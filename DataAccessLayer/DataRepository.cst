@@ -1,0 +1,152 @@
+<%@ CodeTemplate Src="..\CommonSqlCode.cs" Inherits="MoM.Templates.CommonSqlCode" Language="C#" TargetLanguage="C#" Description="Template description here." Debug="False"%>
+<%@ Assembly Name="SchemaExplorer" %>
+<%@ Assembly Name="System.Design" %>
+<%@ Import Namespace="SchemaExplorer" %>
+
+<%@ Property Name="SourceTables" Type="SchemaExplorer.TableSchemaCollection" Category="Connection" Description="Tables of the system." %>
+<%@ Property Name="NameSpace" Type="System.String" Category="Data" Description="Entities Namespace." %>
+<%@ Property Name="DALNameSpace" Type="System.String" Category="Data" Description="DAL Namespace." %>
+<%@ Property Name="SourceViews" Type="SchemaExplorer.ViewSchemaCollection" Category="Connection" Description="Tables of the system." %>
+
+#region Using directives
+
+using System;
+using System.Configuration;
+using System.Configuration.Provider;
+using System.Web.Configuration;
+using System.Web;
+using <%=NameSpace%>;
+using <%=DALNameSpace%>;
+using <%=DALNameSpace%>.Bases;
+
+#endregion
+
+namespace <%=DALNameSpace%>
+{
+	/// <summary>
+	/// This class represents the Data source repository and gives access to all the underlying providers.
+	/// </summary>
+	[CLSCompliant(true)]
+	public sealed class DataRepository 
+	{
+		private static NetTiersProvider _provider = null;
+        private static NetTiersProviderCollection _providers = null;
+        
+        private static volatile object SyncRoot = new object();
+				
+		private DataRepository()
+		{
+		}
+		
+		private static void LoadProviders()
+        {
+            // Avoid claiming lock if providers are already loaded
+            if (_provider == null)
+            {
+                lock (SyncRoot)
+                {
+                    // Do this again to make sure _provider is still null
+                    if (_provider == null)
+                    {
+                        // Get a reference to the <imageService> section
+                        NetTiersServiceSection section = (NetTiersServiceSection)WebConfigurationManager.GetSection("netTiersService");
+
+                        // Load registered providers and point _provider to the default provider
+                        _providers = new NetTiersProviderCollection();
+
+                        ProvidersHelper.InstantiateProviders(section.Providers, _providers, typeof(NetTiersProvider));
+                        _provider = _providers[section.DefaultProvider];
+
+                        if (_provider == null)
+                        {
+                            throw new ProviderException("Unable to load default NetTiersProvider");
+                        }
+                    }
+                }
+            }
+        }
+
+		/// <summary>
+        /// Gets the provider.
+        /// </summary>
+        /// <value>The provider.</value>
+        public static NetTiersProvider Provider
+        {
+            get { LoadProviders(); return _provider; }
+        }
+
+		/// <summary>
+        /// Gets the provider collection.
+        /// </summary>
+        /// <value>The providers.</value>
+        public static NetTiersProviderCollection Providers
+        {
+            get { LoadProviders(); return _providers; }
+        }
+		
+		/// <summary>
+		/// Creates a new <c cref="TransactionManager"/> instance from the current datasource.
+		/// </summary>
+		/// <returns></returns>
+		public TransactionManager CreateTransaction()
+		{
+			return _provider.CreateTransaction();
+		}	
+		
+		#region "Static properties"
+		
+		<% foreach(TableSchema SourceTable in SourceTables) { 
+			string className = GetClassName(SourceTable.Name);
+			string providerName = GetProviderName(SourceTable.Name);
+			string providerBaseName = GetProviderBaseName(SourceTable.Name);
+		%>
+		
+		
+		#region "<%=providerName%>"
+		
+		///<summary>
+		/// Gets the current instance of the Data Access Logic Component for the <see cref="<%=className%>"/> business entity.
+		/// It exposes CRUD methods as well as selecting on index, foreign keys and custom stored procedures.
+		///</summary>
+		public /*new*/ static <%=providerBaseName%> <%=providerName%>
+		{
+			get 
+			{
+				LoadProviders();
+				return _provider.<%=providerName%>;
+			}
+		}
+		
+		#endregion
+		
+		<%}%>
+		
+		<% foreach(ViewSchema SourceView in SourceViews) { 
+			string className = GetClassName(SourceView.Name);
+			string providerName = GetProviderName(SourceView.Name);
+			string providerBaseName = GetProviderBaseName(SourceView.Name);
+		%>			
+		
+		
+		#region "<%=providerName%>"
+		
+		///<summary>
+		/// Gets the current instance of the Data Access Logic Component for the <see cref="<%=className%>"/> business entity.
+		/// It exposes CRUD methods as well as selecting on index, foreign keys and custom stored procedures.
+		///</summary>
+		public /*new*/ static <%=providerBaseName%> <%=providerName%>
+		{
+			get 
+			{
+				LoadProviders();
+				return _provider.<%=providerName%>;
+			}
+		}
+		
+		#endregion
+		<%}%>
+		
+		#endregion
+		
+	}
+}

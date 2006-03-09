@@ -1,0 +1,310 @@
+<%--
+ * $Id: CommonRules.cst,v 1.3 2006/02/20 18:12:00 bgjohnso Exp $
+ * Last modified by $Author: bgjohnso $
+ * Last modified at $Date: 2006/02/20 18:12:00 $
+ * $Revision: 1.3 $
+--%>
+<%@ CodeTemplate Src="..\..\CommonSqlCode.cs" Inherits="MoM.Templates.CommonSqlCode" Language="C#" TargetLanguage="C#" Description="BrokenRule class for validation."%>
+<%@ Assembly Name="SchemaExplorer" %>
+<%@ Import Namespace="SchemaExplorer" %>
+<%@ Assembly Name="System.Design" %>
+
+<%@ Property Name="NameSpace" Optional="False" Type="System.String" Category="Style" Description="Object Namespace." %>
+<%@ Assembly Name="SchemaExplorer" %>
+using System;
+using System.Collections.Generic;
+using System.Text;
+using System.Reflection;
+
+namespace <%=NameSpace%>.Validation
+{
+   public static class CommonRules
+   {
+      #region NotNull
+
+      public static bool NotNull(object target, ValidationRuleArgs e)
+      {
+         PropertyInfo p = target.GetType().GetProperty(e.PropertyName);
+
+         if (p != null)
+         {
+            object value = p.GetValue(target, null);
+
+            if ( value == null)
+            {
+               e.Description = string.Format("{0} can not be null.",e.PropertyName);
+               return false;
+            }
+
+            return true;
+         }
+         else
+         { 
+            throw new ArgumentException(string.Format("Property \"{0}\" not found on object \"{1}\"",e.PropertyName,target.GetType().ToString()));
+         }
+      }
+
+      #endregion
+
+      #region StringRequired
+
+      /// <summary>
+      /// Rule ensuring a String value contains one or more
+      /// characters.
+      /// </summary>
+      /// <param name="target">Object containing the data to validate</param>
+      /// <param name="e">Arguments parameter specifying the name of the String
+      /// property to validate</param>
+      /// <returns>False if the rule is broken</returns>
+      /// <remarks>
+      /// This implementation uses late binding, and will only work
+      /// against String property values.
+      /// </remarks>
+      public static bool StringRequired(object target, ValidationRuleArgs e)
+      {
+         PropertyInfo p = target.GetType().GetProperty(e.PropertyName);
+
+         if (p != null)
+         {
+            string value = (string)p.GetValue(target,null);
+            if (string.IsNullOrEmpty(value))
+            {
+               e.Description = e.PropertyName + " required";
+               return false;
+            }
+            return true;
+         }
+         else
+         { 
+            throw new ArgumentException(string.Format("Property \"{0}\" not found on object \"{1}\"",e.PropertyName,target.GetType().ToString()));
+         }
+         
+      }
+
+      #endregion 
+
+      #region StringMaxLength
+
+      /// <summary>
+      /// Rule ensuring a String value doesn't exceed
+      /// a specified length.
+      /// </summary>
+      /// <param name="target">Object containing the data to validate</param>
+      /// <param name="e">Arguments parameter specifying the name of the String
+      /// property to validate</param>
+      /// <returns>False if the rule is broken</returns>
+      /// <remarks>
+      /// This implementation uses late binding, and will only work
+      /// against String property values.
+      /// </remarks>
+      public static bool StringMaxLength(object target, ValidationRuleArgs e)
+      {
+         MaxLengthRuleArgs args = e as MaxLengthRuleArgs;
+         if (args != null)
+         {
+            int max = args.MaxLength;
+
+            PropertyInfo p = target.GetType().GetProperty(e.PropertyName);
+
+            if (p != null)
+            {
+               if (p.PropertyType == typeof(string))
+               {
+                  string value = (string)p.GetValue(target, null);
+
+                  if (!String.IsNullOrEmpty(value) && (value.Length > max))
+                  {
+                     e.Description = String.Format(
+                       "{0} can not exceed {1} characters",
+                       e.PropertyName, max.ToString());
+                     return false;
+                  }
+                  return true;
+               }
+               else 
+               {
+                  throw new ArgumentException(string.Format("Property \"{0}\" is not of type String.", e.PropertyName));
+               }
+            }
+            else
+            { 
+               throw new ArgumentException(string.Format("Property \"{0}\" not found on object \"{1}\"",e.PropertyName,target.GetType().ToString()));
+            }
+         }
+         else
+         {
+            throw new ArgumentException("Invalid ValidationRuleArgs.  e must be of type MaxLengthRuleArgs.");
+         }
+
+      }
+
+      public class MaxLengthRuleArgs : ValidationRuleArgs
+      {
+         private int _maxLength;
+
+         public int MaxLength
+         {
+            get { return _maxLength; }
+         }
+
+         public MaxLengthRuleArgs(
+           string propertyName, int maxLength)
+            : base(propertyName)
+         {
+            _maxLength = maxLength;
+         }
+
+         /// <summary>
+         /// Return a string representation of the object.
+         /// </summary>
+         public override string ToString()
+         {
+            return base.ToString() + "!" + _maxLength.ToString();
+         }
+      }
+
+      #endregion
+
+      #region CompareValues
+
+      public static bool LessThanValue<T>(object target, ValidationRuleArgs e)
+      {
+         return CompareValues<T>(target, e as CompareValueRuleArgs<T>, CompareType.LessThan);
+      }
+
+      public static bool LessThanOrEqualToValue<T>(object target, ValidationRuleArgs e)
+      {
+         return CompareValues<T>(target, e as CompareValueRuleArgs<T>, CompareType.LessThanOrEqualTo);
+      }
+
+      public static bool EqualsValue<T>(object target, ValidationRuleArgs e)
+      {
+         return CompareValues<T>(target, e as CompareValueRuleArgs<T>, CompareType.EqualTo);
+      }
+
+      public static bool GreaterThanValue<T>(object target, ValidationRuleArgs e)
+      {
+         return CompareValues<T>(target, e as CompareValueRuleArgs<T>, CompareType.GreaterThan
+            );
+      }
+
+      public static bool GreaterThanOrEqualToValue<T>(object target, ValidationRuleArgs e)
+      {
+         return CompareValues<T>(target, e as CompareValueRuleArgs<T>, CompareType.GreaterThanOrEqualTo);
+      }
+
+      private static bool CompareValues<T>(object target, CompareValueRuleArgs<T> e, CompareType compareType)
+      {
+         bool result = true;
+         
+         if (e != null)
+         {
+            T compareValue = e.CompareValue;
+
+            PropertyInfo p = target.GetType().GetProperty(e.PropertyName);
+
+            T value = (T)p.GetValue(target, null);
+            int res = System.Collections.Comparer.DefaultInvariant.Compare(value, compareValue);
+
+            switch (compareType)
+            { 
+               case CompareType.LessThanOrEqualTo:
+                  result = (res <= 0);
+
+                  if (!result)
+                  {
+                     e.Description = string.Format("{0} can not exceed {1}",
+                     e.PropertyName, compareValue.ToString());
+                  }
+                  break;
+
+               case CompareType.LessThan:
+                  result = (res < 0);
+
+                  if (!result)
+                  {
+                     e.Description = string.Format("{0} must be less than {1}",
+                     e.PropertyName, compareValue.ToString());
+                  }
+                  break;
+
+               case CompareType.EqualTo:
+                  result = (res == 0);
+
+                  if (!result)
+                  {
+                     e.Description = string.Format("{0} must equal {1}",
+                     e.PropertyName, compareValue.ToString());
+                  }
+                  break;
+
+               case CompareType.GreaterThan:
+                  result = (res > 0);
+
+                  if (!result)
+                  {
+                     e.Description = string.Format("{0} must exceed {1}",
+                     e.PropertyName, compareValue.ToString());
+                  }
+                  break;
+
+               case CompareType.GreaterThanOrEqualTo:
+                  result = (res >= 0);
+
+                  if (!result)
+                  {
+                     e.Description = string.Format("{0} must be greater than or equal to {1}",
+                     e.PropertyName, compareValue.ToString());
+                  }
+                  break;
+
+            }
+
+            if (!result)
+            {
+               
+            }
+         }
+         return result;
+      }
+
+      private enum CompareType
+      { 
+         LessThanOrEqualTo,
+         LessThan,
+         EqualTo,
+         GreaterThan,
+         GreaterThanOrEqualTo
+      }
+
+      public class CompareValueRuleArgs<T> : ValidationRuleArgs
+      {
+         T _compareValue;
+
+         public T CompareValue
+         {
+            get { return _compareValue; }
+         }
+
+         public CompareValueRuleArgs(string propertyName, T compareValue)
+            : base(propertyName)
+         {
+            _compareValue = compareValue;
+         }
+
+         /// <summary>
+         /// Returns a string representation of the object.
+         /// </summary>
+         public override string ToString()
+         {
+            return base.ToString() + "!" + _compareValue.ToString();
+         }
+      }
+
+      #endregion
+
+   }
+}
+
+
+

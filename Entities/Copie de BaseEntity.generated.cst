@@ -1,0 +1,191 @@
+<%@ CodeTemplate Language="C#" TargetLanguage="C#" Description="A base class for the entities."%>
+<%@ Property Name="NameSpace" Optional="False" Type="System.String" Category="Style" Description="Object Namespace." %>
+
+using System;
+using System.ComponentModel;
+using System.Collections;
+using System.Xml.Serialization;
+using System.Runtime.Serialization;
+
+namespace <%=NameSpace%>
+{
+
+	/// <summary>
+	/// The interface that each business object of the model implements.
+	/// </summary>
+	public abstract class BaseEntity : IEntity, INotifyPropertyChanged
+	{
+		protected EntityState state = EntityState.Added ;
+		
+		// use by in place editing of databinding features for new inserted row
+		protected bool bindingIsNew = true;
+				
+		/// <summary>
+		///	The name of the underlying database table.
+		/// </summary>
+		public abstract string TableName { get;}
+		
+		/// <summary>
+		///		The name of the underlying database table's columns.
+		/// </summary>
+		/// <value>A string array that holds the columns names.</value>
+		public abstract string[] TableColumns {get;}
+
+		//private bool _isDeleted = false;
+		/// <summary>
+		/// 	True if object has been <see cref="MarkToDelete"/>. ReadOnly.
+		/// </summary>
+		[BrowsableAttribute(false), XmlIgnoreAttribute()]
+		public bool IsDeleted
+		{
+			get { return this.state == EntityState.Deleted; }
+		}		
+		
+		//private bool _isDirty = false;
+		/// <summary>
+		///		Indicates if the object has been modified from its original state.
+		/// </summary>
+		/// <remarks>True if object has been modified from its original state; otherwise False;</remarks>
+		[BrowsableAttribute(false), XmlIgnoreAttribute()]
+		public bool IsDirty
+		{
+			get { return this.state != EntityState.Unchanged; }
+		}
+		
+		
+		//private bool _isNew = true;
+		/// <summary>
+		///		Indicates if the object is new.
+		/// </summary>
+		/// <remarks>True if objectis new; otherwise False;</remarks>
+		[BrowsableAttribute(false), XmlIgnoreAttribute()]
+		public bool IsNew
+		{
+			get { return this.state == EntityState.Added; }
+			set { this.state = EntityState.Added; }
+		}
+		
+
+		
+		//private EntityState state = EntityState.Unchanged ;
+		/// <summary>
+		///		Indicates state of object
+		/// </summary>
+		/// <remarks>0=Unchanged, 1=Added, 2=Changed</remarks>
+		[BrowsableAttribute(false), XmlIgnoreAttribute()]
+		public virtual EntityState EntityState
+		{
+			get { return this.state; }
+			set { this.state = value; }
+		}
+		
+		/// <summary>
+		/// Accepts the changes made to this object.
+		/// </summary>
+		/// <remarks>
+		/// After calling this method <see cref="IsDirty"/> and <see cref="IsNew"/> are false. <see cref="IsDeleted"/> flag remain unchanged as it is handled by the parent List.
+		/// </remarks>
+		public virtual void AcceptChanges()
+		{			
+			this.bindingIsNew = false;
+			this.state = EntityState.Unchanged ;
+			OnPropertyChanged(string.Empty);
+		}
+		
+		
+		///<summary>
+		///  TODO: Revert all changes and restore original values.
+		///  Currently not supported.
+		///</summary>
+		/// <exception cref="NotSupportedException">This method is not currently supported and always throws this exception.</exception>
+		public abstract void CancelChanges();
+		
+		
+		///<summary>
+		///   Marks entity to be deleted.
+		///</summary>
+		public virtual void MarkToDelete()
+		{
+			
+			if (this.state != EntityState.Added)
+				this.state = EntityState.Deleted ;
+		}
+		
+		///<summary>
+		///   Remove the "isDeleted" mark from the entity.
+		///</summary>
+		public virtual void RemoveDeleteMark()
+		{
+			if (this.state != EntityState.Added) 
+			{				
+				this.state = EntityState.Changed ;
+			}
+		}
+				 
+		/// <summary>
+        /// Gets or sets the parent collection.
+        /// </summary>
+        /// <value>The parent collection.</value>
+		public abstract object ParentCollection{get;set;}
+					
+		
+		/// <summary>
+		/// Object that contains data to associate with this object
+		/// </summary>
+		private object tag;	
+		
+		/// <summary>
+		///     Gets or sets the object that contains supplemental data about this object.
+		/// </summary>
+		/// <value>Object</value>
+		[System.ComponentModel.Bindable(false)]
+		[LocalizableAttribute(false)]
+		[DescriptionAttribute("Object containing data to be associated with this object")]
+		public virtual object Tag
+		{
+			get
+			{
+				return this.tag;
+			}
+			set
+			{
+				if (this.tag == value)
+					return;
+		
+				this.tag = value;
+			}
+		}
+		
+		
+		#region INotifyPropertyChanged Members
+		
+		/// <summary>
+		/// Event to indicate that a property has changed.
+		/// </summary>
+		[field:NonSerialized]
+		public event PropertyChangedEventHandler PropertyChanged;
+		
+		/// <summary>
+		/// Called when a property is changed
+		/// </summary>
+		/// <param name="propertyName">The name of the property that has changed.</param>
+		protected virtual void OnPropertyChanged(string propertyName)
+		{ 
+			OnPropertyChanged(new PropertyChangedEventArgs(propertyName));
+		}
+		
+		/// <summary>
+		/// Called when a property is changed
+		/// </summary>
+		/// <param name="e">PropertyChangedEventArgs</param>
+		protected virtual void OnPropertyChanged(PropertyChangedEventArgs e)
+		{
+			if (null != PropertyChanged)
+			{
+				PropertyChanged(this, e);
+			}
+		}
+		
+		#endregion
+	}
+}

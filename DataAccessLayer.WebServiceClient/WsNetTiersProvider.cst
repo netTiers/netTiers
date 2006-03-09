@@ -1,0 +1,487 @@
+<%--
+ * $Id: WsNetTiersProvider.cst,v 1.1 2005/12/02 15:23:23 jroland Exp $
+ * Last modified by $Author: jroland $
+ * Last modified at $Date: 2005/12/02 15:23:23 $
+ * $Revision: 1.1 $
+ --%>
+<%@ CodeTemplate Src="..\CommonSqlCode.cs" Inherits="MoM.Templates.CommonSqlCode" Language="C#" TargetLanguage="C#" Description="Template description here." %>
+<%@ Assembly Name="SchemaExplorer" %>
+<%@ Assembly Name="System.Design" %>
+<%@ Import Namespace="SchemaExplorer" %>
+
+<%@ Property Name="DALNameSpace" Type="System.String" Category="Data" Description="DAL Namespace." %>
+<%@ Property Name="SourceTables" Type="SchemaExplorer.TableSchemaCollection" Category="Connection" Description="Tables of the system." %>
+<%@ Property Name="SourceViews" Type="SchemaExplorer.ViewSchemaCollection" Category="Connection" Description="Tables of the system." %>
+
+<%@ Property Name="WebReferenceName" Type="System.String" Default="" Category="Decoration" Description="The WebService Proxy Class Name." %>
+<%@ Property Name="ProxyClassName" Type="System.String" Default="WsProxy" Optional="True" Category="Decoration" Description="The WebService Proxy Class Name." %>
+
+
+#region Using directives
+
+using System;
+using System.Configuration.Provider;
+using System.Collections.Specialized;
+using System.Data;
+using System.Data.Common;
+using <%=DALNameSpace%>.Bases;
+
+#endregion
+
+namespace <%=DALNameSpace%>.WebServiceClient
+{
+	/// <summary>
+	/// The WebService client data provider.
+	/// </summary>
+	public sealed class WsNetTiersProvider : <%=DALNameSpace%>.Bases.NetTiersProvider
+	{
+		private static object syncRoot = new Object();
+		private string _applicationName;
+		private string _url;
+        
+		/// <summary>
+		/// Initializes a new instance of the <see cref="WsDataProvider"/> class.
+		///</summary>
+		public WsNetTiersProvider()
+		{			
+		}
+		
+		public override void Initialize(string name, NameValueCollection config)
+        {
+            // Verify that config isn't null
+            if (config == null)
+            {
+                throw new ArgumentNullException("config");
+            }
+
+            // Assign the provider a default name if it doesn't have one
+            if (String.IsNullOrEmpty(name))
+            {
+                name = "SqlNetTiersProvider";
+            }
+
+            // Add a default "description" attribute to config if the
+            // attribute doesn't exist or is empty
+            if (string.IsNullOrEmpty(config["description"]))
+            {
+                config.Remove("description");
+                config.Add("description", "NetTiers Sql provider");
+            }
+
+            // Call the base class's Initialize method
+            base.Initialize(name, config);
+
+            // Initialize _applicationName
+            _applicationName = config["applicationName"];
+
+            if (string.IsNullOrEmpty(_applicationName))
+            {
+                _applicationName = "/";
+            }
+            config.Remove("applicationName");
+
+
+            #region "Initialize Url"
+            string url  = config["url"];
+           	if (string.IsNullOrEmpty(url))
+            {
+                throw new ProviderException("Empty or missing url");
+            }
+            this._url = url;
+            config.Remove("url");
+            #endregion
+
+            // Throw an exception if unrecognized attributes remain
+            if (config.Count > 0)
+            {
+                string attr = config.GetKey(0);
+                if (!String.IsNullOrEmpty(attr))
+                {
+                    throw new ProviderException("Unrecognized attribute: " + attr);
+                }
+            }
+        }
+        
+        public string Url
+        {
+        	get {return this._url;}
+        	set {this._url = value;}
+        }
+		
+		/// <summary>
+		/// Creates a new <c cref="TransactionManager"/> instance from the current datasource.
+		/// </summary>
+		/// <returns></returns>
+		public override TransactionManager CreateTransaction()
+		{
+			throw new NotSupportedException("Transactions are not supported by the webservice client.");
+		}
+		
+		///<summary>
+		/// Indicates if the current <c cref="DataProviderBase"/> implementation supports Transacton.
+		///</summary>
+		public override bool IsTransactionSupported
+		{
+			get
+			{
+				return false;
+			}
+		}
+
+		<% foreach(TableSchema SourceTable in SourceTables) { 
+			string className = GetClassName(SourceTable.Name);
+			string providerClassName = GetProviderClassName(SourceTable.Name);
+			string providerBaseName = GetProviderBaseName(SourceTable.Name);
+		%>
+			
+		private Ws<%=providerClassName%> inner<%=providerClassName%>;
+
+		///<summary>
+		/// This class is the Data Access Logic Component for the <see cref="<%=className%>"/> business entity.
+		/// It exposes CRUD methods as well as selecting on index, foreign keys and custom stored procedures.
+		///</summary>
+		/// <value></value>
+		public override <%=providerBaseName%> <%=providerClassName%>
+		{
+			get
+			{
+				if (inner<%=providerClassName%> == null) 
+				{
+					lock (syncRoot)
+					{
+						if (inner<%=providerClassName%> == null)
+						{
+							this.inner<%=providerClassName%> = new Ws<%=providerClassName%>(this._url);
+						}
+					}
+				}
+				return inner<%=providerClassName%>;
+			}
+		}
+		
+		<%}%>
+		
+		<% foreach(ViewSchema SourceView in SourceViews) { 
+			string className = GetClassName(SourceView.Name);
+			string providerName = GetProviderClassName(SourceView.Name);
+			string providerBaseName = GetProviderBaseName(SourceView.Name);
+		%>
+			
+		private Ws<%=providerName%> inner<%=providerName%>;
+
+		///<summary>
+		/// This class is the Data Access Logic Component for the <see cref="<%=className%>"/> business entity.
+		/// It exposes CRUD methods as well as selecting on index, foreign keys and custom stored procedures.
+		///</summary>
+		/// <value></value>
+		public override <%=providerBaseName%> <%=providerName%>
+		{
+			get
+			{
+				if (inner<%=providerName%> == null) 
+				{
+					lock (syncRoot) 
+					{
+						if (inner<%=providerName%> == null)
+						{
+							this.inner<%=providerName%> = new Ws<%=providerName%>(this._url);
+						}
+					}
+				}
+				return inner<%=providerName%>;
+			}
+		}
+		
+		<%}%>
+		
+		#region "General data access methods"
+
+		#region "ExecuteNonQuery"
+		/// <summary>
+		/// Executes the non query.
+		/// </summary>
+		/// <param name="storedProcedureName">Name of the stored procedure.</param>
+		/// <param name="parameterValues">The parameter values.</param>
+		/// <returns></returns>
+		public override int ExecuteNonQuery(string storedProcedureName, params object[] parameterValues)
+		{
+			<%=WebReferenceName%>.<%=ProxyClassName%> proxy = new <%=WebReferenceName%>.<%=ProxyClassName%>();
+			proxy.Url = this._url;
+			return proxy.ExecuteNonQuery(storedProcedureName, parameterValues);
+		}
+
+		/// <summary>
+		/// Executes the non query.
+		/// </summary>
+		/// <param name="transactionManager">The transaction manager.</param>
+		/// <param name="storedProcedureName">Name of the stored procedure.</param>
+		/// <param name="parameterValues">The parameter values.</param>
+		/// <returns></returns>
+		public override int ExecuteNonQuery(TransactionManager transactionManager, string storedProcedureName, params object[] parameterValues)
+		{
+			throw new NotSupportedException("TransactionManager overloads are not supported by the WebService provider.");
+		}
+
+		/// <summary>
+		/// Executes the non query.
+		/// </summary>
+		/// <param name="commandWrapper">The command wrapper.</param>
+		public override void ExecuteNonQuery(DbCommand commandWrapper)
+		{
+			throw new NotSupportedException("DBCommandWrapper overloads are not supported by the WebService provider.");
+		}
+
+		/// <summary>
+		/// Executes the non query.
+		/// </summary>
+		/// <param name="transactionManager">The transaction manager.</param>
+		/// <param name="commandWrapper">The command wrapper.</param>
+		public override void ExecuteNonQuery(TransactionManager transactionManager, DbCommand commandWrapper)
+		{
+			throw new NotSupportedException("DBCommandWrapper overloads are not supported by the WebService provider.");
+		}
+
+
+		/// <summary>
+		/// Executes the non query.
+		/// </summary>
+		/// <param name="commandType">Type of the command.</param>
+		/// <param name="commandText">The command text.</param>
+		/// <returns></returns>
+		public override int ExecuteNonQuery(CommandType commandType, string commandText)
+		{
+			<%=WebReferenceName%>.<%=ProxyClassName%> proxy = new <%=WebReferenceName%>.<%=ProxyClassName%>();
+			proxy.Url = this._url;
+			return proxy.ExecuteNonQuery((<%=WebReferenceName%>.CommandType)Enum.Parse(typeof(<%=WebReferenceName%>.CommandType), commandType.ToString(), false), commandText);
+		}
+		/// <summary>
+		/// Executes the non query.
+		/// </summary>
+		/// <param name="transactionManager">The transaction manager.</param>
+		/// <param name="commandType">Type of the command.</param>
+		/// <param name="commandText">The command text.</param>
+		/// <returns></returns>
+		public override int ExecuteNonQuery(TransactionManager transactionManager, CommandType commandType, string commandText)
+		{
+			throw new NotSupportedException("TransactionManager overloads are not supported by the WebService provider.");
+		}
+		#endregion
+
+		#region "ExecuteDataReader"
+		/// <summary>
+		/// Executes the reader.
+		/// </summary>
+		/// <param name="storedProcedureName">Name of the stored procedure.</param>
+		/// <param name="parameterValues">The parameter values.</param>
+		/// <returns></returns>
+		public override IDataReader ExecuteReader(string storedProcedureName, params object[] parameterValues)
+		{
+			throw new NotSupportedException("ExecuteReader methods are not supported by the WebService provider.");
+		}
+
+		/// <summary>
+		/// Executes the reader.
+		/// </summary>
+		/// <param name="transactionManager">The transaction manager.</param>
+		/// <param name="storedProcedureName">Name of the stored procedure.</param>
+		/// <param name="parameterValues">The parameter values.</param>
+		/// <returns></returns>
+		public override IDataReader ExecuteReader(TransactionManager transactionManager, string storedProcedureName, params object[] parameterValues)
+		{
+			throw new NotSupportedException("ExecuteReader methods are not supported by the WebService provider.");
+		}
+
+		/// <summary>
+		/// Executes the reader.
+		/// </summary>
+		/// <param name="commandWrapper">The command wrapper.</param>
+		/// <returns></returns>
+		public override IDataReader ExecuteReader(DbCommand commandWrapper)
+		{
+			throw new NotSupportedException("ExecuteReader methods are not supported by the WebService provider.");
+		}
+
+		/// <summary>
+		/// Executes the reader.
+		/// </summary>
+		/// <param name="transactionManager">The transaction manager.</param>
+		/// <param name="commandWrapper">The command wrapper.</param>
+		/// <returns></returns>
+		public override IDataReader ExecuteReader(TransactionManager transactionManager, DbCommand commandWrapper)
+		{
+			throw new NotSupportedException("ExecuteReader methods are not supported by the WebService provider.");
+		}
+
+
+		/// <summary>
+		/// Executes the reader.
+		/// </summary>
+		/// <param name="commandType">Type of the command.</param>
+		/// <param name="commandText">The command text.</param>
+		/// <returns></returns>
+		public override IDataReader ExecuteReader(CommandType commandType, string commandText)
+		{
+			throw new NotSupportedException("ExecuteReader methods are not supported by the WebService provider.");
+		}
+		/// <summary>
+		/// Executes the reader.
+		/// </summary>
+		/// <param name="transactionManager">The transaction manager.</param>
+		/// <param name="commandType">Type of the command.</param>
+		/// <param name="commandText">The command text.</param>
+		/// <returns></returns>
+		public override IDataReader ExecuteReader(TransactionManager transactionManager, CommandType commandType, string commandText)
+		{
+			throw new NotSupportedException("ExecuteReader methods are not supported by the WebService provider.");
+		}
+		#endregion
+
+		#region "ExecuteDataSet"
+		/// <summary>
+		/// Executes the data set.
+		/// </summary>
+		/// <param name="storedProcedureName">Name of the stored procedure.</param>
+		/// <param name="parameterValues">The parameter values.</param>
+		/// <returns></returns>
+		public override DataSet ExecuteDataSet(string storedProcedureName, params object[] parameterValues)
+		{
+			<%=WebReferenceName%>.<%=ProxyClassName%> proxy = new <%=WebReferenceName%>.<%=ProxyClassName%>();
+			proxy.Url = this._url;
+			return proxy.ExecuteDataSet(storedProcedureName, parameterValues);
+		}
+
+		/// <summary>
+		/// Executes the data set.
+		/// </summary>
+		/// <param name="transactionManager">The transaction manager.</param>
+		/// <param name="storedProcedureName">Name of the stored procedure.</param>
+		/// <param name="parameterValues">The parameter values.</param>
+		/// <returns></returns>
+		public override DataSet ExecuteDataSet(TransactionManager transactionManager, string storedProcedureName, params object[] parameterValues)
+		{
+			throw new NotSupportedException("TransactionManager overloads are not supported by the WebService provider.");
+		}
+
+		/// <summary>
+		/// Executes the data set.
+		/// </summary>
+		/// <param name="commandWrapper">The command wrapper.</param>
+		/// <returns></returns>
+		public override DataSet ExecuteDataSet(DbCommand commandWrapper)
+		{
+			throw new NotSupportedException("DBCommandWrapper overloads are not supported by the WebService provider.");
+		}
+
+		/// <summary>
+		/// Executes the data set.
+		/// </summary>
+		/// <param name="transactionManager">The transaction manager.</param>
+		/// <param name="commandWrapper">The command wrapper.</param>
+		/// <returns></returns>
+		public override DataSet ExecuteDataSet(TransactionManager transactionManager, DbCommand commandWrapper)
+		{
+			throw new NotSupportedException("DBCommandWrapper overloads are not supported by the WebService provider.");
+		}
+
+
+		/// <summary>
+		/// Executes the data set.
+		/// </summary>
+		/// <param name="commandType">Type of the command.</param>
+		/// <param name="commandText">The command text.</param>
+		/// <returns></returns>
+		public override DataSet ExecuteDataSet(CommandType commandType, string commandText)
+		{
+			<%=WebReferenceName%>.<%=ProxyClassName%> proxy = new <%=WebReferenceName%>.<%=ProxyClassName%>();
+			proxy.Url = this._url;
+			return proxy.ExecuteDataSet((<%=WebReferenceName%>.CommandType)Enum.Parse(typeof(<%=WebReferenceName%>.CommandType), commandType.ToString(), false), commandText);
+		}
+		
+		/// <summary>
+		/// Executes the data set.
+		/// </summary>
+		/// <param name="transactionManager">The transaction manager.</param>
+		/// <param name="commandType">Type of the command.</param>
+		/// <param name="commandText">The command text.</param>
+		/// <returns></returns>
+		public override DataSet ExecuteDataSet(TransactionManager transactionManager, CommandType commandType, string commandText)
+		{
+			throw new NotSupportedException("TransactionManager overloads are not supported by the WebService provider.");			
+		}
+		#endregion
+
+		#region "ExecuteScalar"
+		/// <summary>
+		/// Executes the scalar.
+		/// </summary>
+		/// <param name="storedProcedureName">Name of the stored procedure.</param>
+		/// <param name="parameterValues">The parameter values.</param>
+		/// <returns></returns>
+		public override object ExecuteScalar(string storedProcedureName, params object[] parameterValues)
+		{
+			<%=WebReferenceName%>.<%=ProxyClassName%> proxy = new <%=WebReferenceName%>.<%=ProxyClassName%>();
+			proxy.Url = this._url;
+			return proxy.ExecuteScalar(storedProcedureName, parameterValues);
+		}
+
+		/// <summary>
+		/// Executes the scalar.
+		/// </summary>
+		/// <param name="transactionManager">The transaction manager.</param>
+		/// <param name="storedProcedureName">Name of the stored procedure.</param>
+		/// <param name="parameterValues">The parameter values.</param>
+		/// <returns></returns>
+		public override object ExecuteScalar(TransactionManager transactionManager, string storedProcedureName, params object[] parameterValues)
+		{
+			throw new NotSupportedException("TransactionManager overloads are not supported by the WebService provider.");
+		}
+
+		/// <summary>
+		/// Executes the scalar.
+		/// </summary>
+		/// <param name="commandWrapper">The command wrapper.</param>
+		/// <returns></returns>
+		public override object ExecuteScalar(DbCommand commandWrapper)
+		{
+			throw new NotSupportedException("DBCommandWrapper overloads are not supported by the WebService provider.");
+		}
+
+		/// <summary>
+		/// Executes the scalar.
+		/// </summary>
+		/// <param name="transactionManager">The transaction manager.</param>
+		/// <param name="commandWrapper">The command wrapper.</param>
+		/// <returns></returns>
+		public override object ExecuteScalar(TransactionManager transactionManager, DbCommand commandWrapper)
+		{
+			throw new NotSupportedException("DBCommandWrapper overloads are not supported by the WebService provider.");
+		}
+
+		/// <summary>
+		/// Executes the scalar.
+		/// </summary>
+		/// <param name="commandType">Type of the command.</param>
+		/// <param name="commandText">The command text.</param>
+		/// <returns></returns>
+		public override object ExecuteScalar(CommandType commandType, string commandText)
+		{
+			<%=WebReferenceName%>.<%=ProxyClassName%> proxy = new <%=WebReferenceName%>.<%=ProxyClassName%>();
+			proxy.Url = this._url;
+			return proxy.ExecuteScalar((<%=WebReferenceName%>.CommandType)Enum.Parse(typeof(<%=WebReferenceName%>.CommandType), commandType.ToString(), false), commandText);	
+		}
+		/// <summary>
+		/// Executes the scalar.
+		/// </summary>
+		/// <param name="transactionManager">The transaction manager.</param>
+		/// <param name="commandType">Type of the command.</param>
+		/// <param name="commandText">The command text.</param>
+		/// <returns></returns>
+		public override object ExecuteScalar(TransactionManager transactionManager, CommandType commandType, string commandText)
+		{
+			throw new NotSupportedException("TransactionManager overloads are not supported by the WebService provider.");		
+		}
+		#endregion
+
+		#endregion
+	}
+}
