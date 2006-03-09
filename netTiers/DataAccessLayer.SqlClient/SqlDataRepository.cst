@@ -1,0 +1,137 @@
+<%--
+ * $Id: SqlDataRepository.cst,v 1.1 2005/11/04 07:09:39 jroland Exp $
+ * Last modified by $Author: jroland $
+ * Last modified at $Date: 2005/11/04 07:09:39 $
+ * $Revision: 1.1 $
+ --%>
+<%@ CodeTemplate Src="..\CommonSqlCode.cs" Inherits="MoM.Templates.CommonSqlCode" Language="C#" TargetLanguage="C#" Description="Template description here." Debug="False"%>
+<%@ Assembly Name="SchemaExplorer" %>
+<%@ Assembly Name="System.Design" %>
+<%@ Import Namespace="SchemaExplorer" %>
+
+<%@ Property Name="SourceTables" Type="SchemaExplorer.TableSchemaCollection" Category="Connection" Description="Tables of the system." %>
+<%@ Property Name="SourceViews" Type="SchemaExplorer.ViewSchemaCollection" Category="Connection" Description="Tables of the system." %>
+<%@ Property Name="DALNameSpace" Type="System.String" Category="Data" Description="DAL Namespace." %>
+
+#region Using directives
+
+using System;
+using <%=DALNameSpace%>.Bases;
+
+#endregion
+
+namespace <%=DALNameSpace%>.SqlClient
+{
+	/// <summary>
+	/// This class represents the Sql Data source repository and gives access to all the underlying providers.
+	/// </summary>
+	public sealed class SqlDataRepository
+	{
+		private static object syncRoot = new Object();
+		
+		private static NetTiers.Configuration.SqlDataProviderData innerSqlDataProviderData;
+		private static SqlDataProvider innerSqlDataProvider;
+		
+		private SqlDataRepository()
+		{
+		}
+		
+		/// <summary>
+		/// Gets the <see cref="SqlDataProvider"/> instance with the specified name.
+		/// </summary>
+		/// <param name="providerName">Name of the provider.</param>
+		/// <returns></returns>
+		public static SqlDataProvider GetDataProvider(string providerName)
+		{
+			innerSqlDataProviderData = Configuration.Current.DataProviderDataCollection[providerName] as NetTiers.Configuration.SqlDataProviderData;
+			Type providerType = System.Reflection.Assembly.GetExecutingAssembly().GetType("<%=DALNameSpace%>." + innerSqlDataProviderData.TypeName);
+			return (SqlDataProvider)Activator.CreateInstance(providerType, new object[] {innerSqlDataProviderData.Name});
+		}
+		
+		/// <summary>
+		/// Creates a new <c cref="TransactionManager"/> instance from the current datasource.
+		/// </summary>
+		/// <returns></returns>
+		public static TransactionManager CreateTransaction()
+		{
+			return Current.CreateTransaction();
+		}
+		
+		/// <summary>
+		/// The internal IDataProvider instance, defines as singleton.
+		/// </summary>
+		/// <remarks>Uses reflection to instanciate the IDataProvider instance.</remarks>
+		private static SqlDataProvider Current
+		{
+			get 
+			{
+				if (innerSqlDataProvider == null) 
+				{
+					lock (syncRoot) 
+					{
+						if (innerSqlDataProvider == null)
+						{
+							innerSqlDataProvider = GetDataProvider(Configuration.Current.DefaultDataProviderSettings.Name);
+						}
+					}
+				}
+				return innerSqlDataProvider;
+			}
+		}
+		
+		#region "Public properties"
+		
+		<% foreach(TableSchema SourceTable in SourceTables) { 
+			string className = GetClassName(SourceTable.Name);
+			string providerName = GetProviderClassName(SourceTable.Name);
+			//string providerDecoratorClassName = GetProviderDecoratorClassName(SourceTable.Name);
+			//string repositoryClassName = GetRepositoryClassName(SourceTable.Name);
+			string providerBaseName = "Sql" + GetProviderBaseName(SourceTable.Name);
+		%>
+		
+		
+		#region "<%=providerName%>"
+
+		///<summary>
+		/// Gets the current instance of the Data Access Logic Component for the <see cref="<%=className%>"/> business entity.
+		/// It exposes CRUD methods as well as selecting on index, foreign keys and custom stored procedures.
+		///</summary>
+		public static Sql<%=providerName%> <%=providerName%>
+		{
+			get 
+			{
+				return Current.Sql<%=providerName%>;
+			}
+		}
+		
+		#endregion
+		
+		<%}%>
+		
+		<% foreach(ViewSchema SourceView in SourceViews) { 
+			string className = GetClassName(SourceView.Name);
+			string providerName = GetProviderName(SourceView.Name);
+			string providerBaseName = GetProviderBaseName(SourceView.Name);
+		%>			
+		
+		
+		#region "<%=providerName%>"
+		
+		///<summary>
+		/// Gets the current instance of the Data Access Logic Component for the <see cref="<%=className%>"/> business entity.
+		/// It exposes CRUD methods as well as selecting on index, foreign keys and custom stored procedures.
+		///</summary>
+		public static Sql<%=providerName%> <%=providerName%>
+		{
+			get 
+			{
+				return Current.Sql<%=providerName%>;
+			}
+		}
+		
+		#endregion
+		<%}%>
+		
+		#endregion
+	}
+}
