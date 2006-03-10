@@ -805,9 +805,9 @@ namespace <%=DALNameSpace%>.SqlClient
 					// String types are nullable, but all other types are value types %>
 		database.AddInParameter(commandWrapper, "@<%=GetPropertyName(cols[i].Name)%>", DbType.<%= cols[i].DataType.ToString() %>, (entity.<%=GetPropertyName(cols[i].Name)%>.HasValue ? (object) entity.<%=GetPropertyName(cols[i].Name)%>  : System.DBNull.Value));
 				<%}
-				else
+				else					
 			{%>
-		database.AddInParameter(commandWrapper, "@<%=GetPropertyName(cols[i].Name)%>", DbType.<%= cols[i].DataType.ToString() %>, entity.<%=GetPropertyName(cols[i].Name)%> );
+		database.AddInParameter(commandWrapper, "@<%=GetPropertyName(cols[i].Name)%>", <%= GetDbType(cols[i]) %>, entity.<%=GetPropertyName(cols[i].Name)%> );
 			<%}
 			}
 		}%>
@@ -906,9 +906,9 @@ namespace <%=DALNameSpace%>.SqlClient
 					// String types are nullable, but all other types are value types%>
 		database.AddInParameter(commandWrapper, "@<%=GetPropertyName(cols[i].Name)%>", DbType.<%= cols[i].DataType.ToString() %>, (entity.<%=GetPropertyName(cols[i].Name)%>.HasValue ? (object) entity.<%=GetPropertyName(cols[i].Name)%> : System.DBNull.Value) );
 				<%}
-				else
+				else				
 			{%>
-		database.AddInParameter(commandWrapper, "@<%=GetPropertyName(cols[i].Name)%>", DbType.<%= cols[i].DataType.ToString() %>, entity.<%=GetPropertyName(cols[i].Name)%> );
+		database.AddInParameter(commandWrapper, "@<%=GetPropertyName(cols[i].Name)%>", <%=GetDbType(cols[i]) %>, entity.<%=GetPropertyName(cols[i].Name)%> );
 			<%}
 			}
 			if (cols[i].IsPrimaryKeyMember && !IsComputed(cols[i]) && !IsIdentityColumn(cols[i]) && cols[i] != RowVersion)
@@ -1019,8 +1019,8 @@ namespace <%=DALNameSpace%>.SqlClient
 		SqlDatabase database = new SqlDatabase(this._connectionString);
 		DbCommand commandWrapper = database.GetStoredProcCommand("<%=command.Name%>");
 		
-		<% foreach(ParameterSchema col in command.InputParameters)	{ %>
-			database.AddInParameter(commandWrapper, "@<%=GetPropertyName(col.Name)%>", DbType.<%=col.DataType.ToString()%>,  <% if (col.AllowDBNull) { %>Utility.DefaultToDBNull(<%=GetPrivateName(col.Name)%>, DbType.<%= col.DataType.ToString() %>) <%} else {%><%=GetPrivateName(col.Name)%> <%}%>);
+		<% foreach(ParameterSchema col in command.InputParameters)	{%>			
+			database.AddInParameter(commandWrapper, "@<%=GetPropertyName(col.Name)%>", <%=GetDbType(col)%>,  <% if (col.AllowDBNull) { %>Utility.DefaultToDBNull(<%=GetPrivateName(col.Name)%>, DbType.<%= col.DataType.ToString() %>) <%} else {%><%=GetPrivateName(col.Name)%> <%}%>);
 		<%}%>
 
 		<% foreach(ParameterSchema col in command.AllOutputParameters)	{ %>

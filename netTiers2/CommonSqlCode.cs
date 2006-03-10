@@ -1589,6 +1589,11 @@ namespace MoM.Templates
 			//return GetCSType(field.DataType);
 		}
 		
+		/// <summary>
+		/// Convert database types to C# types, withou nullable support.
+		/// </summary>
+		/// <param name="field">Column or parameter</param>
+		/// <returns>The C# (rough) equivalent of the field's data type</returns>
 		public string GetCSTypeWithoutNullable(DataObjectBase field)
 		{
 			if (field.NativeType.ToLower() == "real")
@@ -1600,6 +1605,22 @@ namespace MoM.Templates
 			else
 				return field.SystemType.ToString();
 			//return GetCSType(field.DataType);
+		}
+		
+		/// <summary>
+		/// Return the DbType enum entry of a specified column. It's a hack of the SchemaExplorer property, as it do not support Xml column properly.
+		/// </summary>
+		/// <param name="field">Column or parameter</param>
+		public string GetDbType(DataObjectBase field)
+		{
+			if (field.NativeType.ToLower() == "xml")
+			{
+				return "DbType.Xml";
+			}
+			else
+			{
+				return "DbType." + field.DataType.ToString();
+			}
 		}
 
 /*
