@@ -553,6 +553,19 @@ namespace MoM.Templates
 		}
 		
 		/// <summary>
+		/// Remove any non-word characters from a name (word characters are a-z, A-Z, 0-9, _)
+		/// with the exception of a period (.)
+		/// so that it may be used in code
+		/// </summary>
+		///<remarks>Meant to be used to format things like namespaces and database names
+		/// <param name="name">name to be cleaned</param>
+		/// <returns>Cleaned up object name</returns>
+		public string GetCleanName2(string name)
+		{
+			return Regex.Replace(name, @"[^A-Za-z0-9_\.]", "");
+		}
+		
+		/// <summary>
 		/// Transform the name of a column into a public class property name.
 		/// </summary>
 		public string GetPropertyName(ColumnSchema column)
