@@ -1590,7 +1590,7 @@ namespace MoM.Templates
 		public string GetCSType(DataObjectBase field)
 		{
 			if (field.NativeType.ToLower() == "real")
-				return "System.Single";
+				return "System.Single" + (field.AllowDBNull?"?":"");
 			else if (field.NativeType.ToLower() == "xml")
 				return "string";
 			//else if (field.NativeType.ToLower() == "xml")
