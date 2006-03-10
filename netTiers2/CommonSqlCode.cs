@@ -1960,7 +1960,7 @@ namespace MoM.Templates
 				return numValue.ToString() + "F";
 			else if (column.NativeType.ToLower() == "xml")
 			{
-				return null;
+				return "\"" + "<TEST></TEST>" + "\"";
 			}	
 			else
 			{
