@@ -1,10 +1,10 @@
-<%--
+﻿<%--
  * $Id: Enum.cst,v 1.3 2005/12/09 21:31:54 jroland Exp $
  * Last modified by $Author: jroland $
  * Last modified at $Date: 2005/12/09 21:31:54 $
  * $Revision: 1.3 $
 --%>
-<%@ CodeTemplate Src="..\CommonSqlCode.cs" Inherits="MoM.Templates.CommonSqlCode" Language="C#" TargetLanguage="C#" Description="Template description here." Debug="False"%>
+<%@ CodeTemplate Src="..\CommonSqlCode.cs" Inherits="MoM.Templates.CommonSqlCode" Language="C#" TargetLanguage="C#" Description="Template description here." Debug="False" ResponseEncoding="UTF-8"%>
 <%@ Assembly Name="SchemaExplorer" %>
 <%@ Import Namespace="SchemaExplorer" %>
 <%@ Import Namespace="System.Data" %>
@@ -35,7 +35,30 @@ namespace <%=NameSpace%>
 				Response.Write("\t\t/// {0}{1}", row[2], Environment.NewLine);
 				Response.Write("\t\t/// </summary>{0}", Environment.NewLine);
 			}
-			Response.Write("\t\t{0} = {1}{2}{3}{3}", row[1].ToString().Trim().Replace(" ", "_").Replace("-", "_"), row[0], i<datas.Rows.Count-1 ? ", " : string.Empty, Environment.NewLine);
+			//Initial Formatting - trim whitespace
+			string val = row[1].ToString().Trim();
+			
+			//Replace non-word characters
+			val = Regex.Replace(val,@"[\W]", "_");
+			
+			//Replace duplicate _ with a single instance
+			val = Regex.Replace(val,@"_+","_");
+			
+			//Remove digit characters from start
+			val = Regex.Replace(val,@"^[0-9]+","");
+			
+			//Strip any leading and trailing underscores
+			val = val.TrimStart(new char[] {'_'}).TrimEnd(new char[] {'_'});
+			
+			//If completely numeric value, prefix with Option_
+			if ( Regex.IsMatch(val,@"^[0-9]+$"))
+				val = "Option_" + val;
+				
+			//If empty string, use Option_[Value]
+			if ( val == string.Empty)
+				val = string.Format("Option_{0}",row[0]);
+			
+			Response.Write("\t\t{0} = {1}{2}{3}{3}", val, row[0], i<datas.Rows.Count-1 ? ", " : string.Empty, Environment.NewLine);
 		}
 	%>
 	}
