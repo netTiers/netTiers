@@ -22,13 +22,9 @@ using System.Xml.Serialization;
 namespace <%=NameSpace%>
 {
 	/// <summary>
-	/// A generic collection for the nettiers entities that are generated from tables. 
-	/// Supports filtering, databinding, searching and sorting.
+	/// Represents a strongly typed list of .netTiers table entity that can be accessed by index. 
+	/// Provides methods to search, sort, and manipulate lists.
 	/// </summary>
-	/// <remarks>
-	/// An online quick start guide to generics can be found here:
-	/// <see cref="http://www.ondotnet.com/pub/a/dotnet/excerpt/progcsharp4_ch09-04/index.html?page=1">ondotnet.com</see>
-	/// </remarks>
 	[Serializable]
 	public class TList<T> : ListBase<T> where T : IEntity, new()
    	{
@@ -250,7 +246,7 @@ namespace <%=NameSpace%>
 		///</summary>
 		/// <param name="propertyName">Property of the object to search.</param>
 		/// <param name="value">Value to find.</param>
-      /// <param name="ignoreCase">A Boolean indicating a case-sensitive or insensitive comparison (true indicates a case-insensitive comparison).  String properties only.</param>
+      	/// <param name="ignoreCase">A Boolean indicating a case-sensitive or insensitive comparison (true indicates a case-insensitive comparison).  String properties only.</param>
 		public virtual TList<T> FindAll(string propertyName, object value, bool ignoreCase)
 		{
 			PropertyDescriptorCollection props = TypeDescriptor.GetProperties(typeof(T));
@@ -279,14 +275,22 @@ namespace <%=NameSpace%>
 			
 			return copy;		
 		}
-		
+				
 		/// <summary>
 		/// Retrieves the all the elements that match the conditions defined by the specified predicate.
 		/// </summary>
-		/// <param name="match">The <c>Predicate</c> delegate that defines the conditions of the elements to search for.</param>
-		/// <returns>A TList containing all the elements that match the conditions defined by the specified predicate, if found; otherwise, an empty TList. </returns>
+		/// <param name="match">The <see cref="T:System.Predicate`1"></see> delegate that defines the conditions of the elements to search for.</param>
+		/// <returns>
+		/// A <see cref="T:TList{T}"></see> containing all the elements that match the conditions defined by the specified predicate, if found; otherwise, an empty <see cref="T:TList{T}"></see>.
+		/// </returns>
+		/// <exception cref="T:System.ArgumentNullException">match is null.</exception>		
 		public new TList<T> FindAll(Predicate<T> match) 
 		{
+			if (match == null)
+		    {
+		    	throw new ArgumentNullException("match");
+		    }
+
 			TList<T> result = new TList<T>();
 			foreach (T item in this.Items)
 			{
@@ -297,6 +301,88 @@ namespace <%=NameSpace%>
 			}
 			return result;
 		}
+		
+		/// <summary>
+		/// Determines whether the <see cref="T:TList{T}"></see> contains elements that match the conditions defined by the specified predicate.
+		/// </summary>
+		/// <param name="match">The <see cref="T:System.Predicate`1"></see> delegate that defines the conditions of the elements to search for.</param>
+		/// <returns>
+		/// true if the <see cref="T:TList{T}"></see> contains one or more elements that match the conditions defined by the specified predicate; otherwise, false.
+		/// </returns>
+		/// <exception cref="T:System.ArgumentNullException">match is null.</exception>
+		public bool Exists(Predicate<T> match)
+		{
+		      return (this.FindIndex(match) != -1);
+		}
+		
+		/// <summary>
+		/// Searches for an element that matches the conditions defined by the specified predicate, and returns the zero-based index of the first occurrence within the entire <see cref="T:TList{T}"></see>.
+		/// </summary>
+		/// <param name="match">The <see cref="T:System.Predicate`1"></see> delegate that defines the conditions of the element to search for.</param>
+		/// <returns>
+		/// The zero-based index of the first occurrence of an element that matches the conditions defined by match, if found; otherwise, –1.
+		/// </returns>
+		/// <exception cref="T:System.ArgumentNullException">match is null.</exception>
+		public int FindIndex(Predicate<T> match)
+		{
+		      return this.FindIndex(0, this.Count, match);
+		}
+		
+		/// <summary>
+		/// Searches for an element that matches the conditions defined by the specified predicate, and returns the zero-based index of the first occurrence within the range of elements in the <see cref="T:TList{T}"></see> that extends from the specified index to the last element.
+		/// </summary>
+		/// <param name="startIndex">The zero-based starting index of the search.</param>
+		/// <param name="match">The <see cref="T:System.Predicate`1"></see> delegate that defines the conditions of the element to search for.</param>
+		/// <returns>
+		/// The zero-based index of the first occurrence of an element that matches the conditions defined by match, if found; otherwise, –1.
+		/// </returns>
+		/// <exception cref="T:System.ArgumentOutOfRangeException">startIndex is outside the range of valid indexes for the <see cref="T:TList{T}"></see>.</exception>
+		/// <exception cref="T:System.ArgumentNullException">match is null.</exception>
+		public int FindIndex(int startIndex, Predicate<T> match)
+		{
+		      return this.FindIndex(startIndex, this.Count - startIndex, match);
+		}
+		
+		/// <summary>
+		/// Searches for an element that matches the conditions defined by the specified predicate, and returns the zero-based index of the first occurrence within the range of elements in the <see cref="T:TList{T}"></see> that starts at the specified index and contains the specified number of elements.
+		/// </summary>
+		/// <param name="startIndex">The zero-based starting index of the search.</param>
+		/// <param name="count">The number of elements in the section to search.</param>
+		/// <param name="match">The <see cref="T:System.Predicate`1"></see> delegate that defines the conditions of the element to search for.</param>
+		/// <returns>
+		/// The zero-based index of the first occurrence of an element that matches the conditions defined by match, if found; otherwise, –1.
+		/// </returns>
+		/// <exception cref="T:System.ArgumentOutOfRangeException">startIndex is outside the range of valid indexes for the <see cref="T:TList{T}"></see>.-or-count is less than 0.-or-startIndex and count do not specify a valid section in the <see cref="T:TList{T}"></see>.</exception>
+		/// <exception cref="T:System.ArgumentNullException">match is null.</exception>
+		public int FindIndex(int startIndex, int count, Predicate<T> match)
+		{
+			if (startIndex > this.Count)
+		    {
+		    	throw new ArgumentOutOfRangeException("startIndex", "index is out of range");
+		    }
+		    
+		    if ((count < 0) || (startIndex > (this.Count - count)))
+		    {
+		    	throw new ArgumentOutOfRangeException("count", "count is out of range");
+		    }
+		     
+	      if (match == null)
+	      {
+	            throw new ArgumentNullException("match");
+	      }
+	      int num1 = startIndex + count;
+	      for (int num2 = startIndex; num2 < num1; num2++)
+	      {
+	            if (match(this[num2]))
+	            {
+	                  return num2;
+	            }
+	      }
+	      return -1;
+		}
+
+
+		
 
       #endregion Find
 
