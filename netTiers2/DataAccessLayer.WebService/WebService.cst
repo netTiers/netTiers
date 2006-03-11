@@ -1,4 +1,4 @@
-﻿<%--
+<%--
  * $Id: WebService.cst,v 1.1 2005/12/02 15:23:23 jroland Exp $
  * Last modified by $Author: jroland $
  * Last modified at $Date: 2005/12/02 15:23:23 $
@@ -32,11 +32,17 @@
 <%@ Property Name="WebServiceUrl" Type="System.String" Category="Style" Description="The webservice base URL. The asmx filename will be added programmatically." Default="http://localhost/Services/" %>
 <%%@ WebService Language="C#" Class="<%=ClassName%>" %>
 <%%@ Assembly Name="<%=BLLNameSpace%>" %>
+<%%@ Assembly Name="<%=DALNameSpace%>" %>
 <%%@ Assembly Name="<%=DALNameSpace+".SqlClient"%>" %>
+
 
 using System;
 using System.Data;
 using System.Web.Services;
+using <%=BLLNameSpace%>;
+using <%=DALNameSpace%>;
+using <%=DALNameSpace+".SqlClient"%>;
+
 
 
 /// <summary>
@@ -319,7 +325,20 @@ public class <%=ClassName%>: WebService
 		<%=DALNameSpace%>.DataRepository.<%=providerName%>.Insert(entity);
 		return entity;		
 	}
-		
+	
+	/// <summary>
+	/// Inserts a <%=collectionClassName%> object into the datasource using a transaction.
+	/// </summary>
+	/// <param name="entity"><%=collectionClassName%> object to insert.</param>
+	/// <remarks>After inserting into the datasource, the <%=className%> object will be updated
+	/// to refelect any changes made by the datasource. (ie: identity or computed columns)
+	/// </remarks>
+	/// <returns>Returns true if operation is successful.</returns>
+	[WebMethod(Description="Inserts a Bulk set of rows into the table <%=SourceTable.Name%>.")]
+	public void <%=providerName%>_BulkInsert(<%=collectionClassName%> entityList )
+	{
+		<%=DALNameSpace%>.DataRepository.<%=providerName%>.BulkInsert(entityList);
+	}
 	#endregion "Insert Functions"
 	<% } %>
 			
@@ -393,7 +412,7 @@ public class <%=ClassName%>: WebService
 	{
 		string className = NameSpace + "." + GetClassName(SourceView.Name);
 		string providerName = GetProviderName(SourceView.Name);		
-		string collectionClassName = NameSpace + "." + GetCollectionClassName(SourceView.Name);
+		string collectionClassName = NameSpace + "." + GetViewCollectionClassName(SourceView.Name);
 	 	%>
 	
 	<% if (IncludeGetList) { %>

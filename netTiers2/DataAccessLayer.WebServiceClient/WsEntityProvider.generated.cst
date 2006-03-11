@@ -1,4 +1,4 @@
-﻿<%--
+<%--
  * $Id: WsEntityProvider.generated.cst,v 1.1 2006/01/23 13:08:05 jroland Exp $
  * Last modified by $Author: jroland $
  * Last modified at $Date: 2006/01/23 13:08:05 $
@@ -191,8 +191,6 @@ namespace <%=DALNameSpace%>.WebServiceClient
 			return outItem;
 		}
 		
-		
-		
 		/// <summary>
 		/// Convert a nettiers entity to the ws proxy entity.
 		/// </summary>
@@ -213,6 +211,22 @@ namespace <%=DALNameSpace%>.WebServiceClient
 							
 			return outItem;
 		}
+		
+		/// <summary>
+		/// Convert a collection from  to a nettiers collection to a the ws proxy collection.
+		/// </summary>
+		public static <%=WebReferenceName + "." + GetClassName(SourceTable.Name) %>[] Convert(<%=collectionClassName%> items)
+		{
+			<%=WebReferenceName + "." + GetClassName(SourceTable.Name) %>[] outItems = new <%=WebReferenceName + "." + GetClassName(SourceTable.Name) %>[items.Count];
+			int count = 0;
+		
+			foreach (<%=className%> item in items)
+			{
+				outItems[count++] = Convert(item);
+			}
+			return outItems;
+		}
+
 		
 		#endregion
 		
@@ -476,7 +490,6 @@ namespace <%=DALNameSpace%>.WebServiceClient
 	
 	<% if (IncludeInsert) { %>
 		#region "Insert Functions"
-					
 		/// <summary>
 		/// 	Inserts a <%=className%> object into the datasource using a transaction.
 		/// </summary>
@@ -502,6 +515,29 @@ namespace <%=DALNameSpace%>.WebServiceClient
 			}
 		}
 	
+		/// <summary>
+		/// Lets you efficiently bulk many entity to the database.
+		/// </summary>
+		/// <param name="transactionManager">NOTE: The transaction manager should be null for the web service client implementation.</param>
+		/// <param name="entities">The entities.</param>
+		/// <remarks>
+		/// After inserting into the datasource, the <%=className%> object will be updated
+		/// to refelect any changes made by the datasource. (ie: identity or computed columns)
+		/// </remarks>
+		public override void BulkInsert(TransactionManager transactionManager, TList<<%=className%>> entityList)
+		{
+			<%=WebReferenceName%>.<%=ProxyClassName%> proxy = new <%=WebReferenceName%>.<%=ProxyClassName%>();
+			proxy.Url = this._url;
+			try
+			{
+				proxy.<%=providerName%>_BulkInsert(Convert(entityList));
+			}
+			catch (Exception ex)
+			{	
+				System.Diagnostics.Debug.WriteLine(ex);
+			}
+		}
+
 		#endregion
 	<%	}//endif (IncludeInsert) %>
 	
