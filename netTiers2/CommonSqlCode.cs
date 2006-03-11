@@ -1344,6 +1344,10 @@ namespace MoM.Templates
 						{
 							param = "(" + column.Size + ")";
 						}
+						else if (column.Size == -1)
+						{
+							param = "(MAX)";
+						}
 					}
 					break;
 				}
