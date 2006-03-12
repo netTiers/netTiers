@@ -21,7 +21,7 @@ GO
 
 <xsl:template match="procedure">
 -- Drop the <xsl:value-of select="@owner"/>.<xsl:value-of select="@name"/> procedure
-IF EXISTS (SELECT * FROM dbo.sysobjects WHERE id = object_id(N'<xsl:value-of select="@name"/>') AND OBJECTPROPERTY(id, N'IsProcedure') = 1)
+IF EXISTS (SELECT * FROM dbo.sysobjects WHERE id = object_id(N'<xsl:value-of select="@owner"/>.<xsl:value-of select="@name"/>') AND OBJECTPROPERTY(id, N'IsProcedure') = 1)
 DROP PROCEDURE <xsl:value-of select="@owner"/>.<xsl:value-of select="@name"/>
 GO
 
@@ -35,7 +35,7 @@ AS
 <xsl:value-of select="body" disable-output-escaping="yes"/>
 <xsl:if test="@grant and string-length(@grant) &gt; 0">
 GO
-GRANT EXEC ON <xsl:value-of select="@name"/> TO <xsl:value-of select="@grant"/>
+GRANT EXEC ON <xsl:value-of select="@owner"/>.<xsl:value-of select="@name"/> TO <xsl:value-of select="@grant"/>
 </xsl:if>
 GO
 SET QUOTED_IDENTIFIER ON 
