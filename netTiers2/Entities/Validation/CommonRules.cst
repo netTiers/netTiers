@@ -22,6 +22,13 @@ namespace <%=NameSpace%>.Validation
    {
       #region NotNull
 
+      /// <summary>
+      /// Rule that does not allow a property value to be null
+      /// </summary>
+      /// <param name="target">Object containing the data to validate.</param>
+      /// <param name="e"><see cref="ValidationRuleArgs"/> containing the information about the object to be validated.</param>
+      /// <returns>False if the rule is broken; true otherwise.</returns>
+      /// <returns>Returns true if the property value is not null; false otherwise.</returns>
       public static bool NotNull(object target, ValidationRuleArgs e)
       {
          PropertyInfo p = target.GetType().GetProperty(e.PropertyName);
@@ -52,10 +59,9 @@ namespace <%=NameSpace%>.Validation
       /// Rule ensuring a String value contains one or more
       /// characters.
       /// </summary>
-      /// <param name="target">Object containing the data to validate</param>
-      /// <param name="e">Arguments parameter specifying the name of the String
-      /// property to validate</param>
-      /// <returns>False if the rule is broken</returns>
+      /// <param name="target">Object containing the data to validate.</param>
+      /// <param name="e"><see cref="ValidationRuleArgs"/> containing the information about the object to be validated.</param>
+      /// <returns>False if the rule is broken; true otherwise.</returns>
       /// <remarks>
       /// This implementation uses late binding, and will only work
       /// against String property values.
@@ -89,10 +95,9 @@ namespace <%=NameSpace%>.Validation
       /// Rule ensuring a String value doesn't exceed
       /// a specified length.
       /// </summary>
-      /// <param name="target">Object containing the data to validate</param>
-      /// <param name="e">Arguments parameter specifying the name of the String
-      /// property to validate</param>
-      /// <returns>False if the rule is broken</returns>
+      /// <param name="target">Object containing the data to validate.</param>
+      /// <param name="e"><see cref="ValidationRuleArgs"/> containing the information about the object to be validated.</param>
+      /// <returns>False if the rule is broken; true otherwise.</returns>
       /// <remarks>
       /// This implementation uses late binding, and will only work
       /// against String property values.
@@ -138,15 +143,26 @@ namespace <%=NameSpace%>.Validation
 
       }
 
+      /// <summary>
+      /// Class used with the <see cref="StringMaxLength"/>.
+      /// </summary>
       public class MaxLengthRuleArgs : ValidationRuleArgs
       {
          private int _maxLength;
 
+         /// <summary>
+         /// Maximum length of the string property.
+         /// </summary>
          public int MaxLength
          {
             get { return _maxLength; }
          }
 
+         /// <summary>
+         /// Constructor
+         /// </summary>
+         /// <param name="propertyName">Property to validate</param>
+         /// <param name="maxLength">Max length of the property</param>
          public MaxLengthRuleArgs(
            string propertyName, int maxLength)
             : base(propertyName)
@@ -167,32 +183,75 @@ namespace <%=NameSpace%>.Validation
 
       #region CompareValues
 
+      /// <summary>
+      /// Generic rule that determines if an object's property is less than a particular value.
+      /// </summary>
+      /// <typeparam name="T">Datatype of the property to validate</typeparam>
+      /// <param name="target">Object containing the data to validate.</param>
+      /// <param name="e"><see cref="ValidationRuleArgs"/> containing the information about the object to be validated.</param>
+      /// <returns>False if the rule is broken; true otherwise.</returns>
       public static bool LessThanValue<T>(object target, ValidationRuleArgs e)
       {
          return CompareValues<T>(target, e as CompareValueRuleArgs<T>, CompareType.LessThan);
       }
 
+      /// <summary>
+      /// Generic rule that determines if an object's property is less than or equal to a particular value.
+      /// </summary>
+      /// <typeparam name="T">Datatype of the property to validate</typeparam>
+      /// <param name="target">Object containing the data to validate.</param>
+      /// <param name="e"><see cref="ValidationRuleArgs"/> containing the information about the object to be validated.</param>
+      /// <returns>False if the rule is broken; true otherwise.</returns>
       public static bool LessThanOrEqualToValue<T>(object target, ValidationRuleArgs e)
       {
          return CompareValues<T>(target, e as CompareValueRuleArgs<T>, CompareType.LessThanOrEqualTo);
       }
 
+      /// <summary>
+      /// Generic rule that determines if an object's property is equal to a particular value.
+      /// </summary>
+      /// <typeparam name="T">Datatype of the property to validate</typeparam>
+      /// <param name="target">Object containing the data to validate.</param>
+      /// <param name="e"><see cref="ValidationRuleArgs"/> containing the information about the object to be validated.</param>
+      /// <returns>False if the rule is broken; true otherwise.</returns>
       public static bool EqualsValue<T>(object target, ValidationRuleArgs e)
       {
          return CompareValues<T>(target, e as CompareValueRuleArgs<T>, CompareType.EqualTo);
       }
 
+      /// <summary>
+      /// Generic rule that determines if an object's property is greater than a particular value.
+      /// </summary>
+      /// <typeparam name="T">Datatype of the property to validate</typeparam>
+      /// <param name="target">Object containing the data to validate.</param>
+      /// <param name="e"><see cref="ValidationRuleArgs"/> containing the information about the object to be validated.</param>
+      /// <returns>False if the rule is broken; true otherwise.</returns>
       public static bool GreaterThanValue<T>(object target, ValidationRuleArgs e)
       {
          return CompareValues<T>(target, e as CompareValueRuleArgs<T>, CompareType.GreaterThan
             );
       }
 
+      /// <summary>
+      /// Generic rule that determines if an object's property is greater than or equal to a particular value.
+      /// </summary>
+      /// <typeparam name="T">Datatype of the property to validate</typeparam>
+      /// <param name="target">Object containing the data to validate.</param>
+      /// <param name="e"><see cref="ValidationRuleArgs"/> containing the information about the object to be validated.</param>
+      /// <returns>False if the rule is broken; true otherwise.</returns>
       public static bool GreaterThanOrEqualToValue<T>(object target, ValidationRuleArgs e)
       {
          return CompareValues<T>(target, e as CompareValueRuleArgs<T>, CompareType.GreaterThanOrEqualTo);
       }
 
+      /// <summary>
+      /// Private method that compares a property value with a specified value.
+      /// </summary>
+      /// <typeparam name="T">Datatype of the property to validate.</typeparam>
+      /// <param name="target">Object containing the data to validate.</param>
+      /// <param name="e"><see cref="ValidationRuleArgs"/> containing the information about the object to be validated.</param>
+      /// <param name="compareType"><see cref="CompareType"/> defining the type of comparison that will be made.
+      /// <returns></returns>
       private static bool CompareValues<T>(object target, CompareValueRuleArgs<T> e, CompareType compareType)
       {
          bool result = true;
@@ -268,6 +327,9 @@ namespace <%=NameSpace%>.Validation
          return result;
       }
 
+      /// <summary>
+      /// Enum indicating the type of comparison that will be made.
+      /// </summary>
       private enum CompareType
       { 
          LessThanOrEqualTo,
@@ -277,15 +339,27 @@ namespace <%=NameSpace%>.Validation
          GreaterThanOrEqualTo
       }
 
+      /// <summary>
+      /// Class used with the <see cref="CompareValues{T}"/> rules.
+      /// </summary>
+      /// <typeparam name="T"></typeparam>
       public class CompareValueRuleArgs<T> : ValidationRuleArgs
       {
          T _compareValue;
 
+         /// <summary>
+         /// Value to be compared against an object's property.
+         /// </summary>
          public T CompareValue
          {
             get { return _compareValue; }
          }
 
+         /// <summary>
+         /// Constructor
+         /// </summary>
+         /// <param name="propertyName">Name of the property to be validated.</param>
+         /// <param name="compareValue">The value to be compared against the property.</param>
          public CompareValueRuleArgs(string propertyName, T compareValue)
             : base(propertyName)
          {
@@ -305,6 +379,3 @@ namespace <%=NameSpace%>.Validation
 
    }
 }
-
-
-
