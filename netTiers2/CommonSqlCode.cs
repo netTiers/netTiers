@@ -1311,8 +1311,14 @@ namespace MoM.Templates
 			{
 				nullDefaultValue = "null";
 			}
-			
-			return string.Format(formater, GetPropertyName(parameterName), column.NativeType, isOutput ? "Output" : "Input", column.Size, column.Precision, column.Scale, GetSqlParameterParam(column), nullDefaultValue);
+
+			bool isReal = false;
+			if (column.NativeType.ToLower() == "real") // SQL doesn't like precision or scale on Real
+			{
+				isReal = true;
+			}
+
+            return string.Format(formater, GetPropertyName(parameterName), column.NativeType, isOutput ? "Output" : "Input", column.Size, column.Precision, column.Scale, isReal ? "" : GetSqlParameterParam(column), nullDefaultValue);
 		}
 		
 		/// <summary>
