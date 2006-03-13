@@ -45,6 +45,9 @@
 	// Name of the table being worked on.
 	string name = SourceTable.Name;
 	
+	//Get the owner of the table
+	string owner = GetOwner(SourceTable);
+	
 	// Collection of all columns in the table.
 	ColumnSchemaCollection cols = SourceTable.Columns;
 	
@@ -179,7 +182,7 @@ public abstract class <%=abstractRepositoryClassName%> : <%=providerBaseName%>
 	public override <%=GetCollectionClassName(primaryTable.Name)%> GetBy<%=functionname%>(TransactionManager transactionManager, <%=GetFunctionHeaderParameters(junctionTableKey.ForeignKeyMemberColumns)%>, int start, int pageLength)
 	{
 		Database database = transactionManager != null ? transactionManager.Database : DatabaseFactory.CreateDatabase(this.sqlDataProviderData.DatabaseInstanceName);
-		DBCommandWrapper commandWrapper = StoredProcedureProvider.GetCommandWrapper(database, "<%=ProcedurePrefix + commandStem + SelectSuffix + "By" + functionname%>");
+		DBCommandWrapper commandWrapper = StoredProcedureProvider.GetCommandWrapper(database, "<%=owner + ProcedurePrefix + commandStem + SelectSuffix + "By" + functionname%>");
 		
 		<% foreach(ColumnSchema col in junctionTableKey.ForeignKeyMemberColumns) { %>
 		commandWrapper.AddInParameter("@<%=GetPropertyName(col.Name)%>", DbType.<%=col.DataType.ToString()%>, <%=GetPrivateName(col.Name)%>);
@@ -241,7 +244,7 @@ public abstract class <%=abstractRepositoryClassName%> : <%=providerBaseName%>
 	public override bool Delete(TransactionManager transactionManager, <%= GetFunctionHeaderParameters(SourceTable.PrimaryKey.MemberColumns) %><% if(RowVersion != null) {Response.Write(", byte[] " + GetPrivateName(RowVersion.Name));}%>)
 	{
 		Database database = transactionManager != null ? transactionManager.Database : DatabaseFactory.CreateDatabase(this.sqlDataProviderData.DatabaseInstanceName);
-		DBCommandWrapper commandWrapper = StoredProcedureProvider.GetCommandWrapper(database, "<%=ProcedurePrefix + commandStem + DeleteSuffix%>");
+		DBCommandWrapper commandWrapper = StoredProcedureProvider.GetCommandWrapper(database, "<%=owner + ProcedurePrefix + commandStem + DeleteSuffix%>");
 		
 		<% foreach(ColumnSchema col in SourceTable.PrimaryKey.MemberColumns) { %>
 		commandWrapper.AddInParameter("@<%=GetPropertyName(col.Name)%>", DbType.<%=col.DataType%>, <%=GetPrivateName(col.Name)%>);
@@ -309,7 +312,7 @@ public abstract class <%=abstractRepositoryClassName%> : <%=providerBaseName%>
 			return new <%=collectionClassName%>();
 
 		Database database = transactionManager != null ? transactionManager.Database : DatabaseFactory.CreateDatabase(this.sqlDataProviderData.DatabaseInstanceName);
-		DBCommandWrapper commandWrapper = StoredProcedureProvider.GetCommandWrapper(database, "<%=ProcedurePrefix + commandStem + FindSuffix%>");
+		DBCommandWrapper commandWrapper = StoredProcedureProvider.GetCommandWrapper(database, "<%=owner + ProcedurePrefix + commandStem + FindSuffix%>");
 		
 		whereClause = whereClause.Replace("AND", "|");
 		Hashtable hparams = new Hashtable();
@@ -416,7 +419,7 @@ public abstract class <%=abstractRepositoryClassName%> : <%=providerBaseName%>
 	public override <%=collectionClassName%> GetAll(TransactionManager transactionManager, int start, int pageLength)
 	{
 		Database database = transactionManager != null ? transactionManager.Database : DatabaseFactory.CreateDatabase(this.sqlDataProviderData.DatabaseInstanceName);
-		DBCommandWrapper commandWrapper = StoredProcedureProvider.GetCommandWrapper(database, "<%=ProcedurePrefix + commandStem + SelectSuffix + SelectAllSuffix%>");
+		DBCommandWrapper commandWrapper = StoredProcedureProvider.GetCommandWrapper(database, "<%=owner + ProcedurePrefix + commandStem + SelectSuffix + SelectAllSuffix%>");
 		
 		IDataReader reader = null;
 		try
@@ -461,7 +464,7 @@ public abstract class <%=abstractRepositoryClassName%> : <%=providerBaseName%>
 	public override <%=collectionClassName%> GetPaged(TransactionManager transactionManager, string whereClause, string orderBy, int start, int pageLength, out int count)
 	{
 		Database database = transactionManager != null ? transactionManager.Database : DatabaseFactory.CreateDatabase(this.sqlDataProviderData.DatabaseInstanceName);
-		DBCommandWrapper commandWrapper = StoredProcedureProvider.GetCommandWrapper(database, "<%=ProcedurePrefix + commandStem + SelectSuffix + "Paged"%>");
+		DBCommandWrapper commandWrapper = StoredProcedureProvider.GetCommandWrapper(database, "<%=owner + ProcedurePrefix + commandStem + SelectSuffix + "Paged"%>");
 		
 		commandWrapper.AddInParameter("@PageIndex", DbType.Int32, start);
 		commandWrapper.AddInParameter("@PageSize", DbType.Int32, pageLength);
@@ -562,7 +565,7 @@ public abstract class <%=abstractRepositoryClassName%> : <%=providerBaseName%>
 	public override <%=collectionClassName%> GetBy<%=GetKeysName(fkeys[j].ForeignKeyMemberColumns)%>(TransactionManager transactionManager, <%= GetFunctionHeaderParameters(fkeys[j].ForeignKeyMemberColumns) %>, int start, int pageLength)
 	{
 		Database database = transactionManager != null ? transactionManager.Database : DatabaseFactory.CreateDatabase(this.sqlDataProviderData.DatabaseInstanceName);
-		DBCommandWrapper commandWrapper = StoredProcedureProvider.GetCommandWrapper(database, "<%=ProcedurePrefix + commandStem + SelectSuffix + "By" + GetKeysName(fkeys[j].ForeignKeyMemberColumns)%>");
+		DBCommandWrapper commandWrapper = StoredProcedureProvider.GetCommandWrapper(database, "<%=owner + ProcedurePrefix + commandStem + SelectSuffix + "By" + GetKeysName(fkeys[j].ForeignKeyMemberColumns)%>");
 		
 		<% foreach(ColumnSchema col in fkeys[j].ForeignKeyMemberColumns) { %>
 			commandWrapper.AddInParameter("@<%=GetPropertyName(col.Name)%>", DbType.<%=col.DataType%>, <%=GetPrivateName(col.Name)%>);
@@ -651,7 +654,7 @@ public abstract class <%=abstractRepositoryClassName%> : <%=providerBaseName%>
 	public override <%=returnType%> GetBy<%=GetKeysName(indexes[j].MemberColumns)%>(TransactionManager transactionManager, <%= GetFunctionHeaderParameters(indexes[j].MemberColumns) %>, int start, int pageLength)
 	{
 		Database database = transactionManager != null ? transactionManager.Database : DatabaseFactory.CreateDatabase(this.sqlDataProviderData.DatabaseInstanceName);
-		DBCommandWrapper commandWrapper = StoredProcedureProvider.GetCommandWrapper(database, "<%=ProcedurePrefix + commandStem + SelectSuffix + "By" + GetKeysName(indexes[j].MemberColumns)%>");
+		DBCommandWrapper commandWrapper = StoredProcedureProvider.GetCommandWrapper(database, "<%=owner + ProcedurePrefix + commandStem + SelectSuffix + "By" + GetKeysName(indexes[j].MemberColumns)%>");
 		
 		<% foreach(ColumnSchema col in indexes[j].MemberColumns) { %>
 			commandWrapper.AddInParameter("@<%=GetPropertyName(col.Name)%>", DbType.<%=col.DataType%>, <%=GetPrivateName(col.Name)%>);
@@ -731,7 +734,7 @@ public abstract class <%=abstractRepositoryClassName%> : <%=providerBaseName%>
 	public override bool Insert(TransactionManager transactionManager, <%=className%> entity)
 	{
 		Database database = transactionManager != null ? transactionManager.Database : DatabaseFactory.CreateDatabase(this.sqlDataProviderData.DatabaseInstanceName);
-		DBCommandWrapper commandWrapper = StoredProcedureProvider.GetCommandWrapper(database, "<%=ProcedurePrefix + commandStem + InsertSuffix %>");
+		DBCommandWrapper commandWrapper = StoredProcedureProvider.GetCommandWrapper(database, "<%=owner + ProcedurePrefix + commandStem + InsertSuffix %>");
 		
 		<%
 		
@@ -826,7 +829,7 @@ public abstract class <%=abstractRepositoryClassName%> : <%=providerBaseName%>
 	public override bool Update(TransactionManager transactionManager, <%=className%> entity)
 	{
 		Database database = transactionManager != null ? transactionManager.Database : DatabaseFactory.CreateDatabase(this.sqlDataProviderData.DatabaseInstanceName);
-		DBCommandWrapper commandWrapper = StoredProcedureProvider.GetCommandWrapper(database, "<%=ProcedurePrefix + commandStem + UpdateSuffix %>");
+		DBCommandWrapper commandWrapper = StoredProcedureProvider.GetCommandWrapper(database, "<%=owner + ProcedurePrefix + commandStem + UpdateSuffix %>");
 		
 		<%		
 		//Debugger.Break();
