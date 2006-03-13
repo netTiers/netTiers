@@ -260,10 +260,28 @@ public partial class <%=entityName%>UC : System.Web.UI.UserControl
 					<%
 					foreach(ColumnSchema column in cols)
 					{
+						string propertyName = GetPropertyName(column);
 					%>
-					case "<%=GetPropertyName(column.Name)%>":
+					case "<%=propertyName%>":
 					<%
-						if ( column.AllowDBNull )
+						if ( column.DataType == System.Data.DbType.DateTime)
+						{
+							string privateName = GetPrivateName(column);
+						%>
+						DateTime <%=privateName%>;
+
+                  if (!DateTime.TryParse(values["<%=propertyName%>"].ToString(), out <%=privateName%>))
+                  {
+                     values[key] = DateTime.MinValue;
+                     nullFound = true;
+                  }
+                  else
+                  {
+                     values["<%=propertyName%>"] = <%=privateName%>;
+                  }
+						<%
+						}
+						else if ( column.AllowDBNull )
 						{
 						%>
 						//This field allows nulls, convert to default value

@@ -134,6 +134,23 @@
 		}
 		%>
 	</DeleteParameters>
+	<UpdateParameters>
+		<%
+		foreach( ColumnSchema column in colsUpdatable)
+		{
+		string name = GetPropertyName(column.Name);
+		string type = GetParameterTypeCode(column);
+		
+		if ( ! column.IsForeignKeyMember && type=="DateTime" )
+		{
+		%>
+		<asp:Parameter Name="<%=name%>" Type="<%=type%>" />
+		<%
+		}
+		}
+		%>
+    </UpdateParameters>
+
 </asp:ObjectDataSource>
 
 <%
@@ -829,7 +846,7 @@ public string GetFilterLists(TableKeySchemaCollection fkeys)
 
 public string GetParameterTypeCode(ColumnSchema column)
 {
-		Type colType = Type.GetType(GetCSType((DataObjectBase)column));
+		Type colType = Type.GetType(GetCSTypeWithoutNullable((DataObjectBase)column));
 		TypeCode colTypeCode = Type.GetTypeCode(colType);
 		return Enum.GetName(typeof(TypeCode), colTypeCode);
 }
