@@ -7,11 +7,22 @@
 <%@ CodeTemplate Language="C#" TargetLanguage="C#" Src="..\CommonSqlCode.cs" Inherits="MoM.Templates.CommonSqlCode" Description="Business Object template." ResponseEncoding="UTF-8"%>
 <%@ Assembly Name="SchemaExplorer" %>
 <%@ Assembly Name="System.Design" %>
+<%@ Import Namespace="SchemaExplorer" %>
 <%@ Property Name="NameSpace" Type="System.String" Category="Data" Description="Object Namespace." %>
 <%@ Property Name="SourceTable" Type="SchemaExplorer.TableSchema" Category="Connection" Description="Table Object should be based on." %>
 <%
 	string className = GetClassName(SourceTable.Name);	
 	string abstractClassName = GetAbstractClassName(SourceTable.Name);
+	
+	// Collection of all columns in the table.
+	ColumnSchemaCollection cols = SourceTable.Columns;
+	
+	ColumnSchemaCollection colsUpdatable = new ColumnSchemaCollection();
+	foreach (ColumnSchema column in cols)
+	{
+		if ( ! IsIdentityColumn(column) && ! IsComputed(column) )
+			colsUpdatable.Add(column);
+	}
 %>
 #region Using directives
 
@@ -32,6 +43,25 @@ namespace <%=NameSpace%>
 	/// </remarks>	
 	public partial class <%=className%>:  <%=abstractClassName%>
 	{		
+		
+		#region Constructors
+		///<summary>
+		/// Creates a new <see cref="<%=className%>"/> instance.
+		///</summary>
+		public <%=className%>():base(){}	
+		<% if(colsUpdatable.Count > 0) { %>
+		///<summary>
+		/// Creates a new <see cref="<%=className%>"/> instance.
+		///</summary>
+		<% for (int x=0; x < colsUpdatable.Count; x++) { %>
+		///<param name="<%=GetPrivateName(className) + GetPropertyName(colsUpdatable[x].Name) %>"><%=GetColumnXmlComment(colsUpdatable[x],2)%></param>
+		<% } %>
+		public <%=className%>(<% WrapInit(); for (int x=0; x < colsUpdatable.Count; x++) { %><%= GetCSType(colsUpdatable[x]) %> <%= GetPrivateName(className) + GetPropertyName(colsUpdatable[x].Name) %><%WrapIncr(colsUpdatable[x]); if (x < colsUpdatable.Count -1){%>, <% WrapLine(3); } }// end for %>):
+			base(<% WrapInit(); for (int x=0; x < colsUpdatable.Count; x++) { %><%= GetPrivateName(className) + GetPropertyName(colsUpdatable[x].Name) %><%WrapIncr(colsUpdatable[x]); if (x < colsUpdatable.Count -1){%>, <% WrapLine(3); } }// end for %>)
+		{}
+		<% } %>
+		
+		#endregion
 		/// <summary>
       /// Adds custom validation rules to this object.
       /// </summary>
