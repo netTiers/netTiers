@@ -367,21 +367,21 @@
 																																										
 														"Entities\\Enum.cst",
 														"Entities\\IEntity.cst",
-														"Entities\\BaseEntity.cst",
-														"Entities\\BaseEntity.generated.cst",
+														"Entities\\EntityBase.cst",
+														"Entities\\EntityBaseCore.generated.cst",
 														"Entities\\Filter.cst",
 														"Entities\\EntityHelper.cst",	
 														"Entities\\EntityPropertyComparer.cst", 
 														"Entities\\GenericTypeConverter.cst", 
 														
-														"Entities\\Entity.generated.cst",
+														"Entities\\EntityInstanceBase.generated.cst",
 														"Entities\\EntityData.cst",
-														"Entities\\Entity.cst",
+														"Entities\\EntityInstance.cst",
 														"Entities\\TList.cst", 
 														"Entities\\ListBase.cst",
 														
 														"Entities\\Views\\VList.cst",
-														"Entities\\Views\\EntityView.generated.cst",
+														"Entities\\Views\\EntityViewBase.generated.cst",
 														"Entities\\Views\\EntityView.cst",
 														
 														"Entities\\Validation\\BrokenRule.cst",
@@ -406,13 +406,13 @@
 														"DataAccessLayer\\Bases\\Views\\EntityViewProviderBase.cst",														
 																																																							
 														"DataAccessLayer.SqlClient\\SqlNetTiersProvider.cst",
-														"DataAccessLayer.SqlClient\\SqlEntityProvider.generated.cst",
+														"DataAccessLayer.SqlClient\\SqlEntityProviderBase.generated.cst",
 														"DataAccessLayer.SqlClient\\SqlEntityProvider.cst",
 														
 														"DataAccessLayer.SqlClient\\StoredProcedureProvider.cst",
 														"DataAccessLayer.SqlClient\\StoredProceduresXml.cst",
 																												
-														"DataAccessLayer.SqlClient\\Views\\SqlEntityViewProvider.generated.cst",
+														"DataAccessLayer.SqlClient\\Views\\SqlEntityViewProviderBase.generated.cst",
 														"DataAccessLayer.SqlClient\\Views\\SqlEntityViewProvider.cst",
 																												
 														"DataAccessLayer.WebService\\WebService.cst",
@@ -916,19 +916,23 @@ public void Go()
 	
 	
 	//----------------------------------------------------------------------------------------------------------------------------------------------
-	//-- BaseEntity file
+	//-- EntityBaseCore file
 	//----------------------------------------------------------------------------------------------------------------------------------------------
-	XmlElement baseGenEntityNode = AddFileNode(commonNode, "BaseEntity.generated.cs");
-	this.GetTemplate("BaseEntity.generated.cst").SetProperty("NameSpace", BLLNameSpace);
-	this.GetTemplate("BaseEntity.generated.cst").SetProperty("SourceTables", _sourceTables);
-	this.GetTemplate("BaseEntity.generated.cst").SetProperty("SourceViews", _sourceViews);
-	this.RenderToFile("BaseEntity.generated.cst", rootPathBLL + "\\BaseEntity.generated.cs", true);
+	XmlElement entityBaseCoreNode = AddFileNode(commonNode, "EntityBaseCore.generated.cs");
+	this.GetTemplate("EntityBaseCore.generated.cst").SetProperty("NameSpace", BLLNameSpace);
+	this.GetTemplate("EntityBaseCore.generated.cst").SetProperty("SourceTables", _sourceTables);
+	this.GetTemplate("EntityBaseCore.generated.cst").SetProperty("SourceViews", _sourceViews);
+	this.RenderToFile("EntityBaseCore.generated.cst", rootPathBLL + "\\EntityBaseCore.generated.cs", true);
 				
-	if (!File.Exists(rootPathBLL + "\\BaseEntity.cs"))
+	
+	//----------------------------------------------------------------------------------------------------------------------------------------------
+	//-- EntityBase file - generated only once
+	//----------------------------------------------------------------------------------------------------------------------------------------------
+	if (!File.Exists(rootPathBLL + "\\EntityBase.cs"))
 	{
-		XmlElement baseEntityNode = AddFileNode(commonNode, "BaseEntity.cs");
-		this.GetTemplate("BaseEntity.cst").SetProperty("NameSpace", BLLNameSpace);
-		this.RenderToFile("BaseEntity.cst", rootPathBLL + "\\BaseEntity.cs", true);
+		XmlElement entityBaseNode = AddFileNode(commonNode, "EntityBase.cs");
+		this.GetTemplate("EntityBase.cst").SetProperty("NameSpace", BLLNameSpace);
+		this.RenderToFile("EntityBase.cst", rootPathBLL + "\\EntityBase.cs", true);
 	}
 	
 	
@@ -1620,14 +1624,14 @@ public void Go()
 		//----------------------------------------------------------------------------------------------------------------------------------------------
 		//-- Abstract Business Object
 		//----------------------------------------------------------------------------------------------------------------------------------------------
-		XmlElement boBaseNode = AddFileNode(tableNode, GetAbstractClassName(SourceView.Name) + ".cs");
+		XmlElement boBaseNode = AddFileNode(tableNode, GetPartialClassName(GetAbstractClassName(SourceView.Name)) + ".cs");
 				
-		this.GetTemplate("EntityView.generated.cst").SetProperty("SourceView", SourceView);
-		this.GetTemplate("EntityView.generated.cst").SetProperty("SourceTables", _sourceTables);
-		this.GetTemplate("EntityView.generated.cst").SetProperty("NameSpace", BLLNameSpace);
-		this.GetTemplate("EntityView.generated.cst").SetProperty("IncludeRelations", IncludeRelations);
+		this.GetTemplate("EntityViewBase.generated.cst").SetProperty("SourceView", SourceView);
+		this.GetTemplate("EntityViewBase.generated.cst").SetProperty("SourceTables", _sourceTables);
+		this.GetTemplate("EntityViewBase.generated.cst").SetProperty("NameSpace", BLLNameSpace);
+		this.GetTemplate("EntityViewBase.generated.cst").SetProperty("IncludeRelations", IncludeRelations);
 		
-		this.RenderToFile("EntityView.generated.cst", rootPathBLL + "\\Views\\" + GetPartialClassName(GetClassName(SourceView.Name)) + ".cs", true);
+		this.RenderToFile("EntityViewBase.generated.cst", rootPathBLL + "\\Views\\" + GetPartialClassName(GetAbstractClassName(SourceView.Name)) + ".cs", true);
 		
 		//----------------------------------------------------------------------------------------------------------------------------------------------
 		//-- Business Object
@@ -1662,19 +1666,19 @@ public void Go()
 		//----------------------------------------------------------------------------------------------------------------------------------------------
 		//	base provider class
 		//----------------------------------------------------------------------------------------------------------------------------------------------
-		XmlElement dalcViewBaseNode = AddFileNode(tableNode, "Sql"+ GetPartialClassName(GetProviderName(SourceView.Name)) + ".cs");
-		this.GetTemplate("SqlEntityViewProvider.generated.cst").SetProperty("IncludeCustoms", IncludeCustoms);
-		this.GetTemplate("SqlEntityViewProvider.generated.cst").SetProperty("IncludeGetList", IncludeGetList);
-		this.GetTemplate("SqlEntityViewProvider.generated.cst").SetProperty("IncludeGetListByIX", IncludeGetListByIX);
-		this.GetTemplate("SqlEntityViewProvider.generated.cst").SetProperty("IncludeFind", IncludeFind);
-		this.GetTemplate("SqlEntityViewProvider.generated.cst").SetProperty("SourceView", SourceView);
-		this.GetTemplate("SqlEntityViewProvider.generated.cst").SetProperty("NameSpace", BLLNameSpace);
-		this.GetTemplate("SqlEntityViewProvider.generated.cst").SetProperty("DALNameSpace", DALNameSpace);
-		this.GetTemplate("SqlEntityViewProvider.generated.cst").SetProperty("SelectSuffix", SelectSuffix);
-		this.GetTemplate("SqlEntityViewProvider.generated.cst").SetProperty("SelectAllSuffix", SelectAllSuffix);
-		this.GetTemplate("SqlEntityViewProvider.generated.cst").SetProperty("ProcedurePrefix", ProcedurePrefix);
+		XmlElement dalcViewBaseNode = AddFileNode(tableNode, "Sql"+ GetPartialClassName(GetProviderBaseName(SourceView.Name)) + ".cs");
+		this.GetTemplate("SqlEntityViewProviderBase.generated.cst").SetProperty("IncludeCustoms", IncludeCustoms);
+		this.GetTemplate("SqlEntityViewProviderBase.generated.cst").SetProperty("IncludeGetList", IncludeGetList);
+		this.GetTemplate("SqlEntityViewProviderBase.generated.cst").SetProperty("IncludeGetListByIX", IncludeGetListByIX);
+		this.GetTemplate("SqlEntityViewProviderBase.generated.cst").SetProperty("IncludeFind", IncludeFind);
+		this.GetTemplate("SqlEntityViewProviderBase.generated.cst").SetProperty("SourceView", SourceView);
+		this.GetTemplate("SqlEntityViewProviderBase.generated.cst").SetProperty("NameSpace", BLLNameSpace);
+		this.GetTemplate("SqlEntityViewProviderBase.generated.cst").SetProperty("DALNameSpace", DALNameSpace);
+		this.GetTemplate("SqlEntityViewProviderBase.generated.cst").SetProperty("SelectSuffix", SelectSuffix);
+		this.GetTemplate("SqlEntityViewProviderBase.generated.cst").SetProperty("SelectAllSuffix", SelectAllSuffix);
+		this.GetTemplate("SqlEntityViewProviderBase.generated.cst").SetProperty("ProcedurePrefix", ProcedurePrefix);
 			
-		this.RenderToFile("SqlEntityViewProvider.generated.cst", rootPathDALSql + "\\Views\\Sql" + GetPartialClassName(GetProviderName(SourceView.Name)) + ".cs", true);
+		this.RenderToFile("SqlEntityViewProviderBase.generated.cst", rootPathDALSql + "\\Views\\Sql" + GetPartialClassName(GetProviderBaseName(SourceView.Name)) + ".cs", true);
 		//----------------------------------------------------------------------------------------------------------------------------------------------
 		
 		//----------------------------------------------------------------------------------------------------------------------------------------------
@@ -1793,32 +1797,32 @@ public void Go()
 			*/
 						
 			//----------------------------------------------------------------------------------------------------------------------------------------------
-			//-- Generated entity file 
+			//-- Entity Instance Base
 			//----------------------------------------------------------------------------------------------------------------------------------------------
 			XmlElement boBaseNode = AddFileNode(tableNode, GetPartialClassName(GetClassName(SourceTable.Name)) + ".cs");
 					
-			this.GetTemplate("Entity.generated.cst").SetProperty("SourceTable", SourceTable);
-			this.GetTemplate("Entity.generated.cst").SetProperty("SourceTables", _sourceTables);
-			this.GetTemplate("Entity.generated.cst").SetProperty("NameSpace", BLLNameSpace);
-			this.GetTemplate("Entity.generated.cst").SetProperty("IncludeRelations", IncludeRelations);
-			this.GetTemplate("Entity.generated.cst").SetProperty("IncludeManyToMany", IncludeManyToMany);
-			this.GetTemplate("Entity.generated.cst").SetProperty("IncludeGetListByFK", IncludeGetListByFK);
+			this.GetTemplate("EntityInstanceBase.generated.cst").SetProperty("SourceTable", SourceTable);
+			this.GetTemplate("EntityInstanceBase.generated.cst").SetProperty("SourceTables", _sourceTables);
+			this.GetTemplate("EntityInstanceBase.generated.cst").SetProperty("NameSpace", BLLNameSpace);
+			this.GetTemplate("EntityInstanceBase.generated.cst").SetProperty("IncludeRelations", IncludeRelations);
+			this.GetTemplate("EntityInstanceBase.generated.cst").SetProperty("IncludeManyToMany", IncludeManyToMany);
+			this.GetTemplate("EntityInstanceBase.generated.cst").SetProperty("IncludeGetListByFK", IncludeGetListByFK);
 			
-			this.RenderToFile("Entity.generated.cst", rootPathBLL + "\\" + GetPartialClassName(GetClassName(SourceTable.Name)) + ".cs", true);
+			this.RenderToFile("EntityInstanceBase.generated.cst", rootPathBLL + "\\" + GetPartialClassName(GetAbstractClassName(SourceTable.Name)) + ".cs", true);
 			
 			AddExecutionTime(boBaseNode);
 			
 			//----------------------------------------------------------------------------------------------------------------------------------------------
-			//-- Entity file
+			//-- Entity file - generated only once
 			//----------------------------------------------------------------------------------------------------------------------------------------------
 			if (!File.Exists(rootPathBLL + "\\" + GetClassName(SourceTable.Name) + ".cs")) // || OverwritePartialClassStub)
 			{
 				XmlElement boNode = AddFileNode(tableNode, GetClassName(SourceTable.Name) + ".cs");
 								
-				this.GetTemplate("Entity.cst").SetProperty("SourceTable", SourceTable);
-				this.GetTemplate("Entity.cst").SetProperty("NameSpace", BLLNameSpace);
+				this.GetTemplate("EntityInstance.cst").SetProperty("SourceTable", SourceTable);
+				this.GetTemplate("EntityInstance.cst").SetProperty("NameSpace", BLLNameSpace);
 				
-				this.RenderToFile("Entity.cst", rootPathBLL + "\\" + GetClassName(SourceTable.Name) + ".cs", false);
+				this.RenderToFile("EntityInstance.cst", rootPathBLL + "\\" + GetClassName(SourceTable.Name) + ".cs", false);
 				
 				AddExecutionTime(boNode);
 			}
@@ -1875,36 +1879,36 @@ public void Go()
 			//----------------------------------------------------------------------------------------------------------------------------------------------
 			//	Generating the abstract SqlClient entity Repository class		
 			//----------------------------------------------------------------------------------------------------------------------------------------------
-			XmlElement sqlDalcBaseNode = AddFileNode(tableNode, "SqlClient\\Sql"+ GetPartialClassName(GetProviderName(SourceTable.Name)) + ".cs");
+			XmlElement sqlDalcBaseNode = AddFileNode(tableNode, "SqlClient\\Sql"+ GetPartialClassName(GetProviderBaseName(SourceTable.Name)) + ".cs");
 			
 			//Response.WriteLine("Building abstract SqlClient Repository class : SqlClient\\" + GetAbstractRepositoryClassName(SourceTable.Name) );
-			this.GetTemplate("SqlEntityProvider.generated.cst").SetProperty("IncludeCustoms", IncludeCustoms);
-			this.GetTemplate("SqlEntityProvider.generated.cst").SetProperty("IncludeInsert", IncludeInsert);
-			this.GetTemplate("SqlEntityProvider.generated.cst").SetProperty("IncludeUpdate", IncludeUpdate);
-			this.GetTemplate("SqlEntityProvider.generated.cst").SetProperty("IncludeSave", IncludeSave);
-			this.GetTemplate("SqlEntityProvider.generated.cst").SetProperty("IncludeDelete", IncludeDelete);
-			this.GetTemplate("SqlEntityProvider.generated.cst").SetProperty("IncludeManyToMany", IncludeManyToMany);
-			this.GetTemplate("SqlEntityProvider.generated.cst").SetProperty("IncludeGetList", IncludeGetList);
-			this.GetTemplate("SqlEntityProvider.generated.cst").SetProperty("IncludeGetListByFK", IncludeGetListByFK);
-			this.GetTemplate("SqlEntityProvider.generated.cst").SetProperty("IncludeGetListByIX", IncludeGetListByIX);
-			this.GetTemplate("SqlEntityProvider.generated.cst").SetProperty("IncludeFind", IncludeFind);
-			this.GetTemplate("SqlEntityProvider.generated.cst").SetProperty("IsolationLevel", IsolationLevel);
-			this.GetTemplate("SqlEntityProvider.generated.cst").SetProperty("ExcludeFields", ExcludeFields);
+			this.GetTemplate("SqlEntityProviderBase.generated.cst").SetProperty("IncludeCustoms", IncludeCustoms);
+			this.GetTemplate("SqlEntityProviderBase.generated.cst").SetProperty("IncludeInsert", IncludeInsert);
+			this.GetTemplate("SqlEntityProviderBase.generated.cst").SetProperty("IncludeUpdate", IncludeUpdate);
+			this.GetTemplate("SqlEntityProviderBase.generated.cst").SetProperty("IncludeSave", IncludeSave);
+			this.GetTemplate("SqlEntityProviderBase.generated.cst").SetProperty("IncludeDelete", IncludeDelete);
+			this.GetTemplate("SqlEntityProviderBase.generated.cst").SetProperty("IncludeManyToMany", IncludeManyToMany);
+			this.GetTemplate("SqlEntityProviderBase.generated.cst").SetProperty("IncludeGetList", IncludeGetList);
+			this.GetTemplate("SqlEntityProviderBase.generated.cst").SetProperty("IncludeGetListByFK", IncludeGetListByFK);
+			this.GetTemplate("SqlEntityProviderBase.generated.cst").SetProperty("IncludeGetListByIX", IncludeGetListByIX);
+			this.GetTemplate("SqlEntityProviderBase.generated.cst").SetProperty("IncludeFind", IncludeFind);
+			this.GetTemplate("SqlEntityProviderBase.generated.cst").SetProperty("IsolationLevel", IsolationLevel);
+			this.GetTemplate("SqlEntityProviderBase.generated.cst").SetProperty("ExcludeFields", ExcludeFields);
 			
-			this.GetTemplate("SqlEntityProvider.generated.cst").SetProperty("InsertSuffix", InsertSuffix);
-			this.GetTemplate("SqlEntityProvider.generated.cst").SetProperty("UpdateSuffix", UpdateSuffix);
-			this.GetTemplate("SqlEntityProvider.generated.cst").SetProperty("DeleteSuffix", DeleteSuffix);
-			this.GetTemplate("SqlEntityProvider.generated.cst").SetProperty("SelectSuffix", SelectSuffix);
-			this.GetTemplate("SqlEntityProvider.generated.cst").SetProperty("SelectAllSuffix", SelectAllSuffix);
-			this.GetTemplate("SqlEntityProvider.generated.cst").SetProperty("FindSuffix", FindSuffix);
-			this.GetTemplate("SqlEntityProvider.generated.cst").SetProperty("ProcedurePrefix", ProcedurePrefix.Replace(" ", ""));
+			this.GetTemplate("SqlEntityProviderBase.generated.cst").SetProperty("InsertSuffix", InsertSuffix);
+			this.GetTemplate("SqlEntityProviderBase.generated.cst").SetProperty("UpdateSuffix", UpdateSuffix);
+			this.GetTemplate("SqlEntityProviderBase.generated.cst").SetProperty("DeleteSuffix", DeleteSuffix);
+			this.GetTemplate("SqlEntityProviderBase.generated.cst").SetProperty("SelectSuffix", SelectSuffix);
+			this.GetTemplate("SqlEntityProviderBase.generated.cst").SetProperty("SelectAllSuffix", SelectAllSuffix);
+			this.GetTemplate("SqlEntityProviderBase.generated.cst").SetProperty("FindSuffix", FindSuffix);
+			this.GetTemplate("SqlEntityProviderBase.generated.cst").SetProperty("ProcedurePrefix", ProcedurePrefix.Replace(" ", ""));
 			
-			this.GetTemplate("SqlEntityProvider.generated.cst").SetProperty("SourceTable", SourceTable);
-			this.GetTemplate("SqlEntityProvider.generated.cst").SetProperty("SourceTables", _sourceTables);
-			this.GetTemplate("SqlEntityProvider.generated.cst").SetProperty("NameSpace", BLLNameSpace);
-			this.GetTemplate("SqlEntityProvider.generated.cst").SetProperty("DALNameSpace", DALNameSpace);
+			this.GetTemplate("SqlEntityProviderBase.generated.cst").SetProperty("SourceTable", SourceTable);
+			this.GetTemplate("SqlEntityProviderBase.generated.cst").SetProperty("SourceTables", _sourceTables);
+			this.GetTemplate("SqlEntityProviderBase.generated.cst").SetProperty("NameSpace", BLLNameSpace);
+			this.GetTemplate("SqlEntityProviderBase.generated.cst").SetProperty("DALNameSpace", DALNameSpace);
 						
-			this.RenderToFile("SqlEntityProvider.generated.cst", rootPathDALSql + "\\Sql" + GetPartialClassName(GetProviderName(SourceTable.Name)) + ".cs", true);
+			this.RenderToFile("SqlEntityProviderBase.generated.cst", rootPathDALSql + "\\Sql" + GetPartialClassName(GetProviderBaseName(SourceTable.Name)) + ".cs", true);
 			AddExecutionTime(sqlDalcBaseNode);
 			//----------------------------------------------------------------------------------------------------------------------------------------------
 			
