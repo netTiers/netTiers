@@ -57,6 +57,7 @@ namespace MoM.Templates
 		private string manyToManyFormat		= "{0}From{1}";
 		private string strippedTablePrefixes		= "tbl;tbl_";
 		private string aliasFilePath 		= "";
+		private string procedurePrefix = "";
 		
 		private Hashtable aliases = null;
 		
@@ -229,6 +230,24 @@ namespace MoM.Templates
 			set	{this.aliasFilePath = value;}
 		}
 		
+		[Category("Stored procedures style")]
+		[Description("The prefix to attach to the stored procs.")]
+		public string ProcedurePrefix
+		{
+			get {return this.procedurePrefix;}
+			set
+			{
+				if (value == null || value == string.Empty)
+					return;
+				this.procedurePrefix = value;
+			}
+		}
+
+		public enum CustomNonMatchingReturnType
+		{
+			DataSet,
+			IDataReader
+		}
 		#endregion
 
 		/// <summary>

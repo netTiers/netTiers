@@ -1,4 +1,4 @@
-<%--
+﻿<%--
  * $Id: WsEntityProvider.generated.cst,v 1.1 2006/01/23 13:08:05 jroland Exp $
  * Last modified by $Author: jroland $
  * Last modified at $Date: 2006/01/23 13:08:05 $
@@ -14,6 +14,8 @@
 <%@ Property Name="SourceTable" Type="SchemaExplorer.TableSchema" Category="Connection" Description="Table that the data access class should be based on." %>
 
 <%@ Property Name="IncludeCustoms" Type="System.Boolean" Default="True" Category="Options" Description="If true customs stored procedures will be generated as functions." %>
+<%@ Property Name="CustomNonMatchingReturnType" Type="CustomNonMatchingReturnType" Default="DataSet" Category="Options" Description="When using custom stored procedures, if the returned rows do not match the fields in an entity, a DataSet or IDataReader will be returned. Choose One.  This is useful if you've returned more than one resultset in a custom procedure; you can use a ConvertToDataSet(IDataReader) method in the Utility class to convert that to a DataSet." %>
+<%@ Property Name="CustomProcedureStartsWith" Type="System.String" Default="_{0}_" Category="Options" Description="If you include custom stored procedures, this is the pattern that NetTiers will look for your custom stored procedures. A string format will be used to match the procedure pattern.  So, {0}=TableName, {1}=StoredProc Prefix.  By default NetTiers will look at tables that starts with '_{0}_', which means it will detect the procedure _TableName_GetByBirthdate and will be detected and generated." %>
 <%@ Property Name="IncludeInsert" Type="System.Boolean" Default="True" Category="Options" Description="If true insert functions will be generated." %>
 <%@ Property Name="IncludeUpdate" Type="System.Boolean" Default="True" Category="Options" Description="If true update functions will be generated." %>
 <%@ Property Name="IncludeSave" Type="System.Boolean" Default="True" Category="Options" Description="If true combined insert/update functions will be generated." %>
@@ -578,7 +580,7 @@ namespace <%=DALNameSpace%>.WebServiceClient
 		#region "Custom Methods"
 		
 	<% 
-	string prefix = "_" + SourceTable.Name + "_";
+	string prefix = string.Format(CustomProcedureStartsWith, SourceTable.Name, ProcedurePrefix);
 	foreach(CommandSchema command in SourceTable.Database.Commands)
 	{
 		//Response.WriteLine("// " + command.Name);
@@ -595,37 +597,38 @@ namespace <%=DALNameSpace%>.WebServiceClient
 			}
 			else	// Return a basic DataSet
 			{
-				returnType = "DataSet";
+				returnType = this.CustomNonMatchingReturnType.ToString();
 			}
 	%>
 	
-	#region "<%=command.Name%>"
+		#region "<%=command.Name%>"
+				
+		/// <summary>
+		///	This method wrap the '<%=command.Name%>' stored procedure. 
+		/// </summary><%=TransformStoredProcedureInputsToMethodComments(command.InputParameters) + TransformStoredProcedureOutputsToMethodComments(command.AllOutputParameters)%>
+		/// <param name="start">Row number at which to start reading.</param>
+		/// <param name="pageLength">Number of rows to return.</param>
+		/// <param name="transactionManager"><see cref="TransactionManager"/> object</param>
+		/// <remark>This method is generate from a stored procedure.</remark>
+		/// <returns>A <see cref="<%=returnType%>"/> instance.</returns>
+		public override <%=returnType%> <%=methodName%>(TransactionManager transactionManager, int start, int pageLength <%=TransformStoredProcedureInputsToMethod(true, command.InputParameters) + TransformStoredProcedureOutputsToMethod(true, command.AllOutputParameters) %>)
+		{
+			<%=WebReferenceName%>.<%=ProxyClassName%> proxy = new <%=WebReferenceName%>.<%=ProxyClassName%>();
+			proxy.Url = this._url;
 			
-	/// <summary>
-	///	This method wrap the '<%=command.Name%>' stored procedure. 
-	/// </summary><%=TransformStoredProcedureInputsToMethodComments(command.InputParameters)%>
-	/// <param name="start">Row number at which to start reading.</param>
-	/// <param name="pageLength">Number of rows to return.</param>
-	/// <param name="transactionManager"><see cref="TransactionManager"/> object</param>
-	/// <remark>This method is generate from a stored procedure.</remark>
-	/// <returns>A <see cref="<%=returnType%>"/> instance.</returns>
-	public override <%=returnType%> <%=methodName%>(TransactionManager transactionManager, int start, int pageLength <%=TransformStoredProcedureInputsToMethod(true, command.InputParameters)%>)
-	{
-		<%=WebReferenceName%>.<%=ProxyClassName%> proxy = new <%=WebReferenceName%>.<%=ProxyClassName%>();
-		proxy.Url = this._url;
+			<% if (returnType == collectionClassName) { %>
+			<%=WebReferenceName%>.<%=GetClassName(SourceTable.Name)%>[] items = proxy.<%=providerName%>_<%=methodName%>(start, pageLength <%=TransformStoredProcedureInputsToDataAccess(true, command.InputParameters) + TransformStoredProcedureOutputsToDataAccess(true, command.AllOutputParameters)%>);
+			return Convert(items); 
+			<% } else if (returnType == "void") { %>
+			proxy.<%=className%>_<%=providerName%>(<%=TransformStoredProcedureInputsToDataAccess(false, command.InputParameters) + TransformStoredProcedureOutputsToDataAccess(true, command.AllOutputParameters)%>);
+			<% } else if (returnType == "DataSet"){ %>
+			return proxy.<%=providerName%>_<%=methodName%>(start, pageLength<%=TransformStoredProcedureInputsToDataAccess(true, command.InputParameters) + TransformStoredProcedureOutputsToDataAccess(true, command.AllOutputParameters)%>);
+			<% } else { %>
+				throw new NotSupportedException("This <%=methodName%> for custom procedure <%=command.Name%> is implemented to return an IDataReader.  These are not supported by the client proxy.");
+			<% } %>		
+		}
 		
-		<% if (returnType == collectionClassName) { %>
-		<%=WebReferenceName%>.<%=GetClassName(SourceTable.Name)%>[] items = proxy.<%=providerName%>_<%=methodName%>(start, pageLength <%=TransformStoredProcedureInputsToDataAccess(true, command.InputParameters)%>);
-		return Convert(items); 
-		<% } else if (returnType == "void") { %>
-		proxy.<%=className%>_<%=providerName%>(<%=TransformStoredProcedureInputsToDataAccess(false, command.InputParameters)%>);
-		<% } else { %>
-		return proxy.<%=providerName%>_<%=methodName%>(start, pageLength<%=TransformStoredProcedureInputsToDataAccess(true, command.InputParameters)%>);
-		<% } %>		
-	}
-	
-	#endregion
-	
+		#endregion
 		
 	<%
 			}

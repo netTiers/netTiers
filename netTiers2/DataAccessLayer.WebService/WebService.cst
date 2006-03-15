@@ -1,4 +1,4 @@
-<%--
+﻿<%--
  * $Id: WebService.cst,v 1.1 2005/12/02 15:23:23 jroland Exp $
  * Last modified by $Author: jroland $
  * Last modified at $Date: 2005/12/02 15:23:23 $
@@ -14,6 +14,9 @@
 <%@ Property Name="SourceViews" Type="SchemaExplorer.ViewSchemaCollection" Category="Context" Description="views that the data access class should be based on." %>
 
 <%@ Property Name="IncludeCustoms" Type="System.Boolean" Default="True" Category="Options" Description="If true customs stored procedures will be generated as functions." %>
+<%@ Property Name="CustomNonMatchingReturnType" Type="CustomNonMatchingReturnType" Default="DataSet" Category="Options" Description="When using custom stored procedures, if the returned rows do not match the fields in an entity, a DataSet or IDataReader will be returned. Choose One.  This is useful if you've returned more than one resultset in a custom procedure; you can use a ConvertToDataSet(IDataReader) method in the Utility class to convert that to a DataSet." %>
+<%@ Property Name="CustomProcedureStartsWith" Type="System.String" Default="_{0}_" Category="Options" Description="If you include custom stored procedures, this is the pattern that NetTiers will look for your custom stored procedures. A string format will be used to match the procedure pattern.  So, {0}=TableName, {1}=StoredProc Prefix.  By default NetTiers will look at tables that starts with '_{0}_', which means it will detect the procedure _TableName_GetByBirthdate and will be detected and generated." %>
+
 <%@ Property Name="IncludeInsert" Type="System.Boolean" Default="True" Category="Options" Description="If true insert functions will be generated." %>
 <%@ Property Name="IncludeUpdate" Type="System.Boolean" Default="True" Category="Options" Description="If true update functions will be generated." %>
 <%@ Property Name="IncludeDelete" Type="System.Boolean" Default="True" Category="Options" Description="If true delete functions will be generated." %>
@@ -366,7 +369,7 @@ public class <%=ClassName%>: WebService
 	#region Custom Methods
 	
 <%
-	string prefix = "_" + SourceTable.Name + "_";
+	string prefix = string.Format(CustomProcedureStartsWith, SourceTable.Name, ProcedurePrefix);
 	foreach(CommandSchema command in SourceTable.Database.Commands)
 	{
 		// If the stored procedure is targeting the current table.
@@ -389,9 +392,13 @@ public class <%=ClassName%>: WebService
 	///	This method wrap the <%=command.Name%> stored procedure. 
 	/// </summary>
 	[WebMethod(Description="This method wrap the <%=command.Name%> stored procedure.")]
-	public <%=returnType%> <%=providerName%>_<%=methodName%>(int start, int pageLength <%=TransformStoredProcedureInputsToMethod(true, command.InputParameters)%>)
+	public <%=returnType%> <%=providerName%>_<%=methodName%>(int start, int pageLength <%=TransformStoredProcedureInputsToMethod(true, command.InputParameters) + TransformStoredProcedureOutputsToMethod(true, command.AllOutputParameters)%>)
 	{
-		return <%=DALNameSpace%>.DataRepository.<%=providerName%>.<%=methodName%>(start, pageLength <%=TransformStoredProcedureInputsToDataAccess(true, command.InputParameters)%>);
+	    <% if (returnType == "DataSet") { %>
+		    return <%=DALNameSpace%>.Utility.ConvertDataReaderToDataSet(<%=DALNameSpace%>.DataRepository.<%=providerName%>.<%=methodName%>(start, pageLength <%=TransformStoredProcedureInputsToDataAccess(true, command.InputParameters) + TransformStoredProcedureOutputsToDataAccess(true, command.AllOutputParameters)%>));
+	    <% } else { %>
+		    return <%=DALNameSpace%>.DataRepository.<%=providerName%>.<%=methodName%>(start, pageLength <%=TransformStoredProcedureInputsToDataAccess(true, command.InputParameters)%>);
+	    <% } %>
 	}
 		
 <%

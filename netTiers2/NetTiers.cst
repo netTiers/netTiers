@@ -33,6 +33,8 @@
 
 <%-- Options --%>
 <%@ Property Name="IncludeCustoms" Type="System.Boolean" Default="True" Category="CRUD Options" Description="If true custom stored procedures (that starts with '_TableName_') will be detected and generated." %>
+<%@ Property Name="CustomNonMatchingReturnType" Type="CustomNonMatchingReturnType" Default="DataSet" Category="CRUD Options" Description="When using custom stored procedures, if the returned rows do not match the fields in an entity, a DataSet or IDataReader will be returned. Choose One.  This is useful if you've returned more than one resultset in a custom procedure; you can use a ConvertToDataSet(IDataReader) method in the Utility class to convert that to a DataSet." %>
+<%@ Property Name="CustomProcedureStartsWith" Type="System.String" Default="_{0}_" Category="CRUD Options" Description="If you include custom stored procedures, this is the pattern that NetTiers will look for your custom stored procedures to start with. A string format will be used to match the beginning of the procedure pattern.  So, {0}=TableName, {1}=ProcedurePrefix(See Property Below).  By default NetTiers will look at tables that starts with '_{0}_', which means it will detect the procedure _TableName_GetByBirthdate, '{1}_cust_{0}' would match usp_cust_tablename_GetByAny; the appropriate methods will be generated." %>
 <%@ Property Name="IncludeDrop" Type="System.Boolean" Default="True" Category="CRUD Options" Description="If true drop statements will be generated to drop existing stored procedures." %>
 <%@ Property Name="IncludeInsert" Type="System.Boolean" Default="True" Category="CRUD Options" Description="If true insert procedures will be generated." %>
 <%@ Property Name="IncludeUpdate" Type="System.Boolean" Default="True" Category="CRUD Options" Description="If true update procedures will be generated." %>
@@ -55,7 +57,6 @@
 <%@ Property Name="SelectSuffix" Type="System.String" Default="_Get" Category="Stored procedures style" Description="Suffix to use for all generated SELECT stored procedures." %>
 <%@ Property Name="SelectAllSuffix" Type="System.String" Default="_List" Category="Stored procedures style" Description="Suffix to use for all generated SELECT stored procedures." %>
 <%@ Property Name="FindSuffix" Type="System.String" Default="_Find" Category="Stored procedures style"Description="Suffix to use for all generated selective SELECT stored procedures." %>
-<%@ Property Name="ProcedurePrefix" Type="System.String" Category="Stored procedures style" Description="The prefix to attach to the stored procs" Default="" Optional="True" %>
 <%@ Property Name="GrantUser" Type="System.String" Category="Stored procedures style" Description="Optional user or role to GRANT EXEC Procedure permissions to" Default="" Optional="True" %>
 
 
@@ -1148,6 +1149,8 @@ public void Go()
 		this.GetTemplate("WebService.cst").SetProperty("SourceViews", _sourceViews);
 		this.GetTemplate("WebService.cst").SetProperty("SourceTables", _sourceTables);
 		this.GetTemplate("WebService.cst").SetProperty("IncludeCustoms", IncludeCustoms);				
+		this.GetTemplate("WebService.cst").SetProperty("CustomNonMatchingReturnType", CustomNonMatchingReturnType);
+		this.GetTemplate("WebService.cst").SetProperty("CustomProcedureStartsWith", CustomProcedureStartsWith);
 		this.GetTemplate("WebService.cst").SetProperty("IncludeInsert", IncludeInsert);
 		this.GetTemplate("WebService.cst").SetProperty("IncludeUpdate", IncludeUpdate);
 		this.GetTemplate("WebService.cst").SetProperty("IncludeDelete", IncludeDelete);
@@ -1651,6 +1654,8 @@ public void Go()
 		XmlElement dalcFactoryNode = AddFileNode(tableNode, GetProviderBaseName(SourceView.Name) + ".cs");
 		
 		this.GetTemplate("EntityViewProviderBase.cst").SetProperty("IncludeCustoms", IncludeCustoms);
+		this.GetTemplate("EntityViewProviderBase.cst").SetProperty("CustomNonMatchingReturnType", CustomNonMatchingReturnType);				
+		this.GetTemplate("EntityViewProviderBase.cst").SetProperty("CustomProcedureStartsWith", CustomProcedureStartsWith);
 		this.GetTemplate("EntityViewProviderBase.cst").SetProperty("IncludeGetList", IncludeGetList);
 		this.GetTemplate("EntityViewProviderBase.cst").SetProperty("IncludeGetListByIX", IncludeGetListByIX);
 		this.GetTemplate("EntityViewProviderBase.cst").SetProperty("IncludeFind", IncludeFind);
@@ -1672,6 +1677,8 @@ public void Go()
 		this.GetTemplate("SqlEntityViewProviderBase.generated.cst").SetProperty("IncludeGetListByIX", IncludeGetListByIX);
 		this.GetTemplate("SqlEntityViewProviderBase.generated.cst").SetProperty("IncludeFind", IncludeFind);
 		this.GetTemplate("SqlEntityViewProviderBase.generated.cst").SetProperty("SourceView", SourceView);
+		this.GetTemplate("SqlEntityViewProviderBase.generated.cst").SetProperty("CustomNonMatchingReturnType", CustomNonMatchingReturnType);
+		this.GetTemplate("SqlEntityViewProviderBase.generated.cst").SetProperty("CustomProcedureStartsWith", CustomProcedureStartsWith);
 		this.GetTemplate("SqlEntityViewProviderBase.generated.cst").SetProperty("NameSpace", BLLNameSpace);
 		this.GetTemplate("SqlEntityViewProviderBase.generated.cst").SetProperty("DALNameSpace", DALNameSpace);
 		this.GetTemplate("SqlEntityViewProviderBase.generated.cst").SetProperty("SelectSuffix", SelectSuffix);
@@ -1713,6 +1720,8 @@ public void Go()
 				
 			this.GetTemplate("EntityViewRepositoryTest.cst").SetProperty("IncludeGetList", IncludeGetList);
 			this.GetTemplate("EntityViewRepositoryTest.cst").SetProperty("IncludeCustoms", IncludeCustoms);
+			this.GetTemplate("EntityViewRepositoryTest.cst").SetProperty("CustomNonMatchingReturnType", CustomNonMatchingReturnType);				
+			this.GetTemplate("EntityViewRepositoryTest.cst").SetProperty("CustomProcedureStartsWith", CustomProcedureStartsWith);
 						
 			this.RenderToFile("EntityViewRepositoryTest.cst", rootPathUT + "\\Views\\" + GetRepositoryTestClassName(SourceView.Name) + ".cs", true);
 			AddExecutionTime(testNode);
@@ -1726,6 +1735,8 @@ public void Go()
 			//----------------------------------------------------------------------------------------------------------------------------------------------
 			XmlElement wsdalcViewBaseNode = AddFileNode(tableNode, "Ws" + GetPartialClassName(GetProviderName(SourceView.Name)) + ".cs");
 			this.GetTemplate("WsEntityViewProvider.generated.cst").SetProperty("IncludeCustoms", IncludeCustoms);
+			this.GetTemplate("WsEntityViewProvider.generated.cst").SetProperty("CustomNonMatchingReturnType", CustomNonMatchingReturnType);				
+			this.GetTemplate("WsEntityViewProvider.generated.cst").SetProperty("CustomProcedureStartsWith", CustomProcedureStartsWith);			
 			this.GetTemplate("WsEntityViewProvider.generated.cst").SetProperty("IncludeGetList", IncludeGetList);
 			this.GetTemplate("WsEntityViewProvider.generated.cst").SetProperty("IncludeGetListByIX", IncludeGetListByIX);
 			this.GetTemplate("WsEntityViewProvider.generated.cst").SetProperty("IncludeFind", IncludeFind);
@@ -1858,6 +1869,9 @@ public void Go()
 			this.GetTemplate("EntityProviderBase.cst").SetProperty("SourceTables", _sourceTables);
 			
 			this.GetTemplate("EntityProviderBase.cst").SetProperty("IncludeCustoms", IncludeCustoms);
+			this.GetTemplate("EntityProviderBase.cst").SetProperty("CustomNonMatchingReturnType", CustomNonMatchingReturnType);				
+			this.GetTemplate("EntityProviderBase.cst").SetProperty("CustomProcedureStartsWith", CustomProcedureStartsWith);			
+
 			this.GetTemplate("EntityProviderBase.cst").SetProperty("IncludeInsert", IncludeInsert);
 			this.GetTemplate("EntityProviderBase.cst").SetProperty("IncludeUpdate", IncludeUpdate);
 			this.GetTemplate("EntityProviderBase.cst").SetProperty("IncludeSave", IncludeSave);
@@ -1882,7 +1896,18 @@ public void Go()
 			XmlElement sqlDalcBaseNode = AddFileNode(tableNode, "SqlClient\\Sql"+ GetPartialClassName(GetProviderBaseName(SourceTable.Name)) + ".cs");
 			
 			//Response.WriteLine("Building abstract SqlClient Repository class : SqlClient\\" + GetAbstractRepositoryClassName(SourceTable.Name) );
-			this.GetTemplate("SqlEntityProviderBase.generated.cst").SetProperty("IncludeCustoms", IncludeCustoms);
+			this.GetTemplate("SqlEntityProviderBase.generated.cst").SetProperty("IncludeCustoms", IncludeCustoms);				
+			this.GetTemplate("SqlEntityProviderBase.generated.cst").SetProperty("CustomNonMatchingReturnType", CustomNonMatchingReturnType);				
+			this.GetTemplate("SqlEntityProviderBase.generated.cst").SetProperty("CustomProcedureStartsWith", CustomProcedureStartsWith);			
+			
+			this.GetTemplate("SqlEntityProviderBase.generated.cst").SetProperty("InsertSuffix", InsertSuffix);
+			this.GetTemplate("SqlEntityProviderBase.generated.cst").SetProperty("UpdateSuffix", UpdateSuffix);
+			this.GetTemplate("SqlEntityProviderBase.generated.cst").SetProperty("DeleteSuffix", DeleteSuffix);
+			this.GetTemplate("SqlEntityProviderBase.generated.cst").SetProperty("SelectSuffix", SelectSuffix);
+			this.GetTemplate("SqlEntityProviderBase.generated.cst").SetProperty("SelectAllSuffix", SelectAllSuffix);
+			this.GetTemplate("SqlEntityProviderBase.generated.cst").SetProperty("FindSuffix", FindSuffix);
+			this.GetTemplate("SqlEntityProviderBase.generated.cst").SetProperty("ProcedurePrefix", ProcedurePrefix.Replace(" ", ""));
+			
 			this.GetTemplate("SqlEntityProviderBase.generated.cst").SetProperty("IncludeInsert", IncludeInsert);
 			this.GetTemplate("SqlEntityProviderBase.generated.cst").SetProperty("IncludeUpdate", IncludeUpdate);
 			this.GetTemplate("SqlEntityProviderBase.generated.cst").SetProperty("IncludeSave", IncludeSave);
@@ -1892,16 +1917,7 @@ public void Go()
 			this.GetTemplate("SqlEntityProviderBase.generated.cst").SetProperty("IncludeGetListByFK", IncludeGetListByFK);
 			this.GetTemplate("SqlEntityProviderBase.generated.cst").SetProperty("IncludeGetListByIX", IncludeGetListByIX);
 			this.GetTemplate("SqlEntityProviderBase.generated.cst").SetProperty("IncludeFind", IncludeFind);
-			this.GetTemplate("SqlEntityProviderBase.generated.cst").SetProperty("IsolationLevel", IsolationLevel);
-			this.GetTemplate("SqlEntityProviderBase.generated.cst").SetProperty("ExcludeFields", ExcludeFields);
-			
-			this.GetTemplate("SqlEntityProviderBase.generated.cst").SetProperty("InsertSuffix", InsertSuffix);
-			this.GetTemplate("SqlEntityProviderBase.generated.cst").SetProperty("UpdateSuffix", UpdateSuffix);
-			this.GetTemplate("SqlEntityProviderBase.generated.cst").SetProperty("DeleteSuffix", DeleteSuffix);
-			this.GetTemplate("SqlEntityProviderBase.generated.cst").SetProperty("SelectSuffix", SelectSuffix);
-			this.GetTemplate("SqlEntityProviderBase.generated.cst").SetProperty("SelectAllSuffix", SelectAllSuffix);
-			this.GetTemplate("SqlEntityProviderBase.generated.cst").SetProperty("FindSuffix", FindSuffix);
-			this.GetTemplate("SqlEntityProviderBase.generated.cst").SetProperty("ProcedurePrefix", ProcedurePrefix.Replace(" ", ""));
+
 			
 			this.GetTemplate("SqlEntityProviderBase.generated.cst").SetProperty("SourceTable", SourceTable);
 			this.GetTemplate("SqlEntityProviderBase.generated.cst").SetProperty("SourceTables", _sourceTables);
@@ -1967,6 +1983,10 @@ public void Go()
 				XmlElement wsDalcBaseNode = AddFileNode(tableNode, "WebServiceClient\\Ws" + GetPartialClassName(GetProviderName(SourceTable.Name)) + ".cs");
 				
 				this.GetTemplate("WsEntityProvider.generated.cst").SetProperty("IncludeCustoms", IncludeCustoms);
+				this.GetTemplate("WsEntityProvider.generated.cst").SetProperty("CustomNonMatchingReturnType", CustomNonMatchingReturnType);				
+				this.GetTemplate("WsEntityProvider.generated.cst").SetProperty("CustomProcedureStartsWith", CustomProcedureStartsWith);			
+
+				
 				this.GetTemplate("WsEntityProvider.generated.cst").SetProperty("IncludeInsert", IncludeInsert);
 				this.GetTemplate("WsEntityProvider.generated.cst").SetProperty("IncludeUpdate", IncludeUpdate);
 				this.GetTemplate("WsEntityProvider.generated.cst").SetProperty("IncludeSave", IncludeSave);

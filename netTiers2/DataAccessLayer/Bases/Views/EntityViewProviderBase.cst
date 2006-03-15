@@ -12,6 +12,8 @@
 <%@ Property Name="SourceView" Type="SchemaExplorer.ViewSchema" Category="Connection" Description="Table that the data access class should be based on." %>
 	
 <%@ Property Name="IncludeCustoms" Type="System.Boolean" Default="True" Category="Options" Description="If true customs stored procedures will be generated as functions." %>
+<%@ Property Name="CustomNonMatchingReturnType" Type="CustomNonMatchingReturnType" Default="DataSet" Category="Options" Description="When using custom stored procedures, if the returned rows do not match the fields in an entity, a DataSet or IDataReader will be returned. Choose One.  This is useful if you've returned more than one resultset in a custom procedure; you can use a ConvertToDataSet(IDataReader) method in the Utility class to convert that to a DataSet." %>
+<%@ Property Name="CustomProcedureStartsWith" Type="System.String" Default="_{0}_" Category="Options" Description="If you include custom stored procedures, this is the pattern that NetTiers will look for your custom stored procedures. A string format will be used to match the procedure pattern.  So, {0}=TableName, {1}=StoredProc Prefix.  By default NetTiers will look at tables that starts with '_{0}_', which means it will detect the procedure _TableName_GetByBirthdate and will be detected and generated." %>
 <%@ Property Name="IncludeGetList" Type="System.Boolean" Default="True" Category="Options" Description="If true getlist functions will be generated." %>
 <%@ Property Name="IncludeGetListByIX" Type="System.Boolean" Default="True" Category="Options" Description="If true getlist functions will be generated." %>
 
@@ -213,7 +215,7 @@ namespace <%=DALNameSpace%>.Bases
 		#region Custom Methods
 		
 	<%
-		string prefix = "_" + SourceView.Name + "_";
+		string prefix = string.Format(CustomProcedureStartsWith, SourceView.Name, ProcedurePrefix);
 		foreach(CommandSchema command in SourceView.Database.Commands)
 		{
 			// If the stored procedure is targeting the current table.
@@ -232,7 +234,7 @@ namespace <%=DALNameSpace%>.Bases
 			}
 			else	// Return a basic DataSet
 			{
-				returnType = "DataSet";
+				returnType = CustomNonMatchingReturnType.ToString();
 			}
 			
 			string returnTypeForComment = returnType.Replace("<", "&lt;").Replace(">", "&gt;");

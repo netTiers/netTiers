@@ -14,6 +14,8 @@
 <%@ Property Name="SourceView" Type="SchemaExplorer.ViewSchema" Category="Connection" Description="Table that the data access class should be based on." %>
 
 <%@ Property Name="IncludeCustoms" Type="System.Boolean" Default="True" Category="Options" Description="If true customs stored procedures will be generated as functions." %>
+<%@ Property Name="CustomNonMatchingReturnType" Type="CustomNonMatchingReturnType" Default="DataSet" Category="Options" Description="When using custom stored procedures, if the returned rows do not match the fields in an entity, a DataSet or IDataReader will be returned. Choose One.  This is useful if you've returned more than one resultset in a custom procedure; you can use a ConvertToDataSet(IDataReader) method in the Utility class to convert that to a DataSet." %>
+<%@ Property Name="CustomProcedureStartsWith" Type="System.String" Default="_{0}_" Category="Options" Description="If you include custom stored procedures, this is the pattern that NetTiers will look for your custom stored procedures. A string format will be used to match the procedure pattern.  So, {0}=TableName, {1}=StoredProc Prefix.  By default NetTiers will look at tables that starts with '_{0}_', which means it will detect the procedure _TableName_GetByBirthdate and will be detected and generated." %>
 <%@ Property Name="IncludeGetList" Type="System.Boolean" Default="True" Category="Options" Description="If true getlist functions will be generated." %>
 <%@ Property Name="IncludeGetListByFK" Type="System.Boolean" Default="True" Category="Options" Description="If true get functions will be generated." %>
 <%@ Property Name="IncludeGetListByIX" Type="System.Boolean" Default="True" Category="Options" Description="If true getlist functions will be generated." %>
@@ -139,7 +141,6 @@ public partial class <%=providerBaseName%> : <%=GetProviderBaseName(SourceView.N
 		
 	#endregion
 	
-		
 	<%/*	
 		-------------------------------
 		GET LIST FUNCTIONS
@@ -161,7 +162,9 @@ public partial class <%=providerBaseName%> : <%=GetProviderBaseName(SourceView.N
 		SqlDatabase database = new SqlDatabase(this._connectionString);
 		DbCommand commandWrapper = StoredProcedureProvider.GetCommandWrapper(database, "<%=ProcedurePrefix + GetCleanName(name) + SelectSuffix + SelectAllSuffix%>", _useStoredProcedure);
 		
-		IDataReader reader;
+		IDataReader reader = null;
+		//Create Collection
+		<%=collectionClassName%> rows = new <%=collectionClassName%>();
 		try
 		{
 			if (transactionManager != null)
@@ -173,16 +176,11 @@ public partial class <%=providerBaseName%> : <%=GetProviderBaseName(SourceView.N
 			{
 				reader = database.ExecuteReader(commandWrapper);
 			}
+		
+			Fill(reader, rows, start, pageLength);
 		}
-		catch(SqlException ex)
-		{
-			throw new DataException("An data access error occured, please check inner SqlException error.", ex);
-		}
-
-		//Create Collection
-		<%=collectionClassName%> rows = new <%=collectionClassName%>();
-		Fill(reader, rows, start, pageLength);
-		reader.Close();
+		finally {	if (reader != null) reader.Close();	}
+		
 		return rows;
 	}//end getall
 	
@@ -210,8 +208,9 @@ public partial class <%=providerBaseName%> : <%=GetProviderBaseName(SourceView.N
 		database.AddInParameter(commandWrapper, "@WhereClause", DbType.String, whereClause);
 		database.AddInParameter(commandWrapper, "@OrderBy", DbType.String, orderBy);
 	
-		IDataReader reader;
-			
+		IDataReader reader = null;
+		//Create Collection
+		<%=collectionClassName%> rows = new <%=collectionClassName%>();	
 		try
 		{
 			if (transactionManager != null)
@@ -223,20 +222,19 @@ public partial class <%=providerBaseName%> : <%=GetProviderBaseName(SourceView.N
 			{
 				reader = database.ExecuteReader(commandWrapper);
 			}
+
+
+			//reader.Read();
+			//count = reader.GetInt32(0);
+			//reader.NextResult();
+	
+			Fill(reader, rows, start, pageLength);
 		}
-		catch(SqlException ex)
+		finally
 		{
-			throw new DataException("An data access error occured, please check inner SqlException error.", ex);
+		     if (reader != null)
+		     	 reader.Close();
 		}
-
-		//reader.Read();
-		//count = reader.GetInt32(0);
-		//reader.NextResult();
-
-		//Create Collection
-		<%=collectionClassName%> rows = new <%=collectionClassName%>();
-		Fill(reader, rows, start, pageLength);
-		reader.Close();
 		return rows;
 	}
 	
@@ -245,18 +243,15 @@ public partial class <%=providerBaseName%> : <%=GetProviderBaseName(SourceView.N
 <%
  	} //end IncludeGetList
 %>
-	
-
 <%/*---------------------------------------------------------------------------------
 							CUSTOM STORED PROCEDURES
   -------------------------------------------------------------------------------*/%>
 
 <% if (IncludeCustoms) { %>
-
 	#region "Custom Methods"
 	
 <% 
-	string prefix = "_" + SourceView.Name + "_";
+	string prefix = string.Format(CustomProcedureStartsWith, SourceView.Name, ProcedurePrefix);
 	foreach(CommandSchema command in SourceView.Database.Commands)
 	{
 		//Response.WriteLine("// " + command.Name);
@@ -271,9 +266,9 @@ public partial class <%=providerBaseName%> : <%=GetProviderBaseName(SourceView.N
 			{
 				returnType = collectionClassName;
 			}
-			else	// Return a basic DataSet
+			else	// Return user selected type
 			{
-				returnType = "DataSet";
+				returnType =  CustomNonMatchingReturnType.ToString();
 			}
 			
 			string returnTypeForComment = returnType.Replace("<", "&lt;").Replace(">", "&gt;");
@@ -341,16 +336,32 @@ public partial class <%=providerBaseName%> : <%=GetProviderBaseName(SourceView.N
 				reader = database.ExecuteReader(commandWrapper);
 			}			
 			
-			//Create Collection
 			<% if (returnType == collectionClassName) {%>
+				
+				//Create Collection
 				<%=collectionClassName%> rows = new <%=collectionClassName%>();
-				Fill(reader, rows, start, pageLength);
-				reader.Close();
+				try
+				{
+				    Fill(reader, rows, start, pageLength);
+				}
+				finally
+				{	
+					if (reader != null) 
+						reader.Close();
+				}
 				return rows;
 				<%} else if (returnType != "void"){%>
-				reader.Read();
-				<%=returnType%> tmp = (<%=returnType%>)reader[0];
-				reader.Close();
+				<%=returnType%> tmp = null;
+				try
+				{
+				    reader.Read();
+				    tmp = (<%=returnType%>)reader[0];
+				}
+				finally 
+				{	
+					if (reader != null) 
+						reader.Close();
+				}
 				return tmp;
 			<% } %>		
 		<% } %>
@@ -370,7 +381,6 @@ public partial class <%=providerBaseName%> : <%=GetProviderBaseName(SourceView.N
 %>
 
 	#endregion
-
 <% } // endif IncludeCustoms %>
 	
 	}//end class
