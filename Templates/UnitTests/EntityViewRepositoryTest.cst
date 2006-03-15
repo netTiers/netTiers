@@ -1,0 +1,200 @@
+<%--
+ * $Id: EntityViewRepositoryTest.cst,v 1.1 2005/11/04 07:09:49 jroland Exp $
+ * Last modified by $Author: jroland $
+ * Last modified at $Date: 2005/11/04 07:09:49 $
+ * $Revision: 1.1 $
+--%>
+<%@ CodeTemplate Src="..\CommonSqlCode.cs" Inherits="MoM.Templates.CommonSqlCode" Language="C#" TargetLanguage="C#" Description="Generate nUnit test for the entity." Debug="False" %>
+
+<%@ Assembly Name="SchemaExplorer" %>
+<%@ Assembly Name="System.Design" %>
+<%@ Import Namespace="SchemaExplorer" %>
+
+<%@ Property Name="SourceTables" Type="SchemaExplorer.TableSchemaCollection" Optional="True"  Category="DataSource" Description="Tables that the stored procedures should be based on." %>
+<%@ Property Name="SourceView" Type="SchemaExplorer.ViewSchema" Category="Connection" Description="Table that the data access class should be based on." %>
+<%@ Property Name="NameSpace" Type="System.String" Category="Data" Description="Project root Namespace." %>
+<%@ Property Name="DALNameSpace" Type="System.String" Category="Data" Description="Project root Namespace." %>
+<%@ Property Name="UTNameSpace" Type="System.String" Category="Data" Description="Project root Namespace." %>
+
+<%@ Property Name="IncludeCustoms" Type="System.Boolean" Default="True" Category="Options" Description="If true customs stored procedures will be generated as functions." %>
+<%@ Property Name="IncludeGetList" Type="System.Boolean" Default="True" Category="Options" Description="If true getlist functions will be generated." %>
+
+<%
+	string className = GetClassName(SourceView.Name);
+	string collectionClassName = GetCollectionClassName(SourceView.Name);
+	string providerName = GetProviderClassName(SourceView.Name);
+	string unitTestClassName = GetRepositoryTestClassName(SourceView.Name);
+%>
+#region Using directives
+
+using System;
+using System.IO;
+using System.Xml;
+using System.Xml.Serialization;
+using NUnit.Framework;
+using <%=NameSpace%>;
+using <%=DALNameSpace%>;
+
+#endregion
+
+namespace <%=UTNameSpace%>
+{
+    /// <summary>
+    /// Provides tests for the and <see cref="<%=className%>"/> objects (entity, collection and repository).
+    /// </summary>
+    [TestFixture]
+    public class <%=unitTestClassName%>
+    {
+    	// the <%=className%> instance used to test the repository.
+		private <%=className%> mock;
+		
+		// the <%=collectionClassName%> instance used to test the repository.
+		<%=collectionClassName%> mockCollection;
+		
+		/// <summary>
+		/// Creates a new <see cref="<%=unitTestClassName%>"/> instance.
+		/// </summary>	
+		public <%=unitTestClassName%>()
+		{			
+			this.mock = (<%=className%>)CreateMockInstance();	
+		}
+        
+        /// <summary>
+		/// This method is used to construct the test environment prior to running the tests.
+		/// </summary>
+        [TestFixtureSetUp]
+        public void Init()
+        {
+			System.Console.WriteLine(new String('-', 75));
+			System.Console.WriteLine("-- Testing the <%=className%> Entity with the {0} --", <%=DALNameSpace%>.Configuration.Current.DefaultDataProvider);
+			System.Console.WriteLine(new String('-', 75));
+        }
+    
+    	/// <summary>
+		/// This method is used to restore the environment after the tests are completed.
+		/// </summary>
+        [TestFixtureTearDown]
+        public void Dispose()
+        {       	
+			System.Console.WriteLine();
+			System.Console.WriteLine();
+        }
+        
+		
+		<% if (IncludeGetList) { %>
+		/// <summary>
+		/// Selects all <%=className%> objects of the database.
+		/// </summary>
+		[Test]
+		public void Step_1_SelectAll()
+		{
+			mockCollection = DataRepository.<%=providerName%>.GetAll(0, 10);
+			Assert.IsTrue(mockCollection.Count > 0, "No records returned.");
+			System.Console.WriteLine("DataRepository.<%=providerName%>.GetAll():");			
+			System.Console.WriteLine(mockCollection);			
+		}
+		
+		/// <summary>
+		/// Selects all <%=className%> objects of the database.
+		/// </summary>
+		[Test]
+		public void Step_2_Search()
+		{
+			mockCollection = DataRepository.<%=providerName%>.Get(0, 10);
+			Assert.IsTrue(mockCollection.Count > 0, "No records returned.");
+			System.Console.WriteLine("DataRepository.<%=providerName%>.Get():");			
+			System.Console.WriteLine(mockCollection);
+					
+		}
+		<% } %>
+			
+		
+		#region Serialization tests
+		
+		/// <summary>
+		/// Serialize the mock <%=className%> entity into a temporary file.
+		/// </summary>
+		[Test]
+		public void Step_6_SerializeEntity()
+		{
+			string fileName = "temp_<%=className%>.xml";
+		
+			XmlSerializer mySerializer = new XmlSerializer(typeof(<%=className%>)); 
+			StreamWriter myWriter = new StreamWriter(fileName); 
+			mySerializer.Serialize(myWriter, this.mock); 
+			myWriter.Close();
+			System.Console.WriteLine("this.mock correctly serialized to a temporary file.");			
+		}
+		
+		/// <summary>
+		/// Deserialize the mock <%=className%> entity from a temporary file.
+		/// </summary>
+		[Test]
+		public void Step_7_DeserializeEntity()
+		{
+			string fileName = "temp_<%=className%>.xml";
+		
+			XmlSerializer mySerializer = new XmlSerializer(typeof(<%=className%>)); 
+			FileStream myFileStream = new FileStream(fileName,  FileMode.Open); 
+			this.mock = (<%=className%>) mySerializer.Deserialize(myFileStream);
+			myFileStream.Close();
+			File.Delete(fileName);
+			
+			System.Console.WriteLine("this.mock correctly deserialized from a temporary file.");
+		}
+		
+		/// <summary>
+		/// Serialize a <%=className%> collection into a temporary file.
+		/// </summary>
+		[Test]
+		public void Step_8_SerializeCollection()
+		{
+			string fileName = "temp_<%=collectionClassName%>.xml";
+		
+			<%=collectionClassName%> mockCollection = new <%=collectionClassName%>();
+			mockCollection.Add(this.mock);
+		
+			XmlSerializer mySerializer = new XmlSerializer(typeof(<%=collectionClassName%>)); 
+			StreamWriter myWriter = new StreamWriter(fileName); 
+			mySerializer.Serialize(myWriter, mockCollection); 
+			myWriter.Close();
+			
+			System.Console.WriteLine("<%=collectionClassName%> correctly serialized to a temporary file.");					
+		}
+		
+		
+		/// <summary>
+		/// Deserialize a <%=className%> collection from a temporary file.
+		/// </summary>
+		[Test]
+		public void Step_9_DeserializeCollection()
+		{
+			string fileName = "temp_<%=collectionClassName%>.xml";
+		
+			XmlSerializer mySerializer = new XmlSerializer(typeof(<%=collectionClassName%>)); 
+			FileStream myFileStream = new FileStream(fileName,  FileMode.Open); 
+			<%=collectionClassName%> mockCollection = (<%=collectionClassName%>) mySerializer.Deserialize(myFileStream);
+			myFileStream.Close();
+			File.Delete(fileName);
+			System.Console.WriteLine("<%=collectionClassName%> correctly deserialized from a temporary file.");	
+		}
+		#endregion
+		
+		#region Mock Instance
+		///<summary>
+		///  Returns a Typed <%=className%> Entity with mock values.
+		///</summary>
+		public <%=className%> CreateMockInstance()
+		{		
+			<%=className%> mock = new <%=className%>();
+						
+			<% for (int x=0; x < SourceView.Columns.Count; x++) {%>
+			mock.<%= GetPropertyName(SourceView.Columns[x].Name) %> = <%= GetCSMockValueByType(SourceView.Columns[x], RandomString(SourceView.Columns[x], false), false, Guid.NewGuid(), RandomNumber(1, 250), DateTime.Now) %>;
+			<% } %>			
+		   return (<%=className%>)mock;
+		}
+		
+
+		#endregion
+    }
+}
