@@ -403,8 +403,10 @@
 														"DataAccessLayer\\Bases\\NetTiersProviderCollection.cst",							
 														"DataAccessLayer\\Bases\\NetTiersServiceSection.cst",							
 														
+														"DataAccessLayer\\Bases\\EntityProviderBaseCore.generated.cst",
 														"DataAccessLayer\\Bases\\EntityProviderBase.cst",														
 														"DataAccessLayer\\Bases\\Views\\EntityViewProviderBase.cst",														
+														"DataAccessLayer\\Bases\\Views\\EntityViewProviderBaseCore.generated.cst",
 																																																							
 														"DataAccessLayer.SqlClient\\SqlNetTiersProvider.cst",
 														"DataAccessLayer.SqlClient\\SqlEntityProviderBase.generated.cst",
@@ -1644,23 +1646,35 @@ public void Go()
 		//----------------------------------------------------------------------------------------------------------------------------------------------
 		//	Generating the entity Repository decorator		
 		//----------------------------------------------------------------------------------------------------------------------------------------------
-		XmlElement dalcFactoryNode = AddFileNode(tableNode, GetProviderBaseName(SourceView.Name) + ".cs");
+		XmlElement dalcFactoryCoreNode = AddFileNode(tableNode, GetPartialClassName(GetProviderBaseName(SourceView.Name) + "Core") + ".cs");
 		
-		this.GetTemplate("EntityViewProviderBase.cst").SetProperty("IncludeCustoms", IncludeCustoms);
-		this.GetTemplate("EntityViewProviderBase.cst").SetProperty("CustomNonMatchingReturnType", CustomNonMatchingReturnType);				
-		this.GetTemplate("EntityViewProviderBase.cst").SetProperty("CustomProcedureStartsWith", CustomProcedureStartsWith);
-		this.GetTemplate("EntityViewProviderBase.cst").SetProperty("IncludeGetList", IncludeGetList);
-		this.GetTemplate("EntityViewProviderBase.cst").SetProperty("IncludeGetListByIX", IncludeGetListByIX);
-		this.GetTemplate("EntityViewProviderBase.cst").SetProperty("IncludeFind", IncludeFind);
-		this.GetTemplate("EntityViewProviderBase.cst").SetProperty("SourceView", SourceView);
-		this.GetTemplate("EntityViewProviderBase.cst").SetProperty("NameSpace", BLLNameSpace);
-		this.GetTemplate("EntityViewProviderBase.cst").SetProperty("DALNameSpace", DALNameSpace);
+		this.GetTemplate("EntityViewProviderBaseCore.generated.cst").SetProperty("IncludeCustoms", IncludeCustoms);
+		this.GetTemplate("EntityViewProviderBaseCore.generated.cst").SetProperty("CustomNonMatchingReturnType", CustomNonMatchingReturnType);				
+		this.GetTemplate("EntityViewProviderBaseCore.generated.cst").SetProperty("CustomProcedureStartsWith", CustomProcedureStartsWith);
+		this.GetTemplate("EntityViewProviderBaseCore.generated.cst").SetProperty("IncludeGetList", IncludeGetList);
+		this.GetTemplate("EntityViewProviderBaseCore.generated.cst").SetProperty("IncludeGetListByIX", IncludeGetListByIX);
+		this.GetTemplate("EntityViewProviderBaseCore.generated.cst").SetProperty("IncludeFind", IncludeFind);
+		this.GetTemplate("EntityViewProviderBaseCore.generated.cst").SetProperty("SourceView", SourceView);
+		this.GetTemplate("EntityViewProviderBaseCore.generated.cst").SetProperty("NameSpace", BLLNameSpace);
+		this.GetTemplate("EntityViewProviderBaseCore.generated.cst").SetProperty("DALNameSpace", DALNameSpace);
 							
-		this.RenderToFile("EntityViewProviderBase.cst", rootPathDAL + "\\Bases\\Views\\" + GetProviderBaseName(SourceView.Name) + ".cs", true);
+		this.RenderToFile("EntityViewProviderBaseCore.generated.cst", rootPathDAL + "\\Bases\\Views\\" + GetPartialClassName(GetProviderBaseName(SourceView.Name) + "Core") + ".cs", true);
+		
+		AddExecutionTime(dalcFactoryCoreNode);
 		//----------------------------------------------------------------------------------------------------------------------------------------------
 
-
-
+		if (!File.Exists(rootPathDAL + "\\Bases\\Views\\" + GetProviderBaseName(SourceView.Name) + ".cs")) // || OverwritePartialClassStub)
+		{
+			XmlElement dalcFactoryNode = AddFileNode(tableNode, GetProviderBaseName(SourceView.Name) + ".cs");
+			
+			this.GetTemplate("EntityViewProviderBase.cst").SetProperty("SourceView", SourceView);
+			this.GetTemplate("EntityViewProviderBase.cst").SetProperty("NameSpace", BLLNameSpace);
+			this.GetTemplate("EntityViewProviderBase.cst").SetProperty("DALNameSpace", DALNameSpace);
+			
+			this.RenderToFile("EntityViewProviderBase.cst", rootPathDAL + "\\Bases\\Views\\" + GetProviderBaseName(SourceView.Name) + ".cs", true);
+			
+			AddExecutionTime(dalcFactoryNode);
+		}
 		//----------------------------------------------------------------------------------------------------------------------------------------------
 		//	base provider class
 		//----------------------------------------------------------------------------------------------------------------------------------------------
@@ -1856,31 +1870,48 @@ public void Go()
 			//----------------------------------------------------------------------------------------------------------------------------------------------
 			//	Generating the entity Repository decorator		
 			//----------------------------------------------------------------------------------------------------------------------------------------------
-			XmlElement dalcFactoryNode = AddFileNode(tableNode, GetProviderBaseName(SourceTable.Name) + ".cs");
+			XmlElement dalcFactoryCoreNode = AddFileNode(tableNode, GetPartialClassName(GetProviderBaseName(SourceTable.Name) + "Core") + ".cs");
 			
-			this.GetTemplate("EntityProviderBase.cst").SetProperty("SourceTable", SourceTable);
-			this.GetTemplate("EntityProviderBase.cst").SetProperty("SourceTables", _sourceTables);
+			this.GetTemplate("EntityProviderBaseCore.generated.cst").SetProperty("SourceTable", SourceTable);
+			this.GetTemplate("EntityProviderBaseCore.generated.cst").SetProperty("SourceTables", _sourceTables);
 			
-			this.GetTemplate("EntityProviderBase.cst").SetProperty("IncludeCustoms", IncludeCustoms);
-			this.GetTemplate("EntityProviderBase.cst").SetProperty("CustomNonMatchingReturnType", CustomNonMatchingReturnType);				
-			this.GetTemplate("EntityProviderBase.cst").SetProperty("CustomProcedureStartsWith", CustomProcedureStartsWith);			
+			this.GetTemplate("EntityProviderBaseCore.generated.cst").SetProperty("IncludeCustoms", IncludeCustoms);
+			this.GetTemplate("EntityProviderBaseCore.generated.cst").SetProperty("CustomNonMatchingReturnType", CustomNonMatchingReturnType);				
+			this.GetTemplate("EntityProviderBaseCore.generated.cst").SetProperty("CustomProcedureStartsWith", CustomProcedureStartsWith);			
 
-			this.GetTemplate("EntityProviderBase.cst").SetProperty("IncludeInsert", IncludeInsert);
-			this.GetTemplate("EntityProviderBase.cst").SetProperty("IncludeUpdate", IncludeUpdate);
-			this.GetTemplate("EntityProviderBase.cst").SetProperty("IncludeSave", IncludeSave);
-			this.GetTemplate("EntityProviderBase.cst").SetProperty("IncludeDelete", IncludeDelete);
-			this.GetTemplate("EntityProviderBase.cst").SetProperty("IncludeManyToMany", IncludeManyToMany);
-			this.GetTemplate("EntityProviderBase.cst").SetProperty("IncludeGetList", IncludeGetList);
-			this.GetTemplate("EntityProviderBase.cst").SetProperty("IncludeGetListByFK", IncludeGetListByFK);
-			this.GetTemplate("EntityProviderBase.cst").SetProperty("IncludeGetListByIX", IncludeGetListByIX);
-			this.GetTemplate("EntityProviderBase.cst").SetProperty("IncludeFind", IncludeFind);
-			this.GetTemplate("EntityProviderBase.cst").SetProperty("IncludeRelations", IncludeRelations);
+			this.GetTemplate("EntityProviderBaseCore.generated.cst").SetProperty("IncludeInsert", IncludeInsert);
+			this.GetTemplate("EntityProviderBaseCore.generated.cst").SetProperty("IncludeUpdate", IncludeUpdate);
+			this.GetTemplate("EntityProviderBaseCore.generated.cst").SetProperty("IncludeSave", IncludeSave);
+			this.GetTemplate("EntityProviderBaseCore.generated.cst").SetProperty("IncludeDelete", IncludeDelete);
+			this.GetTemplate("EntityProviderBaseCore.generated.cst").SetProperty("IncludeManyToMany", IncludeManyToMany);
+			this.GetTemplate("EntityProviderBaseCore.generated.cst").SetProperty("IncludeGetList", IncludeGetList);
+			this.GetTemplate("EntityProviderBaseCore.generated.cst").SetProperty("IncludeGetListByFK", IncludeGetListByFK);
+			this.GetTemplate("EntityProviderBaseCore.generated.cst").SetProperty("IncludeGetListByIX", IncludeGetListByIX);
+			this.GetTemplate("EntityProviderBaseCore.generated.cst").SetProperty("IncludeFind", IncludeFind);
+			this.GetTemplate("EntityProviderBaseCore.generated.cst").SetProperty("IncludeRelations", IncludeRelations);
 			
-			this.GetTemplate("EntityProviderBase.cst").SetProperty("NameSpace", BLLNameSpace);
-			this.GetTemplate("EntityProviderBase.cst").SetProperty("DALNameSpace", DALNameSpace);
+			this.GetTemplate("EntityProviderBaseCore.generated.cst").SetProperty("NameSpace", BLLNameSpace);
+			this.GetTemplate("EntityProviderBaseCore.generated.cst").SetProperty("DALNameSpace", DALNameSpace);
 							
-			this.RenderToFile("EntityProviderBase.cst", rootPathDAL + "\\Bases\\" + GetProviderBaseName(SourceTable.Name) + ".cs", true);
-			AddExecutionTime(dalcFactoryNode);
+			this.RenderToFile("EntityProviderBaseCore.generated.cst", rootPathDAL + "\\Bases\\" + GetPartialClassName(GetProviderBaseName(SourceTable.Name) + "Core") + ".cs", true);
+			AddExecutionTime(dalcFactoryCoreNode);
+			
+			//----------------------------------------------------------------------------------------------------------------------------------------------
+			//	Generating the entity Provider		
+			//----------------------------------------------------------------------------------------------------------------------------------------------
+			if (!File.Exists(rootPathDAL + "\\Bases\\" + GetProviderBaseName(SourceTable.Name) + ".cs"))
+			{
+				XmlElement dalcFactoryNode = AddFileNode(tableNode, GetPartialClassName(GetProviderBaseName(SourceTable.Name)) + ".cs");
+				
+				this.GetTemplate("EntityProviderBase.cst").SetProperty("SourceTable", SourceTable);
+				
+				this.GetTemplate("EntityProviderBase.cst").SetProperty("NameSpace", BLLNameSpace);
+				this.GetTemplate("EntityProviderBase.cst").SetProperty("DALNameSpace", DALNameSpace);
+				
+				this.RenderToFile("EntityProviderBase.cst", rootPathDAL + "\\Bases\\" + GetProviderBaseName(SourceTable.Name) + ".cs", true);
+				
+				AddExecutionTime(dalcFactoryNode);
+			}
 			//----------------------------------------------------------------------------------------------------------------------------------------------
 
 
