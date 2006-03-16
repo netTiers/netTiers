@@ -10,6 +10,7 @@ using System.Collections.Generic;
 using System.Text;
 using System.Text.RegularExpressions;
 using System.Reflection;
+using System.Collections;
 
 namespace <%=NameSpace%>.Validation
 {
@@ -353,7 +354,7 @@ namespace <%=NameSpace%>.Validation
             PropertyInfo p = target.GetType().GetProperty(e.PropertyName);
 
             T value = (T)p.GetValue(target, null);
-            int res = System.Collections.Comparer.DefaultInvariant.Compare(value, compareValue);
+            int res = Comparer.DefaultInvariant.Compare(value, compareValue);
 
             switch (compareType)
             { 
@@ -462,6 +463,159 @@ namespace <%=NameSpace%>.Validation
          public override string ToString()
          {
             return base.ToString() + "!" + _compareValue.ToString();
+         }
+      }
+
+      #endregion
+		
+		#region InRange
+
+      /// <summary>
+      /// Generic rule that determines if an object's property is within a specified range.
+      /// </summary>
+      /// <typeparam name="T">Datatype of the property to validate.  Must implement <see cref="System.IComparable{T}"/>.</typeparam>
+      /// <param name="target">Object containing the data to validate.</param>
+      /// <param name="e"><see cref="ValidationRuleArgs"/> containing the information about the object to be validated.</param>
+      /// <returns>False if the rule is broken; true otherwise.</returns>
+      public static bool InRange<T>(object target, ValidationRuleArgs e)
+      {
+         bool result = true;
+
+         RangeRuleArgs<T> ruleArgs = e as RangeRuleArgs<T>;
+
+         if (ruleArgs != null)
+         {
+            PropertyInfo p = target.GetType().GetProperty(e.PropertyName);
+
+            T value = (T)p.GetValue(target, null);
+
+            result = ruleArgs.Range.Contains(value);
+
+            if (!result)
+            {
+               e.Description = string.Format("{0} must be between {1} and {2}.", ruleArgs.PropertyName, ruleArgs.Range.MinValue, ruleArgs.Range.MaxValue);
+            }
+
+            return result;
+         }
+         else
+         {
+            throw new ArgumentException("Must be of type RangeRuleArgs.", "e");
+         }
+      }
+
+      /// <summary>
+      /// Class used to do a range comparison on a property.
+      /// </summary>
+      /// <typeparam name="T">Datatype of the property being validated.</typeparam>
+      public class Range<T>
+      {
+         private readonly T minValue;
+         private readonly T maxValue;
+
+         /// <summary>
+         /// Creates a new instance of the <see cref="T:Range"/> class.
+         /// </summary>
+         /// <param name="minValue">The minimum value of the property.</param>
+         /// <param name="maxValue">The maximum value of the property.</param>
+         public Range(T minValue, T maxValue)
+         {
+            //Make sure that the user has not reversed the values
+            if (Comparer.DefaultInvariant.Compare(minValue, maxValue) <= 0)
+            {
+               this.minValue = minValue;
+               this.maxValue = maxValue;
+            }
+            else
+            { 
+               //Values are reversed
+               this.minValue = maxValue;
+               this.maxValue = minValue;
+            }
+         }
+
+         /// <summary>
+         /// The minimum value in the range.
+         /// </summary>
+         public T MinValue
+         {
+            get { return this.minValue; }
+         }
+
+         /// <summary>
+         /// The maximum value in the range.
+         /// </summary>
+         public T MaxValue
+         {
+            get { return this.maxValue; }
+         }
+
+         /// <summary>
+         /// Compares the specified value with the <see cref="MinValue"/> and <see cref="MaxValue"/>
+         /// to determine if the value is within the range.
+         /// </summary>
+         /// <param name="value">The value to find within the current range</param>
+         /// <returns>True if the value is within the range (inclusive); False otherwise.</returns>
+         public bool Contains(T value)
+         {
+            return Comparer.DefaultInvariant.Compare(value, MinValue) >= 0 && Comparer.DefaultInvariant.Compare(value, MaxValue) <= 0;
+         }
+
+         /// <summary>
+         /// Returns a string representation of the object.
+         /// </summary>
+         public override string ToString()
+         {
+            return base.ToString() + "!" + minValue.ToString() + "-" + maxValue.ToString();
+         }
+      }
+
+      /// <summary>
+      /// Validation Rule Argument class
+      /// </summary>
+      /// <typeparam name="T">Datatype of the property being validated.</typeparam>
+      public class RangeRuleArgs<T> : ValidationRuleArgs
+      {
+         private Range<T> range;
+
+         /// <summary>
+         /// Creates a new instance of the <see cref="T:RangeRuleArgs"/> class.
+         /// </summary>
+         /// <param name="propertyName">Name of the property to be validated.</param>
+         /// <param name="minValue">The minimum value of the property.</param>
+         /// <param name="maxValue">The maximum value of the property.</param>
+
+         public RangeRuleArgs(string propertyName, T minValue, T maxValue)
+            : base(propertyName)
+         {
+            range = new Range<T>(minValue, maxValue);
+         }
+
+         /// <summary>
+         /// Creates a new instance of the <see cref="T:RangeRuleArgs"/> class.
+         /// </summary>
+         /// <param name="propertyName">Name of the property to be validated.</param>
+         /// <param name="range"><see cref="T:Range"/> object containing the range of valid values for the property.</param>
+         public RangeRuleArgs(string propertyName, Range<T> range)
+            : base(propertyName)
+         {
+            this.range = range;
+         }
+
+         /// <summary>
+         /// Returns the <see cref="T:Range{T}"/> object associated with this instance.
+         /// </summary>
+         public Range<T> Range
+         {
+            get { return this.range; }
+         }
+
+         /// <summary>
+         /// Returns a string representation of the object.
+         /// </summary>
+         public override string ToString()
+         {
+            return base.ToString() + "!" + range.ToString();
          }
       }
 
