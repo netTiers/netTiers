@@ -8,12 +8,13 @@
 using System;
 using System.Collections.Generic;
 using System.Text;
+using System.Text.RegularExpressions;
 using System.Reflection;
 
 namespace <%=NameSpace%>.Validation
 {
 	/// <summary>
-   /// Static class that contains common validation rules.  Each rule conforms to the <see cref="ValidationRuleArgs"/> delegate.
+	  /// Static class that contains common validation rules.  Each rule conforms to the <see cref="ValidationRuleArgs"/> delegate.
    /// </summary>
    public static class CommonRules
    {
@@ -173,6 +174,98 @@ namespace <%=NameSpace%>.Validation
          public override string ToString()
          {
             return base.ToString() + "!" + _maxLength.ToString();
+         }
+      }
+
+      #endregion
+      
+      #region RegexIsMatch
+
+      /// <summary>
+      /// Rule ensuring a String value is matching
+      /// a specified regular expression.
+      /// </summary>
+      /// <param name="target">Object containing the data to validate.</param>
+      /// <param name="e"><see cref="ValidationRuleArgs"/> containing the information about the object to be validated, must be of type RegexRuleArgs</param>
+      /// <returns>False if the rule is broken; true otherwise.</returns>
+      /// <remarks>
+      /// This implementation uses late binding, and will only work
+      /// against String property values.
+      /// </remarks>
+      public static bool RegexIsMatch(object target, ValidationRuleArgs e)
+      {
+         RegexRuleArgs args = e as RegexRuleArgs;
+         if (args != null)
+         {
+            string expression = args.Expression;
+
+            PropertyInfo p = target.GetType().GetProperty(e.PropertyName);
+
+            if (p != null)
+            {
+               if (p.PropertyType == typeof(string))
+               {
+                  string value = (string)p.GetValue(target, null);
+
+                  if (!Regex.IsMatch(value, expression))
+                  {
+                     e.Description = String.Format(
+                       "{0} do not match the regular expression {1}",
+                       e.PropertyName, expression);
+                     return false;
+                  }
+                  return true;
+               }
+               else 
+               {
+                  throw new ArgumentException(string.Format("Property \"{0}\" is not of type String.", e.PropertyName));
+               }
+            }
+            else
+            { 
+               throw new ArgumentException(string.Format("Property \"{0}\" not found on object \"{1}\"",e.PropertyName,target.GetType().ToString()));
+            }
+         }
+         else
+         {
+            throw new ArgumentException("Invalid ValidationRuleArgs.  e must be of type RegexRuleArgs.");
+         }
+
+      }
+
+      /// <summary>
+      /// Class used with the <see cref="RegexIsMatch"/>.
+      /// </summary>
+      public class RegexRuleArgs : ValidationRuleArgs
+      {
+         private string _expression;
+
+         /// <summary>
+         /// The Regular expression that the string have to match.
+         /// </summary>
+         public string Expression
+         {
+            get { return _expression; }
+         }
+
+         /// <summary>
+         /// Initializes a new instance of the RegexRuleArgs class.
+         /// </summary>
+         /// <param name="propertyName">Property to validate</param>
+         /// <param name="expression">The Regular expression that the property have to match</param>
+         public RegexRuleArgs(
+           string propertyName, string expression)
+            : base(propertyName)
+         {
+            _expression = expression;
+         }
+
+         /// <summary>
+         /// Return a string representation of the object.
+         /// </summary>
+         public override string ToString()
+         {
+            return base.ToString() + "!" + _expression;
          }
       }
 
