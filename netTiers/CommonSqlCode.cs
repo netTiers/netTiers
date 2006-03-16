@@ -1,8 +1,8 @@
 /*
  * $Id: CommonSqlCode.cs,v 1.6 2006/03/04 04:15:41 jcteague Exp $
- * Last modified by $Author: jcteague $
- * Last modified at $Date: 2006/03/04 04:15:41 $
- * $Revision: 1.6 $
+ * Last modified by $Author$
+ * Last modified at $Date$
+ * $Revision$
  */
  
 /*
