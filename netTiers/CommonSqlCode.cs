@@ -1412,6 +1412,73 @@ namespace MoM.Templates
 		}
 
 		#endregion
+		#region "Stored procedures output transformations"
+		
+		/// <summary>
+		/// Transform the list of sql parameters to a list of method parameters.
+		/// </summary>
+		public string TransformStoredProcedureOutputsToMethod(ParameterSchemaCollection outputParameters)
+		{
+			return TransformStoredProcedureOutputsToMethod(false, outputParameters);
+		}
+		
+		/// <summary>
+		/// Transform the list of sql parameters to a list of method parameters.
+		/// </summary>
+		public string TransformStoredProcedureOutputsToMethod(bool startWithComa, ParameterSchemaCollection outputParameters)
+		{
+			StringBuilder temp = new StringBuilder();
+			for(int i=0; i<outputParameters.Count; i++)
+			{
+				if ((i>0) || startWithComa)
+					temp.Append(", ");
+
+				temp.AppendFormat("ref {0} {1}", GetCSType(outputParameters[i]), GetPrivateName(outputParameters[i].Name.Substring(1)));
+			}
+			
+			return temp.ToString();
+		}
+		
+		/// <summary>
+		/// Transform the list of sql parameters to a list of ExecuteXXXXX parameters.
+		/// </summary>
+		public string TransformStoredProcedureOutputsToDataAccess(ParameterSchemaCollection outputParameters)
+		{
+			return TransformStoredProcedureOutputsToDataAccess(false, outputParameters);
+		}
+		
+		/// <summary>
+		/// Transform the list of sql parameters to a list of ExecuteXXXXX parameters.
+		/// </summary>
+		public string TransformStoredProcedureOutputsToDataAccess(bool alwaysStartWithaComa, ParameterSchemaCollection outputParameters)
+		{
+			StringBuilder temp = new StringBuilder();
+			for(int i=0; i<outputParameters.Count; i++)
+			{
+				if ( (i>0) || alwaysStartWithaComa )
+					temp.Append(", ");
+
+				temp.AppendFormat("ref {0}", GetPrivateName(outputParameters[i].Name.Substring(1)) );
+			}
+			
+			return temp.ToString();
+		}
+						
+		/// <summary>
+		/// Transform the list of sql parameters to a list of comment param for a method
+		/// </summary>
+		public string TransformStoredProcedureOutputsToMethodComments(ParameterSchemaCollection outputParameters)
+		{
+			StringBuilder temp = new StringBuilder();
+			for(int i=0; i<outputParameters.Count; i++)
+			{
+				temp.AppendFormat("{2}\t/// <param name=\"{0}\"> A <c>{1}</c> instance.</param>", GetPrivateName(outputParameters[i].Name.Substring(1)), GetCSType(outputParameters[i]).Replace("<", "&lt;").Replace(">", "&gt;"), Environment.NewLine);
+			}
+			
+			return temp.ToString();
+		}
+
+		#endregion
 		
 		/// <summary>
 		/// Returns a string that reprenst the given columns formated as method parameters definitions. (ex: string param1, int param2)
