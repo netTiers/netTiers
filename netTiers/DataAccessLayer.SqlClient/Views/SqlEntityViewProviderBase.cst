@@ -10,6 +10,7 @@
 
 <%@ Import Namespace="SchemaExplorer" %>
 <%@ Import Namespace="System.Collections" %>
+<%@ Import Namespace="System.Text" %>
 
 <%@ Property Name="SourceView" Type="SchemaExplorer.ViewSchema" Category="Connection" Description="Table that the data access class should be based on." %>
 
@@ -230,35 +231,45 @@ public abstract class Sql<%=providerBaseName%> : <%=providerBaseName%>
 		if (command.Name.StartsWith(prefix))
 		{
 			string methodName = command.Name.Substring(prefix.Length);
-			string returnType = "void";
-						
-			if (IsMatching(command, SourceView))
-			{
-				returnType = collectionClassName;
-			}
-			else	// Return a basic DataSet
-			{
-				returnType = "DataSet";
-			}
+			string returnType = CustomMethodReturnType(command,collectionClassName,SourceView);
 %>
 	#region "<%=command.Name%>"
 	
 	/// <summary>
 	///	This method wrap the '<%=command.Name%>' stored procedure. 
-	/// </summary><%=TransformStoredProcedureInputsToMethodComments(command.InputParameters)%>
+	/// </summary><%=TransformStoredProcedureInputsToMethodComments(command.InputParameters)+ TransformStoredProcedureOutputsToMethodComments(command.AllOutputParameters)%>
 	/// <param name="start">Row number at which to start reading.</param>
 	/// <param name="pageLength">Number of rows to return.</param>
 	/// <param name="transactionManager"><see cref="TransactionManager"/> object</param>
 	/// <remark>This method is generate from a stored procedure.</remark>
 	/// <returns>A <see cref="<%=returnType%>"/> instance.</returns>
-	public override <%=returnType%> <%=methodName%>(TransactionManager transactionManager, int start, int pageLength <%=TransformStoredProcedureInputsToMethod(true, command.InputParameters)%>)
+	public override <%=returnType%> <%=methodName%>(TransactionManager transactionManager <%if(returnType == collectionClassName){%>, int start, int pageLength <%}%>  <%=TransformStoredProcedureInputsToMethod(true, command.InputParameters)+ TransformStoredProcedureOutputsToMethod(true, command.AllOutputParameters)%>)
 	{
 		Database database = transactionManager != null ? transactionManager.Database : DatabaseFactory.CreateDatabase(this.sqlDataProviderData.DatabaseInstanceName);
 		DBCommandWrapper commandWrapper = database.GetStoredProcCommandWrapper("<%=command.Name%>");
 		
 		<% foreach(ParameterSchema col in command.InputParameters)	{ %>
-			commandWrapper.AddInParameter("@<%=GetPropertyName(col.Name)%>", DbType.<%=col.DataType.ToString()%>,  <% if (col.AllowDBNull) { %>Utility.DefaultToDBNull(<%=GetPrivateName(col.Name)%>, DbType.<%= col.DataType.ToString() %>) <%} else {%><%=GetPrivateName(col.Name)%> <%}%>);
+		commandWrapper.AddInParameter("@<%=GetPropertyName(col.Name)%>", DbType.<%=col.DataType.ToString()%>,  <% if (col.AllowDBNull) { %>Utility.DefaultToDBNull(<%=GetPrivateName(col.Name)%>, DbType.<%= col.DataType.ToString() %>) <%} else {%><%=GetPrivateName(col.Name)%> <%}%>);
 		<%}%>
+		
+		<% foreach(ParameterSchema col in command.AllOutputParameters)	{ %>
+		commandWrapper.AddOutParameter("@<%=GetPropertyName(col.Name)%>",DbType.<%=col.DataType.ToString()%>,<%= col.Size.ToString() %>);
+				
+		<%}%>
+		
+		<%
+			//Set up the output params
+			StringBuilder outputValues = new StringBuilder();
+			
+			foreach(ParameterSchema outParam in command.AllOutputParameters)
+			{
+				outputValues.AppendFormat("\t\t\t{0} =  ({1})commandWrapper.GetParameterValue(\"@{2}\");\n",
+				GetPrivateName(outParam.Name), 
+				GetCSType(outParam), 
+				GetPropertyName(outParam.Name)); 
+	
+			}
+		%>
 
 		try
 		{
@@ -275,7 +286,7 @@ public abstract class Sql<%=providerBaseName%> : <%=providerBaseName%>
 			{
 				ds = database.ExecuteDataSet(commandWrapper);
 			}
-			
+<%=outputValues.ToString()%>			
 			return ds;
 			
 		<% } else if (returnType == "void") { %>
@@ -288,7 +299,7 @@ public abstract class Sql<%=providerBaseName%> : <%=providerBaseName%>
 			{
 				database.ExecuteNonQuery(commandWrapper);
 			}
-			
+<%=outputValues.ToString()%>			
 			return;
 			
 		<% } else if 	(returnType == collectionClassName) { %>
@@ -309,11 +320,13 @@ public abstract class Sql<%=providerBaseName%> : <%=providerBaseName%>
 				<%=collectionClassName%> rows = new <%=collectionClassName%>();
 				Fill(reader, rows, start, pageLength);
 				reader.Close();
+<%=outputValues.ToString()%>
 				return rows;
 				<%} else if (returnType != "void"){%>
 				reader.Read();
 				<%=returnType%> tmp = (<%=returnType%>)reader[0];
 				reader.Close();
+<%=outputValues.ToString()%>				
 				return tmp;
 			<% } %>		
 		<% } %>

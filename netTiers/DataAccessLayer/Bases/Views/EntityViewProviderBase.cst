@@ -221,17 +221,7 @@ namespace <%=DALNameSpace%>.Bases
 			}
 			
 			string methodName = command.Name.Substring(prefix.Length);
-			string returnType = string.Empty;
-			
-			// if the sp return row of the table
-			if (IsMatching(command, SourceView))
-			{
-				returnType = collectionClassName;
-			}
-			else	// Return a basic DataSet
-			{
-				returnType = "DataSet";
-			}
+			string returnType = CustomMethodReturnType(command,collectionClassName,SourceView);
 			
 	%>
 		
@@ -239,46 +229,59 @@ namespace <%=DALNameSpace%>.Bases
 		
 		/// <summary>
 		///	This method wrap the '<%=command.Name%>' stored procedure. 
-		/// </summary><%=TransformStoredProcedureInputsToMethodComments(command.InputParameters)%>
+		/// </summary><%=TransformStoredProcedureInputsToMethodComments(command.InputParameters)+ TransformStoredProcedureOutputsToMethodComments(command.AllOutputParameters)%>
 		/// <remark>This method is generate from a stored procedure.</remark>
 		/// <returns>A <see cref="<%=returnType%>"/> instance.</returns>
-		public <%=returnType%> <%=methodName%>(<%=TransformStoredProcedureInputsToMethod(false, command.InputParameters)%>)
+		public <%=returnType%> <%=methodName%>(<%=TransformStoredProcedureInputsToMethod(false, command.InputParameters)%>+ TransformStoredProcedureOutputsToMethodComments(command.AllOutputParameters))
 		{
-			return <%=methodName%>(null, 0, int.MaxValue <%=TransformStoredProcedureInputsToDataAccess(true, command.InputParameters)%>);
+			<% if(returnType != "void")%>return <%=methodName%>(null<% if(returnType == collectionClassName){%>, 0, int.MaxValue <%}%> <%=TransformStoredProcedureInputsToDataAccess(true, command.InputParameters)+ TransformStoredProcedureOutputsToDataAccess(true, command.AllOutputParameters)%>);
 		}
-		
+		<%
+		   //this function is not needed if returnType is void
+		if(returnType == collectionClassName)
+		{
+		%>
 		/// <summary>
 		///	This method wrap the '<%=command.Name%>' stored procedure. 
-		/// </summary><%=TransformStoredProcedureInputsToMethodComments(command.InputParameters)%>
+		/// </summary><%=TransformStoredProcedureInputsToMethodComments(command.InputParameters)+ TransformStoredProcedureOutputsToMethodComments(command.AllOutputParameters)%>
 		/// <param name="start">Row number at which to start reading.</param>
 		/// <param name="pageLength">Number of rows to return.</param>
 		/// <remark>This method is generate from a stored procedure.</remark>
 		/// <returns>A <see cref="<%=returnType%>"/> instance.</returns>
-		public <%=returnType%> <%=methodName%>(int start, int pageLength<%=TransformStoredProcedureInputsToMethod(true, command.InputParameters)%>)
+		public <%=returnType%> <%=methodName%>(int start, int pageLength<%=TransformStoredProcedureInputsToMethod(true, command.InputParameters)+ TransformStoredProcedureOutputsToMethod(command.InputParameters.Count > 0, command.AllOutputParameters)%>)
 		{
-			return <%=methodName%>(null, start, pageLength <%=TransformStoredProcedureInputsToDataAccess(true, command.InputParameters)%>);
+			<% if(returnType != "void")%>return <%=methodName%>(null<% if(returnType == collectionClassName){%>, 0, int.MaxValue <%}%> <%=TransformStoredProcedureInputsToDataAccess(true, command.InputParameters)+ TransformStoredProcedureOutputsToDataAccess(true, command.AllOutputParameters)+ TransformStoredProcedureOutputsToDataAccess(true, command.AllOutputParameters)%>);
 		}
-				
+		<%
+		}
+		%>
+		<%
+		   //this function is not needed if returnType is void
+		if(returnType == collectionClassName)
+		{
+		%>
 		/// <summary>
 		///	This method wrap the '<%=command.Name%>' stored procedure. 
-		/// </summary><%=TransformStoredProcedureInputsToMethodComments(command.InputParameters)%>
+		/// </summary><%=TransformStoredProcedureInputsToMethodComments(command.InputParameters)+ TransformStoredProcedureOutputsToMethodComments(command.AllOutputParameters)%>
 		/// <remark>This method is generate from a stored procedure.</remark><% if (returnType != "void") {%>
 		/// <param name="transactionManager"><see cref="TransactionManager"/> object</param>
 		/// <returns>A <see cref="<%=returnType%>"/> instance.</returns><%}%>
-		public <%=returnType%> <%=methodName%>(TransactionManager transactionManager<%=TransformStoredProcedureInputsToMethod(true, command.InputParameters)%>)
+		public <%=returnType%> <%=methodName%>(TransactionManager transactionManager<%=TransformStoredProcedureInputsToMethod(true, command.InputParameters)+ TransformStoredProcedureOutputsToMethod(command.InputParameters.Count > 0, command.AllOutputParameters)%>)
 		{
-			return <%=methodName%>(0, int.MaxValue <%=TransformStoredProcedureInputsToDataAccess(true, command.InputParameters)%>);
+			<% if(returnType != "void")%>return <%=methodName%>(<% if(returnType == collectionClassName){%> 0, int.MaxValue <%}%> <%=TransformStoredProcedureInputsToDataAccess(true, command.InputParameters)+ TransformStoredProcedureOutputsToDataAccess(true, command.AllOutputParameters)%>);
 		}
-		
+		<%
+		}
+		%>
 		/// <summary>
 		///	This method wrap the '<%=command.Name%>' stored procedure. 
-		/// </summary><%=TransformStoredProcedureInputsToMethodComments(command.InputParameters)%>
+		/// </summary><%=TransformStoredProcedureInputsToMethodComments(command.InputParameters)+ TransformStoredProcedureOutputsToMethodComments(command.AllOutputParameters)%>
 		/// <param name="start">Row number at which to start reading.</param>
 		/// <param name="pageLength">Number of rows to return.</param>
 		/// <param name="transactionManager"><see cref="TransactionManager"/> object</param>
 		/// <remark>This method is generate from a stored procedure.</remark>
 		/// <returns>A <see cref="<%=returnType%>"/> instance.</returns>
-		public abstract <%=returnType%> <%=methodName%>(TransactionManager transactionManager, int start, int pageLength <%=TransformStoredProcedureInputsToMethod(true, command.InputParameters)%>);
+		public abstract <%=returnType%> <%=methodName%>(TransactionManager transactionManager<% if(returnType == collectionClassName){%>, 0, int.MaxValue <%}%> <%=TransformStoredProcedureInputsToMethod(true, command.InputParameters)+ TransformStoredProcedureOutputsToMethod(command.InputParameters.Count > 0, command.AllOutputParameters)%>);
 		
 		#endregion
 <%
