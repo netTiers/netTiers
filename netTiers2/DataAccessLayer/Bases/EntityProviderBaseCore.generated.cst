@@ -93,7 +93,7 @@ namespace <%=DALNameSpace%>.Bases
 	{		
 		
 		<% if(IncludeManyToMany) { %>
-		#region "Get from  Many To Many Relationship Functions"
+		#region Get from Many To Many Relationship Functions
 		<%
 		TableSchema primaryTable = SourceTable;
 		
@@ -185,11 +185,10 @@ namespace <%=DALNameSpace%>.Bases
 		 	}// end if(IsJunctionTable(junctionTableKey.ForeignKeyTable)) %>
 		<%}//end foreach pkey %>
 		#endregion	
+		
 		<%} //endif(IncludeManyToMany) %>
-		
-		
 		<% if (IncludeDelete && SourceTable.PrimaryKey != null) {%>
-		#region "Delete Functions"
+		#region Delete Functions
 			
 		/// <summary>
 		/// 	Deletes rows from the DataSource.
@@ -227,7 +226,10 @@ namespace <%=DALNameSpace%>.Bases
 		<% for (int i = 0; i < SourceTable.PrimaryKey.MemberColumns.Count; i++) { %>
 		/// <param name="<%= GetPrivateName(SourceTable.PrimaryKey.MemberColumns[i].Name)%>"><%=GetColumnXmlComment(SourceTable.PrimaryKey.MemberColumns[i],2)%>. Primary Key.</param>
 		<% } %>
-		<% if (RowVersion != null){ %>/// <param name="<%=GetPrivateName(RowVersion.Name)%>">The timestamp field used for concurrency check.</param><% ;Response.Write(Environment.NewLine);} %>/// <remarks>Deletes based on primary key(s).</remarks>
+		<% if (RowVersion != null){ %>
+		/// <param name="<%=GetPrivateName(RowVersion.Name)%>">The timestamp field used for concurrency check.</param>
+		<% } %>
+		/// <remarks>Deletes based on primary key(s).</remarks>
 		/// <returns>Returns true if operation suceeded.</returns>
 		public bool Delete(<%= GetFunctionHeaderParameters(SourceTable.PrimaryKey.MemberColumns) %><% if(RowVersion != null) {Response.Write(", byte[] " + GetPrivateName(RowVersion.Name));}%>)
 		{
@@ -265,22 +267,26 @@ namespace <%=DALNameSpace%>.Bases
 		{
 			return Delete(transactionManager, <% for (int i = 0; i < SourceTable.PrimaryKey.MemberColumns.Count; i++) { %>entity.<%if(!IsIdentityColumn(SourceTable.PrimaryKey.MemberColumns[i]) && !IsComputed(SourceTable.PrimaryKey.MemberColumns[i])) {%>Original<%}%><%= GetPropertyName(SourceTable.PrimaryKey.MemberColumns[i].Name)%><% if (i < SourceTable.PrimaryKey.MemberColumns.Count - 1) { %>, <% } %><% } %><% if(RowVersion != null) {Response.Write(", entity." + GetPropertyName(RowVersion.Name));}%>);	
 		}		
-						
+		
 		/// <summary>
 		/// 	Deletes a row from the DataSource.
 		/// </summary>
 		/// <param name="transactionManager"><see cref="TransactionManager"/> object</param>
-<% for (int i = 0; i < SourceTable.PrimaryKey.MemberColumns.Count; i++) { %>
+		<% for (int i = 0; i < SourceTable.PrimaryKey.MemberColumns.Count; i++) { %>
 		/// <param name="<%= GetPrivateName(SourceTable.PrimaryKey.MemberColumns[i].Name)%>"><%=GetColumnXmlComment(SourceTable.PrimaryKey.MemberColumns[i],2)%>. Primary Key.</param>
-<% } %><% if (RowVersion != null){ %>/// <param name="<%=GetPrivateName(RowVersion.Name)%>">The timestamp field used for concurrency check.</param><% } %>/// <remarks>Deletes based on primary key(s).</remarks>
+		<% } %>
+		<% if (RowVersion != null){ %>
+		/// <param name="<%=GetPrivateName(RowVersion.Name)%>">The timestamp field used for concurrency check.</param>
+		<% } %>
+		/// <remarks>Deletes based on primary key(s).</remarks>
 		/// <returns>Returns true if operation suceeded.</returns>
 		public abstract bool Delete(TransactionManager transactionManager, <%= GetFunctionHeaderParameters(SourceTable.PrimaryKey.MemberColumns) %><% if(RowVersion != null) {Response.Write(", byte[] " + GetPrivateName(RowVersion.Name));}%>);
 		
 		#endregion
-		<% } //endif(includedelete) %>
 		
+		<% } //endif(includedelete) %>
 		<% if (IncludeFind) { %>
-		#region "Find Functions"
+		#region Find Functions
 		
 		/// <summary>
 		/// 	Returns rows meeting the whereclause condition from the DataSource.
@@ -330,10 +336,10 @@ namespace <%=DALNameSpace%>.Bases
 		public abstract <%=collectionClassName%> Find(TransactionManager transactionManager, string whereClause, int start, int pageLength);
 		
 		#endregion "Find Functions"
+		
 		<% } //endif (IncludeFind) %>
-			
 		<% if (IncludeGetList) { %>
-		#region "GetList Functions"
+		#region GetList Functions
 		
 		/// <summary>
 		/// 	Gets All rows from the DataSource.
@@ -447,7 +453,6 @@ namespace <%=DALNameSpace%>.Bases
 		/// <returns>Returns a TList of <%=className%> objects.</returns>
 		public abstract <%=collectionClassName%> GetPaged(TransactionManager transactionManager, string whereClause, string orderBy, int start, int pageLength, out int count);
 		
-		
 		/// <summary>
         /// Gets a page of rows from the DataSource.
         /// </summary>
@@ -464,9 +469,8 @@ namespace <%=DALNameSpace%>.Bases
 		#endregion
 			
 		<% } //endif (IncludeGetList) %>
-			
 		<% if (IncludeGetListByFK) { %>
-		#region "Get By Foreign Key Functions"
+		#region Get By Foreign Key Functions
 		<%
 			for (int j=0; j < fkeys.Count;j++)
 			{
@@ -543,11 +547,10 @@ namespace <%=DALNameSpace%>.Bases
 		
 	<% 		}//endfor %>
 		#endregion
+
 	<% 	} //endif (IncludeGetListByFK) %>
-		
-		
 	<% if (IncludeGetListByIX) { %>	
-		#region "Get By Index Functions"
+		#region Get By Index Functions
 		<%	
 			for (int j=0; j < indexes.Count;j++)
 			{
@@ -631,11 +634,10 @@ namespace <%=DALNameSpace%>.Bases
 						
 	<%		}//endfor %>
 		#endregion "Get By Index Functions"
+	
 	<%	}//end if includegetlistbyix %>
-	
-	
 	<% if (IncludeInsert) { %>
-		#region "Insert Functions"
+		#region Insert Functions
 		
 		/// <summary>
 		/// 	Inserts a <see cref="<%=className%>"/> object into the datasource.
@@ -736,11 +738,10 @@ namespace <%=DALNameSpace%>.Bases
 		public abstract bool Insert(TransactionManager transactionManager, <%=className%> entity);
 		
 		#endregion
+
 	<%	}//endif (IncludeInsert) %>
-	
-	
 	<% if (IncludeUpdate) { %>	
-		#region "Update Functions"
+		#region Update Functions
 		
 		/// <summary>
 		/// 	Update existing rows in the datasource.
@@ -818,11 +819,10 @@ namespace <%=DALNameSpace%>.Bases
 		public abstract bool Update(TransactionManager transactionManager, <%=className%> entity);
 		
 		#endregion
+
 	<%	}//endif (IncludeUpdate) %>
-	
-	
 	<% if (IncludeSave){ %>
-		#region "Save Functions"
+		#region Save Functions
 		
 		/// <summary>
 		/// 	Save rows changes in the datasource (insert, update ,delete).
@@ -920,8 +920,8 @@ namespace <%=DALNameSpace%>.Bases
 		}
 		
 		#endregion
+
 	<%} // endif (IncludeSave) %>
-	
 	<% if (IncludeCustoms) { %>
 		#region Custom Methods
 		
@@ -1004,9 +1004,9 @@ namespace <%=DALNameSpace%>.Bases
 	%>
 		
 		#endregion
+
 	<% }//endif (IncludeCustoms) %>
-	
-		#region "Helper Functions"	
+		#region Helper Functions	
 		/*
 		/// <summary>
 		/// Fill an <%=collectionClassNameForComment%> from the first table in a DataSet
@@ -1027,7 +1027,6 @@ namespace <%=DALNameSpace%>.Bases
 				return new <%=collectionClassName%>();
 			}	
 		}
-		
 		
 		/// <summary>
 		/// Fill an <%=collectionClassNameForComment%> From a DataTable
@@ -1100,7 +1099,6 @@ namespace <%=DALNameSpace%>.Bases
 			return rows;
 		}
 		
-		
 		/// <summary>
 		/// Refreshes the <see cref="<%=className%>"/> object from the <see cref="IDataReader"/>.
 		/// </summary>
@@ -1119,7 +1117,6 @@ namespace <%=DALNameSpace%>.Bases
 			entity.AcceptChanges();
 		}
 		
-		
 		/// <summary>
 		/// Refreshes the <see cref="<%=className%>"/> object from the <see cref="DataSet"/>.
 		/// </summary>
@@ -1137,7 +1134,6 @@ namespace <%=DALNameSpace%>.Bases
 			<%} //end for each column %>
 			entity.AcceptChanges();
 		}
-				
 		
 		<%
 		if (IncludeRelations)
@@ -1145,6 +1141,7 @@ namespace <%=DALNameSpace%>.Bases
 		// Going to require knowing the foreign key indexes in order to do deep loading.
 		if (IncludeGetListByFK) { %>  
 		#region DeepLoad
+		
 		#region Deep Load By Entity
 		/// <summary>
 		/// Deep Load the IEntity object with all of the child 
@@ -1356,10 +1353,12 @@ namespace <%=DALNameSpace%>.Bases
 			}		
 			return;
 		}
-		#endregion
-		#endregion 
-		<%	}//endif %>
 		
+		#endregion
+		
+		#endregion 
+		
+		<%	}//endif %>
 		<%  if (IncludeSave && IncludeGetListByFK) { %>
 		#region DeepSave
 		
