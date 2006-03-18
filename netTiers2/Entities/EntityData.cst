@@ -102,21 +102,60 @@ if(IncludeRelations)
 /// Many To Many Relationship Class Template Property String
 ///</summary>
 protected static string MANY_TO_MANY = @"
-		public {1} {0} = new {1}();
+		private {1} {2};
+      public {1} {0}
+      {{
+         get
+         {{
+            if ({2} == null)
+            {{
+               {2} = new {1}();
+            }}
+
+            return {2};
+         }}
+         set {{ {2} = value; }}
+      }}
 ";
 
 ///<summary>
 /// One to One Relationship Class Template Property String
 ///</summary>		
 protected static string ONE_TO_ONE = @"
-		public {0} {0} = new {0}();
+		private {0} {1};
+      public {0} {0}
+      {{
+         get
+         {{
+            if ({1} == null)
+            {{
+               {1} = new {0}();
+            }}
+
+            return {1};
+         }}
+         set {{ {1} = value; }}
+      }}
 ";
 		
 ///<summary>
 /// One To Many Relationship Class Template Property String
 ///</summary>		
 protected static string ONE_TO_MANY = @"
-		public {3} {0} = new {3}();
+		private {3} {1};
+      public {3} {0}
+      {{
+         get
+         {{
+            if ({1} == null)
+            {{
+               {1} = new {3}();
+            }}
+
+            return {1};
+         }}
+         set {{ {1} = value; }}
+      }}
 ";
 		
 ///<summary>
@@ -145,7 +184,7 @@ private void WriteRelationshipPropertyString()
 			case (int)RelationshipType.ManyToOne:
 			    object[] oneToManyParams = {
 						GetCollectionPropertyName(item.SecondaryTable)
-						, item.PkIdxName
+						, GetPrivateName(item.SecondaryTable)
 						, GetClassName(item.SecondaryTable)
 						, GetCollectionClassName(item.SecondaryTable)						
 				};
@@ -158,7 +197,7 @@ private void WriteRelationshipPropertyString()
 						//GetCollectionClassName(item.CleanName) + "_From_" + GetClassName(item.JunctionTable), 
 						item.CollectionName,
 						GetCollectionClassName(item.SecondaryTable),
-						item.JunctionTable
+						GetPrivateName(item.SecondaryTable)
 				};
 				item.PropertyString = string.Format(MANY_TO_MANY, manyToManyParams);
 				break;
