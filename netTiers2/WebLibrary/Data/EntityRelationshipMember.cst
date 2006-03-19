@@ -1,0 +1,703 @@
+<%--
+ * $Id: EntityRelationshipMember.cst,v 1.0 2006/03/19 10:00:00 bdiaz Exp $
+ * Last modified by $Author: bdiaz $
+ * Last modified at $Date: 2006-03-19 10:00:00 -0600 (Sun, 19 Mar 2006) $
+ * $Revision: 1 $
+--%>
+<%@ CodeTemplate Language="C#" TargetLanguage="Text" Src="" Inherits="" Debug="False" Description="Generates the specified class." %>
+
+<%@ Property Name="BLLNameSpace" Optional="False" Type="System.String" Category="Style" Description="BLL Namespace." %>
+<%@ Property Name="DALNameSpace" Optional="False" Type="System.String" Category="Style" Description="DAL Namespace." %>
+<%@ Property Name="WebNameSpace" Optional="False" Type="System.String" Category="Style" Description="Web Namespace." %>
+
+<%@ Assembly Name="System.Data" %>
+<%@ Import Namespace="System.Data" %>
+#region Imports...
+using System;
+using System.Data;
+using System.Collections;
+using System.Collections.Generic;
+using System.Configuration;
+using System.Web;
+using System.Web.Security;
+using System.Web.UI;
+using System.Web.UI.WebControls;
+using System.Web.UI.WebControls.WebParts;
+using System.Web.UI.HtmlControls;
+using <%= BLLNameSpace %>;
+using <%= WebNameSpace %>.UI;
+#endregion
+
+namespace <%= WebNameSpace %>.Data
+{
+	/// <summary>
+	/// Summary description for EntityRelationshipMember
+	/// </summary>
+	[ParseChildren(true), PersistChildren(false)]
+	public class EntityRelationshipMember : DataBoundControl
+	{
+		#region Declarations
+		private String _entityTypeName;
+		private String _entityKeyName;
+		private String _foreignKeyName;
+		private String _referenceProperty;
+		private String _linkProperty;
+		private String _listControlID;
+		private String _gridControlID;
+		private String _viewControlID;
+
+		private IList _inserts;
+		private IList _propertyMappings;
+		private ListControl _listControl;
+		private GridView _gridControl;
+		private Control _viewControl;
+		private Type _entityType;
+		private bool _enableDeepLoad;
+		#endregion
+
+		#region Constructors
+		public EntityRelationshipMember()
+		{
+		}
+		#endregion
+
+		#region Properties
+
+		[Bindable]
+		public String EntityTypeName
+		{
+			get { return _entityTypeName; }
+			set { _entityTypeName = value; }
+		}
+
+		[Bindable]
+		public Type EntityType
+		{
+			get
+			{
+				if ( _entityType == null )
+				{
+					_entityType = EntityUtil.GetType(EntityTypeName);
+				}
+
+				return _entityType;
+			}
+			set { _entityType = value; }
+		}
+
+		[Bindable]
+		public String EntityKeyName
+		{
+			get { return _entityKeyName; }
+			set { _entityKeyName = value; }
+		}
+
+		[Bindable]
+		public int EntityIndex
+		{
+			get { return (int) (ViewState["EntityIndex"] ?? 0); }
+			set { ViewState["EntityIndex"] = value; }
+		}
+
+		[Bindable]
+		public String ForeignKeyName
+		{
+			get { return _foreignKeyName; }
+			set { _foreignKeyName = value; }
+		}
+
+		[Bindable]
+		public String ReferenceProperty
+		{
+			get { return _referenceProperty; }
+			set { _referenceProperty = value; }
+		}
+
+		[Bindable]
+		public String LinkProperty
+		{
+			get { return _linkProperty; }
+			set { _linkProperty = value; }
+		}
+
+		[Bindable]
+		public String ListControlID
+		{
+			get { return _listControlID; }
+			set { _listControlID = value; }
+		}
+
+		[Bindable]
+		public ListControl ListControl
+		{
+			get
+			{
+				if ( _listControl == null && !String.IsNullOrEmpty(ListControlID) )
+				{
+					_listControl = GetControl(ListControlID) as ListControl;
+				}
+
+				return _listControl;
+			}
+			set
+			{
+				_listControl = value;
+			}
+		}
+
+		[Bindable]
+		public String GridControlID
+		{
+			get { return _gridControlID; }
+			set { _gridControlID = value; }
+		}
+
+		[Bindable]
+		public GridView GridControl
+		{
+			get
+			{
+				if ( _gridControl == null && !String.IsNullOrEmpty(GridControlID) )
+				{
+					_gridControl = GetControl(GridControlID) as GridView;
+				}
+
+				return _gridControl;
+			}
+			set
+			{
+				_gridControl = value;
+			}
+		}
+
+		[Bindable]
+		public String ViewControlID
+		{
+			get { return _viewControlID; }
+			set { _viewControlID = value; }
+		}
+
+		[Bindable]
+		public Control ViewControl
+		{
+			get
+			{
+				if ( _viewControl == null && !String.IsNullOrEmpty(ViewControlID) )
+				{
+					_viewControl = GetControl(ViewControlID);
+				}
+
+				return _viewControl;
+			}
+			set
+			{
+				_viewControl = value;
+			}
+		}
+
+		[Bindable]
+		[PersistenceMode(PersistenceMode.InnerProperty)]
+		public IList PropertyMappings
+		{
+			get
+			{
+				if ( _propertyMappings == null )
+				{
+					_propertyMappings = new ArrayList();
+				}
+
+				return _propertyMappings; 
+			}
+		}
+
+		/// <summary>
+		/// Gets a collection of business objects to be inserted
+		/// after the primary business object is inserted.
+		/// </summary>
+		public IList Inserts
+		{
+			get
+			{
+				if ( _inserts == null )
+				{
+					_inserts = new ArrayList();
+				}
+
+				return _inserts;
+			}
+		}
+
+		[Bindable]
+		public bool EnableDeepLoad
+		{
+			get { return _enableDeepLoad; }
+			set { _enableDeepLoad = value; }
+		}
+
+		public bool HasDataSource
+		{
+			get { return GetEntityDataSource() != null; }
+		}
+
+		#endregion
+
+		#region Methods
+
+		#region Entity Methods
+		public EntityDataSource GetEntityDataSource()
+		{
+			return GetDataSource() as EntityDataSource;
+		}
+
+		public Object GetEntityId()
+		{
+			Object entity = GetEntity();
+			return EntityUtil.GetPropertyValue(entity, EntityKeyName);
+		}
+
+		public Object GetEntity()
+		{
+			Object entity = null;
+
+			if ( HasDataSource )
+			{
+				entity = GetEntityDataSource().GetCurrentEntity();
+			}
+
+			return entity;
+		}
+
+		public IList GetEntityList()
+		{
+			IList entityList = null;
+
+			if ( HasDataSource )
+			{
+				IEnumerable list = GetEntityDataSource().GetEntityList();
+				entityList = EntityUtil.GetEntityList(list);
+			}
+
+			return entityList;
+		}
+
+		public void DeepLoad()
+		{
+			if ( HasDataSource && EnableDeepLoad )
+			{
+				GetEntityDataSource().DeepLoad();
+			}
+		}
+		#endregion
+
+		#region Control Methods
+
+		private Control GetControl(String controlId)
+		{
+			Control control = null;
+
+			if ( EntityIndex > 0 )
+			{
+				IList<Control> controls = FormUtil.GetControls(Page, controlId);
+				control = controls[EntityIndex];
+			}
+			else
+			{
+				control = FindControl(controlId);
+			}
+
+			return control;
+		}
+
+		#endregion
+
+		#region ListControl Methods
+		public bool IsSelected(String value)
+		{
+			if ( ListControl != null )
+			{
+				foreach ( ListItem item in ListControl.Items )
+				{
+					if ( Object.Equals(item.Value, value) )
+					{
+						return item.Selected;
+					}
+				}
+			}
+
+			return false;
+		}
+
+		public void Select(String value)
+		{
+			foreach ( ListItem item in ListControl.Items )
+			{
+				if ( Object.Equals(item.Value, value) )
+				{
+					item.Selected = true;
+				}
+			}
+		}
+
+		public void ClearSelections()
+		{
+			if ( ListControl != null )
+			{
+				foreach ( ListItem item in ListControl.Items )
+				{
+					item.Selected = false;
+				}
+			}
+		}
+		#endregion
+
+		#region GridControl Methods
+		public Object GetLink(IList links, GridViewRow row)
+		{
+			String id = GetEntityKeyValue(row);
+			return EntityUtil.GetEntity(links, EntityKeyName, id);
+		}
+
+		public GridViewRow GetRow(GridViewRowCollection rows, Object link)
+		{
+			Object value = EntityUtil.GetPropertyValue(link, ForeignKeyName);
+			GridViewRow gridRow = null;
+
+			if ( value != null )
+			{
+				String strValue = String.Format("{0}", value);
+				String id;
+
+				foreach ( GridViewRow row in rows )
+				{
+					id = GetForeignKeyValue(row) as String;
+
+					if ( strValue.Equals(id) )
+					{
+						gridRow = row;
+						break;
+					}
+				}
+			}
+
+			return gridRow;
+		}
+
+		public TableCell GetCell(GridViewRow row, String dataField)
+		{
+			EntityProperty property = null;
+			return GetCell(row, dataField, out property);
+		}
+
+		public TableCell GetCell(GridViewRow row, String dataField, out EntityProperty property)
+		{
+			TableCell cell = null;
+			property = null;
+
+			if ( row != null )
+			{
+				int index = GetColumnIndex(dataField, out property);
+
+				if ( index > -1 && index < row.Cells.Count )
+				{
+					cell = row.Cells[index];
+				}
+			}
+
+			return cell;
+		}
+
+		public void SetValue(TableCell cell, String controlId, String controlProperty, Object value)
+		{
+			if ( cell != null )
+			{
+				if ( String.IsNullOrEmpty(controlId) )
+				{
+					cell.Text = String.Format("{0}", value);
+				}
+				else
+				{
+					Control control = cell.FindControl(controlId);
+					FormUtil.SetValue(control, controlProperty, value);
+				}
+			}
+		}
+
+		public void SetValue(GridViewRow row, String dataField, Object value)
+		{
+			EntityProperty property = null;
+			TableCell cell = GetCell(row, dataField, out property);
+
+			if ( cell != null && property != null )
+			{
+				SetValue(cell, property.ControlID, property.ControlProperty, value);
+
+				if ( !String.IsNullOrEmpty(property.OriginalValueControlID) )
+				{
+					SetValue(cell, property.OriginalValueControlID, property.OriginalValueControlProperty, value);
+				}
+			}
+		}
+
+		public Object GetValue(TableCell cell, String controlId, String controlProperty)
+		{
+			Object value = null;
+
+			if ( String.IsNullOrEmpty(controlId) )
+			{
+				value = cell.Text;
+			}
+			else
+			{
+				Control control = cell.FindControl(controlId);
+				value = FormUtil.GetValue(control, controlProperty);
+			}
+
+			return value;
+		}
+
+		public Object GetValue(GridViewRow row, String dataField)
+		{
+			return GetValue(row, dataField, false);
+		}
+
+		public Object GetOriginalValue(GridViewRow row, String dataField)
+		{
+			return GetValue(row, dataField, true);
+		}
+
+		public Object GetValue(GridViewRow row, String dataField, bool useOriginal)
+		{
+			EntityProperty property = null;
+			TableCell cell = GetCell(row, dataField, out property);
+			Object value = null;
+
+			if ( cell != null && property != null )
+			{
+				String controlId = property.ControlID;
+				String propertyName = property.ControlProperty;
+
+				if ( useOriginal && !String.IsNullOrEmpty(property.OriginalValueControlID) )
+				{
+					controlId = property.OriginalValueControlID;
+					propertyName = property.OriginalValueControlProperty;
+				}
+
+				value = GetValue(cell, controlId, propertyName);
+			}
+
+			return value;
+		}
+
+		public IDictionary GetValues(GridViewRow row)
+		{
+			IDictionary values = new Hashtable();
+			Object value;
+
+			// get property values
+			foreach ( EntityProperty property in PropertyMappings )
+			{
+				value = GetValue(row, property.DataField);
+				values.Add(property.DataField, value);
+			}
+
+			return values;
+		}
+
+		public String GetEntityKeyValue(GridViewRow row)
+		{
+			return GetOriginalValue(row, EntityKeyName) as String;
+		}
+
+		public String GetForeignKeyValue(GridViewRow row)
+		{
+			return GetOriginalValue(row, ForeignKeyName) as String;
+		}
+
+		public int GetColumnIndex(String dataField)
+		{
+			EntityProperty property = null;
+			return GetColumnIndex(dataField, out property);
+		}
+
+		public int GetColumnIndex(String dataField, out EntityProperty property)
+		{
+			int index = -1;
+			property = null;
+
+			if ( !String.IsNullOrEmpty(dataField) )
+			{
+				foreach ( EntityProperty prop in PropertyMappings )
+				{
+					if ( dataField.Equals(prop.DataField) )
+					{
+						index = prop.ColumnIndex;
+						property = prop;
+						break;
+					}
+				}
+			}
+
+			return index;
+		}
+
+		public bool IsNewItem(GridViewRow row)
+		{
+			String value = GetEntityKeyValue(row);
+			bool isNew = String.IsNullOrEmpty(value);
+
+			if ( isNew )
+			{
+				foreach ( EntityProperty property in PropertyMappings )
+				{
+					if ( property.IsKey )
+					{
+						value = String.Format("{0}", GetValue(row, property.DataField));
+
+						if ( String.IsNullOrEmpty(value) )
+						{
+							isNew = false;
+							break;
+						}
+					}
+				}
+			}
+
+			return isNew;
+		}
+
+		public bool IsCurrentItem(GridViewRowCollection rows, Object link)
+		{
+			GridViewRow row = GetRow(rows, link);
+			String origValue, currValue;
+			bool isCurrent = false;
+
+			if ( row != null )
+			{
+				isCurrent = true;
+
+				foreach ( EntityProperty property in PropertyMappings )
+				{
+					if ( property.IsKey )
+					{
+						/*
+						value = GetOriginalValue(row, property.DataField);
+
+						// compare original value
+						if ( !EntityUtil.IsPropertyValueEqual(link, property.DataField, value) )
+						{
+							isCurrent = false;
+							break;
+						}
+						// check for current value, if OriginalValueControlID is used
+						if ( !String.IsNullOrEmpty(property.OriginalValueControlID) )
+						{
+							strValue = String.Format("{0}", GetValue(row, property.DataField));
+
+							if ( String.IsNullOrEmpty(strValue) )
+							{
+								isCurrent = false;
+								break;
+							}
+						}
+						*/
+
+						origValue = String.Format("{0}", GetOriginalValue(row, property.DataField));
+						currValue = String.Format("{0}", GetValue(row, property.DataField));
+
+						if ( !String.IsNullOrEmpty(origValue) && String.IsNullOrEmpty(currValue) )
+						{
+							isCurrent = false;
+							break;
+						}
+					}
+				}
+			}
+
+			return isCurrent;
+		}
+		#endregion
+		
+		#endregion
+	}
+
+	/// <summary>
+	/// Summary description for EntityProperty
+	/// </summary>
+	public sealed class EntityProperty
+	{
+		#region Declarations
+		private String _controlID;
+		private String _controlProperty;
+		private String _originalValueControlID;
+		private String _originalValueControlProperty;
+		private String _dataField;
+		private int _columnIndex = Int32.MinValue;
+		private bool _isKey = false;
+		#endregion
+
+		#region Constructors
+		public EntityProperty()
+		{
+		}
+
+		public EntityProperty(String controlId, String dataField, int columnIndex, bool isKey)
+		{
+			ControlID = controlId;
+			DataField = dataField;
+			ColumnIndex = columnIndex;
+			IsKey = isKey;
+		}
+		#endregion
+
+		#region Properties
+		[Bindable]
+		public String ControlID
+		{
+			get { return _controlID; }
+			set { _controlID = value; }
+		}
+
+		[Bindable]
+		public String ControlProperty
+		{
+			get { return _controlProperty; }
+			set { _controlProperty = value; }
+		}
+
+		[Bindable]
+		public String OriginalValueControlID
+		{
+			get { return _originalValueControlID; }
+			set { _originalValueControlID = value; }
+		}
+
+		[Bindable]
+		public String OriginalValueControlProperty
+		{
+			get { return _originalValueControlProperty; }
+			set { _originalValueControlProperty = value; }
+		}
+
+		[Bindable]
+		public String DataField
+		{
+			get { return _dataField; }
+			set { _dataField = value; }
+		}
+
+		[Bindable]
+		public int ColumnIndex
+		{
+			get { return _columnIndex; }
+			set { _columnIndex = value; }
+		}
+
+		[Bindable]
+		public bool IsKey
+		{
+			get { return _isKey; }
+			set { _isKey = value; }
+		}
+		#endregion
+	}
+}

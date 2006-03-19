@@ -1,0 +1,421 @@
+<%--
+ * $Id: EntityRelationship.cst,v 1.0 2006/03/19 10:00:00 bdiaz Exp $
+ * Last modified by $Author: bdiaz $
+ * Last modified at $Date: 2006-03-19 10:00:00 -0600 (Sun, 19 Mar 2006) $
+ * $Revision: 1 $
+--%>
+<%@ CodeTemplate Language="C#" TargetLanguage="Text" Src="" Inherits="" Debug="False" Description="Generates the specified class." %>
+
+<%@ Property Name="BLLNameSpace" Optional="False" Type="System.String" Category="Style" Description="BLL Namespace." %>
+<%@ Property Name="DALNameSpace" Optional="False" Type="System.String" Category="Style" Description="DAL Namespace." %>
+<%@ Property Name="WebNameSpace" Optional="False" Type="System.String" Category="Style" Description="Web Namespace." %>
+
+<%@ Assembly Name="System.Data" %>
+<%@ Import Namespace="System.Data" %>
+#region Imports...
+using System;
+using System.Data;
+using System.Collections;
+using System.Configuration;
+using System.Web;
+using System.Web.Security;
+using System.Web.UI;
+using System.Web.UI.WebControls;
+using System.Web.UI.WebControls.WebParts;
+using System.Web.UI.HtmlControls;
+using <%= BLLNameSpace %>;
+#endregion
+
+namespace <%= WebNameSpace %>.Data
+{
+	/// <summary>
+	/// The base class for all relationship controls.
+	/// </summary>
+	[ParseChildren(true), PersistChildren(false)]
+	public abstract class EntityRelationship : WebControl
+	{
+		#region Declarations
+
+		private EntityRelationshipMember _primaryMember;
+		private EntityRelationshipMember _linkMember;
+		private EntityRelationshipMember _referenceMember;
+
+		#endregion
+
+		#region Constructors
+
+		/// <summary>
+		/// Initializes a new instance of the EntityRelationship class.
+		/// </summary>
+		public EntityRelationship()
+		{
+		}
+
+		#endregion
+
+		#region Properties
+
+		/// <summary>
+		/// Gets or sets an instance of EntityRelationshipMember that
+		/// represents the primary table in the relationship.
+		/// </summary>
+		[Bindable]
+		[PersistenceMode(PersistenceMode.InnerProperty)]
+		public EntityRelationshipMember PrimaryMember
+		{
+			get { return _primaryMember; }
+			set { _primaryMember = value; }
+		}
+
+		/// <summary>
+		/// Gets or sets an instance of EntityRelationshipMember that
+		/// represents the join table in the relationship.
+		/// </summary>
+		[Bindable]
+		[PersistenceMode(PersistenceMode.InnerProperty)]
+		public EntityRelationshipMember LinkMember
+		{
+			get { return _linkMember; }
+			set { _linkMember = value; }
+		}
+
+		/// <summary>
+		/// Gets or sets an instance of EntityRelationshipMember that
+		/// represents the foreign key table in the relationship.
+		/// </summary>
+		[Bindable]
+		[PersistenceMode(PersistenceMode.InnerProperty)]
+		public EntityRelationshipMember ReferenceMember
+		{
+			get { return _referenceMember; }
+			set { _referenceMember = value; }
+		}
+
+		#endregion
+
+		#region Event Handlers
+
+		protected override void OnLoad(EventArgs e)
+		{
+			base.OnLoad(e);
+
+			// add child controls
+			if ( PrimaryMember != null )
+			{
+				this.Controls.Add(PrimaryMember);
+			}
+			if ( LinkMember != null )
+			{
+				this.Controls.Add(LinkMember);
+			}
+			if ( ReferenceMember != null )
+			{
+				this.Controls.Add(ReferenceMember);
+			}
+
+			EntityDataSource PrimaryDataSource = PrimaryMember.GetEntityDataSource();
+			if ( PrimaryDataSource != null )
+			{
+				//PrimaryDataSource.Selecting += new EntityDataSourceSelectingEventHandler(PrimaryDataSource_Selecting);
+				PrimaryDataSource.Selected += new EntityDataSourceMethodEventHandler(PrimaryDataSource_Selected);
+				PrimaryDataSource.Inserting += new EntityDataSourceMethodEventHandler(PrimaryDataSource_Inserting);
+				PrimaryDataSource.Inserted += new EntityDataSourceMethodEventHandler(PrimaryDataSource_Inserted);
+				PrimaryDataSource.Updating += new EntityDataSourceMethodEventHandler(PrimaryDataSource_Updating);
+				//PrimaryDataSource.Updated += new EntityDataSourceMethodEventHandler(PrimaryDataSource_Updated);
+				//PrimaryDataSource.Deleting += new EntityDataSourceMethodEventHandler(PrimaryDataSource_Deleting);
+				//PrimaryDataSource.Deleted += new EntityDataSourceMethodEventHandler(PrimaryDataSource_Deleted);
+			}
+		}
+
+		#region EntityDataSource Event Handlers
+		private void PrimaryDataSource_Selecting(object sender, EntityDataSourceSelectingEventArgs args)
+		{
+			OnSelecting(args);
+		}
+
+		private void PrimaryDataSource_Selected(object sender, EntityDataSourceMethodEventArgs args)
+		{
+			OnSelected(args);
+		}
+
+		private void PrimaryDataSource_Inserting(object sender, EntityDataSourceMethodEventArgs args)
+		{
+			OnInserting(args);
+		}
+
+		private void PrimaryDataSource_Inserted(object sender, EntityDataSourceMethodEventArgs args)
+		{
+			OnInserted(args);
+		}
+
+		private void PrimaryDataSource_Updating(object sender, EntityDataSourceMethodEventArgs args)
+		{
+			OnUpdating(args);
+		}
+
+		private void PrimaryDataSource_Updated(object sender, EntityDataSourceMethodEventArgs args)
+		{
+			OnUpdated(args);
+		}
+
+		private void PrimaryDataSource_Deleting(object sender, EntityDataSourceMethodEventArgs args)
+		{
+			OnDeleting(args);
+		}
+
+		private void PrimaryDataSource_Deleted(object sender, EntityDataSourceMethodEventArgs args)
+		{
+			OnDeleted(args);
+		}
+		#endregion
+
+		#region EntityRelationship Event Handlers
+		protected void OnSelecting(EntityDataSourceSelectingEventArgs args)
+		{
+		}
+
+		protected void OnSelected(EntityDataSourceMethodEventArgs args)
+		{
+			if ( args.Index == PrimaryMember.EntityIndex )
+			{
+				PrimaryMember.DeepLoad();
+				UpdateControl(args.EntityList, args.Index);
+			}
+		}
+
+		protected void OnInserting(EntityDataSourceMethodEventArgs args)
+		{
+			UpdateRelationships(args.EntityList, args.Index);
+		}
+
+		protected void OnInserted(EntityDataSourceMethodEventArgs args)
+		{
+			InsertLinks();
+			InsertReferences();
+		}
+
+		protected void OnUpdating(EntityDataSourceMethodEventArgs args)
+		{
+			if ( args.Index == PrimaryMember.EntityIndex )
+			{
+				PrimaryMember.DeepLoad();
+				UpdateRelationships(args.EntityList, args.Index);
+			}
+		}
+
+		protected void OnUpdated(EntityDataSourceMethodEventArgs args)
+		{
+		}
+
+		protected void OnDeleting(EntityDataSourceMethodEventArgs args)
+		{
+		}
+
+		protected void OnDeleted(EntityDataSourceMethodEventArgs args)
+		{
+		}
+		#endregion
+
+		#endregion
+
+		#region Methods
+		/// <summary>
+		/// Initializes and updates the control with the relationships
+		/// held within the specified business object.
+		/// </summary>
+		/// <param name="entityList">The collection of business objects containing
+		/// the current relationships with which to update the control.</param>
+		/// <param name="index">The position within entityList that contains the current item.</param>
+		protected virtual void UpdateControl(IEnumerable entityList, int index)
+		{
+		}
+
+		/// <summary>
+		/// Updates the specified business object with values bound to the
+		/// control which represent the current relationships.
+		/// </summary>
+		/// <param name="entityList">The collection of business objects containing
+		/// the current relationships with which to update the control.</param>
+		/// <param name="index">The position within entityList that contains the current item.</param>
+		protected virtual void UpdateRelationships(IEnumerable entityList, int index)
+		{
+		}
+
+		#region LinkMember Methods
+
+		protected IList GetLinkList(IEnumerable entityList, int index)
+		{
+			return GetList(entityList, index, LinkMember, PrimaryMember.LinkProperty);
+		}
+
+		protected void InsertLinks()
+		{
+			Insert(LinkMember);
+		}
+
+		protected void InsertLink(IEnumerable entityList, int index, Object foreignKeyValue)
+		{
+			IList links = GetLinkList(entityList, index);
+			InsertLink(links, foreignKeyValue);
+		}
+
+		protected void InsertLink(IList links, Object foreignKeyValue)
+		{
+			// make sure link doesn't exist
+			Object link = EntityUtil.GetEntity(links, LinkMember.ForeignKeyName, foreignKeyValue);
+
+			if ( link == null )
+			{
+				Object entityKeyValue = PrimaryMember.GetEntityId();
+
+				IDictionary values = new Hashtable();
+				values.Add(LinkMember.EntityKeyName, entityKeyValue);
+				values.Add(LinkMember.ForeignKeyName, foreignKeyValue);
+
+				// delayed insert
+				if ( LinkMember.HasDataSource && entityKeyValue == null )
+				{
+					LinkMember.Inserts.Add(values);
+				}
+				else
+				{
+					Insert(LinkMember, links, values);
+				}
+			}
+		}
+
+		protected void RemoveLink(IList links, Object link)
+		{
+			Remove(LinkMember, links, link);
+		}
+
+		#endregion
+
+		#region ReferenceMember Methods
+
+		protected IList GetReferenceList(IEnumerable entityList, int index)
+		{
+			return GetList(entityList, index, ReferenceMember, PrimaryMember.ReferenceProperty);
+		}
+
+		protected void InsertReferences()
+		{
+			Insert(ReferenceMember);
+		}
+
+		protected void InsertReference(IList links, IDictionary values)
+		{
+			Object entityKeyValue = PrimaryMember.GetEntityId();
+
+			// delayed insert
+			if ( ReferenceMember.HasDataSource && entityKeyValue == null )
+			{
+				ReferenceMember.Inserts.Add(values);
+			}
+			else
+			{
+				Insert(ReferenceMember, links, values, true);
+			}
+		}
+
+		protected void UpdateReference(Object link, IDictionary values)
+		{
+			Update(ReferenceMember, link, values);
+		}
+
+		protected void RemoveReference(IList links, Object link)
+		{
+			Remove(ReferenceMember, links, link);
+		}
+
+		#endregion
+
+		#region Base EntityRelationshipMember Methods
+
+		protected IList GetList(IEnumerable entityList, int index, EntityRelationshipMember member, String listPropertyName)
+		{
+			IList list;
+
+			if ( member != null && member.HasDataSource )
+			{
+				// get list from data source
+				list = member.GetEntityList();
+			}
+			else
+			{
+				// get list from DeepLoaded entity
+				Object entity = EntityUtil.GetEntity(entityList, index);
+				list = EntityUtil.GetEntityList(entity, listPropertyName);
+			}
+
+			return list;
+		}
+
+		private void Insert(EntityRelationshipMember member)
+		{
+			if ( member != null && member.HasDataSource )
+			{
+				Object entityKeyValue = PrimaryMember.GetEntityId();
+
+				foreach ( IDictionary values in member.Inserts )
+				{
+					values[member.EntityKeyName] = entityKeyValue;
+					member.GetEntityDataSource().Insert(values);
+				}
+
+				member.Inserts.Clear();
+			}
+		}
+
+		private void Insert(EntityRelationshipMember member, IList links, IDictionary values)
+		{
+			Insert(member, links, values, false);
+		}
+
+		private void Insert(EntityRelationshipMember member, IList links, IDictionary values, bool initEntityKey)
+		{
+			if ( member != null && member.HasDataSource )
+			{
+				member.GetEntityDataSource().Insert(values);
+			}
+			else
+			{
+				Object link = EntityUtil.GetNewEntity(member.EntityType);
+				EntityUtil.SetEntityValues(link, values);
+
+				if ( initEntityKey )
+				{
+					EntityUtil.SetEntityKeyValue(link, member.EntityKeyName);
+				}
+
+				EntityUtil.Add(links, link);
+			}
+		}
+
+		private void Update(EntityRelationshipMember member, Object link, IDictionary values)
+		{
+			if ( member != null && member.HasDataSource )
+			{
+				member.GetEntityDataSource().Update(link, values);
+			}
+			else
+			{
+				EntityUtil.SetEntityValues(link, values);
+			}
+		}
+
+		private void Remove(EntityRelationshipMember member, IList links, Object link)
+		{
+			EntityUtil.Remove(links, link);
+
+			if ( member != null && member.HasDataSource )
+			{
+				member.GetEntityDataSource().Delete(link);
+			}
+		}
+
+		#endregion
+
+		#endregion
+	}
+}

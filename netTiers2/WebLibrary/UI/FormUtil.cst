@@ -1,0 +1,541 @@
+<%--
+ * $Id: FormUtil.cst,v 1.0 2006/03/19 10:00:00 bdiaz Exp $
+ * Last modified by $Author: bdiaz $
+ * Last modified at $Date: 2006-03-19 10:00:00 -0600 (Sun, 19 Mar 2006) $
+ * $Revision: 1 $
+--%>
+<%@ CodeTemplate Language="C#" TargetLanguage="Text" Src="" Inherits="" Debug="False" Description="Generates the specified class." %>
+
+<%@ Property Name="BLLNameSpace" Optional="False" Type="System.String" Category="Style" Description="BLL Namespace." %>
+<%@ Property Name="DALNameSpace" Optional="False" Type="System.String" Category="Style" Description="DAL Namespace." %>
+<%@ Property Name="WebNameSpace" Optional="False" Type="System.String" Category="Style" Description="Web Namespace." %>
+
+<%@ Assembly Name="System.Data" %>
+<%@ Import Namespace="System.Data" %>
+#region Imports...
+using System;
+using System.Data;
+using System.Collections.Generic;
+using System.Collections.Specialized;
+using System.Configuration;
+using System.Web;
+using System.Web.Security;
+using System.Web.SessionState;
+using System.Web.UI;
+using System.Web.UI.WebControls;
+using System.Web.UI.WebControls.WebParts;
+using System.Web.UI.HtmlControls;
+using <%= BLLNameSpace %>;
+using <%= WebNameSpace %>.Data;
+#endregion
+
+namespace <%= WebNameSpace %>.UI
+{
+	/// <summary>
+	/// Summary description for FormUtil
+	/// </summary>
+	public sealed class FormUtil
+	{
+		private static readonly String ControlCacheKey = "ControlCache";
+
+		private FormUtil()
+		{
+		}
+
+		/// <summary>
+		/// Loads an instance of an IBindableTemplate from the specified path.
+		/// </summary>
+		/// <param name="control">The TemplateControl which will perform the load.</param>
+		/// <param name="path">The path to the template to load.</param>
+		/// <returns>An instance of IBindableTemplate found at the specified path.</returns>
+		/// <remarks>
+		/// Adapted from an article written by James Crowley, which can be found at:
+		/// http://www.developerfusion.co.uk/show/4721/
+		/// </remarks>
+		public static IBindableTemplate LoadBindableTemplate(TemplateControl control, String path)
+		{
+			Control container = control.LoadControl(path);
+			FormView formView = container.Controls[0] as FormView;
+			
+			if ( formView == null )
+			{
+				throw new Exception("Required FormView control not found as the first child of specified template");
+			}
+
+			return (IBindableTemplate) formView.ItemTemplate;
+		}
+
+		public static void SetDefaultMode(FormView formView, String requestParameterName)
+		{
+			if ( String.IsNullOrEmpty(HttpContext.Current.Request[requestParameterName]) )
+			{
+				formView.DefaultMode = FormViewMode.Insert;
+				HideButton(formView, "UpdateButton");
+			}
+			else
+			{
+				formView.DefaultMode = FormViewMode.Edit;
+				HideButton(formView, "InsertButton");
+			}
+		}
+
+		public static void HideButton(Control parent, String buttonId)
+		{
+			if ( parent != null && !String.IsNullOrEmpty(buttonId) )
+			{
+				Button btn = parent.FindControl(buttonId) as Button;
+				if ( btn != null )
+				{
+					btn.Visible = false;
+				}
+			}
+		}
+
+		public static void SaveRequestParameter(String requestParameterName, String sessionParameterName)
+		{
+			String value = HttpContext.Current.Request[requestParameterName];
+
+			if ( !String.IsNullOrEmpty(value) )
+			{
+				HttpContext.Current.Session[sessionParameterName] = value;
+			}
+		}
+
+		public static void SetOnInserting(FormView formView, String[] names, Object[] values)
+		{
+			formView.ItemInserting += new FormViewInsertEventHandler(
+				delegate(object sender, FormViewInsertEventArgs e)
+				{
+					SetValues(e.Values, names, values);
+				}
+			);
+		}
+
+		public static void SetOnUpdating(FormView formView, String[] names, Object[] values)
+		{
+			formView.ItemUpdating += new FormViewUpdateEventHandler(
+				delegate(object sender, FormViewUpdateEventArgs e)
+				{
+					SetValues(e.NewValues, names, values);
+				}
+			);
+		}
+
+		public static void SetValues(IOrderedDictionary list, String[] names, Object[] values)
+		{
+			for ( int i = 0; i < names.Length; i++ )
+			{
+				if ( list.Contains(names[i]) )
+				{
+					list.Remove(names[i]);
+				}
+
+				list.Add(names[i], values[i]);
+			}
+		}
+
+		public static void SetPageIndex(GridView gridView, String parameterName)
+		{
+			if ( !gridView.Page.IsPostBack && !gridView.Page.IsCallback && !String.IsNullOrEmpty(parameterName) )
+			{
+				String page = HttpContext.Current.Request[parameterName];
+
+				if ( !String.IsNullOrEmpty(page) )
+				{
+					int index = 0;
+
+					if ( Int32.TryParse(page, out index) )
+					{
+						gridView.PageIndex = index;
+					}
+				}
+			}
+		}
+
+		public static void SetSortExpression(GridView gridView, String sortParameterName, String dirParameterName)
+		{
+			if ( !gridView.Page.IsPostBack && !gridView.Page.IsCallback && !String.IsNullOrEmpty(sortParameterName) )
+			{
+				String sort = HttpContext.Current.Request[sortParameterName];
+
+				if ( !String.IsNullOrEmpty(sort) )
+				{
+					SortDirection dir = SortDirection.Ascending;
+
+					if ( !String.IsNullOrEmpty(dirParameterName) )
+					{
+						String sortDir = HttpContext.Current.Request[dirParameterName];
+
+						if ( !String.IsNullOrEmpty(sortDir) )
+						{
+							dir = (SortDirection) Enum.Parse(typeof(SortDirection), sortDir);
+						}
+					}
+
+					gridView.Sort(sort, dir);
+				}
+			}
+		}
+
+		public static void SetGridParams(GridView gridView, String pageParam, String sortParam, String dirParam)
+		{
+			SetPageIndex(gridView, pageParam);
+			SetSortExpression(gridView, sortParam, dirParam);
+		}
+
+		public static String GetRedirectUrl(GridView gridView, String url)
+		{
+			String sort = HttpContext.Current.Server.UrlEncode(gridView.SortExpression);
+			int dir = (int) gridView.SortDirection;
+			return String.Format(url, gridView.PageIndex, sort, dir);
+		}
+
+		public static void RedirectAfterInsert(FormView formView, String url)
+		{
+			RedirectAfterInsert(formView, url, null);
+		}
+
+		public static void RedirectAfterInsert(FormView formView, String url, EntityDataSource dataSource)
+		{
+			formView.ItemInserted += new FormViewInsertedEventHandler(
+				delegate(object sender, FormViewInsertedEventArgs e)
+				{
+					Redirect(url, dataSource);
+				}
+			);
+		}
+
+		public static void RedirectAfterInsert(FormView formView, GridView gridView, String url)
+		{
+			url = GetRedirectUrl(gridView, url);
+			RedirectAfterInsert(formView, url);
+		}
+
+		public static void RedirectAfterUpdate(GridView gridView, String url)
+		{
+			gridView.RowUpdated += new GridViewUpdatedEventHandler(
+				delegate(object sender, GridViewUpdatedEventArgs e)
+				{
+					url = GetRedirectUrl(gridView, url);
+					Redirect(url);
+				}
+			);
+		}
+
+		public static void RedirectAfterUpdate(FormView formView, String url)
+		{
+			RedirectAfterUpdate(formView, url, null);
+		}
+
+		public static void RedirectAfterUpdate(FormView formView, String url, EntityDataSource dataSource)
+		{
+			formView.ItemUpdated += new FormViewUpdatedEventHandler(
+				delegate(object sender, FormViewUpdatedEventArgs e)
+				{
+					Redirect(url, dataSource);
+				}
+			);
+		}
+
+		public static void RedirectAfterCancel(FormView formView, String url)
+		{
+			RedirectAfterCancel(formView, url, null);
+		}
+
+		public static void RedirectAfterCancel(FormView formView, String url, EntityDataSource dataSource)
+		{
+			formView.ItemCommand += new FormViewCommandEventHandler(
+				delegate(object sender, FormViewCommandEventArgs e)
+				{
+					// cancel button
+					if ( String.Compare("Cancel", e.CommandName, true) == 0 )
+					{
+						Redirect(url, dataSource);
+					}
+				}
+			);
+		}
+
+		public static void RedirectAfterAddNew(FormView formView, String url)
+		{
+			formView.ItemCommand += new FormViewCommandEventHandler(
+				delegate(object sender, FormViewCommandEventArgs e)
+				{
+					// add button
+					if ( String.Compare("New", e.CommandName, true) == 0 )
+					{
+						Redirect(url);
+						HttpContext.Current.Response.End();
+					}
+				}
+			);
+		}
+
+		public static void RedirectAfterInsertCancel(FormView formView, String url)
+		{
+			RedirectAfterInsertCancel(formView, url, null);
+		}
+
+		public static void RedirectAfterInsertCancel(FormView formView, String url, EntityDataSource dataSource)
+		{
+			RedirectAfterInsert(formView, url, dataSource);
+			RedirectAfterCancel(formView, url, dataSource);
+		}
+
+		public static void RedirectAfterUpdateCancel(FormView formView, String url)
+		{
+			RedirectAfterUpdateCancel(formView, url, null);
+		}
+
+		public static void RedirectAfterUpdateCancel(FormView formView, String url, EntityDataSource dataSource)
+		{
+			RedirectAfterUpdate(formView, url, dataSource);
+			RedirectAfterCancel(formView, url, dataSource);
+		}
+
+		public static void RedirectAfterInsertUpdate(FormView formView, String url)
+		{
+			RedirectAfterInsertUpdate(formView, url, null);
+		}
+
+		public static void RedirectAfterInsertUpdate(FormView formView, String url, EntityDataSource dataSource)
+		{
+			RedirectAfterInsert(formView, url, dataSource);
+			RedirectAfterUpdate(formView, url, dataSource);
+		}
+
+		public static void RedirectAfterInsertUpdateCancel(FormView formView, String url, EntityDataSource dataSource)
+		{
+			RedirectAfterInsert(formView, url, dataSource);
+			RedirectAfterUpdate(formView, url, dataSource);
+			RedirectAfterCancel(formView, url, dataSource);
+		}
+
+		public static void Redirect(String url)
+		{
+			Redirect(url, null);
+		}
+
+		public static void Redirect(String url, EntityDataSource dataSource)
+		{
+			if ( dataSource != null )
+			{
+				url = String.Format(url, dataSource.GetSelectedEntityId());
+			}
+
+			// make sure second argument is false so that unhandled
+			// exceptions bubble up to the application level handler
+			HttpContext.Current.Response.Redirect(url, false);
+		}
+
+		public static void ValidateSessionParam(String parameterName, String url)
+		{
+			Object value = HttpContext.Current.Session[parameterName];
+
+			if ( value == null )
+			{
+				Redirect(url);
+			}
+		}
+
+		public static void InitPassword(FormView formView, String controlId, EntityDataSource dataSource, String propertyName)
+		{
+			if ( formView != null && !formView.Page.IsPostBack && dataSource != null &&
+				!String.IsNullOrEmpty(controlId) && !String.IsNullOrEmpty(propertyName) )
+			{
+				TextBox input = formView.FindControl(controlId) as TextBox;
+				if ( input != null )
+				{
+					Object entity = dataSource.GetCurrentEntity();
+					if ( entity != null )
+					{
+						String password = EntityUtil.GetPropertyValue(entity, propertyName) as String;
+						InitPassword(input, password);
+					}
+				}
+			}
+		}
+
+		public static void InitPassword(TextBox control, String password)
+		{
+			if ( control != null && control.TextMode == TextBoxMode.Password && !control.Page.IsPostBack )
+			{
+				control.Attributes.Add("value", password);
+			}
+		}
+
+		public static Control FindControl(Control control, params String[] controlIds)
+		{
+			if ( control != null )
+			{
+				foreach ( String controlId in controlIds )
+				{
+					control = control.FindControl(controlId);
+
+					if ( control == null )
+					{
+						break;
+					}
+				}
+			}
+
+			return control;
+		}
+
+		public static IList<Control> FindControls(Control control, String controlId)
+		{
+			IList<Control> controls = new List<Control>();
+
+			if ( control != null )
+			{
+				if ( control.ID == controlId )
+				{
+					controls.Add(control);
+				}
+
+				IList<Control> list;
+
+				foreach ( Control ctrl in control.Controls )
+				{
+					list = FindControls(ctrl, controlId);
+
+					foreach ( Control c in list )
+					{
+						controls.Add(c);
+					}
+				}
+			}
+
+			return controls;
+		}
+
+		public static IDictionary<String, IList<Control>> GetControlCache(Page page)
+		{
+			if ( !page.Items.Contains(ControlCacheKey) )
+			{
+				page.Items.Add(ControlCacheKey, new Dictionary<String, IList<Control>>());
+			}
+
+			return page.Items[ControlCacheKey] as IDictionary<String, IList<Control>>;
+		}
+
+		public static IList<Control> GetControls(Page page, String controlId)
+		{
+			IDictionary<String, IList<Control>> cache = GetControlCache(page);
+
+			if ( !cache.ContainsKey(controlId) )
+			{
+				IList<Control> controls = FindControls(page, controlId);
+
+				if ( !cache.ContainsKey(controlId) )
+				{
+					cache.Add(controlId, controls);
+				}
+			}
+
+			return cache[controlId];
+		}
+
+		public static String GetClientID(Control container, String controlId, String propertyName)
+		{
+			IList<Control> controls = GetControls(container.Page, controlId);
+			int index = Math.Max((int) DataBinder.Eval(container, propertyName), 0);
+			String clientId = String.Empty;
+
+			if ( controls.Count > index )
+			{
+				clientId = controls[index].ClientID;
+			}
+
+			return clientId;
+		}
+
+		public static Object GetValue(Control control)
+		{
+			return GetValue(control, null);
+		}
+
+		public static Object GetValue(Control control, String propertyName)
+		{
+			if ( String.IsNullOrEmpty(propertyName) )
+			{
+				propertyName = GetDefaultPropertyName(control);
+			}
+
+			return EntityUtil.GetPropertyValue(control, propertyName);
+		}
+
+		public static void SetValue(Control control, Object value)
+		{
+			SetValue(control, null, value);
+		}
+
+		public static void SetValue(Control control, String propertyName, Object value)
+		{
+			if ( control is CheckBox )
+			{
+				CheckBox chkBox = control as CheckBox;
+				String strValue = ( value != null ) ? value.ToString() : String.Empty;
+				chkBox.Checked = strValue.Equals(chkBox.Text);
+			}
+			else
+			{
+				if ( String.IsNullOrEmpty(propertyName) )
+				{
+					propertyName = GetDefaultPropertyName(control);
+				}
+
+				EntityUtil.SetPropertyValue(control, propertyName, value);
+			}
+		}
+
+		public static String GetDefaultPropertyName(Object o)
+		{
+			Type type = null;
+
+			if ( o != null )
+			{
+				type = o.GetType();
+			}
+
+			return GetDefaultPropertyName(type);
+		}
+
+		public static String GetDefaultPropertyName(Type type)
+		{
+			String name = null;
+
+			if ( type != null )
+			{
+				Type attribType = typeof(ControlValuePropertyAttribute);
+				ControlValuePropertyAttribute attrib = (ControlValuePropertyAttribute) Attribute.GetCustomAttribute(type, attribType);
+
+				if ( attrib != null )
+				{
+					name = attrib.Name;
+				}
+			}
+
+			return name;
+		}
+
+		public static bool HasValue(Control control)
+		{
+			String value = String.Format("{0}", GetValue(control));
+			return ( control != null && !String.IsNullOrEmpty(value) );
+		}
+
+		public static bool HasValue(Control parent, String controlId)
+		{
+			bool hasValue = false;
+
+			if ( parent != null && !String.IsNullOrEmpty(controlId) )
+			{
+				Control control = parent.FindControl(controlId);
+				hasValue = HasValue(control);
+			}
+
+			return hasValue;
+		}
+	}
+}
