@@ -71,6 +71,8 @@
 <%@ Property Name="GenerateWebAdmin" Type="System.Boolean" Default="false" Category="WebAdmin2.0" Description="Indicates if the web admin user controls should be generated." %>
 <%@ Property Name="WebAdminOutputPath" Type="System.String" Category="WebAdmin2.0" Description="The full path for the the WebAdmin files" Default="my path" Optional="true"%>
 
+<%-- Web Library --%>
+<%@ Property Name="GenerateWebLibrary" Type="System.Boolean" Default="true" Category="WebLibrary" Description="Indicates if the web library should be generated." %>
 
 <%@ Assembly Name="SchemaExplorer" %>
 <%@ Assembly Name="System.Design" %>
@@ -372,6 +374,7 @@
 														"Entities\\EntityBaseCore.generated.cst",
 														"Entities\\Filter.cst",
 														"Entities\\EntityHelper.cst",	
+														"Entities\\EntityUtil.cst",	
 														"Entities\\EntityPropertyComparer.cst", 
 														"Entities\\GenericTypeConverter.cst", 
 														
@@ -433,7 +436,10 @@
 														
 														"ASP.Net\\2.0\\AdminEntityUC_Designer.cst",
 														"ASP.Net\\2.0\\AdminEntityUC_CodeBehind.cst",
-														"ASP.Net\\2.0\\Menu_xml.cst"
+														"ASP.Net\\2.0\\Menu_xml.cst",
+														
+														"WebLibrary\\EntityDataSource.cst",
+														"WebLibrary\\EntityTransactionModule.cst"
 														};
 	
 	// Compile and load all them in a collection
@@ -557,12 +563,14 @@ public void Go()
 	string DALWSNameSpace = DALNameSpace  + ".WebServiceClient";
 	string UTNameSpace = NameSpace + "." + (UnitTestsNameSpace.Length>0 ? GetCleanName2(UnitTestsNameSpace) : "UnitTests");
 	string WSNameSpace = DALNameSpace + ".WebService";
+	string WebLibNameSpace = NameSpace + ".Web";
 	
 	// Build output pathes
 	string rootPathBLL = OutputDirectory + "\\" + BLLNameSpace;
 	string rootPathDAL = OutputDirectory + "\\" + DALNameSpace;
 	string rootPathDALSql = OutputDirectory + "\\" + DALSqlNameSpace;
 	string rootPathDALWS = OutputDirectory + "\\" + DALWSNameSpace;
+	string rootPathWebLib = OutputDirectory + "\\" + WebLibNameSpace;
 	string rootPathUT = OutputDirectory + "\\" + UTNameSpace;
 	string rootPathSQL = OutputDirectory + (SQLFolderName.Length>0 ? "\\" + SQLFolderName : string.Empty);
 	
@@ -796,6 +804,13 @@ public void Go()
 		// TODO copy all the ressources needed to generate a full webadmin website
 		SafeCopyFile(this.CodeTemplateInfo.DirectoryName + "\\References\\Microsoft.Practices.EnterpriseLibrary.Common.dll", OutputDirectory + "\\References\\Microsoft.Practices.EnterpriseLibrary.Common.dll");
 		
+	}
+	
+	if (GenerateWebLibrary)
+	{
+		SafeCreateDirectory(rootPathWebLib);
+		SafeCreateDirectory(rootPathWebLib + "\\Data");
+		//SafeCreateDirectory(rootPathWebLib + "\\UI");
 	}
 		
 	//----------------------------------------------------------------------------------------------------------------------------------------------
@@ -1230,6 +1245,25 @@ public void Go()
 		AddExecutionTime(waConfigNode);
 	}
 	
+	//----------------------------------------------------------------------------------------------------------------------------------------------
+	//-- Web Library Classes
+	//----------------------------------------------------------------------------------------------------------------------------------------------
+	if ( GenerateWebLibrary )
+	{
+		AddFileNode(commonNode, "EntityDataSource.cs");
+		this.GetTemplate("EntityDataSource.cst").SetProperty("BLLNameSpace", BLLNameSpace);
+		this.GetTemplate("EntityDataSource.cst").SetProperty("DALNameSpace", DALNameSpace);
+		this.GetTemplate("EntityDataSource.cst").SetProperty("WebNameSpace", WebLibNameSpace);
+		this.RenderToFile("EntityDataSource.cst", rootPathWebLib + "\\Data\\EntityDataSource.cs", true);
+
+		AddFileNode(commonNode, "EntityTransactionModule.cs");
+		this.GetTemplate("EntityTransactionModule.cst").SetProperty("BLLNameSpace", BLLNameSpace);
+		this.GetTemplate("EntityTransactionModule.cst").SetProperty("DALNameSpace", DALNameSpace);
+		this.GetTemplate("EntityTransactionModule.cst").SetProperty("WebNameSpace", WebLibNameSpace);
+		this.RenderToFile("EntityTransactionModule.cst", rootPathWebLib + "\\Data\\EntityTransactionModule.cs", true);
+	}
+	
+	
 	// Hard coded Guid make it easier to maintain solution when regenerating projects
 	// It may be intersting to put those value in global properties
 	string bllGuid = "20E43088-4618-4F4A-B8AD-FC31B50D94CD"; //Guid.NewGuid().ToString();
@@ -1238,7 +1272,8 @@ public void Go()
 	string DALWSGuid = "061C1BBE-0BFB-4D45-8125-9AB0BBC09A92"; //Guid.NewGuid().ToString();
 	string wsGuid  = "5E3CA58E-216A-4F53-BD23-5A48A6C44924"; //Guid.NewGuid().ToString();
 	string utGuid  = "031D5BAE-0BFB-4D45-8125-9AB0BBC09A92"; //Guid.NewGuid().ToString();
-		
+	string webLibGuid = "47FE3BE8-3E46-47CA-8494-473755867DD0"; //Guid.NewGuid().ToString();
+
 	string projectTemplate = vsnetVersion == VSNetVersion.v2005 ? "vsnet2005.project.cst" : "vsnet2003.project.cst";
 	string solutionTemplate = vsnetVersion == VSNetVersion.v2005 ? "vsnet2005.solution.cst" : "vsnet2003.solution.cst";
 		
@@ -1255,6 +1290,7 @@ public void Go()
 		this.GetTemplate(solutionTemplate).SetProperty("BLLNameSpace", BLLNameSpace);
 		this.GetTemplate(solutionTemplate).SetProperty("DALSqlNameSpace", DALSqlNameSpace);
 		this.GetTemplate(solutionTemplate).SetProperty("DALWSNameSpace", DALWSNameSpace);
+		this.GetTemplate(solutionTemplate).SetProperty("WebLibNameSpace", WebLibNameSpace);
 		this.GetTemplate(solutionTemplate).SetProperty("UTNameSpace", UTNameSpace);
 		this.GetTemplate(solutionTemplate).SetProperty("WSNameSpace", WSNameSpace);
 		
@@ -1264,12 +1300,14 @@ public void Go()
 		this.GetTemplate(solutionTemplate).SetProperty("DALWSGuid", DALWSGuid);
 		this.GetTemplate(solutionTemplate).SetProperty("WSGuid", wsGuid);
 		this.GetTemplate(solutionTemplate).SetProperty("UTGuid", utGuid);
+		this.GetTemplate(solutionTemplate).SetProperty("WebLibGuid", webLibGuid);
 		
 		this.GetTemplate(solutionTemplate).SetProperty("IncludeBll", GenerateBusinessLogicLayer);
 		this.GetTemplate(solutionTemplate).SetProperty("IncludeDALBase", GenerateDataAccessLayer);	
 		this.GetTemplate(solutionTemplate).SetProperty("IncludeSqlClient", GenerateDataAccessLayer);	
 		this.GetTemplate(solutionTemplate).SetProperty("IncludeWebservice", GenerateWebservice);
 		this.GetTemplate(solutionTemplate).SetProperty("IncludeWebserviceClient", GenerateWebservice);
+		this.GetTemplate(solutionTemplate).SetProperty("IncludeWebLibrary", GenerateWebLibrary);
 		this.GetTemplate(solutionTemplate).SetProperty("IncludeUnitTest", IncludeUnitTest);
 				
 		this.GetTemplate(solutionTemplate).SetProperty("WebServiceUrl", WebServiceUrl);
@@ -1299,12 +1337,14 @@ public void Go()
 		this.GetTemplate(projectTemplate).SetProperty("DALWSGuid", DALWSGuid);
 		this.GetTemplate(projectTemplate).SetProperty("UTGuid", utGuid);
 		this.GetTemplate(projectTemplate).SetProperty("WSGuid", wsGuid);
+		this.GetTemplate(projectTemplate).SetProperty("WebLibGuid", webLibGuid);
 								
 		this.GetTemplate(projectTemplate).SetProperty("IncludeBll", true);
 		this.GetTemplate(projectTemplate).SetProperty("IncludeDALBase", false);	
 		this.GetTemplate(projectTemplate).SetProperty("IncludeSqlClient", false);	
 		this.GetTemplate(projectTemplate).SetProperty("IncludeWebservice", false);
 		this.GetTemplate(projectTemplate).SetProperty("IncludeWebserviceClient", false);
+		this.GetTemplate(projectTemplate).SetProperty("IncludeWebLibrary", false);
 		this.GetTemplate(projectTemplate).SetProperty("IncludeUnitTest", false);
 		
 											
@@ -1316,6 +1356,7 @@ public void Go()
 		this.GetTemplate(projectTemplate).SetProperty("BLLNameSpace", BLLNameSpace);
 		this.GetTemplate(projectTemplate).SetProperty("DALSqlNameSpace", DALSqlNameSpace);
 		this.GetTemplate(projectTemplate).SetProperty("DALWSNameSpace", DALWSNameSpace);
+		this.GetTemplate(projectTemplate).SetProperty("WebLibNameSpace", WebLibNameSpace);
 		this.GetTemplate(projectTemplate).SetProperty("UTNameSpace", UTNameSpace);
 		this.GetTemplate(projectTemplate).SetProperty("WSNameSpace", WSNameSpace);
 								
@@ -1345,12 +1386,14 @@ public void Go()
 		this.GetTemplate(projectTemplate).SetProperty("DALWSGuid", DALWSGuid);
 		this.GetTemplate(projectTemplate).SetProperty("UTGuid", utGuid);
 		this.GetTemplate(projectTemplate).SetProperty("WSGuid", wsGuid);
+		this.GetTemplate(projectTemplate).SetProperty("WebLibGuid", webLibGuid);
 					
 		this.GetTemplate(projectTemplate).SetProperty("IncludeBll", false);
 		this.GetTemplate(projectTemplate).SetProperty("IncludeDALBase", true);	
 		this.GetTemplate(projectTemplate).SetProperty("IncludeSqlClient", false);			
 		this.GetTemplate(projectTemplate).SetProperty("IncludeWebservice", false);
 		this.GetTemplate(projectTemplate).SetProperty("IncludeWebserviceClient", false);
+		this.GetTemplate(projectTemplate).SetProperty("IncludeWebLibrary", false);
 		this.GetTemplate(projectTemplate).SetProperty("IncludeUnitTest", false);			
 		
 								
@@ -1362,6 +1405,7 @@ public void Go()
 		this.GetTemplate(projectTemplate).SetProperty("BLLNameSpace", BLLNameSpace);
 		this.GetTemplate(projectTemplate).SetProperty("DALSqlNameSpace", DALSqlNameSpace);
 		this.GetTemplate(projectTemplate).SetProperty("DALWSNameSpace", DALWSNameSpace);
+		this.GetTemplate(projectTemplate).SetProperty("WebLibNameSpace", WebLibNameSpace);
 		this.GetTemplate(projectTemplate).SetProperty("UTNameSpace", UTNameSpace);
 		this.GetTemplate(projectTemplate).SetProperty("WSNameSpace", WSNameSpace);
 								
@@ -1386,12 +1430,14 @@ public void Go()
 		this.GetTemplate(projectTemplate).SetProperty("DALWSGuid", DALWSGuid);
 		this.GetTemplate(projectTemplate).SetProperty("UTGuid", utGuid);
 		this.GetTemplate(projectTemplate).SetProperty("WSGuid", wsGuid);
+		this.GetTemplate(projectTemplate).SetProperty("WebLibGuid", webLibGuid);
 					
 		this.GetTemplate(projectTemplate).SetProperty("IncludeBll", false);
 		this.GetTemplate(projectTemplate).SetProperty("IncludeDALBase", false);	
 		this.GetTemplate(projectTemplate).SetProperty("IncludeSqlClient", true);			
 		this.GetTemplate(projectTemplate).SetProperty("IncludeWebservice", false);
 		this.GetTemplate(projectTemplate).SetProperty("IncludeWebserviceClient", false);
+		this.GetTemplate(projectTemplate).SetProperty("IncludeWebLibrary", false);
 		this.GetTemplate(projectTemplate).SetProperty("IncludeUnitTest", false);			
 		
 								
@@ -1403,6 +1449,7 @@ public void Go()
 		this.GetTemplate(projectTemplate).SetProperty("BLLNameSpace", BLLNameSpace);
 		this.GetTemplate(projectTemplate).SetProperty("DALSqlNameSpace", DALSqlNameSpace);
 		this.GetTemplate(projectTemplate).SetProperty("DALWSNameSpace", DALWSNameSpace);
+		this.GetTemplate(projectTemplate).SetProperty("WebLibNameSpace", WebLibNameSpace);
 		this.GetTemplate(projectTemplate).SetProperty("UTNameSpace", UTNameSpace);
 		this.GetTemplate(projectTemplate).SetProperty("WSNameSpace", WSNameSpace);
 		
@@ -1434,12 +1481,14 @@ public void Go()
 				this.GetTemplate(projectTemplate).SetProperty("DALWSGuid", DALWSGuid);
 				this.GetTemplate(projectTemplate).SetProperty("UTGuid", utGuid);
 				this.GetTemplate(projectTemplate).SetProperty("WSGuid", wsGuid);
+				this.GetTemplate(projectTemplate).SetProperty("WebLibGuid", webLibGuid);
 									
 				this.GetTemplate(projectTemplate).SetProperty("IncludeBll", false);
 				this.GetTemplate(projectTemplate).SetProperty("IncludeDALBase", false);	
 				this.GetTemplate(projectTemplate).SetProperty("IncludeSqlClient", false);			
 				this.GetTemplate(projectTemplate).SetProperty("IncludeWebservice", true);
 				this.GetTemplate(projectTemplate).SetProperty("IncludeWebserviceClient", false);
+				this.GetTemplate(projectTemplate).SetProperty("IncludeWebLibrary", false);
 				this.GetTemplate(projectTemplate).SetProperty("IncludeUnitTest", false);			
 															
 				this.GetTemplate(projectTemplate).SetProperty("WebServiceUrl", WebServiceUrl);
@@ -1450,6 +1499,7 @@ public void Go()
 				this.GetTemplate(projectTemplate).SetProperty("BLLNameSpace", BLLNameSpace);
 				this.GetTemplate(projectTemplate).SetProperty("DALSqlNameSpace", DALSqlNameSpace);
 				this.GetTemplate(projectTemplate).SetProperty("DALWSNameSpace", DALWSNameSpace);
+				this.GetTemplate(projectTemplate).SetProperty("WebLibNameSpace", WebLibNameSpace);
 				this.GetTemplate(projectTemplate).SetProperty("UTNameSpace", UTNameSpace);
 				this.GetTemplate(projectTemplate).SetProperty("WSNameSpace", WSNameSpace);
 										
@@ -1474,12 +1524,14 @@ public void Go()
 			this.GetTemplate(projectTemplate).SetProperty("DALWSGuid", DALWSGuid);
 			this.GetTemplate(projectTemplate).SetProperty("UTGuid", utGuid);
 			this.GetTemplate(projectTemplate).SetProperty("WSGuid", wsGuid);
+			this.GetTemplate(projectTemplate).SetProperty("WebLibGuid", webLibGuid);
 			
 			this.GetTemplate(projectTemplate).SetProperty("IncludeBll", false);
 			this.GetTemplate(projectTemplate).SetProperty("IncludeDALBase", false);	
 			this.GetTemplate(projectTemplate).SetProperty("IncludeSqlClient", false);			
 			this.GetTemplate(projectTemplate).SetProperty("IncludeWebservice", false);
 			this.GetTemplate(projectTemplate).SetProperty("IncludeWebserviceClient", true);
+			this.GetTemplate(projectTemplate).SetProperty("IncludeWebLibrary", false);
 			this.GetTemplate(projectTemplate).SetProperty("IncludeUnitTest", false);			
 			
 									
@@ -1491,6 +1543,7 @@ public void Go()
 			this.GetTemplate(projectTemplate).SetProperty("DALNameSpace", DALNameSpace);
 			this.GetTemplate(projectTemplate).SetProperty("DALSqlNameSpace", DALSqlNameSpace);
 			this.GetTemplate(projectTemplate).SetProperty("DALWSNameSpace", DALWSNameSpace);
+			this.GetTemplate(projectTemplate).SetProperty("WebLibNameSpace", WebLibNameSpace);
 			this.GetTemplate(projectTemplate).SetProperty("UTNameSpace", UTNameSpace);
 			this.GetTemplate(projectTemplate).SetProperty("WSNameSpace", WSNameSpace);
 			
@@ -1500,6 +1553,49 @@ public void Go()
 			//this.GetTemplate(projectTemplate).RenderToFile(rootPathDALWS + "\\" + DALWSNameSpace + ".csproj", true);
 			this.RenderToFile(projectTemplate, rootPathDALWS + "\\" + DALWSNameSpace + ".csproj", true);
 		}
+	}
+	
+	// Web Library project file
+	if (GenerateWebLibrary)
+	{
+		AddFileNode(commonNode, WebLibNameSpace + ".csproj");
+		
+		this.GetTemplate(projectTemplate).SetProperty("SourceDatabase", SourceDatabase);
+		this.GetTemplate(projectTemplate).SetProperty("SourceTables", _sourceTables);
+		this.GetTemplate(projectTemplate).SetProperty("SourceViews", _sourceViews);
+		this.GetTemplate(projectTemplate).SetProperty("EnumTables", _enumTables);
+					
+		this.GetTemplate(projectTemplate).SetProperty("BLLGuid", bllGuid);
+		this.GetTemplate(projectTemplate).SetProperty("DALGuid", dalGuid);
+		this.GetTemplate(projectTemplate).SetProperty("DALSqlGuid", DALSqlGuid);
+		this.GetTemplate(projectTemplate).SetProperty("DALWSGuid", DALWSGuid);
+		this.GetTemplate(projectTemplate).SetProperty("UTGuid", utGuid);
+		this.GetTemplate(projectTemplate).SetProperty("WSGuid", wsGuid);
+		this.GetTemplate(projectTemplate).SetProperty("WebLibGuid", webLibGuid);
+				
+		this.GetTemplate(projectTemplate).SetProperty("IncludeBll", false);
+		this.GetTemplate(projectTemplate).SetProperty("IncludeDALBase", false);	
+		this.GetTemplate(projectTemplate).SetProperty("IncludeSqlClient", false);			
+		this.GetTemplate(projectTemplate).SetProperty("IncludeWebservice", false);
+		this.GetTemplate(projectTemplate).SetProperty("IncludeWebserviceClient", false);
+		this.GetTemplate(projectTemplate).SetProperty("IncludeWebLibrary", true);
+		this.GetTemplate(projectTemplate).SetProperty("IncludeUnitTest", false);
+					
+		this.GetTemplate(projectTemplate).SetProperty("WebServiceUrl", WebServiceUrl);
+		this.GetTemplate(projectTemplate).SetProperty("rootPathWS", rootPathWS);
+		
+		this.GetTemplate(projectTemplate).SetProperty("NameSpace", NameSpace);
+		this.GetTemplate(projectTemplate).SetProperty("BLLNameSpace", BLLNameSpace);
+		this.GetTemplate(projectTemplate).SetProperty("DALNameSpace", DALNameSpace);
+		this.GetTemplate(projectTemplate).SetProperty("DALSqlNameSpace", DALSqlNameSpace);
+		this.GetTemplate(projectTemplate).SetProperty("DALWSNameSpace", DALWSNameSpace);
+		this.GetTemplate(projectTemplate).SetProperty("WebLibNameSpace", WebLibNameSpace);
+		this.GetTemplate(projectTemplate).SetProperty("UTNameSpace", UTNameSpace);
+		this.GetTemplate(projectTemplate).SetProperty("WSNameSpace", WSNameSpace);
+					
+		this.GetTemplate(projectTemplate).SetProperty("OutputDirectory", OutputDirectory);
+												
+		this.RenderToFile(projectTemplate, rootPathWebLib + "\\" + WebLibNameSpace + ".csproj", true);
 	}
 	
 	// Unit tests only project file
@@ -1518,12 +1614,14 @@ public void Go()
 		this.GetTemplate(projectTemplate).SetProperty("DALWSGuid", DALWSGuid);
 		this.GetTemplate(projectTemplate).SetProperty("UTGuid", utGuid);
 		this.GetTemplate(projectTemplate).SetProperty("WSGuid", wsGuid);
+		this.GetTemplate(projectTemplate).SetProperty("WebLibGuid", webLibGuid);
 				
 		this.GetTemplate(projectTemplate).SetProperty("IncludeBll", false);
 		this.GetTemplate(projectTemplate).SetProperty("IncludeDALBase", false);	
 		this.GetTemplate(projectTemplate).SetProperty("IncludeSqlClient", false);			
 		this.GetTemplate(projectTemplate).SetProperty("IncludeWebservice", false);
 		this.GetTemplate(projectTemplate).SetProperty("IncludeWebserviceClient", false);
+		this.GetTemplate(projectTemplate).SetProperty("IncludeWebLibrary", false);
 		this.GetTemplate(projectTemplate).SetProperty("IncludeUnitTest", true);
 					
 		this.GetTemplate(projectTemplate).SetProperty("WebServiceUrl", WebServiceUrl);
@@ -1534,6 +1632,7 @@ public void Go()
 		this.GetTemplate(projectTemplate).SetProperty("DALNameSpace", DALNameSpace);
 		this.GetTemplate(projectTemplate).SetProperty("DALSqlNameSpace", DALSqlNameSpace);
 		this.GetTemplate(projectTemplate).SetProperty("DALWSNameSpace", DALWSNameSpace);
+		this.GetTemplate(projectTemplate).SetProperty("WebLibNameSpace", WebLibNameSpace);
 		this.GetTemplate(projectTemplate).SetProperty("UTNameSpace", UTNameSpace);
 		this.GetTemplate(projectTemplate).SetProperty("WSNameSpace", WSNameSpace);
 					
@@ -1580,6 +1679,15 @@ public void Go()
 	this.GetTemplate("EntityHelper.cst").SetProperty("NameSpace", BLLNameSpace);
 	this.GetTemplate("EntityHelper.cst").RenderToFile(rootPathBLL + "\\EntityHelper.cs", true);
 	//AddExecutionTime(entityHelperNode);
+	//----------------------------------------------------------------------------------------------------------------------------------------------
+	
+	//----------------------------------------------------------------------------------------------------------------------------------------------
+	//-- EntityUtil.cs
+	//----------------------------------------------------------------------------------------------------------------------------------------------
+	XmlElement entityUtilNode = AddFileNode(commonNode, "EntityUtil.cs");
+	this.GetTemplate("EntityUtil.cst").SetProperty("NameSpace", BLLNameSpace);
+	this.GetTemplate("EntityUtil.cst").RenderToFile(rootPathBLL + "\\EntityUtil.cs", true);
+	//AddExecutionTime(entityUtilNode);
 	//----------------------------------------------------------------------------------------------------------------------------------------------
 	
 	string version = string.Empty;

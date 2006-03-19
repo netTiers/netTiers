@@ -12,6 +12,7 @@
 <%@ Property Name="DALWSGuid" Type="System.String" Category="Style" Description="DAL Project Guid" %>
 <%@ Property Name="UTGuid" Type="System.String" Category="Context" Description="Unit tests Project Guid" %>
 <%@ Property Name="WSGuid" Type="System.String" Category="Context" Description="WebService Project Guid" %>
+<%@ Property Name="WebLibGuid" Type="System.String" Category="Context" Description="Web Library Project Guid" %>
 
 <%@ Property Name="OutputDirectory" Type="System.String" Category="General" Description="The root output folder."%>
 
@@ -22,11 +23,13 @@
 <%@ Property Name="DALWSNameSpace" Type="System.String" Category="Data" Description="DAL ws Namespace." %>
 <%@ Property Name="UTNameSpace" Type="System.String" Category="Data" Description="UT Namespace." %>
 <%@ Property Name="WSNameSpace" Type="System.String" Category="Data" Description="WebService Namespace." %>
+<%@ Property Name="WebLibNameSpace" Type="System.String" Category="Data" Description="Web Library Namespace." %>
 
 <%@ Property Name="IncludeBll" Type="System.Boolean" Category="Option" Description="" %>
 
 <%@ Property Name="IncludeDALBase" Type="System.Boolean" Category="Option" Description="" %>
 <%@ Property Name="IncludeSqlClient" Type="System.Boolean" Category="Option" Description="" %>
+<%@ Property Name="IncludeWebLibrary" Type="System.Boolean" Category="Option" Description="" %>
 <%@ Property Name="IncludeWebservice" Type="System.Boolean" Category="Option" Description="" %>
 <%@ Property Name="IncludeWebserviceClient" Type="System.Boolean" Category="Option" Description="" %>
 <%@ Property Name="IncludeUnitTest" Type="System.Boolean" Default="true" Category="General" Description="Indicates whether the Unit tests should be generated." %>
@@ -64,11 +67,14 @@
 	{
 		fileName = WSNameSpace;
 	}
-	else if (IncludeWebserviceClient
-)
+	else if (IncludeWebserviceClient)
 	{
 		fileName = DALWSNameSpace;
-	}	
+	}
+	else if (IncludeWebLibrary)
+	{
+		fileName = WebLibNameSpace;
+	}
 	else
 	{
 		fileName = NameSpace;
@@ -79,13 +85,14 @@
 	string SqlClientSubFolder = string.Empty;
 	string WSClientSubFolder = string.Empty;
 	string UTSubFolder = string.Empty;
+	string WebLibSubFolder = string.Empty;
 %>
 <Project DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <PropertyGroup>
     <ProjectType><%if (IncludeWebservice) Response.Write("Web"); else Response.Write("Local"); %></ProjectType>
     <ProductVersion>8.0.50727</ProductVersion>
     <SchemaVersion>2.0</SchemaVersion>
-    <ProjectGuid>{<% if (IncludeBll) Response.Write(BLLGuid); else if (IncludeDALBase) Response.Write(DALGuid); else if (IncludeSqlClient) Response.Write(DALSqlGuid); else if (IncludeUnitTest) Response.Write(UTGuid); else if (IncludeWebservice) Response.Write(WSGuid);else if (IncludeWebserviceClient) Response.Write(DALWSGuid);  %>}</ProjectGuid>
+    <ProjectGuid>{<% if (IncludeBll) Response.Write(BLLGuid); else if (IncludeDALBase) Response.Write(DALGuid); else if (IncludeSqlClient) Response.Write(DALSqlGuid); else if (IncludeUnitTest) Response.Write(UTGuid); else if (IncludeWebservice) Response.Write(WSGuid);else if (IncludeWebserviceClient) Response.Write(DALWSGuid); else if (IncludeWebLibrary) Response.Write(WebLibGuid);  %>}</ProjectGuid>
     <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
     <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
     <ApplicationIcon>
@@ -179,7 +186,7 @@
     </ProjectReference>
 	<%}%>
 	
-	<% if (IncludeSqlClient || IncludeWebserviceClient) { %>
+	<% if (IncludeSqlClient || IncludeWebserviceClient || IncludeWebLibrary) { %>
     <ProjectReference Include="..\<%=DALNameSpace%>\<%=DALNameSpace%>.csproj">
         <Name><%=DALNameSpace%></Name>
         <Project>{<%=DALGuid%>}</Project>
@@ -420,6 +427,9 @@
 			<Compile Include="<%=BLLSubFolder%>EntityHelper.cs">
 			  <SubType>Code</SubType>
 			</Compile>
+			<Compile Include="<%=BLLSubFolder%>EntityUtil.cs">
+			  <SubType>Code</SubType>
+			</Compile>
 			<Compile Include="<%=BLLSubFolder%>GenericTypeConverter.cs">
 			  <SubType>Code</SubType>
 			</Compile>
@@ -490,6 +500,15 @@
 			  <SubType>Code</SubType>
 			</Compile>			
 		<%}%>
+		
+		<% if (IncludeWebLibrary) { %>
+			<Compile Include="<%=WebLibSubFolder%>Data\EntityTransactionModule.cs">
+			  <SubType>Code</SubType>
+			</Compile>			
+			<Compile Include="<%=WebLibSubFolder%>Data\EntityDataSource.cs">
+			  <SubType>Code</SubType>
+			</Compile>			
+		<% } %>
 		
 		<%  if (IncludeWebservice) {%>
 			<Compile Include="<%=GetClassName(SourceDatabase.Name) + "Services.asmx"%>">
