@@ -1,0 +1,522 @@
+<%--
+ * $Id: EntityDataSource.cst,v 1.0 2006/03/19 01:00:00 bdiaz Exp $
+ * Last modified by $Author: bdiaz $
+ * Last modified at $Date: 2006-03-19 01:00:00 -0600 (Sun, 19 Mar 2006) $
+ * $Revision: 1 $
+--%>
+<%@ CodeTemplate Language="C#" TargetLanguage="Text" Src="" Inherits="" Debug="False" Description="Template description here." %>
+
+<%@ Property Name="NameSpace" Optional="False" Type="System.String" Category="Style" Description="BLL Namespace." %>
+
+<%@ Assembly Name="System.Data" %>
+<%@ Import Namespace="System.Data" %>
+#region Imports...
+using System;
+using System.Collections;
+using System.Reflection;
+#endregion
+
+namespace <%= NameSpace %>
+{
+	/// <summary>
+	/// Summary description for EntityUtil
+	/// </summary>
+	public sealed class EntityUtil
+	{
+		private EntityUtil()
+		{
+		}
+
+		public static Object GetNewEntity(Type type)
+		{
+			return GetNewEntity(type, null);
+		}
+
+		public static Object GetNewEntity(Type type, params Object[] args)
+		{
+			ConstructorInfo c = GetConstructor(type, GetTypes(args));
+			return ( c != null ) ? c.Invoke(args) : null;
+		}
+
+		public static ConstructorInfo GetConstructor(Type type)
+		{
+			return GetConstructor(type, null);
+		}
+
+		public static ConstructorInfo GetConstructor(Type type, Type[] types)
+		{
+			ConstructorInfo c = null;
+
+			if ( type != null )
+			{
+				c = type.GetConstructor(types ?? Type.EmptyTypes);
+			}
+
+			return c;
+		}
+
+		public static PropertyInfo GetProperty(Object item, String propertyName)
+		{
+			PropertyInfo prop = null;
+			
+			if ( item != null )
+			{
+				prop = GetProperty(item.GetType(), propertyName);
+			}
+
+			return prop;
+		}
+
+		public static PropertyInfo GetProperty(Type type, String propertyName)
+		{
+			PropertyInfo prop = null;
+
+			if ( type != null && !String.IsNullOrEmpty(propertyName) )
+			{
+				prop = type.GetProperty(propertyName);
+			}
+
+			return prop;
+		}
+
+		public static MethodInfo GetMethod(Object item, String methodName)
+		{
+			return GetMethod(item, methodName, null);
+		}
+
+		public static MethodInfo GetMethod(Object item, String methodName, Type[] types)
+		{
+			MethodInfo m = null;
+
+			if ( item != null )
+			{
+				m = GetMethod(item.GetType(), methodName, types);
+			}
+
+			return m;
+		}
+
+		public static MethodInfo GetMethod(Type type, String methodName)
+		{
+			return GetMethod(type, methodName, null);
+		}
+
+		public static MethodInfo GetMethod(Type type, String methodName, Type[] types)
+		{
+			MethodInfo m = null;
+
+			if ( type != null && !String.IsNullOrEmpty(methodName) )
+			{
+				m = type.GetMethod(methodName, (types ?? Type.EmptyTypes));
+			}
+
+			return m;
+		}
+
+		public static Object InvokeMethod(Object entity, String methodName)
+		{
+			return InvokeMethod(entity, methodName, null, null);
+		}
+
+		public static Object InvokeMethod(Object entity, String methodName, Object[] args)
+		{
+			return InvokeMethod(entity, methodName, args, GetTypes(args));
+		}
+
+		public static Object InvokeMethod(Object entity, String methodName, Object[] args, Type[] types)
+		{
+			Object returnValue = null;
+
+			MethodInfo m = GetMethod(entity, methodName, types);
+			if ( m != null )
+			{
+				returnValue = m.Invoke(entity, args);
+			}
+
+			return returnValue;
+		}
+
+		public static Type GetType(String typeName)
+		{
+			Type type = null;
+
+			if ( !String.IsNullOrEmpty(typeName) )
+			{
+				type = Type.GetType(typeName, true);
+			}
+
+			return type;
+		}
+
+		public static Type[] GetTypes(Object[] args)
+		{
+			Type[] types = Type.EmptyTypes;
+
+			if ( args != null )
+			{
+				types = Type.GetTypeArray(args);
+			}
+
+			return types;
+		}
+
+		public static Object GetPropertyValue(Object item, String propertyName)
+		{
+			PropertyInfo property = null;
+			return GetPropertyValue(item, propertyName, out property);
+		}
+
+		public static Object GetPropertyValue(Object item, String propertyName, out PropertyInfo property)
+		{
+			Object value = null;
+			property = GetProperty(item, propertyName);
+
+			if ( property != null && property.CanRead )
+			{
+				value = property.GetValue(item, null);
+			}
+
+			return value;
+		}
+
+		public static Object GetStaticPropertyValue(Type type, String propertyName)
+		{
+			PropertyInfo property = null;
+			return GetStaticPropertyValue(type, propertyName, out property);
+		}
+
+		public static Object GetStaticPropertyValue(Type type, String propertyName, out PropertyInfo property)
+		{
+			Object value = null;
+			property = GetProperty(type, propertyName);
+
+			if ( property != null && property.CanRead )
+			{
+				value = property.GetValue(null, null);
+			}
+
+			return value;
+		}
+
+		public static void SetPropertyValue(Object item, String propertyName, Object propertyValue)
+		{
+			PropertyInfo property = null;
+			SetPropertyValue(item, propertyName, propertyValue, out property);
+		}
+
+		public static void SetPropertyValue(Object item, String propertyName, Object propertyValue, out PropertyInfo property)
+		{
+			property = GetProperty(item, propertyName);
+
+			if ( property != null && property.CanWrite )
+			{
+				Object value = ChangeType(propertyValue, property.PropertyType);
+				property.SetValue(item, value, null);
+			}
+		}
+
+		public static Guid SetEntityKeyValue(Object entity, String entityKeyName)
+		{
+			PropertyInfo property = null;
+			Object objId = GetPropertyValue(entity, entityKeyName, out property);
+			Guid entityId = Guid.Empty;
+
+			if ( property != null && property.PropertyType.IsAssignableFrom(typeof(Guid)) )
+			{
+				if ( Guid.Empty.Equals(objId) && property.CanWrite )
+				{
+					entityId = Guid.NewGuid();
+					property.SetValue(entity, entityId, null);
+				}
+			}
+
+			return entityId;
+		}
+
+		/// <summary>
+		/// Sets the properties of the specified entity based on the
+		/// name/value pairs found in the specified collection.
+		/// </summary>
+		/// <param name="entity">The instance of an object to set the properties on.</param>
+		/// <param name="values">An instance of System.Collections.IDictionary containing the name/value pairs.</param>
+		public static void SetEntityValues(Object entity, IDictionary values)
+		{
+			if ( entity != null && values != null )
+			{
+				Object oValue;
+
+				foreach ( Object oKey in values.Keys )
+				{
+					if ( oKey is String )
+					{
+						oValue = values[oKey];
+						SetPropertyValue(entity, oKey.ToString(), oValue);
+					}
+				}
+			}
+		}
+
+		/// <summary>
+		/// Initializes the properties specified in propertyNames
+		/// with the value of DateTime.Now for the specified entity.
+		/// </summary>
+		/// <param name="entity">The instance of an object to set the properties on.</param>
+		/// <param name="propertyNames">The list of property names to initialize.</param>
+		public static void InitEntityDateTimeValues(Object entity, String[] propertyNames)
+		{
+			if ( entity != null && propertyNames != null )
+			{
+				PropertyInfo prop;
+
+				foreach ( String name in propertyNames )
+				{
+					prop = GetProperty(entity, name);
+
+					if ( prop != null && prop.CanWrite && prop.PropertyType.IsAssignableFrom(typeof(DateTime)) )
+					{
+						prop.SetValue(entity, DateTime.Now, null);
+					}
+				}
+			}
+		}
+
+		public static bool IsPropertyValueEqual(Object item, String propertyName, Object propertyValue)
+		{
+			PropertyInfo property = null;
+			Object prevValue = GetPropertyValue(item, propertyName, out property);
+
+			Object currValue = null;
+			bool isEqual = false;
+
+			if ( property != null )
+			{
+				currValue = ChangeType(propertyValue, property.PropertyType);
+				isEqual = Object.Equals(prevValue, currValue);
+			}
+
+			return isEqual;
+		}
+
+		public static Object ChangeType(Object value, Type conversionType)
+		{
+			return ChangeType(value, conversionType, true);
+		}
+
+		public static Object ChangeType(Object value, Type conversionType, bool convertBlankToNull)
+		{
+			Object newValue = null;
+
+			if ( convertBlankToNull && value != null )
+			{
+				if ( value is String )
+				{
+					String strValue = value.ToString().Trim();
+
+					if ( String.IsNullOrEmpty(strValue) )
+					{
+						value = null;
+					}
+				}
+			}
+			if ( conversionType.IsGenericType )
+			{
+				newValue = ChangeGenericType(value, conversionType, convertBlankToNull);
+			}
+			else if ( value != null )
+			{
+				// special handling for non-convertible values
+				if ( !(value is IConvertible) )
+				{
+					value = value.ToString();
+				}
+				// special handling of Guid types
+				if ( conversionType == typeof(Guid) )
+				{
+					if ( !String.IsNullOrEmpty(value.ToString()) )
+					{
+						newValue = new Guid(value.ToString());
+					}
+				}
+				else
+				{
+					newValue = Convert.ChangeType(value, conversionType);
+				}
+			}
+
+			return newValue;
+		}
+
+		public static Object ChangeGenericType(Object value, Type conversionType)
+		{
+			return ChangeGenericType(value, conversionType, true);
+		}
+
+		public static Object ChangeGenericType(Object value, Type conversionType, bool convertBlankToNull)
+		{
+			Object newValue = null;
+
+			if ( conversionType.IsGenericType )
+			{
+				Type typeDef = conversionType.GetGenericTypeDefinition();
+				Type[] typeArgs = conversionType.GetGenericArguments();
+
+				if ( typeArgs.Length == 1 )
+				{
+					Type newType = typeArgs[0];
+					Object arg = ChangeType(value, newType, convertBlankToNull);
+					newValue = GetNewGenericEntity(typeDef, typeArgs, arg);
+				}
+			}
+
+			return newValue;
+		}
+
+		public static Type MakeGenericType(Type typeDefinition, Type[] typeArguments)
+		{
+			Type genericType = null;
+
+			if ( typeDefinition != null && typeArguments != null && typeArguments.Length > 0 )
+			{
+				genericType = typeDefinition.MakeGenericType(typeArguments);
+			}
+
+			return genericType;
+		}
+
+		public static Object GetNewGenericEntity(Type typeDefinition, Type[] typeArguments, params Object[] args)
+		{
+			Type genericType = MakeGenericType(typeDefinition, typeArguments);
+			return GetNewGenericEntity(genericType, args);
+		}
+
+		public static Object GetNewGenericEntity(Type genericType)
+		{
+			return GetNewGenericEntity(genericType, null);
+		}
+
+		public static Object GetNewGenericEntity(Type genericType, params Object[] args)
+		{
+			Object entity = null;
+
+			if ( genericType != null )
+			{
+				// make sure a single null arg was not passed in
+				if ( args != null && args.Length == 1 && args[0] == null )
+				{
+					args = null;
+				}
+
+				entity = Activator.CreateInstance(genericType, args);
+			}
+
+			return entity;
+		}
+
+		public static bool HasEntities(IList entities)
+		{
+			return ( entities != null && entities.Count > 0 );
+		}
+
+		public static Object GetEntity(IList entities, String propertyName, Object propertyValue)
+		{
+			if ( HasEntities(entities) )
+			{
+				foreach ( Object entity in entities )
+				{
+					if ( IsPropertyValueEqual(entity, propertyName, propertyValue) )
+					{
+						return entity;
+					}
+				}
+			}
+
+			return null;
+		}
+
+		/// <summary>
+		/// Gets the item within entityList at the position specified by index.
+		/// </summary>
+		/// <param name="entityList">The collection of business objects.</param>
+		/// <param name="index">The position within entityList that contains the current item.</param>
+		/// <returns>The current business object.</returns>
+		public static Object GetEntity(IEnumerable entityList, int index)
+		{
+			IList list = GetEntityList(entityList);
+			Object entity = null;
+
+			if ( list.Count > index )
+			{
+				entity = list[index];
+			}
+
+			return entity;
+		}
+
+		public static IList GetEntityList(Object entity, String propertyName)
+		{
+			Object list = EntityUtil.GetPropertyValue(entity, propertyName);
+			return GetEntityList(list);
+		}
+
+		public static IList GetEntityList(Object entityList)
+		{
+			IList list = null;
+
+			if ( entityList == null )
+			{
+				list = new ArrayList();
+			}
+			else
+			{
+				if ( entityList is IList )
+				{
+					list = (IList) entityList;
+				}
+				else
+				{
+					list = new ArrayList();
+
+					if ( entityList is IEnumerable )
+					{
+						IEnumerable temp = entityList as IEnumerable;
+
+						foreach ( Object item in temp )
+						{
+							if ( item != null )
+							{
+								list.Add(item);
+							}
+						}
+					}
+					else
+					{
+						list.Add(entityList);
+					}
+				}
+			}
+
+			return list;
+		}
+
+		public static void Add(IList list, Object item)
+		{
+			if ( list != null && item != null )
+			{
+				list.Add(item);
+			}
+		}
+
+		public static void Remove(IList list, Object item)
+		{
+			if ( list != null && item != null )
+			{
+				if ( item is IEntity )
+				{
+					((IEntity) item).MarkToDelete();
+				}
+
+				list.Remove(item);
+			}
+		}
+	}
+}
