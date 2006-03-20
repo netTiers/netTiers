@@ -255,42 +255,7 @@ namespace <%=DALNameSpace%>
         /// <returns></returns>
         public static IDataReader ExecuteReader(TransactionManager transactionManager, DbCommand dbCommand)
         {
-            if (!transactionManager.IsOpen) throw new DataException("Transaction must be open before executing a query.");
-			<%if (RetryEnabled && RetryMaxAttempts > 1) {%>
-			IDataReader reader = null;
-			for (int attempt = 1; attempt <= <%=RetryMaxAttempts%>; attempt++)
-			{
-				try
-				{
-            		reader = transactionManager.Database.ExecuteReader(dbCommand, transactionManager.TransactionObject);
-				}
-				catch (DataException)
-				{
-					// we could time out due to locks 
-					// or our database may be temporaryly unavailable
-					if (attempt == <%=RetryMaxAttempts%>)
-						throw;
-						
-					System.Threading.Thread.Sleep(<%
-					switch (RetrySleepStyle)
-					{
-						case MoM.Templates.SleepStyle.Constant:
-							%><%=RetrySleepTime%><%
-							break;
-						case MoM.Templates.SleepStyle.Linear:
-							%><%=RetrySleepTime%>*attempt<%
-							break;
-						case MoM.Templates.SleepStyle.Exponential:
-							%>Math.Pow(<%=RetrySleepTime%>,attempt)<%
-							break;
-					}
-					%>);
-				}
-			}
-			<%} else {%>
-			IDataReader reader = transactionManager.Database.ExecuteReader(dbCommand);
-			<%}%>
-			return reader;
+			<% WriteExecuteMethod(ExecuteType.Reader, true); %>
 		}
 		
         /// <summary>
@@ -300,41 +265,7 @@ namespace <%=DALNameSpace%>
         /// <returns></returns>
 		public static IDataReader ExecuteReader(Database database, DbCommand dbCommand)
 		{
-			<%if (RetryEnabled && RetryMaxAttempts > 1) {%>
-			IDataReader reader = null;
-			for (int attempt = 1; attempt <= <%=RetryMaxAttempts%>; attempt++)
-			{
-				try
-				{
-					reader = database.ExecuteReader(dbCommand);
-				}
-				catch (DataException)
-				{
-					// we could time out due to locks 
-					// or our database may be temporaryly unavailable
-					if (attempt == <%=RetryMaxAttempts%>)
-						throw;
-						
-					System.Threading.Thread.Sleep(<%
-					switch (RetrySleepStyle)
-					{
-						case MoM.Templates.SleepStyle.Constant:
-							%><%=RetrySleepTime%><%
-							break;
-						case MoM.Templates.SleepStyle.Linear:
-							%><%=RetrySleepTime%>*attempt<%
-							break;
-						case MoM.Templates.SleepStyle.Exponential:
-							%>Math.Pow(<%=RetrySleepTime%>,attempt)<%
-							break;
-					}
-					%>);
-				}
-			}
-			<%} else {%>
-			IDataReader reader = database.ExecuteReader(dbCommand);
-			<%}%>
-			return reader;
+			<% WriteExecuteMethod(ExecuteType.Reader, false); %>
 		}
         #endregion
         
@@ -346,9 +277,7 @@ namespace <%=DALNameSpace%>
         /// <returns></returns>
         public static int ExecuteNonQuery(TransactionManager transactionManager, DbCommand dbCommand)
         {
-            if (!transactionManager.IsOpen) throw new DataException("Transaction must be open before executing a query.");
-            int count = transactionManager.Database.ExecuteNonQuery(dbCommand, transactionManager.TransactionObject);
-            return count;
+			<% WriteExecuteMethod(ExecuteType.NonQuery, true); %>
         }
 		
         /// <summary>
@@ -358,41 +287,7 @@ namespace <%=DALNameSpace%>
         /// <returns></returns>
 		public static int ExecuteNonQuery(Database database, DbCommand dbCommand)
 		{
-			<%if (RetryEnabled && RetryMaxAttempts > 1) {%>
-			int count = 0;
-			for (int attempt = 1; attempt <= <%=RetryMaxAttempts%>; attempt++)
-			{
-				try
-				{
-					count = database.ExecuteNonQuery(dbCommand);
-				}
-				catch (DataException)
-				{
-					// we could time out due to locks 
-					// or our database may be temporaryly unavailable
-					if (attempt == <%=RetryMaxAttempts%>)
-						throw;
-
-					System.Threading.Thread.Sleep(<%
-					switch (RetrySleepStyle)
-					{
-						case MoM.Templates.SleepStyle.Constant:
-							%><%=RetrySleepTime%><%
-							break;
-						case MoM.Templates.SleepStyle.Linear:
-							%><%=RetrySleepTime%>*attempt<%
-							break;
-						case MoM.Templates.SleepStyle.Exponential:
-							%>Math.Pow(<%=RetrySleepTime%>,attempt)<%
-							break;
-					}
-					%>);
-				}
-			}
-			<%} else {%>
-			int count = database.ExecuteNonQuery(dbCommand);
-			<%}%>
-			return count;
+			<% WriteExecuteMethod(ExecuteType.NonQuery, false); %>
 		}
         #endregion
 		
@@ -404,9 +299,7 @@ namespace <%=DALNameSpace%>
         /// <returns></returns>
         public static DataSet ExecuteDataSet(TransactionManager transactionManager, DbCommand dbCommand)
         {
-            if (!transactionManager.IsOpen) throw new DataException("Transaction must be open before executing a query.");
-        	DataSet dataSet = transactionManager.Database.ExecuteDataSet(dbCommand, transactionManager.TransactionObject);
-            return dataSet;
+			<% WriteExecuteMethod(ExecuteType.DataSet, true); %>
         }
 
 		/// <summary>
@@ -416,43 +309,128 @@ namespace <%=DALNameSpace%>
         /// <returns></returns>
 		public static DataSet ExecuteDataSet(Database database, DbCommand dbCommand)
 		{
-			<%if (RetryEnabled && RetryMaxAttempts > 1) {%>
-			DataSet dataSet = null;
-			for (int attempt = 1; attempt <= <%=RetryMaxAttempts%>; attempt++)
-			{
-				try
-				{
-					dataSet = database.ExecuteDataSet(dbCommand);
-				}
-				catch (DataException)
-				{
-					// we could time out due to locks 
-					// or our database may be temporaryly unavailable
-					if (attempt == <%=RetryMaxAttempts%>)
-						throw;
-						
-					System.Threading.Thread.Sleep(<%
-					switch (RetrySleepStyle)
-					{
-						case MoM.Templates.SleepStyle.Constant:
-							%><%=RetrySleepTime%><%
-							break;
-						case MoM.Templates.SleepStyle.Linear:
-							%><%=RetrySleepTime%>*attempt<%
-							break;
-						case MoM.Templates.SleepStyle.Exponential:
-							%>Math.Pow(<%=RetrySleepTime%>,attempt)<%
-							break;
-					}
-					%>);
-				}
-			}
-			<%} else {%>
-			DataSet dataSet = database.ExecuteDataSet(dbCommand);
-			<%}%>
-			return dataSet;
+			<% WriteExecuteMethod(ExecuteType.DataSet, false); %>
 		}
 		#endregion		
 		#endregion
 	}
 }
+
+<script runat="template">
+
+private enum ExecuteType
+{
+	Reader,
+	NonQuery,
+	DataSet,
+	Scalar
+}
+
+private static string RetryExecuteCode = @"
+			{6}{3} results = {7};
+			for (int attempt = 1; attempt <= {1}; attempt++)
+			{{
+				try
+				{{
+					results = {5}.Execute{0}(dbCommand{4});
+				}}
+				catch (DataException)
+				{{
+					// we could time out due to locks 
+					// or our database may be temporaryly unavailable
+					if (attempt == {1})
+						throw;
+						
+					System.Threading.Thread.Sleep({2});
+				}}
+			}}
+			
+			return results;";
+
+private static string NoRetryExecuteCode = @"
+			{6}{3} results = {5}.Execute{0}(dbCommand{4});
+			return results;";
+
+private void WriteExecuteMethod(ExecuteType executeType, bool useTransactions)
+{
+	string results = string.Empty;
+	string sleepType = string.Empty;
+	object[] formatParams = null;
+	bool useRetry = RetryEnabled && RetryMaxAttempts > 1;
+	
+	switch (RetrySleepStyle)
+	{
+		case MoM.Templates.SleepStyle.Constant:
+			sleepType = string.Format("{0}",RetrySleepTime);
+			break;
+		case MoM.Templates.SleepStyle.Linear:
+			sleepType = string.Format("{0}*attempt",RetrySleepTime);
+			break;
+		case MoM.Templates.SleepStyle.Exponential:
+			sleepType = string.Format("(int)Math.Pow({0},attempt)",RetrySleepTime);
+			break;
+	}
+					
+	switch (executeType)
+	{
+		case ExecuteType.Reader:
+			formatParams = new object[]
+				{
+					"Reader",
+					RetryMaxAttempts,
+					sleepType,
+					"IDataReader",
+					(useTransactions? ", transactionManager.TransactionObject":""),
+					(useTransactions? "transactionManager.Database":"database"),
+					(useTransactions? "if (!transactionManager.IsOpen) throw new DataException(\"Transaction must be open before executing a query.\");\n\t\t\t":""),
+					"null"
+					
+				};
+			break;
+			
+		case ExecuteType.NonQuery:
+			formatParams = new object[]
+				{
+					"NonQuery",
+					RetryMaxAttempts,
+					sleepType,
+					"int",
+					(useTransactions? ", transactionManager.TransactionObject":""),
+					(useTransactions? "transactionManager.Database":"database"),
+					(useTransactions? "if (!transactionManager.IsOpen) throw new DataException(\"Transaction must be open before executing a query.\");\n\t\t\t":""),
+					"0"
+				};
+			break;
+			
+		case ExecuteType.DataSet:
+			formatParams = new object[]
+				{
+					"DataSet",
+					RetryMaxAttempts,
+					sleepType,
+					"DataSet",
+					(useTransactions? ", transactionManager.TransactionObject":""),
+					(useTransactions? "transactionManager.Database":"database"),
+					(useTransactions? "if (!transactionManager.IsOpen) throw new DataException(\"Transaction must be open before executing a query.\");\n\t\t\t":""),
+					"null"
+				};
+			break;
+		case ExecuteType.Scalar:
+			formatParams = new object[]
+				{
+					"Object",
+					RetryMaxAttempts,
+					sleepType,
+					"Object",
+					(useTransactions? ", transactionManager.TransactionObject":""),
+					(useTransactions? "transactionManager.Database":"database"),
+					(useTransactions? "if (!transactionManager.IsOpen) throw new DataException(\"Transaction must be open before executing a query.\");\n\t\t\t":""),
+					"null"
+				};
+			break;
+	}
+		
+	Response.WriteLine(string.Format((useRetry? RetryExecuteCode: NoRetryExecuteCode),formatParams));
+
+}
+</script>

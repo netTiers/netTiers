@@ -27,11 +27,6 @@
 <%@ Property Name="DALNameSpace" Type="System.String" Category="Data" Description="DAL Namespace." %>
 <%@ Property Name="ProcedurePrefix" Optional="True" Type="System.String" Category="Style" Description="Prefix for Strored Procedures" %>
 
-<%@ Property Name="RetryEnabled" Optional="False" Type="System.Boolean" Category="Retry" Description="Enabling Retry will add code retry the queries that failed with data exceptions. Useful to if your database becomes temporarily unavailable." %>
-<%@ Property Name="RetryMaxAttempts" Optional="True" Type="System.Int32" Category="Retry" Description="The number of attempts that will be made." %>
-<%@ Property Name="RetrySleepTime" Optional="True" Type="System.Int32" Category="Retry" Description="The number of milliseconds that the current thread will sleep between attempts.  Sleep only occurs if an exception is thrown." Default="1000" %>
-<%@ Property Name="RetrySleepStyle" Optional="True" Type="MoM.Templates.SleepStyle" Category="Retry" Description="" %>
-
 <%
 	// Name of the table being worked on.
 	string name = SourceView.Name;
@@ -292,60 +287,66 @@ public partial class <%=providerBaseName%> : <%=GetProviderBaseName(SourceView.N
 		DbCommand commandWrapper = database.GetStoredProcCommand("<%=command.Name%>");
 		
 		<% foreach(ParameterSchema col in command.InputParameters)	{ %>
-			database.AddInParameter(commandWrapper, "@<%=GetPropertyName(col.Name)%>", <%=GetDbType(col)%>,  <% if (col.AllowDBNull) { %>Utility.DefaultToDBNull(<%=GetPrivateName(col.Name)%>, DbType.<%= col.DataType.ToString() %>) <%} else {%><%=GetPrivateName(col.Name)%> <%}%>);
+		database.AddInParameter(commandWrapper, "@<%=GetPropertyName(col.Name)%>", <%=GetDbType(col)%>,  <% if (col.AllowDBNull) { %>Utility.DefaultToDBNull(<%=GetPrivateName(col.Name)%>, DbType.<%= col.DataType.ToString() %>) <%} else {%><%=GetPrivateName(col.Name)%> <%}%>);
 		<%}%>
 
 		try
 		{
-
-		<% if (returnType == "DataSet") { %>
+			<% if (returnType == "DataSet") { %>
 			DataSet ds = null;
 			
 			if (transactionManager != null)
 			{	
-				ds = ExecuteDataSet(transactionManager,commandWrapper);
+				ds = database.ExecuteDataSet(commandWrapper, transactionManager.TransactionObject);
 			}
 			else
 			{
-				ds = ExecuteDataSet(database,commandWrapper);
+				ds = database.ExecuteDataSet(commandWrapper);
 			}
+			return ds;	
+			<% } else if (returnType == "IDataReader") { %>
+			IDataReader dr = null;
 			
-			return ds;
-			
-		<% } else if (returnType == "void") { %>
 			if (transactionManager != null)
 			{	
-				Utility.ExecuteNonQuery(transactionManager, commandWrapper);
+				dr = Utility.ExecuteReader(transactionManager,commandWrapper);
+			}
+			else
+			{
+				dr = Utility.ExecuteReader(database, commandWrapper);
+			}
+			return dr;
+			<% } else if (returnType == "void") { %>
+			if (transactionManager != null)
+			{	
+				Utility.ExecuteNonQuery(commandWrapper, transactionManager.TransactionObject);
 			}
 			else
 			{
 				Utility.ExecuteNonQuery(database, commandWrapper);
 			}
-			
 			return;
-			
-		<% } else if 	(returnType == collectionClassName) { %>
+			<% } else if 	(returnType == collectionClassName) { %>
 			IDataReader reader = null;
 
 			if (transactionManager != null)
 			{	
-				reader = Utility.ExecuteReader(transactionManager,commandWrapper);
+				reader = Utility.ExecuteReader(transactionManager, commandWrapper);
 			}
 			else
 			{
 				reader = Utility.ExecuteReader(database, commandWrapper);
 			}			
 			
+			//Create Collection
 			<% if (returnType == collectionClassName) {%>
-				
-				//Create Collection
 				<%=collectionClassName%> rows = new <%=collectionClassName%>();
 				try
-				{
-				    Fill(reader, rows, start, pageLength);
+				{    
+					Fill(reader, rows, start, pageLength);
 				}
 				finally
-				{	
+				{
 					if (reader != null) 
 						reader.Close();
 				}
@@ -354,18 +355,12 @@ public partial class <%=providerBaseName%> : <%=GetProviderBaseName(SourceView.N
 				<%=returnType%> tmp = null;
 				try
 				{
-				    reader.Read();
-				    tmp = (<%=returnType%>)reader[0];
-				}
-				finally 
-				{	
-					if (reader != null) 
-						reader.Close();
-				}
+					reader.Read();
+					tmp = (<%=returnType%>)reader[0];
+				}finally {reader.Close();}
 				return tmp;
-			<% } %>		
-		<% } %>
-		
+				<% } %>		
+			<% } %>
 		}
 		catch(SqlException ex)
 		{
