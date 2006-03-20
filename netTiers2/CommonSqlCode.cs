@@ -3136,8 +3136,19 @@ namespace MoM.Templates
 			public RelationshipType CollectionRelationshipType;	
 			public TableKeySchema TableKey = null;
 		}
-	#endregion
-		
+	#endregion		
 	}
+
+	#region Retry
+	public enum SleepStyle
+	{ 
+		/// <summary>Each sleep will be the <i>n</i> milliseconds.</summary>
+		Constant, 
+		/// <summary>Each sleep will increase by <i>n</i>*<i>attempts</i> milliseconds.</summary>
+		Linear, 
+		/// <summary>Each sleep will increase exponential by <i>n</i>^<i>attempts</i> milliseconds.</summary>
+		Exponential 
+	}
+	#endregion
 }
 

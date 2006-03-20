@@ -59,6 +59,11 @@
 <%@ Property Name="FindSuffix" Type="System.String" Default="_Find" Category="Stored procedures style"Description="Suffix to use for all generated selective SELECT stored procedures." %>
 <%@ Property Name="GrantUser" Type="System.String" Category="Stored procedures style" Description="Optional user or role to GRANT EXEC Procedure permissions to" Default="" Optional="True" %>
 
+<%-- Retry of SQL statements --%>
+<%@ Property Name="RetryEnabled" Optional="False" Type="System.Boolean" Category="Retry" Default="false" Description="Enabling Retry will add code retry the queries that failed with data exceptions. Useful to if your database becomes temporarily unavailable." %>
+<%@ Property Name="RetryMaxAttempts" Optional="True" Type="System.Int32" Category="Retry" Description="The number of attempts that will be made." Default="5" %>
+<%@ Property Name="RetrySleepTime" Optional="True" Type="System.Int32" Category="Retry" Description="The number of milliseconds that the current thread will sleep between attempts.  Sleep only occurs if an exception is thrown." Default="1000" %>
+<%@ Property Name="RetrySleepStyle" Optional="True" Type="MoM.Templates.SleepStyle" Category="Retry" Description="" %>
 
 <%-- webservice --%>
 <%@ Property Name="GenerateWebservice" Type="System.Boolean" Default="false" Category="WebService" Description="Indicates if the webservice dataaccesslayer should be generated" %>
@@ -1106,10 +1111,15 @@ public void Go()
 		AddFileNode(commonNode, "Utility.cs");
 		this.GetTemplate("Utility.cst").SetProperty("DALNameSpace", DALNameSpace);
 		this.GetTemplate("Utility.cst").SetProperty("NameSpace", BLLNameSpace);
+		this.GetTemplate("Utility.cst").SetProperty("RetryEnabled", RetryEnabled);
+		this.GetTemplate("Utility.cst").SetProperty("RetryMaxAttempts", RetryMaxAttempts);
+		this.GetTemplate("Utility.cst").SetProperty("RetrySleepTime", RetrySleepTime);
+		this.GetTemplate("Utility.cst").SetProperty("RetrySleepStyle", RetrySleepStyle);
 		this.RenderToFile("Utility.cst", rootPathDAL + "\\Utility.cs", true);
 		
 		AddFileNode(commonNode, "StoredProcedureProvider.cs");
 		this.GetTemplate("StoredProcedureProvider.cst").SetProperty("DALNameSpace", DALNameSpace);
+		
 		this.RenderToFile("StoredProcedureProvider.cst", rootPathDALSql + "\\StoredProcedureProvider.cs", true);
 						
 		AddFileNode(commonNode, "TransactionManager.cs");
@@ -1883,7 +1893,12 @@ public void Go()
 		this.GetTemplate("SqlEntityViewProviderBase.generated.cst").SetProperty("SelectSuffix", SelectSuffix);
 		this.GetTemplate("SqlEntityViewProviderBase.generated.cst").SetProperty("SelectAllSuffix", SelectAllSuffix);
 		this.GetTemplate("SqlEntityViewProviderBase.generated.cst").SetProperty("ProcedurePrefix", ProcedurePrefix);
-			
+		
+		this.GetTemplate("SqlEntityViewProviderBase.generated.cst").SetProperty("RetryEnabled", RetryEnabled);
+		this.GetTemplate("SqlEntityViewProviderBase.generated.cst").SetProperty("RetryMaxAttempts", RetryMaxAttempts);
+		this.GetTemplate("SqlEntityViewProviderBase.generated.cst").SetProperty("RetrySleepTime", RetrySleepTime);
+		this.GetTemplate("SqlEntityViewProviderBase.generated.cst").SetProperty("RetrySleepStyle", RetrySleepStyle);
+		
 		this.RenderToFile("SqlEntityViewProviderBase.generated.cst", rootPathDALSql + "\\Views\\Sql" + GetPartialClassName(GetProviderBaseName(SourceView.Name)) + ".cs", true);
 		//----------------------------------------------------------------------------------------------------------------------------------------------
 		
@@ -1899,7 +1914,6 @@ public void Go()
 			this.GetTemplate("SqlEntityViewProvider.cst").SetProperty("ClassName", GetClassName(SourceView.Name));
 			this.GetTemplate("SqlEntityViewProvider.cst").SetProperty("ProviderName", "Sql" + GetProviderName(SourceView.Name));
 			this.GetTemplate("SqlEntityViewProvider.cst").SetProperty("ProviderBaseName", "Sql" + GetProviderBaseName(SourceView.Name));
-					
 			this.RenderToFile("SqlEntityViewProvider.cst", rootPathDALSql + "\\Views\\Sql" + GetProviderName(SourceView.Name) + ".cs", false);
 			//AddExecutionTime(sqlDalcNode);
 		}
@@ -2140,6 +2154,11 @@ public void Go()
 			this.GetTemplate("SqlEntityProviderBase.generated.cst").SetProperty("SourceTables", _sourceTables);
 			this.GetTemplate("SqlEntityProviderBase.generated.cst").SetProperty("NameSpace", BLLNameSpace);
 			this.GetTemplate("SqlEntityProviderBase.generated.cst").SetProperty("DALNameSpace", DALNameSpace);
+						
+			this.GetTemplate("SqlEntityProviderBase.generated.cst").SetProperty("RetryEnabled", RetryEnabled);
+			this.GetTemplate("SqlEntityProviderBase.generated.cst").SetProperty("RetryMaxAttempts", RetryMaxAttempts);
+			this.GetTemplate("SqlEntityProviderBase.generated.cst").SetProperty("RetrySleepTime", RetrySleepTime);
+			this.GetTemplate("SqlEntityProviderBase.generated.cst").SetProperty("RetrySleepStyle", RetrySleepStyle);
 						
 			this.RenderToFile("SqlEntityProviderBase.generated.cst", rootPathDALSql + "\\Sql" + GetPartialClassName(GetProviderBaseName(SourceTable.Name)) + ".cs", true);
 			AddExecutionTime(sqlDalcBaseNode);

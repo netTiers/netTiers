@@ -44,6 +44,11 @@
 <%@ Property Name="DALNameSpace" Type="System.String" Category="Data" Description="DAL Namespace." %>
 <%@ Property Name="ProcedurePrefix" Optional="True" Type="System.String" Category="Style" Description="Prefix for Strored Procedures" %>
 
+<%@ Property Name="RetryEnabled" Optional="False" Type="System.Boolean" Category="Retry" Description="Enabling Retry will add code retry the queries that failed with data exceptions. Useful to if your database becomes temporarily unavailable." %>
+<%@ Property Name="RetryMaxAttempts" Optional="True" Type="System.Int32" Category="Retry" Description="The number of attempts that will be made." %>
+<%@ Property Name="RetrySleepTime" Optional="True" Type="System.Int32" Category="Retry" Description="The number of milliseconds that the current thread will sleep between attempts.  Sleep only occurs if an exception is thrown." Default="1000" %>
+<%@ Property Name="RetrySleepStyle" Optional="True" Type="MoM.Templates.SleepStyle" Category="Retry" Description="" %>
+
 <%
 	// Name of the table being worked on.
 	string name = SourceTable.Name;
@@ -241,12 +246,11 @@ namespace <%=DALNameSpace%>.SqlClient
 			{
 			if (transactionManager != null)
 			{
-				if (!transactionManager.IsOpen) throw new DataException("Transaction must be open before executing a query.");
-				reader = database.ExecuteReader(commandWrapper, transactionManager.TransactionObject);
+				reader = Utility.ExecuteReader(transactionManager, commandWrapper);
 			}
 			else
 			{
-				reader = database.ExecuteReader(commandWrapper);
+				reader = Utility.ExecuteReader(database, commandWrapper);
 			}		
 			Fill(reader, rows, start, pageLength);
 			}
@@ -297,12 +301,11 @@ namespace <%=DALNameSpace%>.SqlClient
 			
 			if (transactionManager != null)
 			{	
-				if (!transactionManager.IsOpen) throw new DataException("Transaction must be open before executing a query.");
-				results = database.ExecuteNonQuery(commandWrapper, transactionManager.TransactionObject);
+				results = Utility.ExecuteNonQuery(transactionManager, commandWrapper);
 			}
 			else
 			{
-				results = database.ExecuteNonQuery(commandWrapper);
+				results = Utility.ExecuteNonQuery(database,commandWrapper);
 			}
 			
 			
@@ -396,12 +399,11 @@ namespace <%=DALNameSpace%>.SqlClient
 			{
 				if (transactionManager != null)
 				{
-					if (!transactionManager.IsOpen) throw new DataException("Transaction must be open before executing a query.");
-					reader = database.ExecuteReader(commandWrapper, transactionManager.TransactionObject);
+					reader = Utility.ExecuteReader(transactionManager, commandWrapper);
 				}
 				else
 				{
-					reader = database.ExecuteReader(commandWrapper);
+					reader = Utility.ExecuteReader(database, commandWrapper);
 				}		
 				
 				Fill(reader, rows, start, pageLength);
@@ -447,12 +449,11 @@ namespace <%=DALNameSpace%>.SqlClient
 			{
 				if (transactionManager != null)
 				{
-					if (!transactionManager.IsOpen) throw new DataException("Transaction must be open before executing a query.");
-					reader = database.ExecuteReader(commandWrapper, transactionManager.TransactionObject);
+					reader = Utility.ExecuteReader(transactionManager, commandWrapper);
 				}
 				else
 				{
-					reader = database.ExecuteReader(commandWrapper);
+					reader = Utility.ExecuteReader(database, commandWrapper);
 				}		
 		
 				Fill(reader, rows, start, pageLength);
@@ -466,7 +467,7 @@ namespace <%=DALNameSpace%>.SqlClient
 		}//end getall
 		
 		#endregion
-		
+				
 		#region Paged Recordset
 				
 		/// <summary>
@@ -494,12 +495,11 @@ namespace <%=DALNameSpace%>.SqlClient
 			
 			if (transactionManager != null)
 			{
-				if (!transactionManager.IsOpen) throw new DataException("Transaction must be open before executing a query.");
-				reader = database.ExecuteReader(commandWrapper, transactionManager.TransactionObject);
+				reader = Utility.ExecuteReader(transactionManager, commandWrapper);
 			}
 			else
 			{
-				reader = database.ExecuteReader(commandWrapper);
+				reader = Utility.ExecuteReader(database, commandWrapper);
 			}
 			
 			
@@ -588,14 +588,12 @@ namespace <%=DALNameSpace%>.SqlClient
 			{
 				if (transactionManager != null)
 				{
-					if (!transactionManager.IsOpen) throw new DataException("Transaction must be open before executing a query.");
-					reader = database.ExecuteReader(commandWrapper, transactionManager.TransactionObject);
+					reader = Utility.ExecuteReader(transactionManager, commandWrapper);
 				}
 				else
 				{
-					reader = database.ExecuteReader(commandWrapper);
+					reader = Utility.ExecuteReader(database, commandWrapper);
 				}
-				
 			
 				//Create Collection
 				Fill(reader, rows, start, pageLength);
@@ -678,12 +676,11 @@ namespace <%=DALNameSpace%>.SqlClient
 			{
 				if (transactionManager != null)
 				{
-					if (!transactionManager.IsOpen) throw new DataException("Transaction must be open before executing a query.");
-					reader = database.ExecuteReader(commandWrapper, transactionManager.TransactionObject);
+					reader = Utility.ExecuteReader(transactionManager, commandWrapper);
 				}
 				else
 				{
-					reader = database.ExecuteReader(commandWrapper);
+					reader = Utility.ExecuteReader(database, commandWrapper);
 				}		
 		
 				//Create collection and fill
@@ -845,12 +842,11 @@ namespace <%=DALNameSpace%>.SqlClient
 				
 			if (transactionManager != null)
 			{
-				if (!transactionManager.IsOpen) throw new DataException("Transaction must be open before executing a query.");
-				results = database.ExecuteNonQuery(commandWrapper, transactionManager.TransactionObject);
+				results = Utility.ExecuteNonQuery(transactionManager, commandWrapper);
 			}
 			else
 			{
-				results = database.ExecuteNonQuery(commandWrapper);
+				results = Utility.ExecuteNonQuery(database,commandWrapper);
 			}
 					
 			<%
@@ -953,12 +949,11 @@ namespace <%=DALNameSpace%>.SqlClient
 			
 			if (transactionManager != null)
 			{
-				if (!transactionManager.IsOpen) throw new DataException("Transaction must be open before executing a query.");
-				results = database.ExecuteNonQuery(commandWrapper, transactionManager.TransactionObject);
+				results = Utility.ExecuteNonQuery(transactionManager, commandWrapper);
 			}
 			else
 			{
-				results = database.ExecuteNonQuery(commandWrapper);
+				results = Utility.ExecuteNonQuery(database,commandWrapper);
 			}
 			
 		<%
@@ -1068,12 +1063,11 @@ namespace <%=DALNameSpace%>.SqlClient
 			
 			if (transactionManager != null)
 			{	
-				if (!transactionManager.IsOpen) throw new DataException("Transaction must be open before executing a query.");
-				ds = database.ExecuteDataSet(commandWrapper, transactionManager.TransactionObject);
+				ds = ExecuteDataSet(transactionManager, commandWrapper);
 			}
 			else
 			{
-				ds = database.ExecuteDataSet(commandWrapper);
+				ds = ExecuteDataSet(database, commandWrapper);
 			}
 			
 <%=outputValues.ToString()%>
@@ -1084,12 +1078,11 @@ namespace <%=DALNameSpace%>.SqlClient
 			
 			if (transactionManager != null)
 			{	
-				if (!transactionManager.IsOpen) throw new DataException("Transaction must be open before executing a query.");
-				dr = database.ExecuteReader(commandWrapper, transactionManager.TransactionObject);
+				dr = Utility.ExecuteReader(transactionManager,commandWrapper);
 			}
 			else
 			{
-				dr = database.ExecuteReader(commandWrapper);
+				dr = Utility.ExecuteReader(database, commandWrapper);
 			}
 			//These won't get set until the data reader is closed.  So Comment them out.			
 			/*
@@ -1100,12 +1093,11 @@ namespace <%=DALNameSpace%>.SqlClient
 			<% } else if (returnType == "void") { %>
 			if (transactionManager != null)
 			{	
-				if (!transactionManager.IsOpen) throw new DataException("Transaction must be open before executing a query.");
-				database.ExecuteNonQuery(commandWrapper, transactionManager.TransactionObject);
+				Utility.ExecuteNonQuery(commandWrapper, transactionManager.TransactionObject);
 			}
 			else
 			{
-				database.ExecuteNonQuery(commandWrapper);
+				Utility.ExecuteNonQuery(database, commandWrapper);
 			}
 			
 <%=outputValues.ToString()%>
@@ -1116,12 +1108,11 @@ namespace <%=DALNameSpace%>.SqlClient
 
 			if (transactionManager != null)
 			{	
-				if (!transactionManager.IsOpen) throw new DataException("Transaction must be open before executing a query.");
-				reader = database.ExecuteReader(commandWrapper, transactionManager.TransactionObject);
+				reader = Utility.ExecuteReader(transactionManager, commandWrapper);
 			}
 			else
 			{
-				reader = database.ExecuteReader(commandWrapper);
+				reader = Utility.ExecuteReader(database, commandWrapper);
 			}			
 			
 			//Create Collection
@@ -1150,15 +1141,12 @@ namespace <%=DALNameSpace%>.SqlClient
 				<% } %>		
 			<% } %>
 		}
-		#endregion	
-	
+		#endregion
 <%
 		}
 	}
 %>
-
 		#endregion
 <% } // endif IncludeCustoms %>
-	
 	}//end class
 } // end namespace

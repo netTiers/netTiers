@@ -27,6 +27,11 @@
 <%@ Property Name="DALNameSpace" Type="System.String" Category="Data" Description="DAL Namespace." %>
 <%@ Property Name="ProcedurePrefix" Optional="True" Type="System.String" Category="Style" Description="Prefix for Strored Procedures" %>
 
+<%@ Property Name="RetryEnabled" Optional="False" Type="System.Boolean" Category="Retry" Description="Enabling Retry will add code retry the queries that failed with data exceptions. Useful to if your database becomes temporarily unavailable." %>
+<%@ Property Name="RetryMaxAttempts" Optional="True" Type="System.Int32" Category="Retry" Description="The number of attempts that will be made." %>
+<%@ Property Name="RetrySleepTime" Optional="True" Type="System.Int32" Category="Retry" Description="The number of milliseconds that the current thread will sleep between attempts.  Sleep only occurs if an exception is thrown." Default="1000" %>
+<%@ Property Name="RetrySleepStyle" Optional="True" Type="MoM.Templates.SleepStyle" Category="Retry" Description="" %>
+
 <%
 	// Name of the table being worked on.
 	string name = SourceView.Name;
@@ -169,12 +174,11 @@ public partial class <%=providerBaseName%> : <%=GetProviderBaseName(SourceView.N
 		{
 			if (transactionManager != null)
 			{
-				if (!transactionManager.IsOpen) throw new DataException("Transaction must be open before executing a query.");
-				reader = database.ExecuteReader(commandWrapper, transactionManager.TransactionObject);
+				reader = Utility.ExecuteReader(transactionManager, commandWrapper);
 			}
 			else
 			{
-				reader = database.ExecuteReader(commandWrapper);
+				reader = Utility.ExecuteReader(database, commandWrapper);
 			}
 		
 			Fill(reader, rows, start, pageLength);
@@ -215,12 +219,11 @@ public partial class <%=providerBaseName%> : <%=GetProviderBaseName(SourceView.N
 		{
 			if (transactionManager != null)
 			{
-				if (!transactionManager.IsOpen) throw new DataException("Transaction must be open before executing a query.");
-				reader = database.ExecuteReader(commandWrapper, transactionManager.TransactionObject);
+				reader = Utility.ExecuteReader(transactionManager,commandWrapper);
 			}
 			else
 			{
-				reader = database.ExecuteReader(commandWrapper);
+				reader = Utility.ExecuteReader(database, commandWrapper);
 			}
 
 
@@ -300,12 +303,11 @@ public partial class <%=providerBaseName%> : <%=GetProviderBaseName(SourceView.N
 			
 			if (transactionManager != null)
 			{	
-				if (!transactionManager.IsOpen) throw new DataException("Transaction must be open before executing a query.");
-				ds = database.ExecuteDataSet(commandWrapper, transactionManager.TransactionObject);
+				ds = ExecuteDataSet(transactionManager,commandWrapper);
 			}
 			else
 			{
-				ds = database.ExecuteDataSet(commandWrapper);
+				ds = ExecuteDataSet(database,commandWrapper);
 			}
 			
 			return ds;
@@ -313,12 +315,11 @@ public partial class <%=providerBaseName%> : <%=GetProviderBaseName(SourceView.N
 		<% } else if (returnType == "void") { %>
 			if (transactionManager != null)
 			{	
-				if (!transactionManager.IsOpen) throw new DataException("Transaction must be open before executing a query.");
-				database.ExecuteNonQuery(commandWrapper, transactionManager.TransactionObject);
+				Utility.ExecuteNonQuery(transactionManager, commandWrapper);
 			}
 			else
 			{
-				database.ExecuteNonQuery(commandWrapper);
+				Utility.ExecuteNonQuery(database, commandWrapper);
 			}
 			
 			return;
@@ -328,12 +329,11 @@ public partial class <%=providerBaseName%> : <%=GetProviderBaseName(SourceView.N
 
 			if (transactionManager != null)
 			{	
-				if (!transactionManager.IsOpen) throw new DataException("Transaction must be open before executing a query.");
-				reader = database.ExecuteReader(commandWrapper, transactionManager.TransactionObject);
+				reader = Utility.ExecuteReader(transactionManager,commandWrapper);
 			}
 			else
 			{
-				reader = database.ExecuteReader(commandWrapper);
+				reader = Utility.ExecuteReader(database, commandWrapper);
 			}			
 			
 			<% if (returnType == collectionClassName) {%>
@@ -372,9 +372,7 @@ public partial class <%=providerBaseName%> : <%=GetProviderBaseName(SourceView.N
 			throw new DataException("An data access error occured, please check inner SqlException.", ex);
 		}
 	}
-	
 	#endregion
-	
 <%
 		}
 	}
@@ -382,6 +380,5 @@ public partial class <%=providerBaseName%> : <%=GetProviderBaseName(SourceView.N
 
 	#endregion
 <% } // endif IncludeCustoms %>
-	
 	}//end class
 } // end namespace
