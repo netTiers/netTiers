@@ -2448,12 +2448,18 @@ namespace MoM.Templates
 					return false;
 				}
 				
-				if (command.CommandResults[0].Columns[i].NativeType != table.Columns[i].NativeType && command.CommandResults[0].Columns[i].NativeType != "sql_variant" )
+				// manage the xml column type deparately
+				if ( table.Columns[i].NativeType == "xml" && (command.CommandResults[0].Columns[i].NativeType == "sql_variant" || command.CommandResults[0].Columns[i].NativeType == "ntext"))
 				{
-					return false;
+					return true;
+				}
+				
+				if (command.CommandResults[0].Columns[i].NativeType == table.Columns[i].NativeType )
+				{
+					return true;
 				}
 			}
-			return true;
+			return false;
 		}
 		
 		/// <summary>
