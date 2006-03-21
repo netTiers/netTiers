@@ -47,6 +47,7 @@ namespace <%= WebNameSpace %>.Data
 		public static readonly String PageIndexParameterName = "PageIndex";
 		public static readonly String PageSizeParameterName = "PageSize";
 		public static readonly String RecordCountParameterName = "RecordCount";
+		public static readonly String SortExpressionParameterName = "SortExpression";
 
 		private EntityDataSourceView _entityView;
 		private ParameterCollection _parameters;
@@ -133,6 +134,23 @@ namespace <%= WebNameSpace %>.Data
 				}
 
 				return _entityView;
+			}
+		}
+
+		/// <summary>
+		/// Gets or sets the cached SortExpression that is supplied by
+		/// DataBoundControls tied to this IDataSource.
+		/// </summary>
+		private String SortExpression
+		{
+			get
+			{
+				String s = (String) ViewState[SortExpressionParameterName];
+				return s ?? String.Empty;
+			}
+			set
+			{
+				ViewState[SortExpressionParameterName] = value;
 			}
 		}
 		#endregion
@@ -1064,6 +1082,13 @@ namespace <%= WebNameSpace %>.Data
 
 					if ( entityList != null )
 					{
+						// make sure we have a valid TotalRowCount
+						if ( arguments.TotalRowCount < 1 )
+						{
+							IList list = EntityUtil.GetEntityList(entityList);
+							arguments.TotalRowCount = list.Count;
+						}
+
 						UpdateEntityId(entityList);
 						OnSelected(new EntityDataSourceMethodEventArgs(entityList, EntityIndex, param, arguments.TotalRowCount));
 					}
@@ -1555,9 +1580,19 @@ namespace <%= WebNameSpace %>.Data
 
 					if ( OrderByClauseParameterName.Equals(param.Name) )
 					{
-						if ( EnableSorting && arguments != null && !String.IsNullOrEmpty(arguments.SortExpression) )
+						if ( EnableSorting )
 						{
-							value = arguments.SortExpression;
+							if ( arguments != null )
+							{
+								value = arguments.SortExpression ?? String.Empty;
+								// cache the SortExpression for later use
+								_owner.SortExpression = arguments.SortExpression;
+							}
+							else if ( _owner.SortExpression != null )
+							{
+								// use the cached SortExpression when arguments object is not available
+								value = _owner.SortExpression;
+							}
 						}
 					}
 					else if ( RecordCountParameterName.Equals(param.Name) )
