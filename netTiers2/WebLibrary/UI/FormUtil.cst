@@ -32,38 +32,62 @@ using <%= WebNameSpace %>.Data;
 namespace <%= WebNameSpace %>.UI
 {
 	/// <summary>
-	/// Summary description for FormUtil
+	/// Provides helper methods for use in web pages and controls.
 	/// </summary>
-	public sealed class FormUtil
+	public static class FormUtil
 	{
 		private static readonly String ControlCacheKey = "ControlCache";
 
-		private FormUtil()
+		#region Request Methods
+
+		#endregion
+
+		#region Response Methods
+
+		public static void Redirect(String url)
 		{
+			Redirect(url, null);
 		}
 
-		/// <summary>
-		/// Loads an instance of an IBindableTemplate from the specified path.
-		/// </summary>
-		/// <param name="control">The TemplateControl which will perform the load.</param>
-		/// <param name="path">The path to the template to load.</param>
-		/// <returns>An instance of IBindableTemplate found at the specified path.</returns>
-		/// <remarks>
-		/// Adapted from an article written by James Crowley, which can be found at:
-		/// http://www.developerfusion.co.uk/show/4721/
-		/// </remarks>
-		public static IBindableTemplate LoadBindableTemplate(TemplateControl control, String path)
+		public static void Redirect(String url, EntityDataSource dataSource)
 		{
-			Control container = control.LoadControl(path);
-			FormView formView = container.Controls[0] as FormView;
-			
-			if ( formView == null )
+			if ( dataSource != null )
 			{
-				throw new Exception("Required FormView control not found as the first child of specified template");
+				url = String.Format(url, dataSource.GetSelectedEntityId());
 			}
 
-			return (IBindableTemplate) formView.ItemTemplate;
+			// make sure second argument is false so that unhandled
+			// exceptions bubble up to the application level handler
+			HttpContext.Current.Response.Redirect(url, false);
 		}
+
+		#endregion
+
+		#region Session Methods
+
+		public static void SaveRequestParameter(String requestParameterName, String sessionParameterName)
+		{
+			String value = HttpContext.Current.Request[requestParameterName];
+
+			if ( !String.IsNullOrEmpty(value) )
+			{
+				HttpContext.Current.Session[sessionParameterName] = value;
+			}
+		}
+
+		public static void ValidateSessionParam(String parameterName, String url)
+		{
+			Object value = HttpContext.Current.Session[parameterName];
+
+			if ( value == null )
+			{
+				Redirect(url);
+			}
+		}
+
+		#endregion
+
+		#region FormView Methods
 
 		public static void SetDefaultMode(FormView formView, String requestParameterName)
 		{
@@ -76,28 +100,6 @@ namespace <%= WebNameSpace %>.UI
 			{
 				formView.DefaultMode = FormViewMode.Edit;
 				HideButton(formView, "InsertButton");
-			}
-		}
-
-		public static void HideButton(Control parent, String buttonId)
-		{
-			if ( parent != null && !String.IsNullOrEmpty(buttonId) )
-			{
-				Button btn = parent.FindControl(buttonId) as Button;
-				if ( btn != null )
-				{
-					btn.Visible = false;
-				}
-			}
-		}
-
-		public static void SaveRequestParameter(String requestParameterName, String sessionParameterName)
-		{
-			String value = HttpContext.Current.Request[requestParameterName];
-
-			if ( !String.IsNullOrEmpty(value) )
-			{
-				HttpContext.Current.Session[sessionParameterName] = value;
 			}
 		}
 
@@ -121,75 +123,6 @@ namespace <%= WebNameSpace %>.UI
 			);
 		}
 
-		public static void SetValues(IOrderedDictionary list, String[] names, Object[] values)
-		{
-			for ( int i = 0; i < names.Length; i++ )
-			{
-				if ( list.Contains(names[i]) )
-				{
-					list.Remove(names[i]);
-				}
-
-				list.Add(names[i], values[i]);
-			}
-		}
-
-		public static void SetPageIndex(GridView gridView, String parameterName)
-		{
-			if ( !gridView.Page.IsPostBack && !gridView.Page.IsCallback && !String.IsNullOrEmpty(parameterName) )
-			{
-				String page = HttpContext.Current.Request[parameterName];
-
-				if ( !String.IsNullOrEmpty(page) )
-				{
-					int index = 0;
-
-					if ( Int32.TryParse(page, out index) )
-					{
-						gridView.PageIndex = index;
-					}
-				}
-			}
-		}
-
-		public static void SetSortExpression(GridView gridView, String sortParameterName, String dirParameterName)
-		{
-			if ( !gridView.Page.IsPostBack && !gridView.Page.IsCallback && !String.IsNullOrEmpty(sortParameterName) )
-			{
-				String sort = HttpContext.Current.Request[sortParameterName];
-
-				if ( !String.IsNullOrEmpty(sort) )
-				{
-					SortDirection dir = SortDirection.Ascending;
-
-					if ( !String.IsNullOrEmpty(dirParameterName) )
-					{
-						String sortDir = HttpContext.Current.Request[dirParameterName];
-
-						if ( !String.IsNullOrEmpty(sortDir) )
-						{
-							dir = (SortDirection) Enum.Parse(typeof(SortDirection), sortDir);
-						}
-					}
-
-					gridView.Sort(sort, dir);
-				}
-			}
-		}
-
-		public static void SetGridParams(GridView gridView, String pageParam, String sortParam, String dirParam)
-		{
-			SetPageIndex(gridView, pageParam);
-			SetSortExpression(gridView, sortParam, dirParam);
-		}
-
-		public static String GetRedirectUrl(GridView gridView, String url)
-		{
-			String sort = HttpContext.Current.Server.UrlEncode(gridView.SortExpression);
-			int dir = (int) gridView.SortDirection;
-			return String.Format(url, gridView.PageIndex, sort, dir);
-		}
-
 		public static void RedirectAfterInsert(FormView formView, String url)
 		{
 			RedirectAfterInsert(formView, url, null);
@@ -209,17 +142,6 @@ namespace <%= WebNameSpace %>.UI
 		{
 			url = GetRedirectUrl(gridView, url);
 			RedirectAfterInsert(formView, url);
-		}
-
-		public static void RedirectAfterUpdate(GridView gridView, String url)
-		{
-			gridView.RowUpdated += new GridViewUpdatedEventHandler(
-				delegate(object sender, GridViewUpdatedEventArgs e)
-				{
-					url = GetRedirectUrl(gridView, url);
-					Redirect(url);
-				}
-			);
 		}
 
 		public static void RedirectAfterUpdate(FormView formView, String url)
@@ -311,31 +233,222 @@ namespace <%= WebNameSpace %>.UI
 			RedirectAfterCancel(formView, url, dataSource);
 		}
 
-		public static void Redirect(String url)
+		#endregion
+
+		#region DetailsView Methods
+
+		public static void RedirectAfterInsert(DetailsView view, String url)
 		{
-			Redirect(url, null);
+			RedirectAfterInsert(view, url, null);
 		}
 
-		public static void Redirect(String url, EntityDataSource dataSource)
+		public static void RedirectAfterInsert(DetailsView view, String url, EntityDataSource dataSource)
 		{
-			if ( dataSource != null )
-			{
-				url = String.Format(url, dataSource.GetSelectedEntityId());
-			}
-
-			// make sure second argument is false so that unhandled
-			// exceptions bubble up to the application level handler
-			HttpContext.Current.Response.Redirect(url, false);
+			view.ItemInserted += new DetailsViewInsertedEventHandler(
+				delegate(object sender, DetailsViewInsertedEventArgs e)
+				{
+					Redirect(url, dataSource);
+				}
+			);
 		}
 
-		public static void ValidateSessionParam(String parameterName, String url)
+		public static void RedirectAfterInsert(DetailsView view, GridView grid, String url)
 		{
-			Object value = HttpContext.Current.Session[parameterName];
+			url = GetRedirectUrl(grid, url);
+			RedirectAfterInsert(view, url);
+		}
 
-			if ( value == null )
+		public static void RedirectAfterInsertCancel(DetailsView view, GridView grid, String url)
+		{
+			url = GetRedirectUrl(grid, url);
+			RedirectAfterInsertCancel(view, url);
+	}
+
+		public static void RedirectAfterCancel(DetailsView view, String url)
+		{
+			RedirectAfterCancel(view, url, null);
+		}
+
+		public static void RedirectAfterCancel(DetailsView view, String url, EntityDataSource dataSource)
+		{
+			view.ItemCommand += new DetailsViewCommandEventHandler(
+				delegate(object sender, DetailsViewCommandEventArgs e)
+				{
+					// cancel button
+					if ( String.Compare("Cancel", e.CommandName, true) == 0 )
+					{
+						Redirect(url, dataSource);
+					}
+				}
+			);
+		}
+
+		public static void RedirectAfterInsertCancel(DetailsView view, String url)
+		{
+			RedirectAfterInsertCancel(view, url, null);
+		}
+
+		public static void RedirectAfterInsertCancel(DetailsView view, String url, EntityDataSource dataSource)
+		{
+			RedirectAfterInsert(view, url, dataSource);
+			RedirectAfterCancel(view, url, dataSource);
+		}
+
+		#endregion
+
+		#region GridView Methods
+
+		public static void SetPageIndex(GridView gridView, String parameterName)
+		{
+			if ( !gridView.Page.IsPostBack && !gridView.Page.IsCallback && !String.IsNullOrEmpty(parameterName) )
 			{
-				Redirect(url);
+				String page = HttpContext.Current.Request[parameterName];
+
+				if ( !String.IsNullOrEmpty(page) )
+				{
+					int index = 0;
+
+					if ( Int32.TryParse(page, out index) )
+					{
+						gridView.PageIndex = index;
+					}
+				}
 			}
+		}
+
+		public static void SetSortExpression(GridView gridView, String sortParameterName, String dirParameterName)
+		{
+			if ( !gridView.Page.IsPostBack && !gridView.Page.IsCallback && !String.IsNullOrEmpty(sortParameterName) )
+			{
+				String sort = HttpContext.Current.Request[sortParameterName];
+
+				if ( !String.IsNullOrEmpty(sort) )
+				{
+					SortDirection dir = SortDirection.Ascending;
+
+					if ( !String.IsNullOrEmpty(dirParameterName) )
+					{
+						String sortDir = HttpContext.Current.Request[dirParameterName];
+
+						if ( !String.IsNullOrEmpty(sortDir) )
+						{
+							dir = (SortDirection) Enum.Parse(typeof(SortDirection), sortDir);
+						}
+					}
+
+					gridView.Sort(sort, dir);
+				}
+			}
+		}
+
+		public static void SetGridParams(GridView gridView, String pageParam, String sortParam, String dirParam)
+		{
+			SetPageIndex(gridView, pageParam);
+			SetSortExpression(gridView, sortParam, dirParam);
+		}
+
+		public static String GetRedirectUrl(GridView gridView, String url)
+		{
+			String sort = HttpContext.Current.Server.UrlEncode(gridView.SortExpression);
+			int dir = (int) gridView.SortDirection;
+			return String.Format(url, gridView.PageIndex, sort, dir);
+		}
+
+		public static void Redirect(GridView gridView, String url)
+		{
+			url = GetRedirectUrl(gridView, url);
+			Redirect(url);
+		}
+
+		public static void RedirectAfterUpdate(GridView gridView, String url)
+		{
+			gridView.RowUpdated += new GridViewUpdatedEventHandler(
+				delegate(object sender, GridViewUpdatedEventArgs e)
+				{
+					Redirect(gridView, url);
+				}
+			);
+		}
+
+		public static void RedirectAfterDelete(GridView gridView, String url)
+		{
+			gridView.RowDeleted += new GridViewDeletedEventHandler(
+				delegate(object sender, GridViewDeletedEventArgs e)
+				{
+					Redirect(gridView, url);
+				}
+			);
+		}
+
+		public static void RedirectAfterCancel(GridView gridView, String url)
+		{
+			gridView.RowCancelingEdit += new GridViewCancelEditEventHandler(
+				delegate(object sender, GridViewCancelEditEventArgs e)
+				{
+					Redirect(gridView, url);
+				}
+			);
+		}
+
+		public static void RedirectAfterUpdateDeleteCancel(GridView gridView, String url)
+		{
+			RedirectAfterUpdate(gridView, url);
+			RedirectAfterDelete(gridView, url);
+			RedirectAfterCancel(gridView, url);
+		}
+
+		public static void SetOnClientClick(GridView gridView, int cellIndex, String buttonText, String script)
+		{
+			gridView.RowCreated += new GridViewRowEventHandler(
+				delegate(object sender, GridViewRowEventArgs e)
+				{
+					if ( cellIndex < e.Row.Cells.Count )
+					{
+						TableCell cell = e.Row.Cells[cellIndex] as DataControlFieldCell;
+						Button button;
+
+						if ( cell != null )
+						{
+							foreach ( Control control in cell.Controls )
+							{
+								button = control as Button;
+
+								if ( button != null && String.Compare(button.Text, buttonText, true) == 0 )
+								{
+									button.Attributes.Add("onclick", script);
+								}
+							}
+						}
+					}
+				}
+			);
+		}
+
+		#endregion
+
+		#region Control Methods
+
+		/// <summary>
+		/// Loads an instance of an IBindableTemplate from the specified path.
+		/// </summary>
+		/// <param name="control">The TemplateControl which will perform the load.</param>
+		/// <param name="path">The path to the template to load.</param>
+		/// <returns>An instance of IBindableTemplate found at the specified path.</returns>
+		/// <remarks>
+		/// Adapted from an article written by James Crowley, which can be found at:
+		/// http://www.developerfusion.co.uk/show/4721/
+		/// </remarks>
+		public static IBindableTemplate LoadBindableTemplate(TemplateControl control, String path)
+		{
+			Control container = control.LoadControl(path);
+			FormView formView = container.Controls[0] as FormView;
+
+			if ( formView == null )
+			{
+				throw new Exception("Required FormView control not found as the first child of specified template");
+			}
+
+			return (IBindableTemplate) formView.ItemTemplate;
 		}
 
 		public static void InitPassword(FormView formView, String controlId, EntityDataSource dataSource, String propertyName)
@@ -361,6 +474,31 @@ namespace <%= WebNameSpace %>.UI
 			if ( control != null && control.TextMode == TextBoxMode.Password && !control.Page.IsPostBack )
 			{
 				control.Attributes.Add("value", password);
+			}
+		}
+
+		public static void HideButton(Control parent, String buttonId)
+		{
+			if ( parent != null && !String.IsNullOrEmpty(buttonId) )
+			{
+				Button btn = parent.FindControl(buttonId) as Button;
+				if ( btn != null )
+				{
+					btn.Visible = false;
+				}
+			}
+		}
+
+		public static void SetValues(IOrderedDictionary list, String[] names, Object[] values)
+		{
+			for ( int i = 0; i < names.Length; i++ )
+			{
+				if ( list.Contains(names[i]) )
+				{
+					list.Remove(names[i]);
+				}
+
+				list.Add(names[i], values[i]);
 			}
 		}
 
@@ -537,5 +675,7 @@ namespace <%= WebNameSpace %>.UI
 
 			return hasValue;
 		}
+
+		#endregion
 	}
 }
