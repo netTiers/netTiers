@@ -1,4 +1,4 @@
-﻿<%--
+<%--
  * $Id: SqlEntityProviderBase.generated.cst,v 1.3 2006/02/27 22:06:45 bgjohnso Exp $
  * Last modified by $Author$
  * Last modified at $Date$
@@ -810,27 +810,25 @@ namespace <%=DALNameSpace%>.SqlClient
 			SqlDatabase database = new SqlDatabase(this._connectionString);
 			DbCommand commandWrapper = StoredProcedureProvider.GetCommandWrapper(database, "<%=owner + ProcedurePrefix + commandStem + InsertSuffix %>", _useStoredProcedure);
 			
-			<%
-			
+			<%			
 			for (int i = 0; i < cols.Count; i++)		
 			{ 	
-				if (IsComputed(cols[i]) || IsIdentityColumn(cols[i]) )
-				{%>
+				if (RowVersion != null && cols[i] == RowVersion) { %>
+			database.AddOutParameter(commandWrapper, "@<%=GetPropertyName(RowVersion.Name)%>", DbType.<%= RowVersion.DataType.ToString() %>, 8);
+				<% } else if ( IsComputed(cols[i]) || IsIdentityColumn(cols[i]) ) { %>
 			database.AddOutParameter(commandWrapper, "@<%=GetPropertyName(cols[i].Name)%>", DbType.<%= cols[i].DataType.ToString() %>, <%= cols[i].Size.ToString() %>);
-				<%}
-				else
-				{
+				<%} else {
 					if (cols[i].AllowDBNull && !IsCSReferenceDataType(cols[i])  )
 					{ 
-						// String types are nullable, but all other types are value types %>
+			// String types are nullable, but all other types are value types %>
 			database.AddInParameter(commandWrapper, "@<%=GetPropertyName(cols[i].Name)%>", DbType.<%= cols[i].DataType.ToString() %>, (entity.<%=GetPropertyName(cols[i].Name)%>.HasValue ? (object) entity.<%=GetPropertyName(cols[i].Name)%>  : System.DBNull.Value));
-					<%}
-					else					
-				{%>
+					<% } else {%>
 			database.AddInParameter(commandWrapper, "@<%=GetPropertyName(cols[i].Name)%>", <%= GetDbType(cols[i]) %>, entity.<%=GetPropertyName(cols[i].Name)%> );
-				<%}
-				}
-			}%>
+				<% }
+				}		
+			} // end for 
+			
+			%>
 			
 			int results = 0;
 			
@@ -936,7 +934,7 @@ namespace <%=DALNameSpace%>.SqlClient
 			
 			if (RowVersion != null)
 			{%>
-			database.AddOutParameter(commandWrapper, "@Returned<%=GetPropertyName(RowVersion.Name)%>", DbType.<%= RowVersion.DataType.ToString() %>, <%= RowVersion.Size.ToString() %>);
+			database.AddOutParameter(commandWrapper, "@Returned<%=GetPropertyName(RowVersion.Name)%>", DbType.<%= RowVersion.DataType.ToString() %>, 8);
 			<%}%>
 			
 			int results = 0;
