@@ -354,10 +354,18 @@ namespace <%=DALNameSpace%>.SqlClient
 					if (clause.Trim().IndexOf('=') > 1)
 						sparams = clause.Split('=');
 	
-					if (sparams[0] != null	&&
-						sparams[1] != null && 
-						!hparams.ContainsKey("@" + sparams[0].Trim()))
-						hparams.Add("@" + sparams[0].Trim(), sparams[1].Trim().Replace("'", ""));
+					if (sparams[0] != null	&& sparams[1] != null && !hparams.ContainsKey("@" + sparams[0].Trim()))
+					{
+						try
+                        {
+                            Guid guid = new Guid(sparams[1].Trim().Replace("'", ""));
+                            hparams.Add("@" + sparams[0].Trim(), guid);
+                        }
+                        catch (FormatException)
+                        {
+                            hparams.Add("@" + sparams[0].Trim(), sparams[1].Trim().Replace("'", ""));
+                        }
+					}
 				}
 			}
 			else
@@ -366,10 +374,18 @@ namespace <%=DALNameSpace%>.SqlClient
 				if (whereClause.Trim().IndexOf('=') > 1)
 					sparams = whereClause.Split('=');
 	
-				if (sparams[0] != null	&&
-					sparams[1] != null && 
-					!hparams.ContainsKey("@" + sparams[0].Trim()))
-					hparams.Add("@" + sparams[0].Trim(), sparams[1].Trim().Replace("'", ""));
+				if (sparams[0] != null	&&	sparams[1] != null && !hparams.ContainsKey("@" + sparams[0].Trim()))
+				{
+					try
+                    {
+                        Guid guid = new Guid(sparams[1].Trim().Replace("'", ""));
+                        hparams.Add("@" + sparams[0].Trim(), guid);
+                    }
+                    catch (FormatException)
+                    {
+                        hparams.Add("@" + sparams[0].Trim(), sparams[1].Trim().Replace("'", ""));
+                    }
+				}
 			}
 			
 			if (hparams.Count == 0)
@@ -1038,6 +1054,7 @@ namespace <%=DALNameSpace%>.SqlClient
 			<%}%>
 	
 			<% foreach(ParameterSchema col in command.AllOutputParameters)	{ %>
+				
 				database.AddParameter(commandWrapper, "@<%=GetPropertyName(col.Name)%>", DbType.<%=col.DataType.ToString()%>, ParameterDirection.InputOutput, "", DataRowVersion.Current,<%=GetPrivateName(col.Name)%>);
 			<%}%>
 			
