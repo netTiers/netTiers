@@ -342,64 +342,47 @@ namespace <%=DALNameSpace%>.SqlClient
 	
 			SqlDatabase database = new SqlDatabase(this._connectionString);
 			DbCommand commandWrapper = StoredProcedureProvider.GetCommandWrapper(database, "<%=owner + ProcedurePrefix + commandStem + FindSuffix%>", _useStoredProcedure);
-			
-			whereClause = whereClause.Replace("AND", "|");
-			Hashtable hparams = new Hashtable();
-			if (whereClause.ToUpper().IndexOf("|") > -1)
-			{
-				string[] clauses = whereClause.Split('|');
-				foreach (string clause in clauses)
-				{
-					string[] sparams = new string[2];
-					if (clause.Trim().IndexOf('=') > 1)
-						sparams = clause.Split('=');
+
+		bool searchUsingOR = false;
+		if (whereClause.IndexOf("OR") > 0) // did they want to do "a=b OR c=d OR..."?
+			searchUsingOR = true;
+		
+		database.AddInParameter(commandWrapper, "@SearchUsingOR", DbType.Boolean, searchUsingOR);
+		
+	<% foreach(ColumnSchema column in SourceTable.Columns) {%>
+		database.AddInParameter(commandWrapper, "@<%=column.Name%>", DbType.<%=column.DataType%>, DBNull.Value);
+	<% } %>
+
+		// replace all instances of 'AND' and 'OR' because we already set searchUsingOR
+		whereClause = whereClause.Replace("AND", "|").Replace("OR", "|") ; 
+		string[] clauses = whereClause.Split('|');
 	
-					if (sparams[0] != null	&& sparams[1] != null && !hparams.ContainsKey("@" + sparams[0].Trim()))
-					{
-						try
-                        {
-                            Guid guid = new Guid(sparams[1].Trim().Replace("'", ""));
-                            hparams.Add("@" + sparams[0].Trim(), guid);
-                        }
-                        catch (FormatException)
-                        {
-                            hparams.Add("@" + sparams[0].Trim(), sparams[1].Trim().Replace("'", ""));
-                        }
-					}
-				}
-			}
-			else
+		// Here's what's going on below: Find a field, then to get the value we
+		// drop the field name from the front, trim spaces, drop the '=' sign,
+		// trim more spaces, and drop any outer single quotes
+		
+		char[] equalSign = {'='};
+		char[] singleQuote = {'\''};
+   		foreach (string clause in clauses)
+		{
+			<% foreach(ColumnSchema column in SourceTable.Columns) {%>		
+			if (clause.Trim().StartsWith("<%=column.Name%>"))
 			{
-				string[] sparams = new string[2];	
-				if (whereClause.Trim().IndexOf('=') > 1)
-					sparams = whereClause.Split('=');
-	
-				if (sparams[0] != null	&&	sparams[1] != null && !hparams.ContainsKey("@" + sparams[0].Trim()))
+				if ("<%=column.DataType%>" == "Guid") // fix for guid types
 				{
-					try
-                    {
-                        Guid guid = new Guid(sparams[1].Trim().Replace("'", ""));
-                        hparams.Add("@" + sparams[0].Trim(), guid);
-                    }
-                    catch (FormatException)
-                    {
-                        hparams.Add("@" + sparams[0].Trim(), sparams[1].Trim().Replace("'", ""));
-                    }
+					database.SetParameterValue(commandWrapper, "@<%=column.Name%>", new Guid(
+						clause.Replace("<%=column.Name%>","").Trim().TrimStart(equalSign).Trim().Trim(singleQuote)));
+				} else {
+					database.SetParameterValue(commandWrapper, "@<%=column.Name%>", 
+						clause.Replace("<%=column.Name%>","").Trim().TrimStart(equalSign).Trim().Trim(singleQuote));
 				}
+				continue;
 			}
-			
-			if (hparams.Count == 0)
-				return new <%=collectionClassName%>();
-					
-			
-			<% foreach(ColumnSchema column in SourceTable.Columns) {%>
-			database.AddInParameter(commandWrapper, "@<%=column.Name%>", DbType.<%=column.DataType%>, DBNull.Value);
 			<% } %>
-			
-			foreach (string key in hparams.Keys)
-			{
-			database.SetParameterValue(commandWrapper, key.ToString(), hparams[key]);
-			}
+
+			throw new ArgumentException("Unable to use this part of the where clause in this version of Find: " + clause);
+		}
+
 					
 			IDataReader reader = null;
 			//Create Collection
@@ -1054,7 +1037,6 @@ namespace <%=DALNameSpace%>.SqlClient
 			<%}%>
 	
 			<% foreach(ParameterSchema col in command.AllOutputParameters)	{ %>
-				
 				database.AddParameter(commandWrapper, "@<%=GetPropertyName(col.Name)%>", DbType.<%=col.DataType.ToString()%>, ParameterDirection.InputOutput, "", DataRowVersion.Current,<%=GetPrivateName(col.Name)%>);
 			<%}%>
 			
