@@ -423,7 +423,7 @@ namespace MoM.Templates
 			string[] strips = this.strippedTablePrefixes.Split(new char[] {',', ';'});
 			foreach(string strip in strips)
 			{
-				if (tableName.StartsWith(strip))
+            if (newName.StartsWith(strip))
 				{
 					newName = newName.Remove(0, strip.Length);
 					continue;
