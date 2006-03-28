@@ -268,9 +268,9 @@ namespace <%=NameSpace%>
 				<%if ( cols[x].AllowDBNull && !IsCSReferenceDataType(cols[x]) ) {%>
 				this.entityData.Is<%=GetPropertyName(cols[x])%>Null = false;
 				<%} // end IsCSReferenceDataType%>
-				if (this.state == EntityState.Unchanged)
+				if (this.currentEntityState == EntityState.Unchanged)
 				{
-					this.state = EntityState.Changed;
+					this.currentEntityState = EntityState.Changed;
 				}
 				OnColumnChanged(<%=className%>Column.<%=GetPropertyName(cols[x]) %>);
 			}
@@ -334,7 +334,7 @@ namespace <%=NameSpace%>
 		[BrowsableAttribute(false), XmlIgnoreAttribute()]
 		public virtual bool IsDeleted
 		{
-			get { return this.state == EntityState.Deleted; }
+			get { return this.currentEntityState == EntityState.Deleted; }
 		}		
 		
 		//private bool _isDirty = false;
@@ -345,7 +345,7 @@ namespace <%=NameSpace%>
 		[BrowsableAttribute(false), XmlIgnoreAttribute()]
 		public virtual bool IsDirty
 		{
-			get { return this.state != EntityState.Unchanged; }
+			get { return this.currentEntityState != EntityState.Unchanged; }
 		}
 		
 		
@@ -357,12 +357,12 @@ namespace <%=NameSpace%>
 		[BrowsableAttribute(false), XmlIgnoreAttribute()]
 		public virtual bool IsNew
 		{
-			get { return this.state == EntityState.Added; }
-			set { this.state = EntityState.Added; }
+			get { return this.currentEntityState == EntityState.Added; }
+			set { this.currentEntityState = EntityState.Added; }
 		}
 		
 
-		protected EntityState state = EntityState.Added ;
+		protected EntityState currentEntityState = EntityState.Added ;
 		/// <summary>
 		///		Indicates state of object
 		/// </summary>
@@ -370,8 +370,8 @@ namespace <%=NameSpace%>
 		[BrowsableAttribute(false), XmlIgnoreAttribute()]
 		public virtual EntityState EntityState
 		{
-			get { return this.state; }
-			set { this.state = value; }
+			get { return this.currentEntityState; }
+			set { this.currentEntityState = value; }
 		}
 
 		/// <summary>
@@ -427,7 +427,7 @@ WriteRelationshipPropertyString();
 				this.inTxn = false;
 
 				//if (this._isNew)
-				if (this.state == EntityState.Added)
+				if (this.currentEntityState == EntityState.Added)
 				{
 					if (ParentCollection != null)
 						(ParentCollection as <%=collectionClassName%>).Remove( (<%=className%>) this ) ;
@@ -445,11 +445,11 @@ WriteRelationshipPropertyString();
 				/*if (this._isDirty) 
 				{
 					if (this._isNew) {
-						this.state = EntityState.Added ;
+						this.currentEntityState = EntityState.Added ;
 						this._isNew = false ;
 					}
 					else
-						this.state = EntityState.Changed ;
+						this.currentEntityState = EntityState.Changed ;
 				}
 
 				this._isNew = false ;
@@ -501,7 +501,7 @@ WriteRelationshipPropertyString();
 			//this._isDeleted = false;
 			//this._isDirty = false;
 			//this._isNew = false;
-			this.state = EntityState.Unchanged;			
+			this.currentEntityState = EntityState.Unchanged;			
 		}
 		
 		
@@ -521,8 +521,8 @@ WriteRelationshipPropertyString();
 		///</summary>
 		public virtual void MarkToDelete()
 		{
-			if (this.state != EntityState.Added)
-				this.state = EntityState.Deleted ;
+			if (this.currentEntityState != EntityState.Added)
+				this.currentEntityState = EntityState.Deleted ;
 		}
 		
 		///<summary>
@@ -531,9 +531,9 @@ WriteRelationshipPropertyString();
 		public virtual void RemoveDeleteMark()
 		{
 			//this._isDeleted = false;
-			if (this.state != EntityState.Added) 
+			if (this.currentEntityState != EntityState.Added) 
 			{				
-				this.state = EntityState.Changed ;
+				this.currentEntityState = EntityState.Changed ;
 			}
 		}
 		
@@ -697,9 +697,9 @@ WriteRelationshipPropertyString();
 		{
 			this.entityData.Is<%=GetPropertyName(cols[x])%>Null = true;			
 			this.entityData.<%= GetPropertyName(cols[x]) %> = <%= GetCSDefaultByType(cols[x]) %>; // set to default for data type
-			if (this.state == EntityState.Unchanged)
+			if (this.currentEntityState == EntityState.Unchanged)
 			{
-				this.state = EntityState.Changed;
+				this.currentEntityState = EntityState.Changed;
 			}
 		}
 		<% } // end !IsCSReferenceDataType(cols[x])
