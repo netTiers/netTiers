@@ -916,6 +916,195 @@ namespace <%=NameSpace%>
 
 
       #endregion
+	
+	  #region ToDataSet
+		/// <summary>
+		/// NOTE: EXPERIMENTAL CODE, Please do not use this in a production environment.  
+		/// Need to refactor to a few methods, secure it down a bit, and do more type checking.
+		/// Recursively adds child relationships of a <seealso cref="ListBase"/> Entities and 
+		/// builds out a nested dataset including <see cref="System.Data.DataRelation"/> relationships.
+		/// </summary>
+		/// <param name="includeChildren">You can optionally go deep by including includeChildren</param>
+		/// <returns>DataSet</returns>
+		/// <example>
+		///  An example using the Northwind database would be to deep load a TList or VList, 
+		///  and then call list.ToDataSet(true/false);
+		///  <code><![CDATA[
+		///    TList<Categories> list = DataRepository.CategoriesProvider.GetAll();
+		///    DataRepository.CategoriesProvider.DeepLoad(list, true);
+		///    DataSet ds = list.ToDataSet(true);
+		///    ds.WriteXml("C:\\Test2.xml");
+		///    ]]></code>
+		/// </example>
+		public System.Data.DataSet ToDataSet(bool includeChildren)
+		{
+			System.Data.DataSet dataset = new System.Data.DataSet();
+	
+			//recursively convert and fill object graph to a dataset.
+			return AddRelations(dataset, null, includeChildren);
+		}
+	
+		#region AddRelations
+		/// <summary>
+		/// NOTE: EXPERIMENTAL CODE, Please do not use this in a production environment.  Need to refactor to a few methods, secure it down a bit, and do more type checking.
+		/// Recursively adds child relationships of a TList's Entity and builds out a nested dataset including relationships.
+		/// </summary>
+		/// <param name="dataset">An already instatiated dataset which will be used to fill all objects.</param>
+		/// <param name="parentKeys">Used to pass down the parent primary key to a child datatable to add a dataRelation</param>
+		/// <param name="includeChildren">bool, include deep load of all child collections in this object graph?</param>
+		/// <returns></returns>
+		internal System.Data.DataSet AddRelations(System.Data.DataSet dataset, List<System.Data.DataColumn> parentKeys, bool includeChildren)
+		{
+			if (dataset == null)
+				throw new ArgumentException("Invalid parameter context, dataset can not be null in this method context.", "dataset");
+	
+			//child property collections
+			List<PropertyDescriptor> children = new List<PropertyDescriptor>();
+			System.Data.DataTable dataTable = null;
+			bool tableExists = false;
+			string tName = typeof(T).Name;
+	
+			if (!dataset.Tables.Contains(tName))
+			{
+				//current type table
+				dataTable = new System.Data.DataTable(tName);
+				tableExists = false;
+			}
+			else
+			{
+				dataTable = dataset.Tables[tName];
+				tableExists = true;
+			}
+	
+			//Props
+			PropertyDescriptorCollection props = TypeDescriptor.GetProperties(typeof(T));
+	
+			//pks of current type
+			List<System.Data.DataColumn> primaryKey = new List<System.Data.DataColumn>();
+	
+			//build out table if not exists
+			if (!tableExists)
+			{
+				#region get meta data, build dataTable
+				//look at current type's props, and if child hold a ref to it, so that you can recursively add the child.
+				foreach (PropertyDescriptor prop in props)
+				{
+					//TODO: Change to custom entity attribute for PK discovery
+					if (prop.Attributes.Matches(new Attribute[] { new ReadOnlyAttribute(false), new BindableAttribute(), new DescriptionAttribute() }))
+						primaryKey.Add(dataTable.Columns.Add(prop.Name, prop.PropertyType));
+					else if (prop.PropertyType.GetInterface("IList") != null && prop.PropertyType.IsGenericType && (prop.PropertyType.BaseType != null && prop.PropertyType.BaseType.GetGenericTypeDefinition() == typeof(ListBase<>)))
+						children.Add(prop);
+					else if (prop.PropertyType.GetInterface("IEntity") == null && prop.Attributes.Matches(new Attribute[] { new BindableAttribute(), new DescriptionAttribute() }))
+					{
+						//check if nullable property, get param, otherwise, just add property type
+						Type columnType = (prop.PropertyType.IsGenericType && prop.PropertyType.GetGenericTypeDefinition() == typeof(Nullable<>) ? prop.PropertyType.GetGenericArguments()[0] : prop.PropertyType);
+						dataTable.Columns.Add(prop.Name, columnType);
+					}
+				}
+				#endregion
+			}
+	
+			#region Fill Entity Data
+			foreach (T entity in this.Items)
+			{
+				System.Data.DataRow row = dataTable.NewRow();
+	
+				foreach (PropertyDescriptor currentProperty in props)
+				{
+					if (!dataTable.Columns.Contains(currentProperty.Name))
+						continue;
+	
+					object val = currentProperty.GetValue(entity);
+					row[currentProperty.Name] = (val == null ? DBNull.Value : val);
+				}
+	
+				dataTable.Rows.Add(row);
+			}
+			#endregion
+			
+			//Add Table
+			if (!tableExists)
+				dataset.Tables.Add(dataTable);
+	
+			#region Add Child DataRelations
+			if (parentKeys != null && !tableExists)
+			{
+				#region if part of a parentkey, then add relationship
+				bool skip = false;
+	
+				// get last inserted table
+				System.Data.DataTable childTable = dataset.Tables[dataset.Tables.Count - 1];
+	
+				System.Diagnostics.Trace.WriteLine(childTable.TableName + " - Found");
+	
+				//find fk's, add relationships
+				List<System.Data.DataColumn> childCols = new List<System.Data.DataColumn>();
+				if (childTable != null)
+				{
+					foreach (System.Data.DataColumn col in parentKeys)
+					{
+						if (!childTable.Columns.Contains(col.ColumnName))
+							skip = true;
+	
+						System.Diagnostics.Trace.WriteLine(childTable.TableName + " - Skip " + skip);
+						childCols.Add(childTable.Columns[col.ColumnName]);
+					}
+	
+					if (!skip)
+					{
+						System.Diagnostics.Trace.WriteLine(childTable.TableName + " - relation added ");
+						int key = parentKeys.GetHashCode() + childCols.GetHashCode();
+						if (!dataset.Relations.Contains(key.ToString()))
+						{
+							System.Data.DataRelation relation = dataset.Relations.Add(key.ToString(), parentKeys.ToArray(), childCols.ToArray());
+							relation.Nested = true;
+						}
+					}
+				}
+				#endregion
+			}
+			#endregion 
+	
+			#region Include Entity Child Collections
+			// if include the child collections.
+			if (includeChildren)
+			{
+				foreach (PropertyDescriptor child in children)
+				{
+					//Get DataTable in DataSet, nested recursively.
+					foreach (T childEntity in this.Items)
+					{
+						object[] childEntityParams = new object[3] { dataset, primaryKey, includeChildren };
+	
+						//add children
+						System.Reflection.MethodInfo addRelationsMethod = child.PropertyType.GetMethod("AddRelations", 
+								System.Reflection.BindingFlags.NonPublic  | 
+								System.Reflection.BindingFlags.Instance);
+	
+						//ensure method exists, invoke
+						if (addRelationsMethod == null)
+							throw new InvalidOperationException("The template method for converting a TList to a Dataset has been altered. Can not include child collections.");
+	
+						//create a return reference, don't assign immediately, in case it's null.
+						object childDataset = null;
+						childDataset = addRelationsMethod.Invoke(Convert.ChangeType(child.GetValue(childEntity), child.PropertyType), childEntityParams);
+	
+						// ensure obj not null, 
+						if (childDataset == null)
+							throw new ArgumentException("Could not successfully convert nested child relationships to a dataset, consider a shallow conversion.");
+	
+						//convert it to my dataset, now filled another child
+						dataset = (System.Data.DataSet)childDataset;
+					}
+				}
+			}
+			#endregion
+	
+			//finally return the dataset
+			return dataset;
+		}
+		#endregion
+		#endregion
 
    }
 
