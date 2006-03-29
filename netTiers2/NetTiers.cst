@@ -44,7 +44,7 @@
 <%@ Property Name="IncludeGetList" Type="System.Boolean" Default="True" Category="CRUD Options" Description="If true getlist procedures will be generated." %>	
 <%@ Property Name="IncludeGetListByFK" Type="System.Boolean" Default="True" Category="CRUD Options" Description="If true get statements will be generated." %>
 <%@ Property Name="IncludeGetListByIX" Type="System.Boolean" Default="True" Category="CRUD Options" Description="If true getlist statements will be generated." %>
-<%@ Property Name="IncludeFind" Type="System.Boolean" Default="False" Category="CRUD Options" Description="If true find statements will be generated." %>
+<%@ Property Name="IncludeFind" Type="System.Boolean" Default="True" Category="CRUD Options" Description="If true find statements will be generated." %>
 <%@ Property Name="IncludeManyToMany" Type="System.Boolean" Default="True" Category="CRUD Options" Description="If true select statements will be generated for any many to many relationship." %>
 <%@ Property Name="IncludeRelations" Type="System.Boolean" Default="True" Category="CRUD Options" Description="If true, the child collection relationships will be generated within your entities, if set to false, these child collections will not be generated, and Deep Load/Save will not be generated." %>
 <%@ Property Name="IsolationLevel" Type="TransactionIsolationLevelEnum" Default="None" Category="CRUD Options" Description="Isolation level to use in generated procedures." %>
@@ -215,6 +215,20 @@
 	public string CurrentFileName
 	{
 		get {return this._CurrentFileName;}		
+	}
+	
+	private StringBuilder _CompileErrors = new StringBuilder();
+	[Browsable(false)]
+	public string CompileErrors
+	{
+		get {return this._CompileErrors.ToString();}		
+	}
+	
+	private StringBuilder _CompileWarnings = new StringBuilder();
+	[Browsable(false)]
+	public string CompileWarnings
+	{
+		get {return this._CompileWarnings.ToString();}		
 	}
 	
 	[Browsable(false)]
@@ -477,16 +491,31 @@ public CodeTemplate CompileTemplate(string templateName)
 	this._CurrentFileName = templateName;
 	CodeTemplateCompiler compiler = new CodeTemplateCompiler(templateName);
 	compiler.Compile();
+
 	if (compiler.Errors.Count == 0)
 	{
+// Question: Is there a separate list of warnings - when no errors break the compilation?
+//
+//		for (int i = 0; i < compiler.Errors.Count; i++)
+//		{
+//			// give warnings
+//			_CompileWarnings.Append(compiler.Errors[i].ToString() + "\r\n");
+//		}
+
 		return compiler.CreateInstance();
 	}
 	else
 	{
 		for (int i = 0; i < compiler.Errors.Count; i++)
 		{
-			Response.WriteLine(compiler.Errors[i].ToString());
+			if (compiler.Errors[i].IsWarning)
+			{
+				_CompileWarnings.Append(compiler.Errors[i].ToString() + "\r\n"); // AppendLine not there
+			} else {
+				_CompileErrors.Append(compiler.Errors[i].ToString() + "\r\n");
+			}
 		}
+
 		return null;
 	}
 	
@@ -501,7 +530,10 @@ public void RenderToFile(string templateName, string path, bool overwrite)
 
 // load all the templates and put them into an hashtable
 public void LoadTemplates()
-{	
+{
+	_CompileErrors.Length = 0;
+	_CompileWarnings.Length = 0;
+
 	foreach(string _templatesFileName in _templatesFileNames)
 	{
 		string key = System.IO.Path.GetFileName(_templatesFileName);
@@ -529,6 +561,23 @@ public void LoadTemplates()
 		}
 		catch(Exception) {}
 	}
+
+	// do this because the individual compile errors are erased
+	// Question: what erases the results pane before each compile - can we do it before top compile only?
+
+	// if there is a way to get the warnings when there are no errors,
+	// then add a param called 'DisplayWarnings' and check it before showing these
+	if (_CompileWarnings.Length > 0 && _CompileErrors.Length == 0)
+	{
+		throw new Exception("Compile Warnings: \r\n" + _CompileWarnings.ToString());
+	}
+
+	// display compile errors (and warnings if user wants warnings)
+	if (_CompileErrors.Length > 0)
+	{
+		throw new Exception("Compile Warnings: \r\n" + _CompileWarnings.ToString() + "\r\nCompile Errors: \r\n" + _CompileErrors.ToString());
+	}
+
 }
 
 public CodeTemplate GetTemplate(string templateType)
