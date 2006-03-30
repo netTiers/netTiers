@@ -1,4 +1,4 @@
-<%@ CodeTemplate Src="..\CommonSqlCode.cs" Debug="true" Inherits="MoM.Templates.CommonSqlCode" Language="C#" TargetLanguage="T-SQL"
+﻿<%@ CodeTemplate Src="..\CommonSqlCode.cs" Debug="true" Inherits="MoM.Templates.CommonSqlCode" Language="C#" TargetLanguage="T-SQL"
 	Description="Generates SELECT/INSERT/UPDATE/DELETE stored procedures based on one or more selected tables, or an entire database schema." ResponseEncoding="UTF-8"%>
 
 <%@ Property Name="CompanyName" Optional="True" Type="System.String" Category="General" Description="The name of your company." %>
@@ -119,7 +119,7 @@
 		{%>
 		
 		<procedure owner="<%=SourceTable.Owner%>" name="<%= ProcedurePrefix + commandStem + SelectSuffix + SelectAllSuffix %>" <%if (GrantUser != "") {%>grant="<%=GrantUser%>"<%}%>>
-			<comment><%= GetProcSqlComment(string.Format("Gets all records from the {0} table", name), tableComment) %></comment>
+			<comment><![CDATA[<%= GetProcSqlComment(string.Format("Gets all records from the {0} table", name), tableComment) %>]]></comment>
 			<parameters/>
 			<body><![CDATA[
 				<%= GetSetTransactionIsolationLevelStatement() %>
@@ -138,7 +138,7 @@
 		%>
 		
 		<procedure owner="<%=SourceTable.Owner%>" name="<%= ProcedurePrefix + commandStem + SelectSuffix %>Paged" <%if (GrantUser != "") {%>grant="<%=GrantUser%>"<%}%>>
-			<comment><%= GetProcSqlComment(string.Format("Gets records from the {0} table passing page index and page count parameters", name), tableComment) %></comment>
+			<comment><![CDATA[<%= GetProcSqlComment(string.Format("Gets records from the {0} table passing page index and page count parameters", name), tableComment) %>]]></comment>
 			<parameters>
 				<parameter name="@WhereClause" type="varchar" direction="Input" size="2000" precision="0" scale="0" param="(2000)" />
 				<parameter name="@OrderBy" type="varchar" direction="Input" size="2000" precision="0" scale="0" param="(2000)"/>
@@ -242,7 +242,7 @@
 		if (IncludeInsert)
 		{%>
 		<procedure owner="<%=SourceTable.Owner%>" name="<%= ProcedurePrefix + commandStem + InsertSuffix %>" <%if (GrantUser != "") {%>grant="<%=GrantUser%>"<%}%>>
-			<comment><%= GetProcSqlComment(string.Format("Inserts a record into the {0} table", name), tableComment) %></comment>
+			<comment><![CDATA[<%= GetProcSqlComment(string.Format("Inserts a record into the {0} table", name), tableComment) %>]]></comment>
 			<parameters>
 				<% 
 				int countComputedColumns = 0;
@@ -313,7 +313,7 @@
 		if (IncludeUpdate) 
 		{%>
 		<procedure owner="<%=SourceTable.Owner%>" name="<%= ProcedurePrefix + commandStem + UpdateSuffix %>" <%if (GrantUser != "") {%>grant="<%=GrantUser%>"<%}%>>
-			<comment><%= GetProcSqlComment(string.Format("Updates a record in the {0} table", name), tableComment) %></comment>
+			<comment><![CDATA[<%= GetProcSqlComment(string.Format("Updates a record in the {0} table", name), tableComment) %>]]></comment>
 			<parameters>
 				<% 
 				int countComputedColumns = 0;
@@ -412,7 +412,7 @@
 		if (IncludeDelete && SourceTable.PrimaryKey != null) 
 		{%>
 		<procedure owner="<%=SourceTable.Owner%>" name="<%= ProcedurePrefix + commandStem + DeleteSuffix %>" <%if (GrantUser != "") {%>grant="<%=GrantUser%>"<%}%>>
-			<comment><%= GetProcSqlComment(string.Format("Deletes a record in the {0} table", name), tableComment) %></comment>
+			<comment><![CDATA[<%= GetProcSqlComment(string.Format("Deletes a record in the {0} table", name), tableComment) %>]]></comment>
 			<parameters>
 			<% 
 				string tempParams = string.Empty;
@@ -468,7 +468,7 @@
 				getbyKeys.Add(GetKeysName(fkeys[j].ForeignKeyMemberColumns));
 %>
 		<procedure owner="<%=SourceTable.Owner%>" name="<%= ProcedurePrefix + commandStem + SelectSuffix + "By" + FKColumnName(fkeys[j]) %>" <%if (GrantUser != "") {%>grant="<%=GrantUser%>"<%}%>>
-			<comment><%= GetProcSqlComment(string.Format("Select records from the {0} table through a foreign key", SourceTable.Name), "") %></comment>
+			<comment><![CDATA[<%= GetProcSqlComment(string.Format("Select records from the {0} table through a foreign key", SourceTable.Name), "") %>]]></comment>
 			<parameters>
 			<% 
 				for (int i = 0; i < fkeys[j].ForeignKeyMemberColumns.Count; i++) 
@@ -514,7 +514,7 @@
 				}
 %>
 		<procedure owner="<%=SourceTable.Owner%>" name="<%= ProcedurePrefix + commandStem + SelectSuffix + "By" + IXColumnName(indexes[j]) %>" <%if (GrantUser != "") {%>grant="<%=GrantUser%>"<%}%>>
-			<comment><%= GetProcSqlComment(string.Format("Select records from the {0} table through an index", SourceTable.Name), "") %></comment>
+			<comment><![CDATA[<%= GetProcSqlComment(string.Format("Select records from the {0} table through an index", SourceTable.Name), "") %>]]></comment>
 			<parameters>
 			<% 
 				for (int i = 0; i < indexes[j].MemberColumns.Count; i++) 
@@ -572,7 +572,7 @@
 							// here query
 %>
 		<procedure owner="<%=SourceTable.Owner%>" name="<%= ProcedurePrefix + commandStem + SelectSuffix + "By" + functionname %>" <%if (GrantUser != "") {%>grant="<%=GrantUser%>"<%}%>>
-			<comment><%= GetProcSqlComment("Gets records through a junction table", "") %></comment>
+			<comment><![CDATA[<%= GetProcSqlComment("Gets records through a junction table", "") %>]]></comment>
 			<parameters>
 			<% 
 				for (int i = 0; i < junctionTableKey.ForeignKeyMemberColumns.Count; i++) 
@@ -623,7 +623,7 @@ SELECT <% for (int i = 0; i < primaryTable.Columns.Count; i++)
 		if(IncludeFind)
 		{%>
 		<procedure owner="<%=SourceTable.Owner%>" name="<%= ProcedurePrefix + commandStem + FindSuffix %>" <%if (GrantUser != "") {%>grant="<%=GrantUser%>"<%}%>>
-			<comment><%= GetProcSqlComment(string.Format("Finds records in the {0} table passing nullable parameters", name), tableComment) %></comment>
+			<comment><![CDATA[<%= GetProcSqlComment(string.Format("Finds records in the {0} table passing nullable parameters", name), tableComment) %>]]></comment>
 			<parameters>
 				<parameter name="@SearchUsingOR" type="bit" direction="Input" size="0" precision="1" scale="0" param="" nulldefault="null"/>
 				<% 
@@ -707,7 +707,7 @@ SELECT <% for (int i = 0; i < primaryTable.Columns.Count; i++)
 		if (IncludeGetList) 
 		{%>
 		<procedure owner="<%=SourceView.Owner%>" name="<%= ProcedurePrefix + commandStem + SelectSuffix + SelectAllSuffix %>" <%if (GrantUser != "") {%>grant="<%=GrantUser%>"<%}%>>
-			<comment><%= GetProcSqlComment(string.Format("Gets all records from the {0} view", name), tableComment) %></comment>
+			<comment><![CDATA[<%= GetProcSqlComment(string.Format("Gets all records from the {0} view", name), tableComment) %>]]></comment>
 			<parameters/>
 			<body><![CDATA[
 				<%= GetSetTransactionIsolationLevelStatement() %>
@@ -722,7 +722,7 @@ SELECT <% for (int i = 0; i < primaryTable.Columns.Count; i++)
 		</procedure>
 		
 		<procedure owner="<%=SourceView.Owner%>" name="<%= ProcedurePrefix + commandStem + SelectSuffix %>" <%if (GrantUser != "") {%>grant="<%=GrantUser%>"<%}%>>
-			<comment><%= GetProcSqlComment(string.Format("Gets records from the {0} view passing page index and page count parameters", name), tableComment) %></comment>
+			<comment><![CDATA[<%= GetProcSqlComment(string.Format("Gets records from the {0} view passing page index and page count parameters", name), tableComment) %>]]></comment>
 			<parameters>
 				<parameter name="@WhereClause" type="varchar" direction="Input" size="2000" precision="0" scale="0" param="(2000)" />
 				<parameter name="@OrderBy" type="varchar" direction="Input" size="2000" precision="0" scale="0" param="(2000)"/>			
