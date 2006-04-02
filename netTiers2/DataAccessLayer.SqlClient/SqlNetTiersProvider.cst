@@ -108,28 +108,37 @@ namespace <%=DALNameSpace%>.SqlClient
             config.Remove("useStoredProcedure");
             #endregion
 
+			#region ConnectionString
 
-            // Initialize _connectionString
-            string connect = config["connectionStringName"];
+			// Initialize _connectionString
+			_connectionString = config["connectionString"];
+			config.Remove("connectionString");
 
-            if (String.IsNullOrEmpty(connect))
-            {
-                throw new ProviderException("Empty or missing connectionStringName");
-            }
-            config.Remove("connectionStringName");
+			string connect = config["connectionStringName"];
+			config.Remove("connectionStringName");
 
-            if (WebConfigurationManager.ConnectionStrings[connect] == null)
-            {
-                throw new ProviderException("Missing connection string");
-            }
+			if ( String.IsNullOrEmpty(_connectionString) )
+			{
+				if ( String.IsNullOrEmpty(connect) )
+				{
+					throw new ProviderException("Empty or missing connectionStringName");
+				}
 
-            _connectionString = WebConfigurationManager.ConnectionStrings
-                [connect].ConnectionString;
+				if ( WebConfigurationManager.ConnectionStrings[connect] == null )
+				{
+					throw new ProviderException("Missing connection string");
+				}
 
-            if (String.IsNullOrEmpty(_connectionString))
+				_connectionString = WebConfigurationManager.ConnectionStrings
+					[connect].ConnectionString;
+			}
+
+            if ( String.IsNullOrEmpty(_connectionString) )
             {
                 throw new ProviderException("Empty connection string");
-            }
+			}
+
+			#endregion
             
              #region "_providerInvariantName"
 
