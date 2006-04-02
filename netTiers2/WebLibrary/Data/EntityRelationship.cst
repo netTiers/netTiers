@@ -4,7 +4,7 @@
  * Last modified at $Date: 2006-03-19 10:00:00 -0600 (Sun, 19 Mar 2006) $
  * $Revision: 1 $
 --%>
-<%@ CodeTemplate Language="C#" TargetLanguage="Text" Src="" Inherits="" Debug="False" Description="Generates the specified class." %>
+<%@ CodeTemplate Language="C#" TargetLanguage="C#" Src="" Inherits="" Debug="False" Description="Generates the specified class." %>
 
 <%@ Property Name="BLLNameSpace" Optional="False" Type="System.String" Category="Style" Description="BLL Namespace." %>
 <%@ Property Name="DALNameSpace" Optional="False" Type="System.String" Category="Style" Description="DAL Namespace." %>
@@ -95,6 +95,10 @@ namespace <%= WebNameSpace %>.Data
 
 		#region Event Handlers
 
+		/// <summary>
+		/// Raises the System.Web.UI.Control.Load event.
+		/// </summary>
+		/// <param name="e">The System.EventArgs object that contains the event data.</param>
 		protected override void OnLoad(EventArgs e)
 		{
 			base.OnLoad(e);
@@ -170,10 +174,19 @@ namespace <%= WebNameSpace %>.Data
 		#endregion
 
 		#region EntityRelationship Event Handlers
+
+		/// <summary>
+		/// Handles the EntityDataSource.Selecting event.
+		/// </summary>
+		/// <param name="args">An EntityDataSourceSelectingEventArgs object that contains the event data.</param>
 		protected void OnSelecting(EntityDataSourceSelectingEventArgs args)
 		{
 		}
 
+		/// <summary>
+		/// Handles the EntityDataSource.Selected event.
+		/// </summary>
+		/// <param name="args">An EntityDataSourceMethodEventArgs object that contains the event data.</param>
 		protected void OnSelected(EntityDataSourceMethodEventArgs args)
 		{
 			if ( args.Index == PrimaryMember.EntityIndex )
@@ -183,17 +196,29 @@ namespace <%= WebNameSpace %>.Data
 			}
 		}
 
+		/// <summary>
+		/// Handles the EntityDataSource.Inserting event.
+		/// </summary>
+		/// <param name="args">An EntityDataSourceMethodEventArgs object that contains the event data.</param>
 		protected void OnInserting(EntityDataSourceMethodEventArgs args)
 		{
 			UpdateRelationships(args.EntityList, args.Index);
 		}
 
+		/// <summary>
+		/// Handles the EntityDataSource.Inserted event.
+		/// </summary>
+		/// <param name="args">An EntityDataSourceMethodEventArgs object that contains the event data.</param>
 		protected void OnInserted(EntityDataSourceMethodEventArgs args)
 		{
 			InsertLinks();
 			InsertReferences();
 		}
 
+		/// <summary>
+		/// Handles the EntityDataSource.Updating event.
+		/// </summary>
+		/// <param name="args">An EntityDataSourceMethodEventArgs object that contains the event data.</param>
 		protected void OnUpdating(EntityDataSourceMethodEventArgs args)
 		{
 			if ( args.Index == PrimaryMember.EntityIndex )
@@ -203,17 +228,30 @@ namespace <%= WebNameSpace %>.Data
 			}
 		}
 
+		/// <summary>
+		/// Handles the EntityDataSource.Updated event.
+		/// </summary>
+		/// <param name="args">An EntityDataSourceMethodEventArgs object that contains the event data.</param>
 		protected void OnUpdated(EntityDataSourceMethodEventArgs args)
 		{
 		}
 
+		/// <summary>
+		/// Handles the EntityDataSource.Deleting event.
+		/// </summary>
+		/// <param name="args">An EntityDataSourceMethodEventArgs object that contains the event data.</param>
 		protected void OnDeleting(EntityDataSourceMethodEventArgs args)
 		{
 		}
 
+		/// <summary>
+		/// Handles the EntityDataSource.Deleted event.
+		/// </summary>
+		/// <param name="args">An EntityDataSourceMethodEventArgs object that contains the event data.</param>
 		protected void OnDeleted(EntityDataSourceMethodEventArgs args)
 		{
 		}
+
 		#endregion
 
 		#endregion
@@ -243,22 +281,45 @@ namespace <%= WebNameSpace %>.Data
 
 		#region LinkMember Methods
 
+		/// <summary>
+		/// Gets the collection of business objects from the associated <paramref name="LinkMember"/>.
+		/// </summary>
+		/// <param name="entityList">The list of data retrieved by the associated <see cref="EntityDataSource"/>.</param>
+		/// <param name="index">The position of the current entity object within the <paramref name="entityList"/>.</param>
+		/// <returns>A collection of business objects which represent the
+		/// relationship defined by the <paramref name="LinkMember"/> property.</returns>
 		protected IList GetLinkList(IEnumerable entityList, int index)
 		{
 			return GetList(entityList, index, LinkMember, PrimaryMember.LinkProperty);
 		}
 
+		/// <summary>
+		/// Inserts any previously cached business object links.
+		/// </summary>
 		protected void InsertLinks()
 		{
 			Insert(LinkMember);
 		}
 
+		/// <summary>
+		/// Inserts the specified <paramref name="foreignKeyValue"/> into the
+		/// relationship defined by the <paramref name="LinkMember"/> property.
+		/// </summary>
+		/// <param name="entityList">The list of data retrieved by the associated <see cref="EntityDataSource"/>.</param>
+		/// <param name="index">The position of the current entity object within the <paramref name="entityList"/>.</param>
+		/// <param name="foreignKeyValue">The value to insert.</param>
 		protected void InsertLink(IEnumerable entityList, int index, Object foreignKeyValue)
 		{
 			IList links = GetLinkList(entityList, index);
 			InsertLink(links, foreignKeyValue);
 		}
 
+		/// <summary>
+		/// Inserts the specified <paramref name="foreignKeyValue"/> into the
+		/// collection of business objects.
+		/// </summary>
+		/// <param name="links">A collection of business objects.</param>
+		/// <param name="foreignKeyValue">The value to insert.</param>
 		protected void InsertLink(IList links, Object foreignKeyValue)
 		{
 			// make sure link doesn't exist
@@ -284,6 +345,11 @@ namespace <%= WebNameSpace %>.Data
 			}
 		}
 
+		/// <summary>
+		/// Removes the specified item from the collection of business objects.
+		/// </summary>
+		/// <param name="links">A collection of business objects.</param>
+		/// <param name="link">The item to remove.</param>
 		protected void RemoveLink(IList links, Object link)
 		{
 			Remove(LinkMember, links, link);
@@ -293,16 +359,32 @@ namespace <%= WebNameSpace %>.Data
 
 		#region ReferenceMember Methods
 
+		/// <summary>
+		/// Gets the collection of business objects from the associated <paramref name="ReferenceMember"/>.
+		/// </summary>
+		/// <param name="entityList">The list of data retrieved by the associated <see cref="EntityDataSource"/>.</param>
+		/// <param name="index">The position of the current entity object within the <paramref name="entityList"/>.</param>
+		/// <returns>A collection of business objects which represent the
+		/// relationship defined by the <paramref name="ReferenceMember"/> property.</returns>
 		protected IList GetReferenceList(IEnumerable entityList, int index)
 		{
 			return GetList(entityList, index, ReferenceMember, PrimaryMember.ReferenceProperty);
 		}
 
+		/// <summary>
+		/// Inserts any previously cached business object references.
+		/// </summary>
 		protected void InsertReferences()
 		{
 			Insert(ReferenceMember);
 		}
 
+		/// <summary>
+		/// Inserts the specified name/value pairs into the
+		/// relationship defined by the <paramref name="ReferenceMember"/> property.
+		/// </summary>
+		/// <param name="links">A collection of business objects.</param>
+		/// <param name="values">A collection of name/value pairs to insert.</param>
 		protected void InsertReference(IList links, IDictionary values)
 		{
 			Object entityKeyValue = PrimaryMember.GetEntityId();
@@ -318,11 +400,21 @@ namespace <%= WebNameSpace %>.Data
 			}
 		}
 
+		/// <summary>
+		/// Updates the specified business object with the specified name/value pairs.
+		/// </summary>
+		/// <param name="link">The business object to update.</param>
+		/// <param name="values">A collection of name/value pairs to update.</param>
 		protected void UpdateReference(Object link, IDictionary values)
 		{
 			Update(ReferenceMember, link, values);
 		}
 
+		/// <summary>
+		/// Removes the specified item from the collection of business objects.
+		/// </summary>
+		/// <param name="links">A collection of business objects.</param>
+		/// <param name="link">The item to remove.</param>
 		protected void RemoveReference(IList links, Object link)
 		{
 			Remove(ReferenceMember, links, link);
@@ -332,6 +424,15 @@ namespace <%= WebNameSpace %>.Data
 
 		#region Base EntityRelationshipMember Methods
 
+		/// <summary>
+		/// Gets the collection of business objects from the specified relationship member.
+		/// </summary>
+		/// <param name="entityList">The list of data retrieved by the associated <see cref="EntityDataSource"/>.</param>
+		/// <param name="index">The position of the current entity object within the <paramref name="entityList"/>.</param>
+		/// <param name="member">The relationship member.</param>
+		/// <param name="listPropertyName">The property name.</param>
+		/// <returns>A collection of business objects which represent the
+		/// relationship defined by the specified relationship member.</returns>
 		protected IList GetList(IEnumerable entityList, int index, EntityRelationshipMember member, String listPropertyName)
 		{
 			IList list;
@@ -351,6 +452,10 @@ namespace <%= WebNameSpace %>.Data
 			return list;
 		}
 
+		/// <summary>
+		/// Inserts any previously cached business object references.
+		/// </summary>
+		/// <param name="member">The relationship member.</param>
 		private void Insert(EntityRelationshipMember member)
 		{
 			if ( member != null && member.HasDataSource )
@@ -367,11 +472,27 @@ namespace <%= WebNameSpace %>.Data
 			}
 		}
 
+		/// <summary>
+		/// Inserts the specified name/value pairs into the
+		/// relationship defined by the specified member.
+		/// </summary>
+		/// <param name="member">The relationship member.</param>
+		/// <param name="links">A collection of business objects.</param>
+		/// <param name="values">A collection of name/value pairs to insert.</param>
 		private void Insert(EntityRelationshipMember member, IList links, IDictionary values)
 		{
 			Insert(member, links, values, false);
 		}
 
+		/// <summary>
+		/// Inserts the specified name/value pairs into the
+		/// relationship defined by the specified member.
+		/// </summary>
+		/// <param name="member">The relationship member.</param>
+		/// <param name="links">A collection of business objects.</param>
+		/// <param name="values">A collection of name/value pairs to insert.</param>
+		/// <param name="initEntityKey">A value indicating whether or not to initialize the
+		/// business object's unique identifier property before executing the insert operation.</param>
 		private void Insert(EntityRelationshipMember member, IList links, IDictionary values, bool initEntityKey)
 		{
 			if ( member != null && member.HasDataSource )
@@ -392,6 +513,12 @@ namespace <%= WebNameSpace %>.Data
 			}
 		}
 
+		/// <summary>
+		/// Updates the specified business object with the specified name/value pairs.
+		/// </summary>
+		/// <param name="member">The relationship member.</param>
+		/// <param name="link">The business object to update.</param>
+		/// <param name="values">A collection of name/value pairs to insert.</param>
 		private void Update(EntityRelationshipMember member, Object link, IDictionary values)
 		{
 			if ( member != null && member.HasDataSource )
@@ -404,6 +531,12 @@ namespace <%= WebNameSpace %>.Data
 			}
 		}
 
+		/// <summary>
+		/// Removes the specified item from the collection of business objects.
+		/// </summary>
+		/// <param name="member">The relationship member.</param>
+		/// <param name="links">A collection of business objects.</param>
+		/// <param name="link">The item to remove.</param>
 		private void Remove(EntityRelationshipMember member, IList links, Object link)
 		{
 			EntityUtil.Remove(links, link);

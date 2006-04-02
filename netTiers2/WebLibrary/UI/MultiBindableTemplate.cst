@@ -4,7 +4,7 @@
  * Last modified at $Date: 2006-03-19 10:00:00 -0600 (Sun, 19 Mar 2006) $
  * $Revision: 1 $
 --%>
-<%@ CodeTemplate Language="C#" TargetLanguage="Text" Src="" Inherits="" Debug="False" Description="Generates the specified class." %>
+<%@ CodeTemplate Language="C#" TargetLanguage="C#" Src="" Inherits="" Debug="False" Description="Generates the MultiBindableTemplate class." %>
 
 <%@ Property Name="BLLNameSpace" Optional="False" Type="System.String" Category="Style" Description="BLL Namespace." %>
 <%@ Property Name="DALNameSpace" Optional="False" Type="System.String" Category="Style" Description="DAL Namespace." %>
@@ -40,11 +40,20 @@ namespace <%= WebNameSpace %>.UI
 	{
 		private IBindableTemplate[] _templates;
 
+		/// <summary>
+		/// Initializes a new instance of the MultiBindableTemplate class.
+		/// </summary>
+		/// <param name="templates"></param>
 		public MultiBindableTemplate(params IBindableTemplate[] templates)
 		{
 			_templates = templates;
 		}
 
+		/// <summary>
+		/// Initializes a new instance of the MultiBindableTemplate class.
+		/// </summary>
+		/// <param name="control"></param>
+		/// <param name="paths"></param>
 		public MultiBindableTemplate(TemplateControl control, params String[] paths)
 		{
 			_templates = new IBindableTemplate[paths.Length];
@@ -55,6 +64,21 @@ namespace <%= WebNameSpace %>.UI
 			}
 		}
 
+		/// <summary>
+		/// Retrieves a set of name/value pairs for values bound using
+		/// two-way ASP.NET data-binding syntax within the templated content.
+		/// </summary>
+		/// <param name="container">
+		/// The System.Web.UI.Control from which to extract name/value pairs, which are
+		/// passed by the data-bound control to an associated data source control in
+		/// two-way data-binding scenarios.
+		/// </param>
+		/// <returns>
+		/// An System.Collections.Specialized.IOrderedDictionary of name/value pairs.
+		/// The name represents the name of a control within templated content, and the
+		/// value is the current value of a property value bound using two-way ASP.NET
+		/// data-binding syntax.
+		/// </returns>
 		public IOrderedDictionary ExtractValues(Control container)
 		{
 			IOrderedDictionary multi = null;
@@ -81,6 +105,15 @@ namespace <%= WebNameSpace %>.UI
 			return multi;
 		}
 
+		/// <summary>
+		/// When implemented by a class, defines the System.Web.UI.Control object that
+		/// child controls and templates belong to. These child controls are in turn
+		/// defined within an inline template.
+		/// </summary>
+		/// <param name="container">
+		/// The System.Web.UI.Control object to contain the instances of controls from
+		/// the inline template.
+		/// </param>
 		public void InstantiateIn(Control container)
 		{
 			// create a container control
@@ -99,6 +132,9 @@ namespace <%= WebNameSpace %>.UI
 			container.Controls.Add(c);
 		}
 
+		/// <summary>
+		/// Gets a value that indicates whether there are any templates specified.
+		/// </summary>
 		public bool HasTemplates
 		{
 			get { return (_templates != null && _templates.Length > 0); }

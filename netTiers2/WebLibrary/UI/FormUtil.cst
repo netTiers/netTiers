@@ -4,7 +4,7 @@
  * Last modified at $Date: 2006-03-19 10:00:00 -0600 (Sun, 19 Mar 2006) $
  * $Revision: 1 $
 --%>
-<%@ CodeTemplate Language="C#" TargetLanguage="Text" Src="" Inherits="" Debug="False" Description="Generates the specified class." %>
+<%@ CodeTemplate Language="C#" TargetLanguage="C#" Src="" Inherits="" Debug="False" Description="Generates the FormUtil class." %>
 
 <%@ Property Name="BLLNameSpace" Optional="False" Type="System.String" Category="Style" Description="BLL Namespace." %>
 <%@ Property Name="DALNameSpace" Optional="False" Type="System.String" Category="Style" Description="DAL Namespace." %>
@@ -316,6 +316,21 @@ namespace <%= WebNameSpace %>.UI
 			}
 		}
 
+		public static void SetSelectedIndex(GridView gridView, String parameterName)
+		{
+			if ( !gridView.Page.IsPostBack && !gridView.Page.IsCallback && !String.IsNullOrEmpty(parameterName) )
+			{
+				String value = HttpContext.Current.Request[parameterName];
+
+				if ( !String.IsNullOrEmpty(value) )
+				{
+					int index = -1;
+					Int32.TryParse(value, out index);
+					gridView.SelectedIndex = Math.Max(index, -1);
+				}
+			}
+		}
+
 		public static void SetSortExpression(GridView gridView, String sortParameterName, String dirParameterName)
 		{
 			if ( !gridView.Page.IsPostBack && !gridView.Page.IsCallback && !String.IsNullOrEmpty(sortParameterName) )
@@ -343,15 +358,32 @@ namespace <%= WebNameSpace %>.UI
 
 		public static void SetGridParams(GridView gridView, String pageParam, String sortParam, String dirParam)
 		{
+			SetGridParams(gridView, pageParam, sortParam, dirParam, "index");
+		}
+
+		public static void SetGridParams(GridView gridView, String pageParam, String sortParam, String dirParam, String indexParam)
+		{
 			SetPageIndex(gridView, pageParam);
 			SetSortExpression(gridView, sortParam, dirParam);
+			SetSelectedIndex(gridView, indexParam);
+		}
+
+		public static void SetGridParams(GridView gridView)
+		{
+			SetGridParams(gridView, "page", "sort", "dir", "index");
+		}
+
+		public static String GetRedirectUrl(GridView gridView)
+		{
+			String url = HttpContext.Current.Request.Url.AbsolutePath + "?page={0}&sort={1}&dir={2}&index={3}";
+			return GetRedirectUrl(gridView, url);
 		}
 
 		public static String GetRedirectUrl(GridView gridView, String url)
 		{
 			String sort = HttpContext.Current.Server.UrlEncode(gridView.SortExpression);
 			int dir = (int) gridView.SortDirection;
-			return String.Format(url, gridView.PageIndex, sort, dir);
+			return String.Format(url, gridView.PageIndex, sort, dir, gridView.SelectedIndex);
 		}
 
 		public static void Redirect(GridView gridView, String url)
