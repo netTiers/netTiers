@@ -797,6 +797,17 @@ namespace MoM.Templates
 		}
 		
 		/// <summary>
+		/// Check that a given table has a primary key.
+		/// </summary>
+		/// <param name="table">The table to check.</param>
+		public bool HasPrimaryKey(TableSchema table)
+		{
+			if (!table.HasPrimaryKey) return false; // requires CodeSmith 3.2
+			if (table.PrimaryKey == null || table.PrimaryKey.MemberColumns.Count == 0) return false;
+			return true;
+		}
+		
+		/// <summary>
 		/// Check that a given index has all it's columns into the primary key.
 		/// </summary>
 		/// <param name="index">The index to check.</param>
@@ -2362,7 +2373,7 @@ namespace MoM.Templates
 			#region "Primary key validation"
 			
 			// No primary key
-			if (table.PrimaryKey == null)
+			if (!HasPrimaryKey(table))
 			{
 				throw new ApplicationException("table has no primary key.");
 			}
@@ -2847,7 +2858,7 @@ namespace MoM.Templates
 		/// <exception cref="ArgumentNullException">key is null</exception>
 		public bool IsIdentifyingRelationship(TableKeySchema key)
 		{
-			if ( key == null )
+			if (key == null)
 				throw new ArgumentNullException("key");
 
 			PrimaryKeySchema childPrimaryKey = key.ForeignKeyTable.PrimaryKey;
@@ -2859,7 +2870,7 @@ namespace MoM.Templates
 			for (int i = 0; i < key.ForeignKeyMemberColumns.Count; i++)
 			{
 				// see if the child table's PK has the FK member
-				if ( childPrimaryKey.MemberColumns[key.ForeignKeyMemberColumns[i].Name] == null )
+				if (childPrimaryKey.MemberColumns[key.ForeignKeyMemberColumns[i].Name] == null)
 					return false;
 			}
 			return true;
@@ -2871,11 +2882,10 @@ namespace MoM.Templates
 		/// </summary>
 		public bool IsJunctionTable(TableSchema table)
 		{
-			if (table.PrimaryKey == null || table.PrimaryKey.MemberColumns.Count == 0)
+			if (!HasPrimaryKey(table))
 			{
 				//Response.WriteLine(string.Format("IsJunctionTable: The table {0} doesn't have a primary key.", table.Name));
 				return false;
-				
 			}
 			if (table.PrimaryKey.MemberColumns.Count == 1)
 			{
