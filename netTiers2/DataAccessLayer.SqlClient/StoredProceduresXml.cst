@@ -130,6 +130,7 @@
 				FROM
 					<%=owner%>[<%= SourceTable.Name %>]
 					
+				Select @@ROWCOUNT
 			]]></body>
 		</procedure>
 		
@@ -489,7 +490,8 @@
 					<% for (int i = 0; i < fkeys[j].ForeignKeyMemberColumns.Count; i++) { %>
 					<% if (i > 0) { %>AND <% } %>[<%= fkeys[j].ForeignKeyMemberColumns[i].Name %>] = @<%= GetPropertyName(fkeys[j].ForeignKeyMemberColumns[i].Name) %>
 					<% } %>
-					
+				
+				Select @@ROWCOUNT
 			]]></body>
 		</procedure>
 <%
@@ -534,6 +536,7 @@
 					<% for (int i = 0; i < indexes[j].MemberColumns.Count; i++) { %>
 					<% if (i > 0) { %>AND <% } %>[<%= indexes[j].MemberColumns[i].Name %>] = @<%= GetPropertyName(indexes[j].MemberColumns[i].Name) %>
 					<% } %>
+			Select @@ROWCOUNT
 					
 			]]></body>
 			
@@ -606,7 +609,10 @@ SELECT <% for (int i = 0; i < primaryTable.Columns.Count; i++)
 						} // for
 					} // if
 				} // foreach
-				%>)]]></body>
+				
+				%>)
+				Select @@ROWCOUNT			
+				]]></body>
 		</procedure>
 <%						
 						}// //end if there is many to many relationship.
@@ -680,7 +686,7 @@ SELECT <% for (int i = 0; i < primaryTable.Columns.Count; i++)
 						Response.Write("\t" + tmpWhere.Remove(0,4));
 					}
 					%>					
-
+	Select @@ROWCOUNT			
   END
 				]]></body>
 		</procedure>
@@ -717,6 +723,7 @@ SELECT <% for (int i = 0; i < primaryTable.Columns.Count; i++)
 					<% } %>
 				FROM
 					<%=owner%>[<%= SourceView.Name %>]
+				Select @@ROWCOUNT			
 										
 			]]></body>
 		</procedure>
@@ -743,7 +750,7 @@ SELECT <% for (int i = 0; i < primaryTable.Columns.Count; i++)
 				BEGIN
 					SET @SQL = @SQL + ' ORDER BY ' + @OrderBy
 				END
-				
+				SET @SQL = @SQL + ';Select @@ROWCOUNT'
 				-- Execution the query
 				exec sp_executesql @SQL
 								

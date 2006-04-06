@@ -125,7 +125,8 @@ namespace <%=DALNameSpace%>.Bases
 		/// <returns>Returns a typed collection of <%=GetClassName(primaryTable.Name)%> objects.</returns>
 		public <%=GetCollectionClassName(primaryTable.Name)%> GetBy<%=functionname%>(<%=GetFunctionHeaderParameters(junctionTableKey.ForeignKeyMemberColumns)%>)
 		{
-			return GetBy<%=functionname%>(<%=GetFunctionCallParameters(junctionTableKey.ForeignKeyMemberColumns)%>, 0, int.MaxValue);
+			int count = -1;
+			return GetBy<%=functionname%>(null,<%=GetFunctionCallParameters(junctionTableKey.ForeignKeyMemberColumns)%>, 0, int.MaxValue, out count);
 			
 		}
 		
@@ -143,7 +144,8 @@ namespace <%=DALNameSpace%>.Bases
 		/// <returns>Returns a TList of <%=GetClassName(primaryTable.Name)%> objects.</returns>
 		public <%=GetCollectionClassName(primaryTable.Name)%> GetBy<%=functionname%>(<%= GetFunctionHeaderParameters(junctionTableKey.ForeignKeyMemberColumns) %>, int start, int pageLength)
 		{
-			return GetBy<%=functionname%>(null, <%= GetFunctionCallParameters(junctionTableKey.ForeignKeyMemberColumns) %>, start, pageLength);
+			int count = -1;
+			return GetBy<%=functionname%>(null, <%= GetFunctionCallParameters(junctionTableKey.ForeignKeyMemberColumns) %>, start, pageLength, out count);
 		}
 		
 		/// <summary>
@@ -159,9 +161,47 @@ namespace <%=DALNameSpace%>.Bases
 		/// <returns>Returns a typed collection of <%=primaryTable.Name%> objects.</returns>
 		public <%=GetCollectionClassName(primaryTable.Name)%> GetBy<%=functionname%>(TransactionManager transactionManager, <%= GetFunctionHeaderParameters(junctionTableKey.ForeignKeyMemberColumns) %>)
 		{
-			return GetBy<%=functionname%>(transactionManager, <%= GetFunctionCallParameters(junctionTableKey.ForeignKeyMemberColumns) %>, 0, int.MaxValue);
+			int count = -1;
+			return GetBy<%=functionname%>(transactionManager, <%= GetFunctionCallParameters(junctionTableKey.ForeignKeyMemberColumns) %>, 0, int.MaxValue, out count);
 		}
 		
+		
+		/// <summary>
+		///		Gets <%=GetClassName(primaryTable.Name)%> objects from the datasource by <%=junctionTableKey.ForeignKeyMemberColumns[0].Name%> in the
+		///		<%=junctionTable.Name%> table. Table <%=primaryTable.Name%> is related to table <%=secondaryTable.Name%>
+		///		through the (M:N) relationship defined in the <%=junctionTable.Name%> table.
+		/// </summary>
+	<% for (int i = 0; i < junctionTableKey.ForeignKeyMemberColumns.Count; i++) { %>
+		/// <param name="<%= GetPrivateName(junctionTableKey.ForeignKeyMemberColumns[i].Name)%>"><%=GetColumnXmlComment(junctionTableKey.ForeignKeyMemberColumns[i],2)%></param>
+	<% } %>
+		/// <param name="transactionManager"><see cref="TransactionManager"/> object</param>
+		/// <remarks></remarks>
+		/// <returns>Returns a typed collection of <%=primaryTable.Name%> objects.</returns>
+		public <%=GetCollectionClassName(primaryTable.Name)%> GetBy<%=functionname%>(TransactionManager transactionManager, <%= GetFunctionHeaderParameters(junctionTableKey.ForeignKeyMemberColumns) %>,int start, int pageLength)
+		{
+			int count = -1;
+			return GetBy<%=functionname%>(transactionManager, <%= GetFunctionCallParameters(junctionTableKey.ForeignKeyMemberColumns) %>, start, pageLength, out count);
+		}
+		
+		/// <summary>
+		///		Gets <%=GetClassName(primaryTable.Name)%> objects from the datasource by <%=junctionTableKey.ForeignKeyMemberColumns[0].Name%> in the
+		///		<%=junctionTable.Name%> table. Table <%=primaryTable.Name%> is related to table <%=secondaryTable.Name%>
+		///		through the (M:N) relationship defined in the <%=junctionTable.Name%> table.
+		/// </summary>
+	<% for (int i = 0; i < junctionTableKey.ForeignKeyMemberColumns.Count; i++) { %>
+		/// <param name="<%= GetPrivateName(junctionTableKey.ForeignKeyMemberColumns[i].Name)%>"><%=GetColumnXmlComment(junctionTableKey.ForeignKeyMemberColumns[i],2)%></param>
+	<% } %>
+		/// <param name="transactionManager"><see cref="TransactionManager"/> object</param>
+		/// <param name="count">out parameter to get total records for query</param>
+		/// <remarks></remarks>
+		/// <returns>Returns a typed collection of <%=primaryTable.Name%> objects.</returns>
+		public <%=GetCollectionClassName(primaryTable.Name)%> GetBy<%=functionname%>(<%= GetFunctionHeaderParameters(junctionTableKey.ForeignKeyMemberColumns) %>,int start, int pageLength, out int count)
+		{
+			
+			return GetBy<%=functionname%>(null, <%= GetFunctionCallParameters(junctionTableKey.ForeignKeyMemberColumns) %>, start, pageLength, out count);
+		}
+
+
 		/// <summary>
 		///		Gets <%=primaryTable.Name%> objects from the datasource by <%=junctionTableKey.ForeignKeyMemberColumns[0].Name%> in the
 		///		<%=junctionTable.Name%> table. Table <%=primaryTable.Name%> is related to table <%=secondaryTable.Name%>
@@ -175,7 +215,7 @@ namespace <%=DALNameSpace%>.Bases
 <% } %>
 		/// <remarks></remarks>
 		/// <returns>Returns a TList of <%=GetClassName(primaryTable.Name)%> objects.</returns>
-		public abstract <%=GetCollectionClassName(primaryTable.Name)%> GetBy<%=functionname%>(TransactionManager transactionManager,<%=GetFunctionHeaderParameters(junctionTableKey.ForeignKeyMemberColumns)%>, int start, int pageLength);
+		public abstract <%=GetCollectionClassName(primaryTable.Name)%> GetBy<%=functionname%>(TransactionManager transactionManager,<%=GetFunctionHeaderParameters(junctionTableKey.ForeignKeyMemberColumns)%>, int start, int pageLength, out int count);
 		
 		#endregion GetBy<%=functionname%>
 		
@@ -296,7 +336,8 @@ namespace <%=DALNameSpace%>.Bases
 		/// <returns>Returns a typed collection of <%=className%> objects.</returns>
 		public <%=collectionClassName%> Find(string whereClause)
 		{
-			return Find(whereClause, 0, int.MaxValue);
+			int count = -1;
+			return Find(null,whereClause, 0, int.MaxValue, out count);
 		}	
 		
 		/// <summary>
@@ -309,7 +350,8 @@ namespace <%=DALNameSpace%>.Bases
 		/// <returns>Returns a typed collection of <%=className%> objects.</returns>
 		public <%=collectionClassName%> Find(string whereClause, int start, int pageLength)
 		{
-			return Find(null, whereClause, start, pageLength);
+			int count = -1;
+			return Find(null, whereClause, start, pageLength, out count);
 		}
 		
 		/// <summary>
@@ -321,7 +363,21 @@ namespace <%=DALNameSpace%>.Bases
 		/// <returns>Returns a typed collection of <%=className%> objects.</returns>
 		public <%=collectionClassName%> Find(TransactionManager transactionManager, string whereClause)
 		{
-			return Find(transactionManager, whereClause, 0, int.MaxValue);
+			int count = -1;
+			return Find(transactionManager, whereClause, 0, int.MaxValue, out count);
+		}
+		
+		/// <summary>
+		/// 	Returns rows meeting the whereclause condition from the DataSource.
+		/// </summary>
+		/// <param name="transactionManager"><see cref="TransactionManager"/> object</param>
+		/// <param name="whereClause">Specifies the condition for the rows returned by a query (Name='John Doe', Name='John Doe' AND Id='1', Name='John Doe' OR Id='1').</param>
+		/// <param name="count">out parameter to get total records for query</param>
+		/// <remarks>Operators must be capitalized (OR, AND)</remarks>
+		/// <returns>Returns a typed collection of <%=className%> objects.</returns>
+		public <%=collectionClassName%> Find(TransactionManager transactionManager, string whereClause, out int count)
+		{
+			return Find(transactionManager, whereClause, 0, int.MaxValue, out count);
 		}
 		
 		/// <summary>
@@ -333,7 +389,7 @@ namespace <%=DALNameSpace%>.Bases
 		/// <param name="transactionManager"><see cref="TransactionManager"/> object</param>
 		/// <remarks>Operators must be capitalized (OR, AND)</remarks>
 		/// <returns>Returns a typed collection of <%=className%> objects.</returns>
-		public abstract <%=collectionClassName%> Find(TransactionManager transactionManager, string whereClause, int start, int pageLength);
+		public abstract <%=collectionClassName%> Find(TransactionManager transactionManager, string whereClause, int start, int pageLength, out int count);
 		
 		#endregion "Find Functions"
 		
@@ -347,7 +403,8 @@ namespace <%=DALNameSpace%>.Bases
 		/// <returns>Returns a TList of <%=className%> objects.</returns>
 		public <%=collectionClassName%> GetAll()
 		{
-			return GetAll(0, int.MaxValue);
+			int count = -1;
+			return GetAll(0, int.MaxValue, out count);
 		}
 		
 		/// <summary>
@@ -359,7 +416,8 @@ namespace <%=DALNameSpace%>.Bases
 		/// <returns>Returns a typed collection of <%=className%> objects.</returns>
 		public <%=collectionClassName%> GetAll(int start, int pageLength)
 		{	
-			return GetAll(null, start, pageLength);
+			int count = -1;
+			return GetAll(null, start, pageLength, out count);
 		}
 					
 		/// <summary>
@@ -370,8 +428,38 @@ namespace <%=DALNameSpace%>.Bases
 		/// <returns>Returns a TList of <%=className%> objects.</returns>
 		public <%=collectionClassName%> GetAll(TransactionManager transactionManager)
 		{
-			return GetAll(transactionManager, 0,int.MaxValue);
-		}	
+			int count = -1;
+			return GetAll(transactionManager, 0,int.MaxValue, out count);
+		}
+		
+		
+		/// <summary>
+		/// 	Gets All rows from the DataSource.
+		/// </summary>
+		/// <param name="start">Row number at which to start reading.</param>
+		/// <param name="pageLength">Number of rows to return.</param>
+		/// <remarks></remarks>
+		/// <returns>Returns a typed collection of <%=className%> objects.</returns>
+		public <%=collectionClassName%> GetAll(TransactionManager transactionManager, int start, int pageLength)
+		{	
+			int count = -1;
+			return GetAll(transactionManager, start, pageLength, out count);
+		}
+		
+		/// <summary>
+		/// 	Gets All rows from the DataSource.
+		/// </summary>
+		/// <param name="start">Row number at which to start reading.</param>
+		/// <param name="pageLength">Number of rows to return.</param>
+		/// <param name="count">out parameter to get total records for query</param>
+		/// <remarks></remarks>
+		/// <returns>Returns a typed collection of <%=className%> objects.</returns>
+		public <%=collectionClassName%> GetAll(int start, int pageLength, out int count)
+		{	
+			return GetAll(null, start, pageLength, out count);
+		}
+		
+		
 		
 		/// <summary>
 		/// 	Gets All rows from the DataSource.
@@ -381,7 +469,7 @@ namespace <%=DALNameSpace%>.Bases
 		/// <param name="transactionManager"><see cref="TransactionManager"/> object</param>
 		/// <remarks></remarks>
 		/// <returns>Returns a TList of <%=className%> objects.</returns>
-		public abstract <%=collectionClassName%> GetAll(TransactionManager transactionManager, int start, int pageLength);
+		public abstract <%=collectionClassName%> GetAll(TransactionManager transactionManager, int start, int pageLength, out int count);
 		
 		#endregion
 		
@@ -393,8 +481,9 @@ namespace <%=DALNameSpace%>.Bases
 		/// <param name="count">Number of rows in the DataSource.</param>
 		/// <remarks></remarks>
 		/// <returns>Returns a TList of <%=className%> objects.</returns>
-		public <%=collectionClassName%> GetPaged(out int count)
+		public <%=collectionClassName%> GetPaged()
 		{
+			int count = -1;
 			return GetPaged(null, null, 0, int.MaxValue, out count);
 		}
 		
@@ -411,6 +500,21 @@ namespace <%=DALNameSpace%>.Bases
 			return GetPaged(null, null, start, pageLength, out count);
 		}
 		
+		
+		/// <summary>
+		/// Gets a page of rows from the DataSource.
+		/// </summary>
+		/// <param name="start">Row number at which to start reading.</param>
+		/// <param name="pageLength">Number of rows to return.</param>
+		
+		/// <remarks></remarks>
+		/// <returns>Returns a TList of <%=className%> objects.</returns>
+		public <%=collectionClassName%> GetPaged(int start, int pageLength)
+		{
+			int count = -1;
+			return GetPaged(null, null, start, pageLength, out count);
+		}
+		
 		/// <summary>
 		/// Gets a page of rows from the DataSource.
 		/// </summary>
@@ -424,6 +528,51 @@ namespace <%=DALNameSpace%>.Bases
 		public <%=collectionClassName%> GetPaged(string whereClause, string orderBy, int start, int pageLength, out int count)
 		{
 			return GetPaged(null, whereClause, orderBy, start, pageLength, out count);
+		}
+		
+		/// <summary>
+		/// Gets a page of rows from the DataSource.
+		/// </summary>
+		/// <param name="whereClause">Specifies the condition for the rows returned by a query (Name='John Doe', Name='John Doe' AND Id='1', Name='John Doe' OR Id='1').</param>
+		/// <param name="orderBy">Specifies the sort criteria for the rows in the DataSource (Name ASC; BirthDay DESC, Name ASC);</param>
+		/// <param name="start">Row number at which to start reading.</param>
+		/// <param name="pageLength">Number of rows to return.</param>
+		/// <remarks></remarks>
+		/// <returns>Returns a TList of <%=className%> objects.</returns>
+		public <%=collectionClassName%> GetPaged(string whereClause, string orderBy, int start, int pageLength)
+		{
+			int count = -1;
+			return GetPaged(null, whereClause, orderBy, start, pageLength, out count);
+		}
+		
+		/// <summary>
+		/// Gets a page of rows from the DataSource.
+		/// </summary>
+		/// <param name="whereClause">Specifies the condition for the rows returned by a query (Name='John Doe', Name='John Doe' AND Id='1', Name='John Doe' OR Id='1').</param>
+		/// <param name="orderBy">Specifies the sort criteria for the rows in the DataSource (Name ASC; BirthDay DESC, Name ASC);</param>
+		/// <param name="start">Row number at which to start reading.</param>
+		/// <param name="pageLength">Number of rows to return.</param>
+		/// <remarks></remarks>
+		/// <returns>Returns a TList of <%=className%> objects.</returns>
+		public <%=collectionClassName%> GetPaged(TransactionManager transactionManager, string whereClause, string orderBy, int start, int pageLength)
+		{
+			int count = -1;
+			return GetPaged(transactionManager, whereClause, orderBy, start, pageLength, out count);
+		}
+		
+		/// <summary>
+		/// Gets a page of rows from the DataSource.
+		/// </summary>
+		/// <param name="start">Row number at which to start reading.</param>
+		/// <param name="pageLength">Number of rows to return.</param>
+		
+		/// <param name="transactionManager"><see cref="TransactionManager"/> object</param>
+		/// <remarks></remarks>
+		/// <returns>Returns a TList of <%=className%> objects.</returns>
+		public <%=collectionClassName%> GetPaged(TransactionManager transactionManager, int start, int pageLength)
+		{
+			int count = -1;
+			return GetPaged(transactionManager, null, null, start, pageLength, out count);
 		}
 		
 		/// <summary>
@@ -498,7 +647,8 @@ namespace <%=DALNameSpace%>.Bases
 		/// <returns>Returns a typed collection of <%=className%> objects.</returns>
 		public <%=collectionClassName%> GetBy<%=GetKeysName(fkeys[j].ForeignKeyMemberColumns)%>(<%= GetFunctionHeaderParameters(fkeys[j].ForeignKeyMemberColumns) %>)
 		{
-			return GetBy<%=GetKeysName(fkeys[j].ForeignKeyMemberColumns)%>(<%= GetFunctionCallParameters(fkeys[j].ForeignKeyMemberColumns) %>, 0,int.MaxValue);
+			int count = -1;
+			return GetBy<%=GetKeysName(fkeys[j].ForeignKeyMemberColumns)%>(<%= GetFunctionCallParameters(fkeys[j].ForeignKeyMemberColumns) %>, 0,int.MaxValue, out count);
 		}
 		
 		/// <summary>
@@ -513,7 +663,24 @@ namespace <%=DALNameSpace%>.Bases
 		/// <returns>Returns a typed collection of <%=className%> objects.</returns>
 		public <%=collectionClassName%> GetBy<%=GetKeysName(fkeys[j].ForeignKeyMemberColumns)%>(TransactionManager transactionManager, <%= GetFunctionHeaderParameters(fkeys[j].ForeignKeyMemberColumns) %>)
 		{
-			return GetBy<%=GetKeysName(fkeys[j].ForeignKeyMemberColumns)%>(transactionManager, <%= GetFunctionCallParameters(fkeys[j].ForeignKeyMemberColumns) %>, 0, int.MaxValue);
+			int count = -1;
+			return GetBy<%=GetKeysName(fkeys[j].ForeignKeyMemberColumns)%>(transactionManager, <%= GetFunctionCallParameters(fkeys[j].ForeignKeyMemberColumns) %>, 0, int.MaxValue, out count);
+		}
+		
+			/// <summary>
+		/// 	Gets rows from the datasource based on the <%=fkeys[j].Name%> key.
+		///		<%=fkeys[j].Name%> Description: <%=GetColumnXmlComment(fkeys[j],2)%>
+		/// </summary>
+	<% for (int i = 0; i < fkeys[j].ForeignKeyMemberColumns.Count; i++) { %>
+		/// <param name="<%= GetPrivateName(fkeys[j].ForeignKeyMemberColumns[i].Name)%>"><%=GetColumnXmlComment(fkeys[j].ForeignKeyMemberColumns[i],2)%></param>
+	<% } %>
+		/// <param name="transactionManager"><see cref="TransactionManager"/> object</param>
+		/// <remarks></remarks>
+		/// <returns>Returns a typed collection of <%=className%> objects.</returns>
+		public <%=collectionClassName%> GetBy<%=GetKeysName(fkeys[j].ForeignKeyMemberColumns)%>(TransactionManager transactionManager, <%= GetFunctionHeaderParameters(fkeys[j].ForeignKeyMemberColumns) %>, int start, int pageLength)
+		{
+			int count = -1;
+			return GetBy<%=GetKeysName(fkeys[j].ForeignKeyMemberColumns)%>(transactionManager, <%= GetFunctionCallParameters(fkeys[j].ForeignKeyMemberColumns) %>, start, pageLength, out count);
 		}
 		
 		/// <summary>
@@ -529,7 +696,25 @@ namespace <%=DALNameSpace%>.Bases
 		/// <returns>Returns a typed collection of <%=className%> objects.</returns>
 		public <%=collectionClassName%> GetBy<%=GetKeysName(fkeys[j].ForeignKeyMemberColumns)%>(<%= GetFunctionHeaderParameters(fkeys[j].ForeignKeyMemberColumns)%>, int start, int pageLength)
 		{
-			return GetBy<%=GetKeysName(fkeys[j].ForeignKeyMemberColumns)%>(null, <%= GetFunctionCallParameters(fkeys[j].ForeignKeyMemberColumns) %>, start, pageLength);	
+			int count =  -1;
+			return GetBy<%=GetKeysName(fkeys[j].ForeignKeyMemberColumns)%>(null, <%= GetFunctionCallParameters(fkeys[j].ForeignKeyMemberColumns) %>, start, pageLength,out count);	
+		}
+		
+		/// <summary>
+		/// 	Gets rows from the datasource based on the <%=fkeys[j].Name%> key.
+		///		<%=GetPrivateName(fkeys[j].Name)%> Description: <%=GetColumnXmlComment(fkeys[j],2)%>
+		/// </summary>
+		/// <param name="start">Row number at which to start reading.</param>
+		/// <param name="pageLength">Number of rows to return.</param>
+	<% for (int i = 0; i < fkeys[j].ForeignKeyMemberColumns.Count; i++) { %>
+		/// <param name="<%= GetPrivateName(fkeys[j].ForeignKeyMemberColumns[i].Name)%>"><%=GetColumnXmlComment(fkeys[j].ForeignKeyMemberColumns[i],2)%></param>
+	<% } %>
+		/// <param name="count">out parameter to get total records for query</param>
+		/// <remarks></remarks>
+		/// <returns>Returns a typed collection of <%=className%> objects.</returns>
+		public <%=collectionClassName%> GetBy<%=GetKeysName(fkeys[j].ForeignKeyMemberColumns)%>(<%= GetFunctionHeaderParameters(fkeys[j].ForeignKeyMemberColumns)%>, int start, int pageLength,out int count)
+		{
+			return GetBy<%=GetKeysName(fkeys[j].ForeignKeyMemberColumns)%>(null, <%= GetFunctionCallParameters(fkeys[j].ForeignKeyMemberColumns) %>, start, pageLength, out count);	
 		}
 						
 		/// <summary>
@@ -543,7 +728,7 @@ namespace <%=DALNameSpace%>.Bases
 		/// <param name="<%= GetPrivateName(fkeys[j].ForeignKeyMemberColumns[i].Name)%>"><%=GetColumnXmlComment(fkeys[j].ForeignKeyMemberColumns[i],2)%></param>
 	<% } %>
 		/// <returns>Returns a typed collection of <%=className%> objects.</returns>
-		public abstract <%=collectionClassName%> GetBy<%=GetKeysName(fkeys[j].ForeignKeyMemberColumns)%>(TransactionManager transactionManager, <%= GetFunctionHeaderParameters(fkeys[j].ForeignKeyMemberColumns) %>, int start, int pageLength);
+		public abstract <%=collectionClassName%> GetBy<%=GetKeysName(fkeys[j].ForeignKeyMemberColumns)%>(TransactionManager transactionManager, <%= GetFunctionHeaderParameters(fkeys[j].ForeignKeyMemberColumns) %>, int start, int pageLength, out int count);
 		
 	<% 		}//endfor %>
 		#endregion
@@ -588,7 +773,8 @@ namespace <%=DALNameSpace%>.Bases
 		/// <returns>Returns an instance of the <see cref="<%=returnType.Replace("<", "&lt;").Replace(">", "&gt;")%>"/> class.</returns>
 		public <%= returnType %> GetBy<%=GetKeysName(indexes[j].MemberColumns)%>(<%= GetFunctionHeaderParameters(indexes[j].MemberColumns) %>)
 		{
-			return GetBy<%=GetKeysName(indexes[j].MemberColumns)%>(<%= GetFunctionCallParameters(indexes[j].MemberColumns) %>, 0, int.MaxValue);
+			int count = -1;
+			return GetBy<%=GetKeysName(indexes[j].MemberColumns)%>(null,<%= GetFunctionCallParameters(indexes[j].MemberColumns) %>, 0, int.MaxValue, out count);
 		}
 		
 		/// <summary>
@@ -603,7 +789,8 @@ namespace <%=DALNameSpace%>.Bases
 		/// <returns>Returns an instance of the <see cref="<%=returnType.Replace("<", "&lt;").Replace(">", "&gt;")%>"/> class.</returns>
 		public <%=returnType%> GetBy<%=GetKeysName(indexes[j].MemberColumns)%>(<%= GetFunctionHeaderParameters(indexes[j].MemberColumns) %>, int start, int pageLength)
 		{
-			return GetBy<%=GetKeysName(indexes[j].MemberColumns)%>(null, <%= GetFunctionCallParameters(indexes[j].MemberColumns) %>, start, pageLength);
+			int count = -1;
+			return GetBy<%=GetKeysName(indexes[j].MemberColumns)%>(null, <%= GetFunctionCallParameters(indexes[j].MemberColumns) %>, start, pageLength, out count);
 		}
 		
 		/// <summary>
@@ -617,9 +804,42 @@ namespace <%=DALNameSpace%>.Bases
 		/// <returns>Returns an instance of the <see cref="<%=returnType.Replace("<", "&lt;").Replace(">", "&gt;")%>"/> class.</returns>
 		public <%=returnType%> GetBy<%=GetKeysName(indexes[j].MemberColumns)%>(TransactionManager transactionManager, <%= GetFunctionHeaderParameters(indexes[j].MemberColumns) %>)
 		{
-			return GetBy<%=GetKeysName(indexes[j].MemberColumns)%>(transactionManager, <%= GetFunctionCallParameters(indexes[j].MemberColumns) %>, 0, int.MaxValue);
+			int count = -1;
+			return GetBy<%=GetKeysName(indexes[j].MemberColumns)%>(transactionManager, <%= GetFunctionCallParameters(indexes[j].MemberColumns) %>, 0, int.MaxValue, out count);
 		}
-			
+		
+		/// <summary>
+		/// 	Gets rows from the datasource based on the <%=indexes[j].Name%> index.
+		/// </summary>
+	<% for (int i = 0; i < indexes[j].MemberColumns.Count; i++) { %>
+		/// <param name="<%= GetPrivateName(indexes[j].MemberColumns[i].Name)%>"><%=GetColumnXmlComment(indexes[j].MemberColumns[i],2)%></param>
+	<% } %>
+		/// <param name="transactionManager"><see cref="TransactionManager"/> object</param>
+		/// <remarks></remarks>
+		/// <returns>Returns an instance of the <see cref="<%=returnType.Replace("<", "&lt;").Replace(">", "&gt;")%>"/> class.</returns>
+		public <%=returnType%> GetBy<%=GetKeysName(indexes[j].MemberColumns)%>(TransactionManager transactionManager, <%= GetFunctionHeaderParameters(indexes[j].MemberColumns) %>, int start, int pageLength)
+		{
+			int count = -1;
+			return GetBy<%=GetKeysName(indexes[j].MemberColumns)%>(transactionManager, <%= GetFunctionCallParameters(indexes[j].MemberColumns) %>, start, pageLength, out count);
+		}
+		
+		/// <summary>
+		/// 	Gets rows from the datasource based on the <%=indexes[j].Name%> index.
+		/// </summary>
+		/// <param name="start">Row number at which to start reading.</param>
+		/// <param name="pageLength">Number of rows to return.</param>
+	<% for (int i = 0; i < indexes[j].MemberColumns.Count; i++) { %>
+		/// <param name="<%= GetPrivateName(indexes[j].MemberColumns[i].Name)%>"><%=GetColumnXmlComment(indexes[j].MemberColumns[i],2)%></param>
+	<% } %>
+		/// <param name="count">out parameter to get total records for query</param>
+		/// <remarks></remarks>
+		/// <returns>Returns an instance of the <see cref="<%=returnType.Replace("<", "&lt;").Replace(">", "&gt;")%>"/> class.</returns>
+		public <%=returnType%> GetBy<%=GetKeysName(indexes[j].MemberColumns)%>(<%= GetFunctionHeaderParameters(indexes[j].MemberColumns) %>, int start, int pageLength, out int count)
+		{
+			return GetBy<%=GetKeysName(indexes[j].MemberColumns)%>(null, <%= GetFunctionCallParameters(indexes[j].MemberColumns) %>, start, pageLength, out count);
+		}
+		
+				
 		/// <summary>
 		/// 	Gets rows from the datasource based on the <%=indexes[j].Name%> index.
 		/// </summary>
@@ -630,7 +850,7 @@ namespace <%=DALNameSpace%>.Bases
 		/// <param name="<%= GetPrivateName(indexes[j].MemberColumns[i].Name)%>"><%=GetColumnXmlComment(indexes[j].MemberColumns[i],2)%></param>
 	<% } %>
 		/// <returns>Returns an instance of the <see cref="<%=returnType.Replace("<", "&lt;").Replace(">", "&gt;")%>"/> class.</returns>
-		public abstract <%=returnType%> GetBy<%=GetKeysName(indexes[j].MemberColumns)%>(TransactionManager transactionManager, <%= GetFunctionHeaderParameters(indexes[j].MemberColumns) %>, int start, int pageLength);
+		public abstract <%=returnType%> GetBy<%=GetKeysName(indexes[j].MemberColumns)%>(TransactionManager transactionManager, <%= GetFunctionHeaderParameters(indexes[j].MemberColumns) %>, int start, int pageLength, out int count);
 						
 	<%		}//endfor %>
 		#endregion "Get By Index Functions"

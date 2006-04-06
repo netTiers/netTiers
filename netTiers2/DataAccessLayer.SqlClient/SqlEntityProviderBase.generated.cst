@@ -224,7 +224,7 @@ namespace <%=DALNameSpace%>.SqlClient
 	<% } %>
 		/// <param name="transactionManager"><see cref="TransactionManager"/> object</param>
 		/// <returns>Returns a <c>TList</c> of <%=GetClassName(primaryTable.Name)%> objects.</returns>
-		public override <%=GetCollectionClassName(primaryTable.Name)%> GetBy<%=functionname%>(TransactionManager transactionManager, <%=GetFunctionHeaderParameters(junctionTableKey.ForeignKeyMemberColumns)%>, int start, int pageLength)
+		public override <%=GetCollectionClassName(primaryTable.Name)%> GetBy<%=functionname%>(TransactionManager transactionManager, <%=GetFunctionHeaderParameters(junctionTableKey.ForeignKeyMemberColumns)%>, int start, int pageLength, out int count)
 		{
 			SqlDatabase database = new SqlDatabase(this._connectionString);
 			DbCommand commandWrapper = StoredProcedureProvider.GetCommandWrapper(database, "<%=owner + ProcedurePrefix + commandStem + SelectSuffix + "By" + functionname%>", _useStoredProcedure);
@@ -248,6 +248,16 @@ namespace <%=DALNameSpace%>.SqlClient
 				reader = Utility.ExecuteReader(database, commandWrapper);
 			}		
 			Fill(reader, rows, start, pageLength);
+			count = -1;
+			if(reader.NextResult())
+			{
+				if(reader.Read())
+				{
+					count = reader.GetInt32(0);
+				}
+			}
+					
+			
 			}
 			finally 
 			{
@@ -335,8 +345,9 @@ namespace <%=DALNameSpace%>.SqlClient
 		/// <param name="whereClause">Specifies the condition for the rows returned by a query (Name='John Doe', Name='John Doe' AND Id='1', Name='John Doe' OR Id='1').</param>
 		/// <remarks>Operators must be capitalized (OR, AND)</remarks>
 		/// <returns>Returns a typed collection of <%=className%> objects.</returns>
-		public override <%=collectionClassName%> Find(TransactionManager transactionManager, string whereClause, int start, int pageLength)
+		public override <%=collectionClassName%> Find(TransactionManager transactionManager, string whereClause, int start, int pageLength, out int count)
 		{
+			count = -1;
 			if (whereClause.IndexOf(";") > -1)
 				return new <%=collectionClassName%>();
 	
@@ -401,6 +412,14 @@ namespace <%=DALNameSpace%>.SqlClient
 				}		
 				
 				Fill(reader, rows, start, pageLength);
+				
+				if(reader.NextResult())
+				{
+					if(reader.Read())
+					{
+						count = reader.GetInt32(0);
+					}
+				}
 			}
 			finally
 			{
@@ -429,7 +448,7 @@ namespace <%=DALNameSpace%>.SqlClient
 		/// <param name="transactionManager"><see cref="TransactionManager"/> object</param>
 		/// <remarks></remarks>
 		/// <returns>Returns a typed collection of <%=className%> objects.</returns>
-		public override <%=collectionClassName%> GetAll(TransactionManager transactionManager, int start, int pageLength)
+		public override <%=collectionClassName%> GetAll(TransactionManager transactionManager, int start, int pageLength, out int count)
 		{
 			SqlDatabase database = new SqlDatabase(this._connectionString);
 			DbCommand commandWrapper = StoredProcedureProvider.GetCommandWrapper(database, "<%=owner + ProcedurePrefix + commandStem + SelectSuffix + SelectAllSuffix%>", _useStoredProcedure);
@@ -451,6 +470,14 @@ namespace <%=DALNameSpace%>.SqlClient
 				}		
 		
 				Fill(reader, rows, start, pageLength);
+				count = -1;
+				if(reader.NextResult())
+				{
+					if(reader.Read())
+					{
+						count = reader.GetInt32(0);
+					}
+				}
 			}
 			finally 
 			{
@@ -567,7 +594,7 @@ namespace <%=DALNameSpace%>.SqlClient
 		<% } %>
 		/// <remarks></remarks>
 		/// <returns>Returns a typed collection of <%=className%> objects.</returns>
-		public override <%=collectionClassName%> GetBy<%=GetKeysName(fkeys[j].ForeignKeyMemberColumns)%>(TransactionManager transactionManager, <%= GetFunctionHeaderParameters(fkeys[j].ForeignKeyMemberColumns) %>, int start, int pageLength)
+		public override <%=collectionClassName%> GetBy<%=GetKeysName(fkeys[j].ForeignKeyMemberColumns)%>(TransactionManager transactionManager, <%= GetFunctionHeaderParameters(fkeys[j].ForeignKeyMemberColumns) %>, int start, int pageLength, out int count)
 		{
 			SqlDatabase database = new SqlDatabase(this._connectionString);
 			DbCommand commandWrapper = StoredProcedureProvider.GetCommandWrapper(database, "<%=owner + ProcedurePrefix + commandStem + SelectSuffix + "By" + GetKeysName(fkeys[j].ForeignKeyMemberColumns)%>", _useStoredProcedure);
@@ -591,6 +618,14 @@ namespace <%=DALNameSpace%>.SqlClient
 			
 				//Create Collection
 				Fill(reader, rows, start, pageLength);
+				count = -1;
+				if(reader.NextResult())
+				{
+					if(reader.Read())
+					{
+						count = reader.GetInt32(0);
+					}
+				}
 			}
 			finally
 			{
@@ -655,7 +690,7 @@ namespace <%=DALNameSpace%>.SqlClient
 		/// <param name="transactionManager"><see cref="TransactionManager"/> object</param>
 		/// <remarks></remarks>
 		/// <returns>Returns an instance of the <see cref="<%=returnTypeForComment%>"/> class.</returns>
-		public override <%=returnType%> GetBy<%=GetKeysName(indexes[j].MemberColumns)%>(TransactionManager transactionManager, <%= GetFunctionHeaderParameters(indexes[j].MemberColumns) %>, int start, int pageLength)
+		public override <%=returnType%> GetBy<%=GetKeysName(indexes[j].MemberColumns)%>(TransactionManager transactionManager, <%= GetFunctionHeaderParameters(indexes[j].MemberColumns) %>, int start, int pageLength, out int count)
 		{
 			SqlDatabase database = new SqlDatabase(this._connectionString);
 			DbCommand commandWrapper = StoredProcedureProvider.GetCommandWrapper(database, "<%=owner + ProcedurePrefix + commandStem + SelectSuffix + "By" + GetKeysName(indexes[j].MemberColumns)%>", _useStoredProcedure);
@@ -679,6 +714,14 @@ namespace <%=DALNameSpace%>.SqlClient
 		
 				//Create collection and fill
 				Fill(reader, tmp, start, pageLength);
+				count = -1;
+				if(reader.NextResult())
+				{
+					if(reader.Read())
+					{
+						count = reader.GetInt32(0);
+					}
+				}
 			}
 			finally 
 			{
