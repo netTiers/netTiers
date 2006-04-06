@@ -1218,6 +1218,23 @@ namespace <%=DALNameSpace%>.Bases
 			Debug.WriteLine("DeepLoad object '<%= className %>'");
 			Debug.Indent();
 			
+			<%
+			// option 1a: clear all collections
+			// entity.My1Collection.Clear(); entity.My2Collection.Clear(); etc...
+			// option 1b: check the count below to decide if we should set the value directly or call CopyTo
+			// if (entity.My1Collection.Count > 0)
+
+			// option 2a: use an 'AlreadySeen' list to decide if need to set or copy-to
+			%>
+			ArrayList alreadySetCollections = new ArrayList();
+			<%
+			// option 2b: check the 'AlreadySeen' list below to decide if we should set the value directly or call CopyTo
+			// if (alreadySetCollections.IndexOf("My1Collection") > -1)
+
+			// option 3a: same as option 1a - clear all collections first
+			// option 3b: always use CopyTo - but that's probably less efficient
+			%>
+			
 			// Load Entity through Provider
 			<% 
 			int ctr = 0;
@@ -1233,7 +1250,13 @@ namespace <%=DALNameSpace%>.Bases
 				|| (deepLoadType == DeepLoadType.ExcludeChildren && innerList[typeof(<%=NameSpace + ". " + GetCollectionClassName(item.SecondaryTable)%>)] == null))
 			{
 				Debug.WriteLine("- property '<%=item.CollectionName%>' yy loaded.");
-				entity.<%=item.CollectionName%> = DataRepository.<%=GetProviderClassName(item.SecondaryTable)%>.GetBy<%=item.GetByKeysName%>(<%=item.CallParams%>);			 
+				if (alreadySetCollections.IndexOf("<%=item.CollectionName%>") > -1)
+				{
+					DataRepository.<%=GetProviderClassName(item.SecondaryTable)%>.GetBy<%=item.GetByKeysName%>(<%=item.CallParams%>).CopyTo(entity.<%=item.CollectionName%>);
+				} else {
+					entity.<%=item.CollectionName%> = DataRepository.<%=GetProviderClassName(item.SecondaryTable)%>.GetBy<%=item.GetByKeysName%>(<%=item.CallParams%>);			 
+					alreadySetCollections.Add("<%=item.CollectionName%>");
+				}
 				/*if (deep)
 				{
 					DataRepository.<%=GetProviderClassName(item.SecondaryTable)%>.DeepLoad(entity.<%=item.CollectionName%>, deep, deepLoadType, childTypes);
@@ -1267,7 +1290,15 @@ namespace <%=DALNameSpace%>.Bases
 				|| (deepLoadType == DeepLoadType.ExcludeChildren && innerList[typeof(<%=NameSpace + ". " + item.CollectionTypeName%>)] == null))
 			{
 				Debug.WriteLine("- property '<%=item.CollectionName%>' loaded.");
-				entity.<%=item.CollectionName%> = DataRepository.<%=GetProviderClassName(item.SecondaryTable)%>.<%=item.GetByKeysName%>(<%=item.CallParams%>);
+
+				if (alreadySetCollections.IndexOf("<%=item.CollectionName%>") > -1)
+				{
+					DataRepository.<%=GetProviderClassName(item.SecondaryTable)%>.<%=item.GetByKeysName%>(<%=item.CallParams%>).CopyTo(entity.<%=item.CollectionName%>);
+				} else {
+					entity.<%=item.CollectionName%> = DataRepository.<%=GetProviderClassName(item.SecondaryTable)%>.<%=item.GetByKeysName%>(<%=item.CallParams%>);			 
+					alreadySetCollections.Add("<%=item.CollectionName%>");
+				}
+
 				if (deep)
 				{
 					DataRepository.<%=GetProviderClassName(item.SecondaryTable)%>.DeepLoad(entity.<%=item.CollectionName%>, deep, deepLoadType, childTypes);
