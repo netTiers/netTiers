@@ -46,6 +46,8 @@ namespace <%=NameSpace%>
       private bool _containsListCollection = false;
       [NonSerialized]
       private PropertyDescriptorCollection _propertyCollection;
+      [NonSerialized]
+      private Dictionary<string, PropertyDescriptorCollection> _childCollectionProperties;
 
       /// <summary>
       /// Initializes a new instance of the <see cref="T:TList{T}"/> class.
@@ -60,14 +62,10 @@ namespace <%=NameSpace%>
       /// </summary>
       private void InitializeList()
       {
-         // create a filter so we only return the properties that have been designated as bindable
-         Attribute[] attrs = new Attribute[] { new BindableAttribute() };
-         // get the type information for the next two steps
-         Type t = typeof(T);
          // save the bindable properties in a local field
-         _propertyCollection = TypeDescriptor.GetProperties(t, attrs);
+         _propertyCollection = EntityHelper.GetBindableProperties(typeof(T));
          // save the name of the type for use in the IDE GUI
-         _listName = t.Name;
+         _listName = typeof(T).Name;
       }
 
       #region Core Overrides
@@ -119,12 +117,12 @@ namespace <%=NameSpace%>
          // Simple iteration:
          for (int i = start; i < Count; i++)
          {
-            
+
             T item = this[i];
             object temp = prop.GetValue(item);
-            if ( temp is string )
+            if (temp is string)
             {
-               if ( String.Compare(temp.ToString(),key.ToString(),ignoreCase) == 0)
+               if (String.Compare(temp.ToString(), key.ToString(), ignoreCase) == 0)
                   return i;
             }
             else if (temp != null && temp.Equals(key))
@@ -415,16 +413,16 @@ namespace <%=NameSpace%>
          // Send a IBindingList list event
          OnListChanged(new ListChangedEventArgs(ListChangedType.Reset, 0, 0));
       }
-      
+
       /// <summary>
       /// Force the filtering of the collection, based on the use of the specified Predicate.
       /// </summary>
       /// <param name="match"></param>
       public void ApplyFilter(Predicate<T> match)
       {
-      	this._filterString = string.Empty;
-      	
-      	 // Restore the state without filter
+         this._filterString = string.Empty;
+
+         // Restore the state without filter
          for (int i = 0; i < this.excludedItems.Count; i++)
          {
             this.Add(this.excludedItems[i]);
@@ -432,20 +430,20 @@ namespace <%=NameSpace%>
 
          // Clear the filterd items
          this.excludedItems.Clear();
-      	
-      	
-      	IList iList = (IList)this;
-      	      	      	
-      	for (int i = this.Items.Count - 1; i >= 0; i--)
-		{
-			if (!match(this.Items[i]))
-			{
-				this.excludedItems.Add(this.Items[i]);
-				iList.RemoveAt(i); // we do this on IList so we're not firing events					
-			}
-		}
-      	
-      	// Send a IBindingList list event
+
+
+         IList iList = (IList)this;
+
+         for (int i = this.Items.Count - 1; i >= 0; i--)
+         {
+            if (!match(this.Items[i]))
+            {
+               this.excludedItems.Add(this.Items[i]);
+               iList.RemoveAt(i); // we do this on IList so we're not firing events					
+            }
+         }
+
+         // Send a IBindingList list event
          OnListChanged(new ListChangedEventArgs(ListChangedType.Reset, 0, 0));
       }
 
@@ -606,7 +604,31 @@ namespace <%=NameSpace%>
       /// </summary>
       public PropertyDescriptorCollection GetItemProperties(PropertyDescriptor[] listAccessors)
       {
-         return _propertyCollection;
+         if (listAccessors == null)
+         {
+            return _propertyCollection;
+         }
+         else // Expect only one argument representing a child collection
+         {
+            if (_childCollectionProperties == null)
+               _childCollectionProperties = new Dictionary<string, PropertyDescriptorCollection>();
+
+            string typeName = listAccessors[0].PropertyType.FullName;
+
+            if (_childCollectionProperties.ContainsKey(typeName))
+            {
+               return _childCollectionProperties[typeName];
+            }
+            else
+            {
+               PropertyDescriptorCollection props = EntityHelper.GetBindableProperties(listAccessors[0].PropertyType);
+               _childCollectionProperties.Add(typeName, props);
+
+               return props;
+            }
+
+         }
+
       }
 
       /// <summary>
@@ -799,7 +821,7 @@ namespace <%=NameSpace%>
       /// <param name="array">The array of items to add.</param>
       public void AddRange(T[] array)
       {
-      	if (array == null) return;
+         if (array == null) return;
          foreach (T item in array)
          {
             this.Add(item);
@@ -812,7 +834,7 @@ namespace <%=NameSpace%>
       /// <param name="list">The list of items to add.</param>
       public void AddRange(ListBase<T> list)
       {
-      	if (list == null) return;
+         if (list == null) return;
          foreach (T item in list)
          {
             this.Add(item);
@@ -825,286 +847,286 @@ namespace <%=NameSpace%>
       /// <param name="list">The list of items to add.</param>
       public void AddRange(List<T> list)
       {
-      	 if (list == null) return;
+         if (list == null) return;
          foreach (T item in list)
          {
             this.Add(item);
          }
       }
-      
-		/// <summary>
-		/// Retrieves the all the elements that match the conditions defined by the specified predicate.
-		/// </summary>
-		/// <param name="match">The <see cref="T:System.Predicate`1"></see> delegate that defines the conditions of the elements to search for.</param>
-		/// <returns>
-		/// A <see cref="T:TList`1"></see> containing all the elements that match the conditions defined by the specified predicate, if found; otherwise, an empty <see cref="T:TList`1"></see>.
-		/// </returns>
-		/// <exception cref="T:System.ArgumentNullException">match is null.</exception>		
-		public ListBase<T> FindAll(Predicate<T> match) 
-		{
-			if (match == null)
-		    {
-		    	throw new ArgumentNullException("match");
-		    }
-		    
-		    ListBase<T> result = this.Clone() as ListBase<T>;
-			result.ClearItems();
-			foreach (T item in this.Items)
-			{
-				if (match(item))
-				{
-					result.Add(item);
-				}
-			}
-			return result;
-		}
-				
-		/// <summary>
-		/// Searches for an element that matches the conditions defined by the specified predicate, and returns the first occurrence within the entire <see cref="T:TList`1"></see>.
-		/// </summary>
-		/// <param name="match">The <see cref="T:System.Predicate`1"></see> delegate that defines the conditions of the element to search for.</param>
-		/// <returns>
-		/// The first element that matches the conditions defined by the specified predicate, if found; otherwise, the default value for type T.
-		/// </returns>
-		/// <exception cref="T:System.ArgumentNullException">match is null.</exception>
-		public T Find(Predicate<T> match)
-		{
-			if (match == null)
-		    {
-		    	throw new ArgumentNullException("match");
-		    }
 
-			foreach (T item in this.Items)
-			{
-				if (match(item))
-				{
-					return item;
-				}
-			}
-			return default(T);
-		}
+      /// <summary>
+      /// Retrieves the all the elements that match the conditions defined by the specified predicate.
+      /// </summary>
+      /// <param name="match">The <see cref="T:System.Predicate`1"></see> delegate that defines the conditions of the elements to search for.</param>
+      /// <returns>
+      /// A <see cref="T:TList`1"></see> containing all the elements that match the conditions defined by the specified predicate, if found; otherwise, an empty <see cref="T:TList`1"></see>.
+      /// </returns>
+      /// <exception cref="T:System.ArgumentNullException">match is null.</exception>		
+      public ListBase<T> FindAll(Predicate<T> match)
+      {
+         if (match == null)
+         {
+            throw new ArgumentNullException("match");
+         }
+
+         ListBase<T> result = this.Clone() as ListBase<T>;
+         result.ClearItems();
+         foreach (T item in this.Items)
+         {
+            if (match(item))
+            {
+               result.Add(item);
+            }
+         }
+         return result;
+      }
+
+      /// <summary>
+      /// Searches for an element that matches the conditions defined by the specified predicate, and returns the first occurrence within the entire <see cref="T:TList`1"></see>.
+      /// </summary>
+      /// <param name="match">The <see cref="T:System.Predicate`1"></see> delegate that defines the conditions of the element to search for.</param>
+      /// <returns>
+      /// The first element that matches the conditions defined by the specified predicate, if found; otherwise, the default value for type T.
+      /// </returns>
+      /// <exception cref="T:System.ArgumentNullException">match is null.</exception>
+      public T Find(Predicate<T> match)
+      {
+         if (match == null)
+         {
+            throw new ArgumentNullException("match");
+         }
+
+         foreach (T item in this.Items)
+         {
+            if (match(item))
+            {
+               return item;
+            }
+         }
+         return default(T);
+      }
+
+      /*
+      /// <summary>
+      /// Reverses the order of the elements in the entire <see cref="T:TList{T}"></see>.
+      /// </summary>
+      public void Reverse()
+      {
+         this.Reverse(0, this.Count);
+      }
 		
-		/*
-		/// <summary>
-		/// Reverses the order of the elements in the entire <see cref="T:TList{T}"></see>.
-		/// </summary>
-		public void Reverse()
-		{
-			this.Reverse(0, this.Count);
-		}
-		
-		/// <summary>
-		/// Reverses the order of the elements in the specified range.
-		/// </summary>
-		/// <param name="index">The zero-based starting index of the range to reverse.</param>
-		/// <param name="count">The number of elements in the range to reverse.</param>
-		/// <exception cref="T:System.ArgumentException">index and count do not denote a valid range of elements in the <see cref="T:T:TList{T}"></see>. </exception>
-		/// <exception cref="T:System.ArgumentOutOfRangeException">index is less than 0.-or-count is less than 0. </exception>
-		public void Reverse(int index, int count)
-		{
-			if ((index < 0) || (count < 0))
-			{
-				throw new ArgumentOutOfRangeException((index < 0) ? "index" : "count", "Parameter is less than 0.");
-			}
-			if ((this.Count - index) < count)
-			{
-				throw new ArgumentException("index and count do not denote a valid range of elements");
-			}
-			Array.Reverse(this, index, count);
-		}
-		*/
+      /// <summary>
+      /// Reverses the order of the elements in the specified range.
+      /// </summary>
+      /// <param name="index">The zero-based starting index of the range to reverse.</param>
+      /// <param name="count">The number of elements in the range to reverse.</param>
+      /// <exception cref="T:System.ArgumentException">index and count do not denote a valid range of elements in the <see cref="T:T:TList{T}"></see>. </exception>
+      /// <exception cref="T:System.ArgumentOutOfRangeException">index is less than 0.-or-count is less than 0. </exception>
+      public void Reverse(int index, int count)
+      {
+         if ((index < 0) || (count < 0))
+         {
+            throw new ArgumentOutOfRangeException((index < 0) ? "index" : "count", "Parameter is less than 0.");
+         }
+         if ((this.Count - index) < count)
+         {
+            throw new ArgumentException("index and count do not denote a valid range of elements");
+         }
+         Array.Reverse(this, index, count);
+      }
+      */
 
 
       #endregion
-	
-	  #region ToDataSet
-		/// <summary>
-		/// NOTE: EXPERIMENTAL CODE, Please do not use this in a production environment.  
-		/// Need to refactor to a few methods, secure it down a bit, and do more type checking.
-		/// Recursively adds child relationships of a <seealso cref="ListBase{T}"/> Entities and 
-		/// builds out a nested dataset including <see cref="System.Data.DataRelation"/> relationships.
-		/// </summary>
-		/// <param name="includeChildren">You can optionally go deep by including includeChildren</param>
-		/// <returns>DataSet</returns>
-		/// <example>
-		///  An example using the Northwind database would be to deep load a TList or VList, 
-		///  and then call list.ToDataSet(true/false);
-		///  <code><![CDATA[
-		///    TList<Categories> list = DataRepository.CategoriesProvider.GetAll();
-		///    DataRepository.CategoriesProvider.DeepLoad(list, true);
-		///    DataSet ds = list.ToDataSet(true);
-		///    ds.WriteXml("C:\\Test2.xml");
-		///    ]]></code>
-		/// </example>
-		public System.Data.DataSet ToDataSet(bool includeChildren)
-		{
-			System.Data.DataSet dataset = new System.Data.DataSet();
-	
-			//recursively convert and fill object graph to a dataset.
-			return AddRelations(dataset, null, includeChildren);
-		}
-	
-		#region AddRelations
-		/// <summary>
-		/// NOTE: EXPERIMENTAL CODE, Please do not use this in a production environment.  Need to refactor to a few methods, secure it down a bit, and do more type checking.
-		/// Recursively adds child relationships of a TList's Entity and builds out a nested dataset including relationships.
-		/// </summary>
-		/// <param name="dataset">An already instatiated dataset which will be used to fill all objects.</param>
-		/// <param name="parentKeys">Used to pass down the parent primary key to a child datatable to add a dataRelation</param>
-		/// <param name="includeChildren">bool, include deep load of all child collections in this object graph?</param>
-		/// <returns></returns>
-		internal System.Data.DataSet AddRelations(System.Data.DataSet dataset, List<System.Data.DataColumn> parentKeys, bool includeChildren)
-		{
-			if (dataset == null)
-				throw new ArgumentException("Invalid parameter context, dataset can not be null in this method context.", "dataset");
-	
-			//child property collections
-			List<PropertyDescriptor> children = new List<PropertyDescriptor>();
-			System.Data.DataTable dataTable = null;
-			bool tableExists = false;
-			string tName = typeof(T).Name;
-	
-			if (!dataset.Tables.Contains(tName))
-			{
-				//current type table
-				dataTable = new System.Data.DataTable(tName);
-				tableExists = false;
-			}
-			else
-			{
-				dataTable = dataset.Tables[tName];
-				tableExists = true;
-			}
-	
-			//Props
-			PropertyDescriptorCollection props = TypeDescriptor.GetProperties(typeof(T));
-	
-			//pks of current type
-			List<System.Data.DataColumn> primaryKey = new List<System.Data.DataColumn>();
-	
-			//build out table if not exists
-			if (!tableExists)
-			{
-				#region get meta data, build dataTable
-				//look at current type's props, and if child hold a ref to it, so that you can recursively add the child.
-				foreach (PropertyDescriptor prop in props)
-				{
-					//TODO: Change to custom entity attribute for PK discovery
-					if (prop.Attributes.Matches(new Attribute[] { new ReadOnlyAttribute(false), new BindableAttribute(), new DescriptionAttribute() }))
-						primaryKey.Add(dataTable.Columns.Add(prop.Name, prop.PropertyType));
-					else if (prop.PropertyType.GetInterface("IList") != null && prop.PropertyType.IsGenericType && (prop.PropertyType.BaseType != null && prop.PropertyType.BaseType.GetGenericTypeDefinition() == typeof(ListBase<>)))
-						children.Add(prop);
-					else if (prop.PropertyType.GetInterface("IEntity") == null && prop.Attributes.Matches(new Attribute[] { new BindableAttribute(), new DescriptionAttribute() }))
-					{
-						//check if nullable property, get param, otherwise, just add property type
-						Type columnType = (prop.PropertyType.IsGenericType && prop.PropertyType.GetGenericTypeDefinition() == typeof(Nullable<>) ? prop.PropertyType.GetGenericArguments()[0] : prop.PropertyType);
-						dataTable.Columns.Add(prop.Name, columnType);
-					}
-				}
-				#endregion
-			}
-	
-			#region Fill Entity Data
-			foreach (T entity in this.Items)
-			{
-				System.Data.DataRow row = dataTable.NewRow();
-	
-				foreach (PropertyDescriptor currentProperty in props)
-				{
-					if (!dataTable.Columns.Contains(currentProperty.Name))
-						continue;
-	
-					object val = currentProperty.GetValue(entity);
-					row[currentProperty.Name] = (val == null ? DBNull.Value : val);
-				}
-	
-				dataTable.Rows.Add(row);
-			}
-			#endregion
-			
-			//Add Table
-			if (!tableExists)
-				dataset.Tables.Add(dataTable);
-	
-			#region Add Child DataRelations
-			if (parentKeys != null && !tableExists)
-			{
-				#region if part of a parentkey, then add relationship
-				bool skip = false;
-	
-				// get last inserted table
-				System.Data.DataTable childTable = dataset.Tables[dataset.Tables.Count - 1];
-	
-				System.Diagnostics.Trace.WriteLine(childTable.TableName + " - Found");
-	
-				//find fk's, add relationships
-				List<System.Data.DataColumn> childCols = new List<System.Data.DataColumn>();
-				if (childTable != null)
-				{
-					foreach (System.Data.DataColumn col in parentKeys)
-					{
-						if (!childTable.Columns.Contains(col.ColumnName))
-							skip = true;
-	
-						System.Diagnostics.Trace.WriteLine(childTable.TableName + " - Skip " + skip);
-						childCols.Add(childTable.Columns[col.ColumnName]);
-					}
-	
-					if (!skip)
-					{
-						System.Diagnostics.Trace.WriteLine(childTable.TableName + " - relation added ");
-						int key = parentKeys.GetHashCode() + childCols.GetHashCode();
-						if (!dataset.Relations.Contains(key.ToString()))
-						{
-							System.Data.DataRelation relation = dataset.Relations.Add(key.ToString(), parentKeys.ToArray(), childCols.ToArray());
-							relation.Nested = true;
-						}
-					}
-				}
-				#endregion
-			}
-			#endregion 
-	
-			#region Include Entity Child Collections
-			// if include the child collections.
-			if (includeChildren)
-			{
-				foreach (PropertyDescriptor child in children)
-				{
-					//Get DataTable in DataSet, nested recursively.
-					foreach (T childEntity in this.Items)
-					{
-						object[] childEntityParams = new object[3] { dataset, primaryKey, includeChildren };
-	
-						//add children
-						System.Reflection.MethodInfo addRelationsMethod = child.PropertyType.GetMethod("AddRelations", 
-								System.Reflection.BindingFlags.NonPublic  | 
-								System.Reflection.BindingFlags.Instance);
-	
-						//ensure method exists, invoke
-						if (addRelationsMethod == null)
-							throw new InvalidOperationException("The template method for converting a TList to a Dataset has been altered. Can not include child collections.");
-	
-						//create a return reference, don't assign immediately, in case it's null.
-						object childDataset = null;
-						childDataset = addRelationsMethod.Invoke(Convert.ChangeType(child.GetValue(childEntity), child.PropertyType), childEntityParams);
-	
-						// ensure obj not null, 
-						if (childDataset == null)
-							throw new ArgumentException("Could not successfully convert nested child relationships to a dataset, consider a shallow conversion.");
-	
-						//convert it to my dataset, now filled another child
-						dataset = (System.Data.DataSet)childDataset;
-					}
-				}
-			}
-			#endregion
-	
-			//finally return the dataset
-			return dataset;
-		}
-		#endregion
-		#endregion
+
+      #region ToDataSet
+      /// <summary>
+      /// NOTE: EXPERIMENTAL CODE, Please do not use this in a production environment.  
+      /// Need to refactor to a few methods, secure it down a bit, and do more type checking.
+      /// Recursively adds child relationships of a <seealso cref="ListBase{T}"/> Entities and 
+      /// builds out a nested dataset including <see cref="System.Data.DataRelation"/> relationships.
+      /// </summary>
+      /// <param name="includeChildren">You can optionally go deep by including includeChildren</param>
+      /// <returns>DataSet</returns>
+      /// <example>
+      ///  An example using the Northwind database would be to deep load a TList or VList, 
+      ///  and then call list.ToDataSet(true/false);
+      ///  <code><![CDATA[
+      ///    TList<Categories> list = DataRepository.CategoriesProvider.GetAll();
+      ///    DataRepository.CategoriesProvider.DeepLoad(list, true);
+      ///    DataSet ds = list.ToDataSet(true);
+      ///    ds.WriteXml("C:\\Test2.xml");
+      ///    ]]></code>
+      /// </example>
+      public System.Data.DataSet ToDataSet(bool includeChildren)
+      {
+         System.Data.DataSet dataset = new System.Data.DataSet();
+
+         //recursively convert and fill object graph to a dataset.
+         return AddRelations(dataset, null, includeChildren);
+      }
+
+      #region AddRelations
+      /// <summary>
+      /// NOTE: EXPERIMENTAL CODE, Please do not use this in a production environment.  Need to refactor to a few methods, secure it down a bit, and do more type checking.
+      /// Recursively adds child relationships of a TList's Entity and builds out a nested dataset including relationships.
+      /// </summary>
+      /// <param name="dataset">An already instatiated dataset which will be used to fill all objects.</param>
+      /// <param name="parentKeys">Used to pass down the parent primary key to a child datatable to add a dataRelation</param>
+      /// <param name="includeChildren">bool, include deep load of all child collections in this object graph?</param>
+      /// <returns></returns>
+      internal System.Data.DataSet AddRelations(System.Data.DataSet dataset, List<System.Data.DataColumn> parentKeys, bool includeChildren)
+      {
+         if (dataset == null)
+            throw new ArgumentException("Invalid parameter context, dataset can not be null in this method context.", "dataset");
+
+         //child property collections
+         List<PropertyDescriptor> children = new List<PropertyDescriptor>();
+         System.Data.DataTable dataTable = null;
+         bool tableExists = false;
+         string tName = typeof(T).Name;
+
+         if (!dataset.Tables.Contains(tName))
+         {
+            //current type table
+            dataTable = new System.Data.DataTable(tName);
+            tableExists = false;
+         }
+         else
+         {
+            dataTable = dataset.Tables[tName];
+            tableExists = true;
+         }
+
+         //Props
+         PropertyDescriptorCollection props = TypeDescriptor.GetProperties(typeof(T));
+
+         //pks of current type
+         List<System.Data.DataColumn> primaryKey = new List<System.Data.DataColumn>();
+
+         //build out table if not exists
+         if (!tableExists)
+         {
+            #region get meta data, build dataTable
+            //look at current type's props, and if child hold a ref to it, so that you can recursively add the child.
+            foreach (PropertyDescriptor prop in props)
+            {
+               //TODO: Change to custom entity attribute for PK discovery
+               if (prop.Attributes.Matches(new Attribute[] { new ReadOnlyAttribute(false), new BindableAttribute(), new DescriptionAttribute() }))
+                  primaryKey.Add(dataTable.Columns.Add(prop.Name, prop.PropertyType));
+               else if (prop.PropertyType.GetInterface("IList") != null && prop.PropertyType.IsGenericType && (prop.PropertyType.BaseType != null && prop.PropertyType.BaseType.GetGenericTypeDefinition() == typeof(ListBase<>)))
+                  children.Add(prop);
+               else if (prop.PropertyType.GetInterface("IEntity") == null && prop.Attributes.Matches(new Attribute[] { new BindableAttribute(), new DescriptionAttribute() }))
+               {
+                  //check if nullable property, get param, otherwise, just add property type
+                  Type columnType = (prop.PropertyType.IsGenericType && prop.PropertyType.GetGenericTypeDefinition() == typeof(Nullable<>) ? prop.PropertyType.GetGenericArguments()[0] : prop.PropertyType);
+                  dataTable.Columns.Add(prop.Name, columnType);
+               }
+            }
+            #endregion
+         }
+
+         #region Fill Entity Data
+         foreach (T entity in this.Items)
+         {
+            System.Data.DataRow row = dataTable.NewRow();
+
+            foreach (PropertyDescriptor currentProperty in props)
+            {
+               if (!dataTable.Columns.Contains(currentProperty.Name))
+                  continue;
+
+               object val = currentProperty.GetValue(entity);
+               row[currentProperty.Name] = (val == null ? DBNull.Value : val);
+            }
+
+            dataTable.Rows.Add(row);
+         }
+         #endregion
+
+         //Add Table
+         if (!tableExists)
+            dataset.Tables.Add(dataTable);
+
+         #region Add Child DataRelations
+         if (parentKeys != null && !tableExists)
+         {
+            #region if part of a parentkey, then add relationship
+            bool skip = false;
+
+            // get last inserted table
+            System.Data.DataTable childTable = dataset.Tables[dataset.Tables.Count - 1];
+
+            System.Diagnostics.Trace.WriteLine(childTable.TableName + " - Found");
+
+            //find fk's, add relationships
+            List<System.Data.DataColumn> childCols = new List<System.Data.DataColumn>();
+            if (childTable != null)
+            {
+               foreach (System.Data.DataColumn col in parentKeys)
+               {
+                  if (!childTable.Columns.Contains(col.ColumnName))
+                     skip = true;
+
+                  System.Diagnostics.Trace.WriteLine(childTable.TableName + " - Skip " + skip);
+                  childCols.Add(childTable.Columns[col.ColumnName]);
+               }
+
+               if (!skip)
+               {
+                  System.Diagnostics.Trace.WriteLine(childTable.TableName + " - relation added ");
+                  int key = parentKeys.GetHashCode() + childCols.GetHashCode();
+                  if (!dataset.Relations.Contains(key.ToString()))
+                  {
+                     System.Data.DataRelation relation = dataset.Relations.Add(key.ToString(), parentKeys.ToArray(), childCols.ToArray());
+                     relation.Nested = true;
+                  }
+               }
+            }
+            #endregion
+         }
+         #endregion
+
+         #region Include Entity Child Collections
+         // if include the child collections.
+         if (includeChildren)
+         {
+            foreach (PropertyDescriptor child in children)
+            {
+               //Get DataTable in DataSet, nested recursively.
+               foreach (T childEntity in this.Items)
+               {
+                  object[] childEntityParams = new object[3] { dataset, primaryKey, includeChildren };
+
+                  //add children
+                  System.Reflection.MethodInfo addRelationsMethod = child.PropertyType.GetMethod("AddRelations",
+                        System.Reflection.BindingFlags.NonPublic |
+                        System.Reflection.BindingFlags.Instance);
+
+                  //ensure method exists, invoke
+                  if (addRelationsMethod == null)
+                     throw new InvalidOperationException("The template method for converting a TList to a Dataset has been altered. Can not include child collections.");
+
+                  //create a return reference, don't assign immediately, in case it's null.
+                  object childDataset = null;
+                  childDataset = addRelationsMethod.Invoke(Convert.ChangeType(child.GetValue(childEntity), child.PropertyType), childEntityParams);
+
+                  // ensure obj not null, 
+                  if (childDataset == null)
+                     throw new ArgumentException("Could not successfully convert nested child relationships to a dataset, consider a shallow conversion.");
+
+                  //convert it to my dataset, now filled another child
+                  dataset = (System.Data.DataSet)childDataset;
+               }
+            }
+         }
+         #endregion
+
+         //finally return the dataset
+         return dataset;
+      }
+      #endregion
+      #endregion
 
    }
 
