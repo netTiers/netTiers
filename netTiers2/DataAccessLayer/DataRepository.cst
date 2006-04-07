@@ -30,11 +30,11 @@ namespace <%=DALNameSpace%>
 	[CLSCompliant(true)]
 	public sealed class DataRepository 
 	{
-		private static NetTiersProvider _provider = null;
-        private static NetTiersProviderCollection _providers = null;
-		private static NetTiersServiceSection section = null;
+		private static volatile NetTiersProvider _provider = null;
+        private static volatile NetTiersProviderCollection _providers = null;
+		private static volatile NetTiersServiceSection section = null;
         
-        private static volatile object SyncRoot = new object();
+        private static object SyncRoot = new object();
 				
 		private DataRepository()
 		{
@@ -135,12 +135,18 @@ namespace <%=DALNameSpace%>
 			{
 				if ( _connections == null )
 				{
-					_connections = new Dictionary<String, ConnectionProvider>();
-
-					// add a connection provider for each configured connection string
-					foreach( ConnectionStringSettings conn in WebConfigurationManager.ConnectionStrings )
-					{
-						_connections.Add(conn.Name, new ConnectionProvider(conn.Name));
+					lock (SyncRoot)
+                	{
+						if (_connections == null)
+						{
+							_connections = new Dictionary<String, ConnectionProvider>();
+		
+							// add a connection provider for each configured connection string
+							foreach( ConnectionStringSettings conn in WebConfigurationManager.ConnectionStrings )
+							{
+								_connections.Add(conn.Name, new ConnectionProvider(conn.Name));
+							}
+						}
 					}
 				}
 
@@ -155,9 +161,12 @@ namespace <%=DALNameSpace%>
 		/// <param name="connectionString">The provider specific connection information.</param>
 		public static void AddConnection(String connectionStringName, String connectionString)
 		{
-			Connections.Remove(connectionStringName);
-			ConnectionProvider connection = new ConnectionProvider(connectionStringName, connectionString);
-			Connections.Add(connectionStringName, connection);
+			lock (SyncRoot)
+            {
+				Connections.Remove(connectionStringName);
+				ConnectionProvider connection = new ConnectionProvider(connectionStringName, connectionString);
+				Connections.Add(connectionStringName, connection);
+			}
 		}
 
 		/// <summary>
