@@ -6,7 +6,7 @@
 		<html>
 			<head>
 				<title> <xsl:value-of select="title" /> </title>
-				<link href="http://cstemplates.sourceforge.net/default.css" rel="stylesheet" type="text/css"/>
+				<link href="http://nettiers.sourceforge.net/default.css" rel="stylesheet" type="text/css"/>
 				<style>
 					span.executionTime {font-style: italic; color: #003366;}
 				</style>
@@ -15,8 +15,8 @@
 			<body>
 				<table width="100%" border="0" cellspacing="2" cellpadding="2">
 					<tr>
-						<td width="300"><h1><img src="http://cstemplates.sourceforge.net/images/logo.gif" alt=".NetTiers Logo. By Micheal" /></h1></td>
-						<td><h2>.NetTiers generation report</h2></td>
+						<td width="300"><h1><img src="http://nettiers.sourceforge.net/images/logo.gif" alt=".netTiers Logo. By Micheal" /></h1></td>
+						<td><h2>.netTiers Generation Report</h2></td>
 					</tr>
 				</table>
 								
@@ -49,7 +49,7 @@
 	<xsl:template name="navigation">
 		<p><strong>Navigation</strong></p>
 		<ul>
-			<li><a href="http://cstemplates.sourceforge.net/">Website</a></li>
+			<li><a href="http://nettiers.sourceforge.net/">Website</a></li>
 			<li><a href="http://sourceforge.net/projects/cstemplates/">Sourceforge&#160;Site</a></li>
 			<li><a href="https://sourceforge.net/project/showfiles.php?group_id=118735">Downloads</a></li>
 			<li><a href="https://sourceforge.net/tracker/?group_id=118735">Bugs</a></li>
