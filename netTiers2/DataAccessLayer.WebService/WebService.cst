@@ -16,6 +16,7 @@
 <%@ Property Name="IncludeCustoms" Type="System.Boolean" Default="True" Category="Options" Description="If true customs stored procedures will be generated as functions." %>
 <%@ Property Name="CustomNonMatchingReturnType" Type="CustomNonMatchingReturnType" Default="DataSet" Category="Options" Description="When using custom stored procedures, if the returned rows do not match the fields in an entity, a DataSet or IDataReader will be returned. Choose One.  This is useful if you've returned more than one resultset in a custom procedure; you can use a ConvertToDataSet(IDataReader) method in the Utility class to convert that to a DataSet." %>
 <%@ Property Name="CustomProcedureStartsWith" Type="System.String" Default="_{0}_" Category="Options" Description="If you include custom stored procedures, this is the pattern that NetTiers will look for your custom stored procedures. A string format will be used to match the procedure pattern.  So, {0}=TableName, {1}=StoredProc Prefix.  By default NetTiers will look at tables that starts with '_{0}_', which means it will detect the procedure _TableName_GetByBirthdate and will be detected and generated." %>
+<%@ Property Name="ProcedurePrefix" Optional="True" Type="System.String" Category="Style" Description="Prefix for Strored Procedures" %>
 
 <%@ Property Name="IncludeInsert" Type="System.Boolean" Default="True" Category="Options" Description="If true insert functions will be generated." %>
 <%@ Property Name="IncludeUpdate" Type="System.Boolean" Default="True" Category="Options" Description="If true update functions will be generated." %>
@@ -133,9 +134,9 @@ public class <%=ClassName%> : WebService
 	#region GetBy<%=functionname%>
 		
 	[WebMethod(Description="Get rows from the table <%=SourceTable.Name%>, through the junction table <%=junctionTable.Name%>.")]
-	public <%=NameSpace + "." + GetCollectionClassName(primaryTable.Name)%> <%=providerName%>_GetBy<%=functionname%>(<%=GetFunctionHeaderParameters(junctionTableKey.ForeignKeyMemberColumns)%>)
+	public <%=NameSpace + "." + GetCollectionClassName(primaryTable.Name)%> <%=providerName%>_GetBy<%=functionname%>(<%=GetFunctionHeaderParameters(junctionTableKey.ForeignKeyMemberColumns)%>, int start, int pageLength, out int count)
 	{		
-		return <%=DALNameSpace%>.DataRepository.<%=providerName%>.GetBy<%=functionname%>(<%=GetFunctionCallParameters(junctionTableKey.ForeignKeyMemberColumns)%>);
+		return <%=DALNameSpace%>.DataRepository.<%=providerName%>.GetBy<%=functionname%>(<%=GetFunctionCallParameters(junctionTableKey.ForeignKeyMemberColumns)%>, start, pageLength, out count);
 	}
 	
 	#endregion GetBy<%=functionname%>
@@ -182,9 +183,9 @@ public class <%=ClassName%> : WebService
 	/// <remarks></remarks>
 	/// <returns>Returns a DataSet.</returns>
 	[WebMethod(Description="Get rows from the table <%=SourceTable.Name%> with additional query text.")]
-	public <%=collectionClassName%> <%=providerName%>_Find(string whereClause) //, int start, int pagelen) 
+	public <%=collectionClassName%> <%=providerName%>_Find(string whereClause, int start, int pageLength, out int count)
 	{
-		return <%=DALNameSpace%>.DataRepository.<%=providerName%>.Find(whereClause);
+		return <%=DALNameSpace%>.DataRepository.<%=providerName%>.Find(null, whereClause, start, pageLength, out count);
 	}
 	
 	#endregion "Find Functions"
@@ -199,11 +200,12 @@ public class <%=ClassName%> : WebService
 	/// </summary>
 	/// <param name="start">Row number at which to start reading.</param>
 	/// <param name="pagelen">Number of rows to return.</param>
+	/// <param name="count">Number of rows in the DataSource.</param>
 	/// <returns>Returns a <s>DataSet</s>.</returns>
 	[WebMethod(Description="Get all rows from the table <%=SourceTable.Name%>.")]
-	public <%=collectionClassName%> <%=providerName%>_GetAll(int start, int pageLength)
+	public <%=collectionClassName%> <%=providerName%>_GetAll(int start, int pageLength, out int count)
 	{
-		return <%=DALNameSpace%>.DataRepository.<%=providerName%>.GetAll(start, pageLength);		
+		return <%=DALNameSpace%>.DataRepository.<%=providerName%>.GetAll(start, pageLength, out count);		
 	}
 	
 	#endregion
@@ -215,9 +217,9 @@ public class <%=ClassName%> : WebService
 	/// </summary>
 	/// <param name="start">Row number at which to start reading.</param>
 	/// <param name="pageLength">Number of rows to return.</param>
-	/// <param name="count">Number of rows in the DataSource.</param>
 	/// <param name="whereClause">Specifies the condition for the rows returned by a query (Name='John Doe', Name='John Doe' AND Id='1', Name='John Doe' OR Id='1').</param>
 	/// <param name="orderBy">Specifies the sort criteria for the rows in the DataSource (Name ASC; BirthDay DESC, Name ASC);</param>
+	/// <param name="count">Number of rows in the DataSource.</param>
 	/// <remarks></remarks>
 	/// <returns>Returns a typed collection of <%=ClassName%> objects.</returns>
 	[WebMethod(Description="Get all rows from the table <%=SourceTable.Name%>.")]
@@ -255,12 +257,13 @@ public class <%=ClassName%> : WebService
 <% for (int i = 0; i < fkeys[j].ForeignKeyMemberColumns.Count; i++) { %>
 	/// <param name="<%= fkeys[j].ForeignKeyMemberColumns[i].Name%>"><%=fkeys[j].ForeignKeyMemberColumns[i].Description%></param>
 <% } %>
+	/// <param name="count">out parameter to get total records for query</param>	
 	/// <remarks></remarks>
 	/// <returns>Returns a DataSet.</returns>
 	[WebMethod(Description="Get rows from <%=SourceTable.Name%> filtered by the <%=GetKeysName(fkeys[j].ForeignKeyMemberColumns)%> column.")]
-	public <%=collectionClassName%> <%=providerName%>_GetBy<%=GetKeysName(fkeys[j].ForeignKeyMemberColumns)%>(<%= GetFunctionHeaderParameters(fkeys[j].ForeignKeyMemberColumns) %>, int start, int pageLength)
+	public <%=collectionClassName%> <%=providerName%>_GetBy<%=GetKeysName(fkeys[j].ForeignKeyMemberColumns)%>(<%= GetFunctionHeaderParameters(fkeys[j].ForeignKeyMemberColumns) %>, int start, int pageLength, out int count)
 	{
-		return <%=DALNameSpace%>.DataRepository.<%=providerName%>.GetBy<%=GetKeysName(fkeys[j].ForeignKeyMemberColumns)%>(<%= GetFunctionCallParameters(fkeys[j].ForeignKeyMemberColumns) %>, start, pageLength);
+		return <%=DALNameSpace%>.DataRepository.<%=providerName%>.GetBy<%=GetKeysName(fkeys[j].ForeignKeyMemberColumns)%>(<%= GetFunctionCallParameters(fkeys[j].ForeignKeyMemberColumns) %>, start, pageLength, out count);
 	}
 	
 <% 		}//endfor %>
@@ -301,11 +304,12 @@ public class <%=ClassName%> : WebService
 <% for (int i = 0; i < indexes[j].MemberColumns.Count; i++) { %>
 	/// <param name="<%= indexes[j].MemberColumns[i].Name%>"><%= indexes[j].MemberColumns[i].Description%></param>
 <% } %>
+	/// <param name="count">out parameter to get total records for query</param>	
 	/// <returns>Returns a DataSet.</returns>
 	[WebMethod(Description="Get rows from the table <%=SourceTable.Name%> filtered by the column <%=GetKeysName(indexes[j].MemberColumns)%> that is part of the <%=indexes[j].Name%> index.")]
-	public <%=returnType%> <%=providerName%>_GetBy<%=GetKeysName(indexes[j].MemberColumns)%>(<%= GetFunctionHeaderParameters(indexes[j].MemberColumns) %>, int start, int pageLength)
+	public <%=returnType%> <%=providerName%>_GetBy<%=GetKeysName(indexes[j].MemberColumns)%>(<%= GetFunctionHeaderParameters(indexes[j].MemberColumns) %>, int start, int pageLength, out int count)
 	{
-		return <%=DALNameSpace%>.DataRepository.<%=providerName%>.GetBy<%=GetKeysName(indexes[j].MemberColumns)%>(<%= GetFunctionCallParameters(indexes[j].MemberColumns) %>, start, pageLength);
+		return <%=DALNameSpace%>.DataRepository.<%=providerName%>.GetBy<%=GetKeysName(indexes[j].MemberColumns)%>(<%= GetFunctionCallParameters(indexes[j].MemberColumns) %>, start, pageLength, out count);
 	}
 	
 
@@ -369,6 +373,7 @@ public class <%=ClassName%> : WebService
 	#region Custom Methods
 	
 <%
+	System.Diagnostics.Trace.WriteLine(string.Format("{0},{1},{2}", CustomProcedureStartsWith, SourceTable.Name, ProcedurePrefix));
 	string prefix = string.Format(CustomProcedureStartsWith, SourceTable.Name, ProcedurePrefix);
 	foreach(CommandSchema command in SourceTable.Database.Commands)
 	{
@@ -395,7 +400,7 @@ public class <%=ClassName%> : WebService
 	public <%=returnType%> <%=providerName%>_<%=methodName%>(int start, int pageLength <%=TransformStoredProcedureInputsToMethod(true, command.InputParameters) + TransformStoredProcedureOutputsToMethod(true, command.AllOutputParameters)%>)
 	{
 	    <% if (returnType == "DataSet") { %>
-		    return <%=DALNameSpace%>.Utility.ConvertDataReaderToDataSet(<%=DALNameSpace%>.DataRepository.<%=providerName%>.<%=methodName%>(start, pageLength <%=TransformStoredProcedureInputsToDataAccess(true, command.InputParameters) + TransformStoredProcedureOutputsToDataAccess(true, command.AllOutputParameters)%>));
+		    return <% if (CustomNonMatchingReturnType.ToString() == "IDataReader" ) { %><%=DALNameSpace%>.Utility.ConvertDataReaderToDataSet(<%}%><%=DALNameSpace%>.DataRepository.<%=providerName%>.<%=methodName%>(start, pageLength <%=TransformStoredProcedureInputsToDataAccess(true, command.InputParameters) + TransformStoredProcedureOutputsToDataAccess(true, command.AllOutputParameters)%>)<% if (CustomNonMatchingReturnType.ToString() == "IDataReader" ) { %>)<%}%>;
 	    <% } else { %>
 		    return <%=DALNameSpace%>.DataRepository.<%=providerName%>.<%=methodName%>(start, pageLength <%=TransformStoredProcedureInputsToDataAccess(true, command.InputParameters)%>);
 	    <% } %>
@@ -459,7 +464,7 @@ public class <%=ClassName%> : WebService
 	#region Custom Methods
 	
 <%
-	string prefix = "_" + SourceView.Name + "_";
+	string prefix = string.Format(CustomProcedureStartsWith, SourceView.Name, ProcedurePrefix);
 	foreach(CommandSchema command in SourceView.Database.Commands)
 	{
 		// If the stored procedure is targeting the current table.
