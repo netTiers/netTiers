@@ -25,7 +25,7 @@
 <%@ Property Name="ExecuteSql" Type="System.Boolean" Default="False" Category="General" Description="If true the stored procedures are installed on the sql server. (The SQL file is generated in all case)" %>
 <%@ Property Name="SQLFolderName" Type="System.String" Category="General" Description="The sub folder to output the SQL scripts" Default="SQL" %>
 
-<%@ Property Name="IncludeUnitTest" Type="System.Boolean" Default="False" Category="General" Description="Indicates whether the Unit tests should be generated." %>
+<%@ Property Name="IncludeUnitTest" Type="MoM.Templates.UnitTestStyle" Default="None" Category="General" Description="Indicates type of Unit tests to be generated." %>
 
 <%-- Datasource --%>
 <%@ Property Name="EntireDatabase" Type="System.Boolean" Category="DataSource" Description="Should the entire database have CRUD procedures scripted?" %>
@@ -384,6 +384,8 @@
 	private string[] _templatesFileNames = new string[] {
 														"vsnet2005.project.cst",
 														"vsnet2005.solution.cst",
+														"vsnet2005.vsmdi.cst",
+														"vsnet2005.localtestrun.testrunconfig.cst",
 														"nAnt.cst",
 														"AssemblyInfo.cst", 
 																																										
@@ -451,7 +453,9 @@
 														
 																												
 														"UnitTests\\EntityRepositoryTest.cst",
+														"UnitTests\\EntityRepositoryTest.generated.cst",
 														"UnitTests\\EntityViewRepositoryTest.cst",
+														"UnitTests\\EntityViewRepositoryTest.generated.cst",
 														
 														"ASP.Net\\2.0\\AdminEntityUC_Designer.cst",
 														"ASP.Net\\2.0\\AdminEntityUC_CodeBehind.cst",
@@ -641,7 +645,7 @@ public void Go()
 	string rootPathSQL = OutputDirectory + (SQLFolderName.Length>0 ? "\\" + SQLFolderName : string.Empty);
 	
 	string rootPathWS  = WebServiceOutputPath; //OutputDirectory + "\\" + WebServiceVirtualDirectoryName;
-	string specialPath = vsnetIntegration == VSNetIntegration.SeparatedProjects ? (IncludeUnitTest ? rootPathUT : rootPathDAL) : OutputDirectory;
+	string specialPath = vsnetIntegration == VSNetIntegration.SeparatedProjects ? ((IncludeUnitTest != MoM.Templates.UnitTestStyle.None) ? rootPathUT : rootPathDAL) : OutputDirectory;
 	string rootPathWebAdmin = WebAdminOutputPath;
 	
 	if (ProcedurePrefix == null)	ProcedurePrefix = string.Empty;
@@ -839,7 +843,7 @@ public void Go()
 		}
 	}
 	
-	if (IncludeUnitTest)
+	if (IncludeUnitTest != MoM.Templates.UnitTestStyle.None)
 	{
 		SafeCreateDirectory(rootPathUT);
 		SafeCreateDirectory(rootPathUT + "\\Views");
@@ -1137,7 +1141,7 @@ public void Go()
 		string configFile = "App." + (vsnetVersion == VSNetVersion.v2005 ? "config.2005" : "config") + ".cst";
 		
 		// Configuration files for the unit test project
-		if (IncludeUnitTest)
+		if (IncludeUnitTest != MoM.Templates.UnitTestStyle.None)
 		{
 			AddFileNode(commonNode, "Unit test configuration files");
 			this.GetTemplate(configFile).SetProperty("IsWebConfig", false);
@@ -1145,7 +1149,7 @@ public void Go()
 			this.GetTemplate(configFile).SetProperty("ConnectionString", SourceDatabase.ConnectionString);
 			this.GetTemplate(configFile).SetProperty("WebServiceUrl", WebServiceUrl + "/" + GetClassName(SourceDatabase.Name) + "Services.asmx");
 			
-			this.RenderToFile(configFile, specialPath + "\\" + NameSpace + (vsnetIntegration == VSNetIntegration.SeparatedProjects && IncludeUnitTest ? "." + UnitTestsNameSpace : string.Empty) + ".dll.config", true);
+			this.RenderToFile(configFile, specialPath + "\\" + NameSpace + (vsnetIntegration == VSNetIntegration.SeparatedProjects && (IncludeUnitTest != MoM.Templates.UnitTestStyle.None) ? "." + UnitTestsNameSpace : string.Empty) + ".dll.config", true);
 		}	
 		
 		// Configuration files for the webservice
@@ -1423,6 +1427,8 @@ public void Go()
 
 	string projectTemplate = vsnetVersion == VSNetVersion.v2005 ? "vsnet2005.project.cst" : "vsnet2003.project.cst";
 	string solutionTemplate = vsnetVersion == VSNetVersion.v2005 ? "vsnet2005.solution.cst" : "vsnet2003.solution.cst";
+	string vsmdiTemplate = "vsnet2005.vsmdi.cst";
+	string testrunconfigTemplate = "vsnet2005.localtestrun.testrunconfig.cst";
 		
 	
 	//----------------------------------------------------------------------------------------------------------------------------------------------
@@ -1432,7 +1438,7 @@ public void Go()
 	{
 		AddFileNode(commonNode,  NameSpace + ".sln");
 				
-		//this.GetTemplate(solutionTemplate).SetProperty("RootNameSpace", NameSpace);
+		this.GetTemplate(solutionTemplate).SetProperty("RootNameSpace", NameSpace);
 		this.GetTemplate(solutionTemplate).SetProperty("DALNameSpace", DALNameSpace);
 		this.GetTemplate(solutionTemplate).SetProperty("BLLNameSpace", BLLNameSpace);
 		this.GetTemplate(solutionTemplate).SetProperty("DALSqlNameSpace", DALSqlNameSpace);
@@ -1492,7 +1498,7 @@ public void Go()
 		this.GetTemplate(projectTemplate).SetProperty("IncludeWebservice", false);
 		this.GetTemplate(projectTemplate).SetProperty("IncludeWebserviceClient", false);
 		this.GetTemplate(projectTemplate).SetProperty("IncludeWebLibrary", false);
-		this.GetTemplate(projectTemplate).SetProperty("IncludeUnitTest", false);
+		this.GetTemplate(projectTemplate).SetProperty("IncludeUnitTest", MoM.Templates.UnitTestStyle.None);
 		
 											
 		this.GetTemplate(projectTemplate).SetProperty("WebServiceUrl", WebServiceUrl);
@@ -1541,7 +1547,7 @@ public void Go()
 		this.GetTemplate(projectTemplate).SetProperty("IncludeWebservice", false);
 		this.GetTemplate(projectTemplate).SetProperty("IncludeWebserviceClient", false);
 		this.GetTemplate(projectTemplate).SetProperty("IncludeWebLibrary", false);
-		this.GetTemplate(projectTemplate).SetProperty("IncludeUnitTest", false);			
+		this.GetTemplate(projectTemplate).SetProperty("IncludeUnitTest", MoM.Templates.UnitTestStyle.None);			
 		
 								
 		this.GetTemplate(projectTemplate).SetProperty("WebServiceUrl", WebServiceUrl);
@@ -1585,7 +1591,7 @@ public void Go()
 		this.GetTemplate(projectTemplate).SetProperty("IncludeWebservice", false);
 		this.GetTemplate(projectTemplate).SetProperty("IncludeWebserviceClient", false);
 		this.GetTemplate(projectTemplate).SetProperty("IncludeWebLibrary", false);
-		this.GetTemplate(projectTemplate).SetProperty("IncludeUnitTest", false);			
+		this.GetTemplate(projectTemplate).SetProperty("IncludeUnitTest", MoM.Templates.UnitTestStyle.None);			
 		
 								
 		this.GetTemplate(projectTemplate).SetProperty("WebServiceUrl", WebServiceUrl);
@@ -1636,7 +1642,7 @@ public void Go()
 				this.GetTemplate(projectTemplate).SetProperty("IncludeWebservice", true);
 				this.GetTemplate(projectTemplate).SetProperty("IncludeWebserviceClient", false);
 				this.GetTemplate(projectTemplate).SetProperty("IncludeWebLibrary", false);
-				this.GetTemplate(projectTemplate).SetProperty("IncludeUnitTest", false);			
+				this.GetTemplate(projectTemplate).SetProperty("IncludeUnitTest", MoM.Templates.UnitTestStyle.None);			
 															
 				this.GetTemplate(projectTemplate).SetProperty("WebServiceUrl", WebServiceUrl);
 				this.GetTemplate(projectTemplate).SetProperty("rootPathWS", rootPathWS);
@@ -1679,7 +1685,7 @@ public void Go()
 			this.GetTemplate(projectTemplate).SetProperty("IncludeWebservice", false);
 			this.GetTemplate(projectTemplate).SetProperty("IncludeWebserviceClient", true);
 			this.GetTemplate(projectTemplate).SetProperty("IncludeWebLibrary", false);
-			this.GetTemplate(projectTemplate).SetProperty("IncludeUnitTest", false);			
+			this.GetTemplate(projectTemplate).SetProperty("IncludeUnitTest", MoM.Templates.UnitTestStyle.None);			
 			
 									
 			this.GetTemplate(projectTemplate).SetProperty("WebServiceUrl", WebServiceUrl);
@@ -1726,7 +1732,7 @@ public void Go()
 		this.GetTemplate(projectTemplate).SetProperty("IncludeWebservice", false);
 		this.GetTemplate(projectTemplate).SetProperty("IncludeWebserviceClient", false);
 		this.GetTemplate(projectTemplate).SetProperty("IncludeWebLibrary", true);
-		this.GetTemplate(projectTemplate).SetProperty("IncludeUnitTest", false);
+		this.GetTemplate(projectTemplate).SetProperty("IncludeUnitTest", MoM.Templates.UnitTestStyle.None);
 					
 		this.GetTemplate(projectTemplate).SetProperty("WebServiceUrl", WebServiceUrl);
 		this.GetTemplate(projectTemplate).SetProperty("rootPathWS", rootPathWS);
@@ -1746,7 +1752,7 @@ public void Go()
 	}
 	
 	// Unit tests only project file
-	if (IncludeUnitTest) // && !File.Exists(rootPathDAL + "\\" + NameSpace + ".DataAccessLayer.csproj"))
+	if (IncludeUnitTest != MoM.Templates.UnitTestStyle.None) // && !File.Exists(rootPathDAL + "\\" + NameSpace + ".DataAccessLayer.csproj"))
 	{
 		AddFileNode(commonNode, NameSpace + "." + UnitTestsNameSpace + ".csproj");
 		
@@ -1769,7 +1775,7 @@ public void Go()
 		this.GetTemplate(projectTemplate).SetProperty("IncludeWebservice", false);
 		this.GetTemplate(projectTemplate).SetProperty("IncludeWebserviceClient", false);
 		this.GetTemplate(projectTemplate).SetProperty("IncludeWebLibrary", false);
-		this.GetTemplate(projectTemplate).SetProperty("IncludeUnitTest", true);
+		this.GetTemplate(projectTemplate).SetProperty("IncludeUnitTest", IncludeUnitTest);
 					
 		this.GetTemplate(projectTemplate).SetProperty("WebServiceUrl", WebServiceUrl);
 		this.GetTemplate(projectTemplate).SetProperty("rootPathWS", rootPathWS);
@@ -1787,6 +1793,21 @@ public void Go()
 												
 		//this.GetTemplate(projectTemplate).RenderToFile(rootPathUT + "\\" + UTNameSpace + ".csproj", true);
 		this.RenderToFile(projectTemplate, rootPathUT + "\\" + UTNameSpace + ".csproj", true);
+	}
+	
+	if (IncludeUnitTest == MoM.Templates.UnitTestStyle.VSTS)
+	{		
+		if (!File.Exists(OutputDirectory + "\\" + NameSpace + ".vsmdi"))
+		{
+			AddFileNode(commonNode, NameSpace + ".vsmdi");
+			this.RenderToFile(vsmdiTemplate, OutputDirectory + "\\" + NameSpace + ".vsmdi", true);
+		}
+		
+		if (!File.Exists(OutputDirectory + "\\" + "localtestrun.testrunconfig"))
+		{
+			AddFileNode(commonNode, "localtestrun.testrunconfig");
+			this.RenderToFile(testrunconfigTemplate, OutputDirectory + "\\" + "localtestrun.testrunconfig", true);
+		}
 	}
 	//----------------------------------------------------------------------------------------------------------------------------------------------
 	
@@ -1970,22 +1991,52 @@ public void Go()
 		//----------------------------------------------------------------------------------------------------------------------------------------------
 		//	entity and provider nUnit Test class
 		//----------------------------------------------------------------------------------------------------------------------------------------------
-		if (IncludeUnitTest)
+		if (IncludeUnitTest != MoM.Templates.UnitTestStyle.None)
 		{
-			XmlElement testNode = AddFileNode(tableNode, GetRepositoryTestClassName(SourceView.Name) + ".cs");
-			this.GetTemplate("EntityViewRepositoryTest.cst").SetProperty("SourceView", SourceView);
-			this.GetTemplate("EntityViewRepositoryTest.cst").SetProperty("SourceTables", _sourceTables);
-			
-			this.GetTemplate("EntityViewRepositoryTest.cst").SetProperty("NameSpace", BLLNameSpace);
-			this.GetTemplate("EntityViewRepositoryTest.cst").SetProperty("DALNameSpace", DALNameSpace);
-			this.GetTemplate("EntityViewRepositoryTest.cst").SetProperty("UTNameSpace", UTNameSpace);
+			XmlElement testNode;
+			//------------------------------------------------------------------------------------------------------------------------------------------
+			//	generate only once
+			//------------------------------------------------------------------------------------------------------------------------------------------
+			if (!File.Exists(rootPathUT + "\\Views\\" + GetRepositoryTestClassName(SourceView.Name) + ".cs"))
+			{
+				testNode = AddFileNode(tableNode, GetRepositoryTestClassName(SourceView.Name) + ".cs");
+				this.GetTemplate("EntityViewRepositoryTest.cst").SetProperty("SourceView", SourceView);
+				this.GetTemplate("EntityViewRepositoryTest.cst").SetProperty("SourceTables", _sourceTables);
 				
-			this.GetTemplate("EntityViewRepositoryTest.cst").SetProperty("IncludeGetList", IncludeGetList);
-			this.GetTemplate("EntityViewRepositoryTest.cst").SetProperty("IncludeCustoms", IncludeCustoms);
-			this.GetTemplate("EntityViewRepositoryTest.cst").SetProperty("CustomNonMatchingReturnType", CustomNonMatchingReturnType);				
-			this.GetTemplate("EntityViewRepositoryTest.cst").SetProperty("CustomProcedureStartsWith", CustomProcedureStartsWith);
+				this.GetTemplate("EntityViewRepositoryTest.cst").SetProperty("NameSpace", BLLNameSpace);
+				this.GetTemplate("EntityViewRepositoryTest.cst").SetProperty("DALNameSpace", DALNameSpace);
+				this.GetTemplate("EntityViewRepositoryTest.cst").SetProperty("UTNameSpace", UTNameSpace);
+					
+				this.GetTemplate("EntityViewRepositoryTest.cst").SetProperty("IncludeGetList", IncludeGetList);
+				this.GetTemplate("EntityViewRepositoryTest.cst").SetProperty("IncludeCustoms", IncludeCustoms);
+				this.GetTemplate("EntityViewRepositoryTest.cst").SetProperty("CustomNonMatchingReturnType", CustomNonMatchingReturnType);				
+				this.GetTemplate("EntityViewRepositoryTest.cst").SetProperty("CustomProcedureStartsWith", CustomProcedureStartsWith);
+				
+				this.GetTemplate("EntityViewRepositoryTest.cst").SetProperty("IncludeUnitTest", IncludeUnitTest);
+							
+				this.RenderToFile("EntityViewRepositoryTest.cst", rootPathUT + "\\Views\\" + GetRepositoryTestClassName(SourceView.Name) + ".cs", true);
+				AddExecutionTime(testNode);
+			}
+			
+			//------------------------------------------------------------------------------------------------------------------------------------------
+			//	generate always
+			//------------------------------------------------------------------------------------------------------------------------------------------
+			testNode = AddFileNode(tableNode, GetRepositoryTestClassName(SourceView.Name) + ".generated.cs");
+			this.GetTemplate("EntityViewRepositoryTest.generated.cst").SetProperty("SourceView", SourceView);
+			this.GetTemplate("EntityViewRepositoryTest.generated.cst").SetProperty("SourceTables", _sourceTables);
+			
+			this.GetTemplate("EntityViewRepositoryTest.generated.cst").SetProperty("NameSpace", BLLNameSpace);
+			this.GetTemplate("EntityViewRepositoryTest.generated.cst").SetProperty("DALNameSpace", DALNameSpace);
+			this.GetTemplate("EntityViewRepositoryTest.generated.cst").SetProperty("UTNameSpace", UTNameSpace);
+				
+			this.GetTemplate("EntityViewRepositoryTest.generated.cst").SetProperty("IncludeGetList", IncludeGetList);
+			this.GetTemplate("EntityViewRepositoryTest.generated.cst").SetProperty("IncludeCustoms", IncludeCustoms);
+			this.GetTemplate("EntityViewRepositoryTest.generated.cst").SetProperty("CustomNonMatchingReturnType", CustomNonMatchingReturnType);				
+			this.GetTemplate("EntityViewRepositoryTest.generated.cst").SetProperty("CustomProcedureStartsWith", CustomProcedureStartsWith);
+			
+			this.GetTemplate("EntityViewRepositoryTest.generated.cst").SetProperty("IncludeUnitTest", IncludeUnitTest);
 						
-			this.RenderToFile("EntityViewRepositoryTest.cst", rootPathUT + "\\Views\\" + GetRepositoryTestClassName(SourceView.Name) + ".cs", true);
+			this.RenderToFile("EntityViewRepositoryTest.generated.cst", rootPathUT + "\\Views\\" + GetRepositoryTestClassName(SourceView.Name) + ".generated.cs", true);
 			AddExecutionTime(testNode);
 		}
 		
@@ -2231,27 +2282,62 @@ public void Go()
 			//----------------------------------------------------------------------------------------------------------------------------------------------
 			//	Generating the Repository nUnit Test class
 			//----------------------------------------------------------------------------------------------------------------------------------------------
-			if (IncludeUnitTest && !IsJunctionTable(SourceTable))
+			if ((IncludeUnitTest != MoM.Templates.UnitTestStyle.None) && !IsJunctionTable(SourceTable))
 			{
-				XmlElement testNode = AddFileNode(tableNode, GetRepositoryTestClassName(SourceTable.Name) + ".cs");
-				this.GetTemplate("EntityRepositoryTest.cst").SetProperty("SourceTable", SourceTable);
-				this.GetTemplate("EntityRepositoryTest.cst").SetProperty("SourceTables", _sourceTables);
+				XmlElement testNode;
+				//------------------------------------------------------------------------------------------------------------------------------------------
+				//	generate only once
+				//------------------------------------------------------------------------------------------------------------------------------------------
+				if (!File.Exists(rootPathUT + "\\" + GetRepositoryTestClassName(SourceTable.Name) + ".cs"))
+				{
+					testNode = AddFileNode(tableNode, GetRepositoryTestClassName(SourceTable.Name) + ".cs");
+					this.GetTemplate("EntityRepositoryTest.cst").SetProperty("SourceTable", SourceTable);
+					this.GetTemplate("EntityRepositoryTest.cst").SetProperty("SourceTables", _sourceTables);
+					
+					this.GetTemplate("EntityRepositoryTest.cst").SetProperty("NameSpace", BLLNameSpace);
+					this.GetTemplate("EntityRepositoryTest.cst").SetProperty("DALNameSpace", DALNameSpace);
+					this.GetTemplate("EntityRepositoryTest.cst").SetProperty("UTNameSpace", UTNameSpace);
+					
+					this.GetTemplate("EntityRepositoryTest.cst").SetProperty("IncludeInsert", IncludeInsert);
+					this.GetTemplate("EntityRepositoryTest.cst").SetProperty("IncludeUpdate", IncludeUpdate);
+					this.GetTemplate("EntityRepositoryTest.cst").SetProperty("IncludeSave", IncludeSave);
+					this.GetTemplate("EntityRepositoryTest.cst").SetProperty("IncludeDelete", IncludeDelete);
+					this.GetTemplate("EntityRepositoryTest.cst").SetProperty("IncludeGetList", IncludeGetList);		
+					this.GetTemplate("EntityRepositoryTest.cst").SetProperty("IncludeManyToMany", IncludeManyToMany);		
+					this.GetTemplate("EntityRepositoryTest.cst").SetProperty("IncludeGetListByFK", IncludeGetListByFK);		
+					this.GetTemplate("EntityRepositoryTest.cst").SetProperty("IncludeGetListByIX", IncludeGetListByIX);	
+					this.GetTemplate("EntityRepositoryTest.cst").SetProperty("IncludeRelations", IncludeRelations);	
+					
+					this.GetTemplate("EntityRepositoryTest.cst").SetProperty("IncludeUnitTest", IncludeUnitTest);
+					
+					this.RenderToFile("EntityRepositoryTest.cst", rootPathUT + "\\" + GetRepositoryTestClassName(SourceTable.Name) + ".cs", true);
+					AddExecutionTime(testNode);
+				}
 				
-				this.GetTemplate("EntityRepositoryTest.cst").SetProperty("NameSpace", BLLNameSpace);
-				this.GetTemplate("EntityRepositoryTest.cst").SetProperty("DALNameSpace", DALNameSpace);
-				this.GetTemplate("EntityRepositoryTest.cst").SetProperty("UTNameSpace", UTNameSpace);
+				//------------------------------------------------------------------------------------------------------------------------------------------
+				//	generate always
+				//------------------------------------------------------------------------------------------------------------------------------------------
+				testNode = AddFileNode(tableNode, GetRepositoryTestClassName(SourceTable.Name) + ".generated.cs");
+				this.GetTemplate("EntityRepositoryTest.generated.cst").SetProperty("SourceTable", SourceTable);
+				this.GetTemplate("EntityRepositoryTest.generated.cst").SetProperty("SourceTables", _sourceTables);
 				
-				this.GetTemplate("EntityRepositoryTest.cst").SetProperty("IncludeInsert", IncludeInsert);
-				this.GetTemplate("EntityRepositoryTest.cst").SetProperty("IncludeUpdate", IncludeUpdate);
-				this.GetTemplate("EntityRepositoryTest.cst").SetProperty("IncludeSave", IncludeSave);
-				this.GetTemplate("EntityRepositoryTest.cst").SetProperty("IncludeDelete", IncludeDelete);
-				this.GetTemplate("EntityRepositoryTest.cst").SetProperty("IncludeGetList", IncludeGetList);		
-				this.GetTemplate("EntityRepositoryTest.cst").SetProperty("IncludeManyToMany", IncludeManyToMany);		
-				this.GetTemplate("EntityRepositoryTest.cst").SetProperty("IncludeGetListByFK", IncludeGetListByFK);		
-				this.GetTemplate("EntityRepositoryTest.cst").SetProperty("IncludeGetListByIX", IncludeGetListByIX);	
-				this.GetTemplate("EntityRepositoryTest.cst").SetProperty("IncludeRelations", IncludeRelations);	
+				this.GetTemplate("EntityRepositoryTest.generated.cst").SetProperty("NameSpace", BLLNameSpace);
+				this.GetTemplate("EntityRepositoryTest.generated.cst").SetProperty("DALNameSpace", DALNameSpace);
+				this.GetTemplate("EntityRepositoryTest.generated.cst").SetProperty("UTNameSpace", UTNameSpace);
 				
-				this.RenderToFile("EntityRepositoryTest.cst", rootPathUT + "\\" + GetRepositoryTestClassName(SourceTable.Name) + ".cs", true);
+				this.GetTemplate("EntityRepositoryTest.generated.cst").SetProperty("IncludeInsert", IncludeInsert);
+				this.GetTemplate("EntityRepositoryTest.generated.cst").SetProperty("IncludeUpdate", IncludeUpdate);
+				this.GetTemplate("EntityRepositoryTest.generated.cst").SetProperty("IncludeSave", IncludeSave);
+				this.GetTemplate("EntityRepositoryTest.generated.cst").SetProperty("IncludeDelete", IncludeDelete);
+				this.GetTemplate("EntityRepositoryTest.generated.cst").SetProperty("IncludeGetList", IncludeGetList);		
+				this.GetTemplate("EntityRepositoryTest.generated.cst").SetProperty("IncludeManyToMany", IncludeManyToMany);		
+				this.GetTemplate("EntityRepositoryTest.generated.cst").SetProperty("IncludeGetListByFK", IncludeGetListByFK);		
+				this.GetTemplate("EntityRepositoryTest.generated.cst").SetProperty("IncludeGetListByIX", IncludeGetListByIX);	
+				this.GetTemplate("EntityRepositoryTest.generated.cst").SetProperty("IncludeRelations", IncludeRelations);	
+				
+				this.GetTemplate("EntityRepositoryTest.generated.cst").SetProperty("IncludeUnitTest", IncludeUnitTest);
+				
+				this.RenderToFile("EntityRepositoryTest.generated.cst", rootPathUT + "\\" + GetRepositoryTestClassName(SourceTable.Name) + ".generated.cs", true);
 				AddExecutionTime(testNode);
 			}
 						

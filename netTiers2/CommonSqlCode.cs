@@ -3166,5 +3166,18 @@ namespace MoM.Templates
 		Exponential 
 	}
 	#endregion
+	
+	#region UnitTests
+	
+	public enum UnitTestStyle
+	{
+		/// <summary>No unit test should be included.</summary>
+		None,
+		/// <summary>NUnit tests should be generated.</summary>
+		NUnit,
+		/// <summary>VSTS test should be gerenated.</summary>
+		VSTS
+	}
+	#endregion
 }
 

@@ -3,7 +3,8 @@
  * Last modified by $Author$
  * Last modified at $Date$
  * $Revision$
---%><%@ CodeTemplate Language="c#" TargetLanguage="c#" Debug="True" Description="" %>
+--%><%@ CodeTemplate Src="CommonSqlCode.cs" Inherits="MoM.Templates.CommonSqlCode" Language="C#" TargetLanguage="Text" Description="Template description here." Debug="True"%>
+<%@ Property Name="RootNameSpace" Type="System.String" Category="Data" Description="Root Namespace." %>
 <%@ Property Name="BLLNameSpace" Type="System.String" Category="Data" Description="Entities Namespace." %>
 <%@ Property Name="DALNameSpace" Type="System.String" Category="Data" Description="DAL Namespace." %>
 <%@ Property Name="DALSqlNameSpace" Type="System.String" Category="Data" Description="DAL sql Namespace." %>
@@ -17,13 +18,18 @@
 <%@ Property Name="WSGuid" Type="System.String" Category="Context" Description="WS Project Guid" %>
 <%@ Property Name="UTGuid" Type="System.String" Category="Context" Description="Unit tests Project Guid" %>
 <%@ Property Name="WebLibGuid" Type="System.String" Category="Context" Description="Web Library Project Guid" %>
-<%@ Property Name="IncludeUnitTest" Type="System.Boolean" Category="General" Description="" Default="true" %>
+<%@ Property Name="IncludeUnitTest" Type="MoM.Templates.UnitTestStyle" Default="NUnit" Category="General" Description="Indicates type of Unit tests to be generated." %>
 <%@ Property Name="IncludeSqlClient" Type="System.Boolean" Category="Option" Description="" %>
 <%@ Property Name="IncludeWebLibrary" Type="System.Boolean" Category="Option" Description="" %>
 <%@ Property Name="IncludeWebservice" Type="System.Boolean" Category="Option" Description="" %>
 <%@ Property Name="IncludeWebserviceClient" Type="System.Boolean" Category="Option" Description="" %>
 <%@ Property Name="WebServiceUrl" Type="System.String" Category="WebService" Description="The webservice base URL. The asmx filename will be added programmatically." Default="http://localhost/Services/" %>
 <%@ Property Name="rootPathWS" Type="System.String" Category="WebService" Description="The folder where the webservice code is generated." Default="" %>
+<%@ Assembly Name="SchemaExplorer" %>
+<%@ Assembly Name="System.Design" %>
+<%@ Import Namespace="SchemaExplorer" %>
+<%@ Import Namespace="System.Text" %>
+<%@ Import Namespace="System.Text.RegularExpressions" %>
 Microsoft Visual Studio Solution File, Format Version 9.00
 # Visual Studio 2005
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "<%=BLLNameSpace%>", "<%=BLLNameSpace%>\<%=BLLNameSpace%>.csproj", "{<%=BLLGuid%>}"
@@ -62,13 +68,26 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "<%=WebServiceUrl%>", "<%=We
 	EndProjectSection
 EndProject
 <% } %>
-<% if (IncludeUnitTest) { %>
+<% if (IncludeUnitTest != MoM.Templates.UnitTestStyle.None) { %>
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "<%=UTNameSpace%>", "<%=UTNameSpace%>\<%=UTNameSpace%>.csproj", "{<%=UTGuid%>}"
+EndProject
+<% } %>
+<% if (IncludeUnitTest == MoM.Templates.UnitTestStyle.VSTS) { %>
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{C54EB3D3-14D5-4C1A-ADC2-BB6687E604A5}"
+	ProjectSection(SolutionItems) = preProject
+		localtestrun.testrunconfig = localtestrun.testrunconfig
+		<%=RootNameSpace%>.vsmdi = <%=RootNameSpace%>.vsmdi
+	EndProjectSection
 EndProject
 <% } %>
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "NetTiers", "NetTiers", "{F3A10C8D-3227-449F-A2CB-014DE2D7F415}"
 EndProject
 Global
+<% if (IncludeUnitTest == MoM.Templates.UnitTestStyle.VSTS) { %>
+	GlobalSection(TestCaseManagementSettings) = postSolution
+		CategoryFile = <%=RootNameSpace%>.vsmdi
+	EndGlobalSection
+<% } %>
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
 		Release|Any CPU = Release|Any CPU
@@ -106,7 +125,7 @@ Global
 		{<%=WSGuid%>}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{<%=WSGuid%>}.Release|Any CPU.Build.0 = Release|Any CPU
 		<%}%>
-		<% if (IncludeUnitTest) { %>
+		<% if (IncludeUnitTest != MoM.Templates.UnitTestStyle.None) { %>
 		{<%=UTGuid%>}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{<%=UTGuid%>}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{<%=UTGuid%>}.Release|Any CPU.ActiveCfg = Release|Any CPU
@@ -131,7 +150,7 @@ Global
 		<% if (IncludeWebservice) { %>
 		{<%=WSGuid%>} = {F3A10C8D-3227-449F-A2CB-014DE2D7F415}
 		<%}%>
-		<% if (IncludeUnitTest) { %>
+		<% if (IncludeUnitTest != MoM.Templates.UnitTestStyle.None) { %>
 		{<%=UTGuid%>} = {F3A10C8D-3227-449F-A2CB-014DE2D7F415}
 		<%}%>
 	EndGlobalSection

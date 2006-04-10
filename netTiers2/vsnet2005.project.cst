@@ -1,4 +1,4 @@
-<%@ CodeTemplate Src="CommonSqlCode.cs" Inherits="MoM.Templates.CommonSqlCode" Language="C#" TargetLanguage="Text" Description="Template description here." Debug="False"%>
+<%@ CodeTemplate Src="CommonSqlCode.cs" Inherits="MoM.Templates.CommonSqlCode" Language="C#" TargetLanguage="Text" Description="Template description here." Debug="True"%>
 
 <%@ Property Name="SourceDatabase" Type="SchemaExplorer.DatabaseSchema" Optional="True" Category="Context" Description="Database that the stored procedures should be based on." %>
 <%@ Property Name="SourceTables" Type="SchemaExplorer.TableSchemaCollection" Category="Context" Description="Tables that the stored procedures should be based on." %>
@@ -32,7 +32,7 @@
 <%@ Property Name="IncludeWebLibrary" Type="System.Boolean" Category="Option" Description="" %>
 <%@ Property Name="IncludeWebservice" Type="System.Boolean" Category="Option" Description="" %>
 <%@ Property Name="IncludeWebserviceClient" Type="System.Boolean" Category="Option" Description="" %>
-<%@ Property Name="IncludeUnitTest" Type="System.Boolean" Default="true" Category="General" Description="Indicates whether the Unit tests should be generated." %>
+<%@ Property Name="IncludeUnitTest" Type="MoM.Templates.UnitTestStyle" Default="NUnit" Category="General" Description="Indicates type of Unit tests to be generated." %>
 
 
 <%@ Property Name="WebServiceUrl" Type="System.String" Category="WebService" Description="The webservice base URL. The asmx filename will be added programmatically." Default="http://localhost/Services/" %>
@@ -59,7 +59,7 @@
 	{
 		fileName = DALSqlNameSpace; 
 	}
-	else if (IncludeUnitTest)
+	else if (IncludeUnitTest != MoM.Templates.UnitTestStyle.None)
 	{
 		fileName = UTNameSpace;
 	}
@@ -92,7 +92,7 @@
     <ProjectType><%if (IncludeWebservice) Response.Write("Web"); else Response.Write("Local"); %></ProjectType>
     <ProductVersion>8.0.50727</ProductVersion>
     <SchemaVersion>2.0</SchemaVersion>
-    <ProjectGuid>{<% if (IncludeBll) Response.Write(BLLGuid); else if (IncludeDALBase) Response.Write(DALGuid); else if (IncludeSqlClient) Response.Write(DALSqlGuid); else if (IncludeUnitTest) Response.Write(UTGuid); else if (IncludeWebservice) Response.Write(WSGuid);else if (IncludeWebserviceClient) Response.Write(DALWSGuid); else if (IncludeWebLibrary) Response.Write(WebLibGuid);  %>}</ProjectGuid>
+    <ProjectGuid>{<% if (IncludeBll) Response.Write(BLLGuid); else if (IncludeDALBase) Response.Write(DALGuid); else if (IncludeSqlClient) Response.Write(DALSqlGuid); else if (IncludeUnitTest != MoM.Templates.UnitTestStyle.None) Response.Write(UTGuid); else if (IncludeWebservice) Response.Write(WSGuid);else if (IncludeWebserviceClient) Response.Write(DALWSGuid); else if (IncludeWebLibrary) Response.Write(WebLibGuid);  %>}</ProjectGuid>
     <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
     <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
     <ApplicationIcon>
@@ -134,6 +134,10 @@
     <RemoveIntegerChecks>false</RemoveIntegerChecks>
     <TreatWarningsAsErrors>false</TreatWarningsAsErrors>
     <WarningLevel>4</WarningLevel>
+<% if (IncludeUnitTest == MoM.Templates.UnitTestStyle.VSTS) 
+   { %>
+	<ProjectTypeGuids>{3AC096D0-A1C2-E12C-1390-A8335801FDAB};{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}</ProjectTypeGuids>
+<% } %>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
     <OutputPath>bin\Release\</OutputPath>
@@ -207,13 +211,20 @@
     </ProjectReference>	
 	<% } %>
     
-    <% if (IncludeUnitTest) { %>
+    <% if (IncludeUnitTest != MoM.Templates.UnitTestStyle.None) { %>
     
     <!-- check the GAC ? -->
+	<% if (IncludeUnitTest == MoM.Templates.UnitTestStyle.NUnit) { %>
     <Reference Include="nunit.framework, Version=2.2.6.0, Culture=neutral, PublicKeyToken=96d09a1eb7f44a77">
       <SpecificVersion>False</SpecificVersion>
       <HintPath>..\References\nunit.framework.dll</HintPath>
     </Reference>
+	<% } else { // We have VSTS Unit tests %>
+	<Reference Include="Microsoft.VisualStudio.QualityTools.UnitTestFramework, Version=8.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>C:\WINNT\assembly\GAC_MSIL\Microsoft.VisualStudio.QualityTools.UnitTestFramework\8.0.0.0__b03f5f7f11d50a3a\Microsoft.VisualStudio.QualityTools.UnitTestFramework.dll</HintPath>
+    </Reference>
+	<% } // end if MoM.Templates.UnitTestStyle.NUnit %>
                     
     <ProjectReference Include="..\<%=DALNameSpace%>\<%=DALNameSpace%>.csproj">
         <Name><%=DALNameSpace%></Name>
@@ -241,7 +252,7 @@
 	
 	</ItemGroup>
 	
-	<% if (IncludeUnitTest || IncludeWebservice) {%>
+	<% if ((IncludeUnitTest != MoM.Templates.UnitTestStyle.None) || IncludeWebservice) {%>
 	<ItemGroup>
 		<None Include="<%=UTNameSpace%>.dll.config">
 			<CopyToOutputDirectory>Always</CopyToOutputDirectory>
@@ -309,9 +320,13 @@
 			</Compile>
 		<%}
 		
-		if ( IncludeUnitTest) { %>
+		if (IncludeUnitTest != MoM.Templates.UnitTestStyle.None) { %>
 		<Compile Include="<%=UTSubFolder%>Views\<%=GetRepositoryTestClassName(SourceViews[i].Name)%>.cs">
 			<SubType>Code</SubType>
+		</Compile>					
+		<Compile Include="<%=UTSubFolder%>Views\<%=GetRepositoryTestClassName(SourceViews[i].Name)%>.generated.cs">
+			<SubType>Code</SubType>
+			<DependentUpon><%=GetRepositoryTestClassName(SourceViews[i].Name)%>.cs</DependentUpon>
 		</Compile>					
 		<%}	// endif IncludeUnitTest
 	}
@@ -375,10 +390,14 @@
 					
 		<%} // endif includeSqlClient
 		
-		if (IncludeUnitTest && !IsJunctionTable(SourceTables[i])) { %>
+		if ((IncludeUnitTest != MoM.Templates.UnitTestStyle.None) && !IsJunctionTable(SourceTables[i])) { %>
 			<Compile Include="<%=UTSubFolder%><%=GetRepositoryTestClassName(SourceTables[i].Name)%>.cs">
 			  	<SubType>Code</SubType>
 			</Compile>	
+			<Compile Include="<%=UTSubFolder%><%=GetRepositoryTestClassName(SourceTables[i].Name)%>.generated.cs">
+			  	<SubType>Code</SubType>
+				<DependentUpon><%=GetRepositoryTestClassName(SourceTables[i].Name)%>.cs</DependentUpon>
+			</Compile>
 		<%}	// endif IncludeUnitTest							
 		
 		if (IncludeWebserviceClient)
