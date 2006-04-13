@@ -2,11 +2,11 @@
 <p><strong>Navigation</strong></p>
 <ul>
 	<li><a href="default.aspx">Home</a></li>
-	<li><a href="beta2.aspx">0.9.2 version</a></li>
 	<li><a href="nightly.aspx"><b>Downloads & nightly builds</b></a></li>
+	<li><a href="beta2.aspx">0.9.2 version</a></li>
 	<li><a href="rss.aspx">Rss feeds</a></li>
 	<li><a href="buttons.aspx">Google buttons</a></li>
-	<li><a href="http://community.codesmithtools.com/forums/16/ShowForum.aspx" target="_blank">Forums</a></li>
+	<li><a href="http://community.codesmithtools.com/forums/default.aspx?GroupID=11" target="_blank">Forums</a></li>
 	<li><a href="http://sourceforge.net/tracker/?group_id=118735&atid=682441">Bugs report</a></li>
 	<li><a href="http://sourceforge.net/projects/nettiers/">Sourceforge home</a></li>
 	<li><a href="http://sourceforge.net/project/showfiles.php?group_id=118735">SF downloads</a></li>
@@ -35,9 +35,24 @@
 	<li><a href="http://msdn.microsoft.com/library/default.asp?url=/library/en-us/dnbda/html/BOAGag.asp">3 tiers design</a></li>
 </ul>
 
-<br /><br /><br/>
 <div align="center">
-<a href="http://www.countersoft.com"><img src="images/ManagedBy.jpg" border=0 /></a></div>
+<script type="text/javascript"><!--
+google_ad_client = "pub-7968026959847871";
+google_ad_width = 125;
+google_ad_height = 125;
+google_ad_format = "125x125_as";
+google_ad_type = "text_image";
+google_ad_channel ="";
+google_color_border = "2D5893";
+google_color_bg = "99AACC";
+google_color_link = "000000";
+google_color_url = "000099";
+google_color_text = "003366";
+//--></script>
+<script type="text/javascript"
+  src="http://pagead2.googlesyndication.com/pagead/show_ads.js">
+</script>
+</div>
 <!--
 <br>
 <br>
