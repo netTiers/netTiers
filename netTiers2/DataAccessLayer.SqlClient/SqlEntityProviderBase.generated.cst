@@ -217,12 +217,13 @@ namespace <%=DALNameSpace%>.SqlClient
 		///		<%=junctionTable.Name%> table. Table <%=primaryTable.Name%> is related to table <%=secondaryTable.Name%>
 		///		through the (M:N) relationship defined in the <%=junctionTable.Name%> table.
 		/// </summary>
-		/// <param name="start">Row number at which to start reading.</param>
-		/// <param name="pageLength">Number of rows to return.</param>
+		/// <param name="transactionManager"><see cref="TransactionManager"/> object</param>
 	<% for (int i = 0; i < junctionTableKey.ForeignKeyMemberColumns.Count; i++) { %>
 		/// <param name="<%= GetPrivateName(junctionTableKey.ForeignKeyMemberColumns[i].Name)%>"><%=GetColumnXmlComment(junctionTableKey.ForeignKeyMemberColumns[i],2)%></param>
 	<% } %>
-		/// <param name="transactionManager"><see cref="TransactionManager"/> object</param>
+		/// <param name="start">Row number at which to start reading.</param>
+		/// <param name="pageLength">Number of rows to return.</param>
+		/// <param name="count">out parameter to get total records for query</param>
 		/// <returns>Returns a <c>TList</c> of <%=GetClassName(primaryTable.Name)%> objects.</returns>
 		public override <%=GetCollectionClassName(primaryTable.Name)%> GetBy<%=functionname%>(TransactionManager transactionManager, <%=GetFunctionHeaderParameters(junctionTableKey.ForeignKeyMemberColumns)%>, int start, int pageLength, out int count)
 		{
@@ -339,10 +340,11 @@ namespace <%=DALNameSpace%>.SqlClient
 		/// <summary>
 		/// 	Returns rows meeting the whereclause condition from the DataSource.
 		/// </summary>
-		/// <param name="start">Row number at which to start reading.</param>
-		/// <param name="pageLength">Number of rows to return.</param>
 		/// <param name="transactionManager"><see cref="TransactionManager"/> object</param>
 		/// <param name="whereClause">Specifies the condition for the rows returned by a query (Name='John Doe', Name='John Doe' AND Id='1', Name='John Doe' OR Id='1').</param>
+		/// <param name="start">Row number at which to start reading.</param>
+		/// <param name="pageLength">Number of rows to return.</param>
+		/// <param name="count">out. The number of rows that match this query.</param>
 		/// <remarks>Operators must be capitalized (OR, AND)</remarks>
 		/// <returns>Returns a typed collection of <%=className%> objects.</returns>
 		public override <%=collectionClassName%> Find(TransactionManager transactionManager, string whereClause, int start, int pageLength, out int count)
@@ -443,9 +445,10 @@ namespace <%=DALNameSpace%>.SqlClient
 		/// <summary>
 		/// 	Gets All rows from the DataSource.
 		/// </summary>
+		/// <param name="transactionManager"><see cref="TransactionManager"/> object</param>
 		/// <param name="start">Row number at which to start reading.</param>
 		/// <param name="pageLength">Number of rows to return.</param>
-		/// <param name="transactionManager"><see cref="TransactionManager"/> object</param>
+		/// <param name="count">out. The number of rows that match this query.</param>
 		/// <remarks></remarks>
 		/// <returns>Returns a typed collection of <%=className%> objects.</returns>
 		public override <%=collectionClassName%> GetAll(TransactionManager transactionManager, int start, int pageLength, out int count)
@@ -683,14 +686,15 @@ namespace <%=DALNameSpace%>.SqlClient
 		/// <summary>
 		/// 	Gets rows from the datasource based on the <%=indexes[j].Name%> index.
 		/// </summary>
-		/// <param name="start">Row number at which to start reading.</param>
-		/// <param name="pageLength">Number of rows to return.</param>
+		/// <param name="transactionManager"><see cref="TransactionManager"/> object</param>
 	<% for (int i = 0; i < indexes[j].MemberColumns.Count; i++) { %>
 		/// <param name="<%= GetPrivateName(indexes[j].MemberColumns[i].Name)%>"><%= indexes[j].MemberColumns[i].Description%></param>
 	<% } %>
-		/// <param name="transactionManager"><see cref="TransactionManager"/> object</param>
-		/// <remarks></remarks>
+		/// <param name="start">Row number at which to start reading.</param>
+		/// <param name="pageLength">Number of rows to return.</param>
+		/// <param name="count">out parameter to get total records for query</param>
 		/// <returns>Returns an instance of the <see cref="<%=returnTypeForComment%>"/> class.</returns>
+		/// <remarks></remarks>
 		public override <%=returnType%> GetBy<%=GetKeysName(indexes[j].MemberColumns)%>(TransactionManager transactionManager, <%= GetFunctionHeaderParameters(indexes[j].MemberColumns) %>, int start, int pageLength, out int count)
 		{
 			SqlDatabase database = new SqlDatabase(this._connectionString);
