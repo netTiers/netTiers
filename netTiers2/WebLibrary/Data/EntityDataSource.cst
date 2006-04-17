@@ -1099,7 +1099,12 @@ namespace <%= WebNameSpace %>.Data
 				EntityDataSourceSelectingEventArgs eventArgs = new EntityDataSourceSelectingEventArgs(param, arguments);
 				OnSelecting(eventArgs);
 
-				if ( !eventArgs.Cancel )
+				if ( eventArgs.Cancel )
+				{
+					return null;
+				}
+
+				try
 				{
 					entityList = GetEntityList(arguments);
 
@@ -1116,7 +1121,16 @@ namespace <%= WebNameSpace %>.Data
 						OnSelected(new EntityDataSourceMethodEventArgs(entityList, EntityIndex, param, arguments.TotalRowCount));
 					}
 				}
+				catch ( Exception ex )
+				{
+					EntityDataSourceMethodEventArgs e = new EntityDataSourceMethodEventArgs(entityList, EntityIndex, param, 0, ex);
+					OnSelected(e);
 
+					if ( !e.ExceptionHandled )
+					{
+						throw;
+					}
+				}
 
 				return entityList;
 			}
@@ -1184,14 +1198,28 @@ namespace <%= WebNameSpace %>.Data
 
 				// perform insert
 				Object[] args = GetArgs(entity);
-				Object result = EntityUtil.InvokeMethod(Provider, InsertMethod, args);
 				int count = 0;
 
-				if ( result == null || Convert.ToBoolean(result) )
+				try
 				{
-					count = 1;
-					UpdateEntityId(entityList);
-					OnInserted(new EntityDataSourceMethodEventArgs(entityList, 0, values, count));
+					Object result = EntityUtil.InvokeMethod(Provider, InsertMethod, args);
+
+					if ( result == null || Convert.ToBoolean(result) )
+					{
+						count = 1;
+						UpdateEntityId(entityList);
+						OnInserted(new EntityDataSourceMethodEventArgs(entityList, 0, values, count));
+					}
+				}
+				catch ( Exception ex )
+				{
+					EntityDataSourceMethodEventArgs e = new EntityDataSourceMethodEventArgs(entityList, 0, values, count, ex);
+					OnInserted(e);
+
+					if ( !e.ExceptionHandled )
+					{
+						throw;
+					}
 				}
 
 				return count;
@@ -1267,14 +1295,28 @@ namespace <%= WebNameSpace %>.Data
 
 				// perform update
 				Object[] args = GetArgs(entity);
-				Object result = EntityUtil.InvokeMethod(Provider, UpdateMethod, args);
 				int count = 0;
 
-				if ( result == null || Convert.ToBoolean(result) )
+				try
 				{
-					count = 1;
-					UpdateEntityId(entityList);
-					OnUpdated(new EntityDataSourceMethodEventArgs(entityList, EntityIndex, values, count));
+					Object result = EntityUtil.InvokeMethod(Provider, UpdateMethod, args);
+
+					if ( result == null || Convert.ToBoolean(result) )
+					{
+						count = 1;
+						UpdateEntityId(entityList);
+						OnUpdated(new EntityDataSourceMethodEventArgs(entityList, EntityIndex, values, count));
+					}
+				}
+				catch ( Exception ex )
+				{
+					EntityDataSourceMethodEventArgs e = new EntityDataSourceMethodEventArgs(entityList, EntityIndex, values, count, ex);
+					OnUpdated(e);
+
+					if ( !e.ExceptionHandled )
+					{
+						throw;
+					}
 				}
 
 				return count;
@@ -1341,13 +1383,27 @@ namespace <%= WebNameSpace %>.Data
 
 				// perform delete
 				Object[] args = GetArgs(entity);
-				Object result = EntityUtil.InvokeMethod(Provider, DeleteMethod, args);
 				int count = 0;
 
-				if ( result == null || Convert.ToBoolean(result) )
+				try
 				{
-					count = 1;
-					OnDeleted(new EntityDataSourceMethodEventArgs(entityList, EntityIndex, oldValues, count));
+					Object result = EntityUtil.InvokeMethod(Provider, DeleteMethod, args);
+
+					if ( result == null || Convert.ToBoolean(result) )
+					{
+						count = 1;
+						OnDeleted(new EntityDataSourceMethodEventArgs(entityList, EntityIndex, oldValues, count));
+					}
+				}
+				catch ( Exception ex )
+				{
+					EntityDataSourceMethodEventArgs e = new EntityDataSourceMethodEventArgs(entityList, EntityIndex, oldValues, count, ex);
+					OnDeleted(e);
+
+					if ( !e.ExceptionHandled )
+					{
+						throw;
+					}
 				}
 
 				return count;
@@ -1905,6 +1961,8 @@ namespace <%= WebNameSpace %>.Data
 	{
 		private IEnumerable _entityList;
 		private IDictionary _inputParameters;
+		private Exception _exception;
+		private bool _exceptionHandled;
 		private int _index;
 		private int _affectedRows;
 
@@ -1932,6 +1990,20 @@ namespace <%= WebNameSpace %>.Data
 			: this(entityList, index, inputParameters)
 		{
 			this._affectedRows = affectedRows;
+		}
+
+		/// <summary>
+		/// Initializes a new instance of the EntityDataSourceEventArgs class.
+		/// </summary>
+		/// <param name="entityList">The objects on which the current operation is being performed.</param>
+		/// <param name="index">The index of the current item being operated on.</param>
+		/// <param name="inputParameters">A collection of name/value pairs submitted during the current operation.</param>
+		/// <param name="affectedRows">The number of rows that are affected by the data operation.</param>
+		/// <param name="exception">An System.Exception that wraps any internal exceptions thrown during the method call.</param>
+		public EntityDataSourceMethodEventArgs(IEnumerable entityList, int index, IDictionary inputParameters, int affectedRows, Exception exception)
+			: this(entityList, index, inputParameters, affectedRows)
+		{
+			this._exception = exception;
 		}
 
 		/// <summary>
@@ -1964,6 +2036,23 @@ namespace <%= WebNameSpace %>.Data
 		public int AffectedRows
 		{
 			get { return _affectedRows; }
+		}
+
+		/// <summary>
+		/// Gets a wrapper for any exceptions that are thrown by the method that is called by the EntityDataSource control during a data operation.
+		/// </summary>
+		public Exception Exception
+		{
+			get { return _exception; }
+		}
+
+		/// <summary>
+		/// Gets or sets a value indicating whether an exception that was thrown by the business object has been handled.
+		/// </summary>
+		public bool ExceptionHandled
+		{
+			get { return _exceptionHandled; }
+			set { _exceptionHandled = value; }
 		}
 	}
 	#endregion
