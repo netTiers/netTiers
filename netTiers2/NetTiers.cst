@@ -190,6 +190,13 @@
 		get {return this._counter;}
 	}
 	
+	private int _errorMessageCount = 0;
+	[Browsable(false)]
+	public int ErrorMessageCount
+	{
+		get {return this._errorMessageCount;}
+	}
+	
 	private int _CurrentObjectIndex = 0;
 	[Browsable(false)]
 	public int CurrentObjectIndex
@@ -2453,7 +2460,18 @@ public void Go()
 		AddExecutionTime(tableNode);
 		_CurrentObjectIndex++;
 	}
+	XmlElement summaryElement = docOutput.CreateElement("summary");
+	XmlElement objectCount = docOutput.CreateElement("objectCount");
+	objectCount.InnerText = Counter.ToString();
 	
+	
+	XmlElement messageCount = docOutput.CreateElement("messageCount");
+	messageCount.InnerText= this.ErrorMessageCount.ToString();
+	
+	summaryElement.AppendChild(objectCount);
+	summaryElement.AppendChild(messageCount);
+	
+	docOutput.DocumentElement.AppendChild(summaryElement);
 	AddExecutionTime(docOutput.DocumentElement);
 	docOutput.Save(OutputDirectory + "\\report.xml");
 	
@@ -2491,12 +2509,13 @@ public void Go()
 
 private XmlElement AddMessageNode(XmlElement rootNode, int level, string message)
 {
+	
 	XmlElement node = docOutput.CreateElement("Message");
 	
 	XmlAttribute attLevel = docOutput.CreateAttribute("level");
 	attLevel.Value = string.Format("{0}", level);
 	node.Attributes.Append(attLevel);
-	
+	this._errorMessageCount++;
 	XmlAttribute attTime = docOutput.CreateAttribute("startTime");
 	attTime.Value = DateTime.Now.ToFileTime().ToString();
 	node.Attributes.Append(attTime);
