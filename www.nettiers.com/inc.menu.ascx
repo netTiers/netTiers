@@ -4,6 +4,7 @@
 	<li><a href="default.aspx">Home</a></li>
 	<li><a href="nightly.aspx"><b>Downloads & nightly builds</b></a></li>
 	<li><a href="beta2.aspx">0.9.2 version</a></li>
+	<li><a href="http://petshop.nettiers.com" target="_blank">Petshop Sample app</a></li>
 	<li><a href="rss.aspx">Rss feeds</a></li>
 	<li><a href="buttons.aspx">Google buttons</a></li>
 	<li><a href="http://community.codesmithtools.com/forums/default.aspx?GroupID=11" target="_blank">Forums</a></li>
@@ -54,7 +55,3 @@ google_color_text = "003366";
   src="http://pagead2.googlesyndication.com/pagead/show_ads.js">
 </script>
 </div>
-<!--
-<br>
-<br>
-<a href="http://www.411asp.net" target=_blank><img src="images/411asp1005.gif" ALT="411ASP.NET" border=0></a>-->
