@@ -1,7 +1,6 @@
 <?xml version="1.0"?>
 <xsl:stylesheet version="1.0" xmlns:xsl="http://www.w3.org/1999/XSL/Transform">
 <xsl:output method="html" indent="yes" />
-
 	<xsl:template match="/NetTiersReport">		
 		<html>
 			<head>
@@ -9,30 +8,30 @@
 				<link href="http://nettiers.sourceforge.net/default.css" rel="stylesheet" type="text/css"/>
 				<style>
 					span.executionTime {font-style: italic; color: #003366;}
-          TD.menu {
-    	      FONT-FAMILY: Tahoma, Arial; HEIGHT: 30px; BACKGROUND-COLOR: #99cc99
-          }
-          .handCursor {  cursor: hand}
-          .pointerCursor {  cursor: pointer}
-         </style>
-        <script language="javascript">
-          var currentMenu="Summary";
-          function showMenu(elementName){
-            if(elementName != currentMenu){
-              document.getElementById(elementName).style.display = "inline";
-              document.getElementById(currentMenu).style.display = "none";
-              currentMenu = elementName;
-            }
-          
-          }
+				TD.menu {
+					FONT-FAMILY: Tahoma, Arial; HEIGHT: 30px; BACKGROUND-COLOR: #99cc99
+				}
+				.handCursor {  cursor: hand}
+				.pointerCursor {  cursor: pointer}
+				</style>
+				<script language="javascript">
+				var currentMenu="Summary";
+				function showMenu(elementName){
+					if(elementName != currentMenu){
+					document.getElementById(elementName).style.display = "inline";
+					document.getElementById(currentMenu).style.display = "none";
+					currentMenu = elementName;
+					}
+				
+				}
         </script>
 			</head>
 	
 			<body>
 				<table width="100%" border="0" cellspacing="2" cellpadding="2">
 					<tr>
-						<td width="300"><h1><img src="http://nettiers.sourceforge.net/images/logo.gif" alt=".NetTiers Logo. By Micheal" /></h1></td>
-						<td><h2>.NetTiers generation report</h2></td>
+						<td width="300"><h1><img src="http://nettiers.sourceforge.net/images/logo.gif" alt=".netTiers Logo. By Micheal" /></h1></td>
+						<td><h2>.netTiers Generation Report</h2></td>
 					</tr>
 				</table>
 								
@@ -59,58 +58,61 @@
 			<p> Below are the steps to to configure the .netTiers components.  These are samples from Northwind.</p>
 			
                         <p>To Configure your application to use .netTiers, add the following sections to 
-              your App / Web config files
+              your App / Web config files.
+			
+			 You can find more information on how to set this up at<br/> 
+			 <a href="http://community.codesmithtools.com/forums/permalink/9769/9769/ShowThread.aspx#9769">.netTiers 2 Install and Configuration Document</a>
             </p>
             <p>1. Add a new section to the configSettings</p>
             
 <pre>
-  < section name="netTiersService"
+  &lt;section name="netTiersService"
 		type="Northwind.DataAccessLayer.Bases.NetTiersServiceSection, Northwind.DataAccessLayer"
 		allowDefinition="MachineToApplication"
-		restartOnExternalChanges="true" />
+		restartOnExternalChanges="true" /&gt;
 </pre>
           <p>2.  Add an item to the ConnectionStrings Section</p>
 <pre>
-< connectionStrings>
-  < add name="netTiersConnectionString" connectionString="Data Source=(local);Initial Catalog=Northwind;Integrated Security=true;Connection Timeout=1;" />
-< /connectionStrings>
+&lt;connectionStrings>
+  &lt;add name="netTiersConnectionString" connectionString="Data Source=(local);Initial Catalog=Northwind;Integrated Security=true;Connection Timeout=1;" /&gt;
+&lt;/connectionStrings&gt;
 </pre>
          <p>3.  Add the netTierService configuration section to your configuration file. Comment / Uncomment which provider you plan on using / not using</p>
  <pre>
-< netTiersService defaultProvider="SqlNetTiersProvider">
-  < providers>
+&lt;netTiersService defaultProvider="SqlNetTiersProvider"&gt;
+  &lt;providers&gt;
     <!--
     *** SqlClient Provider ***
     connectionStringName: sqlclient connection string to the db
     useStoredProcedure: if true indicates that we use the stored procedures, otherwise, we use parametrized queries that are embedded.
     -->
-    < add 
+    &lt;add 
 	    name="SqlNetTiersProvider" 
 	    type="Northwind.DataAccessLayer.SqlClient.SqlNetTiersProvider, Northwind.DataAccessLayer.SqlClient"
 	    connectionStringName="netTiersConnectionString"
 	    useStoredProcedure="false"
-	    providerInvariantName="System.Data.SqlClient" />
+	    providerInvariantName="System.Data.SqlClient" /&gt;
     <!-- 
       *** WebserviceClient Provider ***
       The url parameter indicates the webservices url (ex: http://localhost/NorthWind/NorthWindServices.aspx)
-    <add 
+    &lt;add 
       name="WsNetTiersProvider" 
       type="Northwind.DataAccessLayer.WebServiceClient.WsNetTiersProvider, Northwind.DataAccessLayer.WebServiceClient"
       url="http://localhost/NetTiersCTPWSNorthwindServices.asmx"
       />
     -->
-  < /providers>
-< /netTiersService>
+  &lt;/providers&gt;
+&lt;/netTiersService&gt;
  </pre>
 
           </div>
           <div id="Documentation" style="display:none">
             Documentation Coming Soon ...
           </div>
-					<div id="ReportDetails" style="display:none">
-							<!-- Report Details Page -->
-							<xsl:call-template name="report"/>
-					</div>
+		<div id="ReportDetails" style="display:none">
+				<!-- Report Details Page -->
+				<xsl:call-template name="report"/>
+		</div>
 						</td>
 					</tr>
 				</table>
@@ -133,17 +135,18 @@
 		<p><strong>Navigation</strong></p>
 		<ul>
 			<li><a href="http://nettiers.sourceforge.net/">Website</a></li>
+			<li><a href="http://community.codesmithtools.com/forums/default.aspx?GroupID=11/">Forums</a></li>
 			<li><a href="http://sourceforge.net/projects/nettiers/">Sourceforge&#160;Site</a></li>
-			<li><a href="https://sourceforge.net/project/showfiles.php?group_id=118735">Downloads</a></li>
-			<li><a href="https://sourceforge.net/tracker/?group_id=118735">Bugs</a></li>
+			<li><a href="https://www.nettiers.com/nightly.aspx">Downloads</a></li>
+			<li><a href="http://tracker.nettiers.com">Bugs</a></li>
 		</ul>
 		
 		<p><strong>Documentation</strong></p>
 		<ul>
-			<li><a href="nettiers-manual.html">Manual</a></li>
-			<li><a href="api/index.html">Sample Api Documentation</a></li>
+			<li><a href="http://www.nettiers.com/nettiers-manual.html">Manual</a></li>
+			<!--<li><a href="http://www.nettiers.com/api/index.html">Sample Api Documentation</a></li>>-->
 			<li><a href="https://sourceforge.net/mailarchive/forum.php?forum_id=42604">Mailing&#160;List</a></li>
-			<li><a href="nettiers-manual.html#faq">FAQ</a></li>
+			<!-- <li><a href="http://www.nettiers.com/nettiers-manual.html#faq">FAQ</a></li>-->
 		</ul>
 
 		<p><strong>Related Links</strong></p>
