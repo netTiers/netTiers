@@ -1,5 +1,7 @@
 <%@ Page MasterPageFile="~/MasterPage.master" %>
+
 <asp:Content ID="mainContent" ContentPlaceHolderID="ContentPlaceHolder1" runat="server">
+
 <style>/* Paragraph and pre-formatted text appearance */
 pre
 {
@@ -36,8 +38,8 @@ pre
 <div><div><h2 class="title"><a name="IDAPBIO"></a>Preface</h2></div></div>
 </div>
 <p>
-	    	.NetTiers are CodeSmith templates for object-relational mapping that takes an existing SQLServer database and automatically generates
-	        a personnalized Data Tiers application block to use in your .Net applications.  
+	    	.netTiers are CodeSmith templates for object-relational mapping that takes an existing SQLServer database and automatically generates
+	        a personalized DataTiers application block to use in your .net applications.  
 	     </p>
 <p>
 			Core features include:
@@ -64,14 +66,14 @@ pre
 						Serializable 
     
 <li>
-						trigger events 
+						Trigger Entity Events 
     
 <li>
 						Implements an IEntity interface, which contains the 
     columns that are present in every table 
     
 <li>
-						Specific support for enums.
+						Specific support for Enums, and Enum Generation.
 					</li>
 </ul>
 </div>
@@ -91,48 +93,45 @@ pre
 						Support for queries using foreign key 
     
 <li>
-						Support for queries using keys that are part of an 
-    index 
+						Support for queries using keys that are part of an index (Not already included as a pk or fk)
     
 <li>
-						Support for queries using keys that are part of a 
-    junction table 
+						Support for queries using keys that are part of a  junction table, (many to many relationships)
     
 <li>
 						Support for user defined Methods, generated from 
     queries that are detected throught a very simple naming rule 
     (_TableName_MyMethodName) 
-    
+     Or, you can view this post to find out more: 
 <li>
 						Support for Deep loading and saving, with children 
     type selection and optional recursivity. 
     
 <li>
 						Support for find methods, with paging and sorting. 
-    (builded with the datagrid in mind :-) 
+    (built with the grid family in mind) :-) 
     
 <li>
-						NEW: Support for SqlView. 
+						Support for Sql Views. 
     
-<li>
-						NEW: Select between stored procedure or xml embedded queries.
+<li>				Select between stored procedure or parameterized sql using an xml embedded query file.
 					</li>
 </ul>
 </div>
 <li>
-				Generate strongly-typed collections for entities and repositories.
+				Generate strongly-typed generic collections for entities and repositories using TList<> and/or VList.
 
 				<div class="itemizedlist">
 <ul type="circle">
 <li>
-						Implement CollectionBase , IBindingList, IList and 
-    ICloneable 
+						Implement  BindingList&lt;T&gt;, IBindingListView, IBindingList, IList, ICloneable, IListSource, ITypedList, IDisposable, IComponent, IRaiseItemChangedEvents, IDeserializationCallback
     
 <li>
-						Sortable, even Unsortable ! 
+						Sortable, even Unsortable! 
     
+</li>
 <li>
-						bindable to datagrid, or any winform or asp.net controls
+						Bindable to any gridview, datagrid, or any winform or asp.net control
 					</li>
 </ul>
 </div>
@@ -149,20 +148,31 @@ pre
   compile, test and generate chm/html API documentation. 
   
 <li>
-				A full set of nUnit tests. 
-  
+				Create a full set of validation rules based on database schema information.  And includes a full framework to manage your own rules.
+</li> 
 <li>
 				Each object has a concrete and a base class which it 
   inherit from. The concrete class is generated just once, so you have can use 
-  it to add you custom code. 
-  
+  it to add you custom code.   All of the base classes are also partial classes, so you can add
+  framework wide functionality with no problems.
+<li>
+				Creates an EntityDataSource, you no longer have to mess with overcoming the shortcomings with the ObjectDataSource, .netTiers provides an advanced EntityDataSource that 
+				knows about the repositories and creates a 100% declarative model.  NO CODE BEHIND WHATSOEVER!
+<li>
+				Create a full set of web administration controls, you can setup a web admin to your database in literally, minutes...				
+</li> 
+<li>
+				Do I have to keep going, I mean come on, there are features out the wazzuua, download it today...				
+</li> 
+<li>
+				A full set of nUnit tests. 
 <li>
 				The code is fully commented (it use to Description 
   extended properties of the data table and column) and follow the microsoft 
   naming guidelines. 
   
 <li>
-				Open source! You can modify the templates and contribute (<a href="http://www.sourceforge.net/projects/nettiers" target="_top">http://www.sourceforge.net/projects/nettiers</a>)
+				Holy Cow, It's free and Open source! You can modify the templates like the control freak inside us all demands, and contribute so we can give back to the community. (<a href="http://www.sourceforge.net/projects/nettiers" target="_top">http://www.sourceforge.net/projects/nettiers</a>)
 			</li>
 </ul>
 </div>
@@ -172,7 +182,7 @@ pre
 <div><div><h2 class="title"><a name="IDAPEIO"></a>Chapter&nbsp;1.&nbsp;Concepts</h2></div></div>
 </div>
 <p>
-	       This data tiers is composed of custom business entities components (the data itself) and data access logic components (the persistence logic).
+	       This data tiers concept is composed of custom business entities components (the data itself) and data access logic components (the persistence logic).
 	       This design is inspired from the Microsoft patterns &amp; practices guide <a href="http://msdn.microsoft.com/library/default.asp?url=/library/en-us/dnbda/html/BOAGag.asp" target="_top">Designing Data Tier Components and Passing Data Through Tiers</a>:
 	    </p>
 <div class="mediaobject"><img src="http://www.nettiers.com/images/design.gif"></div>
@@ -223,7 +233,7 @@ pre
 <pre class="programlisting">using Northwind.DataAccessLayer;
 			
 // Get all the employee, sort it on the LastName and print them out 
-EmployeeCollection employees = DataRepository.EmployeeProvider.GetAll();
+TList&lt;Employees&gt; employees = DataRepository.EmployeeProvider.GetAll();
 employees.Sort(EmployeeColumns.LastName, ListSortDirection.Ascending);
 foreach(Employee employee in employees)
 {
@@ -246,11 +256,15 @@ employee.PostalCode = "5556";
 employee.Region = "New-York";
 
 DataRepository.EmployeeProvider.Insert(employee);
+
+//look, new id already populated
+Console.WriteLine("New Employee ID" + employee.EmployeeId);
+	
 	</pre>
 <pre class="programlisting">using Northwind.DataAccessLayer;
 
 // Select by Index and Update
-EmployeeCollection employees = DataRepository.EmployeeProvider.GetByLastName("Doe");
+TList&lt;Employees&gt; employees = DataRepository.EmployeeProvider.GetByLastName("Doe");
 if (employees.Count == 1)
 {
 	employees[0].Notes = "This is a modified fake employee";
@@ -326,12 +340,28 @@ catch(Exception ex)
 */
 	using Northwind.DataAccessLayer;
 
-	SqlDataProvider myRepository = DataRepository.GetDataProvider("my second data provider") as Northwind.DataAccessLayer.SqlClient.SqlDataProvider;
+	SqlDataProvider myRepository = DataRepository.Providers["my second data provider"] as Northwind.DataAccessLayer.SqlClient.SqlDataProvider;
 	
 	this.listBox1.DataSource = myRepository.ProductProvider.GetAll();
 	this.listBox1.DisplayMember = "ProductName";
 	this.listBox1.ValueMember = "ProductID";
-		
+	
+	//Or if you can't have it pre-configured, you can change the connection string at runtime.
+	
+	using Northwind.DataAccessLayer;
+
+    //New syntax using a declared connection string:
+
+    TList&lt;Products&gt; list = DataRepository.Connections["NorthwindConnectionString2"].Provider.CustomersProvider.GetAll();
+
+    //New syntax using a dynamic connection string:
+
+    DataRepository.AddConnection("DynamicConnectionString", "Data Source=(local);Initial Catalog=Northwind;Integrated Security=true;");
+
+    TList&lt;Products&lt; list = DataRepository.Connections["DynamicConnectionString"].Provider.ProductsProvider.GetAll();	
+	this.listBox1.DataSource = list;
+	this.listBox1.DisplayMember = "ProductName";
+	this.listBox1.ValueMember = "ProductID";
 	</pre>
 </div>
 </div>
@@ -347,55 +377,37 @@ catch(Exception ex)
 </div>
 <div class="section" lang="en">
 <div class="titlepage"></div>
-<p>
-				The applications that consume a .netTiers generated application block need to be configured, and this is done with the help of the 
-				Enterprise Library Configuration Console.
-			</p>
-<p>
-				The first step is to add a application configuration file to your project, which is something you can do with the "add new item..." command of visual studio.
-				
-				<div class="mediaobject"><img src="http://www.nettiers.com/images/ApplicationConfigurationFile.png"></div>
-<P></P>
-<p>
-				When you have the EntLib configuration console opened, select "open application" in the menu and pick up the configuration file you just create.
-				
-				<div class="mediaobject"><img src="http://www.nettiers.com/images/EntLib_01.png"></div>
-<P></P>
-<p>
-				Right click on the application, select "new" and then click the ".nettiers configuration" menu item. 
-				A bunch of configuration nodes will now appear as showed on following screenshot:
-				
-				<div class="mediaobject"><img src="http://www.nettiers.com/images/EntLib_02.png"></div>
-<P></P>
-<p>
-				There is actually 4 main nodes: 
-				<div class="itemizedlist"><ul type="disc"><li>.NetTiers configuration
-					
-						<p>
-							Its child "Data Providers" node can hold one or more NetTiers data provider, which represents a data source instance.
-							You can add a new one by right clicking this node and choose the kind of implementation -sql or webservice - you need.
-							Each of this data provider type has its own settings.
-						</p><p>
-							The sql data provider configuration.
-							<div class="itemizedlist"><ul type="circle"><li>data provider name<li>database instance : it's the database configuration 
-    that you create under the Data access application block node.<li>UseStoredProcedure: A boolean value that indicates if the provider uses stored procedure or embedded queries.</li></ul></div>
-  <P></P><p>
-							The webservice data provider configuration.
-							<div class="itemizedlist"><ul type="circle"><li>data provider name<li>URL: the asmx Url that was generated with the templates.</li></ul></div>
-  <P></P><p>
-							Under the main Netiers node, select the default provider that will be used by your application.
-						</p><p>
-							Remark:
-							in your code you can always override the default provider, by specifying explicitly data provider name.
-						 </p><li>Caching application block : here for future use only<li>
-						Configuration application block: here you define where and how the configuration is stored. 
-						Default settings will store the settings into .config files.
-						<p>
-							Thoses config files must be deployed into your bin folder, to automate this you can add a post build event with this macro:
-						</p><p>
-							copy "$(ProjectDir)*.config" "$(TargetDir)"
-						</p><li>Data access application block</li></ul></div>
-<P></P>
+            <p> Below are the steps to to configure the .netTiers components.  These are samples from Northwind.</p>
+            <p>To Configure your application to use .netTiers, add the following sections to 
+              your App / Web config files.
+			
+			 You can find more information on how to set this up at, 
+			 <a href="http://community.codesmithtools.com/forums/permalink/9769/9769/ShowThread.aspx#9769">.netTiers 2 Install and Configuration Document</a></p>
+            <p>1. Add a new section to the configSettings</p>
+            <pre>  &lt;section name="netTiersService"
+		type="Northwind.DataAccessLayer.Bases.NetTiersServiceSection, Northwind.DataAccessLayer"
+		allowDefinition="MachineToApplication"
+		restartOnExternalChanges="true" /&gt;
+</pre>
+            <p>2.  Add an item to the ConnectionStrings Section</p>
+            <pre>&lt;connectionStrings&gt;
+  &lt;add name="netTiersConnectionString" connectionString="Data Source=(local);Initial Catalog=Northwind;Integrated Security=true;Connection Timeout=1;" /&gt;
+&lt;/connectionStrings&gt;
+</pre>
+            <p>3.  Add the netTierService configuration section to your configuration file. Comment / Uncomment which provider you plan on using / not using</p>
+            <pre>&lt;netTiersService defaultProvider="SqlNetTiersProvider"&gt;
+  &lt;providers&gt;
+    
+    &lt;add 
+	    name="SqlNetTiersProvider" 
+	    type="Northwind.DataAccessLayer.SqlClient.SqlNetTiersProvider, Northwind.DataAccessLayer.SqlClient"
+	    connectionStringName="netTiersConnectionString"
+	    useStoredProcedure="false"
+	    providerInvariantName="System.Data.SqlClient" /&gt;
+    
+  &lt;/providers&gt;
+&lt;/netTiersService&gt;
+ </pre>
 </div>
 </div>
 <div class="chapter" lang="en">
@@ -431,29 +443,23 @@ catch(Exception ex)
 	          concrete classes. As opposite to the Base classes which are overwriten at each generation, the concrete class at only generated once.
 	          That solution is good, but presents some disavantages:
 	          <div class="itemizedlist"><ul type="disc"><li>You'll have to write many overloads in order to offer 
-  the same functionnalities than generated code<li>Many classes have to be changes: entity, DALC class, 
-  etc.<li>It is always difficult to manage mixed generated and authored code.</li></ul></div>There is an alternative: generate methods from 
+  the same functionality than generated code</ul></div>There is an alternative: generate methods from 
 your own stored procedures. To activate this, turn the "Include custom sql" 
 option to True. Then your stored procedure name must starts with '_TableName_' 
 followed by the text you want as Method name. This naming convention will permit 
 the templates to detect your stored procedure, and to create the method in the 
 correct repository class (xxTableNameRepository). 
-<P></P>
-<p>
-				The stored procedure to method convertion follow these rules for the method return type:
-				 <div class="itemizedlist"><ul type="disc"><li>if sp rowset == table rowset then method return an 
-  EntityCollection<li>if sp rowset == one value (ex: int, varchar, etc.) 
-  then method return a scalar value<li>if other rowset then method return void</li></ul></div>
-<P></P>
+<br />
+<a href="http://community.codesmithtools.com/forums/permalink/11431/11431/ShowThread.aspx#11431">More info:</a>
 </div>
 <div class="section" lang="en">
 <div class="titlepage">
 <div><div><h2 class="title" style="CLEAR: both"><a name="IDAFMIO"></a>Sample</h2></div></div>
 </div>
 <p>
-				As the best explanation is probably an example, just take a look at the Product table from the Northwind database,
-				and imagine we want the list of products that have units in stock that are bellow a given value.
-				So we first create the following stored procedure:
+An explanation is probably an example, just take a look at the Product table from the Northwind database,
+and imagine we want the list of products that have units in stock that are bellow a given value.
+So we first create the following stored procedure:
 			</p>
 <pre class="programlisting">-- Get the products that have less units in stock than the @UnitsInStock parameter.
 CREATE PROCEDURE dbo._Products_GetWithStockBelow
@@ -735,7 +741,7 @@ protected  ProductCollection GetWithStockBelow(TransactionManager transactionMan
 <dt><span class="section"><a href="#IDA4VIO">v1.1 - Caribert</a></span></dt></dl>
 </div>
 <div class="section" lang="en">
-<div class="titlepage">
+<%--<div class="titlepage">
 <div><div><h2 class="title" style="CLEAR: both"><a name="IDAIUIO"></a>v0.9 - Childebert</h2></div></div>
 </div>
 <div class="itemizedlist">
@@ -753,9 +759,9 @@ protected  ProductCollection GetWithStockBelow(TransactionManager transactionMan
 </div>
 </div>
 <div class="section" lang="en">
-<%--<div class="titlepage">
+<div class="titlepage">
 <div><div><h2 class="title" style="CLEAR: both"><a name="IDAEVIO"></a>v1.0 - Clotaire</h2></div></div>
-</div>--%>
+</div>
 <div class="itemizedlist">
 <ul type="disc">
 <li>
@@ -807,7 +813,7 @@ protected  ProductCollection GetWithStockBelow(TransactionManager transactionMan
 				</li>
 </ul>
 </div>
-</div>
+</div>--%>
 </div>
 <div class="chapter" lang="en">
 <div class="titlepage">

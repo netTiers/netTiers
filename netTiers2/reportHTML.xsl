@@ -107,7 +107,7 @@
 
           </div>
           <div id="Documentation" style="display:none">
-            Documentation Coming Soon ...
+            <a href="http://www.nettiers.com/nettiers2-manual-v1.aspx">View Documentation</a>
           </div>
 		<div id="ReportDetails" style="display:none">
 				<!-- Report Details Page -->
@@ -143,7 +143,8 @@
 		
 		<p><strong>Documentation</strong></p>
 		<ul>
-			<li><a href="http://www.nettiers.com/nettiers-manual.html">Manual</a></li>
+				<li><a href="http://nettiers.com/nettiers-manual-v1.aspx">Manual for .netTiers 1</a></li>
+				<li><a href="http://nettiers.com/nettiers2-manual-v1.aspx">Manual for .netTiers 2</a></li>
 			<!--<li><a href="http://www.nettiers.com/api/index.html">Sample Api Documentation</a></li>>-->
 			<li><a href="https://sourceforge.net/mailarchive/forum.php?forum_id=42604">Mailing&#160;List</a></li>
 			<!-- <li><a href="http://www.nettiers.com/nettiers-manual.html#faq">FAQ</a></li>-->

@@ -14,7 +14,8 @@
 
 <p><strong>Documentation</strong></p>
 <ul>
-	<li><a href="nettiers-manual-v1.aspx">Manual</a></li>
+	<li><a href="nettiers-manual-v1.aspx">Manual for .netTiers 1</a></li>
+	<li><a href="nettiers2-manual-v1.aspx">Manual for .netTiers 2</a></li>
 	<li><a href="http://www.codeproject.com/showcase/CodeSmith.asp" target=_blank>15 mins tutorial</a></li>
 	<li><a href="Documentation.chm">Sample Api Documentation</a></li>
 	<li><a href="http://sourceforge.net/mail/?group_id=118735">Mailing List</a></li>
