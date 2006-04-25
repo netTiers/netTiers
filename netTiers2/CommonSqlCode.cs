@@ -2454,7 +2454,7 @@ namespace MoM.Templates
 			
 			for(int i=0; i<table.Columns.Count; i++) //  CommandResultSchema cmdResult in command.CommandResults)
 			{
-				if (command.CommandResults[0].Columns[i].Name != table.Columns[i].Name)
+				if (command.CommandResults[0].Columns[i].Name.ToLower() != table.Columns[i].Name.ToLower())
 				{
 					return false;
 				}
@@ -2462,15 +2462,14 @@ namespace MoM.Templates
 				// manage the xml column type deparately
 				if ( table.Columns[i].NativeType == "xml" && (command.CommandResults[0].Columns[i].NativeType == "sql_variant" || command.CommandResults[0].Columns[i].NativeType == "ntext"))
 				{
-					return true;
+					continue;
 				}
-				
-				if (command.CommandResults[0].Columns[i].NativeType == table.Columns[i].NativeType )
+				else if (command.CommandResults[0].Columns[i].NativeType != table.Columns[i].NativeType )
 				{
-					return true;
+					return false;
 				}
 			}
-			return false;
+			return true;
 		}
 		
 		/// <summary>
