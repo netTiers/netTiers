@@ -1,4 +1,4 @@
-﻿<%--
+<%--
  * $Id: SqlEntityProviderBase.generated.cst,v 1.3 2006/02/27 22:06:45 bgjohnso Exp $
  * Last modified by $Author$
  * Last modified at $Date$
@@ -372,14 +372,15 @@ namespace <%=DALNameSpace%>.SqlClient
 	
 		// Here's what's going on below: Find a field, then to get the value we
 		// drop the field name from the front, trim spaces, drop the '=' sign,
-		// trim more spaces, and drop any outer single quotes
+		// trim more spaces, and drop any outer single quotes.
+		// Now handles the case when two fields start off the same way - like "Friendly='Yes' AND Friend='john'"
 		
 		char[] equalSign = {'='};
 		char[] singleQuote = {'\''};
    		foreach (string clause in clauses)
 		{
 			<% foreach(ColumnSchema column in SourceTable.Columns) {%>		
-			if (clause.Trim().StartsWith("<%=column.Name%>"))
+			if (clause.Trim().StartsWith("<%=column.Name%> ") || clause.Trim().StartsWith("<%=column.Name%>="))
 			{
 				<%if (column.DataType.ToString() == "Guid") // fix for guid types
 				{%>
