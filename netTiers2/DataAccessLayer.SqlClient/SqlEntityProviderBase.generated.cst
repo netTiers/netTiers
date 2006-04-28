@@ -365,38 +365,43 @@ namespace <%=DALNameSpace%>.SqlClient
 	<% foreach(ColumnSchema column in SourceTable.Columns) {%>
 		database.AddInParameter(commandWrapper, "@<%=column.Name%>", DbType.<%=column.DataType%>, DBNull.Value);
 	<% } %>
-
-		// replace all instances of 'AND' and 'OR' because we already set searchUsingOR
-		whereClause = whereClause.Replace("AND", "|").Replace("OR", "|") ; 
-		string[] clauses = whereClause.Split('|');
 	
-		// Here's what's going on below: Find a field, then to get the value we
-		// drop the field name from the front, trim spaces, drop the '=' sign,
-		// trim more spaces, and drop any outer single quotes.
-		// Now handles the case when two fields start off the same way - like "Friendly='Yes' AND Friend='john'"
+			// replace all instances of 'AND' and 'OR' because we already set searchUsingOR
+			whereClause = whereClause.Replace("AND", "|").Replace("OR", "|") ; 
+			string[] clauses = whereClause.ToLower().Split('|');
 		
-		char[] equalSign = {'='};
-		char[] singleQuote = {'\''};
-   		foreach (string clause in clauses)
-		{
-			<% foreach(ColumnSchema column in SourceTable.Columns) {%>		
-			if (clause.Trim().StartsWith("<%=column.Name%> ") || clause.Trim().StartsWith("<%=column.Name%>="))
+			// Here's what's going on below: Find a field, then to get the value we
+			// drop the field name from the front, trim spaces, drop the '=' sign,
+			// trim more spaces, and drop any outer single quotes.
+			// Now handles the case when two fields start off the same way - like "Friendly='Yes' AND Friend='john'"
+				
+			char[] equalSign = {'='};
+			char[] singleQuote = {'\''};
+			<% string columnName, columnNameSpace, columnNameEqual, columnNameParam; %>
+	   		foreach (string clause in clauses)
 			{
-				<%if (column.DataType.ToString() == "Guid") // fix for guid types
-				{%>
-				database.SetParameterValue(commandWrapper, "@<%=column.Name%>", new Guid(
-					clause.Replace("<%=column.Name%>","").Trim().TrimStart(equalSign).Trim().Trim(singleQuote)));
-				<%} else {%>
-				database.SetParameterValue(commandWrapper, "@<%=column.Name%>", 
-					clause.Replace("<%=column.Name%>","").Trim().TrimStart(equalSign).Trim().Trim(singleQuote));
-				<%}%>
-				continue;
+				<% foreach(ColumnSchema column in SourceTable.Columns) {%>	
+				<% columnName = column.Name.ToLower();
+				      columnNameSpace = columnName + " ";
+				      columnNameEqual = columnName + "=";
+				      columnNameParam = "@" + column.Name;
+				%>
+				if (clause.Trim().StartsWith("<%=columnNameSpace%>") || clause.Trim().StartsWith("<%=columnNameEqual%>"))
+				{
+					<%if (column.DataType.ToString() == "Guid") // fix for guid types
+					{%>
+					database.SetParameterValue(commandWrapper, "<%=columnNameParam%>", new Guid(
+						clause.Replace("<%=columnName%>","").Trim().TrimStart(equalSign).Trim().Trim(singleQuote)));
+					<%} else {%>
+					database.SetParameterValue(commandWrapper, "<%=columnNameParam%>", 
+						clause.Replace("<%=columnName%>","").Trim().TrimStart(equalSign).Trim().Trim(singleQuote));
+					<%}%>
+					continue;
+				}
+				<% } %>
+	
+				throw new ArgumentException("Unable to use this part of the where clause in this version of Find: " + clause);
 			}
-			<% } %>
-
-			throw new ArgumentException("Unable to use this part of the where clause in this version of Find: " + clause);
-		}
-
 					
 			IDataReader reader = null;
 			//Create Collection
