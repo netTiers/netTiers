@@ -1,0 +1,687 @@
+<%@ CodeTemplate Src="CommonSqlCode.cs" Inherits="MoM.Templates.CommonSqlCode" Language="C#" TargetLanguage="Text" Description="Template description here." Debug="True"%>
+
+<%@ Property Name="SourceDatabase" Type="SchemaExplorer.DatabaseSchema" Optional="True" Category="Context" Description="Database that the stored procedures should be based on." %>
+<%@ Property Name="SourceTables" Type="SchemaExplorer.TableSchemaCollection" Category="Context" Description="Tables that the stored procedures should be based on." %>
+<%@ Property Name="SourceViews" Type="SchemaExplorer.ViewSchemaCollection" Category="Context" Description="Views that the stored procedures should be based on." %>
+<%@ Property Name="EnumTables" Type="SchemaExplorer.TableSchemaCollection" Category="Context" Description="Tables that the stored procedures should be based on." %>
+
+
+<%@ Property Name="BLLGuid" Type="System.String" Category="Style" Description="BLL Project Guid" %>
+<%@ Property Name="DALGuid" Type="System.String" Category="Style" Description="DAL Project Guid" %>
+<%@ Property Name="DALSqlGuid" Type="System.String" Category="Style" Description="DAL Project Guid" %>
+<%@ Property Name="DALWSGuid" Type="System.String" Category="Style" Description="DAL Project Guid" %>
+<%@ Property Name="UTGuid" Type="System.String" Category="Context" Description="Unit tests Project Guid" %>
+<%@ Property Name="WSGuid" Type="System.String" Category="Context" Description="WebService Project Guid" %>
+<%@ Property Name="WebLibGuid" Type="System.String" Category="Context" Description="Web Library Project Guid" %>
+
+<%@ Property Name="OutputDirectory" Type="System.String" Category="General" Description="The root output folder."%>
+
+<%@ Property Name="NameSpace" Type="System.String" Category="Style" Description="Root Namespace" %>
+<%@ Property Name="BLLNameSpace" Type="System.String" Category="Data" Description="Entities Namespace." %>
+<%@ Property Name="DALNameSpace" Type="System.String" Category="Data" Description="DAL Namespace." %>
+<%@ Property Name="DALSqlNameSpace" Type="System.String" Category="Data" Description="DAL sql Namespace." %>
+<%@ Property Name="DALWSNameSpace" Type="System.String" Category="Data" Description="DAL ws Namespace." %>
+<%@ Property Name="UTNameSpace" Type="System.String" Category="Data" Description="UT Namespace." %>
+<%@ Property Name="WSNameSpace" Type="System.String" Category="Data" Description="WebService Namespace." %>
+<%@ Property Name="WebLibNameSpace" Type="System.String" Category="Data" Description="Web Library Namespace." %>
+
+<%@ Property Name="IncludeBll" Type="System.Boolean" Category="Option" Description="" %>
+
+<%@ Property Name="IncludeDALBase" Type="System.Boolean" Category="Option" Description="" %>
+<%@ Property Name="IncludeSqlClient" Type="System.Boolean" Category="Option" Description="" %>
+<%@ Property Name="IncludeWebLibrary" Type="System.Boolean" Category="Option" Description="" %>
+<%@ Property Name="IncludeWebservice" Type="System.Boolean" Category="Option" Description="" %>
+<%@ Property Name="IncludeWebserviceClient" Type="System.Boolean" Category="Option" Description="" %>
+<%@ Property Name="IncludeUnitTest" Type="MoM.Templates.UnitTestStyle" Default="NUnit" Category="General" Description="Indicates type of Unit tests to be generated." %>
+
+<%@ Property Name="SignAssembly" Type="System.Boolean" Category="Option" Description="" Default="false" %>
+
+<%@ Property Name="WebServiceUrl" Type="System.String" Category="WebService" Description="The webservice base URL. The asmx filename will be added programmatically." Default="http://localhost/Services/" %>
+<%@ Property Name="rootPathWS" Type="System.String" Category="WebService" Description="The folder where the webservice code is generated." Default="" %>
+
+<%@ Assembly Name="SchemaExplorer" %>
+<%@ Assembly Name="System.Design" %>
+<%@ Import Namespace="SchemaExplorer" %>
+<%@ Import Namespace="System.Text" %>
+<%@ Import Namespace="System.Text.RegularExpressions" %>
+<%
+	string fileName = string.Empty;
+	
+	// the assembly and documentation filename
+	if (IncludeBll)
+	{
+		fileName =  BLLNameSpace; 
+	}
+	else if (IncludeDALBase) 
+	{
+		fileName = DALNameSpace;
+	}
+	else if (IncludeSqlClient) 
+	{
+		fileName = DALSqlNameSpace; 
+	}
+	else if (IncludeUnitTest != MoM.Templates.UnitTestStyle.None)
+	{
+		fileName = UTNameSpace;
+	}
+	else if (IncludeWebservice)
+	{
+		fileName = WSNameSpace;
+	}
+	else if (IncludeWebserviceClient)
+	{
+		fileName = DALWSNameSpace;
+	}
+	else if (IncludeWebLibrary)
+	{
+		fileName = WebLibNameSpace;
+	}
+	else
+	{
+		fileName = NameSpace;
+	}	
+	
+	string BLLSubFolder = string.Empty;
+	string DALSubFolder = string.Empty;
+	string SqlClientSubFolder = string.Empty;
+	string WSClientSubFolder = string.Empty;
+	string UTSubFolder = string.Empty;
+	string WebLibSubFolder = string.Empty;
+%>
+<Project DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <PropertyGroup>
+    <ProjectType><%if (IncludeWebservice) Response.Write("Web"); else Response.Write("Local"); %></ProjectType>
+    <ProductVersion>8.0.50727</ProductVersion>
+    <SchemaVersion>2.0</SchemaVersion>
+    <ProjectGuid>{<% if (IncludeBll) Response.Write(BLLGuid); else if (IncludeDALBase) Response.Write(DALGuid); else if (IncludeSqlClient) Response.Write(DALSqlGuid); else if (IncludeUnitTest != MoM.Templates.UnitTestStyle.None) Response.Write(UTGuid); else if (IncludeWebservice) Response.Write(WSGuid);else if (IncludeWebserviceClient) Response.Write(DALWSGuid); else if (IncludeWebLibrary) Response.Write(WebLibGuid);  %>}</ProjectGuid>
+    <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
+    <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
+    <ApplicationIcon>
+    </ApplicationIcon>
+    <AssemblyKeyContainerName>
+    </AssemblyKeyContainerName>
+    <AssemblyName><%=fileName%></AssemblyName>
+    <AssemblyOriginatorKeyFile><%=NameSpace%>.snk</AssemblyOriginatorKeyFile>
+	<SignAssembly><%=SignAssembly.ToString().ToLower()%></SignAssembly>
+    <DefaultClientScript>JScript</DefaultClientScript>
+    <DefaultHTMLPageLayout>Grid</DefaultHTMLPageLayout>
+    <DefaultTargetSchema>IE50</DefaultTargetSchema>
+    <DelaySign>false</DelaySign>
+    <OutputType>Library</OutputType>
+    <RootNamespace><%=fileName%></RootNamespace>
+    <RunPostBuildEvent>OnBuildSuccess</RunPostBuildEvent>
+    <StartupObject>
+    </StartupObject>
+    <FileUpgradeFlags>
+    </FileUpgradeFlags>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
+    <OutputPath>bin\Debug\</OutputPath>
+    <AllowUnsafeBlocks>false</AllowUnsafeBlocks>
+    <BaseAddress>285212672</BaseAddress>
+    <CheckForOverflowUnderflow>false</CheckForOverflowUnderflow>
+    <ConfigurationOverrideFile>
+    </ConfigurationOverrideFile>
+    <DefineConstants>DEBUG;TRACE</DefineConstants>
+    <DocumentationFile>
+    </DocumentationFile>
+    <DebugSymbols>true</DebugSymbols>
+    <FileAlignment>4096</FileAlignment>
+    <NoStdLib>false</NoStdLib>
+    <NoWarn>
+    </NoWarn>
+    <Optimize>false</Optimize>
+    <RegisterForComInterop>false</RegisterForComInterop>
+    <RemoveIntegerChecks>false</RemoveIntegerChecks>
+    <TreatWarningsAsErrors>false</TreatWarningsAsErrors>
+    <WarningLevel>4</WarningLevel>
+<% if (IncludeUnitTest == MoM.Templates.UnitTestStyle.VSTS) 
+   { %>
+	<ProjectTypeGuids>{3AC096D0-A1C2-E12C-1390-A8335801FDAB};{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}</ProjectTypeGuids>
+<% } %>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
+    <OutputPath>bin\Release\</OutputPath>
+    <AllowUnsafeBlocks>false</AllowUnsafeBlocks>
+    <BaseAddress>285212672</BaseAddress>
+    <CheckForOverflowUnderflow>false</CheckForOverflowUnderflow>
+    <ConfigurationOverrideFile>
+    </ConfigurationOverrideFile>
+    <DefineConstants>TRACE</DefineConstants>
+    <DocumentationFile><%=fileName%>.xml</DocumentationFile>
+    <DebugSymbols>false</DebugSymbols>
+    <FileAlignment>4096</FileAlignment>
+    <NoStdLib>false</NoStdLib>
+    <NoWarn>
+    </NoWarn>
+    <Optimize>true</Optimize>
+    <RegisterForComInterop>false</RegisterForComInterop>
+    <RemoveIntegerChecks>false</RemoveIntegerChecks>
+    <TreatWarningsAsErrors>false</TreatWarningsAsErrors>
+    <WarningLevel>4</WarningLevel>
+  </PropertyGroup>
+  <ItemGroup>
+    <Reference Include="System"/>
+    <Reference Include="System.Web"/>
+    <Reference Include="System.Data"/>
+    <Reference Include="System.Design"/>
+    <Reference Include="System.Xml"/>
+    <Reference Include="System.Configuration" />
+    
+    
+    <% if (IncludeDALBase || IncludeSqlClient || IncludeWebserviceClient) {%>    
+    <Reference Include="Microsoft.Practices.EnterpriseLibrary.Common">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath><%=OutputDirectory%>\References\Microsoft.Practices.EnterpriseLibrary.Common.dll</HintPath>
+    </Reference>    
+    <Reference Include="Microsoft.Practices.EnterpriseLibrary.Data">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath><%=OutputDirectory%>\References\Microsoft.Practices.EnterpriseLibrary.Data.dll</HintPath>
+    </Reference>
+    <Reference Include="Microsoft.Practices.ObjectBuilder">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath><%=OutputDirectory%>\References\Microsoft.Practices.ObjectBuilder.dll</HintPath>
+    </Reference>
+     <%}%>
+     
+     <% if (!IncludeBll) {%>	   
+	<ProjectReference Include="..\<%=BLLNameSpace%>\<%=BLLNameSpace%>.csproj">
+      <Name><%=BLLNameSpace%></Name>
+      <Project>{<%=BLLGuid%>}</Project>
+      <Package>{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}</Package>
+    </ProjectReference>
+	<%}%>
+	
+	<% if (IncludeSqlClient || IncludeWebserviceClient || IncludeWebLibrary) { %>
+    <ProjectReference Include="..\<%=DALNameSpace%>\<%=DALNameSpace%>.csproj">
+        <Name><%=DALNameSpace%></Name>
+        <Project>{<%=DALGuid%>}</Project>
+        <Package>{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}</Package>
+    </ProjectReference>
+    <% } %>
+	
+	<% if (IncludeWebservice) { %>
+    <ProjectReference Include="..\<%=DALNameSpace%>\<%=DALNameSpace%>.csproj">
+        <Name><%=DALNameSpace%></Name>
+        <Project>{<%=DALGuid%>}</Project>
+        <Package>{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}"</Package>
+    </ProjectReference>
+	<ProjectReference Include="..\<%=DALNameSpace + ".SqlClient" %>\<%=DALNameSpace + ".SqlClient" %>.csproj">
+        <Name><%=DALNameSpace + ".SqlClient" %></Name>
+        <Project>{<%=DALSqlGuid%>}</Project>
+        <Package>{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}</Package>
+    </ProjectReference>	
+	<% } %>
+    
+    <% if (IncludeUnitTest != MoM.Templates.UnitTestStyle.None) { %>
+    
+    <!-- check the GAC ? -->
+	<% if (IncludeUnitTest == MoM.Templates.UnitTestStyle.NUnit) { %>
+    <Reference Include="nunit.framework, PublicKeyToken=96d09a1eb7f44a77">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\References\nunit.framework.dll</HintPath>
+    </Reference>
+	<% } else { // We have VSTS Unit tests %>
+	<Reference Include="Microsoft.VisualStudio.QualityTools.UnitTestFramework, Version=8.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>C:\WINNT\assembly\GAC_MSIL\Microsoft.VisualStudio.QualityTools.UnitTestFramework\8.0.0.0__b03f5f7f11d50a3a\Microsoft.VisualStudio.QualityTools.UnitTestFramework.dll</HintPath>
+    </Reference>
+	<% } // end if MoM.Templates.UnitTestStyle.NUnit %>
+                    
+    <ProjectReference Include="..\<%=DALNameSpace%>\<%=DALNameSpace%>.csproj">
+        <Name><%=DALNameSpace%></Name>
+        <Project>{<%=DALGuid%>}</Project>
+        <Package>{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}"</Package>
+    </ProjectReference>
+	<ProjectReference Include="..\<%=DALNameSpace + ".SqlClient" %>\<%=DALNameSpace + ".SqlClient" %>.csproj">
+        <Name><%=DALNameSpace + ".SqlClient" %></Name>
+        <Project>{<%=DALSqlGuid%>}</Project>
+        <Package>{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}</Package>
+    </ProjectReference>
+	     
+    <% } // end if IncludeUnitTest %>  
+    	
+	
+	
+	 <% if (IncludeWebservice || IncludeWebserviceClient) { %>
+	<Reference Include="System.Web.Services">
+      <Name>System.Web.Services</Name>
+    </Reference>
+    <Reference Include="System.Web">
+      <Name>System.Web</Name>
+    </Reference>
+    <%}%>
+	
+	</ItemGroup>
+	
+	<% if ((IncludeUnitTest != MoM.Templates.UnitTestStyle.None) || IncludeWebservice) {%>
+	<ItemGroup>
+		<None Include="<%=UTNameSpace%>.dll.config">
+			<CopyToOutputDirectory>Always</CopyToOutputDirectory>
+		</None>
+	</ItemGroup>
+	<% } %>
+		
+	<ItemGroup>
+<%	
+	// Loop on each view
+	for (int i = 0; i < SourceViews.Count; i++)
+	{
+		if (IncludeBll)
+		{%>
+			<Compile Include="<%=BLLSubFolder%>Views\<%=GetClassName(SourceViews[i].Name)%>.cs">
+			  <SubType>Code</SubType>
+			</Compile>
+			<Compile Include="<%=BLLSubFolder%>Views\<%=GetPartialClassName(GetAbstractClassName(SourceViews[i].Name))%>.cs">
+			  <DependentUpon><%=GetClassName(SourceViews[i].Name)%>.cs</DependentUpon>
+			  <SubType>Code</SubType>
+			</Compile>
+			
+			<!--
+			<Compile Include="<%=BLLSubFolder%>Views\<%=GetCollectionClassName(SourceViews[i].Name)%>.cs">
+			  <SubType>Code</SubType>
+			</Compile>	
+			<Compile Include="<%=BLLSubFolder%>Views\<%=GetPartialClassName(GetCollectionClassName(SourceViews[i].Name))%>.cs">
+			  <DependentUpon><%=GetCollectionClassName(SourceViews[i].Name)%>.cs</DependentUpon>
+			  <SubType>Code</SubType>
+			</Compile>
+			-->					
+		<%} // endif includeBll
+		
+		
+		if (IncludeDALBase)
+		{%>
+			<Compile Include="<%=DALSubFolder%>Bases\Views\<%=GetProviderBaseName(SourceViews[i].Name)%>.cs">
+			  <SubType>Code</SubType>
+			</Compile>
+			<Compile Include="<%=DALSubFolder%>Bases\Views\<%=GetPartialClassName(GetProviderBaseName(SourceViews[i].Name) + "Core")%>.cs">
+				<DependentUpon><%=GetProviderBaseName(SourceViews[i].Name)%>.cs</DependentUpon>
+			  <SubType>Code</SubType>
+			</Compile>
+		<%}
+				
+		if (IncludeSqlClient)
+		{%>
+			<Compile Include="<%=SqlClientSubFolder%>Views\Sql<%=GetProviderName(SourceViews[i].Name)%>.cs">
+			  <SubType>Code</SubType>
+			</Compile>
+			<Compile Include="<%=SqlClientSubFolder%>Views\Sql<%=GetPartialClassName(GetProviderBaseName(SourceViews[i].Name))%>.cs">
+			   <DependentUpon>Sql<%=GetProviderName(SourceViews[i].Name)%>.cs</DependentUpon>
+			   <SubType>Code</SubType>
+			</Compile>
+		<%}
+		
+		if (IncludeWebserviceClient)
+		{%>
+			<Compile Include="<%=WSClientSubFolder%>Views\Ws<%=GetProviderName(SourceViews[i].Name)%>.cs">
+			  <SubType>Code</SubType>
+			</Compile>
+			<Compile Include="<%=WSClientSubFolder%>Views\Ws<%=GetPartialClassName(GetProviderName(SourceViews[i].Name))%>.cs">
+			   <DependentUpon>Ws<%=GetProviderName(SourceViews[i].Name)%>.cs</DependentUpon>
+			   <SubType>Code</SubType>
+			</Compile>
+		<%}
+		
+		if (IncludeUnitTest != MoM.Templates.UnitTestStyle.None) { %>
+		<Compile Include="<%=UTSubFolder%>Views\<%=GetRepositoryTestClassName(SourceViews[i].Name)%>.cs">
+			<SubType>Code</SubType>
+		</Compile>					
+		<Compile Include="<%=UTSubFolder%>Views\<%=GetRepositoryTestClassName(SourceViews[i].Name)%>.generated.cs">
+			<SubType>Code</SubType>
+			<DependentUpon><%=GetRepositoryTestClassName(SourceViews[i].Name)%>.cs</DependentUpon>
+		</Compile>					
+		<%}	// endif IncludeUnitTest
+	}
+			
+	// Loop on each table
+	for (int i = 0; i < SourceTables.Count; i++)
+	{
+		if (IncludeBll)
+		{%>
+			<!--<Compile Include="<%=BLLSubFolder%><%=GetStructName(SourceTables[i].Name)%>.cs">
+			  <SubType>Code</SubType>
+			</Compile>-->
+			<Compile Include="<%=BLLSubFolder%><%=GetClassName(SourceTables[i].Name)%>.cs">
+			  <SubType>Code</SubType>
+			</Compile>
+			<Compile Include="<%=BLLSubFolder%><%=GetPartialClassName(GetAbstractClassName(SourceTables[i].Name))%>.cs">
+			  <DependentUpon><%=GetClassName(SourceTables[i].Name)%>.cs</DependentUpon>
+			  <SubType>Code</SubType>
+			</Compile>
+			
+			<!--
+			<Compile Include="<%=BLLSubFolder%><%=GetCollectionClassName(SourceTables[i].Name)%>.cs">
+			  <SubType>Code</SubType>
+			</Compile>	
+			<Compile Include="<%=BLLSubFolder%><%=GetPartialClassName(GetCollectionClassName(SourceTables[i].Name))%>.cs">
+			  <DependentUpon><%=GetCollectionClassName(SourceTables[i].Name)%>.cs</DependentUpon>
+			  <SubType>Code</SubType>
+			</Compile>
+			-->
+			
+			<% if (EnumTables.Contains(SourceTables[i])) { %>
+				<Compile Include="<%=BLLSubFolder%><%=GetEnumName(SourceTables[i].Name)%>.cs">
+				  <SubType>Code</SubType>
+				</Compile>
+			<% } %>
+		
+		<%} // endif includeBll
+		
+		if (IncludeDALBase)
+		{%>
+			<Compile Include="<%=DALSubFolder%>Bases\<%=GetProviderBaseName(SourceTables[i].Name)%>.cs">
+			  <SubType>Code</SubType>
+			</Compile>
+			
+			<Compile Include="<%=DALSubFolder%>Bases\<%=GetPartialClassName(GetProviderBaseName(SourceTables[i].Name) + "Core")%>.cs">
+			  <DependentUpon><%=GetProviderBaseName(SourceTables[i].Name)%>.cs</DependentUpon>
+			  <SubType>Code</SubType>
+			</Compile>
+		<%}
+		
+		if (IncludeSqlClient)
+		{%>
+			<Compile Include="<%=SqlClientSubFolder%>Sql<%=GetProviderName(SourceTables[i].Name)%>.cs">
+			  <SubType>Code</SubType>
+			</Compile>
+			
+			<Compile Include="<%=SqlClientSubFolder%>Sql<%=GetPartialClassName(GetProviderBaseName(SourceTables[i].Name))%>.cs">
+			  <DependentUpon>Sql<%=GetProviderName(SourceTables[i].Name)%>.cs</DependentUpon>
+			  <SubType>Code</SubType>
+			</Compile>
+					
+		<%} // endif includeSqlClient
+		
+		if ((IncludeUnitTest != MoM.Templates.UnitTestStyle.None) && !IsJunctionTable(SourceTables[i])) { %>
+			<Compile Include="<%=UTSubFolder%><%=GetRepositoryTestClassName(SourceTables[i].Name)%>.cs">
+			  	<SubType>Code</SubType>
+			</Compile>	
+			<Compile Include="<%=UTSubFolder%><%=GetRepositoryTestClassName(SourceTables[i].Name)%>.generated.cs">
+			  	<SubType>Code</SubType>
+				<DependentUpon><%=GetRepositoryTestClassName(SourceTables[i].Name)%>.cs</DependentUpon>
+			</Compile>
+		<%}	// endif IncludeUnitTest							
+		
+		if (IncludeWebserviceClient)
+		{%>
+			<Compile Include="<%=WSClientSubFolder%>Ws<%=GetProviderName(SourceTables[i].Name)%>.cs">
+			  <SubType>Code</SubType>
+			</Compile>
+			<Compile Include="<%=WSClientSubFolder%>Ws<%=GetPartialClassName(GetProviderName(SourceTables[i].Name))%>.cs">
+			  <DependentUpon>Ws<%=GetProviderName(SourceTables[i].Name)%>.cs</DependentUpon>
+			  <SubType>Code</SubType>
+			</Compile>
+		<%}	// endif IncludeWebservice
+	}// endfor SourceTables.Count
+%>		
+		<Compile Include="..\AssemblyInfo.cs">
+		  <SubType>Code</SubType>
+		</Compile>
+			
+		<% /* Include the IEntity interface. */ %>
+		<% if (IncludeBll) { %>
+			<Compile Include="<%=BLLSubFolder%>IEntity.cs">
+			  <SubType>Code</SubType>
+			</Compile>
+			<Compile Include="<%=BLLSubFolder%>IEntityId.cs">
+			  <SubType>Code</SubType>
+			</Compile>
+			<Compile Include="<%=BLLSubFolder%>IEntityKey.cs">
+			  <SubType>Code</SubType>
+			</Compile>
+			<Compile Include="<%=BLLSubFolder%>EntityBase.cs">
+			  <SubType>Code</SubType>
+			</Compile>
+			<Compile Include="<%=BLLSubFolder%>EntityBaseCore.generated.cs">
+			  <SubType>Code</SubType>
+			  <DependentUpon>EntityBase.cs</DependentUpon>
+			</Compile>
+			<Compile Include="<%=BLLSubFolder%>EntityKeyBase.cs">
+			  <SubType>Code</SubType>
+			</Compile>
+			<Compile Include="<%=BLLSubFolder%>EntityKeyBaseCore.generated.cs">
+			  <SubType>Code</SubType>
+			  <DependentUpon>EntityKeyBase.cs</DependentUpon>
+			</Compile>
+			<Compile Include="<%=BLLSubFolder%>ListBase.cs">
+			  <SubType>Code</SubType>
+			</Compile>
+			<Compile Include="<%=BLLSubFolder%>TList.cs">
+			  <SubType>Code</SubType>
+			</Compile>
+			<Compile Include="<%=BLLSubFolder%>Views\VList.cs">
+			  <SubType>Code</SubType>
+			</Compile>
+			<Compile Include="<%=BLLSubFolder%>Filter.cs">
+			  <SubType>Code</SubType>
+			</Compile>
+			<Compile Include="<%=BLLSubFolder%>EntityPropertyComparer.cs">
+			  <SubType>Code</SubType>
+			</Compile>
+			<Compile Include="<%=BLLSubFolder%>EntityHelper.cs">
+			  <SubType>Code</SubType>
+			</Compile>
+			<Compile Include="<%=BLLSubFolder%>EntityUtil.cs">
+			  <SubType>Code</SubType>
+			</Compile>
+			<Compile Include="<%=BLLSubFolder%>GenericTypeConverter.cs">
+			  <SubType>Code</SubType>
+			</Compile>
+			<Compile Include="<%=BLLSubFolder%>Validation\BrokenRule.cs">
+			  <SubType>Code</SubType>
+			</Compile>
+			<Compile Include="<%=BLLSubFolder%>Validation\BrokenRulesList.cs">
+			  <SubType>Code</SubType>
+			</Compile>
+			<Compile Include="<%=BLLSubFolder%>Validation\CommonRules.cs">
+			  <SubType>Code</SubType>
+			</Compile>
+			<Compile Include="<%=BLLSubFolder%>Validation\ValidationRuleArgs.cs">
+			  <SubType>Code</SubType>
+			</Compile>
+			<Compile Include="<%=BLLSubFolder%>Validation\ValidationRuleHandler.cs">
+			  <SubType>Code</SubType>
+			</Compile>
+			<Compile Include="<%=BLLSubFolder%>Validation\ValidationRuleInfo.cs">
+			  <SubType>Code</SubType>
+			</Compile>
+			<Compile Include="<%=BLLSubFolder%>Validation\ValidationRules.cs">
+			  <SubType>Code</SubType>
+			</Compile>
+		<% } %>
+
+		<%/* If SqlCLient is wanted, include the sql Utilities classes */ %>	
+		<% if (IncludeDALBase) {%>
+			<Compile Include="<%=DALSubFolder%>DataRepository.cs">
+			  <SubType>Code</SubType>
+			</Compile>
+			
+			<Compile Include="<%=DALSubFolder%>Bases\NetTiersProvider.cs">
+			  <SubType>Code</SubType>
+			</Compile>
+			
+			<Compile Include="<%=DALSubFolder%>Bases\NetTiersProviderCollection.cs">
+			  <SubType>Code</SubType>
+			</Compile>
+			
+			<Compile Include="<%=DALSubFolder%>Bases\NetTiersServiceSection.cs">
+			  <SubType>Code</SubType>
+			</Compile>
+			
+			<Compile Include="<%=DALSubFolder%>Bases\EntityProviderBase.cs">
+			  <SubType>Code</SubType>
+			</Compile>
+			<Compile Include="<%=DALSubFolder%>Bases\EntityProviderBaseCore.generated.cs">
+			  <SubType>Code</SubType>
+			  <DependentUpon>EntityProviderBase.cs</DependentUpon>
+			</Compile>
+			
+			<Compile Include="<%=DALSubFolder%>Bases\EntityViewProviderBase.cs">
+			  <SubType>Code</SubType>
+			</Compile>
+			<Compile Include="<%=DALSubFolder%>Bases\EntityViewProviderBaseCore.generated.cs">
+			  <SubType>Code</SubType>
+			  <DependentUpon>EntityViewProviderBase.cs</DependentUpon>
+			</Compile>
+			
+			<Compile Include="<%=DALSubFolder%>Utility.cs">
+			  <SubType>Code</SubType>
+			</Compile>
+			
+			<Compile Include="<%=DALSubFolder%>TransactionManager.cs">
+			  <SubType>Code</SubType>
+			</Compile>
+			
+			<Compile Include="<%=DALSubFolder%>IEntityProvider.cs">
+			  <SubType>Code</SubType>
+			</Compile>
+			
+			<Compile Include="<%=DALSubFolder%>IEntityViewProvider.cs">
+			  <SubType>Code</SubType>
+			</Compile>
+			
+		<% } %>
+		<% if (IncludeSqlClient) {%>
+			<Compile Include="<%=SqlClientSubFolder%>SqlNetTiersProvider.cs">
+			  <SubType>Code</SubType>
+			</Compile>
+			
+			<!--<Compile Include="<%=SqlClientSubFolder%>SqlDataRepository.cs">
+			  <SubType>Code</SubType>
+			</Compile>-->
+						
+			<EmbeddedResource Include="<%=SqlClientSubFolder%>Procedures.xml">
+		      <SubType>EmbeddedResource</SubType>
+		    </EmbeddedResource>
+			
+			<Compile Include="<%=SqlClientSubFolder%>StoredProcedureProvider.cs">
+			  <SubType>Code</SubType>
+			</Compile>			
+		<%}%>
+		
+		<% if (IncludeWebLibrary) { %>
+			<Compile Include="<%=WebLibSubFolder%>Data\BaseDataSource.cs">
+			  <SubType>Code</SubType>
+			</Compile>			
+			<Compile Include="<%=WebLibSubFolder%>Data\BaseDataSourceDesigner.cs">
+			  <SubType>Code</SubType>
+			</Compile>			
+			<Compile Include="<%=WebLibSubFolder%>Data\CustomParameter.cs">
+			  <SubType>Code</SubType>
+			</Compile>			
+			<Compile Include="<%=WebLibSubFolder%>Data\DataParameter.cs">
+			  <SubType>Code</SubType>
+			</Compile>			
+			<Compile Include="<%=WebLibSubFolder%>Data\EntityDataSource.cs">
+			  <SubType>Code</SubType>
+			</Compile>			
+			<Compile Include="<%=WebLibSubFolder%>Data\EntityDataSourceFilter.cs">
+			  <SubType>Code</SubType>
+			</Compile>			
+			<Compile Include="<%=WebLibSubFolder%>Data\EntityRelationship.cs">
+			  <SubType>Code</SubType>
+			</Compile>			
+			<Compile Include="<%=WebLibSubFolder%>Data\EntityRelationshipMember.cs">
+			  <SubType>Code</SubType>
+			</Compile>			
+			<Compile Include="<%=WebLibSubFolder%>Data\EntityTransactionModule.cs">
+			  <SubType>Code</SubType>
+			</Compile>			
+			<Compile Include="<%=WebLibSubFolder%>Data\ManyToManyListRelationship.cs">
+			  <SubType>Code</SubType>
+			</Compile>			
+			<Compile Include="<%=WebLibSubFolder%>Data\ManyToManyViewRelationship.cs">
+			  <SubType>Code</SubType>
+			</Compile>			
+			<Compile Include="<%=WebLibSubFolder%>Data\OneToManyGridRelationship.cs">
+			  <SubType>Code</SubType>
+			</Compile>			
+			<Compile Include="<%=WebLibSubFolder%>Data\OneToOneViewRelationship.cs">
+			  <SubType>Code</SubType>
+			</Compile>			
+			<Compile Include="<%=WebLibSubFolder%>Data\ProviderDataSource.cs">
+			  <SubType>Code</SubType>
+			</Compile>			
+			<Compile Include="<%=WebLibSubFolder%>Data\ProviderDataSourceDesigner.cs">
+			  <SubType>Code</SubType>
+			</Compile>			
+			<Compile Include="<%=WebLibSubFolder%>Data\ReadOnlyDataSource.cs">
+			  <SubType>Code</SubType>
+			</Compile>			
+			<Compile Include="<%=WebLibSubFolder%>Data\ReadOnlyDataSourceDesigner.cs">
+			  <SubType>Code</SubType>
+			</Compile>			
+			<Compile Include="<%=WebLibSubFolder%>UI\FormUtil.cs">
+			  <SubType>Code</SubType>
+			</Compile>			
+			<Compile Include="<%=WebLibSubFolder%>UI\FormUtilBase.generated.cs">
+			  <SubType>Code</SubType>
+			  <DependentUpon>FormUtil.cs</DependentUpon>
+			</Compile>			
+			<Compile Include="<%=WebLibSubFolder%>UI\MultiBindableTemplate.cs">
+			  <SubType>Code</SubType>
+			</Compile>			
+			<Compile Include="<%=WebLibSubFolder%>UI\MultiFormView.cs">
+			  <SubType>Code</SubType>
+			</Compile>			
+		<% } %>
+		
+		<%  if (IncludeWebservice) {%>
+			<Compile Include="<%=GetClassName(SourceDatabase.Name) + "Services.asmx"%>">
+			  <SubType>Form</SubType>
+			</Compile>
+		<% } %>
+		
+		<%/* If WebService CLient is wanted, include the web references files */ %>
+        <% if (IncludeWebserviceClient) { %>
+            <Compile Include="Web References\WsProxy\Reference.cs">
+			  <AutoGen>True</AutoGen>
+			  <DesignTime>True</DesignTime>
+			  <DependentUpon>results.discomap</DependentUpon>
+			</Compile>
+        <% } %>
+		 <AppDesigner Include="Properties\" />
+	</ItemGroup>
+	<% if (IncludeWebserviceClient) { %>
+		<ItemGroup>
+			<Compile Include="<%=WSClientSubFolder%>WsNetTiersProvider.cs">
+			  <SubType>Code</SubType>
+			</Compile>
+			
+			<!--<Compile Include="<%=WSClientSubFolder%>WsDataRepository.cs">
+			  <SubType>Code</SubType>
+			</Compile>-->
+		</ItemGroup>
+		<ItemGroup>
+			<WebReferences Include="Web References\" />
+		</ItemGroup>
+		<ItemGroup>
+			<WebReferenceUrl Include="<%=WebServiceUrl%>/<%=GetClassName(SourceDatabase.Name)%>Services.asmx">
+				<UrlBehavior>Static</UrlBehavior>
+				<RelPath>Web References\WsProxy\</RelPath>
+				<UpdateFromURL><%=WebServiceUrl%>/<%=GetClassName(SourceDatabase.Name)%>Services.asmx</UpdateFromURL>
+				<ServiceLocationURL>
+				</ServiceLocationURL>
+				<CachedDynamicPropName>
+				</CachedDynamicPropName>
+				<CachedAppSettingsObjectName>Settings</CachedAppSettingsObjectName>
+				<CachedSettingsPropName><%=GetClassName(SourceDatabase.Name)%>Application_WsProxy_<%=GetClassName(SourceDatabase.Name)%>Services</CachedSettingsPropName>
+			</WebReferenceUrl>
+		</ItemGroup>
+		<ItemGroup>
+			<None Include="Web References\WsProxy\<%=GetClassName(SourceDatabase.Name)%>Services.disco" />
+			<None Include="Web References\WsProxy\<%=GetClassName(SourceDatabase.Name)%>Services.wsdl" />
+			<None Include="Web References\WsProxy\results.discomap">
+				<Generator>MSDiscoCodeGenerator</Generator>
+				<LastGenOutput>Reference.cs</LastGenOutput>
+			</None>
+		</ItemGroup>
+	<% } %>
+  <Import Project="$(MSBuildBinPath)\Microsoft.CSHARP.Targets" />
+  <PropertyGroup>
+    <PreBuildEvent>
+    </PreBuildEvent>
+    <PostBuildEvent>
+    </PostBuildEvent>
+  </PropertyGroup>
+</Project>
