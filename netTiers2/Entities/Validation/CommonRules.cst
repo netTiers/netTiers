@@ -38,7 +38,7 @@ namespace <%=NameSpace%>.Validation
 
             if ( value == null)
             {
-               e.Description = string.Format("{0} can not be null.",e.PropertyName);
+               if (string.IsNullOrEmpty(e.Description)) e.Description = string.Format("{0} can not be null.",e.PropertyName);
                return false;
             }
 
@@ -74,7 +74,7 @@ namespace <%=NameSpace%>.Validation
             string value = (string)p.GetValue(target,null);
             if (string.IsNullOrEmpty(value))
             {
-               e.Description = e.PropertyName + " required";
+               if (string.IsNullOrEmpty(e.Description)) e.Description = e.PropertyName + " required";
                return false;
             }
             return true;
@@ -118,9 +118,7 @@ namespace <%=NameSpace%>.Validation
 
                   if (!String.IsNullOrEmpty(value) && (value.Length > max))
                   {
-                     e.Description = String.Format(
-                       "{0} can not exceed {1} characters",
-                       e.PropertyName, max.ToString());
+                     if (string.IsNullOrEmpty(e.Description)) e.Description = String.Format("{0} can not exceed {1} characters", e.PropertyName, max.ToString());
                      return false;
                   }
                   return true;
@@ -180,6 +178,67 @@ namespace <%=NameSpace%>.Validation
 
       #endregion
       
+      #region MaxWords
+      
+      public class MaxWordsRuleArgs : ValidationRuleArgs
+			{
+			      // Methods
+			      public MaxWordsRuleArgs(string propertyName, int maxLength) : base(propertyName)
+						{
+						      this._maxLength = maxLength;
+						}
+
+
+			      public override string ToString()
+						{
+						      return (base.ToString() + "!" + this._maxLength.ToString());
+						}
+
+			
+			      public int MaxLength
+						{
+						      get
+						      {
+						            return this._maxLength;
+						      }
+						}
+
+			
+			      // Fields
+			      private int _maxLength;
+			}
+
+			public static bool MaxWords(object target, ValidationRuleArgs e)
+			{
+			      CommonRules.MaxWordsRuleArgs args1 = e as CommonRules.MaxWordsRuleArgs;
+			      if (args1 == null)
+			      {
+			            throw new ArgumentException("Invalid ValidationRuleArgs. e must be of type MaxWordsRuleArgs.");
+			      }
+			      string text1 = @"\b\w+\b";
+			      PropertyInfo info1 = target.GetType().GetProperty(e.PropertyName);
+			      if (info1 == null)
+			      {
+			            throw new ArgumentException(string.Format("Property \"{0}\" not found on object \"{1}\"", e.PropertyName, target.GetType().ToString()));
+			      }
+			      if (info1.PropertyType != typeof(string))
+			      {
+			            throw new ArgumentException(string.Format("Property \"{0}\" is not of type String.", e.PropertyName));
+			      }
+			      string text2 = (string) info1.GetValue(target, null);
+			      if (Regex.Matches(text2, text1).Count > args1.MaxLength)
+			      {
+			            if (e.Description == string.Empty)
+			            {
+			                  e.Description = string.Format("{0} exceed the maximum number of words", e.PropertyName, text1);
+			            }
+			            return false;
+			      }
+			      return true;
+			}
+      
+      #endregion
+      
       #region RegexIsMatch
 
       /// <summary>
@@ -210,9 +269,7 @@ namespace <%=NameSpace%>.Validation
 
                   if (!Regex.IsMatch(value, expression))
                   {
-                     e.Description = String.Format(
-                       "{0} do not match the regular expression {1}",
-                       e.PropertyName, expression);
+                     if (string.IsNullOrEmpty(e.Description)) e.Description = String.Format("{0} do not match the regular expression {1}", e.PropertyName, expression);
                      return false;
                   }
                   return true;
@@ -493,7 +550,7 @@ namespace <%=NameSpace%>.Validation
 
             if (!result)
             {
-               e.Description = string.Format("{0} must be between {1} and {2}.", ruleArgs.PropertyName, ruleArgs.Range.MinValue, ruleArgs.Range.MaxValue);
+               if (string.IsNullOrEmpty(e.Description)) e.Description = string.Format("{0} must be between {1} and {2}.", ruleArgs.PropertyName, ruleArgs.Range.MinValue, ruleArgs.Range.MaxValue);
             }
 
             return result;
