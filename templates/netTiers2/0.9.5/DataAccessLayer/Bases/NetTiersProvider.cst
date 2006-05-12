@@ -4,15 +4,20 @@
 <%@ Import Namespace="SchemaExplorer" %>
 
 <%@ Property Name="DALNameSpace" Type="System.String" Category="Data" Description="DAL Namespace." %>
+<%@ Property Name="BLLNameSpace" Type="System.String" Category="Data" Description="DAL Namespace." %>
 <%@ Property Name="SourceTables" Type="SchemaExplorer.TableSchemaCollection" Category="Connection" Description="Tables of the system." %>
 <%@ Property Name="SourceViews" Type="SchemaExplorer.ViewSchemaCollection" Category="Connection" Description="Tables of the system." %>
 
 #region Using directives
 
 using System;
+using System.Collections.Specialized;
+using System.Configuration;
 using System.Data;
 using System.Data.Common;
 using System.Configuration.Provider;
+
+using <%= BLLNameSpace %>;
 
 #endregion
 
@@ -23,6 +28,116 @@ namespace <%=DALNameSpace%>.Bases
 	///</summary>
 	public abstract class NetTiersProvider : ProviderBase
 	{
+		private Type entityCreationalFactoryType = null;
+        private static object syncObject = new object();
+        private bool enableEntityTracking;
+        private bool enableListTracking;
+
+	    /// <summary>
+        /// Initializes the provider.
+        /// </summary>
+        /// <param name="name">The friendly name of the provider.</param>
+        /// <param name="config">A collection of the name/value pairs representing the provider-specific attributes specified in the configuration for this provider.</param>
+        /// <exception cref="T:System.ArgumentNullException">The name of the provider is null.</exception>
+        /// <exception cref="T:System.InvalidOperationException">An attempt is made to call <see cref="M:System.Configuration.Provider.ProviderBase.Initialize(System.String,System.Collections.Specialized.NameValueCollection)"></see> on a provider after the provider has already been initialized.</exception>
+        /// <exception cref="T:System.ArgumentException">The name of the provider has a length of zero.</exception>
+        public override void Initialize(string name, NameValueCollection config)
+	    {
+	        base.Initialize(name, config);
+	        
+            string entityCreationalFactoryTypeString = config["entityFactoryType"];
+
+	        lock(syncObject)
+            {
+                if (string.IsNullOrEmpty(entityCreationalFactoryTypeString))
+                    entityCreationalFactoryType = typeof(<%= BLLNameSpace %>.EntityFactory);
+
+
+                foreach (System.Reflection.Assembly assembly in AppDomain.CurrentDomain.GetAssemblies())
+                {
+                    if (assembly.FullName.Split(',')[0] == entityCreationalFactoryTypeString.Substring(0, entityCreationalFactoryTypeString.LastIndexOf('.')))
+                    {
+                        entityCreationalFactoryType = assembly.GetType(entityCreationalFactoryTypeString, false, true);
+                        break;
+                    }
+                }
+
+                if (entityCreationalFactoryType == null)
+                {
+                    System.Reflection.Assembly entityLibrary = null;
+                    //assembly still not found, try loading the assembly.  It's possible it's not referenced.
+                    try
+                    {
+                        //entityLibrary = AppDomain.CurrentDomain.Load(string.Format("{0}.dll", entityCreationalFactoryType.Substring(0, entityCreationalFactoryType.LastIndexOf('.'))));
+                        entityLibrary = System.Reflection.Assembly.Load(
+                            entityCreationalFactoryTypeString.Substring(0, entityCreationalFactoryTypeString.LastIndexOf('.')));
+                    }
+                    catch
+                    {
+                        //throws file not found exception
+                    }
+
+                    if (entityLibrary != null)
+                    {
+                        entityCreationalFactoryType = entityLibrary.GetType(entityCreationalFactoryTypeString, false, true);
+                    }
+                }
+                if (entityCreationalFactoryType == null)
+                    throw new ArgumentNullException("Could not find a valid entity factory configured in assemblies.  .netTiers can not continue.");
+                
+                bool t;
+                enableEntityTracking = bool.TryParse(config["enableEntityTracking"], out t);
+
+                bool l;
+                enableListTracking = bool.TryParse(config["enableListTracking"], out l);
+            }   
+         }
+	    
+        /// <summary>
+        /// Gets or sets the Creational Entity Factory Type.
+        /// </summary>
+        /// <value>The entity factory type.</value>
+        public virtual Type EntityCreationalFactoryType
+        {
+            get
+            {
+                return entityCreationalFactoryType;
+            }
+            set
+            {
+                entityCreationalFactoryType = value;
+            }
+        }
+
+        /// <summary>
+        /// Gets or sets the ability to track entities.
+        /// </summary>
+        /// <value>true/false.</value>
+        public virtual bool EnableEntityTracking
+        {
+            get
+            {
+                return enableEntityTracking;
+            }
+            set { enableEntityTracking = value; }
+        }
+
+        /// <summary>
+        /// Gets or sets the Entity Factory Type.
+        /// </summary>
+        /// <value>The entity factory type.</value>
+        public virtual bool EnableListTracking
+        {
+            get
+            {
+                return enableListTracking;
+            }
+            set 
+            {
+                enableListTracking = value; 
+            }
+        }
+
 		///<summary>
 		/// Indicates if the current <c cref="NetTiersProvider"/> implementation is supporting Transactions.
 		///</summary>

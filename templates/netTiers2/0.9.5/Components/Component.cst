@@ -1,0 +1,125 @@
+<%--
+ * $Id: Entity<%=NameSpace%>.<%=abstractClassName%>.cst,v 1.31 2005/06/27 12:12:42 jroland Exp $
+ * Last modified by $Author: jroland $
+ * Last modified at $Date: 2005/06/27 12:12:42 $
+ * $Revision: 1.31 $
+
+	Written By:
+		Ryan Hurdon
+	Description:
+		This script will create data access layer classes. It requires stored procedures
+		created from the procedure script. So for this code to work properly you need to run
+		the procedure template, the rowobject template, and the rowcollection template on
+		the same table. You can also optionally use the main script which will run them all
+		for you.
+--%>
+<%@ CodeTemplate Src="..\CommonSqlCode.cs" Inherits="MoM.Templates.CommonSqlCode" Language="C#" TargetLanguage="C#" Description="Component Object Class"%>
+<%@ Assembly Name="SchemaExplorer" %>
+<%@ Assembly Name="System.Design" %>
+<%@ Import Namespace="SchemaExplorer" %>
+<%@ Import Namespace="System.Collections" %>
+
+<%@ Property Name="IncludeCustoms" Type="System.Boolean" Default="True" Category="Options" Description="If true customs stored procedures will be generated as functions." %>
+<%@ Property Name="CustomNonMatchingReturnType" Type="CustomNonMatchingReturnType" Default="DataSet" Category="Options" Description="When using custom stored procedures, if the returned rows do not match the fields in an entity, a DataSet or IDataReader will be returned. Choose One.  This is useful if you've returned more than one resultset in a custom procedure; you can use a ConvertToDataSet(IDataReader) method in the Utility class to convert that to a DataSet." %>
+<%@ Property Name="CustomProcedureStartsWith" Type="System.String" Default="_{0}_" Category="Options" Description="If you include custom stored procedures, this is the pattern that NetTiers will look for your custom stored procedures. A string format will be used to match the procedure pattern.  So, {0}=TableName, {1}=StoredProc Prefix.  By default NetTiers will look at tables that starts with '_{0}_', which means it will detect the procedure _TableName_GetByBirthdate and will be detected and generated." %>
+
+<%@ Property Name="SourceTable" Type="SchemaExplorer.TableSchema" Category="Connection" Description="Table Object should be based on." %>
+<%@ Property Name="SourceTables" Type="SchemaExplorer.TableSchemaCollection" Category="Connection" Description="Tables of the sytem." %>
+
+<%@ Property Name="NameSpace" Optional="True" Type="System.String" Category="Style" Description="Object Namespace." %>
+<%@ Property Name="BLLNameSpace" Optional="True" Type="System.String" Category="Style" Description="Component Namespace." %>
+<%@ Property Name="DALNameSpace" Optional="True" Type="System.String" Category="Style" Description="DAL Namespace." %>
+	
+<%@ Property Name="ProcedurePrefix" Optional="True" Type="System.String" Category="Style" Description="Prefix for Strored Procedures" %>
+<%@ Property Name="IncludeRelations" Type="System.Boolean" Default="False" Category="Options" Description="Include Collections for Related Entities."%>
+<%@ Property Name="IncludeInsert" Type="System.Boolean" Default="True" Category="Options" Description="If true insert functions will be generated." %>
+<%@ Property Name="IncludeUpdate" Type="System.Boolean" Default="True" Category="Options" Description="If true update functions will be generated." %>
+<%@ Property Name="IncludeSave" Type="System.Boolean" Default="True" Category="Options" Description="If true combined insert/update functions will be generated." %>
+<%@ Property Name="IncludeDelete" Type="System.Boolean" Default="True" Category="Options" Description="If true delete functions will be generated." %>
+<%@ Property Name="IncludeManyToMany" Type="System.Boolean" Default="False" Category="Options" Description="If true select statements will be generated for any many to many relationship." %>
+<%@ Property Name="IncludeGetList" Type="System.Boolean" Default="True" Category="Options" Description="If true getlist functions will be generated." %>
+<%@ Property Name="IncludeGetListByFK" Type="System.Boolean" Default="True" Category="Options" Description="If true get functions will be generated." %>
+<%@ Property Name="IncludeGetListByIX" Type="System.Boolean" Default="True" Category="Options" Description="If true getlist functions will be generated." %>
+<%@ Property Name="IncludeFind" Type="System.Boolean" Default="False" Category="Options" Description="If true find functions will be generated." %>
+
+<%@ Property Name="ComponentPatternType" Optional="False" Type="MoM.Templates.ComponentPatternType" Category="Style" Description="Component Pattern Type." %>
+
+<%@ Property Name="UsePartialClass" Type="System.Boolean" Default="true" Category="General" Description="Indicates if partial class should be generated." %>
+	
+<%
+	if (SourceTables == null) SourceTables = new SchemaExplorer.TableSchemaCollection();
+	string name;
+	string today = DateTime.Now.ToLongDateString();
+
+	
+	// Name of the Abstract Class
+	string className = GetClassName(SourceTable.Name);
+	string collectionClassName = GetCollectionClassName(className);
+	string abstractClassName = GetAbstractClassName(SourceTable.Name);
+
+	// Collection of all columns in the table.
+	ColumnSchemaCollection cols = SourceTable.Columns;
+	
+	// Collection of all columns in the table that are not primary keys.
+	//ColumnSchemaCollection nonKeys = SourceTable.NonPrimaryKeyColumns;
+	
+	// Collection of all primary key columns.
+	ColumnSchemaCollection keys = SourceTable.PrimaryKey.MemberColumns;
+	
+	// Collection of ForeignKeys. Provides information about the foreign keys 
+	//(keys where the current table is the foreign table) contained in the table. 
+	TableKeySchemaCollection fkeys = SourceTable.ForeignKeys;
+	
+	//Provides information about the primary keys 
+	//(keys where the current table is the primary table) contained in the table. 
+	TableKeySchemaCollection  pkeys = SourceTable.PrimaryKeys; 
+	
+	//Provides information about the indexes contained in the table. 
+	IndexSchemaCollection indexes = SourceTable.Indexes;
+	
+	// this array store each Get BY MemberColumns in order to avoid to create doublon Get methods
+	System.Collections.ArrayList getbyKeys = new System.Collections.ArrayList();
+	
+	
+	ColumnSchemaCollection colsUpdatable = new ColumnSchemaCollection();
+	foreach (ColumnSchema column in cols)
+	{
+		if ( ! IsIdentityColumn(column) && ! IsComputed(column) )
+			colsUpdatable.Add(column);
+	}
+%>
+
+#region Using Directives
+using System;
+using System.ComponentModel;
+using System.Collections;
+using System.Xml.Serialization;
+using System.Data;
+
+using Entities = <%=BLLNameSpace%>;
+using <%=DALNameSpace%>;
+
+
+#endregion
+
+namespace <%=NameSpace%>
+{
+	
+	///<summary>
+	/// An component type implementation of the '<%=SourceTable.Name%>' table.
+	///</summary>
+	/// <remarks>
+	/// All custom implementations should be done in this class.
+	/// </remarks>
+	[Serializable]
+	public partial class <%=className%> : <%=NameSpace%>.<%=abstractClassName%>
+	{
+		
+		public <%=className%>() : base()
+		{
+		}
+
+	}//End Class
+
+
+} // end namespace

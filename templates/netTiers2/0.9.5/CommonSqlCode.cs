@@ -45,6 +45,7 @@ namespace MoM.Templates
 		private readonly static DbType[] aIntegerDbTypes = new DbType[] {DbType.Int16,DbType.Int32, DbType.Int64 };
 		
 		private string entityFormat 		= "{0}";
+		private string componentServiceFormat = "{0}Service";
 		private string entityDataFormat 	= "{0}Data";
 		private string collectionFormat 	= "{0}Collection";
 		private string genericListFormat 	= "TList<{0}>";
@@ -58,6 +59,8 @@ namespace MoM.Templates
 		private string strippedTablePrefixes		= "tbl;tbl_";
 		private string aliasFilePath 		= "";
 		private string procedurePrefix = "";
+		private string auditUserField = "";
+		private string auditDateField = "";
 		
 		private Hashtable aliases = null;
 		
@@ -72,9 +75,9 @@ namespace MoM.Templates
 		}
 		
 		
-		#region "Code style public properties"
+		#region "9. Code Style public properties"
 		
-		[Category("Code style")]
+		[Category("09. Code style - Advanced")]
 		[Description("The table prefixes to strip from the classes name, delimited by comma.")]
 		public string StrippedTablePrefixes
 		{
@@ -82,7 +85,7 @@ namespace MoM.Templates
 			set	{this.strippedTablePrefixes = value;}
 		}
 		
-		[Category("Code style")]
+		[Category("09. Code style - Advanced")]
 		[Description("The format for entity class name. Parameter {0} is replaced by the trimed table name, in Pascal case.")]
 		public string EntityFormat
 		{
@@ -97,7 +100,7 @@ namespace MoM.Templates
 			}
 		}
 		
-		[Category("Code style")]
+		[Category("09. Code style - Advanced")]
 		[Description("The format for any collection class name. Parameter {0} is replaced by the collection item class name.")]
 		public string CollectionFormat
 		{
@@ -112,7 +115,7 @@ namespace MoM.Templates
 			}
 		}
 		
-		[Category("Code style")]
+		[Category("09. Code style - Advanced")]
 		[Description("The format for the views generic class name. Parameter {0} is replaced by the name of the class that will be stored in the list.")]
 		public string GenericViewFormat
 		{
@@ -127,7 +130,7 @@ namespace MoM.Templates
 			}
 		}
 		
-		[Category("Code style")]
+		[Category("09. Code style - Advanced")]
 		[Description("The format for the tables generic class name. Parameter {0} is replaced by the name of the class that will be stored in the list.")]
 		public string GenericListFormat
 		{
@@ -144,7 +147,7 @@ namespace MoM.Templates
 		
 		
 		
-		[Category("Code style")]
+		[Category("09. Code style - Advanced")]
 		[Description("The format for any provider class name. Parameter {0} is replaced by the original class name.")]
 		public string ProviderFormat
 		{
@@ -159,7 +162,7 @@ namespace MoM.Templates
 			}
 		}
 		
-		[Category("Code style")]
+		[Category("09. Code style - Advanced")]
 		[Description("The format for any interface name. Parameter {0} is replaced by the original class name.")]
 		public string InterfaceFormat
 		{
@@ -174,7 +177,7 @@ namespace MoM.Templates
 			}
 		}
 		
-		[Category("Code style")]
+		[Category("09. Code style - Advanced")]
 		[Description("The format for any base class name. Parameter {0} is replaced by the original class name.")]
 		public string BaseClassFormat
 		{
@@ -189,7 +192,7 @@ namespace MoM.Templates
 			}
 		}
 		
-		[Category("Code style")]
+		[Category("09. Code style - Advanced")]
 		[Description("The format for any enum. Parameter {0} is replaced by the original class name.")]
 		public string EnumFormat
 		{
@@ -204,7 +207,7 @@ namespace MoM.Templates
 			}
 		}
 		
-		[Category("Code style")]
+		[Category("09. Code style - Advanced")]
 		[Description("The format for many to many methods. Parameter {0} is replaced by the secondary class name.")]
 		public string ManyToManyFormat
 		{
@@ -220,7 +223,7 @@ namespace MoM.Templates
 		}
 		
 		[Editor(typeof(System.Windows.Forms.Design.FileNameEditor), typeof(System.Drawing.Design.UITypeEditor))] 
-		[Category("Code style")]
+		[Category("09. Code style - Advanced")]
 		[CodeTemplateProperty(CodeTemplatePropertyOption.Optional)]
 		[DefaultValue("")]		
 		[Description("Optional File Path to a table/object alias file.")]
@@ -230,7 +233,7 @@ namespace MoM.Templates
 			set	{this.aliasFilePath = value;}
 		}
 		
-		[Category("Stored procedures style")]
+		[Category("08. Stored procedures - Advanced")]
 		[Description("The prefix to attach to the stored procs.")]
 		public string ProcedurePrefix
 		{
@@ -248,7 +251,6 @@ namespace MoM.Templates
 			DataSet,
 			IDataReader
 		}
-
 		#endregion
 
 		/// <summary>
@@ -330,10 +332,11 @@ namespace MoM.Templates
 		/// Get the name of the IEntityKey implementation for the specified table.
 		/// </summary>
 		public string GetKeyClassName(string tableName)
+
 		{
 			return String.Format("{0}Key", GetClassName(tableName));
 		}
-
+		
 		/// <summary>
 		/// Get a partial class name from a standard class name.
 		/// </summary>
@@ -341,6 +344,34 @@ namespace MoM.Templates
 		public string GetPartialClassName(string className)
 		{
 			return string.Format("{0}.generated", className);
+		}
+		
+		
+		/// <summary>
+		/// Get a service based class name from a standard class name.
+		/// </summary>
+		/// <param name="className">The normal class name.</param>
+		public string GetServiceClassName(string className)
+		{
+			return string.Format("{0}Service", GetClassName(className));
+		}
+
+		/// <summary>
+		/// Get a partial class name from a standard class name.
+		/// </summary>
+		/// <param name="className">The normal class name.</param>
+		public string GetAbstractServiceClassName(string className)
+		{
+			return string.Format("{0}ServiceBase", GetClassName(className));
+		}
+		
+		/// <summary>
+		/// Get the proxy class name of the Data Repository.
+		/// </summary>
+		/// <param name="className">The normal class name.</param>
+		public string GetProxyClassName(string className)
+		{
+			return string.Format("{0}Services", className);
 		}
 		
 		/// <summary>
@@ -364,7 +395,7 @@ namespace MoM.Templates
 		/// This function get the alias name for this object name.
 		/// </summary>
 		/// <remark>This function should not be called directly, but via the GetClassName.</remark>
-		private string GetAliasName(string tableName)
+		public string GetAliasName(string tableName)
 		{
 			tableName = GetCleanName(tableName);
 			
@@ -403,6 +434,15 @@ namespace MoM.Templates
 			return tableName;
 		}
 				
+		/// <summary>
+		///  Create a class name from a table name, for a business object.
+		/// Is an alias file is present, use the defined mapping.
+		/// Otherwise, use the cleaned table name.
+		/// </summary>
+		public string GetClassName(TableSchema tableName)
+		{
+			return GetClassName(tableName.Name);
+		}
 		
 		/// <summary>
 		///  Create a class name from a table name, for a business object.
@@ -707,12 +747,51 @@ namespace MoM.Templates
 		}
 
 		/// <summary>
+		/// Gets the expression used to set the property value in an entity.  Specificly used to handle nullable columns.
+		/// </summary>
+		/// <param name="column">The column object </param>
+		/// <param name="containerName">The object that has a string indexer for the column (DataRow, IDataReader, etc)</param>
+		/// <param name="objectName">The object instance name.</param>
+		/// <param name="indent">How tabs should the code be indented</param>
+		/// <returns>An expression that sets a temporary variable with a null value if possible.</returns>
+		/// <remarks>This method should not append the trailing semicolon.</remarks>
+		public string GetKeyIfNullable(ColumnSchema column, string objectName)
+		{
+			if ( column.AllowDBNull )
+			{
+				// nullable reference types (strings), set to null if null retrieved from database
+				return string.Format("{2} tmp = {1} ?? {1}",
+					/*0*/GetObjectPropertyAccessor(column,objectName),
+					/*1*/GetCSDefaultByType(column));
+			}
+			return "";
+		}
+		
+		/// <summary>
 		/// Creates a string that reprensents an entity and its property.
 		/// </summary>
 		/// <param name="objectName">Name of the object.</param>
 		/// <param name="column">Name of the column that define the property.</param>
 		public string GetObjectPropertyAccessor(ColumnSchema column, string objectName)
 		{
+			return objectName + "." + GetPropertyName(column.Name);
+		}
+		
+		/// <summary>
+		/// Creates a string that reprensents an entity and its property.
+		/// </summary>
+		/// <param name="objectName">Name of the object.</param>
+		/// <param name="column">Name of the column that define the property.</param>
+		public string GetObjectPropertyAccessorWithDefault(ColumnSchema column, string objectName)
+		{
+			
+			if ( column.AllowDBNull )
+			{
+				// nullable reference types (strings), set to null if null retrieved from database
+				return string.Format("({0} ?? {1})",
+					/*0*/GetObjectPropertyAccessor(column,objectName),
+					/*1*/GetCSDefaultByType(column));
+			}
 			return objectName + "." + GetPropertyName(column.Name);
 		}
 		
@@ -963,6 +1042,121 @@ namespace MoM.Templates
 		}
 		#endregion GetColumnXmlComment
 		
+		#region Component/Composition Helper Methods
+			/// <summary>
+		/// Get the member variable styled version of a name
+		/// </summary>
+		/// <param name="column">The ColumnSchema with the name to be cleaned</param>
+		/// <returns>the cleaned, camelcased name </returns>
+		public string GetComponentMemberVariableName(ColumnSchema column)
+		{
+			return GetCleanParName(column.Name);
+		}
+		
+		/// <summary>
+		/// Get the member variable styled version of a name
+		/// </summary>
+		/// <param name="name">name to be cleaned</param>
+		/// <returns>the cleaned, camelcased name</returns>
+		public string GetComponentMemberVariableName(string name)
+		{
+			return GetCleanParName(name);
+		}
+		
+		public string GetForeignKeyCompositeName (string fk, TableKeySchemaCollection fkeys)
+		{
+			foreach (TableKeySchema key in fkeys)
+			{
+				foreach (ColumnSchema col in key.ForeignKeyMemberColumns)
+				{
+					if (col.Name == fk)
+					{
+						return GetPropertyName(GetClassName(key.PrimaryKeyTable.Name));
+					}
+				}
+			}
+			return "//TODO: UNKNOWN, COULD NOT FIND FOREIGN KEY COMPOSITE NAME \t";
+		}
+				
+		public string GetCompositeClassName(string fk, TableKeySchemaCollection fkeys)
+		{
+			foreach (TableKeySchema key in fkeys)
+			{
+				foreach (ColumnSchema col in key.ForeignKeyMemberColumns)
+				{
+					if (col.Name == fk)
+					{
+						return GetClassName(key.PrimaryKeyTable.Name);
+					}
+				}
+			}
+			return "//TODO: UNKNOWN, COULD NOT FIND COMPOSITE CLASS NAME \t" ;
+		}
+		
+		public string GetCompositeMemberVariableName(string fk, TableKeySchemaCollection fkeys)
+		{
+			foreach (TableKeySchema key in fkeys)
+			{
+				foreach (ColumnSchema col in key.ForeignKeyMemberColumns)
+				{
+					if (col.Name == fk)
+					{
+						return GetComponentMemberVariableName(GetClassName(key.PrimaryKeyTable.Name));
+					}
+				}
+			}
+			return "//TODO: UNKNOWN, COULD NOT FIND COMPOSITE MEMBER VARIABLE NAME\t ";
+		}
+		
+				
+		public string GetCompositePropertyName(string fk, TableKeySchemaCollection fkeys)
+		{
+			foreach (TableKeySchema key in fkeys)
+			{
+				foreach (ColumnSchema col in key.ForeignKeyMemberColumns)
+				{
+					if (col.Name == fk)
+					{
+						return GetPropertyName(GetClassName(key.PrimaryKeyTable.Name));
+					}
+				}
+			}
+			return "//TODO: UNKNOWN, COULD NOT FIND COMPOSITE PROPERTY NAME\t ";
+		}
+
+		public string GetFKPropertyName(string fk, TableKeySchemaCollection fkeys)
+		{
+			foreach (TableKeySchema key in fkeys)
+			{
+				foreach (ColumnSchema col in key.ForeignKeyMemberColumns)
+				{
+					if (col.Name == fk)
+					{
+						return GetPropertyName(GetClassName(key.PrimaryKeyMemberColumns[0].Name));
+					}
+				}
+			}
+			return "//TODO: UNKNOWN, COULD NOT FIND FK COLUMN PROPERTY NAME\t ";
+		}
+		#endregion 
+
+/*
+		/// <summary>
+		/// Transform the list of sql parameters to a list of comment param for a method
+		/// </summary>
+		public string TransformStoredProcedureInputsToMethodComments(ParameterSchemaCollection inputParameters)
+		{
+			StringBuilder temp = new StringBuilder();
+			for(int i=0; i<inputParameters.Count; i++)
+			{
+				temp.AppendFormat("{2}\t/// <param name=\"{0}\"> A <c>{1}</c> instance.</param>", GetPrivateName(inputParameters[i].Name.Substring(1)), GetCSType(inputParameters[i]).Replace("<", "&lt;").Replace(">", "&gt;"), Environment.NewLine);
+			}
+			
+			return temp.ToString();
+		}
+		
+*/
+
 		/// <summary>
 		/// Cleans the given text so that it can be used in a [DescriptionAttribute] attribute in C# code.
 		/// </summary>
@@ -1072,6 +1266,59 @@ namespace MoM.Templates
 			//return (bool)column.ExtendedProperties["CS_IsIdentity"].Value;
 		} 
 		
+		/// <summary>
+		/// Get's the default value of a column
+		/// </summary>
+		/// <param name="column">DB table column to be checked</param>
+		/// <returns>string representation of the default value</returns>
+		public string GetColumnDefaultValue(ColumnSchema column)
+		{
+			// for sql server
+			if (column.ExtendedProperties["CS_Default"] != null)
+			{
+				string value = column.ExtendedProperties["CS_Default"].Value.ToString().ToLower();
+				value = value.Replace("getdate()", "DateTime.Now");
+				value = value.Replace("newid()", "Guid.NewGuid()");
+				value = value.TrimStart('(');
+				value = value.TrimEnd(')');
+				if (!IsNumericType(column) || value.IndexOf("DateTime.Now") > -1 || value.IndexOf("Guid.NewGuid()") > -1)
+					value = string.Format("\"{0}\"", value);
+				return value;
+			}
+				
+			// for access
+			if (column.ExtendedProperties["DefaultValue"] != null)
+				return column.ExtendedProperties["DefaultValue"].Value.ToString();
+			
+			// test mysql
+			
+			return "";			
+		} 
+		
+		/// <summary>
+		/// Determines if the column is a numeric column or not.
+		/// </summary>
+		/// <param name="column">DB table column to be checked</param>
+		/// <returns>true when Numeric, otherwise false</returns>
+		public bool IsNumericType(ColumnSchema column)
+		{
+			switch (column.NativeType.ToLower())
+			{
+				case "bigint":
+				case "bit":
+				case "decimal":
+				case "float":
+				case "int":
+				case "money":
+				case "numeric":
+				case "real":
+				case "smallint":
+				case "smallmoney":
+				case "tinyint": return true;
+				default: return false;
+			}
+		}
+
 		/// <summary>
 		/// Check if a column is read-only.
 		/// </summary>
@@ -1465,6 +1712,24 @@ namespace MoM.Templates
 			return temp.ToString();
 		}
 		
+		public string TransformStoredProcedureInputsToMethod(bool startWithComa, CommandSchema command)
+		{
+			string temp = string.Empty;
+			
+			for(int i=0; i<command.InputParameters.Count; i++)
+			{
+				temp += (temp.Length > 0) || startWithComa ? ", " : "";
+				temp += GetCSType(command.InputParameters[i]) + " " + GetPrivateName(command.InputParameters[i].Name.Substring(1));
+			}
+			for(int j=0; j < command.InputOutputParameters.Count; j++)
+			{
+				temp += (temp.Length > 0) || (startWithComa)  ? ", out " : " out ";
+				temp += GetCSType(command.InputOutputParameters[j]) + " " + GetPrivateName(command.InputOutputParameters[j].Name.Substring(1));
+			}
+			
+			return temp;
+		}
+		
 		/// <summary>
 		/// Transform the list of sql parameters to a list of ExecuteXXXXX parameters.
 		/// </summary>
@@ -1498,10 +1763,28 @@ namespace MoM.Templates
 			StringBuilder temp = new StringBuilder();
 			for(int i=0; i<inputParameters.Count; i++)
 			{
-				temp.AppendFormat("{2}\t\t\t/// <param name=\"{0}\"> A <c>{1}</c> instance.</param>", GetPrivateName(inputParameters[i].Name.Substring(1)), GetCSType(inputParameters[i]).Replace("<", "&lt;").Replace(">", "&gt;"), Environment.NewLine);
+				temp.AppendFormat("{2}\t\t\t/// <param name=\"{0}\"> A <c>{1}</c> instance.</param>", GetPrivateName(inputParameters[i].Name.Substring(1)), GetCSType(inputParameters[i]).Replace("<", "&lt;").Replace(">", "&gt;"), "\r\n");
 			}
 			
 			return temp.ToString();
+		}
+
+		/// <summary>
+		/// Transform the list of sql parameters to a list of comment param for a method
+		/// </summary>
+		public string TransformStoredProcedureInputsToMethodComments(CommandSchema command)
+		{
+			string temp = string.Empty;
+			for(int i=0; i<command.InputParameters.Count; i++)
+			{
+				temp += string.Format("{2}\t\t\t/// <param name=\"{0}\"> A <c>{1}</c> instance.</param>", GetPrivateName(command.InputParameters[i].Name.Substring(1)), GetCSType(command.InputParameters[i]), "\r\n");
+			}
+			for(int i=0; i<command.InputOutputParameters.Count; i++)
+			{
+				temp += string.Format("{2}\t\t\t/// <param name=\"{0}\"> An output  <c>{1}</c> instance.</param>", GetPrivateName(command.InputOutputParameters[i].Name.Substring(1)), GetCSType(command.InputOutputParameters[i]), Environment.NewLine);
+			}
+			
+			return temp;
 		}
 
 		#endregion
@@ -1566,7 +1849,7 @@ namespace MoM.Templates
 			StringBuilder temp = new StringBuilder();
 			for(int i=0; i<outputParameters.Count; i++)
 			{
-				temp.AppendFormat("{2}\t/// <param name=\"{0}\"> A <c>{1}</c> instance.</param>", GetPrivateName(outputParameters[i].Name.Substring(1)), GetCSType(outputParameters[i]).Replace("<", "&lt;").Replace(">", "&gt;"), Environment.NewLine);
+				temp.AppendFormat("{2}\t\t\t/// <param name=\"{0}\"> A <c>{1}</c> instance.</param>", GetPrivateName(outputParameters[i].Name.Substring(1)), GetCSType(outputParameters[i]).Replace("<", "&lt;").Replace(">", "&gt;"), Environment.NewLine);
 			}
 			
 			return temp.ToString();
@@ -1633,6 +1916,29 @@ namespace MoM.Templates
 		/// 
 		/// </summary>
 		/// <param name="columns"></param>
+		/// <param name="accessor"></param>
+		public string GetFunctionThisParametersWithNullable(ColumnSchemaCollection columns, string accessor)
+		{
+			StringBuilder output = new StringBuilder();
+			for (int i = 0; i < columns.Count; i++)
+			{
+				if (!columns[i].AllowDBNull)
+					output.AppendFormat("{1}.{0}", GetPropertyName(columns[i].Name), accessor);
+				else
+					output.AppendFormat("({1}.{0} ?? {2})", GetPropertyName(columns[i].Name), accessor, GetCSDefaultByType(columns[i]));
+				
+				if (i < columns.Count - 1)
+				{
+					output.Append(", ");
+				}
+			}
+			return output.ToString();
+		}
+
+		/// <summary>
+		/// 
+		/// </summary>
+		/// <param name="columns"></param>
 		/// <param name="objectName"></param>
 		public string GetFunctionObjectParameters(ColumnSchemaCollection columns, String objectName)
 		{
@@ -1640,12 +1946,33 @@ namespace MoM.Templates
 			for (int i = 0; i < columns.Count; i++)
 			{
 				output.AppendFormat("{1}.{0}", GetPropertyName(columns[i].Name), objectName);
+
 				if (i < columns.Count - 1)
 				{
 					output.Append(", ");
 				}
 			}
 			return output.ToString();
+		}
+
+		/// <summary>
+		/// Gets the <see cref="System.ComponentModel.DataObjectField" /> Ctor Params
+		/// based on the schema information on a column.
+		/// The 4 params are 
+		///	1. indicates whether the field is the primary key 
+		/// 2. whether the field is a database identity field
+		/// 3. whether the field can be null
+		/// 4. sets the length of the field
+		/// </summary>
+		/// <param name="column">Column</param>
+		/// <returns>The ctor params for the <see cref="System.ComponentModel.DataObjectField" /></returns>
+		public string GetDataObjectFieldCallParams(ColumnSchema column)
+		{
+			return string.Format("{0},{1},{2},{3}",
+				/*0*/ column.IsPrimaryKeyMember.ToString().ToLower(),
+				/*1*/ IsIdentityColumn(column).ToString().ToLower(),
+				/*2*/ column.AllowDBNull.ToString().ToLower(),
+				/*3*/ column.Size);
 		}
 
 		/// <summary>
@@ -1702,161 +2029,6 @@ namespace MoM.Templates
 			}
 		}
 
-/*
-		/// <summary>
-		/// Convert database types to C# types
-		/// </summary>
-		/// <param name="dataType">Column or parameter data type, as a string</param>
-		/// <returns>The C# (rough) equivalent of the field's data type</returns>
-		public string GetCSType(string dataType)
-		{
-			try { return GetCSType((DbType)Enum.Parse(typeof(DbType), dataType)); }
-			catch { return "object"; }
-		}
-*/
-
-
-		/* NULLABLE TYPES, has never been used ???
-		
-		/// <summary>
-		/// Convert db types to NullableTypes
-		/// </summary>
-		/// <param name="dataType">Column or parameter data type</param>
-		/// <returns>The NullableType (rough) equivalent of the field's data type</returns>
-		[Obsolete("has never been used ?", true)]
-		public string GetNullableType(DbType dataType)
-		{
-			switch (dataType)
-			{
-				case DbType.AnsiString: return "NullableString";
-				case DbType.AnsiStringFixedLength: return "NullableString";
-				case DbType.Binary: return "NullableByte[]";
-				case DbType.Boolean: return "NullableBoolean";
-				case DbType.Byte: return "NullableByte";
-				case DbType.Currency: return "NullableDecimal";
-				case DbType.Date: return "NullableDateTime";
-				case DbType.DateTime: return "NullableDateTime";
-				case DbType.Decimal: return "NullableDecimal";
-				case DbType.Double: return "NullableDouble";
-				case DbType.Guid: return "NullableGuid";
-				case DbType.Int16: return "NullableInt16";
-				case DbType.Int32: return "NullableInt32";
-				case DbType.Int64: return "NullableInt64";
-				case DbType.Object: return "object";
-				case DbType.Single: return "NullableSingle";
-				case DbType.String: return "NullableString";
-				case DbType.StringFixedLength: return "NullableString";
-				case DbType.Time: return "NullableDateTime";
-				case DbType.VarNumeric: return "NullableDecimal";
-					//the following won't be used
-					//		case DbType.SByte: return "NullableSByte";
-					//		case DbType.UInt16: return "NullableUShort";
-					//		case DbType.UInt32: return "NullableUInt";
-					//		case DbType.UInt64: return "NullableULong";
-				default: return "object";
-			}
-		}
-
-		
-		/// <summary>
-		/// Convert db types to NullableTypes
-		/// </summary>
-		/// <param name="field">Column or parameter</param>
-		/// <returns>The NullableType (rough) equivalent of the field's data type</returns>
-		public string GetNullableType(DataObjectBase field)
-		{
-			return GetNullableType(field.DataType);
-		}
-
-		/// <summary>
-		/// Convert db types to NullableTypes
-		/// </summary>
-		/// <param name="dataType">Column or parameter data type, as a string</param>
-		/// <returns>The NullableType (rough) equivalent of the field's data type</returns>
-		public string GetNullableType(string dataType)
-		{
-			try { return GetNullableType((DbType)Enum.Parse(typeof(DbType), dataType)); }
-			catch { return "object"; }
-		}
-		*/
-
-
-/*
-		/// <summary>
-		/// Get a default value for a given field's data type
-		/// </summary>
-		/// <param name="field">The field for which to get the default value</param>
-		/// <returns>A string representation of the default value</returns>
-		public string GetDefaultByType(DataObjectBase field)
-		{
-			return GetDefaultByType(field.DataType);
-		}
-
-		/// <summary>
-		/// Get a default value for a given data type name
-		/// </summary>
-		/// <param name="dataType">String name of the data type for which to get the default value<</param>
-		/// <returns>A string representation of the default value</returns>
-		public string GetDefaultByType(string dataType)
-		{
-			try { return GetDefaultByType((DbType)Enum.Parse(typeof(DbType), dataType)); }
-			catch { return "null"; }
-		}
-
-		/// <summary>
-		/// Get a default value for a given data type
-		/// </summary>
-		/// <param name="dataType">Data type for which to get the default value<</param>
-		/// <returns>A string representation of the default value</returns>
-		public string GetDefaultByType(DbType dataType)
-		{
-			switch (dataType)
-			{
-				case DbType.AnsiString: return "string.Empty";
-				case DbType.AnsiStringFixedLength: return "string.Empty";
-				//Answer modified was just 0
-				case DbType.Binary: return "0";
-				case DbType.Boolean: return "false";
-				
-				//Answer modified was just 0
-				case DbType.Byte: 
-					return "(byte)0"; 
-					//return "{ 0 }"; 
-				
-				case DbType.Currency: return "0";
-				case DbType.Date: return "DateTime.MaxValue";
-				case DbType.DateTime: return "DateTime.MaxValue";
-				case DbType.Decimal: return "0";
-				case DbType.Double: return "0";
-
-				case DbType.Guid: 
-					return "0";
-
-				case DbType.Int16: 
-					return "0";
-
-				case DbType.Int32: 
-					return "0";
-
-				case DbType.Int64: return "0";
-				case DbType.Object: return "null";
-				case DbType.Single: return "0";
-				case DbType.String: return "0";
-				case DbType.StringFixedLength: return "string.Empty";
-				case DbType.Time: return "DateTime.MaxValue";
-				case DbType.VarNumeric: 
-					return "0";
-					//the following won't be used
-					//		case DbType.SByte: return "0";
-					//		case DbType.UInt16: return "0";
-					//		case DbType.UInt32: return "0";
-					//		case DbType.UInt64: return "0";
-				default: return "null";
-			}
-		}
-	
-*/
-		
 		/// <summary>
 		/// 
 		/// </summary>
@@ -2468,24 +2640,22 @@ namespace MoM.Templates
 		/// <param name="table">The table</param>
 		public bool IsMatching(CommandSchema command, TableSchema table)
 		{
-			if (command.CommandResults.Count != 1)
-			{
-				return false;
-			}
-			
 			if (command.CommandResults[0].Columns.Count != table.Columns.Count)
 			{
 				return false;
 			}
 			
-			for(int i=0; i<table.Columns.Count; i++) //  CommandResultSchema cmdResult in command.CommandResults)
+			for(int i=0; i<table.Columns.Count; i++)
 			{
-				if (command.CommandResults[0].Columns[i].Name.ToLower() != table.Columns[i].Name.ToLower())
+				if (IsComputed(table.Columns[i]))
+					continue;
+			
+				if (!command.CommandResults[0].Columns.Contains(table.Columns[i].Name.ToLower()))
 				{
 					return false;
 				}
 				
-				// manage the xml column type deparately
+				// manage the xml column type separately
 				if ( table.Columns[i].NativeType == "xml" && (command.CommandResults[0].Columns[i].NativeType == "sql_variant" || command.CommandResults[0].Columns[i].NativeType == "ntext"))
 				{
 					continue;
@@ -2505,11 +2675,6 @@ namespace MoM.Templates
 		/// <param name="view">The view</param>
 		public bool IsMatching(CommandSchema command, ViewSchema view)
 		{
-			if (command.CommandResults.Count != 1)
-			{
-				return false;
-			}
-			
 			if (command.CommandResults[0].Columns.Count != view.Columns.Count)
 			{
 				return false;
@@ -2769,8 +2934,8 @@ namespace MoM.Templates
 					CollectionInfo collectionInfo = new CollectionInfo();
 					collectionInfo.PkColNames = GetColumnNames(table.PrimaryKey.MemberColumns);
 					collectionInfo.PkIdxName = keyschema.Name;
-					collectionInfo.PrimaryTable = table.Name;
-					collectionInfo.SecondaryTable = keyschema.ForeignKeyTable.Name;
+					collectionInfo.PrimaryTable = GetClassName(table);
+					collectionInfo.SecondaryTable = GetClassName(keyschema.ForeignKeyTable);
 					collectionInfo.SecondaryTablePkColNames = GetColumnNames(keyschema.ForeignKeyTable.PrimaryKey.MemberColumns);
 					collectionInfo.CollectionRelationshipType = RelationshipType.OneToOne;
 					collectionInfo.CleanName = GetClassName(collectionInfo.SecondaryTable);//GetClassName(keyschema.ForeignKeyTable.Name);		
@@ -2788,19 +2953,16 @@ namespace MoM.Templates
 					CollectionInfo collectionInfo = new CollectionInfo();
 					collectionInfo.PkColNames = GetColumnNames(table.PrimaryKey.MemberColumns);
 					collectionInfo.PkIdxName = keyschema.Name;
-					collectionInfo.PrimaryTable = table.Name;
-					collectionInfo.SecondaryTable = keyschema.ForeignKeyTable.Name;
+					collectionInfo.PrimaryTable = GetClassName(table);
+					collectionInfo.SecondaryTable = GetClassName(keyschema.ForeignKeyTable);
 					collectionInfo.SecondaryTablePkColNames = GetColumnNames(keyschema.ForeignKeyTable.PrimaryKey.MemberColumns);
 					collectionInfo.CollectionRelationshipType = RelationshipType.OneToMany;
 					collectionInfo.CleanName = GetClassName(collectionInfo.SecondaryTable); //GetClassName(keyschema.ForeignKeyTable.Name);
 					collectionInfo.CollectionName = GetCollectionPropertyName(collectionInfo.SecondaryTable);
 					collectionInfo.CollectionTypeName = GetCollectionClassName(collectionInfo.SecondaryTable);
 					collectionInfo.CallParams = GetFunctionRelationshipCallParameters(table.PrimaryKey.MemberColumns);
-					//collectionInfo.CallParams = GetFunctionRelationshipCallParameters(keyschema.ForeignKeyMemberColumns);
 					collectionInfo.GetByKeysName = "GetBy" + GetKeysName(keyschema.ForeignKeyMemberColumns);
 					collectionInfo.TableKey = keyschema;
-					//collectionInfo.GetByKeysName = "GetBy" + GetKeysName(keyschema.ForeignKeyTable.PrimaryKey.MemberColumns);
-				
 					_collections.Add(collectionInfo);
 				}
 		    }
@@ -2825,10 +2987,10 @@ namespace MoM.Templates
 					
 							collectionInfo.PkColNames = GetColumnNames(table.PrimaryKey.MemberColumns);
 							collectionInfo.PkIdxName = junctionTableKey.Name;
-							collectionInfo.PrimaryTable = table.Name;
-							collectionInfo.SecondaryTable = junctionTableKey.PrimaryKeyTable.Name;
+							collectionInfo.PrimaryTable = GetClassName(table);
+							collectionInfo.SecondaryTable = GetClassName(junctionTableKey.PrimaryKeyTable);
 							collectionInfo.SecondaryTablePkColNames = GetColumnNames(junctionTableKey.PrimaryKeyTable.PrimaryKey.MemberColumns);
-							collectionInfo.JunctionTable = junctionTable.Name;
+							collectionInfo.JunctionTable = GetClassName(junctionTable);
 							collectionInfo.CollectionName = string.Format("{0}_From_{1}", GetCollectionPropertyName( collectionInfo.SecondaryTable), GetClassName(collectionInfo.JunctionTable)); //GetManyToManyName(GetCollectionClassName( collectionInfo.SecondaryTable), collectionInfo.JunctionTable);
 							collectionInfo.CollectionTypeName = GetCollectionClassName( collectionInfo.SecondaryTable);
 							collectionInfo.CollectionRelationshipType = RelationshipType.ManyToMany;
@@ -3202,6 +3364,18 @@ namespace MoM.Templates
 		NUnit,
 		/// <summary>VSTS test should be gerenated.</summary>
 		VSTS
+	}
+	#endregion
+	
+	#region ComponentPatternType
+	public enum ComponentPatternType
+	{
+		/// <summary>No Component Pattern Generation should be included.</summary>
+		None,
+		/// <summary>A Service Layer Pattern should be included.</summary>
+		ServiceLayer,
+		/// <summary>A Domain Model Pattern Generation should be included.</summary>
+		DomainModel
 	}
 	#endregion
 }

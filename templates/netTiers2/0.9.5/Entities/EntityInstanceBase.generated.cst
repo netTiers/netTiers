@@ -139,6 +139,11 @@ namespace <%=NameSpace%>
 		/// </summary>
 		private <%=structName%> backupData; 
 		
+		/// <summary>
+		/// 	Key used if Tracking is Enabled for the <see cref="EntityLocator" />.
+		/// </summary>
+		private string entityTrackingKey;
+		
 		[NonSerialized]
 		private TList<<%=className%>> parentCollection;
 		private bool inTxn = false;
@@ -214,14 +219,18 @@ namespace <%=NameSpace%>
 		/// <param name="column">The <see cref="<%=className%>Column"/> which has raised the event.</param>
 		public void OnColumnChanging(<%=className%>Column column)
 		{
+			if(IsEntityTracked && EntityState != EntityState.Added)
+				EntityManager.StopTracking(EntityTrackingKey);
+				
+			if (!suppressEntityEvents)
+			{
 			<%=className%>EventHandler handler = ColumnChanging;
 			if(handler != null)
 			{
 				handler(this, new <%=className%>EventArgs(column));
 			}
-	
 		}
-		
+		}
 		
 		/// <summary>
 		/// Raises the <see cref="ColumnChanged" /> event.
@@ -229,6 +238,8 @@ namespace <%=NameSpace%>
 		/// <param name="column">The <see cref="<%=className%>Column"/> which has raised the event.</param>
 		public void OnColumnChanged(<%=className%>Column column)
 		{
+			if (!suppressEntityEvents)
+			{
 			<%=className%>EventHandler handler = ColumnChanged;
 			if(handler != null)
 			{
@@ -237,7 +248,7 @@ namespace <%=NameSpace%>
 			
 			// warn the parent list that i have changed
 			OnEntityChanged();
-	
+			}
 		} 
 		#endregion
 				
@@ -293,9 +304,9 @@ namespace <%=NameSpace%>
 				this.EntityId.<%= GetPropertyName(cols[x]) %> = value;
 				<% } %>
 				//this._isDirty = true;
-				if (this.state == EntityState.Unchanged)
+				if (this.currentEntityState == EntityState.Unchanged)
 				{
-					this.state = EntityState.Changed;
+					this.currentEntityState = EntityState.Changed;
 				}
 				OnColumnChanged(<%=className%>Column.<%=GetPropertyName(cols[x]) %>);
 				OnPropertyChanged(<%=className%>Column.<%=GetPropertyName(cols[x]) %>.ToString());
@@ -324,7 +335,7 @@ namespace <%=NameSpace%>
 		%>
 
 		<% if (IncludeGetListByFK) { %>
-		#region "Source Foreign Key Property"
+		#region Source Foreign Key Property
 				
 		<%	//Generate a Source property for each foreign key relation		
 		foreach(TableKeySchema tableKey in SourceTable.ForeignKeys)
@@ -343,8 +354,7 @@ namespace <%=NameSpace%>
 		/// </summary>
 		/// <value>The source <%=pkClassName%> for <%=fkPropertyName%>.</value>
 		[Browsable(false), BindableAttribute()]
-		public <%=pkClassName%> <%=fkPropertyName%>Source
-		
+		public virtual <%=pkClassName%> <%=fkPropertyName%>Source
       	{
             get { return this.<%=memberVarName%>; }
             set { this.<%=memberVarName%> = value; }
@@ -354,7 +364,7 @@ namespace <%=NameSpace%>
 		#endregion
 		<%}// IncludeGetListByFK%>	
 			
-
+		#region Table Meta Data
 		/// <summary>
 		///		The name of the underlying database table.
 		/// </summary>
@@ -378,6 +388,8 @@ namespace <%=NameSpace%>
 					} %>};
 			}
 		}
+		#endregion 
+		
 <% 
 if(IncludeRelations) {
 WriteRelationshipPropertyString();
@@ -386,6 +398,9 @@ WriteRelationshipPropertyString();
 		
 		#endregion
 		
+		#region IEditableObject
+		
+		#region  CancelAddNew Event
 		/// <summary>
         /// The delegate for the CancelAddNew event.
         /// </summary>
@@ -404,16 +419,16 @@ WriteRelationshipPropertyString();
         /// </summary>
         public void OnCancelAddNew()
         {    
+			if (!suppressEntityEvents)
+			{
             CancelAddNewEventHandler handler = CancelAddNew ;
             if (handler != null)
             {    
                 handler(this, EventArgs.Empty) ;
             }
         }
-
-		
-		#region IEditableObject
-		
+        }
+		#endregion 
 		
 		/// <summary>
 		/// Begins an edit on an object.
@@ -443,7 +458,7 @@ WriteRelationshipPropertyString();
 				this.inTxn = false;
 
 				if (this.bindingIsNew)
-	        	//if (this.state == EntityState.Added)
+	        	//if (this.currentEntityState == EntityState.Added)
 	        	{
 					if (this.parentCollection != null)
 						this.parentCollection.Remove( (<%=className%>) this ) ;
@@ -464,11 +479,12 @@ WriteRelationshipPropertyString();
 				if (this.IsDirty) 
 				{
 					if (this.bindingIsNew) {
-						this.state = EntityState.Added ;
+						this.currentEntityState = EntityState.Added ;
 						this.bindingIsNew = false ;
 					}
 					else
-						if (this.EntityState == EntityState.Unchanged) this.state = EntityState.Changed ;
+						if (this.EntityState == EntityState.Unchanged) 
+							this.currentEntityState = EntityState.Changed ;
 				}
 
 				this.bindingIsNew = false ;
@@ -500,7 +516,7 @@ WriteRelationshipPropertyString();
         /// </summary>
 	    private void OnEntityChanged() 
 	    {
-	        if (!inTxn && this.parentCollection != null) 
+	        if (!suppressEntityEvents && !inTxn && this.parentCollection != null) 
 	        {
 	            this.parentCollection.EntityChanged(this as <%=className%>);
 	        }
@@ -520,7 +536,6 @@ WriteRelationshipPropertyString();
 		{
 			throw new NotImplementedException("Method currently not Supported.");
 		}	
-		
 		
 		#region ICloneable Members
 		///<summary>
@@ -557,7 +572,7 @@ WriteRelationshipPropertyString();
 		}
 		
 		///<summary>
-		/// ICloneable.Clone() Member, returns the Deep Copy of this entity.
+		/// ICloneable.Clone() Member, returns the Shallow Copy of this entity.
 		///</summary>
 		public object Clone()
 		{
@@ -586,7 +601,6 @@ WriteRelationshipPropertyString();
 			return EntityHelper.Clone<<%=className%>>(this as <%=className%>);	
 		}
 		#endregion
-		
 		
 		///<summary>
 		/// Returns a value indicating whether this instance is equal to a specified object.
@@ -782,6 +796,31 @@ WriteRelationshipPropertyString();
 		
 		#endregion
 		
+		#region EntityTrackingKey
+		///<summary>
+		/// Provides the tracking key for the <see cref="EntityLocator"/>
+		///</summary>
+		public override string EntityTrackingKey
+		{
+			get
+			{
+				if(entityTrackingKey == null)
+					entityTrackingKey = @"<%= className %>" <%
+				for (int x=0; x < cols.Count;x++) { 
+					if(cols[x].IsPrimaryKeyMember) {%>
+					+ this.<%=GetPropertyName(cols[x].Name)%>.ToString()<%
+					}// end if 
+				} //end for each column %>;
+				return entityTrackingKey;
+			}
+			set
+		    {
+		        if (value != null)
+                    entityTrackingKey = value;
+		    }
+		}
+		#endregion 
+		
 		///<summary>
 		/// Returns a String that represents the current object.
 		///</summary>
@@ -802,7 +841,7 @@ WriteRelationshipPropertyString();
 				this.GetType());
 		}
 		
-		#region "Inner data class "
+		#region Inner data class
 		<%
 			CodeTemplateCompiler compiler = new CodeTemplateCompiler(this.CodeTemplateInfo.DirectoryName + "\\EntityData.cst");
 			compiler.Compile();
@@ -874,7 +913,7 @@ WriteRelationshipPropertyString();
 	
 	} // End Class
 	
-	#region "<%=className%>Comparer"
+	#region <%=className%>Comparer
 		
 	/// <summary>
 	///	Strongly Typed IComparer
@@ -1051,6 +1090,7 @@ WriteRelationshipPropertyString();
 	}
 	
 	#endregion	
+	
 	
 	/// <summary>
 	/// Enumerate the <%=className%> columns.

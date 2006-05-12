@@ -713,20 +713,30 @@ namespace <%= DALNameSpace %>.Bases
 
 			//Create a HashTable list of types for easy access
 			Hashtable innerList = new Hashtable(childTypes.Length);
-			for ( int i = 0; i < childTypes.Length; i++ )
+			for(int i=0; i < childTypes.Length; i++)
 			{
-				innerList.Add(childTypes[i], childTypes[i].ToString());
+				if (childTypes[i] == null) continue;
+				
+				if (!childTypes[i].IsGenericType)
+					innerList.Add(childTypes[i].Name, childTypes[i]);
+				else 
+					innerList.Add(string.Format("List<{0}>" , childTypes[i].GetGenericArguments()[0]), childTypes[i]);
 			}
-
+			
+			#if DEBUG
 			Debug.Indent();
 			Debug.WriteLine(String.Format("DeepLoad object '{0}'", typeof(Entity)));
 			Debug.Indent();
-
+			#endif 
+			
 			DeepLoad(mgr, entity, deep, deepLoadType, childTypes, innerList);
 
+			#if DEBUG
 			Debug.Unindent();
 			Debug.Unindent();
 			Debug.WriteLine("");
+			#endif
+			
 			return;
 		}
 
@@ -909,17 +919,20 @@ namespace <%= DALNameSpace %>.Bases
 			}
 
 			//Create a HashTable list of types for easy access
+			// Loop in order for specific save order.
 			Hashtable innerList = new Hashtable(childTypes.Length);
-			for ( int i = 0; i < childTypes.Length; i++ )
+			for(int i=0; i < childTypes.Length; i++)
 			{
-				innerList.Add(childTypes[i], childTypes[i].ToString());
+				if (childTypes[i] == null) continue;
+				
+				if (!childTypes[i].IsGenericType)
+					innerList.Add(childTypes[i].Name, childTypes[i]);
+				else 
+					innerList.Add(string.Format("List<{0}>" , childTypes[i].GetGenericArguments()[0]), childTypes[i]);
+
+				DeepSave(mgr, entity, deepSaveType, childTypes, innerList);
 			}
-
-			// Save Root Entity through Provider
-			Save(mgr, entity);
-
-			DeepSave(mgr, entity, deepSaveType, childTypes, innerList);
-
+			
 			return true;
 		}
 

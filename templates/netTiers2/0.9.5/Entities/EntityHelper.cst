@@ -36,12 +36,8 @@ namespace <%=NameSpace%>
 	/// This classes contains utilities functions for the <see cref="IEntity"/> instances and collections.
 	/// </summary>
 	/// <remarks>All methods static</remarks>
-	public sealed class EntityHelper
+	public static class EntityHelper
 	{
-		private EntityHelper()
-		{
-			//All methods static
-		}
 
 		#region SerializeBinary 
 
@@ -204,37 +200,6 @@ namespace <%=NameSpace%>
          sw.Close();
       }
 		
-		#region CollectionBase SerializeXML Methods OBSOLETE
-        /// <summary>
-		/// Serializes the entity collection to xml.
-		/// </summary>
-		/// <param name="entityCollection">The Entity collection to serialize.</param>
-		/// <returns>A string that contains the serialized entity.</returns>
-		[Obsolete]
-		public static string SerializeXml(CollectionBase entityCollection)
-		{
-			XmlSerializer ser = new XmlSerializer(entityCollection.GetType());
-			StringBuilder sb = new StringBuilder();
-			TextWriter writer = new StringWriter(sb);
-			ser.Serialize(writer, entityCollection);
-			writer.Close();
-			return sb.ToString();
-		}
-
-        /// <summary>
-        /// Serializes the entity collection to xml and puts the data into a file.
-        /// </summary>
-        /// <param name="entityCollection">The Entity collection to serialize.</param>
-        /// <param name="path">The Path to the destination file.</param>
-		[Obsolete]
-        public static void SerializeXml(CollectionBase entityCollection, string path)
-        {
-            XmlSerializer ser = new XmlSerializer(entityCollection.GetType());
-            StreamWriter sw = new StreamWriter(path);
-            ser.Serialize(sw, entityCollection);
-            sw.Close();
-        }
-        #endregion 
 		#endregion 
 
 		#region Deserialize Binary
@@ -332,26 +297,6 @@ namespace <%=NameSpace%>
 			return toReturn;
 		}
 		
-		#region DeserializeXml Obsolete
-		/// <summary>
-		/// Deserializes the XML string to an instance of the specified type.  
-		/// Only works with Types that implement IEntity.
-		/// </summary>
-		/// <param name="data">The xml string to deserialize.</param>
-		/// <param name="type">The targeted Type.</param>
-		/// <returns>An instance of the Type class.</returns>
-		[Obsolete]
-		public static object DeserializeXml(string data, Type type)
-		{
-			XmlSerializer serializer = new XmlSerializer(type);
-			IEntity toReturn;
-			TextReader reader = new StringReader(data);
-			toReturn = (IEntity)serializer.Deserialize(reader);
-			reader.Close();
-			return toReturn;
-		}
-		#endregion
-		
 		#endregion
 
 		#region GetByteLength 
@@ -428,7 +373,6 @@ namespace <%=NameSpace%>
 		#endregion 
 		
 		#region Clone
-
       /// <summary>
       /// Generic method to perform a deep copy of an object
       /// </summary>
@@ -446,6 +390,26 @@ namespace <%=NameSpace%>
       }
       #endregion
 		
+		#region GetBindableProperties
+		/// <summary>
+		/// Get the collection of properties that have been marked as Bindable
+		/// </summary>
+		/// <param name="type">The type of the object to get the properties for.</param>
+		/// <returns><see cref="PropertyDescriptorCollection"/> of bindable properties.</returns>
+		public static PropertyDescriptorCollection GetBindableProperties(Type type)
+		{
+			// create a filter so we only return the properties that have been designated as bindable
+			Attribute[] attrs = new Attribute[] { new BindableAttribute() };
+		
+			// save the bindable properties in a local field
+			return TypeDescriptor.GetProperties(type, attrs);
+		}
+		#endregion
+		
+		<%
+		if (false)
+		{
+		%>
 		#region AreObjectsEqual, OBSOLETE
 		/*
 		Actually this function crashes in some case. need to fix it.
@@ -512,22 +476,47 @@ namespace <%=NameSpace%>
 		}
 		*/
 		#endregion 
+		<%}
+		%>
+
+	}
 		
-		#region GetBindableProperties
+	#region GenericStateChangedEventArgs
+	/// <summary>
+    /// Provides a generic way to inform interested objects about state change
+    /// Supplies the old value and the new value of the changed state.
+    /// </summary>
+    /// <typeparam name="T">State Object</typeparam>
+	public class GenericStateChangedEventArgs<T> : EventArgs
+	{
+		private T oldValue;
+		private T newValue;
 
       /// <summary>
-      /// Get the collection of properties that have been marked as Bindable
+        /// Initializes a new instance of the <see cref="GenericStateChangedEventArgs&lt;T&gt;"/> class.
       /// </summary>
-      /// <param name="type">The type of the object to get the properties for.</param>
-      /// <returns><see cref="PropertyDescriptorCollection"/> of bindable properties.</returns>
-      public static PropertyDescriptorCollection GetBindableProperties(Type type)
+        /// <param name="oldValue">The old value.</param>
+        /// <param name="newValue">The new value.</param>
+		public GenericStateChangedEventArgs(T oldValue, T newValue)
       {
-         // create a filter so we only return the properties that have been designated as bindable
-         Attribute[] attrs = new Attribute[] { new BindableAttribute() };
+			this.oldValue = oldValue;
+			this.newValue = newValue;
+		}
+		
+		/// <summary>
+        /// Gets the old value.
+        /// </summary>
+        /// <value>The old value.</value>
+		public T OldValue { get { return oldValue; } }
      
-         // save the bindable properties in a local field
-         return TypeDescriptor.GetProperties(type, attrs);
+        /// <summary>
+        /// Gets the new value.
+        /// </summary>
+        /// <value>The new value.</value>
+		public T NewValue { get { return newValue; } }
       }
       #endregion
-	}
+	
+
+	
 }

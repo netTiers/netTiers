@@ -13,6 +13,7 @@
 <%@ Property Name="UTGuid" Type="System.String" Category="Context" Description="Unit tests Project Guid" %>
 <%@ Property Name="WSGuid" Type="System.String" Category="Context" Description="WebService Project Guid" %>
 <%@ Property Name="WebLibGuid" Type="System.String" Category="Context" Description="Web Library Project Guid" %>
+<%@ Property Name="ComponentsGuid" Type="System.String" Category="Context" Description="Components Guid" %>
 
 <%@ Property Name="OutputDirectory" Type="System.String" Category="General" Description="The root output folder."%>
 
@@ -24,6 +25,8 @@
 <%@ Property Name="UTNameSpace" Type="System.String" Category="Data" Description="UT Namespace." %>
 <%@ Property Name="WSNameSpace" Type="System.String" Category="Data" Description="WebService Namespace." %>
 <%@ Property Name="WebLibNameSpace" Type="System.String" Category="Data" Description="Web Library Namespace." %>
+<%@ Property Name="ComponentLayerNameSpace" Type="System.String" Category="Data" Description="Component Layer Namespace." %>
+<%@ Property Name="ComponentPattern" Default="None" Type="MoM.Templates.ComponentPatternType" Category="Data" Description="Component Layer Pattern Type." %>
 
 <%@ Property Name="IncludeBll" Type="System.Boolean" Category="Option" Description="" %>
 
@@ -31,6 +34,7 @@
 <%@ Property Name="IncludeSqlClient" Type="System.Boolean" Category="Option" Description="" %>
 <%@ Property Name="IncludeWebLibrary" Type="System.Boolean" Category="Option" Description="" %>
 <%@ Property Name="IncludeWebservice" Type="System.Boolean" Category="Option" Description="" %>
+<%@ Property Name="IncludeComponents" Type="System.Boolean"  Category="Option" Description="Determines whether or not a component library is being used." %>
 <%@ Property Name="IncludeWebserviceClient" Type="System.Boolean" Category="Option" Description="" %>
 <%@ Property Name="IncludeUnitTest" Type="MoM.Templates.UnitTestStyle" Default="NUnit" Category="General" Description="Indicates type of Unit tests to be generated." %>
 
@@ -76,6 +80,10 @@
 	{
 		fileName = WebLibNameSpace;
 	}
+	else if (IncludeComponents)
+	{
+		fileName = ComponentLayerNameSpace;
+	}
 	else
 	{
 		fileName = NameSpace;
@@ -85,6 +93,7 @@
 	string DALSubFolder = string.Empty;
 	string SqlClientSubFolder = string.Empty;
 	string WSClientSubFolder = string.Empty;
+	string ComponentsSubFolder = string.Empty;
 	string UTSubFolder = string.Empty;
 	string WebLibSubFolder = string.Empty;
 %>
@@ -93,7 +102,7 @@
     <ProjectType><%if (IncludeWebservice) Response.Write("Web"); else Response.Write("Local"); %></ProjectType>
     <ProductVersion>8.0.50727</ProductVersion>
     <SchemaVersion>2.0</SchemaVersion>
-    <ProjectGuid>{<% if (IncludeBll) Response.Write(BLLGuid); else if (IncludeDALBase) Response.Write(DALGuid); else if (IncludeSqlClient) Response.Write(DALSqlGuid); else if (IncludeUnitTest != MoM.Templates.UnitTestStyle.None) Response.Write(UTGuid); else if (IncludeWebservice) Response.Write(WSGuid);else if (IncludeWebserviceClient) Response.Write(DALWSGuid); else if (IncludeWebLibrary) Response.Write(WebLibGuid);  %>}</ProjectGuid>
+    <ProjectGuid>{<% if (IncludeBll) Response.Write(BLLGuid); else if (IncludeComponents) Response.Write(ComponentsGuid); else if (IncludeDALBase) Response.Write(DALGuid); else if (IncludeSqlClient) Response.Write(DALSqlGuid); else if (IncludeUnitTest != MoM.Templates.UnitTestStyle.None) Response.Write(UTGuid); else if (IncludeWebservice) Response.Write(WSGuid);else if (IncludeWebserviceClient) Response.Write(DALWSGuid); else if (IncludeWebLibrary) Response.Write(WebLibGuid);  %>}</ProjectGuid>
     <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
     <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
     <ApplicationIcon>
@@ -123,8 +132,7 @@
     <ConfigurationOverrideFile>
     </ConfigurationOverrideFile>
     <DefineConstants>DEBUG;TRACE</DefineConstants>
-    <DocumentationFile>
-    </DocumentationFile>
+    <DocumentationFile><%=fileName%>.xml</DocumentationFile>
     <DebugSymbols>true</DebugSymbols>
     <FileAlignment>4096</FileAlignment>
     <NoStdLib>false</NoStdLib>
@@ -169,7 +177,54 @@
     <Reference Include="System.Configuration" />
     
     
-    <% if (IncludeDALBase || IncludeSqlClient || IncludeWebserviceClient) {%>    
+    <% 
+	if (IncludeBll || IncludeComponents)
+	{
+	%>
+	<Reference Include="Microsoft.Practices.EnterpriseLibrary.Common">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath><%=OutputDirectory%>\References\Microsoft.Practices.EnterpriseLibrary.Common.dll</HintPath>
+    </Reference>    
+    <Reference Include="Microsoft.Practices.EnterpriseLibrary.Caching">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath><%=OutputDirectory%>\References\Microsoft.Practices.EnterpriseLibrary.Caching.dll</HintPath>
+    </Reference>
+    <Reference Include="Microsoft.Practices.EnterpriseLibrary.Caching.Cryptography">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath><%=OutputDirectory%>\References\Microsoft.Practices.EnterpriseLibrary.Caching.Cryptography.dll</HintPath>
+    </Reference>
+	<Reference Include="Microsoft.Practices.ObjectBuilder">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath><%=OutputDirectory%>\References\Microsoft.Practices.ObjectBuilder.dll</HintPath>
+    </Reference>
+		<% if (IncludeComponents){%>
+	<Reference Include="Microsoft.Practices.EnterpriseLibrary.Logging">
+		<SpecificVersion>False</SpecificVersion>
+		<HintPath><%=OutputDirectory%>\References\Microsoft.Practices.EnterpriseLibrary.Logging.dll</HintPath>
+	</Reference>
+	<Reference Include="Microsoft.Practices.EnterpriseLibrary.Logging.Database">
+		<SpecificVersion>False</SpecificVersion>
+		<HintPath><%=OutputDirectory%>\References\Microsoft.Practices.EnterpriseLibrary.Logging.Database.dll</HintPath>
+	</Reference>
+	<Reference Include="Microsoft.Practices.EnterpriseLibrary.ExceptionHandling">
+		<SpecificVersion>False</SpecificVersion>
+		<HintPath><%=OutputDirectory%>\References\Microsoft.Practices.EnterpriseLibrary.ExceptionHandling.dll</HintPath>
+	</Reference>
+	<Reference Include="Microsoft.Practices.EnterpriseLibrary.ExceptionHandling.Logging">
+		<SpecificVersion>False</SpecificVersion>
+		<HintPath><%=OutputDirectory%>\References\Microsoft.Practices.EnterpriseLibrary.ExceptionHandling.Logging.dll</HintPath>
+	</Reference>	
+	<Reference Include="Microsoft.Practices.EnterpriseLibrary.Security">
+		<SpecificVersion>False</SpecificVersion>
+		<HintPath><%=OutputDirectory%>\References\Microsoft.Practices.EnterpriseLibrary.Security.dll</HintPath>
+	</Reference>	
+	<Reference Include="Microsoft.Practices.EnterpriseLibrary.Security.Cryptography">
+		<SpecificVersion>False</SpecificVersion>
+		<HintPath><%=OutputDirectory%>\References\Microsoft.Practices.EnterpriseLibrary.Security.Cryptography.dll</HintPath>
+	</Reference>
+	<%}%>
+	<%	}  // END If IncludeBLL || IncludeComponents 
+	else if (IncludeDALBase || IncludeSqlClient || IncludeWebserviceClient) {%>    
     <Reference Include="Microsoft.Practices.EnterpriseLibrary.Common">
       <SpecificVersion>False</SpecificVersion>
       <HintPath><%=OutputDirectory%>\References\Microsoft.Practices.EnterpriseLibrary.Common.dll</HintPath>
@@ -200,7 +255,7 @@
     </ProjectReference>
     <% } %>
 	
-	<% if (IncludeWebservice) { %>
+	<% if (IncludeWebservice || IncludeComponents) { %>
     <ProjectReference Include="..\<%=DALNameSpace%>\<%=DALNameSpace%>.csproj">
         <Name><%=DALNameSpace%></Name>
         <Project>{<%=DALGuid%>}</Project>
@@ -367,6 +422,28 @@
 		
 		<%} // endif includeBll
 		
+		if (IncludeComponents && ComponentPattern == MoM.Templates.ComponentPatternType.DomainModel)
+		{%>
+		<Compile Include="<%=ComponentsSubFolder%><%=GetClassName(SourceTables[i].Name)%>.cs">
+		  <SubType>Code</SubType>
+		</Compile>
+		<Compile Include="<%=ComponentsSubFolder%><%=GetPartialClassName(GetAbstractClassName(SourceTables[i].Name))%>.cs">
+		  <DependentUpon><%=GetClassName(SourceTables[i].Name)%>.cs</DependentUpon>
+		  <SubType>Code</SubType>
+		</Compile>	
+		<%}
+		else if (IncludeComponents && ComponentPattern == MoM.Templates.ComponentPatternType.ServiceLayer)
+		{%> 
+		<Compile Include="<%=ComponentsSubFolder%><%=GetServiceClassName(SourceTables[i].Name)%>.cs">
+		  <SubType>Code</SubType>
+		</Compile>
+		<Compile Include="<%=ComponentsSubFolder%><%=GetPartialClassName(GetAbstractServiceClassName(SourceTables[i].Name))%>.cs">
+		  <DependentUpon><%=GetServiceClassName(SourceTables[i].Name)%>.cs</DependentUpon>
+		  <SubType>Code</SubType>
+		</Compile>	
+		<%
+		}
+		
 		if (IncludeDALBase)
 		{%>
 			<Compile Include="<%=DALSubFolder%>Bases\<%=GetProviderBaseName(SourceTables[i].Name)%>.cs">
@@ -464,6 +541,27 @@
 			<Compile Include="<%=BLLSubFolder%>EntityUtil.cs">
 			  <SubType>Code</SubType>
 			</Compile>
+			<Compile Include="<%=BLLSubFolder%>IEntityFactory.cs">
+			  <SubType>Code</SubType>
+			</Compile>
+			<Compile Include="<%=BLLSubFolder%>EntityFactoryBase.cs">
+			  <SubType>Code</SubType>
+			</Compile>			
+			<Compile Include="<%=BLLSubFolder%>EntityFactory.cs">
+			  <SubType>Code</SubType>
+			</Compile>
+			<Compile Include="<%=BLLSubFolder%>EntityLocator.cs">
+			  <SubType>Code</SubType>
+			</Compile>		
+			<Compile Include="<%=BLLSubFolder%>EntityManager.cs">
+			  <SubType>Code</SubType>
+			</Compile>
+			<Compile Include="<%=BLLSubFolder%>IEntityCacheItem.cs">
+			  <SubType>Code</SubType>
+			</Compile>		
+			<Compile Include="<%=BLLSubFolder%>EntityCache.cs">
+			  <SubType>Code</SubType>
+			</Compile>
 			<Compile Include="<%=BLLSubFolder%>GenericTypeConverter.cs">
 			  <SubType>Code</SubType>
 			</Compile>
@@ -489,6 +587,43 @@
 			  <SubType>Code</SubType>
 			</Compile>
 		<% } %>
+		<% if (IncludeComponents) 
+		{
+		%>
+			<Compile Include="<%=ComponentsSubFolder%>Processors\**\*.cs">
+			  <SubType>Code</SubType>
+			</Compile>		
+			<Compile Include="<%=ComponentsSubFolder%>SecurityContext.cs">
+			  <SubType>Code</SubType>
+			</Compile>		
+			<Compile Include="<%=ComponentsSubFolder%>DomainUtil.cs">
+			  <SubType>Code</SubType>
+			</Compile>
+		<%
+		if (IncludeComponents && ComponentPattern == MoM.Templates.ComponentPatternType.DomainModel) {%>
+			<Compile Include="<%=ComponentsSubFolder%>IComponentEntity.cs">
+			  <SubType>Code</SubType>
+			</Compile>
+			<Compile Include="<%=ComponentsSubFolder%>ComponentEntityFactory.cs">
+			  <SubType>Code</SubType>
+			</Compile>
+			<Compile Include="<%=ComponentsSubFolder%>CList.cs">
+			  <SubType>Code</SubType>
+			</Compile>
+		<% }else if (IncludeComponents && ComponentPattern == MoM.Templates.ComponentPatternType.ServiceLayer) {%>
+			<Compile Include="<%=ComponentsSubFolder%>ServiceResult.cs">
+			  <SubType>Code</SubType>
+			</Compile>
+			<Compile Include="<%=ComponentsSubFolder%>ServiceBaseCore.generated.cs">
+			  <SubType>Code</SubType>
+			</Compile>
+			<Compile Include="<%=ComponentsSubFolder%>ServiceBase.cs">
+			  <SubType>Code</SubType>
+			</Compile>
+			<Compile Include="<%=ComponentsSubFolder%>IComponentService.cs">
+			  <SubType>Code</SubType>
+			</Compile>		
+		<% } }%>
 
 		<%/* If SqlCLient is wanted, include the sql Utilities classes */ %>	
 		<% if (IncludeDALBase) {%>

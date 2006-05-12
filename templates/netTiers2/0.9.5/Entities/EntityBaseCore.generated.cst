@@ -51,7 +51,17 @@ namespace <%=NameSpace%>
 		/// <summary>
 		/// The EntityState of the entity
 		/// </summary>
-		protected EntityState state = EntityState.Added ;
+		protected EntityState currentEntityState = EntityState.Added ;
+	    /// <summary>
+	    /// Determines whether the entity is being tracked by the <see cref="Locator"/>
+	    /// </summary>
+		protected bool isEntityTracked = false;
+	    /// <summary>
+		/// Suppresses Entity Events from Firing, 
+		/// useful when loading the entities from the database.
+		/// </summary>
+	    protected bool suppressEntityEvents = false;
+		
 		
 		/// <summary>
 		///  Used by in place editing of databinding features for new inserted row.
@@ -77,7 +87,7 @@ namespace <%=NameSpace%>
 		[BrowsableAttribute(false), XmlIgnoreAttribute()]
 		public bool IsDeleted
 		{
-			get { return this.state == EntityState.Deleted; }
+			get { return this.currentEntityState == EntityState.Deleted; }
 		}		
 		
 		//private bool _isDirty = false;
@@ -88,7 +98,7 @@ namespace <%=NameSpace%>
 		[BrowsableAttribute(false), XmlIgnoreAttribute()]
 		public bool IsDirty
 		{
-			get { return this.state != EntityState.Unchanged; }
+			get { return this.currentEntityState != EntityState.Unchanged; }
 		}
 		
 		
@@ -100,8 +110,8 @@ namespace <%=NameSpace%>
 		[BrowsableAttribute(false), XmlIgnoreAttribute()]
 		public bool IsNew
 		{
-			get { return this.state == EntityState.Added; }
-			set { this.state = EntityState.Added; }
+			get { return this.currentEntityState == EntityState.Added; }
+			set { this.currentEntityState = EntityState.Added; }
 		}
 		
 
@@ -114,8 +124,8 @@ namespace <%=NameSpace%>
 		[BrowsableAttribute(false), XmlIgnoreAttribute()]
 		public virtual EntityState EntityState
 		{
-			get { return this.state; }
-			set { this.state = value; }
+			get { return this.currentEntityState; }
+			set { this.currentEntityState = value; }
 		}
 		
 		/// <summary>
@@ -127,7 +137,7 @@ namespace <%=NameSpace%>
 		public virtual void AcceptChanges()
 		{			
 			this.bindingIsNew = false;
-			this.state = EntityState.Unchanged ;
+			this.currentEntityState = EntityState.Unchanged;
 			OnPropertyChanged(string.Empty);
 		}
 		
@@ -146,8 +156,8 @@ namespace <%=NameSpace%>
 		public virtual void MarkToDelete()
 		{
 			
-			if (this.state != EntityState.Added)
-				this.state = EntityState.Deleted ;
+			if (this.currentEntityState != EntityState.Added)
+				this.currentEntityState = EntityState.Deleted ;
 		}
 		
 		///<summary>
@@ -155,9 +165,9 @@ namespace <%=NameSpace%>
 		///</summary>
 		public virtual void RemoveDeleteMark()
 		{
-			if (this.state != EntityState.Added) 
+			if (this.currentEntityState != EntityState.Added) 
 			{				
-				this.state = EntityState.Changed ;
+				this.currentEntityState = EntityState.Changed ;
 			}
 		}
 				 
@@ -210,6 +220,46 @@ namespace <%=NameSpace%>
 			}
 		}
 		
+		/// <summary>
+		/// Determines whether this entity is being tracked.
+		/// </summary>
+		[System.ComponentModel.Bindable(false)]
+		[BrowsableAttribute(false), XmlIgnoreAttribute()]
+		public bool IsEntityTracked 
+		{	
+			get
+			{
+				return isEntityTracked;
+			}
+			set
+			{
+				isEntityTracked = value;
+			}	
+		}
+		
+				
+		/// <summary>
+		/// Determines whether this entity is to suppress events for while set to true
+		/// </summary>
+		[System.ComponentModel.Bindable(false)]
+		[BrowsableAttribute(false), XmlIgnoreAttribute()]
+		public bool SuppressEntityEvents
+		{	
+			get
+			{
+				return suppressEntityEvents;
+			}
+			set
+			{
+				suppressEntityEvents = value;
+			}	
+		}
+		
+		///<summary>
+		/// Provides the tracking key for the <see cref="EntityLocator"/>
+		///</summary>
+		[XmlIgnoreAttribute(), BrowsableAttribute(false)]
+		public abstract string EntityTrackingKey {	get; set; }
 		
 		#region INotifyPropertyChanged Members
 		
@@ -225,7 +275,10 @@ namespace <%=NameSpace%>
 		/// <param name="propertyName">The name of the property that has changed.</param>
 		protected virtual void OnPropertyChanged(string propertyName)
 		{ 
+			if (!suppressEntityEvents)
+			{
 			OnPropertyChanged(new PropertyChangedEventArgs(propertyName));
+		}
 		}
 		
 		/// <summary>
@@ -234,6 +287,8 @@ namespace <%=NameSpace%>
 		/// <param name="e">PropertyChangedEventArgs</param>
 		protected virtual void OnPropertyChanged(PropertyChangedEventArgs e)
 		{
+			if (!suppressEntityEvents)
+			{
 			//Validate the property
          ValidationRules.ValidateRules(e.PropertyName);
 
@@ -241,6 +296,7 @@ namespace <%=NameSpace%>
 			{
 				PropertyChanged(this, e);
 			}
+		}
 		}
 		
 		#endregion
@@ -381,10 +437,14 @@ namespace <%=NameSpace%>
 		
 		public void OnDeserialization(object sender)
 		{
+			if(!suppressEntityEvents)
+			{
 			ValidationRules.Target = this;
 			AddValidationRules();
 		}
+		}
 
       #endregion
+		
 	}
 }

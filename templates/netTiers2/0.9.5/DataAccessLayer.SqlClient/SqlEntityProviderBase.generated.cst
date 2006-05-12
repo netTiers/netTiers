@@ -82,6 +82,7 @@
 	
 	
 	string className = NameSpace + "." + GetClassName(SourceTable.Name);
+	string entityClassName = GetClassName(SourceTable.Name);
 	string abstractRepositoryClassName = "Sql" + GetProviderBaseName(SourceTable.Name);
 	//string repositoryClassName = DALNameSpace + "." +GetRepositoryClassName(SourceTable.Name);
 	string providerBaseName = GetProviderBaseName(SourceTable.Name);
@@ -125,7 +126,7 @@ namespace <%=DALNameSpace%>.SqlClient
 	///</summary>
 	public partial class <%=abstractRepositoryClassName%> : <%=providerBaseName%>
 	{
-		#region "Declarations"	
+		#region Declarations
 		
 		string _connectionString;
 	    bool _useStoredProcedure;
@@ -133,7 +134,7 @@ namespace <%=DALNameSpace%>.SqlClient
 			
 		#endregion "Declarations"
 			
-		#region "Constructors"
+		#region Constructors
 		
 		/// <summary>
 		/// Creates a new <see cref="<%=abstractRepositoryClassName%>"/> instance.
@@ -158,7 +159,7 @@ namespace <%=DALNameSpace%>.SqlClient
 		
 	#endregion "Constructors"
 	
-		#region "Public properties"
+		#region Public properties
 	/// <summary>
     /// Gets or sets the connection string.
     /// </summary>
@@ -191,7 +192,7 @@ namespace <%=DALNameSpace%>.SqlClient
 	#endregion
 	
 	<% if(IncludeManyToMany) { %>
-		#region "Get from  Many To Many Relationship Functions"
+		#region Get Many To Many Relationship Functions
 	<%
 		TableSchema primaryTable = SourceTable;
 		
@@ -280,7 +281,7 @@ namespace <%=DALNameSpace%>.SqlClient
 	<%} //end if many to many %>
 	
 <% if (IncludeDelete && SourceTable.PrimaryKey != null) {%>
-		#region "Delete Functions"
+		#region Delete Functions
 		/// <summary>
 		/// 	Deletes a row from the DataSource.
 		/// </summary>
@@ -295,9 +296,12 @@ namespace <%=DALNameSpace%>.SqlClient
 		{
 			SqlDatabase database = new SqlDatabase(this._connectionString);
 			DbCommand commandWrapper = StoredProcedureProvider.GetCommandWrapper(database, "<%=owner + ProcedurePrefix + commandStem + DeleteSuffix%>", _useStoredProcedure);
-			
-			<% foreach(ColumnSchema col in SourceTable.PrimaryKey.MemberColumns) { %>
+			object[] pkItems = new object[<%= SourceTable.PrimaryKey.MemberColumns.Count %>];
+			<% for(int i = 0; i < SourceTable.PrimaryKey.MemberColumns.Count; i++) { 
+				ColumnSchema col = SourceTable.PrimaryKey.MemberColumns[i];
+			%>
 			database.AddInParameter(commandWrapper, "@<%=GetPropertyName(col.Name)%>", DbType.<%=col.DataType%>, <%=GetPrivateName(col.Name)%>);
+			pkItems[<%= i %>] = <%=GetPrivateName(col.Name)%>;
 			<% } %>
 			<% if (RowVersion != null){ %>
 			database.AddInParameter(commandWrapper, "@<%=GetPropertyName(RowVersion.Name)%>", DbType.<%= RowVersion.DataType.ToString() %>, <%= GetPrivateName(RowVersion.Name) %>);
@@ -314,6 +318,9 @@ namespace <%=DALNameSpace%>.SqlClient
 				results = Utility.ExecuteNonQuery(database,commandWrapper);
 			}
 			
+			//Stop Tracking Now that it has been updated and persisted.
+			if (DataRepository.Provider.EnableEntityTracking)
+				EntityManager.StopTracking(EntityLocator.ConstructKeyFromPkItems(typeof(<%= entityClassName %>), pkItems));
 			
 			if (results == 0)
 			{
@@ -336,7 +343,7 @@ namespace <%=DALNameSpace%>.SqlClient
 		-------------------------------
 	*/%>
 	<% if (IncludeFind) { %>
-		#region "Find Functions"	
+		#region Find Functions
 		/// <summary>
 		/// 	Returns rows meeting the whereclause condition from the DataSource.
 		/// </summary>
@@ -446,7 +453,7 @@ namespace <%=DALNameSpace%>.SqlClient
 		-------------------------------
 	*/%>
 <% if (IncludeGetList) { %>
-		#region "GetList Functions"
+		#region GetList Functions
 				
 		/// <summary>
 		/// 	Gets All rows from the DataSource.
@@ -574,7 +581,7 @@ namespace <%=DALNameSpace%>.SqlClient
 	  -------------------------------------------------------------------------------*/
 	
 	if (IncludeGetListByFK) { %>
-		#region "Get By Foreign Key Functions"
+		#region Get By Foreign Key Functions
 <%
 		for (int j=0; j < fkeys.Count;j++)
 		{
@@ -590,7 +597,7 @@ namespace <%=DALNameSpace%>.SqlClient
 			getbyKeys.Add(GetKeysName(fkeys[j].ForeignKeyMemberColumns));
 %>	
 
-		#region "GetBy<%=GetKeysName(fkeys[j].ForeignKeyMemberColumns)%>"
+		#region GetBy<%=GetKeysName(fkeys[j].ForeignKeyMemberColumns)%>
 		/// <summary>
 		/// 	Gets rows from the datasource based on the <%=fkeys[j].Name%> key.
 		///		<%=fkeys[j].Name%> Description: <%=GetColumnXmlComment(fkeys[j],2)%>
@@ -650,7 +657,6 @@ namespace <%=DALNameSpace%>.SqlClient
 	#endregion
 	
 <% 	} //end includegetlistbyfk %>
-
 <%
 
 	/*---------------------------------------------------------------------------------
@@ -659,7 +665,7 @@ namespace <%=DALNameSpace%>.SqlClient
 	
 	if (IncludeGetListByIX) {
 	%>	
-		#region "Get By Index Functions"
+		#region Get By Index Functions
 	<%	
 		for (int j=0; j < indexes.Count;j++)
 		{
@@ -687,7 +693,7 @@ namespace <%=DALNameSpace%>.SqlClient
 			string returnTypeForComment = returnType.Replace("<", "&lt;").Replace(">", "&gt;");
 	%>
 
-		#region "GetBy<%=GetKeysName(indexes[j].MemberColumns)%>"
+		#region GetBy<%=GetKeysName(indexes[j].MemberColumns)%>
 					
 		/// <summary>
 		/// 	Gets rows from the datasource based on the <%=indexes[j].Name%> index.
@@ -763,7 +769,7 @@ namespace <%=DALNameSpace%>.SqlClient
 		#endregion
 
 <%		}//endfor %>
-	#endregion "Get By Index Functions"
+	#endregion Get By Index Functions
 <%	}//end if includegetlistbyix
 	
 		/*---------------------------------------------------------------------------------
@@ -775,7 +781,7 @@ namespace <%=DALNameSpace%>.SqlClient
 	{
 %>
 
-		#region "Insert Functions"
+		#region Insert Functions
 		/// <summary>
 		/// Lets you efficiently bulk many entity to the database.
 		/// </summary>
@@ -933,7 +939,7 @@ namespace <%=DALNameSpace%>.SqlClient
 	{
 		
 %>	
-		#region "Update Functions"
+		#region Update Functions
 				
 		/// <summary>
 		/// 	Update an existing row in the datasource.
@@ -1002,6 +1008,10 @@ namespace <%=DALNameSpace%>.SqlClient
 				results = Utility.ExecuteNonQuery(database,commandWrapper);
 			}
 			
+			//Stop Tracking Now that it has been updated and persisted.
+			if (DataRepository.Provider.EnableEntityTracking)
+				EntityManager.StopTracking(entity.EntityTrackingKey);
+			
 		<%
 		if (RowVersion != null)
 		{%>
@@ -1044,7 +1054,7 @@ namespace <%=DALNameSpace%>.SqlClient
 							CUSTOM STORED PROCEDURES
   -------------------------------------------------------------------------------*/%>
 <% if (IncludeCustoms) { %>
-		#region "Custom Methods"
+		#region Custom Methods
 	
 <% 
 	string prefix = string.Format(CustomProcedureStartsWith, SourceTable.Name, ProcedurePrefix);
@@ -1066,12 +1076,12 @@ namespace <%=DALNameSpace%>.SqlClient
 			}
 			else	// Return a basic DataSet
 			{
-				returnType = CustomNonMatchingReturnType.ToString();;
+				returnType = CustomNonMatchingReturnType.ToString();
 			}
 			
 			string returnTypeForComment = returnType.Replace("<", "&lt;").Replace(">", "&gt;");
 %>
-		#region "<%=command.Name%>"
+		#region <%=command.Name%>
 					
 		/// <summary>
 		///	This method wrap the '<%=command.Name%>' stored procedure. 
@@ -1101,7 +1111,6 @@ namespace <%=DALNameSpace%>.SqlClient
 			foreach(ParameterSchema outParam in command.AllOutputParameters)
 			{
 				outputValues.AppendFormat("\t\t\t{0} =  Utility.GetParameterValue<{1}>(commandWrapper.Parameters[\"@{2}\"]);\n",GetPrivateName(outParam.Name), GetCSType(outParam), GetPropertyName(outParam.Name)); 
-	
 			}
 			%>
 			<% if (returnType == "DataSet") { %>

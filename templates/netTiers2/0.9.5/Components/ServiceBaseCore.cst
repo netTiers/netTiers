@@ -1,0 +1,819 @@
+<%--
+ * $Id: IEntity.cst,v 1.13 2006/02/27 22:09:40 bgjohnso Exp $
+ * Last modified by $Author: bgjohnso $
+ * Last modified at $Date: 2006/02/27 22:09:40 $
+ * $Revision: 1.13 $
+--%>
+<%@ CodeTemplate Src="..\CommonSqlCode.cs" Inherits="MoM.Templates.CommonSqlCode" Language="C#" TargetLanguage="C#" Description="The interface that each business object of the domain implements."%>
+<%@ Assembly Name="SchemaExplorer" %>
+<%@ Import Namespace="SchemaExplorer" %>
+<%@ Assembly Name="System.Design" %>
+<%@ Property Name="IncludeRelations" Type="System.Boolean" Default="True" Category="Options" Description="Include Collections for Related Entities."%>
+<%@ Property Name="IncludeCustoms" Type="System.Boolean" Default="True" Category="Options" Description="If true customs stored procedures will be generated as functions." %>
+<%@ Property Name="IncludeInsert" Type="System.Boolean" Default="True" Category="Options" Description="If true insert functions will be generated." %>
+<%@ Property Name="IncludeUpdate" Type="System.Boolean" Default="True" Category="Options" Description="If true update functions will be generated." %>
+<%@ Property Name="IncludeSave" Type="System.Boolean" Default="True" Category="Options" Description="If true combined insert/update functions will be generated." %>
+<%@ Property Name="IncludeDelete" Type="System.Boolean" Default="True" Category="Options" Description="If true delete functions will be generated." %>
+<%@ Property Name="IncludeManyToMany" Type="System.Boolean" Default="True" Category="Options" Description="If true select statements will be generated for any many to many relationship." %>
+<%@ Property Name="IncludeGetList" Type="System.Boolean" Default="True" Category="Options" Description="If true getlist functions will be generated." %>
+<%@ Property Name="IncludeGetListByFK" Type="System.Boolean" Default="True" Category="Options" Description="If true get functions will be generated." %>
+<%@ Property Name="IncludeGetListByIX" Type="System.Boolean" Default="True" Category="Options" Description="If true getlist functions will be generated." %>
+<%@ Property Name="IncludeFind" Type="System.Boolean" Default="True" Category="Options" Description="If true find functions will be generated." %>
+
+<%@ Property Name="NameSpace" Optional="False" Type="System.String" Category="Style" Description="Object Namespace." %>
+<%@ Property Name="BLLNameSpace" Optional="False" Type="System.String" Category="Style" Description="BLL Object Namespace." %>
+<%@ Property Name="DALNameSpace" Optional="False" Type="System.String" Category="Style" Description="DAL Object Namespace." %>
+<%@ Assembly Name="SchemaExplorer" %>
+
+using System;
+using System.Collections.Generic;
+using System.ComponentModel;
+using System.Diagnostics;
+using System.Collections;
+using System.Collections.Generic;
+using <%=BLLNameSpace%>;
+using <%=BLLNameSpace%>.Validation;
+using <%=DALNameSpace%>;
+
+
+using Microsoft.Practices.EnterpriseLibrary.Logging;
+
+namespace <%=NameSpace%>
+{
+	/// <summary>
+	/// The interface that each component business domain service of the model implements.
+	/// </summary>
+	public abstract class ServiceBaseCore<Entity, EntityKey> : MarshalByRefObject, IComponentService, IEntityProvider<Entity, EntityKey>	
+		where Entity : IEntityId<EntityKey>, new() 
+		where EntityKey : IEntityKey, new()
+	{
+		
+		protected IList<IProcessor> processorList = new List<IProcessor>();
+		protected ServiceResult serviceResult = null;
+		protected bool abortOnFailure = true;
+		protected int currentProcessorIndex = 0;
+		
+		/// <summary>
+		///	Provides the beginning
+		/// </summary>
+		///<value>A list of business rule processors to execute</value>
+		public virtual ServiceResult Execute()
+		{
+			return Execute(false);
+		}
+		
+		/// <summary>
+		///	Provides the beginning
+		/// </summary>
+		///<value>A list of business rule processors to execute</value>
+		public virtual ServiceResult Execute(bool abortIfFailure)
+		{
+			AbortOnFailure = abortIfFailure;
+			ServiceResult result = new ServiceResult();
+		
+		
+			for(int i=0; i < ProcessorList.Count; i++)
+			{
+				currentProcessorIndex = i;
+				
+				if (ProcessorList[i] == null)
+					throw new ArgumentNullException(string.Format("The process located at index {0} of the ProcessorList is null.", i));
+					
+				//Fire Process Starting Event
+				OnProcessStarting((ProcessorBase)ProcessorList[i]);
+				
+				ProcessorList[i].ChangeProcessorState(ProcessorState.Running);
+				IProcessorResult processResult = null;
+				
+				try
+				{
+					//Begin Process
+					processResult = ProcessorList[i].Process();
+				}
+				catch(Exception exc)
+				{
+					Logger.Write(exc);
+					result.ExceptionList.Add((ProcessorBase)ProcessorList[i], exc);
+				}
+				
+				//if the processor didn't do cleanup, cleanup by default.
+				if (ProcessorList[i].CurrentProcessorState == ProcessorState.Running)
+					ProcessorList[i].ChangeProcessorState(processResult.Result ? ProcessorState.Completed : ProcessorState.Stopped);
+
+				if (processResult != null)
+				{
+					//Add to Processor Result List
+					result.ProcessorResultList.Add(processResult);
+	
+					//Add To Aggregated Broken Rules List
+ 					foreach(BrokenRulesList list in processResult.BrokenRulesLists.Values)
+                        result.ProcessBrokenRuleLists.Add((ProcessorBase)ProcessorList[i], list);				
+				}
+				
+				//Fire Process Ending Event
+				OnProcessEnded(ProcessorList[i] as ProcessorBase);
+
+				if ((processResult == null || !processResult.Result) && AbortOnFailure)
+					return result;
+
+			}
+			return result;
+		}
+		
+		/// <summary>
+		///	Provides a List of Processors to execute external business process logic in.
+		/// </summary>
+		///<value>A list of business rule processors to execute</value>
+		public virtual IList<IProcessor> ProcessorList 
+		{
+			get
+				{
+					return processorList;
+				} 
+			set
+				{
+					processorList = value;
+				}
+		}
+
+		/// <summary>
+		///	Provides a Notification Pattern of Process Results.
+		/// </summary>
+		///<value>A list of business rule processors to execute</value>
+		public virtual ServiceResult ServiceProcessResult
+		{
+			get{
+				if (serviceResult == null)
+					serviceResult = new ServiceResult();
+				
+				return serviceResult;
+			}
+		}
+
+		/// <summary>
+		///	Provides a way to terminate the Processor calls upon an exception. 
+		/// </summary>
+		///<value>bool value determining to stop once an exceptions been thrown. </value>		
+		public virtual bool AbortOnFailure 
+		{
+			get
+			{
+				return abortOnFailure;
+			} 
+			set
+			{
+				abortOnFailure = value;
+			} 
+		}
+
+		/// <summary>
+		/// Current Processor being executed
+		/// </summary>
+		public virtual string CurrentProcessor
+		{
+			get {
+					if (ProcessorList.Count > CurrentProcessorIndex)
+						return ProcessorList[CurrentProcessorIndex].ProcessName;
+					
+					return null;
+				}	
+		}
+
+		/// <summary>
+		/// Current Number of Processes completed thus far.
+		/// </summary>
+		public virtual int ProcessCounter
+		{
+			get {return currentProcessorIndex + 1;}
+		}
+		
+		/// <summary>
+		/// Current index of the processor currently or last executed 
+		/// </summary>
+		public virtual int CurrentProcessorIndex
+		{
+			get {return currentProcessorIndex;}
+		}
+		
+		/// <summary>
+		/// Total Number of Processes currently enlisted in this service 
+		/// </summary>
+		public virtual int TotalProcesses
+		{
+			get {return ProcessorList.Count;}		
+		}
+		
+		#region Events
+		/// <summary>
+		///	Provides the notification on the change of process state to interested parties.
+		/// </summary>
+		public virtual void OnProcessStarting(ProcessorBase processor)
+		{
+			if (ProcessStarting != null)
+				ProcessStarting(this, new ProcessorEventArgs(processor));
+		}
+
+		/// <summary>
+		///	Provides the notification on the change of process state to interested parties.
+		/// </summary>
+		public virtual void OnProcessEnded(ProcessorBase processor)
+		{
+			if (ProcessEnded != null)
+				ProcessEnded(this, new ProcessorEventArgs(processor));
+		}
+		
+		/// <summary>
+		/// Event to indicate that a processor has began.
+		/// </summary>
+		[field: NonSerialized]
+		public event ProcessStartingHandler ProcessStarting;
+
+		/// <summary>
+		/// Event to indicate that a processor has ended.
+		/// </summary>
+		[field: NonSerialized]
+		public event ProcessEndedHandler ProcessEnded;
+	
+		#endregion Events	
+		
+		
+		#region IEntityProvider Implementation
+		<% if ( IncludeGetListByIX ) { %>	
+		#region Get Methods
+
+		/// <summary>
+		/// Gets a row from the DataSource based on its primary key.
+		/// </summary>
+		/// <param name="key">The unique identifier of the row to retrieve.</param>
+		/// <returns>Returns an instance of the Entity class.</returns>
+		public Entity Get(EntityKey key)
+		{
+			return Get(null, key);
+		}
+
+		/// <summary>
+		/// Gets a row from the DataSource based on its primary key.
+		/// </summary>
+		/// <param name="mgr">A <see cref="TransactionManager"/> object.</param>
+		/// <param name="key">The unique identifier of the row to retrieve.</param>
+		/// <returns>Returns an instance of the Entity class.</returns>
+		public Entity Get(TransactionManager mgr, EntityKey key)
+		{
+			return Get(mgr, key, 0, Int32.MaxValue);
+		}
+
+		/// <summary>
+		/// Gets a row from the DataSource based on its primary key.
+		/// </summary>
+		/// <param name="key">The unique identifier of the row to retrieve.</param>
+		/// <param name="start">Row number at which to start reading.</param>
+		/// <param name="pageLength">Number of rows to return.</param>
+		/// <returns>Returns an instance of the Entity class.</returns>
+		public Entity Get(EntityKey key, int start, int pageLength)
+		{
+			return Get(null, key, start, pageLength);
+		}
+
+		/// <summary>
+		/// Gets a row from the DataSource based on its primary key.
+		/// </summary>
+		/// <param name="mgr">A <see cref="TransactionManager"/> object.</param>
+		/// <param name="key">The unique identifier of the row to retrieve.</param>
+		/// <param name="start">Row number at which to start reading.</param>
+		/// <param name="pageLength">Number of rows to return.</param>
+		/// <returns>Returns an instance of the Entity class.</returns>
+		public abstract Entity Get(TransactionManager mgr, EntityKey key, int start, int pageLength);
+
+		#endregion
+
+		<%	} // end if ( IncludeGetListByIX ) %>
+		<% if ( IncludeGetList ) { %>
+		#region GetAll Methods
+
+		/// <summary>
+		/// Gets all rows from the DataSource.
+		/// </summary>
+		/// <returns>Returns a TList of Entity objects.</returns>
+		public virtual TList<Entity> GetAll()
+		{
+			return GetAll(null);
+		}
+
+		/// <summary>
+		/// Gets all rows from the DataSource.
+		/// </summary>
+		/// <param name="mgr">A <see cref="TransactionManager"/> object.</param>
+		/// <returns>Returns a TList of Entity objects.</returns>
+		public virtual TList<Entity> GetAll(TransactionManager mgr)
+		{
+			return GetAll(mgr, 0, Int32.MaxValue);
+		}
+
+		/// <summary>
+		/// Gets all rows from the DataSource.
+		/// </summary>
+		/// <param name="start">Row number at which to start reading.</param>
+		/// <param name="pageLength">Number of rows to return.</param>
+		/// <returns>Returns a TList of Entity objects.</returns>
+		public virtual TList<Entity> GetAll(int start, int pageLength)
+		{
+			return GetAll(null, start, pageLength);
+		}
+
+		/// <summary>
+		/// Gets all rows from the DataSource.
+		/// </summary>
+		/// <param name="mgr">A <see cref="TransactionManager"/> object.</param>
+		/// <param name="start">Row number at which to start reading.</param>
+		/// <param name="pageLength">Number of rows to return.</param>
+		/// <returns>Returns a TList of Entity objects.</returns>
+		public virtual TList<Entity> GetAll(TransactionManager mgr, int start, int pageLength)
+		{
+			int count;
+			return GetAll(mgr, start, pageLength, out count);
+		}
+
+		/// <summary>
+		/// Gets all rows from the DataSource.
+		/// </summary>
+		/// <param name="start">Row number at which to start reading.</param>
+		/// <param name="pageLength">Number of rows to return.</param>
+		/// <param name="count">out. The number of rows that match this query.</param>
+		/// <returns>Returns a TList of Entity objects.</returns>
+		public virtual TList<Entity> GetAll(int start, int pageLength, out int count)
+		{
+			return GetAll(null, start, pageLength, out count);
+		}
+
+		/// <summary>
+		/// Gets all rows from the DataSource.
+		/// </summary>
+		/// <param name="mgr">A <see cref="TransactionManager"/> object.</param>
+		/// <param name="start">Row number at which to start reading.</param>
+		/// <param name="pageLength">Number of rows to return.</param>
+		/// <param name="count">out. The number of rows that match this query.</param>
+		/// <returns>Returns a TList of Entity objects.</returns>
+		public abstract TList<Entity> GetAll(TransactionManager mgr, int start, int pageLength, out int count);
+
+		#endregion
+
+		#region GetPaged Methods
+
+		/// <summary>
+		/// Gets a page of rows from the DataSource.
+		/// </summary>
+		/// <param name="count">Number of rows in the DataSource.</param>
+		/// <returns>Returns a TList of Entity objects.</returns>
+		public virtual TList<Entity> GetPaged(out int count)
+		{
+			return GetPaged(null, out count);
+		}
+
+		/// <summary>
+		/// Gets a page of rows from the DataSource.
+		/// </summary>
+		/// <param name="mgr">A <see cref="TransactionManager"/> object.</param>
+		/// <param name="count">Number of rows in the DataSource.</param>
+		/// <returns>Returns a TList of Entity objects.</returns>
+		public virtual TList<Entity> GetPaged(TransactionManager mgr, out int count)
+		{
+			return GetPaged(mgr, out count);
+		}
+
+		/// <summary>
+		/// Gets a page of rows from the DataSource.
+		/// </summary>
+		/// <param name="start">Row number at which to start reading.</param>
+		/// <param name="pageLength">Number of rows to return.</param>
+		/// <param name="count">Number of rows in the DataSource.</param>
+		/// <returns>Returns a TList of Entity objects.</returns>
+		public virtual TList<Entity> GetPaged(int start, int pageLength, out int count)
+		{
+			return GetPaged(null, start, pageLength, out count);
+		}
+
+		/// <summary>
+		/// Gets a page of rows from the DataSource.
+		/// </summary>
+		/// <param name="mgr">A <see cref="TransactionManager"/> object.</param>
+		/// <param name="start">Row number at which to start reading.</param>
+		/// <param name="pageLength">Number of rows to return.</param>
+		/// <param name="count">Number of rows in the DataSource.</param>
+		/// <returns>Returns a TList of Entity objects.</returns>
+		public virtual TList<Entity> GetPaged(TransactionManager mgr, int start, int pageLength, out int count)
+		{
+			return GetPaged(mgr, String.Empty, String.Empty, start, pageLength, out count);
+		}
+
+		/// <summary>
+		/// Gets a page of rows from the DataSource.
+		/// </summary>
+		/// <param name="whereClause">Specifies the condition for the rows returned by a query (Name='John Doe', Name='John Doe' AND Id='1', Name='John Doe' OR Id='1').</param>
+		/// <param name="orderBy">Specifies the sort criteria for the rows in the DataSource (Name ASC; BirthDay DESC, Name ASC).</param>
+		/// <param name="start">Row number at which to start reading.</param>
+		/// <param name="pageLength">Number of rows to return.</param>
+		/// <param name="count">Number of rows in the DataSource.</param>
+		/// <returns>Returns a TList of Entity objects.</returns>
+		public virtual TList<Entity> GetPaged(String whereClause, String orderBy, int start, int pageLength, out int count)
+		{
+			return GetPaged(null, whereClause, orderBy, start, pageLength, out count);
+		}
+
+		/// <summary>
+		/// Gets a page of rows from the DataSource.
+		/// </summary>
+		/// <param name="mgr">A <see cref="TransactionManager"/> object.</param>
+		/// <param name="whereClause">Specifies the condition for the rows returned by a query (Name='John Doe', Name='John Doe' AND Id='1', Name='John Doe' OR Id='1').</param>
+		/// <param name="orderBy">Specifies the sort criteria for the rows in the DataSource (Name ASC; BirthDay DESC, Name ASC).</param>
+		/// <param name="start">Row number at which to start reading.</param>
+		/// <param name="pageLength">Number of rows to return.</param>
+		/// <param name="count">Number of rows in the DataSource.</param>
+		/// <returns>Returns a TList of Entity objects.</returns>
+		public abstract TList<Entity> GetPaged(TransactionManager mgr, String whereClause, String orderBy, int start, int pageLength, out int count);
+
+		/// <summary>
+		/// Gets the number of rows in the DataSource that match the specified whereClause.
+		/// </summary>
+		/// <param name="whereClause">Specifies the condition for the rows returned by a query (Name='John Doe', Name='John Doe' AND Id='1', Name='John Doe' OR Id='1').</param>
+		/// <param name="count">Number of rows in the DataSource.</param>
+		/// <returns>Returns the number of rows.</returns>
+		public virtual int GetTotalItems(String whereClause, out int count)
+		{
+			return GetTotalItems(null, whereClause, out count);
+		}
+
+		/// <summary>
+		/// Gets the number of rows in the DataSource that match the specified whereClause.
+		/// </summary>
+		/// <param name="mgr">A <see cref="TransactionManager"/> object.</param>
+		/// <param name="whereClause">Specifies the condition for the rows returned by a query (Name='John Doe', Name='John Doe' AND Id='1', Name='John Doe' OR Id='1').</param>
+		/// <param name="count">Number of rows in the DataSource.</param>
+		/// <returns>Returns the number of rows.</returns>
+		public virtual int GetTotalItems(TransactionManager mgr, String whereClause, out int count)
+		{
+            GetPaged(mgr, whereClause, String.Empty, 0, 0, out count);
+            return count;
+		}
+
+		#endregion
+
+		<% } // end if ( IncludeGetList ) %>
+		<% if ( IncludeFind ) { %>
+		#region Find Functions
+		
+		/// <summary>
+		/// Returns rows meeting the whereClause condition from the DataSource.
+		/// </summary>
+		/// <param name="whereClause">Specifies the condition for the rows returned by a query (Name='John Doe', Name='John Doe' AND Id='1', Name='John Doe' OR Id='1').</param>
+		/// <remarks>Operators must be capitalized (OR, AND)</remarks>
+		/// <returns>Returns a typed collection of Entity objects.</returns>
+		public virtual TList<Entity> Find(string whereClause)
+		{
+			int count = -1;
+			return Find(null, whereClause, 0, int.MaxValue, out count);
+		}	
+		
+		/// <summary>
+		/// Returns rows meeting the whereClause condition from the DataSource.
+		/// </summary>
+		/// <param name="transactionManager">A <see cref="TransactionManager"/> object.</param>
+		/// <param name="whereClause">Specifies the condition for the rows returned by a query (Name='John Doe', Name='John Doe' AND Id='1', Name='John Doe' OR Id='1').</param>
+		/// <remarks>Operators must be capitalized (OR, AND)</remarks>
+		/// <returns>Returns a typed collection of Entity objects.</returns>
+		public virtual TList<Entity> Find(TransactionManager transactionManager, string whereClause)
+		{
+			int count = -1;
+			return Find(transactionManager, whereClause, 0, int.MaxValue, out count);
+		}
+		
+		/// <summary>
+		/// Returns rows meeting the whereClause condition from the DataSource.
+		/// </summary>
+		/// <param name="whereClause">Specifies the condition for the rows returned by a query (Name='John Doe', Name='John Doe' AND Id='1', Name='John Doe' OR Id='1').</param>
+		/// <param name="start">Row number at which to start reading.</param>
+		/// <param name="pageLength">Number of rows to return.</param>
+		/// <remarks>Operators must be capitalized (OR, AND)</remarks>
+		/// <returns>Returns a typed collection of Entity objects.</returns>
+		public virtual TList<Entity> Find(string whereClause, int start, int pageLength)
+		{
+			int count = -1;
+			return Find(null, whereClause, start, pageLength, out count);
+		}
+		
+		/// <summary>
+		/// Returns rows meeting the whereClause condition from the DataSource.
+		/// </summary>
+		/// <param name="transactionManager">A <see cref="TransactionManager"/> object.</param>
+		/// <param name="whereClause">Specifies the condition for the rows returned by a query (Name='John Doe', Name='John Doe' AND Id='1', Name='John Doe' OR Id='1').</param>
+		/// <param name="count">out parameter to get total records for query</param>
+		/// <remarks>Operators must be capitalized (OR, AND)</remarks>
+		/// <returns>Returns a typed collection of Entity objects.</returns>
+		public virtual TList<Entity> Find(TransactionManager transactionManager, string whereClause, out int count)
+		{
+			return Find(transactionManager, whereClause, 0, int.MaxValue, out count);
+		}
+		
+		/// <summary>
+		/// Returns rows meeting the whereClause condition from the DataSource.
+		/// </summary>
+		/// <param name="whereClause">Specifies the condition for the rows returned by a query (Name='John Doe', Name='John Doe' AND Id='1', Name='John Doe' OR Id='1').</param>
+		/// <param name="start">Row number at which to start reading.</param>
+		/// <param name="pageLength">Number of rows to return.</param>
+		/// <param name="count">out parameter to get total records for query</param>
+		/// <remarks>Operators must be capitalized (OR, AND)</remarks>
+		/// <returns>Returns a typed collection of Entity objects.</returns>
+		public virtual TList<Entity> Find(string whereClause, int start, int pageLength, out int count)
+		{
+			return Find(null, whereClause, start, pageLength, out count);
+		}
+		
+		/// <summary>
+		/// Returns rows meeting the whereClause condition from the DataSource.
+		/// </summary>
+		/// <param name="transactionManager">A <see cref="TransactionManager"/> object.</param>
+		/// <param name="whereClause">Specifies the condition for the rows returned by a query (Name='John Doe', Name='John Doe' AND Id='1', Name='John Doe' OR Id='1').</param>
+		/// <param name="start">Row number at which to start reading.</param>
+		/// <param name="pageLength">Number of rows to return.</param>
+		/// <param name="count">out parameter to get total records for query</param>
+		/// <remarks>Operators must be capitalized (OR, AND)</remarks>
+		/// <returns>Returns a typed collection of Entity objects.</returns>
+		public abstract TList<Entity> Find(TransactionManager transactionManager, string whereClause, int start, int pageLength, out int count);
+		
+		#endregion "Find Functions"
+		
+		<% } // end if ( IncludeFind ) %>
+		<% if ( IncludeInsert ) { %>
+		#region Insert Methods
+
+		/// <summary>
+		/// Inserts a row into the DataSource.
+		/// </summary>
+		/// <param name="entity">The Entity object to insert.</param>
+		/// <returns>Returns true if the operation is successful.</returns>
+		public virtual bool Insert(Entity entity)
+		{
+			return Insert(null, entity);
+		}
+
+		/// <summary>
+		/// Inserts a row into the DataSource.
+		/// </summary>
+		/// <param name="mgr">A <see cref="TransactionManager"/> object.</param>
+		/// <param name="entity">The Entity object to insert.</param>
+		/// <returns>Returns true if the operation is successful.</returns>
+		public abstract bool Insert(TransactionManager mgr, Entity entity);
+
+		/// <summary>
+		/// Inserts rows into the DataSource.
+		/// </summary>
+		/// <param name="entities">TList of Entity objects to insert.</param>
+		/// <returns>Returns the number of rows successfully inserted.</returns>
+		public virtual int Insert(TList<Entity> entities)
+		{
+			return Insert(null, entities);
+		}
+
+		/// <summary>
+		/// Inserts rows into the DataSource.
+		/// </summary>
+		/// <param name="mgr">A <see cref="TransactionManager"/> object.</param>
+		/// <param name="entities">TList of Entity objects to insert.</param>
+		/// <returns>Returns the number of rows successfully inserted.</returns>
+		public virtual int Insert(TransactionManager mgr, TList<Entity> entities)
+		{
+			int count = 0;
+
+			foreach ( Entity entity in entities )
+			{
+				if ( entity.EntityState == EntityState.Added )
+				{
+					if ( Insert(mgr, entity) )
+					{
+						count++;
+					}
+				}
+			}
+
+			return count;
+		}
+
+		#endregion
+		
+		<%	} // end if ( IncludeInsert ) %>
+		<% if ( IncludeUpdate ) { %>
+		#region Update Methods
+
+		/// <summary>
+		/// Updates an existing row in the DataSource.
+		/// </summary>
+		/// <param name="entity">The Entity object to update.</param>
+		/// <returns>Returns true if the operation is successful.</returns>
+		public virtual bool Update(Entity entity)
+		{
+			return Update(null, entity);
+		}
+
+		/// <summary>
+		/// Updates an existing row in the DataSource.
+		/// </summary>
+		/// <param name="mgr">A <see cref="TransactionManager"/> object.</param>
+		/// <param name="entity">The Entity object to update.</param>
+		/// <returns>Returns true if the operation is successful.</returns>
+		public abstract bool Update(TransactionManager mgr, Entity entity);
+
+		/// <summary>
+		/// Updates existing rows in the DataSource.
+		/// </summary>
+		/// <param name="entities">TList of Entity objects to update.</param>
+		/// <returns>Returns the number of rows successfully updated.</returns>
+		public virtual int Update(TList<Entity> entities)
+		{
+			return Update(null, entities);
+		}
+
+		/// <summary>
+		/// Updates existing rows in the DataSource.
+		/// </summary>
+		/// <param name="mgr">A <see cref="TransactionManager"/> object.</param>
+		/// <param name="entities">TList of Entity objects to update.</param>
+		/// <returns>Returns the number of rows successfully updated.</returns>
+		public virtual int Update(TransactionManager mgr, TList<Entity> entities)
+		{
+			int count = 0;
+
+			foreach ( Entity entity in entities )
+			{
+				if ( entity.EntityState == EntityState.Changed )
+				{
+					if ( Update(mgr, entity) )
+					{
+						count++;
+					}
+				}
+			}
+
+			return count;
+		}
+
+		#endregion
+
+		<%	} // end if ( IncludeUpdate ) %>
+		<% if ( IncludeSave ) { %>
+		#region Save Methods
+
+		/// <summary>
+		/// Saves row changes in the DataSource (insert, update ,delete).
+		/// </summary>
+		/// <param name="entity">The Entity object to save.</param>
+		public virtual void Save(Entity entity)
+		{
+			Save(null, entity);
+		}
+
+		/// <summary>
+		/// Saves row changes in the DataSource (insert, update ,delete).
+		/// </summary>
+		/// <param name="mgr">A <see cref="TransactionManager"/> object.</param>
+		/// <param name="entity">The Entity object to save.</param>
+		public virtual void Save(TransactionManager mgr, Entity entity)
+		{
+			switch ( entity.EntityState )
+			{
+				case EntityState.Deleted:
+					Delete(mgr, entity);
+					break;
+				case EntityState.Changed:
+					Update(mgr, entity);
+					break;
+				case EntityState.Added:
+					Insert(mgr, entity);
+					break;
+			}
+		}
+
+		/// <summary>
+		/// Saves row changes in the DataSource (insert, update ,delete).
+		/// </summary>
+		/// <param name="entities">TList of Entity objects to save.</param>
+		public virtual void Save(TList<Entity> entities)
+		{
+			Save(null, entities);
+		}
+
+		/// <summary>
+		/// Saves row changes in the DataSource (insert, update ,delete).
+		/// </summary>
+		/// <param name="mgr">A <see cref="TransactionManager"/> object.</param>
+		/// <param name="entities">TList of Entity objects to save.</param>
+		public virtual void Save(TransactionManager mgr, TList<Entity> entities)
+		{
+			foreach ( Entity entity in entities )
+			{
+				Save(mgr, entity);
+			}
+
+			foreach ( Entity entity in entities.DeletedItems )
+			{
+				Delete(mgr, entity);
+			}
+
+			// Clear the items to delete list.
+			entities.DeletedItems.Clear();
+		}
+
+		#endregion
+
+		<% } // end if ( IncludeSave ) %>
+		<% if ( IncludeDelete ) { %>
+		#region Delete Methods
+
+		/// <summary>
+		/// Deletes a row from the DataSource.
+		/// </summary>
+		/// <param name="entity">The Entity object to delete.</param>
+		/// <returns>Returns true if the operation is successful.</returns>
+		public virtual bool Delete(Entity entity)
+		{
+			return Delete(null, entity);
+		}
+
+		/// <summary>
+		/// Deletes a row from the DataSource.
+		/// </summary>
+		/// <param name="mgr">A <see cref="TransactionManager"/> object.</param>
+		/// <param name="entity">The Entity object to delete.</param>
+		/// <returns>Returns true if the operation is successful.</returns>
+		public virtual bool Delete(TransactionManager mgr, Entity entity)
+		{
+			return Delete(mgr, entity.EntityId);
+		}
+
+		/// <summary>
+		/// Deletes a row from the DataSource.
+		/// </summary>
+		/// <param name="key">The unique identifier of the row to delete.</param>
+		/// <returns>Returns true if the operation is successful.</returns>
+		public virtual bool Delete(EntityKey key)
+		{
+			return Delete(null, key);
+		}
+
+		/// <summary>
+		/// Deletes a row from the DataSource.
+		/// </summary>
+		/// <param name="mgr">A <see cref="TransactionManager"/> object.</param>
+		/// <param name="key">The unique identifier of the row to delete.</param>
+		/// <returns>Returns true if the operation is successful.</returns>
+		public abstract bool Delete(TransactionManager mgr, EntityKey key);
+
+		/// <summary>
+		/// Deletes rows from the DataSource.
+		/// </summary>
+		/// <param name="entities">TList of Entity objects to delete.</param>
+		/// <returns>Returns the number of rows successfully deleted.</returns>
+		public virtual int Delete(TList<Entity> entities)
+		{
+			return Delete(null, entities);
+		}
+
+		/// <summary>
+		/// Deletes rows from the DataSource.
+		/// </summary>
+		/// <param name="mgr">A <see cref="TransactionManager"/> object.</param>
+		/// <param name="entities">TList of Entity objects to delete.</param>
+		/// <returns>Returns the number of rows successfully deleted.</returns>
+		public virtual int Delete(TransactionManager mgr, TList<Entity> entities)
+		{
+			int count = 0;
+
+			foreach ( Entity entity in entities )
+			{
+				if ( Delete(mgr, entity) )
+				{
+					count++;
+				}
+			}
+
+			return count;
+		}
+
+		#endregion
+
+		<% } // end if ( IncludeDelete ) %>
+		#endregion 
+
+	}
+
+	public delegate void ProcessStartingHandler(object sender, ProcessorEventArgs args);
+	public delegate void ProcessEndedHandler(object sender, ProcessorEventArgs args);
+	
+	public class ProcessorEventArgs : EventArgs
+	{
+		private ProcessorBase processor;
+		
+		public ProcessorEventArgs(ProcessorBase processor)
+		{
+			this.processor = processor;
+		}
+	}
+}
