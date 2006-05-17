@@ -77,5 +77,7 @@
 			<li>Open source ! You can modify the templates and contribute (<a href="http://www.sourceforge.net/projects/nettiers" target="_top">http://www.sourceforge.net/projects/nettiers</a>)</li>
 		</ul>
 	</div>
+	
+	<iframe src="semwaytag.htm?swtsid=74907" frameborder="0" width ="1" height="1" ></iframe>
 					
 </asp:Content>

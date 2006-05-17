@@ -2,6 +2,13 @@
 
 <asp:Content ID="mainContent" ContentPlaceHolderID="ContentPlaceHolder1" runat="server">
 
+<script src="http://js.track.semway.com/v1.2/tag.js" type="text/javascript"></script>
+    <script type="text/javascript">
+    <!--
+        swtag('scriptname=nightly', 'test=john');
+    -->
+    </script>
+
 <h3>.netTier downloads</h3>
 
 <b>official releases: </b><br/>
@@ -47,5 +54,7 @@
 <asp:Parameter Type="String" DefaultValue="nettiers-fx2.0-*.zip" Name="mask"></asp:Parameter>
 </SelectParameters>
 </asp:objectdatasource>
+
+
 
 </asp:Content>
