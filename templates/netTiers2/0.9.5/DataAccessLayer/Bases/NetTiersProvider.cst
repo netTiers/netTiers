@@ -30,8 +30,9 @@ namespace <%=DALNameSpace%>.Bases
 	{
 		private Type entityCreationalFactoryType = null;
         private static object syncObject = new object();
-        private bool enableEntityTracking;
-        private bool enableListTracking;
+        private bool enableEntityTracking = true;
+        private bool enableListTracking = false;
+        private bool useEntityFactory = true;
 
 	    /// <summary>
         /// Initializes the provider.
@@ -50,18 +51,21 @@ namespace <%=DALNameSpace%>.Bases
 	        lock(syncObject)
             {
                 if (string.IsNullOrEmpty(entityCreationalFactoryTypeString))
+				{
                     entityCreationalFactoryType = typeof(<%= BLLNameSpace %>.EntityFactory);
-
-
-                foreach (System.Reflection.Assembly assembly in AppDomain.CurrentDomain.GetAssemblies())
-                {
-                    if (assembly.FullName.Split(',')[0] == entityCreationalFactoryTypeString.Substring(0, entityCreationalFactoryTypeString.LastIndexOf('.')))
-                    {
-                        entityCreationalFactoryType = assembly.GetType(entityCreationalFactoryTypeString, false, true);
-                        break;
-                    }
-                }
-
+				}
+				else
+				{
+					foreach (System.Reflection.Assembly assembly in AppDomain.CurrentDomain.GetAssemblies())
+					{
+						if (assembly.FullName.Split(',')[0] == entityCreationalFactoryTypeString.Substring(0, entityCreationalFactoryTypeString.LastIndexOf('.')))
+						{
+							entityCreationalFactoryType = assembly.GetType(entityCreationalFactoryTypeString, false, true);
+							break;
+						}
+					}
+				}
+				
                 if (entityCreationalFactoryType == null)
                 {
                     System.Reflection.Assembly entityLibrary = null;
@@ -90,7 +94,10 @@ namespace <%=DALNameSpace%>.Bases
 
                 bool l;
                 enableListTracking = bool.TryParse(config["enableListTracking"], out l);
-            }   
+
+                bool c;
+                useEntityFactory = bool.TryParse(config["useEntityFactory"], out c);
+			}   
          }
 	    
         /// <summary>
@@ -137,6 +144,23 @@ namespace <%=DALNameSpace%>.Bases
                 enableListTracking = value; 
             }
         }
+
+        /// <summary>
+        /// Gets or sets the use entity factory property to enable the usage of the EntityFactory and it's type cache.
+        /// </summary>
+        /// <value>The entity factory type.</value>
+        public virtual bool UseEntityFactory
+        {
+            get
+            {
+                return useEntityFactory;
+            }
+            set 
+            {
+                useEntityFactory = value; 
+            }
+        }
+
 
 		///<summary>
 		/// Indicates if the current <c cref="NetTiersProvider"/> implementation is supporting Transactions.

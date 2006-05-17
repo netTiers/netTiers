@@ -233,6 +233,24 @@
 		{
 			return <%=partialClassInternalPrefix%>GetBy<%=GetKeysName(fkeys[j].ForeignKeyMemberColumns)%>(null, <%= GetFunctionCallParameters(fkeys[j].ForeignKeyMemberColumns) %>, start, pageLength, out totalCount, null, null);
 		}
+		
+		/// <summary>
+		/// 	<%= constructorAccessModifier %> method that Gets rows in a <see cref="<%=collectionClassNameComment %>" /> from the datasource based on the <%=fkeys[j].Name%> key.
+		///		<%=fkeys[j].Name%> Description: <%=fkeys[j].Description%>
+		/// </summary>
+		/// <param name="transactionManager">a <c>TransactionManager<c/>  that allows to set to the Isolation level for the query.</param>
+		<% for (int i = 0; i < fkeys[j].ForeignKeyMemberColumns.Count; i++) { %>
+		/// <param name="<%= GetPrivateName(fkeys[j].ForeignKeyMemberColumns[i].Name)%>"><%=fkeys[j].ForeignKeyMemberColumns[i].Description%></param>
+		<% } %>
+		/// <param name="start">Row number at which to start reading.</param>
+		/// <param name="pageLength">Page length of records you would like to retrieve</param>
+		/// <param name="totalCount">Out parameter, number of total rows in given query.</param>
+		/// <returns>Returns a collection <see cref="<%= collectionClassNameComment %>" /> of <c><%=className%></c> objects.</returns>
+		[DataObjectMethod(DataObjectMethodType.Select)]
+		<%= constructorAccessModifier %> <%=collectionClassName%> <%=partialClassInternalPrefix%>GetBy<%=GetKeysName(fkeys[j].ForeignKeyMemberColumns)%>(TransactionManager transactionManager, <%= GetFunctionHeaderParameters(fkeys[j].ForeignKeyMemberColumns) %>, int start, int pageLength, out int totalCount)
+		{
+			return <%=partialClassInternalPrefix%>GetBy<%=GetKeysName(fkeys[j].ForeignKeyMemberColumns)%>(transactionManager, <%= GetFunctionCallParameters(fkeys[j].ForeignKeyMemberColumns) %>, start, pageLength, out totalCount, null, null);
+		}
 		<% } %>
 		
 		<% if (RenderImplementation){ %>
@@ -395,7 +413,7 @@
 		[DataObjectMethod(DataObjectMethodType.Select)]
 		<%= constructorAccessModifier %> <%=returnType%> <%=partialClassInternalPrefix%>GetBy<%=GetKeysName(indexes[j].MemberColumns)%>(<%= GetFunctionHeaderParameters(indexes[j].MemberColumns) %>, int start, int pageLength, out int totalCount)
 		{
-			return <%=partialClassInternalPrefix%>GetBy<%=GetKeysName(indexes[j].MemberColumns)%>(null, <%= GetFunctionCallParameters(indexes[j].MemberColumns) %>, 0, int.MaxValue, out totalCount, null, null);
+			return <%=partialClassInternalPrefix%>GetBy<%=GetKeysName(indexes[j].MemberColumns)%>(null, <%= GetFunctionCallParameters(indexes[j].MemberColumns) %>, start, pageLength, out totalCount, null, null);
 		}
 
 		/// <summary>
@@ -412,7 +430,7 @@
 		[DataObjectMethod(DataObjectMethodType.Select)]
 		<%= constructorAccessModifier %> <%=returnType%> <%=partialClassInternalPrefix%>GetBy<%=GetKeysName(indexes[j].MemberColumns)%>(TransactionManager transactionManager, <%= GetFunctionHeaderParameters(indexes[j].MemberColumns) %>, int start, int pageLength, out int totalCount)
 		{
-			return <%=partialClassInternalPrefix%>GetBy<%=GetKeysName(indexes[j].MemberColumns)%>(transactionManager, <%= GetFunctionCallParameters(indexes[j].MemberColumns) %>, 0, int.MaxValue, out totalCount, null, null);
+			return <%=partialClassInternalPrefix%>GetBy<%=GetKeysName(indexes[j].MemberColumns)%>(transactionManager, <%= GetFunctionCallParameters(indexes[j].MemberColumns) %>, start, pageLength, out totalCount, null, null);
 		}
 		
 		<% } //end if render Overload%>
@@ -484,7 +502,8 @@
 		/// <returns></returns>
 		<%= constructorAccessModifier %> <%=collectionClassName %> <%=partialClassInternalPrefix%>GetAll() 
 		{
-			return <%=partialClassInternalPrefix%>GetAll();
+			int totalCount = -1;
+			return <%=partialClassInternalPrefix%>GetAll(null, 0, int.MaxValue, out totalCount, null, null);
 		}
 
 		/// <summary>
@@ -507,7 +526,7 @@
 		<%= constructorAccessModifier %> <%=collectionClassName %> <%=partialClassInternalPrefix%>GetAll(int start, int pageLength) 
 		{
 			int totalCount = -1;
-			return <%=partialClassInternalPrefix%>GetAll(null, 0, int.MaxValue, out totalCount, null, null);
+			return <%=partialClassInternalPrefix%>GetAll(null, start, pageLength, out totalCount, null, null);
 		}
 		
 		/// <summary>
@@ -585,7 +604,6 @@
 					throw;
 			}
 			return list;
-			
 		}
 		<% } // end renderedImplementation %>
 		#endregion <%=partialClassInternalPrefix%>GetAll
@@ -625,7 +643,7 @@
 		/// <returns>Returns a typed collection of <c><%= className %></c> objects.</returns>
 		<%= constructorAccessModifier %> <%=collectionClassName %> <%=partialClassInternalPrefix%>GetPaged(int start, int pageLength, out int totalCount)
 		{
-			return <%=partialClassInternalPrefix%>GetPaged(null, null, null, start, pageLength, out totalCount);
+			return <%=partialClassInternalPrefix%>GetPaged(null, null, null, start, pageLength, out totalCount, null, null);
 		}
 		
 		/// <summary>
@@ -685,7 +703,7 @@
 		/// <returns>Returns the number of rows.</returns>
 		public int GetTotalItems(TransactionManager mgr, String whereClause, out int totalCount)
 		{
-            GetPaged(mgr, whereClause, String.Empty, 0, 0, out totalCount, null, null);
+            <%=partialClassInternalPrefix%>GetPaged(mgr, whereClause, String.Empty, 0, 0, out totalCount, null, null);
             return totalCount;
 		}
 		<% } %>
@@ -1502,7 +1520,6 @@
 
 		int i=0;
 		bool valid = false;
-		
 		IList commandsCollection = new ArrayList();
 		try
 		{

@@ -717,11 +717,19 @@ namespace <%=DALNameSpace%>.Bases
 					}// end if 
 				} //end for each column %>;
 				
-				<%=className%> c = EntityManager.LocateOrCreate<<%=entityClassName%>>(
-					key.ToString(), // EntityTrackingKey 
-					"<%=entityClassName%>",  //Creational Type
-					DataRepository.Provider.EntityCreationalFactoryType,  //Factory used to create entity
-					DataRepository.Provider.EnableEntityTracking); // Track this entity?
+				<%=className%> c = null;
+				if (DataRepository.Provider.UseEntityFactory)
+				{
+					c = EntityManager.LocateOrCreate<<%=entityClassName%>>(
+						key.ToString(), // EntityTrackingKey 
+						"<%=entityClassName%>",  //Creational Type
+						DataRepository.Provider.EntityCreationalFactoryType,  //Factory used to create entity
+						DataRepository.Provider.EnableEntityTracking); // Track this entity?
+				}
+				else
+				{
+					c = new <%= className %>();
+				}
 				
 				if (!DataRepository.Provider.EnableEntityTracking || c.EntityState == EntityState.Added)
                 {
@@ -729,11 +737,11 @@ namespace <%=DALNameSpace%>.Bases
 				<%for (int x=0; x < cols.Count;x++) { %>
 					<%= GetObjectPropertySetExpression(cols[x], "reader", "c", 5) %>;
 				<% if( cols[x].IsPrimaryKeyMember && !IsIdentityColumn(cols[x]) && !IsComputed(cols[x]) ) {%>
-				c.Original<%=GetPropertyName(cols[x].Name)%> = (Convert.IsDBNull(reader["<%=cols[x].Name%>"]))?<%= GetCSDefaultByType(cols[x])%>:(<%=GetCSType(cols[x])%>)reader["<%=cols[x].Name%>"];
+					c.Original<%=GetPropertyName(cols[x].Name)%> = (Convert.IsDBNull(reader["<%=cols[x].Name%>"]))?<%= GetCSDefaultByType(cols[x])%>:(<%=GetCSType(cols[x])%>)reader["<%=cols[x].Name%>"];
 				<% }// end if %>
 				<%} //end for each column %>
 					c.EntityTrackingKey = key;
-				c.AcceptChanges();
+					c.AcceptChanges();
 					c.SuppressEntityEvents = false;
 				}
 				rows.Add(c);

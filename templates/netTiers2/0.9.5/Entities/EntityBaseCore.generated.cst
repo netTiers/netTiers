@@ -340,65 +340,68 @@ namespace <%=NameSpace%>
 
       #endregion
 
-      #region Validation
+      	#region Validation
 
 		[NonSerialized]
-      private Validation.ValidationRules _validationRules;
+     	private Validation.ValidationRules _validationRules;
 
 
-      /// <summary>
-      /// Returns the list of <see cref="Validation.ValidationRules"/> associated with this object.
-      /// </summary>
+		/// <summary>
+		/// Returns the list of <see cref="Validation.ValidationRules"/> associated with this object.
+		/// </summary>
 		[XmlIgnoreAttribute()]
-      protected Validation.ValidationRules ValidationRules
-      {
-         get
-         {
-            if (_validationRules == null)
-            {
-               _validationRules = new Validation.ValidationRules(this);
-            }
+		protected Validation.ValidationRules ValidationRules
+		{
+			get
+			{
+				if (_validationRules == null)
+				{
+					_validationRules = new Validation.ValidationRules(this);
+					
+					//lazy init the rules as well.
+					AddValidationRules();
+				}
+	
+				return _validationRules;
+			}
+		}
 
-            return _validationRules;
-         }
-      }
+		/// <summary>
+		/// Assigns validation rules to this object.
+		/// </summary>
+		/// <remarks>
+		/// This method can be overridden in a derived class to add custom validation rules. 
+		///</remarks>
+		protected virtual void AddValidationRules()
+		{
+			
+		}
+	
+		/// <summary>
+		/// Returns <see langword="true" /> if the object is valid, 
+		/// <see langword="false" /> if the object validation rules that have indicated failure. 
+		/// </summary>
+		[Browsable(false)]
+		public virtual bool IsValid
+		{
+			get
+			{
+				return ValidationRules.IsValid;
+			}
+		}
 
-      /// <summary>
-      /// Assigns validation rules to this object.
-      /// </summary>
-      /// <remarks>
-      /// This method can be overridden in a derived class to add custom validation rules. 
-      ///</remarks>
-      protected virtual void AddValidationRules()
-      {
-         
-      }
-
-      /// <summary>
-      /// Returns <see langword="true" /> if the object is valid, 
-      /// <see langword="false" /> if the object validation rules that have indicated failure. 
-      /// </summary>
-      [Browsable(false)]
-      public virtual bool IsValid
-      {
-         get
-         {
-            return ValidationRules.IsValid;
-         }
-      }
-
-      /// <summary>
-      /// Returns a list of all the validation rules that failed.
-      /// </summary>
-      /// <returns><see cref="Validation.BrokenRulesList" /></returns>
+		/// <summary>
+		/// Returns a list of all the validation rules that failed.
+		/// </summary>
+		/// <returns><see cref="Validation.BrokenRulesList" /></returns>
 		[XmlIgnoreAttribute()]
-      public virtual Validation.BrokenRulesList BrokenRulesList
-      {
-         get
-         {
-            return ValidationRules.GetBrokenRules();
-         }
-      }
+		public virtual Validation.BrokenRulesList BrokenRulesList
+		{
+			get
+			{
+				return ValidationRules.GetBrokenRules();
+			}
+		}
 	
 		/// <summary>
 		/// Force this object to validate itself using the assigned business rules.
@@ -408,7 +411,7 @@ namespace <%=NameSpace%>
 		{
 			ValidationRules.ValidateRules();
 		}
-		
+	
 		/// <summary>
 		/// Force the object to validate itself using the assigned business rules.
 		/// </summary>
@@ -426,7 +429,7 @@ namespace <%=NameSpace%>
 		{
 			Validate(column.ToString());
 		}
-      #endregion
+      	#endregion
 
       #region IDeserializationCallback Members
 

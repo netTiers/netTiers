@@ -44,8 +44,11 @@ namespace <%=NameSpace%>
 
       private string _listName;
       private bool _containsListCollection = false;
-      [NonSerialized]
+ 
+	  [NonSerialized]
       private PropertyDescriptorCollection _propertyCollection;
+	  [NonSerialized]
+      private List<PropertyDescriptor> supportsChangeEventsProperties = new List<PropertyDescriptor>();
       [NonSerialized]
       private Dictionary<string, PropertyDescriptorCollection> _childCollectionProperties;
 
@@ -64,6 +67,15 @@ namespace <%=NameSpace%>
       {
          // save the bindable properties in a local field
          _propertyCollection = EntityHelper.GetBindableProperties(typeof(T));
+		
+		 foreach (PropertyDescriptor propDesc in _propertyCollection) 
+		 {
+            if (propDesc.SupportsChangeEvents)
+            {
+               supportsChangeEventsProperties.Add(propDesc);
+            }
+         }
+		
          // save the name of the type for use in the IDE GUI
          _listName = typeof(T).Name;
       }
@@ -460,15 +472,11 @@ namespace <%=NameSpace%>
       /// <param name="item">The item to insert in the list.</param>
       protected override void InsertItem(int index, T item)
       {
-
-         //foreach (PropertyDescriptor propDesc in TypeDescriptor.GetProperties(item))
-         foreach (PropertyDescriptor propDesc in _propertyCollection) 
+         foreach (PropertyDescriptor propDesc in supportsChangeEventsProperties) 
 		 {
-            if (propDesc.SupportsChangeEvents)
-            {
-               propDesc.AddValueChanged(item, OnItemChanged);
-            }
+            propDesc.AddValueChanged(item, OnItemChanged);
          }
+		
          base.InsertItem(index, item);
       }
 

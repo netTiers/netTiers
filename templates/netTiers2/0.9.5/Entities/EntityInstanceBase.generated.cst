@@ -171,8 +171,6 @@ namespace <%=NameSpace%>
 		{
 			this.entityData = new <%=structName%>();
 			this.backupData = null;
-			
-			AddValidationRules();
 		}		
 		
 		<% if(colsUpdatable.Count > 0) { %>
@@ -186,9 +184,7 @@ namespace <%=NameSpace%>
 		{
 			this.entityData = new <%=structName%>();
 			this.backupData = null;
-			
-			AddValidationRules();
-			
+
 			<% for (int x=0; x < colsUpdatable.Count; x++) { %>
 			this.<%= GetPropertyName(colsUpdatable[x]) %> = <%= GetPrivateName(className) + GetPropertyName(colsUpdatable[x].Name) %>;
 			<% }// end for %>
@@ -278,7 +274,8 @@ namespace <%=NameSpace%>
 			
 			set
 			{
-				<%if (! cols[x].AllowDBNull && IsCSReferenceDataType(cols[x])) {%>
+				<% // skip
+				if (false && ! cols[x].AllowDBNull && IsCSReferenceDataType(cols[x])) {%>
 				//if ( value == null )
 				//	throw new ArgumentNullException("value", "<%= GetPropertyName(cols[x].Name) %> does not allow null values.");
 				<%}
@@ -291,7 +288,7 @@ namespace <%=NameSpace%>
 				<%}%>
 					return;
 					
-				<% if (IsLengthType(cols[x])) { %>
+				<% if (false && IsLengthType(cols[x])) { %>
 				//if (<%if (cols[x].AllowDBNull){%>value != null &&<%}%>value.Length > <%=cols[x].Size%>)
 				//{
     			//	throw new ArgumentOutOfRangeException("<%= GetPropertyName(cols[x]) %>", "<%= GetPropertyName(cols[x]) %> maximum length is <%=cols[x].Size%>.");
@@ -303,7 +300,6 @@ namespace <%=NameSpace%>
 				<% if ( cols[x].IsPrimaryKeyMember ) { %>
 				this.EntityId.<%= GetPropertyName(cols[x]) %> = value;
 				<% } %>
-				//this._isDirty = true;
 				if (this.currentEntityState == EntityState.Unchanged)
 				{
 					this.currentEntityState = EntityState.Changed;
