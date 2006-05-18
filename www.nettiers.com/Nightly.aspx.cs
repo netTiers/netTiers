@@ -59,16 +59,18 @@ public partial class Nightly : System.Web.UI.Page
 				SqlCommand command = new SqlCommand();
 				command.CommandType = CommandType.Text;
 				command.Connection = conn;
-				command.CommandText = "INSERT INTO SWTrack (UTC, SemWayId, ConsumerId, UserAgent) VALUES(@utc, @semwayid, @consumerid, @useragent)";
+				command.CommandText = "INSERT INTO Tracker (UTC, SemWayId, ConsumerId, UserAgent, Ip) VALUES(@utc, @semwayid, @consumerid, @useragent, @ip)";
 				command.Parameters.Add("@utc", SqlDbType.DateTime);
 				command.Parameters.Add("@semwayid", SqlDbType.NVarChar);
 				command.Parameters.Add("@consumerid", SqlDbType.BigInt);
 				command.Parameters.Add("@useragent", SqlDbType.NVarChar);
-
+				command.Parameters.Add("@ip", SqlDbType.NVarChar);
+				
 				command.Parameters["@utc"].Value = DateTime.Now.ToUniversalTime();
 				command.Parameters["@semwayid"].Value = SemWayId;
 				command.Parameters["@consumerid"].Value = Request.Cookies["__SWSTATE"].Value;
 				command.Parameters["@useragent"].Value = Request.UserAgent;
+				command.Parameters["@ip"].Value = Request.UserHostAddress;
 
 				conn.Open();
 				command.ExecuteNonQuery();
