@@ -1,0 +1,548 @@
+<%@ CodeTemplate Language="C#" TargetLanguage="C#" Src="..\..\CommonSqlCode.cs" Inherits="MoM.Templates.CommonSqlCode" Debug="True" Description="Template description here." %>
+<%@ Property Name="BLLNameSpace" Optional="False" Type="System.String" Category="Style" Description="Object Namespace." %>
+<%@ Property Name="DALNameSpace" Optional="False" Type="System.String" Category="Style" Description="DAL Namespace." %>
+<%@ Property Name="WebNameSpace" Optional="False" Type="System.String" Category="Style" Description="Web Namespace." %>
+
+<%@ Property Name="IncludeFind" Type="System.Boolean" Default="True" Category="CRUD Options" Description="If true find statements will be generated." %>
+<%@ Property Name="IncludeSave" Type="System.Boolean" Default="True" Category="CRUD Options" Description="If true combined insert/update/delete procedures will be generated. In consequence, if this option is selected IncludeInsert, IncludeUpdate and IncludeDelete are automatically activated." %>
+<%@ Property Name="IncludeInsert" Type="System.Boolean" Default="True" Category="CRUD Options" Description="If true insert procedures will be generated." %>
+<%@ Property Name="IncludeUpdate" Type="System.Boolean" Default="True" Category="CRUD Options" Description="If true update procedures will be generated." %>
+<%@ Property Name="IncludeDelete" Type="System.Boolean" Default="True" Category="CRUD Options" Description="If true delete procedures will be generated." %>
+<%@ Property Name="IncludeGet" Type="System.Boolean" Default="True" Category="CRUD Options" Description="If true get procedures will be generated." %>
+<%@ Property Name="IncludeGetList" Type="System.Boolean" Default="True" Category="CRUD Options" Description="If true getlist procedures will be generated." %>	
+<%@ Property Name="IncludeGetListByFK" Type="System.Boolean" Default="True" Category="CRUD Options" Description="If true get statements will be generated." %>
+<%@ Property Name="IncludeGetListByIX" Type="System.Boolean" Default="True" Category="CRUD Options" Description="If true getlist statements will be generated." %>
+<%@ Property Name="IncludeManyToMany" Type="System.Boolean" Default="True" Category="CRUD Options" Description="If true select statements will be generated for any many to many relationship." %>
+<%@ Property Name="IncludeRelations" Type="System.Boolean" Default="True" Category="CRUD Options" Description="If true, the child collection relationships will be generated within your entities, if set to false, these child collections will not be generated, and Deep Load/Save will not be generated." %>
+
+<%@ Property Name="SourceTables" Type="SchemaExplorer.TableSchemaCollection" Category="Connection" Description="Tables of the system." %>
+<%@ Property Name="SourceTable" Type="SchemaExplorer.TableSchema" Category="Connection" Description="Table that the data access class should be based on." %>
+
+<%@ Assembly Name="SchemaExplorer" %>
+<%@ Assembly Name="System.Design" %>
+
+<%@ Import Namespace="SchemaExplorer" %>
+<%@ Import Namespace="System.Collections" %>
+<%@ Import Namespace="System.Text" %>
+<%@ Import Namespace="System" %>
+<% 
+	// Collection of ForeignKeys. Provides information about the foreign keys 
+	//(keys where the current table is the foreign table) contained in the table. 
+	TableKeySchemaCollection fkeys = SourceTable.ForeignKeys;
+	
+	//Provides information about the primary keys 
+	//(keys where the current table is the primary table) contained in the table. 
+	TableKeySchemaCollection pkeys = SourceTable.PrimaryKeys;
+	
+	//Provides information about the indexes contained in the table. 
+	IndexSchemaCollection indexes = SourceTable.Indexes;
+	
+	string tableName = SourceTable.Name;
+	string className = GetClassName(tableName);
+	string keyClassName = GetKeyClassName(tableName);
+	string providerName = GetProviderName(tableName);
+	string providerBaseName = GetProviderBaseName(tableName);
+	
+	// holds all of the method names created
+	ArrayList methodNames = new ArrayList();
+	// fk method names
+	ArrayList fkMethodNames = new ArrayList();
+	// ix method names
+	ArrayList ixMethodNames = new ArrayList();
+	// m:m method names
+	ArrayList manyToManyMethodNames = new ArrayList();
+
+	if ( IncludeGetList )
+	{
+		methodNames.Add("GetAll");
+		methodNames.Add("GetPaged");
+	}
+	if ( IncludeFind )
+	{
+		methodNames.Add("Find");
+	}
+	if ( IncludeGetListByFK )
+	{
+		Debug.WriteLine("GetByFK:");
+		for(int j = 0; j < fkeys.Count; j++)
+		{
+			string fkName = "GetBy" + GetKeysName(fkeys[j].ForeignKeyMemberColumns);
+			Debug.WriteLine(fkName);
+			if(!fkMethodNames.Contains(fkName) && !methodNames.Contains(fkName)){
+				fkMethodNames.Add(fkName);
+			}
+		}
+		methodNames.AddRange((ICollection)fkMethodNames);
+	}
+	if ( IncludeGetListByIX )
+	{
+		Debug.WriteLine("GetByIX:");
+		
+		for(int j = 0; j < indexes.Count; j++)
+		{
+			string ixName = "GetBy" + GetKeysName(indexes[j].MemberColumns);
+			Debug.WriteLine(ixName);
+			if(!ixMethodNames.Contains(ixName) && !methodNames.Contains(ixName)){
+				ixMethodNames.Add(ixName);
+			}
+		}
+		methodNames.AddRange((ICollection)ixMethodNames);
+	}
+	if ( IncludeManyToMany )
+	{
+		Debug.WriteLine("Many to Many");
+		TableSchema primaryTable = SourceTable;
+		
+		foreach(TableKeySchema key in SourceTable.PrimaryKeys)
+		{
+			// Check that the key is related to a junction table
+			if ( IsJunctionTable(key.ForeignKeyTable) && IsJunctionKey(key))
+			{
+				TableSchema junctionTable = key.ForeignKeyTable;
+				
+				// Search for the other(s) key(s) of the junction table' primary key
+				foreach(TableKeySchema junctionTableKey in junctionTable.ForeignKeys)
+				{				
+					if ( IsJunctionKey(junctionTableKey) && junctionTableKey.Name != key.Name )
+					{
+						TableSchema secondaryTable = junctionTableKey.PrimaryKeyTable;
+						string functionname = "GetBy"+GetManyToManyName(junctionTableKey, GetCleanName(junctionTable.Name));
+						if(!manyToManyMethodNames.Contains(functionname)){
+							manyToManyMethodNames.Add(functionname);
+						}
+					}
+					
+				}
+			}
+		}
+		methodNames.AddRange((ICollection)manyToManyMethodNames);
+	}
+%>
+#region Using Directives
+using System;
+using System.Collections.Specialized;
+using System.ComponentModel;
+using System.Web.UI;
+using System.Web.UI.Design;
+
+using <%= BLLNameSpace %>;
+using <%= DALNameSpace %>;
+using <%= DALNameSpace %>.Bases;
+#endregion
+
+namespace <%= WebNameSpace %>.Data
+{
+	/// <summary>
+	/// Represents the DataRepository.<%= className %>Provider object that provides
+	/// data to data-bound controls in multi-tier Web application architectures.
+	/// </summary>
+	[Designer(typeof(ProviderDataSourceDesigner<<%= className %>,<%= keyClassName %>>))]
+	public class <%= className %>DataSource : ProviderDataSource<<%= className %>, <%= keyClassName %>>
+	{
+		#region Constructors
+
+		/// <summary>
+		/// Initializes a new instance of the <%= className %>DataSource class.
+		/// </summary>
+		public <%= className %>DataSource() : base(DataRepository.<%= providerName %>)
+		{
+		}
+
+		#endregion Constructors
+		
+		#region Properties
+		
+		/// <summary>
+		/// Gets a reference to the <%= className %>DataSourceView used by the <%= className %>DataSource.
+		/// </summary>
+		protected <%= className %>DataSourceView <%= className %>View
+		{
+			get { return ( View as <%= className %>DataSourceView ); }
+		}
+		
+		/// <summary>
+		/// Gets or sets the name of the method or function that
+		/// the <%= className %>DataSource control invokes to retrieve data.
+		/// </summary>
+		public <%= className %>SelectMethod SelectMethod
+		{
+			get { return <%= className %>View.SelectMethod; }
+			set { <%= className %>View.SelectMethod = value; }
+		}
+
+		#endregion Properties
+		
+		#region Methods
+
+		/// <summary>
+		/// Creates a new instance of the <%= className %>DataSourceView class that is to be
+		/// used by the <%= className %>DataSource.
+		/// </summary>
+		/// <returns>An instance of the <%= className %>DataSourceView class.</returns>
+		protected override BaseDataSourceView<<%= className %>, <%= keyClassName %>> GetNewDataSourceView()
+		{
+			return new <%= className %>DataSourceView(this, DefaultViewName);
+		}
+		
+		#endregion Methods
+	}
+	
+	/// <summary>
+	/// Supports the <%= className %>DataSource control and provides an interface for
+	/// data-bound controls to perform data operations with business and data objects.
+	/// </summary>
+	public class <%= className %>DataSourceView : ProviderDataSourceView<<%= className %>, <%= keyClassName %>>
+	{
+		#region Declarations
+
+		private <%= className %>SelectMethod _selectMethod;
+
+		#endregion Declarations
+		
+		#region Constructors
+
+		/// <summary>
+		/// Initializes a new instance of the <%= className %>DataSourceView class.
+		/// </summary>
+		/// <param name="owner">A reference to the <%= className %>DataSource which created this instance.</param>
+		/// <param name="viewName">The name of the view.</param>
+		public <%= className %>DataSourceView(<%= className %>DataSource owner, String viewName)
+			: base(owner, viewName)
+		{
+		}
+		
+		#endregion Constructors
+		
+		#region Properties
+
+		/// <summary>
+		/// Gets or sets the name of the method or function that
+		/// the DataSource control invokes to retrieve data.
+		/// </summary>
+		internal <%= className %>SelectMethod SelectMethod
+		{
+			get { return _selectMethod; }
+			set { _selectMethod = value; }
+		}
+
+		/// <summary>
+		/// Gets a strongly typed reference to the Provider property.
+		/// </summary>
+		internal <%= providerBaseName %> <%= providerName %>
+		{
+			get { return Provider as <%= providerBaseName %>; }
+		}
+
+		#endregion Properties
+		
+		#region Select Methods
+		
+		/// <summary>
+		/// Gets a collection of Entity objects based on the value of the SelectMethod property.
+		/// </summary>
+		/// <param name="count">The total number of rows in the DataSource.</param>
+		/// <returns>A collection of Entity objects.</returns>
+		protected override ListBase<<%= className %>> GetSelectData(out int count)
+		{
+			IOrderedDictionary values = Owner.GetParameterValues();
+			ListBase<<%= className %>> results = null;
+			count = 0;
+			<%= WriteParameterValues(indexes, fkeys) %>
+			switch ( SelectMethod )
+			{
+				<% if ( IncludeGetList ) { %>
+				case <%= className %>SelectMethod.GetAll:
+                    results = <%= providerName %>.GetAll(StartIndex, PageSize, out count);
+                    break;
+				case <%= className %>SelectMethod.GetPaged:
+					results = <%= providerName %>.GetPaged(WhereClause, OrderBy, StartIndex, PageSize, out count);
+					break;
+				<% } %>
+				<% if ( IncludeFind ) { %>
+				case <%= className %>SelectMethod.Find:
+					count = <%= providerName %>.Find(WhereClause).Count;
+					results = <%= providerName %>.Find(WhereClause, StartIndex, PageSize);
+                    break;
+				<% }
+				if ( IncludeGetListByIX )
+				{
+					Response.Write(WriteIndexSelectStatements(tableName, indexes));
+				}
+				if ( IncludeGetListByFK )
+				{
+					Response.Write(WriteFKSelectStatements(tableName, fkeys));
+				}
+				if ( IncludeManyToMany )
+				{
+					Response.Write(WriteManyToManySelectStatements());
+				}
+				%>
+				default:
+					break;
+			}
+			
+			return results;
+		}
+		
+		/// <summary>
+		/// Gets the values of any supplied parameters for internal caching.
+		/// </summary>
+		/// <param name="values">An IOrderedDictionary object of name/value pairs.</param>
+		protected override void GetSelectParameters(IOrderedDictionary values)
+		{
+			<% if ( IncludeGetListByIX ) { %>
+			if ( SelectMethod == <%= className %>SelectMethod.GetBy<%= GetKeysName(SourceTable.PrimaryKey.MemberColumns) %> )
+			{
+				EntityId = GetEntityKey(values);
+			}
+			<%	} // end if ( IncludeGetListByIX ) %>
+		}
+		
+		#endregion Select Methods
+	}
+	
+	/// <summary>
+	/// Enumeration of method names available for the <%= className %>DataSource.SelectMethod property.
+	/// </summary>
+	public enum <%= className %>SelectMethod
+	{
+		<% for( int j = 0; j < methodNames.Count; j++ ) { %>
+		/// <summary>
+		/// Represents the <%= methodNames[j].ToString() %> method.
+		/// </summary>
+		<%= methodNames[j].ToString() %><% if (j < methodNames.Count-1) { %>,<% } %>
+		<% } %>
+	}
+}
+
+<script runat="template">
+ArrayList methodNames = new ArrayList();
+
+private string WriteIndexSelectStatements(string tableName, IndexSchemaCollection indexes)
+{
+	StringBuilder sb = new StringBuilder();
+	//primaryKey
+	methodNames.Add(GetKeysName(SourceTable.PrimaryKey.MemberColumns));
+	
+	sb.Append(WriteCaseStatement(tableName, GetKeysName(SourceTable.PrimaryKey.MemberColumns)));
+	//sb.Append(WriteParameterStatements(SourceTable.PrimaryKey.MemberColumns, tableName));
+	
+	sb.AppendFormat("\t\t\t\t\tcount = 1;{0}", Environment.NewLine);
+	sb.AppendFormat("\t\t\t\t\t{0} data = {1}.GetBy{2}({3}, this.StartIndex, this.PageSize);{4}",
+					GetClassName(tableName),
+					GetProviderName(tableName),
+					GetKeysName(SourceTable.PrimaryKey.MemberColumns),
+					GetFunctionCallParameters(SourceTable.PrimaryKey.MemberColumns),
+					Environment.NewLine);
+					
+	sb.AppendFormat("\t\t\t\t\tresults = new VList<{0}>();{1}", GetClassName(tableName), Environment.NewLine);
+	sb.AppendFormat("\t\t\t\t\tresults.Add(data);{0}", Environment.NewLine);
+	sb.Append(WriteBreakStatement());
+	
+	foreach(IndexSchema indexSchema in indexes)
+	{
+		//skip primary key
+		if(indexSchema.Name == SourceTable.PrimaryKey.Name)
+			continue;
+		//check for dups
+		if(!methodNames.Contains(GetKeysName(indexSchema.MemberColumns)))
+		{
+			methodNames.Add(GetKeysName(indexSchema.MemberColumns));
+			
+			sb.Append(WriteCaseStatement(tableName, GetKeysName(indexSchema.MemberColumns)));
+			//sb.Append(WriteParameterStatements(indexSchema.MemberColumns, tableName));
+			sb.Append(WriteTotalRowCountStatement(indexSchema.MemberColumns, tableName));
+			sb.Append(WriteGetByStatement(indexSchema.MemberColumns, tableName));
+			sb.Append(WriteBreakStatement());
+		}
+	}
+	return sb.ToString();
+}
+
+private string WriteFKSelectStatements(string tableName, TableKeySchemaCollection fk)
+{
+	StringBuilder sb = new StringBuilder();
+	foreach(TableKeySchema tableKey in fk)
+	{
+		//dupe check
+		if(!methodNames.Contains(GetKeysName(tableKey.ForeignKeyMemberColumns)))
+		{
+			methodNames.Add(GetKeysName(tableKey.ForeignKeyMemberColumns));
+
+			sb.Append(WriteCaseStatement(tableName, GetKeysName(tableKey.ForeignKeyMemberColumns)));
+			//sb.Append(WriteParameterStatements(tableKey.ForeignKeyMemberColumns, tableName));
+			sb.Append(WriteTotalRowCountStatement(tableKey.ForeignKeyMemberColumns, tableName));
+			sb.Append(WriteGetByStatement(tableKey.ForeignKeyMemberColumns, tableName));
+			sb.Append(WriteBreakStatement());
+		}
+	}
+	return sb.ToString();
+}
+
+private string WriteManyToManySelectStatements()
+{
+	StringBuilder sb = new StringBuilder();
+	TableSchema primaryTable = SourceTable;
+	
+	foreach(TableKeySchema key in SourceTable.PrimaryKeys)
+	{
+		// Check that the key is related to a junction table
+		if ( IsJunctionTable(key.ForeignKeyTable) && IsJunctionKey(key))
+		{
+			TableSchema junctionTable = key.ForeignKeyTable;
+			
+			// Search for the other(s) key(s) of the junction table' primary key
+			foreach(TableKeySchema junctionTableKey in junctionTable.ForeignKeys)
+			{				
+				if ( IsJunctionKey(junctionTableKey) && junctionTableKey.Name != key.Name )
+				{
+					TableSchema secondaryTable = junctionTableKey.PrimaryKeyTable;
+					string functionname = GetManyToManyName(junctionTableKey, GetCleanName(junctionTable.Name));
+					
+					if(!methodNames.Contains(functionname))
+					{
+						methodNames.Add(functionname);
+						sb.Append(WriteCaseStatement(primaryTable.Name, functionname));
+						
+						/* parameters
+						foreach(TableKeySchema table in secondaryTable.PrimaryKeys)
+						{
+							sb.Append(WriteParameterStatements(table.PrimaryKey.MemberColumns, primaryTable.Name));
+						} */
+						
+						sb.Append(WriteTotalRowCountStatement(junctionTableKey.ForeignKeyMemberColumns, primaryTable.Name, functionname));
+						sb.Append(WriteGetByStatement(junctionTableKey.ForeignKeyMemberColumns, primaryTable.Name, functionname));
+						sb.Append(WriteBreakStatement());
+					}
+				}
+			}
+		}
+	}
+	return sb.ToString();
+}
+
+private string WriteCaseStatement(string tableName, string methodName)
+{
+	StringBuilder sb = new StringBuilder();
+	sb.AppendFormat("\t\t\t\tcase {0}SelectMethod.GetBy{1}:{2}",
+					GetClassName(tableName),
+					methodName,
+					Environment.NewLine);
+	return sb.ToString();
+}
+
+private string WriteParameterStatements(MemberColumnSchemaCollection memberColumns, string tableName)
+{
+	StringBuilder sb = new StringBuilder();
+	foreach(MemberColumnSchema memberSchema in memberColumns)
+	{
+		sb.AppendFormat("\t\t\t\t\t{0} {1} = ({0}) GetParameterValue(\"{1}\");{2}", 
+						GetCSType(memberSchema), 
+						GetPrivateName(memberSchema.Name),
+						Environment.NewLine);
+	}
+	return sb.ToString();
+}
+
+private string WriteTotalRowCountStatement(MemberColumnSchemaCollection memberColumns, string tableName)
+{
+	return WriteTotalRowCountStatement(memberColumns, tableName, null);
+}
+private string WriteTotalRowCountStatement(MemberColumnSchemaCollection memberColumns, string tableName, string functionName)
+{
+	StringBuilder sb = new StringBuilder();
+	sb.AppendFormat("\t\t\t\t\tcount = {0}.GetBy{1}({2}).Count;{3}",
+					GetProviderName(tableName),
+					functionName ?? GetKeysName(memberColumns),
+					GetFunctionCallParameters(memberColumns),
+					Environment.NewLine);
+	return sb.ToString();
+}
+
+private string WriteGetByStatement(MemberColumnSchemaCollection memberColumns, string tableName)
+{
+	return WriteGetByStatement(memberColumns, tableName, null);
+}
+private string WriteGetByStatement(MemberColumnSchemaCollection memberColumns, string tableName, string functionName)
+{
+	StringBuilder sb = new StringBuilder();
+	sb.AppendFormat("\t\t\t\t\tresults = {0}.GetBy{1}({2}, this.StartIndex, this.PageSize);{3}",
+					GetProviderName(tableName),
+					functionName ?? GetKeysName(memberColumns),
+					GetFunctionCallParameters(memberColumns),
+					Environment.NewLine);
+	return sb.ToString();
+}
+
+private string WriteBreakStatement()
+{
+	StringBuilder sb = new StringBuilder();
+	sb.AppendFormat("\t\t\t\t\tbreak;{0}", Environment.NewLine);
+	return sb.ToString();
+}
+
+private string WriteParameterValues(IndexSchemaCollection indexes, TableKeySchemaCollection fkeys)
+{
+	StringBuilder sb = new StringBuilder(Environment.NewLine);
+	ArrayList columns = new ArrayList();
+	
+	foreach ( IndexSchema index in indexes )
+	{
+		foreach ( MemberColumnSchema column in index.MemberColumns )
+		{
+			if( !columns.Contains(column.Name) )
+			{
+				columns.Add(column.Name);
+				WriteParameterValue(column, sb);
+			}
+		}
+	}
+	foreach ( TableKeySchema tableKey in fkeys )
+	{
+		foreach ( MemberColumnSchema column in tableKey.ForeignKeyMemberColumns )
+		{
+			if( !columns.Contains(column.Name) )
+			{
+				columns.Add(column.Name);
+				WriteParameterValue(column, sb);
+			}
+		}
+	}
+	foreach(TableKeySchema key in SourceTable.PrimaryKeys)
+	{
+		// Check that the key is related to a junction table
+		if ( IsJunctionTable(key.ForeignKeyTable) && IsJunctionKey(key))
+		{
+			TableSchema junctionTable = key.ForeignKeyTable;
+			
+			// Search for the other(s) key(s) of the junction table' primary key
+			foreach(TableKeySchema junctionTableKey in junctionTable.ForeignKeys)
+			{				
+				if ( IsJunctionKey(junctionTableKey) && junctionTableKey.Name != key.Name )
+				{
+					TableSchema secondaryTable = junctionTableKey.PrimaryKeyTable;
+					
+					foreach(TableKeySchema tableKey in secondaryTable.PrimaryKeys)
+					{
+						foreach ( MemberColumnSchema column in tableKey.PrimaryKeyMemberColumns )
+						{
+							if( !columns.Contains(column.Name) )
+							{
+								columns.Add(column.Name);
+								WriteParameterValue(column, sb);
+							}
+						}
+					}
+				}
+			}
+		}
+	}
+	
+	return sb.ToString();
+}
+
+private void WriteParameterValue(ColumnSchema column, StringBuilder sb)
+{
+	sb.AppendFormat("\t\t\t{1} {0} = ({1}) values[\"{0}\"];{2}", GetPrivateName(column), GetCSTypeWithoutNullable(column), Environment.NewLine);
+}
+</script>
