@@ -86,16 +86,6 @@ namespace <%= WebNameSpace %>.Data
 			set { ProviderView.Provider = value; }
 		}
 
-		/// <summary>
-		/// Gets or sets the name of the method or function that
-		/// the ProviderDataSource control invokes to retrieve data.
-		/// </summary>
-		public ProviderDataSourceMethod SelectMethod
-		{
-			get { return ProviderView.SelectMethod; }
-			set { ProviderView.SelectMethod = value; }
-		}
-
 		#endregion Properties
 
 		#region Methods
@@ -128,7 +118,6 @@ namespace <%= WebNameSpace %>.Data
 	{
 		#region Declarations
 
-		private ProviderDataSourceMethod _selectMethod <% if ( IncludeGetListByIX ) { %>= ProviderDataSourceMethod.GetAll<% } %>;
 		private IEntityProvider<Entity, EntityKey> _provider;
 
 		#endregion Declarations
@@ -158,75 +147,7 @@ namespace <%= WebNameSpace %>.Data
 			set { _provider = value; }
 		}
 
-		/// <summary>
-		/// Gets or sets the name of the method or function that
-		/// the ProviderDataSource control invokes to retrieve data.
-		/// </summary>
-		internal ProviderDataSourceMethod SelectMethod
-		{
-			get { return _selectMethod; }
-			set { _selectMethod = value; }
-		}
-
 		#endregion Properties
-
-		#region Select Methods
-
-		/// <summary>
-		/// Gets a collection of Entity objects based on the value of the SelectMethod property.
-		/// </summary>
-		/// <param name="count">The total number of rows in the DataSource.</param>
-		/// <returns>A collection of Entity objects.</returns>
-		/// <remarks>This method can be overridden by sub-classes needing to provide
-		/// additional data retrieval functionality.</remarks>
-		protected override ListBase<Entity> GetSelectData(out int count)
-		{
-			ListBase<Entity> entityList = null;
-			count = 0;
-
-			switch ( SelectMethod )
-			{
-				<% if ( IncludeGetListByIX ) { %>	
-				case ProviderDataSourceMethod.Get:
-					Entity entity = Provider.Get(GetTransactionManager(), EntityId);
-					entityList = new TList<Entity>();
-					entityList.Add(entity);
-					count = 1;
-					break;
-				<%	} // end if ( IncludeGetListByIX ) %>
-				<% if ( IncludeGetList ) { %>
-				case ProviderDataSourceMethod.GetAll:
-					entityList = Provider.GetAll(GetTransactionManager());
-					count = entityList.Count;
-					break;
-				case ProviderDataSourceMethod.GetPaged:
-					entityList = Provider.GetPaged(GetTransactionManager(), WhereClause, OrderBy, StartIndex, PageSize, out count);
-					break;
-				<% } // end if ( IncludeGetList ) %>
-				default:
-					break;
-			}
-
-			return entityList;
-		}
-
-		/// <summary>
-		/// Gets the values of any supplied parameters for internal caching.
-		/// </summary>
-		/// <param name="values">An IOrderedDictionary object of name/value pairs.</param>
-		/// <remarks>This method can be overridden by sub-classes needing to provide
-		/// additional data retrieval functionality.</remarks>
-		protected override void GetSelectParameters(IOrderedDictionary values)
-		{
-			<% if ( IncludeGetListByIX ) { %>
-			if ( SelectMethod == ProviderDataSourceMethod.Get )
-			{
-				EntityId = GetEntityKey(values);
-			}
-			<%	} // end if ( IncludeGetListByIX ) %>
-		}
-
-		#endregion Select Methods
 
 		<% if ( IncludeInsert ) { %>
 		#region Insert Methods
@@ -328,31 +249,5 @@ namespace <%= WebNameSpace %>.Data
 		}
 
 		#endregion Helper Methods
-	}
-
-	/// <summary>
-	/// Enumeration of method names available for the ProviderDataSource.SelectMethod property.
-	/// </summary>
-	[Serializable]
-	public enum ProviderDataSourceMethod
-	{
-		<% if ( IncludeGetListByIX ) { %>
-		/// <summary>
-		/// Represents the IEntityProvider&lt;Entity, EntityKey&gt;.Get method.
-		/// </summary>
-		Get,
-
-		<%	} // end if ( IncludeGetListByIX ) %>
-		<% if ( IncludeGetList ) { %>
-		/// <summary>
-		/// Represents the IEntityProvider&lt;Entity, EntityKey&gt;.GetAll method.
-		/// </summary>
-		GetAll,
-
-		/// <summary>
-		/// Represents the IEntityProvider&lt;Entity, EntityKey&gt;.GetPaged method.
-		/// </summary>
-		GetPaged
-		<% } // end if ( IncludeGetList ) %>
 	}
 }

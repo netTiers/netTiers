@@ -627,6 +627,7 @@
 														"WebLibrary\\Data\\ProviderDataSourceDesigner.cst",
 														"WebLibrary\\Data\\ReadOnlyDataSource.cst",
 														"WebLibrary\\Data\\ReadOnlyDataSourceDesigner.cst",
+														"WebLibrary\\Data\\TableDataSource.cst",
 														
 														"WebLibrary\\UI\\FormUtil.cst",
 														"WebLibrary\\UI\\FormUtilBase.cst",
@@ -1100,6 +1101,7 @@ public void Go()
 	{
 		SafeCreateDirectory(rootPathWebLib);
 		SafeCreateDirectory(rootPathWebLib + "\\Data");
+		SafeCreateDirectory(rootPathWebLib + "\\DataSourceControls");
 		SafeCreateDirectory(rootPathWebLib + "\\UI");
 	}
 		
@@ -1865,6 +1867,22 @@ public void Go()
 		this.GetTemplate("ReadOnlyDataSourceDesigner.cst").SetProperty("DALNameSpace", DALNameSpace);
 		this.GetTemplate("ReadOnlyDataSourceDesigner.cst").SetProperty("WebNameSpace", WebLibNameSpace);
 		this.RenderToFile("ReadOnlyDataSourceDesigner.cst", rootPathWebLib + "\\Data\\ReadOnlyDataSourceDesigner.cs", true);
+		
+		if ( GenerateDataAccessLayer )
+		{
+			SetCommonProperties("TableDataSource.cst");
+			this.GetTemplate("TableDataSource.cst").SetProperty("SourceTables", SourceTables);
+			this.GetTemplate("TableDataSource.cst").SetProperty("BLLNameSpace", BLLNameSpace);
+			this.GetTemplate("TableDataSource.cst").SetProperty("DALNameSpace", DALNameSpace);
+			this.GetTemplate("TableDataSource.cst").SetProperty("WebNameSpace", WebLibNameSpace);
+			
+			foreach ( TableSchema table in SourceTables )
+			{
+				AddFileNode(commonNode, GetClassName(table.Name) + "DataSource.cs");
+				this.GetTemplate("TableDataSource.cst").SetProperty("SourceTable", table);
+				this.RenderToFile("TableDataSource.cst", rootPathWebLib + "\\DataSourceControls\\" + GetClassName(table.Name) + "DataSource.cs", true);
+			}
+		}
 		
 		// Web.UI
 		if ( !File.Exists(rootPathWebLib + "\\UI\\FormUtil.cs") )

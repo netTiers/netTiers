@@ -235,8 +235,8 @@ namespace <%= WebNameSpace %>.Data
 		{
 			get
 			{
-				Object value = ViewState["StartIndex"];
-				return value != null ? (int) value : 0;
+				int value = (int)ViewState["PageSize"];
+				return value != 0 ? (int) value : Int32.MaxValue;
 			}
 			set { ViewState["StartIndex"] = value; }
 		}
@@ -572,8 +572,8 @@ namespace <%= WebNameSpace %>.Data
 		private ListBase<Entity> _prevTempList;
 		private ListBase<Entity> _tempList;
 		private EntityKey _prevEntityId;
-		private int _prevTempCount;
-		private int _tempCount;
+		private int _prevRowCount;
+		private int _totalRowCount;
 
 		private String _filter;
 		private String _sort;
@@ -919,7 +919,7 @@ namespace <%= WebNameSpace %>.Data
 		{
 			// check temporary cache first
 			ListBase<Entity> entityList = _tempList;
-			count = _tempCount;
+			count = _totalRowCount;
 
 			if ( entityList == null )
 			{
@@ -954,7 +954,7 @@ namespace <%= WebNameSpace %>.Data
 
 				// place in temporary cache
 				_tempList = entityList;
-				_tempCount = count;
+				_totalRowCount = count;
 
 				// TODO: how do we invalidate the cache before time expires?
 			}
@@ -1391,8 +1391,8 @@ namespace <%= WebNameSpace %>.Data
 		/// </summary>
 		private void SetPreviousValues()
 		{
+			_prevRowCount = _totalRowCount;
 			_prevTempList = _tempList;
-			_prevTempCount = _tempCount;
 			_prevEntityId = EntityId;
 		}
 
@@ -1402,7 +1402,7 @@ namespace <%= WebNameSpace %>.Data
 		private void ResetPreviousValues()
 		{
 			_tempList = _prevTempList;
-			_tempCount = _prevTempCount;
+			_totalRowCount = _prevRowCount;
 			EntityId = _prevEntityId;
 		}
 
@@ -1552,7 +1552,7 @@ namespace <%= WebNameSpace %>.Data
 		internal void RaiseChangedEvent()
 		{
 			_tempList = null;
-			_tempCount = 0;
+			_totalRowCount = 0;
 
 			OnDataSourceViewChanged(EventArgs.Empty);
 		}
@@ -1560,3 +1560,7 @@ namespace <%= WebNameSpace %>.Data
 		#endregion
 	}
 }
+
+
+
+
