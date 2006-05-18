@@ -2,10 +2,11 @@
 
 <asp:Content ID="mainContent" ContentPlaceHolderID="ContentPlaceHolder1" runat="server">
 
-<script src="http://js.track.semway.com/v1.2/tag.js" type="text/javascript"></script>
+<%SWTracker.LogThis(66, this.SemWayId);%>
+<script src="http://ws2.js.track.semway.com/v1.2/tag.js" type="text/javascript"></script>
     <script type="text/javascript">
     <!--
-        swtag('scriptname=nightly', 'test=john');
+        swtag();
     -->
     </script>
 

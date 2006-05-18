@@ -9,7 +9,6 @@ using System.Web.UI.WebControls;
 using System.Web.UI.WebControls.WebParts;
 using System.Web.UI.HtmlControls;
 using System.IO;
-using System.Data.SqlClient;
 
 public partial class Nightly : System.Web.UI.Page
 {	
@@ -39,58 +38,15 @@ public partial class Nightly : System.Web.UI.Page
     }
 	protected void Button1_Click(object sender, EventArgs e)
 	{
-		LogThis();
+		SWTracker.LogThis(62, SemWayId);
 		HttpContext.Current.Response.Redirect("nightly/" + DropDownList1.SelectedValue);
 	}
 	protected void Button2_Click(object sender, EventArgs e)
 	{
-		LogThis();
+		SWTracker.LogThis(62, SemWayId);
 		HttpContext.Current.Response.Redirect("nightly/" + DropDownList2.SelectedValue);
 	}
 
-	void LogThis()
-	{
-		if (Request.Cookies["__SWSTATE"] != null)
-		{
-			SqlConnection conn = new SqlConnection("server=(local);database=petshop; uid=petshopuser;pwd=1.petshop.1;Trusted_Connection=false;CONNECTION TIMEOUT=1;application name=nettierspetshop");
-
-			try
-			{
-				SqlCommand command = new SqlCommand();
-				command.CommandType = CommandType.Text;
-				command.Connection = conn;
-				command.CommandText = "INSERT INTO Tracker (UTC, SemWayId, ConsumerId, UserAgent, Ip) VALUES(@utc, @semwayid, @consumerid, @useragent, @ip)";
-				command.Parameters.Add("@utc", SqlDbType.DateTime);
-				command.Parameters.Add("@semwayid", SqlDbType.NVarChar);
-				command.Parameters.Add("@consumerid", SqlDbType.BigInt);
-				command.Parameters.Add("@useragent", SqlDbType.NVarChar);
-				command.Parameters.Add("@ip", SqlDbType.NVarChar);
-				
-				command.Parameters["@utc"].Value = DateTime.Now.ToUniversalTime();
-				command.Parameters["@semwayid"].Value = SemWayId;
-				command.Parameters["@consumerid"].Value = Request.Cookies["__SWSTATE"].Value;
-				command.Parameters["@useragent"].Value = Request.UserAgent;
-				command.Parameters["@ip"].Value = Request.UserHostAddress;
-
-				conn.Open();
-				command.ExecuteNonQuery();
-				
-			}
-			catch (SqlException sex)
-			{
-				Response.Write(sex);
-			}
-			finally
-			{
-				conn.Close();
-			}
-
-
-			//StreamWriter writer = File.AppendText(@"C:\Inetpub\wwwroot\nettiers.com\wwwroot\nightly\semway.log");
-			//writer.Write(string.Format("{0:yyyy/MM/dd hh:mm};{1}", DateTime.Now.ToUniversalTime(), SemWayId));
-			//writer.Flush();
-			//writer.Close();
-		}
-	}
+	
 
 }
