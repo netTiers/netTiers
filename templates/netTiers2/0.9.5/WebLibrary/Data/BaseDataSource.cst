@@ -235,8 +235,8 @@ namespace <%= WebNameSpace %>.Data
 		{
 			get
 			{
-				int value = (int)ViewState["PageSize"];
-				return value != 0 ? (int) value : Int32.MaxValue;
+				Object value = ViewState["StartIndex"];
+				return value != null ? (int) value : 0;
 			}
 			set { ViewState["StartIndex"] = value; }
 		}
@@ -250,7 +250,18 @@ namespace <%= WebNameSpace %>.Data
 			get
 			{
 				Object value = ViewState["PageSize"];
-				return value != null ? (int) value : Int32.MaxValue;
+				int intValue = 0;
+
+				if ( value != null )
+				{
+					intValue = (int) value;
+				}
+				if ( intValue < 1 )
+				{
+					intValue = Int32.MaxValue;
+				}
+
+				return intValue;
 			}
 			set { ViewState["PageSize"] = value; }
 		}
@@ -747,6 +758,16 @@ namespace <%= WebNameSpace %>.Data
 		}
 
 		/// <summary>
+		/// Gets or sets the value indicating the current PageIndex as
+		/// determined by the following equation: StartIndex/PageSize
+		/// </summary>
+		internal int PageIndex
+		{
+			get { return ( StartIndex / PageSize ); }
+			set { StartIndex = ( value * PageSize ); }
+		}
+
+		/// <summary>
 		/// Gets a value indicating whether the BaseDataSourceView object
 		/// associated with the current BaseDataSource object supports the
 		/// ExecuteInsert(IDictionary) operation.
@@ -887,10 +908,27 @@ namespace <%= WebNameSpace %>.Data
 			StartIndex = arguments.StartRowIndex;
 			PageSize = arguments.MaximumRows;
 			SortExpression = arguments.SortExpression;
+			
+			if ( !String.IsNullOrEmpty(SortExpression) )
+			{
+				OrderBy = SortExpression;
+			}
 
 			// known parameters
 			WhereClause = (String) values["whereClause"];
-			OrderBy = (String) values["orderBy"];
+
+			if ( values["orderBy"] != null )
+			{
+				OrderBy = (String) values["orderBy"];
+			}
+			if ( values["PageIndex"] != null )
+			{
+				PageIndex = (int) values["PageIndex"];
+			}
+			if ( values["PageSize"] != null )
+			{
+				PageSize = (int) values["PageSize"];
+			}
 
 			GetSelectParameters(values);
 

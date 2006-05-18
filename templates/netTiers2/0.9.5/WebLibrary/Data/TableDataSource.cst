@@ -61,19 +61,6 @@
 	{
 		methodNames.Add("Find");
 	}
-	if ( IncludeGetListByFK )
-	{
-		Debug.WriteLine("GetByFK:");
-		for(int j = 0; j < fkeys.Count; j++)
-		{
-			string fkName = "GetBy" + GetKeysName(fkeys[j].ForeignKeyMemberColumns);
-			Debug.WriteLine(fkName);
-			if(!fkMethodNames.Contains(fkName) && !methodNames.Contains(fkName)){
-				fkMethodNames.Add(fkName);
-			}
-		}
-		methodNames.AddRange((ICollection)fkMethodNames);
-	}
 	if ( IncludeGetListByIX )
 	{
 		Debug.WriteLine("GetByIX:");
@@ -87,6 +74,19 @@
 			}
 		}
 		methodNames.AddRange((ICollection)ixMethodNames);
+	}
+	if ( IncludeGetListByFK )
+	{
+		Debug.WriteLine("GetByFK:");
+		for(int j = 0; j < fkeys.Count; j++)
+		{
+			string fkName = "GetBy" + GetKeysName(fkeys[j].ForeignKeyMemberColumns);
+			Debug.WriteLine(fkName);
+			if(!fkMethodNames.Contains(fkName) && !methodNames.Contains(fkName)){
+				fkMethodNames.Add(fkName);
+			}
+		}
+		methodNames.AddRange((ICollection)fkMethodNames);
 	}
 	if ( IncludeManyToMany )
 	{
@@ -252,30 +252,30 @@ namespace <%= WebNameSpace %>.Data
 			{
 				<% if ( IncludeGetList ) { %>
 				case <%= className %>SelectMethod.GetAll:
-                    results = <%= providerName %>.GetAll(StartIndex, PageSize, out count);
+                    results = <%= providerName %>.GetAll(GetTransactionManager(), StartIndex, PageSize, out count);
                     break;
 				case <%= className %>SelectMethod.GetPaged:
-					results = <%= providerName %>.GetPaged(WhereClause, OrderBy, StartIndex, PageSize, out count);
+					results = <%= providerName %>.GetPaged(GetTransactionManager(), WhereClause, OrderBy, PageIndex, PageSize, out count);
 					break;
 				<% } %>
 				<% if ( IncludeFind ) { %>
 				case <%= className %>SelectMethod.Find:
-					results = <%= providerName %>.Find(null,WhereClause, StartIndex, PageSize, out count);
+					results = <%= providerName %>.Find(GetTransactionManager(), WhereClause, StartIndex, PageSize, out count);
                     break;
 				<% }
 				if ( IncludeGetListByIX )
 				{
-					Response.Write("//IX"+Environment.NewLine);
+					Response.Write("\t\t\t\t// IX" + Environment.NewLine);
 					Response.Write(WriteIndexSelectStatements(tableName, indexes));
 				}
 				if ( IncludeGetListByFK )
 				{
-					Response.Write("//FX"+Environment.NewLine);
+					Response.Write("\t\t\t\t// FK" + Environment.NewLine);
 					Response.Write(WriteFKSelectStatements(tableName, fkeys));
 				}
 				if ( IncludeManyToMany )
 				{
-					Response.Write("//m2m"+Environment.NewLine);
+					Response.Write("\t\t\t\t// M:M" + Environment.NewLine);
 					Response.Write(WriteManyToManySelectStatements());
 				}
 				%>
@@ -330,7 +330,7 @@ private string WriteIndexSelectStatements(string tableName, IndexSchemaCollectio
 	sb.Append(WriteParameterStatements(SourceTable.PrimaryKey.MemberColumns, tableName));
 	
 	sb.AppendFormat("\t\t\t\t\tcount = 1;{0}", Environment.NewLine);
-	sb.AppendFormat("\t\t\t\t\t{0} data = {1}.GetBy{2}({3}, this.StartIndex, this.PageSize);{4}",
+	sb.AppendFormat("\t\t\t\t\t{0} data = {1}.GetBy{2}(GetTransactionManager(), {3}, this.StartIndex, this.PageSize);{4}",
 					GetClassName(tableName),
 					GetProviderName(tableName),
 					GetKeysName(SourceTable.PrimaryKey.MemberColumns),
@@ -406,7 +406,6 @@ private string WriteManyToManySelectStatements()
 						methodNames.Add(functionname);
 						sb.Append(WriteCaseStatement(primaryTable.Name, functionname));
 						
-						
 						foreach(TableKeySchema table in secondaryTable.PrimaryKeys)
 						{
 							sb.Append(WriteParameterStatements(table.PrimaryKey.MemberColumns, primaryTable.Name));
@@ -438,7 +437,10 @@ private string WriteParameterStatements(MemberColumnSchemaCollection memberColum
 	StringBuilder sb = new StringBuilder();
 	foreach(MemberColumnSchema memberSchema in memberColumns)
 	{
-		sb.AppendFormat("\t\t\t\t\t{0} = ({1})values[\"{0}\"];{2}", GetPrivateName(memberSchema), GetCSTypeWithoutNullable(memberSchema), Environment.NewLine);
+		sb.AppendFormat("\t\t\t\t\t{0} = ({1}) values[\"{0}\"];{2}",
+						GetPrivateName(memberSchema),
+						GetCSTypeWithoutNullable(memberSchema),
+						Environment.NewLine);
 		/*
 		sb.AppendFormat("\t\t\t\t\t{1} = ({0}) GetParameterValue(\"{1}\");{2}", 
 						GetCSType(memberSchema), 
@@ -471,7 +473,7 @@ private string WriteGetByStatement(MemberColumnSchemaCollection memberColumns, s
 private string WriteGetByStatement(MemberColumnSchemaCollection memberColumns, string tableName, string functionName)
 {
 	StringBuilder sb = new StringBuilder();
-	sb.AppendFormat("\t\t\t\t\tresults = {0}.GetBy{1}({2}, this.StartIndex, this.PageSize, out count);{3}",
+	sb.AppendFormat("\t\t\t\t\tresults = {0}.GetBy{1}(GetTransactionManager(), {2}, this.StartIndex, this.PageSize, out count);{3}",
 					GetProviderName(tableName),
 					functionName ?? GetKeysName(memberColumns),
 					GetFunctionCallParameters(memberColumns),
@@ -548,6 +550,9 @@ private string WriteParameterDeclarations(IndexSchemaCollection indexes, TableKe
 
 private void WriteParameterDeclaration(ColumnSchema column, StringBuilder sb)
 {
-	sb.AppendFormat("\t\t\t{1} {0};{2}", GetPrivateName(column), GetCSTypeWithoutNullable(column), Environment.NewLine);
+	sb.AppendFormat("\t\t\t{1} {0};{2}",
+					GetPrivateName(column),
+					GetCSTypeWithoutNullable(column),
+					Environment.NewLine);
 }
 </script>
