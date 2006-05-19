@@ -250,7 +250,14 @@ namespace <%=NameSpace%>
 				
 		#region Properties	
 				
-		<% for (int x=0; x < cols.Count; x++) { %>
+		<% for (int x=0; x < cols.Count; x++) {
+		
+		string dataObjectFieldParams = GetDataObjectFieldCallParams(cols[x]);
+		string defaultValue	= GetColumnDefaultValue(cols[x]).Length > 0
+			? string.Format(",\n\t\tDefaultValue({0})", GetColumnDefaultValue(cols[x])) 
+			: ""; 
+
+		%>
 		/// <summary>
 		/// 	Gets or sets the <%= GetPropertyName(cols[x].Name) %> property. 
 		///		<%=GetColumnXmlComment(cols[x],2)%>
@@ -265,6 +272,7 @@ namespace <%=NameSpace%>
 		/// <exception cref="ArgumentNullException">If you attempt to set to null.</exception>
 		<%}%>
 		[<%if (cols[x].IsPrimaryKeyMember && (IsIdentityColumn(cols[x]) || IsComputed(cols[x])) ) {%>ReadOnlyAttribute(false)/*, XmlIgnoreAttribute()*/, <%}%>DescriptionAttribute("<%=GetDescriptionAttributeText(cols[x].Description)%>"), BindableAttribute()]
+		[DataObjectField(<%= dataObjectFieldParams  %>)<%= defaultValue %>]
 		public <%if (commonColumns.IndexOf(cols[x].Name) != -1) Response.Write ("override "); else Response.Write ("virtual ");%><%= GetCSType(cols[x])%> <%= GetPropertyName(cols[x]) %>
 		{
 			get
