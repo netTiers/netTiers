@@ -3,10 +3,11 @@
 <%@ Assembly Name="System.Design" %>
 <%@ Import Namespace="SchemaExplorer" %>
 
-<%@ Property Name="SourceTables" Type="SchemaExplorer.TableSchemaCollection" Category="Connection" Description="Tables of the system." %>
 <%@ Property Name="NameSpace" Type="System.String" Category="Data" Description="Entities Namespace." %>
 <%@ Property Name="DALNameSpace" Type="System.String" Category="Data" Description="DAL Namespace." %>
+<%@ Property Name="SourceTables" Type="SchemaExplorer.TableSchemaCollection" Category="Connection" Description="Tables of the system." %>
 <%@ Property Name="SourceViews" Type="SchemaExplorer.ViewSchemaCollection" Category="Connection" Description="Tables of the system." %>
+<%@ Property Name="IncludeWCFContextCheck" Type="System.Boolean" Default="False" Category="02. Framework Generation - Optional" Description="Indicates if the WCF Services will be hosted in IIS, which requires DataRepository to check for a current OperationContext." %>
 
 #region Using directives
 
@@ -14,6 +15,7 @@ using System;
 using System.Collections.Generic;
 using System.Configuration;
 using System.Configuration.Provider;
+<% if ( IncludeWCFContextCheck ) { %>using System.ServiceModel;<% } %>
 using System.Web.Configuration;
 using System.Web;
 using <%=NameSpace%>;
@@ -57,7 +59,7 @@ namespace <%=DALNameSpace%>
 						Configuration config = null;
 
 						// load specific config file
-						if ( HttpContext.Current != null )
+						if ( HttpContext.Current != null <% if ( IncludeWCFContextCheck ) { %>|| OperationContext.Current != null <% } %>)
 						{
 							config = WebConfigurationManager.OpenWebConfiguration("~");
 						}

@@ -9,10 +9,11 @@
 <%@ Assembly Name="System.Design" %>
 <%@ Import Namespace="SchemaExplorer" %>
 
+<%@ Property Name="NameSpace" Optional="True" Type="System.String" Category="Style" Description="Object Namespace." %>
 <%@ Property Name="SourceView" Type="SchemaExplorer.ViewSchema" Category="Connection" Description="Table Object should be based on." %>
 <%@ Property Name="SourceTables" Type="SchemaExplorer.TableSchemaCollection" Category="Connection" Description="Tables of the sytem." %>
 <%@ Property Name="IncludeRelations" Type="System.Boolean" Default="False" Category="Options" Description="Include Collections for Related Entities."%>
-<%@ Property Name="NameSpace" Optional="True" Type="System.String" Category="Style" Description="Object Namespace." %>
+<%@ Property Name="IncludeWCFDataAttributes" Type="System.Boolean" Default="False" Category="02. Framework Generation - Optional" Description="Indicates if the WCF attributes, [DataContract] and [DataMember], should be included on the entity classes." %>
 <%
 	string abstractClassName = GetAbstractClassName(SourceView.Name);	
 	string className = GetClassName(SourceView.Name);
@@ -22,16 +23,20 @@
 	Generated on : <%=DateTime.Now.ToLongDateString()%>
 	Important: Do not modify this file. Edit the file <%=className%>.cs instead.
 */
+#region Using Directives
 using System;
 using System.ComponentModel;
 using System.Collections;
+using System.Runtime.Serialization;
 using System.Xml.Serialization;
+#endregion
 
 namespace <%=NameSpace%>
 {
 	///<summary>
 	/// <% if(SourceView.Description.Length == 0 ) {%>An object representation of the '<%=SourceView.Name%>' view. [No description found in the database]<%} else {Response.Write(GetColumnXmlComment(SourceView,1));}%>	
 	///</summary>
+	<% if ( IncludeWCFDataAttributes ) { %>[DataContract]<% } %>
 	[Serializable]
 	[CLSCompliant(true)]
 	[ToolboxItem("<%=abstractClassName%>")]
@@ -107,6 +112,7 @@ namespace <%=NameSpace%>
 		<%if (! SourceView.Columns[x].AllowDBNull && IsCSReferenceDataType(SourceView.Columns[x]) ) {%>
 		/// <exception cref="ArgumentNullException">If you attempt to set to null.</exception>
 		<%}%>
+		<% if ( IncludeWCFDataAttributes ) { %>[DataMember]<% } %>
 		[DescriptionAttribute("<%=GetDescriptionAttributeText(SourceView.Columns[x].Description)%>"), BindableAttribute()]
 		public virtual <%= GetCSType(SourceView.Columns[x])%> <%= GetPropertyName(SourceView.Columns[x].Name) %>
 		{

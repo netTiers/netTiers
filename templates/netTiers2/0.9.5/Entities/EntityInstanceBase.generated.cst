@@ -24,6 +24,7 @@
 <%@ Property Name="IncludeRelations" Type="System.Boolean" Default="False" Category="Options" Description="Include Collections for Related Entities."%>
 <%@ Property Name="IncludeManyToMany" Type="System.Boolean" Default="False" Category="Options" Description="Include Collections for Related Entities."%>
 <%@ Property Name="IncludeGetListByFK" Type="System.Boolean" Default="True" Category="Options" Description="If true get functions will be generated." %>
+<%@ Property Name="IncludeWCFDataAttributes" Type="System.Boolean" Default="False" Category="02. Framework Generation - Optional" Description="Indicates if the WCF attributes, [DataContract] and [DataMember], should be included on the entity classes." %>
 
 <%@ Property Name="NameSpace" Optional="True" Type="System.String" Category="Style" Description="Object Namespace." %>
 	
@@ -117,6 +118,7 @@ namespace <%=NameSpace%>
 	///<summary>
 	/// <% if(SourceTable.Description.Length == 0 ) {%>An object representation of the '<%=SourceTable.Name%>' table. [No description found the database]<%} else {Response.Write(GetColumnXmlComment(SourceTable,1));}%>	
 	///</summary>
+	<% if ( IncludeWCFDataAttributes ) { %>[DataContract]<% } %>
 	[Serializable, DataObject]
 	[CLSCompliant(true)]
 	//[ToolboxItem(typeof(<%=className%>))]
@@ -271,6 +273,7 @@ namespace <%=NameSpace%>
 		<%if (! cols[x].AllowDBNull && IsCSReferenceDataType(cols[x]) ) {%>
 		/// <exception cref="ArgumentNullException">If you attempt to set to null.</exception>
 		<%}%>
+		<% if ( IncludeWCFDataAttributes ) { %>[DataMember]<% } %>
 		[<%if (cols[x].IsPrimaryKeyMember && (IsIdentityColumn(cols[x]) || IsComputed(cols[x])) ) {%>ReadOnlyAttribute(false)/*, XmlIgnoreAttribute()*/, <%}%>DescriptionAttribute("<%=GetDescriptionAttributeText(cols[x].Description)%>"), BindableAttribute()]
 		[DataObjectField(<%= dataObjectFieldParams  %>)<%= defaultValue %>]
 		public <%if (commonColumns.IndexOf(cols[x].Name) != -1) Response.Write ("override "); else Response.Write ("virtual ");%><%= GetCSType(cols[x])%> <%= GetPropertyName(cols[x]) %>

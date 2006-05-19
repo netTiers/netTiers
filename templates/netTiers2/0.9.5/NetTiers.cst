@@ -35,6 +35,8 @@
 <%@ Property Name="LaunchVisualStudio" Type="System.Boolean" Default="False" Category="02. Framework Generation - Optional" Description="Attempts to launch visual studio with the generated solution only if there are no instances already open." %>
 <%@ Property Name="IncludeUnitTest" Type="MoM.Templates.UnitTestStyle" Default="None" Category="02. Framework Generation - Optional" Description="Indicates type of Unit tests to be generated." %>
 <%@ Property Name="IncludeComponentLayer" Type="MoM.Templates.ComponentPatternType" Category="02. Framework Generation - Optional" Description="The pattern type to implement in the Component Layer." Default="None" %>
+<%@ Property Name="IncludeWCFDataAttributes" Type="System.Boolean" Default="False" Category="02. Framework Generation - Optional" Description="Indicates if the WCF attributes, [DataContract] and [DataMember], should be included on the entity classes." %>
+<%@ Property Name="IncludeWCFContextCheck" Type="System.Boolean" Default="False" Category="02. Framework Generation - Optional" Description="Indicates if the WCF Services will be hosted in IIS, which requires DataRepository to check for a current OperationContext." %>
 
 <%-- 3. Namespaces Category --%>
 <%@ Property Name="BusinessLogicLayerNameSpace" Type="System.String" Category="03. Namespaces - Required" Description="The sub namespace that is added to the root namespace for the entities." Default="Entities" Optional="False" %>
@@ -1578,6 +1580,7 @@ public void Go()
 		this.GetTemplate("DataRepository.cst").SetProperty("DALNameSpace", DALNameSpace);
 		this.GetTemplate("DataRepository.cst").SetProperty("SourceTables", _sourceTables);
 		this.GetTemplate("DataRepository.cst").SetProperty("SourceViews", _sourceViews);
+		this.GetTemplate("DataRepository.cst").SetProperty("IncludeWCFContextCheck", IncludeWCFContextCheck);
 		this.RenderToFile("DataRepository.cst", rootPathDAL + "\\DataRepository.cs", true);
 		
 		AddFileNode(commonNode, "IEntityProvider.cs");
@@ -2011,6 +2014,8 @@ public void Go()
 		this.GetTemplate(projectTemplate).SetProperty("IncludeWebLibrary", false);
 		this.GetTemplate(projectTemplate).SetProperty("IncludeComponents", true);
 		this.GetTemplate(projectTemplate).SetProperty("IncludeUnitTest", MoM.Templates.UnitTestStyle.None);
+		this.GetTemplate(projectTemplate).SetProperty("IncludeWCFDataAttributes", false);
+		this.GetTemplate(projectTemplate).SetProperty("IncludeWCFContextCheck", false);
 		
 											
 		this.GetTemplate(projectTemplate).SetProperty("WebServiceUrl", WebServiceUrl);
@@ -2052,7 +2057,6 @@ public void Go()
 		this.GetTemplate(projectTemplate).SetProperty("ComponentGuid", componentGuid);
 		this.GetTemplate(projectTemplate).SetProperty("WebLibGuid", webLibGuid);
 		this.GetTemplate(projectTemplate).SetProperty("ComponentsGuid", componentGuid);
-		this.GetTemplate(projectTemplate).SetProperty("ComponentLayerNameSpace", ComponentsNameSpace);
 								
 		this.GetTemplate(projectTemplate).SetProperty("IncludeBll", true);
 		this.GetTemplate(projectTemplate).SetProperty("IncludeDALBase", false);	
@@ -2062,6 +2066,8 @@ public void Go()
 		this.GetTemplate(projectTemplate).SetProperty("IncludeWebLibrary", false);
 		this.GetTemplate(projectTemplate).SetProperty("IncludeComponents", false);
 		this.GetTemplate(projectTemplate).SetProperty("IncludeUnitTest", MoM.Templates.UnitTestStyle.None);
+		this.GetTemplate(projectTemplate).SetProperty("IncludeWCFDataAttributes", IncludeWCFDataAttributes);
+		this.GetTemplate(projectTemplate).SetProperty("IncludeWCFContextCheck", false);
 		
 											
 		this.GetTemplate(projectTemplate).SetProperty("WebServiceUrl", WebServiceUrl);
@@ -2075,6 +2081,7 @@ public void Go()
 		this.GetTemplate(projectTemplate).SetProperty("WebLibNameSpace", WebLibNameSpace);
 		this.GetTemplate(projectTemplate).SetProperty("UTNameSpace", UTNameSpace);
 		this.GetTemplate(projectTemplate).SetProperty("WSNameSpace", WSNameSpace);
+		this.GetTemplate(projectTemplate).SetProperty("ComponentLayerNameSpace", ComponentsNameSpace);
 								
 		this.GetTemplate(projectTemplate).SetProperty("OutputDirectory", OutputDirectory);
 				
@@ -2102,7 +2109,6 @@ public void Go()
 		this.GetTemplate(projectTemplate).SetProperty("WSGuid", wsGuid);
 		this.GetTemplate(projectTemplate).SetProperty("WebLibGuid", webLibGuid);
 		this.GetTemplate(projectTemplate).SetProperty("ComponentsGuid", componentGuid);
-		this.GetTemplate(projectTemplate).SetProperty("ComponentLayerNameSpace", ComponentsNameSpace);
 					
 		this.GetTemplate(projectTemplate).SetProperty("IncludeBll", false);
 		this.GetTemplate(projectTemplate).SetProperty("IncludeDALBase", true);	
@@ -2114,7 +2120,8 @@ public void Go()
 		this.GetTemplate(projectTemplate).SetProperty("ComponentLayerNameSpace", ComponentsNameSpace);
 		this.GetTemplate(projectTemplate).SetProperty("IncludeComponents", false);
 		this.GetTemplate(projectTemplate).SetProperty("IncludeUnitTest", MoM.Templates.UnitTestStyle.None);			
-		
+		this.GetTemplate(projectTemplate).SetProperty("IncludeWCFDataAttributes", false);
+		this.GetTemplate(projectTemplate).SetProperty("IncludeWCFContextCheck", IncludeWCFContextCheck);
 								
 		this.GetTemplate(projectTemplate).SetProperty("WebServiceUrl", WebServiceUrl);
 		this.GetTemplate(projectTemplate).SetProperty("rootPathWS", rootPathWS);
@@ -2127,6 +2134,7 @@ public void Go()
 		this.GetTemplate(projectTemplate).SetProperty("WebLibNameSpace", WebLibNameSpace);
 		this.GetTemplate(projectTemplate).SetProperty("UTNameSpace", UTNameSpace);
 		this.GetTemplate(projectTemplate).SetProperty("WSNameSpace", WSNameSpace);
+		this.GetTemplate(projectTemplate).SetProperty("ComponentLayerNameSpace", ComponentsNameSpace);
 								
 		this.GetTemplate(projectTemplate).SetProperty("OutputDirectory", OutputDirectory);
 						
@@ -2150,6 +2158,7 @@ public void Go()
 		this.GetTemplate(projectTemplate).SetProperty("UTGuid", utGuid);
 		this.GetTemplate(projectTemplate).SetProperty("WSGuid", wsGuid);
 		this.GetTemplate(projectTemplate).SetProperty("WebLibGuid", webLibGuid);
+		this.GetTemplate(projectTemplate).SetProperty("ComponentsGuid", componentGuid);
 					
 		this.GetTemplate(projectTemplate).SetProperty("IncludeBll", false);
 		this.GetTemplate(projectTemplate).SetProperty("IncludeDALBase", false);	
@@ -2159,9 +2168,8 @@ public void Go()
 		this.GetTemplate(projectTemplate).SetProperty("IncludeComponents", false);
 		this.GetTemplate(projectTemplate).SetProperty("IncludeWebLibrary", false);
 		this.GetTemplate(projectTemplate).SetProperty("IncludeUnitTest", MoM.Templates.UnitTestStyle.None);			
-		this.GetTemplate(projectTemplate).SetProperty("ComponentsGuid", componentGuid);
-		this.GetTemplate(projectTemplate).SetProperty("ComponentLayerNameSpace", ComponentsNameSpace);
-		
+		this.GetTemplate(projectTemplate).SetProperty("IncludeWCFDataAttributes", false);
+		this.GetTemplate(projectTemplate).SetProperty("IncludeWCFContextCheck", false);
 								
 		this.GetTemplate(projectTemplate).SetProperty("WebServiceUrl", WebServiceUrl);
 		this.GetTemplate(projectTemplate).SetProperty("rootPathWS", rootPathWS);
@@ -2174,6 +2182,7 @@ public void Go()
 		this.GetTemplate(projectTemplate).SetProperty("WebLibNameSpace", WebLibNameSpace);
 		this.GetTemplate(projectTemplate).SetProperty("UTNameSpace", UTNameSpace);
 		this.GetTemplate(projectTemplate).SetProperty("WSNameSpace", WSNameSpace);
+		this.GetTemplate(projectTemplate).SetProperty("ComponentLayerNameSpace", ComponentsNameSpace);
 		
 		this.GetTemplate(projectTemplate).SetProperty("OutputDirectory", OutputDirectory);
 				
@@ -2204,6 +2213,7 @@ public void Go()
 				this.GetTemplate(projectTemplate).SetProperty("UTGuid", utGuid);
 				this.GetTemplate(projectTemplate).SetProperty("WSGuid", wsGuid);
 				this.GetTemplate(projectTemplate).SetProperty("WebLibGuid", webLibGuid);
+				this.GetTemplate(projectTemplate).SetProperty("ComponentsGuid", componentGuid);
 									
 				this.GetTemplate(projectTemplate).SetProperty("IncludeBll", false);
 				this.GetTemplate(projectTemplate).SetProperty("IncludeDALBase", false);	
@@ -2213,8 +2223,8 @@ public void Go()
 				this.GetTemplate(projectTemplate).SetProperty("IncludeComponents", false);
 				this.GetTemplate(projectTemplate).SetProperty("IncludeWebLibrary", false);
 				this.GetTemplate(projectTemplate).SetProperty("IncludeUnitTest", MoM.Templates.UnitTestStyle.None);			
-				this.GetTemplate(projectTemplate).SetProperty("ComponentsGuid", componentGuid);
-				this.GetTemplate(projectTemplate).SetProperty("ComponentLayerNameSpace", ComponentsNameSpace);
+				this.GetTemplate(projectTemplate).SetProperty("IncludeWCFDataAttributes", false);
+				this.GetTemplate(projectTemplate).SetProperty("IncludeWCFContextCheck", false);
 															
 				this.GetTemplate(projectTemplate).SetProperty("WebServiceUrl", WebServiceUrl);
 				this.GetTemplate(projectTemplate).SetProperty("rootPathWS", rootPathWS);
@@ -2227,6 +2237,7 @@ public void Go()
 				this.GetTemplate(projectTemplate).SetProperty("WebLibNameSpace", WebLibNameSpace);
 				this.GetTemplate(projectTemplate).SetProperty("UTNameSpace", UTNameSpace);
 				this.GetTemplate(projectTemplate).SetProperty("WSNameSpace", WSNameSpace);
+				this.GetTemplate(projectTemplate).SetProperty("ComponentLayerNameSpace", ComponentsNameSpace);
 										
 				this.GetTemplate(projectTemplate).SetProperty("OutputDirectory", OutputDirectory);
 										
@@ -2251,8 +2262,6 @@ public void Go()
 			this.GetTemplate(projectTemplate).SetProperty("WSGuid", wsGuid);
 			this.GetTemplate(projectTemplate).SetProperty("WebLibGuid", webLibGuid);
 			this.GetTemplate(projectTemplate).SetProperty("ComponentsGuid", componentGuid);
-			this.GetTemplate(projectTemplate).SetProperty("ComponentLayerNameSpace", ComponentsNameSpace);
-
 			
 			this.GetTemplate(projectTemplate).SetProperty("IncludeBll", false);
 			this.GetTemplate(projectTemplate).SetProperty("IncludeDALBase", false);	
@@ -2262,7 +2271,8 @@ public void Go()
 			this.GetTemplate(projectTemplate).SetProperty("IncludeComponents", false);
 			this.GetTemplate(projectTemplate).SetProperty("IncludeWebLibrary", false);
 			this.GetTemplate(projectTemplate).SetProperty("IncludeUnitTest", MoM.Templates.UnitTestStyle.None);			
-			
+			this.GetTemplate(projectTemplate).SetProperty("IncludeWCFDataAttributes", false);
+			this.GetTemplate(projectTemplate).SetProperty("IncludeWCFContextCheck", false);
 									
 			this.GetTemplate(projectTemplate).SetProperty("WebServiceUrl", WebServiceUrl);
 			this.GetTemplate(projectTemplate).SetProperty("rootPathWS", rootPathWS);
@@ -2275,6 +2285,7 @@ public void Go()
 			this.GetTemplate(projectTemplate).SetProperty("WebLibNameSpace", WebLibNameSpace);
 			this.GetTemplate(projectTemplate).SetProperty("UTNameSpace", UTNameSpace);
 			this.GetTemplate(projectTemplate).SetProperty("WSNameSpace", WSNameSpace);
+			this.GetTemplate(projectTemplate).SetProperty("ComponentLayerNameSpace", ComponentsNameSpace);
 			
 			this.GetTemplate(projectTemplate).SetProperty("OutputDirectory", OutputDirectory);
 						
@@ -2312,6 +2323,8 @@ public void Go()
 		this.GetTemplate(projectTemplate).SetProperty("IncludeComponents", false);
 		this.GetTemplate(projectTemplate).SetProperty("IncludeWebLibrary", true);
 		this.GetTemplate(projectTemplate).SetProperty("IncludeUnitTest", MoM.Templates.UnitTestStyle.None);
+		this.GetTemplate(projectTemplate).SetProperty("IncludeWCFDataAttributes", false);
+		this.GetTemplate(projectTemplate).SetProperty("IncludeWCFContextCheck", false);
 					
 		this.GetTemplate(projectTemplate).SetProperty("WebServiceUrl", WebServiceUrl);
 		this.GetTemplate(projectTemplate).SetProperty("rootPathWS", rootPathWS);
@@ -2324,6 +2337,7 @@ public void Go()
 		this.GetTemplate(projectTemplate).SetProperty("WebLibNameSpace", WebLibNameSpace);
 		this.GetTemplate(projectTemplate).SetProperty("UTNameSpace", UTNameSpace);
 		this.GetTemplate(projectTemplate).SetProperty("WSNameSpace", WSNameSpace);
+		this.GetTemplate(projectTemplate).SetProperty("ComponentLayerNameSpace", ComponentsNameSpace);
 					
 		this.GetTemplate(projectTemplate).SetProperty("OutputDirectory", OutputDirectory);
 												
@@ -2348,7 +2362,6 @@ public void Go()
 		this.GetTemplate(projectTemplate).SetProperty("WSGuid", wsGuid);
 		this.GetTemplate(projectTemplate).SetProperty("WebLibGuid", webLibGuid);
 		this.GetTemplate(projectTemplate).SetProperty("ComponentsGuid", componentGuid);
-		this.GetTemplate(projectTemplate).SetProperty("ComponentLayerNameSpace", ComponentsNameSpace);
 				
 		this.GetTemplate(projectTemplate).SetProperty("IncludeBll", false);
 		this.GetTemplate(projectTemplate).SetProperty("IncludeDALBase", false);	
@@ -2358,6 +2371,8 @@ public void Go()
 		this.GetTemplate(projectTemplate).SetProperty("IncludeWebLibrary", false);
 		this.GetTemplate(projectTemplate).SetProperty("IncludeComponents", false);
 		this.GetTemplate(projectTemplate).SetProperty("IncludeUnitTest", IncludeUnitTest);
+		this.GetTemplate(projectTemplate).SetProperty("IncludeWCFDataAttributes", false);
+		this.GetTemplate(projectTemplate).SetProperty("IncludeWCFContextCheck", false);
 					
 		this.GetTemplate(projectTemplate).SetProperty("WebServiceUrl", WebServiceUrl);
 		this.GetTemplate(projectTemplate).SetProperty("rootPathWS", rootPathWS);
@@ -2370,6 +2385,7 @@ public void Go()
 		this.GetTemplate(projectTemplate).SetProperty("WebLibNameSpace", WebLibNameSpace);
 		this.GetTemplate(projectTemplate).SetProperty("UTNameSpace", UTNameSpace);
 		this.GetTemplate(projectTemplate).SetProperty("WSNameSpace", WSNameSpace);
+		this.GetTemplate(projectTemplate).SetProperty("ComponentLayerNameSpace", ComponentsNameSpace);
 					
 		this.GetTemplate(projectTemplate).SetProperty("OutputDirectory", OutputDirectory);
 												
@@ -2487,6 +2503,7 @@ public void Go()
 		this.GetTemplate("EntityViewBase.generated.cst").SetProperty("SourceTables", _sourceTables);
 		this.GetTemplate("EntityViewBase.generated.cst").SetProperty("NameSpace", BLLNameSpace);
 		this.GetTemplate("EntityViewBase.generated.cst").SetProperty("IncludeRelations", IncludeRelations);
+		this.GetTemplate("EntityViewBase.generated.cst").SetProperty("IncludeWCFDataAttributes", IncludeWCFDataAttributes);
 		
 		this.RenderToFile("EntityViewBase.generated.cst", rootPathBLL + "\\Views\\" + GetPartialClassName(GetAbstractClassName(SourceView.Name)) + ".cs", true);
 		
@@ -2714,6 +2731,7 @@ public void Go()
 			this.GetTemplate("EntityInstanceBase.generated.cst").SetProperty("IncludeRelations", IncludeRelations);
 			this.GetTemplate("EntityInstanceBase.generated.cst").SetProperty("IncludeManyToMany", IncludeManyToMany);
 			this.GetTemplate("EntityInstanceBase.generated.cst").SetProperty("IncludeGetListByFK", IncludeGetListByFK);
+			this.GetTemplate("EntityInstanceBase.generated.cst").SetProperty("IncludeWCFDataAttributes", IncludeWCFDataAttributes);
 			
 			this.RenderToFile("EntityInstanceBase.generated.cst", rootPathBLL + "\\" + GetPartialClassName(GetAbstractClassName(SourceTable.Name)) + ".cs", true);
 			
