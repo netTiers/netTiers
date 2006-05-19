@@ -35,6 +35,35 @@ using <%= DALNameSpace %>.Bases;
 namespace <%= WebNameSpace %>.Data
 {
 	/// <summary>
+	/// Internal Object to maintain cached data. Keeps track of the data and the record count
+	/// </summary>
+	internal class CachedDataSource <Entity,EntityKey> where Entity : new() where EntityKey :new()
+    {
+        ListBase<Entity> _data;
+        public ListBase<Entity> Data
+        {
+            get { return _data; }
+            set { _data = value; }
+        }
+        int _virtualRecordCount;
+
+        /// <summary>
+        /// Keeps track of the record count to keep paging working
+        /// </summary>
+        public int VirtualRecordCount
+        {
+            get { return _virtualRecordCount; }
+            set { _virtualRecordCount = value; }
+        }
+        public CachedDataSource() { }
+        public CachedDataSource(ListBase<Entity> data, int count)
+        {
+            this._data = data;
+            this._virtualRecordCount = count;
+        }
+    }
+	
+	/// <summary>
 	/// Represents a business object that provides data to data-bound
 	/// controls in multi-tier Web application architectures.
 	/// </summary>
@@ -68,7 +97,84 @@ namespace <%= WebNameSpace %>.Data
 		}
 
 		#endregion Constructors
+		
+		#region Caching
+        /// <summary>
+        /// Gets or sets a value indicating whether the
+        /// BaseDataSource control has data caching enabled.
+        /// </summary>
+        public bool EnableCaching
+        {
+            get { return View.EnableCaching; }
+            set { View.EnableCaching = value; }
+        }
+        private int _cacheDuration = 30;
+        /// <summary>
+        /// The cache duration in minutes
+        /// </summary>
+        public int CacheDuration
+        {
+            get
+            {
+                return this._cacheDuration;
+            }
+            set
+            {
+                this._cacheDuration = value;
+            }
+        }
+        private string cacheKey = DefaultViewName + "data";
 
+        /// <summary>
+        /// Returns an entry from the cache.  Entries are store partially based on the start and page value
+        /// </summary>
+        /// <param name="start"></param>
+        /// <param name="page"></param>
+        /// <returns></returns>
+        internal CachedDataSource<Entity,EntityKey> GetDataFromCache(int start, int page)
+        {
+            CachedDataSource<Entity,EntityKey>  data = null;
+            Hashtable cachedData = (Hashtable)Context.Cache.Get(cacheKey);
+            if (cachedData != null && cachedData.ContainsKey(CacheHashKey(start,page)))
+            {
+                Context.Trace.Write("CustomerDataSource", "Getting Cached Data " + CacheHashKey(start, page));
+                data = ((CachedDataSource<Entity,EntityKey> )cachedData[CacheHashKey(start, page)]);
+            }
+            return data;
+        }
+        /// <summary>
+        /// Saves an entry to the cache, partially based on start and page value
+        /// </summary>
+        /// <param name="data"></param>
+        /// <param name="start"></param>
+        /// <param name="page"></param>
+        internal void SaveDataToCache(CachedDataSource<Entity, EntityKey> data, int start, int page)
+        {
+            Context.Trace.Write("CustomerDataSource", "Saving Cache Data");
+            Hashtable cacheData = (Hashtable)Context.Cache.Get(cacheKey);
+            if (cacheData == null)
+            {
+                cacheData = CreateCacheEntry();
+            }
+            string hashKey = CacheHashKey(start, page);
+            if (!cacheData.ContainsKey(hashKey))
+            {
+                Context.Trace.Write("CustomerDataSource", "Adding Data to Cache " + hashKey);
+                cacheData.Add(hashKey, data);
+            }
+        }
+        //currently abstract becuase using the enum name as part of the cachekey
+        protected abstract string CacheHashKey(int start, int page);
+        
+		private Hashtable CreateCacheEntry()
+        {
+            Hashtable cacheObject = new Hashtable();
+            Context.Cache.Insert(cacheKey, cacheObject, null, DateTime.Now.AddMinutes(CacheDuration), TimeSpan.Zero);
+            return cacheObject;
+        }
+
+        #endregion
+		
 		#region Properties
 
 		/// <summary>
@@ -117,16 +223,6 @@ namespace <%= WebNameSpace %>.Data
 		internal bool HasParameters
 		{
 			get { return ( _parameters != null ); }
-		}
-
-		/// <summary>
-		/// Gets or sets a value indicating whether the
-		/// BaseDataSource control has data caching enabled.
-		/// </summary>
-		public bool EnableCaching
-		{
-			get { return View.EnableCaching; }
-			set { View.EnableCaching = value; }
 		}
 
 		/// <summary>
@@ -963,7 +1059,14 @@ namespace <%= WebNameSpace %>.Data
 			{
 				if ( EnableCaching )
 				{
-					// TODO: implement reading from cache
+					//get cached datasource
+					CachedDataSource<Entity, EntityKey> data = _owner.GetDataFromCache(StartIndex, PageSize);
+					//if there is cached data use it and the record count returned and
+					if (data != null)
+					{
+						count = data.VirtualRecordCount;
+						entityList = data.Data;
+					}   
 				}
 				if ( entityList == null )
 				{
@@ -986,7 +1089,7 @@ namespace <%= WebNameSpace %>.Data
 
 					if ( EnableCaching )
 					{
-						// TODO: implement saving to cache
+						_owner.SaveDataToCache(new CachedDataSource<Entity,EntityKey>(entityList,count),StartIndex,PageSize);
 					}
 				}
 

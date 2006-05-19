@@ -54,6 +54,7 @@
 
 	if ( IncludeGetList )
 	{
+		methodNames.Add("Get");
 		methodNames.Add("GetAll");
 		methodNames.Add("GetPaged");
 	}
@@ -184,6 +185,19 @@ namespace <%= WebNameSpace %>.Data
 			return new <%= className %>DataSourceView(this, DefaultViewName);
 		}
 		
+		/// <summary>
+        /// Creates a cache hashing key based on the start, page and the SelectMethod being used
+        /// </summary>
+        /// <param name="start"></param>
+        /// <param name="page"></param>
+        /// <returns></returns>
+		protected override string CacheHashKey(int start, int page)
+        {
+            System.Text.StringBuilder sb = new System.Text.StringBuilder();
+            sb.AppendFormat("{0}:{1}:{2}", Enum.GetName(typeof(<%= className %>SelectMethod), SelectMethod), start.ToString(), page.ToString());
+            return sb.ToString();
+        }
+		
 		#endregion Methods
 	}
 	
@@ -251,6 +265,9 @@ namespace <%= WebNameSpace %>.Data
 			switch ( SelectMethod )
 			{
 				<% if ( IncludeGetList ) { %>
+				case <%= className %>SelectMethod.Get:
+				
+					break;
 				case <%= className %>SelectMethod.GetAll:
                     results = <%= providerName %>.GetAll(GetTransactionManager(), StartIndex, PageSize, out count);
                     break;
