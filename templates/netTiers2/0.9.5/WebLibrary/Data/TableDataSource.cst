@@ -346,7 +346,6 @@ private string WriteIndexSelectStatements(string tableName, IndexSchemaCollectio
 	sb.Append(WriteCaseStatement(tableName, GetKeysName(SourceTable.PrimaryKey.MemberColumns)));
 	sb.Append(WriteParameterStatements(SourceTable.PrimaryKey.MemberColumns, tableName));
 	
-	sb.AppendFormat("\t\t\t\t\tcount = 1;{0}", Environment.NewLine);
 	sb.AppendFormat("\t\t\t\t\t{0} data = {1}.GetBy{2}(GetTransactionManager(), {3}, this.StartIndex, this.PageSize);{4}",
 					GetClassName(tableName),
 					GetProviderName(tableName),
@@ -354,8 +353,9 @@ private string WriteIndexSelectStatements(string tableName, IndexSchemaCollectio
 					GetFunctionCallParameters(SourceTable.PrimaryKey.MemberColumns),
 					Environment.NewLine);
 					
-	sb.AppendFormat("\t\t\t\t\tresults = new VList<{0}>();{1}", GetClassName(tableName), Environment.NewLine);
-	sb.AppendFormat("\t\t\t\t\tresults.Add(data);{0}", Environment.NewLine);
+	sb.AppendFormat("\t\t\t\t\tresults = new TList<{0}>();{1}", GetClassName(tableName), Environment.NewLine);
+	sb.AppendFormat("\t\t\t\t\tif ( data != null ) results.Add(data);{0}", Environment.NewLine);
+	sb.AppendFormat("\t\t\t\t\tcount = results.Count;{0}", Environment.NewLine);
 	sb.Append(WriteBreakStatement());
 	
 	foreach(IndexSchema indexSchema in indexes)
