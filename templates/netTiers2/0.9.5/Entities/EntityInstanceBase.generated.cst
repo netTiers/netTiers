@@ -220,14 +220,14 @@ namespace <%=NameSpace%>
 			if(IsEntityTracked && EntityState != EntityState.Added)
 				EntityManager.StopTracking(EntityTrackingKey);
 				
-			if (!suppressEntityEvents)
+			if (!SuppressEntityEvents)
 			{
-			<%=className%>EventHandler handler = ColumnChanging;
-			if(handler != null)
-			{
-				handler(this, new <%=className%>EventArgs(column));
+				<%=className%>EventHandler handler = ColumnChanging;
+				if(handler != null)
+				{
+					handler(this, new <%=className%>EventArgs(column));
+				}
 			}
-		}
 		}
 		
 		/// <summary>
@@ -236,16 +236,16 @@ namespace <%=NameSpace%>
 		/// <param name="column">The <see cref="<%=className%>Column"/> which has raised the event.</param>
 		public void OnColumnChanged(<%=className%>Column column)
 		{
-			if (!suppressEntityEvents)
+			if (!SuppressEntityEvents)
 			{
-			<%=className%>EventHandler handler = ColumnChanged;
-			if(handler != null)
-			{
-				handler(this, new <%=className%>EventArgs(column));
-			}
+				<%=className%>EventHandler handler = ColumnChanged;
+				if(handler != null)
+				{
+					handler(this, new <%=className%>EventArgs(column));
+				}
 			
-			// warn the parent list that i have changed
-			OnEntityChanged();
+				// warn the parent list that i have changed
+				OnEntityChanged();
 			}
 		} 
 		#endregion
@@ -311,9 +311,9 @@ namespace <%=NameSpace%>
 				<% if ( cols[x].IsPrimaryKeyMember ) { %>
 				this.EntityId.<%= GetPropertyName(cols[x]) %> = value;
 				<% } %>
-				if (this.currentEntityState == EntityState.Unchanged)
+				if (this.EntityState == EntityState.Unchanged)
 				{
-					this.currentEntityState = EntityState.Changed;
+					this.EntityState = EntityState.Changed;
 				}
 				OnColumnChanged(<%=className%>Column.<%=GetPropertyName(cols[x]) %>);
 				OnPropertyChanged("<%=GetPropertyName(cols[x]) %>");
@@ -426,14 +426,14 @@ WriteRelationshipPropertyString();
         /// </summary>
         public void OnCancelAddNew()
         {    
-			if (!suppressEntityEvents)
+			if (!SuppressEntityEvents)
 			{
-            CancelAddNewEventHandler handler = CancelAddNew ;
-            if (handler != null)
-            {    
-                handler(this, EventArgs.Empty) ;
-            }
-        }
+	            CancelAddNewEventHandler handler = CancelAddNew ;
+            	if (handler != null)
+	            {    
+    	            handler(this, EventArgs.Empty) ;
+        	    }
+	        }
         }
 		#endregion 
 		
@@ -465,7 +465,7 @@ WriteRelationshipPropertyString();
 				this.inTxn = false;
 
 				if (this.bindingIsNew)
-	        	//if (this.currentEntityState == EntityState.Added)
+	        	//if (this.EntityState == EntityState.Added)
 	        	{
 					if (this.parentCollection != null)
 						this.parentCollection.Remove( (<%=className%>) this ) ;
@@ -486,12 +486,12 @@ WriteRelationshipPropertyString();
 				if (this.IsDirty) 
 				{
 					if (this.bindingIsNew) {
-						this.currentEntityState = EntityState.Added ;
+						this.EntityState = EntityState.Added;
 						this.bindingIsNew = false ;
 					}
 					else
 						if (this.EntityState == EntityState.Unchanged) 
-							this.currentEntityState = EntityState.Changed ;
+							this.EntityState = EntityState.Changed ;
 				}
 
 				this.bindingIsNew = false ;
@@ -523,7 +523,7 @@ WriteRelationshipPropertyString();
         /// </summary>
 	    private void OnEntityChanged() 
 	    {
-	        if (!suppressEntityEvents && !inTxn && this.parentCollection != null) 
+	        if (!SuppressEntityEvents && !inTxn && this.parentCollection != null) 
 	        {
 	            this.parentCollection.EntityChanged(this as <%=className%>);
 	        }
