@@ -7,7 +7,6 @@
 <%@ Property Name="DALNameSpace" Type="System.String" Category="Data" Description="DAL Namespace." %>
 <%@ Property Name="SourceTables" Type="SchemaExplorer.TableSchemaCollection" Category="Connection" Description="Tables of the system." %>
 <%@ Property Name="SourceViews" Type="SchemaExplorer.ViewSchemaCollection" Category="Connection" Description="Tables of the system." %>
-<%@ Property Name="IncludeWCFContextCheck" Type="System.Boolean" Default="False" Category="02. Framework Generation - Optional" Description="Indicates if the WCF Services will be hosted in IIS, which requires DataRepository to check for a current OperationContext." %>
 
 #region Using directives
 
@@ -15,7 +14,6 @@ using System;
 using System.Collections.Generic;
 using System.Configuration;
 using System.Configuration.Provider;
-<% if ( IncludeWCFContextCheck ) { %>using System.ServiceModel;<% } %>
 using System.Web.Configuration;
 using System.Web;
 using <%=NameSpace%>;
@@ -54,29 +52,18 @@ namespace <%=DALNameSpace%>
                     {
 						#region Find NetTiersServiceSection
 						
-                        // Get a reference to the <netTiersService> section
-                        //NetTiersServiceSection section = (NetTiersServiceSection)WebConfigurationManager.GetSection("netTiersService");
-						Configuration config = null;
+                        // Try to get a reference to the default <netTiersService> section
+						section = WebConfigurationManager.GetSection("netTiersService") as NetTiersServiceSection;
 
-						// load specific config file
-						if ( HttpContext.Current != null <% if ( IncludeWCFContextCheck ) { %>|| OperationContext.Current != null <% } %>)
+						if ( section == null )
 						{
-							config = WebConfigurationManager.OpenWebConfiguration("~");
-						}
-						else
-						{
-							string configFile = AppDomain.CurrentDomain.SetupInformation.ConfigurationFile.Replace(".config", "").Replace(".temp", "");
-							config = ConfigurationManager.OpenExeConfiguration(configFile);
+							// otherwise look for section based on the assembly name
+							section = WebConfigurationManager.GetSection("<%= DALNameSpace %>") as NetTiersServiceSection;
 						}
 
-						// find the specific NetTiersServiceSection for this assembly
-						foreach ( ConfigurationSection temp in config.Sections )
+						if ( section == null )
 						{
-							if ( temp is NetTiersServiceSection )
-							{
-								section = temp as NetTiersServiceSection;
-								break;
-							}
+							throw new ProviderException("Unable to load NetTiersServiceSection");
 						}
 						
 						#endregion Find NetTiersServiceSection
