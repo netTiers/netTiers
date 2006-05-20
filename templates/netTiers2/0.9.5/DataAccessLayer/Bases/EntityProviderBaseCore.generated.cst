@@ -709,17 +709,18 @@ namespace <%=DALNameSpace%>.Bases
 				if (!reader.Read())
 					break; // we are done
 
-				string key;
-				key = @"<%= entityClassName %>" <%
-				for (int x=0; x < cols.Count;x++) { 
-					if(cols[x].IsPrimaryKeyMember) {%>
-						+ (Convert.IsDBNull(reader["<%=cols[x].Name%>"])?<%= GetCSDefaultByType(cols[x])%>:(<%=GetCSType(cols[x])%>)reader["<%=cols[x].Name%>"]).ToString()<%
-					}// end if 
-				} //end for each column %>;
+				string key = null;
 				
 				<%=className%> c = null;
 				if (DataRepository.Provider.UseEntityFactory)
 				{
+					key = @"<%= entityClassName %>" <%
+					for (int x=0; x < cols.Count;x++) { 
+						if(cols[x].IsPrimaryKeyMember) {%>
+							+ (reader.IsDBNull(reader.GetOrdinal("<%=cols[x].Name%>"))?<%= GetCSDefaultByType(cols[x])%>:(<%=GetCSType(cols[x])%>)reader["<%=cols[x].Name%>"]).ToString()<%
+						}// end if 
+					} //end for each column %>;
+
 					c = EntityManager.LocateOrCreate<<%=entityClassName%>>(
 						key.ToString(), // EntityTrackingKey 
 						"<%=entityClassName%>",  //Creational Type
@@ -737,7 +738,7 @@ namespace <%=DALNameSpace%>.Bases
 				<%for (int x=0; x < cols.Count;x++) { %>
 					<%= GetObjectPropertySetExpression(cols[x], "reader", "c", 5) %>;
 				<% if( cols[x].IsPrimaryKeyMember && !IsIdentityColumn(cols[x]) && !IsComputed(cols[x]) ) {%>
-					c.Original<%=GetPropertyName(cols[x].Name)%> = (Convert.IsDBNull(reader["<%=cols[x].Name%>"]))?<%= GetCSDefaultByType(cols[x])%>:(<%=GetCSType(cols[x])%>)reader["<%=cols[x].Name%>"];
+					c.Original<%=GetPropertyName(cols[x].Name)%> = (reader.IsDBNull(reader.GetOrdinal("<%=cols[x].Name%>")))?<%= GetCSDefaultByType(cols[x])%>:(<%=GetCSType(cols[x])%>)reader["<%=cols[x].Name%>"];
 				<% }// end if %>
 				<%} //end for each column %>
 					c.EntityTrackingKey = key;
@@ -777,9 +778,9 @@ namespace <%=DALNameSpace%>.Bases
 			DataRow dataRow = dataSet.Tables[0].Rows[0];
 			
 			<%for (int x=0; x < cols.Count;x++) { %>
-			<%= GetObjectPropertySetExpression(cols[x], "dataRow", "entity", 3) %>;
+			<%= GetDatasetPropertySetExpression(cols[x], "dataRow", GetObjectPropertyAccessor(cols[x], "entity"), 3) %>;
 			<% if( cols[x].IsPrimaryKeyMember && !IsIdentityColumn(cols[x]) && !IsComputed(cols[x]) ) {%>
-			<%= GetOriginalObjectPropertySetExpression(cols[x], "dataRow", "entity", 3) %>;
+			<%= GetDatasetPropertySetExpression(cols[x], "dataRow", GetOriginalObjectPropertyAccessor(cols[x], "entity"), 3) %>;
 			<% }// end if %>
 			<%} //end for each column %>
 			entity.AcceptChanges();

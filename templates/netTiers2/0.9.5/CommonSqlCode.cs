@@ -665,7 +665,7 @@ namespace MoM.Templates
 		{
 			if ( column.AllowDBNull )
 			{
-				return string.Format("{2} = (Convert.IsDBNull({1}[\"{0}\"]))?null:({3}){1}[\"{0}\"]",
+				return string.Format("{2} = ({1}.IsDBNull({1}.GetOrdinal(\"{0}\")))?null:({3}){1}[\"{0}\"]",
 						/*0*/column.Name,
 						/*1*/containerName,
 						/*2*/GetObjectPropertyAccessor(column,objectName),
@@ -674,7 +674,7 @@ namespace MoM.Templates
 			else
 			{
 				// regular NOT NULL data types, set to default value for type if null
-				return string.Format("{2} = (Convert.IsDBNull({1}[\"{0}\"]))?{4}:({3}){1}[\"{0}\"]",
+				return string.Format("{2} = ({3}){1}[\"{0}\"]",
 					/*0*/column.Name,
 					/*1*/containerName,
 					/*2*/GetObjectPropertyAccessor(column,objectName),
@@ -696,7 +696,7 @@ namespace MoM.Templates
 		{
 			if ( column.AllowDBNull )
 			{
-				return string.Format("{2} = (Convert.IsDBNull({1}[\"{0}\"]))?null:({3}){1}[\"{0}\"]",
+				return string.Format("{2} = ({1}.IsDBNull({1}.GetOrdinal(\"{0}\")))?null:({3}){1}[\"{0}\"]",
 						/*0*/column.Name,
 						/*1*/containerName,
 						/*2*/GetOriginalObjectPropertyAccessor(column,objectName),
@@ -705,10 +705,41 @@ namespace MoM.Templates
 			else
 			{
 				// regular NOT NULL data types, set to default value for type if null
-				return string.Format("{2} = (Convert.IsDBNull({1}[\"{0}\"]))?{4}:({3}){1}[\"{0}\"]",
+				return string.Format("{2} = ({3}){1}[\"{0}\"]",
 					/*0*/column.Name,
 					/*1*/containerName,
 					/*2*/GetOriginalObjectPropertyAccessor(column,objectName),
+					/*3*/GetCSType(column),
+					/*4*/GetCSDefaultByType(column));
+			}
+		}
+
+		/// <summary>
+		/// Gets the expression used to set the property value in an entity.  Specificly used to handle nullable columns.
+		/// </summary>
+		/// <param name="column">The column object </param>
+		/// <param name="containerName">The object that has a string indexer for the column (DataRow, IDataReader, etc)</param>
+		/// <param name="objectName">The object instance name.</param>
+		/// <param name="indent">How tabs should the code be indented</param>
+		/// <returns>An expression that sets the property based on contents of the column in the container.</returns>
+		/// <remarks>This method should not append the trailing semicolon.</remarks>
+		public string GetDatasetPropertySetExpression(ColumnSchema column, string containerName, string objectName, int indent)
+		{
+			if ( column.AllowDBNull )
+			{
+				return string.Format("{2} = (Convert.IsDBNull({1}[\"{0}\"]))?null:({3}){1}[\"{0}\"]",
+						/*0*/column.Name,
+						/*1*/containerName,
+						/*2*/objectName,
+						/*3*/GetCSType(column));
+			}
+			else
+			{
+				// regular NOT NULL data types, set to default value for type if null
+				return string.Format("{2} = ({3}){1}[\"{0}\"]",
+					/*0*/column.Name,
+					/*1*/containerName,
+					/*2*/objectName,
 					/*3*/GetCSType(column),
 					/*4*/GetCSDefaultByType(column));
 			}
@@ -728,7 +759,7 @@ namespace MoM.Templates
 			if ( column.AllowDBNull )
 			{
 				// nullable reference types (strings), set to null if null retrieved from database
-				return string.Format("{2} = (Convert.IsDBNull({1}[\"{0}\"]))?null:({3}){1}[\"{0}\"]",
+				return string.Format("{2} = ({1}.IsDBNull({1}.GetOrdinal(\"{0}\")))?null:({3}){1}[\"{0}\"]",
 					/*0*/column.Name,
 					/*1*/containerName,
 					/*2*/GetObjectPropertyAccessor(column,objectName),
@@ -737,7 +768,7 @@ namespace MoM.Templates
 			else
 			{
 				// regular NOT NULL data types, set to default value for type if null
-				return string.Format("{2} = (Convert.IsDBNull({1}[\"{0}\"]))?{4}:({3}){1}[\"{0}\"]",
+				return string.Format("{2} = ({3}){1}[\"{0}\"]",
 					/*0*/column.Name,
 					/*1*/containerName,
 					/*2*/GetObjectPropertyAccessor(column,objectName),
@@ -1968,11 +1999,11 @@ namespace MoM.Templates
 		/// <returns>The ctor params for the <see cref="System.ComponentModel.DataObjectField" /></returns>
 		public string GetDataObjectFieldCallParams(ColumnSchema column)
 		{
-			return string.Format("{0},{1},{2},{3}",
+			return string.Format("{0},{1},{2}{3}",
 				/*0*/ column.IsPrimaryKeyMember.ToString().ToLower(),
 				/*1*/ IsIdentityColumn(column).ToString().ToLower(),
 				/*2*/ column.AllowDBNull.ToString().ToLower(),
-				/*3*/ column.Size);
+				/*3*/ (CanCheckLength(column) ? ", " + column.Size.ToString() : ""));
 		}
 
 		/// <summary>
@@ -2131,7 +2162,10 @@ namespace MoM.Templates
 						return false;
 			}
 		}
-		
+
+		/// <summary>
+		/// Determines whether base DataObjectBase is a string type
+		/// </summary>
 		public bool IsStringType(DataObjectBase column)
 		{
 			DbType dataType = column.DataType;
@@ -2147,6 +2181,30 @@ namespace MoM.Templates
 						return false;
 			}
 		}
+		
+		/// <summary>
+		/// Determines whether base DataObjectBase is a string type, and not a blob column of text or ntext
+		/// </summary>
+		public bool CanCheckLength(DataObjectBase column)
+		{
+			switch (column.DataType)
+			{
+				case DbType.AnsiString: 
+				case DbType.AnsiStringFixedLength: 
+				case DbType.String: 
+				case DbType.StringFixedLength: 
+					return 
+					(
+						column.NativeType != "text" && 
+						column.NativeType != "ntext" && 
+						column.Size > 0
+					);
+					
+				default: 
+						return false;
+			}
+		}
+		
 		
 		/// <summary>
 		/// Returns true if the column is represented as a reference data type
