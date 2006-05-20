@@ -1,4 +1,4 @@
-﻿<%--
+<%--
  * $Id: EntityInstanceBase.generated.cst,v 1.11 2006/03/03 03:09:36 bgjohnso Exp $
  * Last modified by $Author$
  * Last modified at $Date$
@@ -24,6 +24,8 @@
 <%@ Property Name="IncludeRelations" Type="System.Boolean" Default="False" Category="Options" Description="Include Collections for Related Entities."%>
 <%@ Property Name="IncludeManyToMany" Type="System.Boolean" Default="False" Category="Options" Description="Include Collections for Related Entities."%>
 <%@ Property Name="IncludeGetListByFK" Type="System.Boolean" Default="True" Category="Options" Description="If true get functions will be generated." %>
+<%@ Property Name="EntityValidateTrunc" Type="System.Boolean" Default="True" Category="Options" Description="If true truncate values to the entity length if too long." %>
+<%@ Property Name="EntityValidateThrow" Type="System.Boolean" Default="False" Category="Options" Description="If true throw an exception when entites are about to be set to values that are too long." %>
 
 <%@ Property Name="NameSpace" Optional="True" Type="System.String" Category="Style" Description="Object Namespace." %>
 	
@@ -277,11 +279,15 @@ namespace <%=NameSpace%>
 				<%}%>
 					return;
 					
-				<% if (IsLengthType(cols[x])) { %>
-				//if (<%if (cols[x].AllowDBNull){%>value != null &&<%}%>value.Length > <%=cols[x].Size%>)
-				//{
-    			//	throw new ArgumentOutOfRangeException("<%= GetPropertyName(cols[x]) %>", "<%= GetPropertyName(cols[x]) %> maximum length is <%=cols[x].Size%>.");
-				//}
+				<% if (IsLengthType(cols[x]) && (EntityValidateTrunc || EntityValidateThrow)) { %>
+				if (<%if (cols[x].AllowDBNull){%>value != null &&<%}%>value.Length > <%=cols[x].Size%>)
+				{
+				     <% if (EntityValidateTrunc) { %>
+    					value = value.Substring(0, <%=cols[x].Size%>);
+				     <% } else { // EntityValidateThrow %>
+    					throw new ArgumentOutOfRangeException("<%= GetPropertyName(cols[x]) %>", "<%= GetPropertyName(cols[x]) %> maximum length is <%=cols[x].Size%>.");
+				     <% } %>
+				}
 				<% } %>
 					
 				OnColumnChanging(<%=className%>Column.<%=GetPropertyName(cols[x]) %>);
