@@ -1,4 +1,4 @@
-﻿<%@ CodeTemplate Src="..\CommonSqlCode.cs" Debug="true" Inherits="MoM.Templates.CommonSqlCode" Language="C#" TargetLanguage="T-SQL"
+<%@ CodeTemplate Src="..\CommonSqlCode.cs" Debug="true" Inherits="MoM.Templates.CommonSqlCode" Language="C#" TargetLanguage="T-SQL"
 	Description="Generates SELECT/INSERT/UPDATE/DELETE stored procedures based on one or more selected tables, or an entire database schema." ResponseEncoding="UTF-8"%>
 
 <%@ Property Name="CompanyName" Optional="True" Type="System.String" Category="General" Description="The name of your company." %>
@@ -13,6 +13,7 @@
 
 <%@ Property Name="IncludeGetList" Type="System.Boolean" Default="True" Category="Options" Description="If true getlist procedures will be generated." %>
 	
+<%@ Property Name="IncludeRefreshEntity" Type="System.Boolean" Default="True" Category="Options" Description="If true the RefreshEntity function is generated for an entity to update itself without going to the DB." %>
 <%@ Property Name="IncludeGetListByFK" Type="System.Boolean" Default="True" Category="Options" Description="If true get statements will be generated." %>
 <%@ Property Name="IncludeGetListByIX" Type="System.Boolean" Default="True" Category="Options" Description="If true getlist statements will be generated." %>
 <%@ Property Name="IncludeFind" Type="System.Boolean" Default="True" Category="Options" Description="If true find statements will be generated." %>
@@ -443,12 +444,6 @@
 		<%} // end if (IncludeDelete) 
 		
 		
-	
-	
-	
-	
-	
-	
 		
 		// -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- 
 		if (IncludeGetListByFK)
@@ -496,8 +491,42 @@
 		</procedure>
 <%
 			} // end for (each foreign key)
-		} // end if (IncludeGetListByFK) 
+
+		} else { // if (IncludeGetListByFK) 
 		
+			// if the user doesn't want the GetBy...Key functions, then we wont have our GetByPrimaryKey stored proc... create it if they want RefreshEntity support
+			 if (IncludeRefreshEntity && SourceTable.PrimaryKey != null)
+			 {
+%>
+		<procedure owner="<%=SourceTable.Owner%>" name="<%= ProcedurePrefix + commandStem + SelectSuffix + "By" + GetKeysName(SourceTable.PrimaryKey.MemberColumns) %>" <%if (GrantUser != "") {%>grant="<%=GrantUser%>"<%}%>>
+			<comment><![CDATA[<%= GetProcSqlComment(string.Format("Supports the RefreshEntity method {0} for updating an entity when IncludeGetListByFK is disabled", SourceTable.Name), "") %>]]></comment>
+			<parameters>
+			<% 
+				for (int i = 0; i < SourceTable.PrimaryKey.MemberColumns.Count; i++) 
+  				{
+  					Response.Write("\t\t\t\t" + GetSqlParameterXmlNode(SourceTable.PrimaryKey.MemberColumns[i], false) + Environment.NewLine);
+  				}
+  			%>
+			</parameters>
+			<body><![CDATA[
+				<%= GetSetTransactionIsolationLevelStatement() %>
+				SELECT
+					<% for (int i = 0; i < cols.Count; i++) { %>
+					[<%= cols[i].Name %>]<% if (i < cols.Count - 1) { %>,<% } %>
+					<% } %>
+				FROM
+					<%= owner %>[<%= SourceTable.Name %>]
+				WHERE
+					<% for (int i = 0; i < SourceTable.PrimaryKey.MemberColumns.Count; i++) { %>
+					<% if (i > 0) { %>AND <% } %>[<%= SourceTable.PrimaryKey.MemberColumns[i].Name %>] = @<%= GetPropertyName(SourceTable.PrimaryKey.MemberColumns[i].Name) %>
+					<% } %>
+				
+				Select @@ROWCOUNT
+			]]></body>
+		</procedure>
+<%
+			 } // if (IncludeRefreshEntity && SourceTable.PrimaryKey != null)
+		}
 		
 		// -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- 
 		if (IncludeGetListByIX)

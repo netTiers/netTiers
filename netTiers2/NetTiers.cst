@@ -33,7 +33,9 @@
 <%@ Property Name="EntireDatabase" Type="System.Boolean" Category="DataSource" Description="Should the entire database have CRUD procedures scripted?" %>
 <%@ Property Name="SourceDatabase" Type="SchemaExplorer.DatabaseSchema" Optional="False" Category="DataSource" 	Description="Database that the stored procedures should be based on." %>
 
-<%-- Options --%>
+<%-- CRUD Options --%>
+<%@ Property Name="CacheDatabases" Type="System.Boolean" Default="True" Category="CRUD Options" Description="If true then once Database objects are created with each connection string, the object is cached in the application cache to be reused later." %>
+<%@ Property Name="IncludeRefreshEntity" Type="System.Boolean" Default="True" Category="CRUD Options" Description="If true the RefreshEntity function is generated for an entity to update itself without going to the DB." %>
 <%@ Property Name="IncludeCustoms" Type="System.Boolean" Default="True" Category="CRUD Options" Description="If true custom stored procedures (that starts with '_TableName_') will be detected and generated." %>
 <%@ Property Name="CustomNonMatchingReturnType" Type="CustomNonMatchingReturnType" Default="DataSet" Category="CRUD Options" Description="When using custom stored procedures, if the returned rows do not match the fields in an entity, a DataSet or IDataReader will be returned. Choose One.  This is useful if you've returned more than one resultset in a custom procedure; you can use a ConvertToDataSet(IDataReader) method in the Utility class to convert that to a DataSet." %>
 <%@ Property Name="CustomProcedureStartsWith" Type="System.String" Default="_{0}_" Category="CRUD Options" Description="If you include custom stored procedures, this is the pattern that NetTiers will look for your custom stored procedures to start with. A string format will be used to match the beginning of the procedure pattern.  So, {0}=TableName, {1}=ProcedurePrefix(See Property Below).  By default NetTiers will look at tables that starts with '_{0}_', which means it will detect the procedure _TableName_GetByBirthdate, '{1}_cust_{0}' would match usp_cust_tablename_GetByAny; the appropriate methods will be generated." %>
@@ -1063,6 +1065,7 @@ public void Go()
 		this.GetTemplate("StoredProceduresXml.cst").SetProperty("SourceViews", _sourceViews);
 		this.GetTemplate("StoredProceduresXml.cst").SetProperty("SourceTables", _sourceTables);
 		
+		this.GetTemplate("StoredProceduresXml.cst").SetProperty("IncludeRefreshEntity", IncludeRefreshEntity);
 		this.GetTemplate("StoredProceduresXml.cst").SetProperty("IncludeDrop", IncludeDrop);
 		this.GetTemplate("StoredProceduresXml.cst").SetProperty("IncludeInsert", IncludeInsert);
 		this.GetTemplate("StoredProceduresXml.cst").SetProperty("IncludeUpdate", IncludeUpdate);
@@ -2155,9 +2158,10 @@ public void Go()
 			this.GetTemplate("EntityInstanceBase.generated.cst").SetProperty("NameSpace", BLLNameSpace);
 			this.GetTemplate("EntityInstanceBase.generated.cst").SetProperty("IncludeRelations", IncludeRelations);
 			this.GetTemplate("EntityInstanceBase.generated.cst").SetProperty("IncludeManyToMany", IncludeManyToMany);
-			this.GetTemplate("EntityInstanceBase.generated.cst").SetProperty("IncludeGetListByFK", IncludeGetListByFK);			
+			this.GetTemplate("EntityInstanceBase.generated.cst").SetProperty("IncludeGetListByFK", IncludeGetListByFK);
 			this.GetTemplate("EntityInstanceBase.generated.cst").SetProperty("EntityValidateTrunc", EntityValidateTrunc);
 			this.GetTemplate("EntityInstanceBase.generated.cst").SetProperty("EntityValidateThrow", IncludeGetListByFK);
+			
 
 			this.RenderToFile("EntityInstanceBase.generated.cst", rootPathBLL + "\\" + GetPartialClassName(GetAbstractClassName(SourceTable.Name)) + ".cs", true);
 			
@@ -2267,6 +2271,9 @@ public void Go()
 			this.GetTemplate("SqlEntityProviderBase.generated.cst").SetProperty("FindSuffix", FindSuffix);
 			this.GetTemplate("SqlEntityProviderBase.generated.cst").SetProperty("ProcedurePrefix", ProcedurePrefix.Replace(" ", ""));
 			
+			this.GetTemplate("SqlEntityProviderBase.generated.cst").SetProperty("CacheDatabases", CacheDatabases);
+			this.GetTemplate("SqlEntityProviderBase.generated.cst").SetProperty("IncludeRefreshEntity", IncludeRefreshEntity);
+
 			this.GetTemplate("SqlEntityProviderBase.generated.cst").SetProperty("IncludeInsert", IncludeInsert);
 			this.GetTemplate("SqlEntityProviderBase.generated.cst").SetProperty("IncludeUpdate", IncludeUpdate);
 			this.GetTemplate("SqlEntityProviderBase.generated.cst").SetProperty("IncludeSave", IncludeSave);

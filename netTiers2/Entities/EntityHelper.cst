@@ -379,11 +379,9 @@ namespace <%=NameSpace%>
 		/// <returns></returns>
 		public static string ToString(Object o)
 		{
+			PropertyInfo[] pi = GetAllProperties(o.GetType());
+	
 			StringBuilder sb = new StringBuilder();
-			Type t = o.GetType();
-
-			PropertyInfo[] pi = t.GetProperties();
-
 			sb.Append("Properties for: " + o.GetType().Name + Environment.NewLine);
 			foreach (PropertyInfo i in pi)
 			{
@@ -394,16 +392,16 @@ namespace <%=NameSpace%>
 					{
 						sb.Append(i.GetValue(o, null).ToString());
 					}
-
+					else
+					{
+						sb.Append("NULL");
+					}
+					sb.Append(Environment.NewLine);
 				}
-				catch
-				{
-				}
-				sb.Append(Environment.NewLine);
-
+				catch { }
 			}
 
-			FieldInfo[] fi = t.GetFields();
+			FieldInfo[] fi = GetAllFields(o.GetType());
 
 			foreach (FieldInfo i in fi)
 			{
@@ -415,12 +413,9 @@ namespace <%=NameSpace%>
 						sb.Append(i.GetValue(o).ToString());
 					}
 
-				}
-				catch
-				{
-				}
-				sb.Append(Environment.NewLine);
-
+					sb.Append(Environment.NewLine);
+		                }
+		                catch { }
 			}
 
 			return sb.ToString();
@@ -513,20 +508,106 @@ namespace <%=NameSpace%>
 		*/
 		#endregion 
 		
+		#region ClearPropertyCache
+	      /// <summary>
+	      /// Clear cached property and field information for object types (originally collected in GetAllProperties, GetAllFields and GetBindableProperties
+	      /// </summary>
+	        public static void ClearPropertyCache()
+	        {
+	            Hashtable propertyCache = (Hashtable)AppDomain.CurrentDomain.GetData("netTiersTypePropertyCache");
+	            if (propertyCache != null)
+	            {
+	                propertyCache.Clear();
+	            }
+	        }
+		#endregion 
+		
+		#region GetAllProperties
+	      /// <summary>
+	      /// Get the collection of properties for a given type - not just the bindable ones. Cache the result so as not to balloon memory in time-critical apps.
+	      /// Use ClearPropertyCache( ) to refresh (ex: when an assembly that contains the type is updated)
+	      /// </summary>
+	      /// <param name="type">The type of the object to get the properties for.</param>
+	      /// <returns><see cref="PropertyInfo"/> array of properties.</returns>
+	        public static PropertyInfo[] GetAllProperties(Type type)
+	        {
+	            Hashtable propertyCache = (Hashtable)AppDomain.CurrentDomain.GetData("netTiersTypePropertyCache");
+	            if (propertyCache == null)
+	            {
+	                propertyCache = new Hashtable();
+	                AppDomain.CurrentDomain.SetData("netTiersTypePropertyCache", propertyCache);
+	            }
+	
+	            string cachedList = "AllPropertyList:" + type.FullName;
+	            PropertyInfo[] pi = (PropertyInfo[])propertyCache[cachedList];
+	            if (pi == null || pi.Length == 0)
+	            {
+	                pi = type.GetProperties();
+	                propertyCache[cachedList] = pi;
+	            }
+	
+	            return pi;
+	        }
+		#endregion 
+		
+		#region GetAllFields
+	      /// <summary>
+	      /// Get the collection of fields for a given type. Cache the result so as not to balloon memory in time-critical apps.
+	      /// Use ClearPropertyCache( ) to refresh (ex: when an assembly that contains the type is updated)
+	      /// </summary>
+	      /// <param name="type">The type of the object to get the fields for.</param>
+	      /// <returns><see cref="FieldInfo"/> array of fields.</returns>
+	        public static FieldInfo[] GetAllFields(Type type)
+	        {
+	            Hashtable propertyCache = (Hashtable)AppDomain.CurrentDomain.GetData("netTiersTypePropertyCache");
+	            if (propertyCache == null)
+	            {
+	                propertyCache = new Hashtable();
+	                AppDomain.CurrentDomain.SetData("netTiersTypePropertyCache", propertyCache);
+	            }
+	
+	            StringBuilder sb = new StringBuilder();
+	
+	            string cachedList = "AllFieldList:" + type.FullName;
+	            FieldInfo[] fi = (FieldInfo[])propertyCache[cachedList];
+	            if (fi == null || fi.Length == 0)
+	            {
+	                fi = type.GetFields();
+	                propertyCache[cachedList] = fi;
+	            }
+	
+	            return fi;
+	        }
+		#endregion 
+		
 		#region GetBindableProperties
 
       /// <summary>
       /// Get the collection of properties that have been marked as Bindable
+      /// Use ClearPropertyCache( ) to refresh (ex: when an assembly that contains the type is updated)
       /// </summary>
       /// <param name="type">The type of the object to get the properties for.</param>
       /// <returns><see cref="PropertyDescriptorCollection"/> of bindable properties.</returns>
       public static PropertyDescriptorCollection GetBindableProperties(Type type)
       {
-         // create a filter so we only return the properties that have been designated as bindable
-         Attribute[] attrs = new Attribute[] { new BindableAttribute() };
-     
-         // save the bindable properties in a local field
-         return TypeDescriptor.GetProperties(type, attrs);
+          Hashtable propertyCache = (Hashtable)AppDomain.CurrentDomain.GetData("netTiersTypePropertyCache");
+         if (propertyCache == null)
+         {
+             propertyCache = new Hashtable();
+             AppDomain.CurrentDomain.SetData("netTiersTypePropertyCache", propertyCache);
+         }
+
+         string cachedList = "BindableProperties:" + type.FullName;
+         PropertyDescriptorCollection propertyDescriptors = (PropertyDescriptorCollection)propertyCache[cachedList];
+         if (propertyDescriptors == null)
+         {
+             // create a filter so we only return the properties that have been designated as bindable
+             Attribute[] attrs = new Attribute[] { new BindableAttribute() };
+	
+             propertyDescriptors = TypeDescriptor.GetProperties(type, attrs);
+             propertyCache[cachedList] = propertyDescriptors;
+          }
+          return propertyDescriptors;
       }
       #endregion
 	}

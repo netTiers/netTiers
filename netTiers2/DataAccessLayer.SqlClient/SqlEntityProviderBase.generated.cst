@@ -24,6 +24,7 @@
 <%@ Property Name="IncludeCustoms" Type="System.Boolean" Default="True" Category="Options" Description="If true customs stored procedures will be generated as functions." %>
 <%@ Property Name="CustomNonMatchingReturnType" Type="CustomNonMatchingReturnType" Default="DataSet" Category="Options" Description="When using custom stored procedures, if the returned rows do not match the fields in an entity, a DataSet or IDataReader will be returned. Choose One.  This is useful if you've returned more than one resultset in a custom procedure; you can use a ConvertToDataSet(IDataReader) method in the Utility class to convert that to a DataSet." %>
 <%@ Property Name="CustomProcedureStartsWith" Type="System.String" Default="_{0}_" Category="Options" Description="If you include custom stored procedures, this is the pattern that NetTiers will look for your custom stored procedures. A string format will be used to match the procedure pattern.  So, {0}=TableName, {1}=StoredProc Prefix.  By default NetTiers will look at tables that starts with '_{0}_', which means it will detect the procedure _TableName_GetByBirthdate and will be detected and generated." %>
+<%@ Property Name="CacheDatabases" Type="System.Boolean" Default="True" Category="Options" Description="If true then once Database objects are created with each connection string, the object is cached in the application cache to be reused later." %>
 <%@ Property Name="IncludeInsert" Type="System.Boolean" Default="True" Category="Options" Description="If true insert functions will be generated." %>
 <%@ Property Name="IncludeUpdate" Type="System.Boolean" Default="True" Category="Options" Description="If true update functions will be generated." %>
 <%@ Property Name="IncludeSave" Type="System.Boolean" Default="True" Category="Options" Description="If true combined insert/update functions will be generated." %>
@@ -33,6 +34,7 @@
 <%@ Property Name="IncludeGetListByIX" Type="System.Boolean" Default="True" Category="Options" Description="If true getlist functions will be generated." %>
 <%@ Property Name="IncludeFind" Type="System.Boolean" Default="False" Category="Options" Description="If true find functions will be generated." %>
 <%@ Property Name="IncludeManyToMany" Type="System.Boolean" Default="True" Category="Options" Description="If true select statements will be generated for any many to many relationship." %>
+<%@ Property Name="IncludeRefreshEntity" Type="System.Boolean" Default="True" Category="Options" Description="If true the RefreshEntity function is generated for an entity to update itself without going to the DB." %>
 
 <%@ Property Name="InsertSuffix" Type="System.String" Default="_Insert" Category="Style" Description="Suffix to use for all generated INSERT functions." %>
 <%@ Property Name="UpdateSuffix" Type="System.String" Default="_Update" Category="Style" Description="Suffix to use for all generated UPDATE functions." %>
@@ -293,7 +295,7 @@ namespace <%=DALNameSpace%>.SqlClient
 		/// <returns>Returns true if operation suceeded.</returns>
 		public override bool Delete(TransactionManager transactionManager, <%= GetFunctionHeaderParameters(SourceTable.PrimaryKey.MemberColumns) %><% if(RowVersion != null) {Response.Write(", byte[] " + GetPrivateName(RowVersion.Name));}%>)
 		{
-			SqlDatabase database = new SqlDatabase(this._connectionString);
+			SqlDatabase database = GetDatabase(this._connectionString);
 			DbCommand commandWrapper = StoredProcedureProvider.GetCommandWrapper(database, "<%=owner + ProcedurePrefix + commandStem + DeleteSuffix%>", _useStoredProcedure);
 			
 			<% foreach(ColumnSchema col in SourceTable.PrimaryKey.MemberColumns) { %>
@@ -353,7 +355,7 @@ namespace <%=DALNameSpace%>.SqlClient
 			if (whereClause.IndexOf(";") > -1)
 				return new <%=collectionClassName%>();
 	
-			SqlDatabase database = new SqlDatabase(this._connectionString);
+			SqlDatabase database = GetDatabase(this._connectionString);
 			DbCommand commandWrapper = StoredProcedureProvider.GetCommandWrapper(database, "<%=owner + ProcedurePrefix + commandStem + FindSuffix%>", _useStoredProcedure);
 
 		bool searchUsingOR = false;
@@ -363,7 +365,7 @@ namespace <%=DALNameSpace%>.SqlClient
 		database.AddInParameter(commandWrapper, "@SearchUsingOR", DbType.Boolean, searchUsingOR);
 		
 	<% foreach(ColumnSchema column in SourceTable.Columns) {%>
-		database.AddInParameter(commandWrapper, "@<%=column.Name%>", DbType.<%=column.DataType%>, DBNull.Value);
+		database.AddInParameter(commandWrapper, "@<%=GetPropertyName(column.Name)%>", DbType.<%=column.DataType%>, DBNull.Value);
 	<% } %>
 	
 			// replace all instances of 'AND' and 'OR' because we already set searchUsingOR
@@ -381,10 +383,10 @@ namespace <%=DALNameSpace%>.SqlClient
 	   		foreach (string clause in clauses)
 			{
 				<% foreach(ColumnSchema column in SourceTable.Columns) {%>	
-				<% columnName = column.Name.ToLower();
+				<% columnName = GetPropertyName(column.Name).ToLower();
 				      columnNameSpace = columnName + " ";
 				      columnNameEqual = columnName + "=";
-				      columnNameParam = "@" + column.Name;
+				      columnNameParam = "@" +GetPropertyName(column.Name);
 				%>
 				if (clause.Trim().StartsWith("<%=columnNameSpace%>") || clause.Trim().StartsWith("<%=columnNameEqual%>"))
 				{
@@ -459,7 +461,7 @@ namespace <%=DALNameSpace%>.SqlClient
 		/// <returns>Returns a typed collection of <%=className%> objects.</returns>
 		public override <%=collectionClassName%> GetAll(TransactionManager transactionManager, int start, int pageLength, out int count)
 		{
-			SqlDatabase database = new SqlDatabase(this._connectionString);
+			SqlDatabase database = GetDatabase(this._connectionString);
 			DbCommand commandWrapper = StoredProcedureProvider.GetCommandWrapper(database, "<%=owner + ProcedurePrefix + commandStem + SelectSuffix + SelectAllSuffix%>", _useStoredProcedure);
 			
 			IDataReader reader = null;
@@ -513,7 +515,7 @@ namespace <%=DALNameSpace%>.SqlClient
 		/// <returns>Returns a typed collection of <%=className%> objects.</returns>
 		public override <%=collectionClassName%> GetPaged(TransactionManager transactionManager, string whereClause, string orderBy, int start, int pageLength, out int count)
 		{
-			SqlDatabase database = new SqlDatabase(this._connectionString);
+			SqlDatabase database = GetDatabase(this._connectionString);
 			DbCommand commandWrapper = StoredProcedureProvider.GetCommandWrapper(database, "<%=owner + ProcedurePrefix + commandStem + SelectSuffix + "Paged"%>", _useStoredProcedure);
 			
 			database.AddInParameter(commandWrapper, "@PageIndex", DbType.Int32, start);
@@ -568,7 +570,127 @@ namespace <%=DALNameSpace%>.SqlClient
 		
 <%
  	} //end IncludeGetList
+
+	/*	
+		-------------------------------
+		ENTITY REFRESH
+		-------------------------------
+	*/
+
+	if (IncludeRefreshEntity && SourceTable.PrimaryKey != null) 
+	{
+		// now we cna refresh an entity from the DB without generating a new entity - with new (X-number of) validation handlers
+		// - this saves a bunch of memory
+%>
+		#region "RefreshEntity"
+		/// <summary>
+		/// Update the <%=GetClassName(SourceTable.Name)%> entity from the database without using GetByPrimaryKey
+		///  - which creates a new entity every time and adds validation event handlers to it (that's bad memory-wise and CPU-wise at high DB refresh/update rates).
+		/// </summary>
+		/// <param name="transactionManager"><see cref="TransactionManager"/> object</param>
+		/// <param name="entity">The <see cref="<%=GetClassName(SourceTable.Name)%>"/> object to refresh.</param>
+	        public override void RefreshEntity(TransactionManager transactionManager, <%=className%> entity)
+	        {
+			if (entity == null) return;
+
+			SqlDatabase database = GetDatabase(this._connectionString);
+			DbCommand commandWrapper = StoredProcedureProvider.GetCommandWrapper(database, "<%=owner + ProcedurePrefix + commandStem + SelectSuffix + "By" + GetKeysName(SourceTable.PrimaryKey.MemberColumns)%>", _useStoredProcedure);
+			
+			<% foreach(ColumnSchema col in SourceTable.PrimaryKey.MemberColumns) { %>
+			database.AddInParameter(commandWrapper, "@<%=GetPropertyName(col.Name)%>", DbType.<%=col.DataType%>, entity.<%=GetPropertyName(col.Name)%>);
+			<% } %>
+			<% if (RowVersion != null){ %>
+			database.AddInParameter(commandWrapper, "@<%=GetPropertyName(RowVersion.Name)%>", DbType.<%= RowVersion.DataType.ToString() %>, entity.<%=GetPropertyName(RowVersion.Name)%>%>);
+			<% } %>
+
+			IDataReader reader = null;
+			try
+			{
+				if (transactionManager != null)
+				{
+					reader = Utility.ExecuteReader(transactionManager, commandWrapper);
+				}
+				else
+				{
+					reader = Utility.ExecuteReader(database, commandWrapper);
+				}		
+
+				RefreshEntity(reader, entity);
+			}
+			finally 
+			{
+				if (reader != null) 
+					reader.Close();
+			}
+	            
+	        }
+		#endregion
+
+<%
+	} // if (IncludeRefreshEntity && SourceTable.PrimaryKey != null) 
+
+	/*---------------------------------------------------------------------------------
+								Cache DB objects
+	  -------------------------------------------------------------------------------*/
 	
+	if (CacheDatabases) { %>
+		#region "Database Caching Functions"
+
+		#region "ClearDatabaseCache"
+		/// <summary>
+		/// Clears the cached DB handles - cached in GetDatabase( )
+		/// </summary>
+	        public void ClearDatabaseCache()
+	        {
+	            Hashtable databaseCache = (Hashtable)AppDomain.CurrentDomain.GetData("netTiersDatabaseCache");
+	            if (databaseCache != null)
+	            {
+	                databaseCache.Clear();
+	            }
+	        }
+
+		#endregion
+
+		#region "GetDatabase"
+		/// <summary>
+		/// Inits and caches DB handles to improve performance - especially at high CPU/Memory usage rates - use ClearDatabaseCache( ) to clear the cache
+		/// </summary>
+		/// <param name="connectionString"></param>
+	        public SqlDatabase GetDatabase(string connectionString)
+	        {
+	            Hashtable databaseCache = (Hashtable)AppDomain.CurrentDomain.GetData("netTiersDatabaseCache");
+	            if (databaseCache == null)
+	            {
+	                databaseCache = new Hashtable();
+	                AppDomain.CurrentDomain.SetData("netTiersDatabaseCache", databaseCache);
+	            }
+	
+	            SqlDatabase database = (SqlDatabase)databaseCache[connectionString];
+	            if (database == null)
+	            {
+	                database = new SqlDatabase(connectionString);
+	                databaseCache[connectionString] = database;
+	            }
+	
+	            return database;
+	        }
+
+		#endregion
+
+		#endregion
+<% 	} else { %>
+
+		#region "GetDatabase"
+	        public SqlDatabase GetDatabase(string connectionString)
+		{
+			return new SqlDatabase(connectionString);
+		}
+		#endregion
+
+<% 	} // if (CacheDatabases) %>
+
+<%
+
 	/*---------------------------------------------------------------------------------
 								Get By FK
 	  -------------------------------------------------------------------------------*/
@@ -606,7 +728,7 @@ namespace <%=DALNameSpace%>.SqlClient
 		/// <returns>Returns a typed collection of <%=className%> objects.</returns>
 		public override <%=collectionClassName%> GetBy<%=GetKeysName(fkeys[j].ForeignKeyMemberColumns)%>(TransactionManager transactionManager, <%= GetFunctionHeaderParameters(fkeys[j].ForeignKeyMemberColumns) %>, int start, int pageLength, out int count)
 		{
-			SqlDatabase database = new SqlDatabase(this._connectionString);
+			SqlDatabase database = GetDatabase(this._connectionString);
 			DbCommand commandWrapper = StoredProcedureProvider.GetCommandWrapper(database, "<%=owner + ProcedurePrefix + commandStem + SelectSuffix + "By" + GetKeysName(fkeys[j].ForeignKeyMemberColumns)%>", _useStoredProcedure);
 			
 			<% foreach(ColumnSchema col in fkeys[j].ForeignKeyMemberColumns) { %>
@@ -703,7 +825,7 @@ namespace <%=DALNameSpace%>.SqlClient
 		/// <remarks></remarks>
 		public override <%=returnType%> GetBy<%=GetKeysName(indexes[j].MemberColumns)%>(TransactionManager transactionManager, <%= GetFunctionHeaderParameters(indexes[j].MemberColumns) %>, int start, int pageLength, out int count)
 		{
-			SqlDatabase database = new SqlDatabase(this._connectionString);
+			SqlDatabase database = GetDatabase(this._connectionString);
 			DbCommand commandWrapper = StoredProcedureProvider.GetCommandWrapper(database, "<%=owner + ProcedurePrefix + commandStem + SelectSuffix + "By" + GetKeysName(indexes[j].MemberColumns)%>", _useStoredProcedure);
 			
 			<% foreach(ColumnSchema col in indexes[j].MemberColumns) { %>
@@ -787,65 +909,81 @@ namespace <%=DALNameSpace%>.SqlClient
 		/// </remarks>	
 		public override void BulkInsert(TransactionManager transactionManager, TList<<%=className%>> entities)
 		{
-			//System.Data.SqlClient.SqlBulkCopy bulkCopy = new System.Data.SqlClient.SqlBulkCopy(this._connectionString, System.Data.SqlClient.SqlBulkCopyOptions.CheckConstraints); //, null);
-			
-			System.Data.SqlClient.SqlBulkCopy bulkCopy = null;
-	
-			if (transactionManager != null && transactionManager.IsOpen)
-			{			
-				System.Data.SqlClient.SqlConnection cnx = transactionManager.TransactionObject.Connection as System.Data.SqlClient.SqlConnection;
-				System.Data.SqlClient.SqlTransaction transaction = transactionManager.TransactionObject as System.Data.SqlClient.SqlTransaction;
-				bulkCopy = new System.Data.SqlClient.SqlBulkCopy(cnx, System.Data.SqlClient.SqlBulkCopyOptions.CheckConstraints, transaction); //, null);
-			}
-			else
-			{
-				bulkCopy = new System.Data.SqlClient.SqlBulkCopy(this._connectionString, System.Data.SqlClient.SqlBulkCopyOptions.CheckConstraints); //, null);
-			}
-			
-			bulkCopy.BulkCopyTimeout = 360;
-			bulkCopy.DestinationTableName = "<%=SourceTable.Name%>";
-			
-			DataTable dataTable = new DataTable();
-			<% 	for (int i = 0; i < cols.Count; i++) { %>
-			DataColumn col<%=i%> = dataTable.Columns.Add("<%=cols[i].Name%>", typeof(<%=GetCSTypeWithoutNullable(cols[i])%>));
-			col<%=i%>.AllowDBNull = <%= cols[i].AllowDBNull.ToString().ToLower()%>;		
-			<% } %>
-			
-			<% 
-			for (int i = 0; i < cols.Count; i++) { %>
-			bulkCopy.ColumnMappings.Add("<%=cols[i].Name%>", "<%=cols[i].Name%>");
-			<% } %>
-			
-			foreach(<%=className%> entity in entities)
-			{
-				if (entity.EntityState != EntityState.Added)
-					continue;
+	            DataTable dataTable = null;
+	            try
+	            {
+					//System.Data.SqlClient.SqlBulkCopy bulkCopy = new System.Data.SqlClient.SqlBulkCopy(this._connectionString, System.Data.SqlClient.SqlBulkCopyOptions.CheckConstraints); //, null);
 					
-				DataRow row = dataTable.NewRow();
-				<% for (int i = 0; i < cols.Count; i++) { %>
-				
-				<% if (cols[i].AllowDBNull && !IsCSReferenceDataType(cols[i])  ){ %>
-					row["<%=cols[i].Name %>"] = entity.<%=GetPropertyName(cols[i].Name)%>.HasValue ? (object) entity.<%=GetPropertyName(cols[i].Name)%>  : System.DBNull.Value;
-				<% } else { %>
-					row["<%=cols[i].Name %>"] = entity.<%= GetPropertyName(cols[i].Name) %>;
-				<% } // end if %>		
+					System.Data.SqlClient.SqlBulkCopy bulkCopy = null;
+			
+					if (transactionManager != null && transactionManager.IsOpen)
+					{			
+						System.Data.SqlClient.SqlConnection cnx = transactionManager.TransactionObject.Connection as System.Data.SqlClient.SqlConnection;
+						System.Data.SqlClient.SqlTransaction transaction = transactionManager.TransactionObject as System.Data.SqlClient.SqlTransaction;
+						bulkCopy = new System.Data.SqlClient.SqlBulkCopy(cnx, System.Data.SqlClient.SqlBulkCopyOptions.CheckConstraints, transaction); //, null);
+					}
+					else
+					{
+						bulkCopy = new System.Data.SqlClient.SqlBulkCopy(this._connectionString, System.Data.SqlClient.SqlBulkCopyOptions.CheckConstraints); //, null);
+					}
+					
+					bulkCopy.BulkCopyTimeout = 360;
+					bulkCopy.DestinationTableName = "<%=SourceTable.Name%>";
+					
+					dataTable = new DataTable();
+					<% 	for (int i = 0; i < cols.Count; i++) { %>
+					DataColumn col<%=i%> = dataTable.Columns.Add("<%=cols[i].Name%>", typeof(<%=GetCSTypeWithoutNullable(cols[i])%>));
+					col<%=i%>.AllowDBNull = <%= cols[i].AllowDBNull.ToString().ToLower()%>;		
+					<% } %>
+					
+					<% 
+					for (int i = 0; i < cols.Count; i++) { %>
+					bulkCopy.ColumnMappings.Add("<%=cols[i].Name%>", "<%=cols[i].Name%>");
+					<% } %>
+					
+					foreach(<%=className%> entity in entities)
+					{
+						if (entity.EntityState != EntityState.Added)
+							continue;
 							
-				<% } // end for %>
-				
-				dataTable.Rows.Add(row);
-			}		
-			
-			// send the data to the server		
-			bulkCopy.WriteToServer(dataTable);		
-			
-			// update back the state
-			foreach(<%=className%> entity in entities)
-			{
-				if (entity.EntityState != EntityState.Added)
-					continue;
-			
-				entity.AcceptChanges();
-			}
+						DataRow row = dataTable.NewRow();
+						<% for (int i = 0; i < cols.Count; i++) { %>
+						
+						<% if (cols[i].AllowDBNull && !IsCSReferenceDataType(cols[i])  ){ %>
+							row["<%=cols[i].Name %>"] = entity.<%=GetPropertyName(cols[i].Name)%>.HasValue ? (object) entity.<%=GetPropertyName(cols[i].Name)%>  : System.DBNull.Value;
+						<% } else { %>
+							row["<%=cols[i].Name %>"] = entity.<%= GetPropertyName(cols[i].Name) %>;
+						<% } // end if %>		
+									
+						<% } // end for %>
+						
+						dataTable.Rows.Add(row);
+					}		
+					
+					// send the data to the server		
+					bulkCopy.WriteToServer(dataTable);		
+					
+					// update back the state
+					foreach(<%=className%> entity in entities)
+					{
+						if (entity.EntityState != EntityState.Added)
+							continue;
+					
+						entity.AcceptChanges();
+					}
+	            }
+	            catch
+	            {
+	                throw;
+	            }
+	            finally
+	            {
+	                if (dataTable != null)
+	                {
+	                    dataTable.Dispose();
+	                }
+	            }
+
 		}
 				
 		/// <summary>
@@ -860,7 +998,7 @@ namespace <%=DALNameSpace%>.SqlClient
 		/// <returns>Returns true if operation is successful.</returns>
 		public override bool Insert(TransactionManager transactionManager, <%=className%> entity)
 		{
-			SqlDatabase database = new SqlDatabase(this._connectionString);
+			SqlDatabase database = GetDatabase(this._connectionString);
 			DbCommand commandWrapper = StoredProcedureProvider.GetCommandWrapper(database, "<%=owner + ProcedurePrefix + commandStem + InsertSuffix %>", _useStoredProcedure);
 			
 			<%			
@@ -947,7 +1085,7 @@ namespace <%=DALNameSpace%>.SqlClient
 		/// <returns>Returns true if operation is successful.</returns>
 		public override bool Update(TransactionManager transactionManager, <%=className%> entity)
 		{
-			SqlDatabase database = new SqlDatabase(this._connectionString);
+			SqlDatabase database = GetDatabase(this._connectionString);
 			DbCommand commandWrapper = StoredProcedureProvider.GetCommandWrapper(database, "<%=owner + ProcedurePrefix + commandStem + UpdateSuffix %>", _useStoredProcedure);
 			
 			<%		
@@ -1083,7 +1221,7 @@ namespace <%=DALNameSpace%>.SqlClient
 		/// <returns>A <see cref="<%=returnTypeForComment%>"/> instance.</returns>
 		public override <%=returnType%> <%=methodName%>(TransactionManager transactionManager, int start, int pageLength <%=TransformStoredProcedureInputsToMethod(true, command.InputParameters) + TransformStoredProcedureOutputsToMethod(true, command.AllOutputParameters)%>)
 		{
-			SqlDatabase database = new SqlDatabase(this._connectionString);
+			SqlDatabase database = GetDatabase(this._connectionString);
 			DbCommand commandWrapper = database.GetStoredProcCommand("<%=command.Name%>");
 			
 			<% foreach(ParameterSchema col in command.InputParameters)	{%>			

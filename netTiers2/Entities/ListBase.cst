@@ -460,8 +460,9 @@ namespace <%=NameSpace%>
       /// <param name="item">The item to insert in the list.</param>
       protected override void InsertItem(int index, T item)
       {
+         PropertyDescriptorCollection propertyCollection = EntityHelper.GetBindableProperties(typeof(T));
 
-         foreach (PropertyDescriptor propDesc in TypeDescriptor.GetProperties(item))
+         foreach (PropertyDescriptor propDesc in propertyCollection)
          {
             if (propDesc.SupportsChangeEvents)
             {
@@ -477,15 +478,20 @@ namespace <%=NameSpace%>
       /// <param name="index">The zero-based index of the item to remove.</param>
       protected override void RemoveItem(int index)
       {
-         T item = Items[index];
-         foreach (PropertyDescriptor propDesc in TypeDescriptor.GetProperties(item))
-         {
-            if (propDesc.SupportsChangeEvents)
-            {
-               propDesc.RemoveValueChanged(item, OnItemChanged);
-            }
-         }
+         PropertyDescriptorCollection propertyCollection = EntityHelper.GetBindableProperties(typeof(T));
 
+         if (propertyCollection != null)
+         {
+             T item = Items[index];
+
+             foreach (PropertyDescriptor propDesc in propertyCollection)
+             {
+                 if (propDesc.SupportsChangeEvents)
+                 {
+                     propDesc.RemoveValueChanged(item, OnItemChanged);
+                 }
+             }
+         }
          base.RemoveItem(index);
       }
 
@@ -701,6 +707,16 @@ namespace <%=NameSpace%>
       {
          if (disposing)
          {
+             foreach (T entity in this.Items)
+             {
+                 if (entity is IDisposable)
+                 {
+                     ((IDisposable)entity).Dispose();
+                 }
+             }
+
+             this.Items.Clear();
+
             EventHandler handler = Disposed;
             if (handler != null)
                handler(this, EventArgs.Empty);
@@ -750,8 +766,13 @@ namespace <%=NameSpace%>
       /// <param name="ignoreCase">A Boolean indicating a case-sensitive or insensitive comparison (true indicates a case-insensitive comparison).  String properties only.</param>
       public virtual T Find(string propertyName, object value, bool ignoreCase)
       {
-         PropertyDescriptorCollection props = TypeDescriptor.GetProperties(typeof(T));
-         PropertyDescriptor searchBy = props.Find(propertyName, true);
+         PropertyDescriptor searchBy = null;
+          
+         // we already got 'TypeDescriptor.GetProperties(item)' during init - so use it
+         if (_propertyCollection != null)
+         {
+              searchBy = _propertyCollection.Find(propertyName, true);
+         }
 
          if (searchBy != null)
          {
@@ -1012,9 +1033,6 @@ namespace <%=NameSpace%>
             tableExists = true;
          }
 
-         //Props
-         PropertyDescriptorCollection props = TypeDescriptor.GetProperties(typeof(T));
-
          //pks of current type
          List<System.Data.DataColumn> primaryKey = new List<System.Data.DataColumn>();
 
@@ -1023,7 +1041,7 @@ namespace <%=NameSpace%>
          {
             #region get meta data, build dataTable
             //look at current type's props, and if child hold a ref to it, so that you can recursively add the child.
-            foreach (PropertyDescriptor prop in props)
+            foreach (PropertyDescriptor prop in _propertyCollection)
             {
                //TODO: Change to custom entity attribute for PK discovery
                if (prop.Attributes.Matches(new Attribute[] { new ReadOnlyAttribute(false), new BindableAttribute(), new DescriptionAttribute() }))
@@ -1045,7 +1063,7 @@ namespace <%=NameSpace%>
          {
             System.Data.DataRow row = dataTable.NewRow();
 
-            foreach (PropertyDescriptor currentProperty in props)
+            foreach (PropertyDescriptor currentProperty in _propertyCollection)
             {
                if (!dataTable.Columns.Contains(currentProperty.Name))
                   continue;
@@ -1358,8 +1376,7 @@ namespace <%=NameSpace%>
          if (!instanceType.IsPublic)
             throw new ArgumentException(string.Format("Type \"{0}\" is not public.", typeof(T).FullName));
 
-         m_PropertyDescriptors = TypeDescriptor.GetProperties(typeof(T));
-
+           m_PropertyDescriptors = EntityHelper.GetBindableProperties(typeof(T));
       }
 
       #endregion

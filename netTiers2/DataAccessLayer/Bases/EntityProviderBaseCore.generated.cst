@@ -1,4 +1,4 @@
-﻿<%@ CodeTemplate Src="..\..\CommonSqlCode.cs" Inherits="MoM.Templates.CommonSqlCode" Language="C#" TargetLanguage="C#" Description="" Debug="True"  ResponseEncoding="UTF-8"%>
+<%@ CodeTemplate Src="..\..\CommonSqlCode.cs" Inherits="MoM.Templates.CommonSqlCode" Language="C#" TargetLanguage="C#" Description="" Debug="True"  ResponseEncoding="UTF-8"%>
 <%@ Assembly Name="SchemaExplorer" %>
 <%@ Assembly Name="System.Design" %>
 <%@ Import Namespace="SchemaExplorer" %>
@@ -1295,7 +1295,20 @@ namespace <%=DALNameSpace%>.Bases
 			return rows;
 		}
 		*/
-						
+
+		/// <summary>
+		/// Update the <%=className%> entity from the database without using GetByPrimaryKey
+		///  - which creates a new entity every time and adds validation event handlers to it (that's bad memory-wise and CPU-wise at high DB refresh/update rates).
+		/// </summary>
+		/// <param name="transactionManager"><see cref="TransactionManager"/> object</param>
+		/// <param name="entity"><see cref="<%=className%>"/> object to refresh </param>
+	        public abstract void RefreshEntity(TransactionManager transactionManager, <%=className%> entity);
+	
+	        public virtual void RefreshEntity(<%=className%> entity)
+	        {
+	            RefreshEntity((TransactionManager)null, entity);
+	        }
+			
 		/// <summary>
 		/// Fill a <%=collectionClassNameForComment%> From a DataReader.
 		/// </summary>
@@ -1338,7 +1351,7 @@ namespace <%=DALNameSpace%>.Bases
 		/// <param name="entity">The <see cref="<%=className%>"/> object to refresh.</param>
 		public static void RefreshEntity(IDataReader reader, <%=className%> entity)
 		{
-			if (!reader.Read()) return;
+			if (reader == null || entity == null || !reader.Read()) return;
 			
 			<%for (int x=0; x < cols.Count;x++) { %>
 			<%= GetObjectPropertySetExpression(cols[x], "reader", "entity", 3) %>;
@@ -1356,6 +1369,8 @@ namespace <%=DALNameSpace%>.Bases
 		/// <param name="entity">The <see cref="<%=className%>"/> object.</param>
 		public static void RefreshEntity(DataSet dataSet, <%=className%> entity)
 		{
+			if (dataSet == null || entity == null || dataSet.Tables.Count == 0 || dataSet.Tables[0].Rows.Count == 0) return;
+
 			DataRow dataRow = dataSet.Tables[0].Rows[0];
 			
 			<%for (int x=0; x < cols.Count;x++) { %>

@@ -13,6 +13,7 @@
 <%@ Property Name="DALNameSpace" Type="System.String" Category="Data" Description="DAL Namespace." %>
 <%@ Property Name="SourceTables" Type="SchemaExplorer.TableSchemaCollection" Category="Connection" Description="Tables of the system." %>
 <%@ Property Name="SourceViews" Type="SchemaExplorer.ViewSchemaCollection" Category="Connection" Description="Tables of the system." %>
+<%@ Property Name="CacheDatabases" Type="System.Boolean" Default="True" Category="Options" Description="If true then once Database objects are created with each connection string, the object is cached in the application cache to be reused later." %>
 
 #region Using directives
 
@@ -318,7 +319,7 @@ namespace <%=DALNameSpace%>.SqlClient
 		/// <returns></returns>
 		public override int ExecuteNonQuery(string storedProcedureName, params object[] parameterValues)
 		{
-			SqlDatabase database = new SqlDatabase(this._connectionString);
+			SqlDatabase database = GetDatabase(this._connectionString);
 			return database.ExecuteNonQuery(storedProcedureName, parameterValues);	
 		}
 
@@ -331,7 +332,7 @@ namespace <%=DALNameSpace%>.SqlClient
 		/// <returns></returns>
 		public override int ExecuteNonQuery(TransactionManager transactionManager, string storedProcedureName, params object[] parameterValues)
 		{
-			SqlDatabase database = new SqlDatabase(this._connectionString);
+			SqlDatabase database = GetDatabase(this._connectionString);
 			return database.ExecuteNonQuery(transactionManager.TransactionObject, storedProcedureName, parameterValues);	
 		}
 
@@ -341,7 +342,7 @@ namespace <%=DALNameSpace%>.SqlClient
 		/// <param name="commandWrapper">The command wrapper.</param>
 		public override void ExecuteNonQuery(DbCommand commandWrapper)
 		{
-			SqlDatabase database = new SqlDatabase(this._connectionString);
+			SqlDatabase database = GetDatabase(this._connectionString);
 			database.ExecuteNonQuery(commandWrapper);	
 			
 		}
@@ -353,7 +354,7 @@ namespace <%=DALNameSpace%>.SqlClient
 		/// <param name="commandWrapper">The command wrapper.</param>
 		public override void ExecuteNonQuery(TransactionManager transactionManager, DbCommand commandWrapper)
 		{
-			SqlDatabase database = new SqlDatabase(this._connectionString);
+			SqlDatabase database = GetDatabase(this._connectionString);
 			database.ExecuteNonQuery(commandWrapper, transactionManager.TransactionObject);	
 		}
 
@@ -366,7 +367,7 @@ namespace <%=DALNameSpace%>.SqlClient
 		/// <returns></returns>
 		public override int ExecuteNonQuery(CommandType commandType, string commandText)
 		{
-			SqlDatabase database = new SqlDatabase(this._connectionString);
+			SqlDatabase database = GetDatabase(this._connectionString);
 			return database.ExecuteNonQuery(commandType, commandText);	
 		}
 		/// <summary>
@@ -392,7 +393,7 @@ namespace <%=DALNameSpace%>.SqlClient
 		/// <returns></returns>
 		public override IDataReader ExecuteReader(string storedProcedureName, params object[] parameterValues)
 		{
-			SqlDatabase database = new SqlDatabase(this._connectionString);			
+			SqlDatabase database = GetDatabase(this._connectionString);			
 			return database.ExecuteReader(storedProcedureName, parameterValues);	
 		}
 
@@ -416,7 +417,7 @@ namespace <%=DALNameSpace%>.SqlClient
 		/// <returns></returns>
 		public override IDataReader ExecuteReader(DbCommand commandWrapper)
 		{
-			SqlDatabase database = new SqlDatabase(this._connectionString);			
+			SqlDatabase database = GetDatabase(this._connectionString);			
 			return database.ExecuteReader(commandWrapper);	
 		}
 
@@ -441,7 +442,7 @@ namespace <%=DALNameSpace%>.SqlClient
 		/// <returns></returns>
 		public override IDataReader ExecuteReader(CommandType commandType, string commandText)
 		{
-			SqlDatabase database = new SqlDatabase(this._connectionString);
+			SqlDatabase database = GetDatabase(this._connectionString);
 			return database.ExecuteReader(commandType, commandText);	
 		}
 		/// <summary>
@@ -467,7 +468,7 @@ namespace <%=DALNameSpace%>.SqlClient
 		/// <returns></returns>
 		public override DataSet ExecuteDataSet(string storedProcedureName, params object[] parameterValues)
 		{
-			SqlDatabase database = new SqlDatabase(this._connectionString);			
+			SqlDatabase database = GetDatabase(this._connectionString);			
 			return database.ExecuteDataSet(storedProcedureName, parameterValues);	
 		}
 
@@ -491,7 +492,7 @@ namespace <%=DALNameSpace%>.SqlClient
 		/// <returns></returns>
 		public override DataSet ExecuteDataSet(DbCommand commandWrapper)
 		{
-			SqlDatabase database = new SqlDatabase(this._connectionString);			
+			SqlDatabase database = GetDatabase(this._connectionString);			
 			return database.ExecuteDataSet(commandWrapper);	
 		}
 
@@ -516,7 +517,7 @@ namespace <%=DALNameSpace%>.SqlClient
 		/// <returns></returns>
 		public override DataSet ExecuteDataSet(CommandType commandType, string commandText)
 		{
-			SqlDatabase database = new SqlDatabase(this._connectionString);
+			SqlDatabase database = GetDatabase(this._connectionString);
 			return database.ExecuteDataSet(commandType, commandText);	
 		}
 		/// <summary>
@@ -542,7 +543,7 @@ namespace <%=DALNameSpace%>.SqlClient
 		/// <returns></returns>
 		public override object ExecuteScalar(string storedProcedureName, params object[] parameterValues)
 		{
-			SqlDatabase database = new SqlDatabase(this._connectionString);			
+			SqlDatabase database = GetDatabase(this._connectionString);			
 			return database.ExecuteScalar(storedProcedureName, parameterValues);	
 		}
 
@@ -566,7 +567,7 @@ namespace <%=DALNameSpace%>.SqlClient
 		/// <returns></returns>
 		public override object ExecuteScalar(DbCommand commandWrapper)
 		{
-			SqlDatabase database = new SqlDatabase(this._connectionString);			
+			SqlDatabase database = GetDatabase(this._connectionString);			
 			return database.ExecuteScalar(commandWrapper);	
 		}
 
@@ -590,7 +591,7 @@ namespace <%=DALNameSpace%>.SqlClient
 		/// <returns></returns>
 		public override object ExecuteScalar(CommandType commandType, string commandText)
 		{
-			SqlDatabase database = new SqlDatabase(this._connectionString);
+			SqlDatabase database = GetDatabase(this._connectionString);
 			return database.ExecuteScalar(commandType, commandText);	
 		}
 		/// <summary>
@@ -607,8 +608,68 @@ namespace <%=DALNameSpace%>.SqlClient
 		}
 		#endregion
 
+
+	/*---------------------------------------------------------------------------------
+								Cache DB objects
+	  -------------------------------------------------------------------------------*/
+	
+<%	if (CacheDatabases) { %>
+		#region "Database Caching Functions"
+
+		#region "ClearDatabaseCache"
+		/// <summary>
+		/// Clears the cached DB handles - cached in GetDatabase( )
+		/// </summary>
+	        public void ClearDatabaseCache()
+	        {
+	            Hashtable databaseCache = (Hashtable)AppDomain.CurrentDomain.GetData("netTiersDatabaseCache");
+	            if (databaseCache != null)
+	            {
+	                databaseCache.Clear();
+	            }
+	        }
+
 		#endregion
 
+		#region "GetDatabase"
+		/// <summary>
+		/// Inits and caches DB handles to improve performance - especially at high CPU/Memory usage rates - use ClearDatabaseCache( ) to clear the cache
+		/// </summary>
+		/// <param name="connectionString"></param>
+	        public SqlDatabase GetDatabase(string connectionString)
+	        {
+	            Hashtable databaseCache = (Hashtable)AppDomain.CurrentDomain.GetData("netTiersDatabaseCache");
+	            if (databaseCache == null)
+	            {
+	                databaseCache = new Hashtable();
+	                AppDomain.CurrentDomain.SetData("netTiersDatabaseCache", databaseCache);
+	            }
+	
+	            SqlDatabase database = (SqlDatabase)databaseCache[connectionString];
+	            if (database == null)
+	            {
+	                database = new SqlDatabase(connectionString);
+	                databaseCache[connectionString] = database;
+	            }
+	
+	            return database;
+	        }
+
+		#endregion
+
+		#endregion
+<% 	} else { %>
+
+		#region "GetDatabase"
+	        public SqlDatabase GetDatabase(string connectionString)
+		{
+			return new SqlDatabase(connectionString);
+		}
+		#endregion
+
+<% 	} // if (CacheDatabases) %>
+
+		#endregion
 
 	}
 }
