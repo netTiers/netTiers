@@ -1000,6 +1000,8 @@ WriteRelationshipPropertyString();
 	[CLSCompliant(true)]
 	public class <%= keyClassName %> : EntityKeyBase
 	{
+		#region Constructors
+		
 		/// <summary>
 		/// Initializes a new instance of the <%= keyClassName %> class.
 		/// </summary>
@@ -1039,6 +1041,8 @@ WriteRelationshipPropertyString();
 
 			#endregion
 		}
+		
+		#endregion Constructors
 
 		#region Properties
 		
@@ -1077,6 +1081,8 @@ WriteRelationshipPropertyString();
 		
 		<% } %>
 		#endregion
+
+		#region Methods
 		
 		/// <summary>
 		/// Reads values from the supplied <see cref="IDictionary"/> object into
@@ -1094,10 +1100,27 @@ WriteRelationshipPropertyString();
 
 			#endregion
 		}
+		
+		///<summary>
+		/// Returns a String that represents the current object.
+		///</summary>
+		public override void ToString()
+		{
+			return String.Format("<% for ( int i=0; i<pkCols.Count; i++ ) { %><%= GetPropertyName(pkCols[i].Name) %>: {<%= i %>}{<%= pkCols.Count %>}<% } %>",
+						<% foreach ( MemberColumnSchema column in pkCols ) { %>
+							<% if ( column.AllowDBNull ) { %>
+								(<%= GetPropertyName(column.Name) %> ?? String.Empty),
+							<% } else { %>
+								<%= GetPropertyName(column.Name) %>,
+							<% } %>
+						<% } %>
+								Environment.NewLine);
+		}
+
+		#endregion Methods
 	}
 	
 	#endregion	
-	
 	
 	/// <summary>
 	/// Enumerate the <%=className%> columns.
