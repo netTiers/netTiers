@@ -351,7 +351,7 @@ private string WriteIndexSelectStatements(string tableName, IndexSchemaCollectio
 					GetFunctionCallParameters(SourceTable.PrimaryKey.MemberColumns),
 					Environment.NewLine);
 					
-	sb.AppendFormat("\t\t\t\t\tresults = new TList<{0}>();{1}", GetClassName(tableName), Environment.NewLine);
+	sb.AppendFormat("\t\t\t\t\tresults = new {0}();{1}", GetCollectionClassName(tableName), Environment.NewLine);
 	sb.AppendFormat("\t\t\t\t\tif ( data != null ) results.Add(data);{0}", Environment.NewLine);
 	sb.AppendFormat("\t\t\t\t\tcount = results.Count;{0}", Environment.NewLine);
 	sb.Append(WriteBreakStatement());
@@ -369,7 +369,24 @@ private string WriteIndexSelectStatements(string tableName, IndexSchemaCollectio
 			sb.Append(WriteCaseStatement(tableName, GetKeysName(indexSchema.MemberColumns)));
 			sb.Append(WriteParameterStatements(indexSchema.MemberColumns, tableName));
 			//sb.Append(WriteTotalRowCountStatement(indexSchema.MemberColumns, tableName));
-			sb.Append(WriteGetByStatement(indexSchema.MemberColumns, tableName));
+			
+			if(indexSchema.IsUnique)
+			{
+					sb.AppendFormat("\t\t\t\t\t{0} data{2} = {1}.GetBy{2}(GetTransactionManager(), {3}, this.StartIndex, this.PageSize);{4}",
+						GetClassName(tableName),
+						GetProviderName(tableName),
+						GetKeysName(indexSchema.MemberColumns),
+						GetFunctionCallParameters(indexSchema.MemberColumns),
+						Environment.NewLine);
+
+				sb.AppendFormat("\t\t\t\t\tresults = new {0}();{1}", GetCollectionClassName(tableName), Environment.NewLine);
+				sb.AppendFormat("\t\t\t\t\tif ( data{0} != null ) results.Add(data{0});{1}", GetKeysName(indexSchema.MemberColumns), Environment.NewLine );
+			}
+			else
+			{
+				sb.Append(WriteGetByStatement(indexSchema.MemberColumns, tableName));
+			}
+			
 			sb.Append(WriteBreakStatement());
 		}
 	}
