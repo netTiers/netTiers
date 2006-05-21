@@ -9,6 +9,7 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.ComponentModel;
+using System.ComponentModel.Design;
 using System.Web.UI.Design;
 using System.Web.UI;
 #endregion
@@ -107,6 +108,50 @@ namespace <%= WebNameSpace %>.Data
 			{
 				TypeSchema ts = new TypeSchema(typeof(Entity));
 				return ts.GetViews()[0];
+			}
+		}
+
+		/// <summary>
+		/// Gets or sets the EnablePaging property.
+		/// </summary>
+		public bool EnablePaging
+		{
+			get { return DataSource.EnablePaging; }
+			set { SetPropertyValue("EnablePaging", value); }
+		}
+
+		/// <summary>
+		/// Gets or sets the EnableSorting property.
+		/// </summary>
+		public bool EnableSorting
+		{
+			get { return DataSource.EnableSorting; }
+			set { SetPropertyValue("EnableSorting", value); }
+		}
+
+		/// <summary>
+		/// Sets the value of the specified property.
+		/// </summary>
+		/// <param name="propertyName">The name of the property to set.</param>
+		/// <param name="value">The new property value.</param>
+		protected void SetPropertyValue(String propertyName, Object value)
+		{
+			PropertyDescriptor propDesc = TypeDescriptor.GetProperties(DataSource.GetType())[propertyName];
+			propDesc.SetValue(DataSource, value);
+		}
+
+		/// <summary>Gets the designer action list collection for this designer.</summary>
+		/// <returns>The <see cref="T:System.ComponentModel.Design.DesignerActionListCollection"/>
+		/// associated with this designer.</returns>
+		public override DesignerActionListCollection ActionLists
+		{
+			get
+			{
+				DesignerActionListCollection actions = new DesignerActionListCollection();
+				// uncomment to add the default item "Configure data source..."
+				//actions.AddRange(base.ActionLists);
+				actions.Add(new BaseDataSourceActionList<Entity, EntityKey>(this));
+				return actions;
 			}
 		}
 
@@ -222,4 +267,62 @@ namespace <%= WebNameSpace %>.Data
 
 		#endregion Methods
 	}
+
+	#region BaseDataSourceActionList
+
+	/// <summary>
+	/// Supports the BaseDataSourceDesigner class.
+	/// </summary>
+	/// <typeparam name="Entity">The class of the business object being accessed.</typeparam>
+	/// <typeparam name="EntityKey">The class of the key
+	/// property of the specified business object class.</typeparam>
+	internal class BaseDataSourceActionList<Entity, EntityKey> : DesignerActionList
+		where Entity : new()
+		where EntityKey : new()
+	{
+		private BaseDataSourceDesigner<Entity, EntityKey> _designer;
+
+		/// <summary>
+		/// Initializes a new instance of the BaseDataSourceActionList class.
+		/// </summary>
+		/// <param name="designer"></param>
+		public BaseDataSourceActionList(BaseDataSourceDesigner<Entity, EntityKey> designer) : base(designer.Component)
+		{
+			_designer = designer;
+		}
+
+		/// <summary>
+		/// Gets or sets the EnablePaging property.
+		/// </summary>
+		public bool EnablePaging
+		{
+			get { return _designer.EnablePaging; }
+			set { _designer.EnablePaging = value; }
+		}
+
+		/// <summary>
+		/// Gets or sets the EnableSorting property.
+		/// </summary>
+		public bool EnableSorting
+		{
+			get { return _designer.EnableSorting; }
+			set { _designer.EnableSorting = value; }
+		}
+
+		/// <summary>
+		/// Returns the collection of <see cref="T:System.ComponentModel.Design.DesignerActionItem"/>
+		/// objects contained in the list.
+		/// </summary>
+		/// <returns>A <see cref="T:System.ComponentModel.Design.DesignerActionItem"/>
+		/// array that contains the items in this list.</returns>
+		public override DesignerActionItemCollection GetSortedActionItems()
+		{
+			DesignerActionItemCollection items = new DesignerActionItemCollection();
+			items.Add(new DesignerActionPropertyItem("EnablePaging", "Enable Paging", "General"));
+			items.Add(new DesignerActionPropertyItem("EnableSorting", "Enable Sorting", "General"));
+			return items;
+		}
+	}
+
+	#endregion BaseDataSourceActionList
 }

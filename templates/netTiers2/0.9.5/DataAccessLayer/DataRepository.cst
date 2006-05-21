@@ -7,6 +7,7 @@
 <%@ Property Name="DALNameSpace" Type="System.String" Category="Data" Description="DAL Namespace." %>
 <%@ Property Name="SourceTables" Type="SchemaExplorer.TableSchemaCollection" Category="Connection" Description="Tables of the system." %>
 <%@ Property Name="SourceViews" Type="SchemaExplorer.ViewSchemaCollection" Category="Connection" Description="Tables of the system." %>
+<%@ Property Name="IncludeDesignTimeSupport" Type="System.Boolean" Default="true" Category="05. WebLibrary - Advanced" Description="Indicates if Visual Studio design-time support should be provided for the Web Library controls." %>
 
 #region Using directives
 
@@ -32,7 +33,10 @@ namespace <%=DALNameSpace%>
 	{
 		private static volatile NetTiersProvider _provider = null;
         private static volatile NetTiersProviderCollection _providers = null;
-		private static volatile NetTiersServiceSection section = null;
+		private static volatile NetTiersServiceSection _section = null;
+		<% if ( IncludeDesignTimeSupport ) { %>
+		private static volatile Configuration _config = null;
+		<% } %>
         
         private static object SyncRoot = new object();
 				
@@ -50,29 +54,11 @@ namespace <%=DALNameSpace%>
                     // Do this again to make sure _provider is still null
                     if (_provider == null)
                     {
-						#region Find NetTiersServiceSection
-						
-                        // Try to get a reference to the default <netTiersService> section
-						section = WebConfigurationManager.GetSection("netTiersService") as NetTiersServiceSection;
-
-						if ( section == null )
-						{
-							// otherwise look for section based on the assembly name
-							section = WebConfigurationManager.GetSection("<%= DALNameSpace %>") as NetTiersServiceSection;
-						}
-
-						if ( section == null )
-						{
-							throw new ProviderException("Unable to load NetTiersServiceSection");
-						}
-						
-						#endregion Find NetTiersServiceSection
-
                         // Load registered providers and point _provider to the default provider
                         _providers = new NetTiersProviderCollection();
 
-                        ProvidersHelper.InstantiateProviders(section.Providers, _providers, typeof(NetTiersProvider));
-                        _provider = _providers[section.DefaultProvider];
+                        ProvidersHelper.InstantiateProviders(NetTiersSection.Providers, _providers, typeof(NetTiersProvider));
+						_provider = _providers[NetTiersSection.DefaultProvider];
 
                         if (_provider == null)
                         {
@@ -110,7 +96,154 @@ namespace <%=DALNameSpace%>
 			return _provider.CreateTransaction();
 		}
 
+		#region Configuration
+
+		/// <summary>
+		/// Gets a reference to the configured NetTiersServiceSection object.
+		/// </summary>
+		public static NetTiersServiceSection NetTiersSection
+		{
+			get
+			{
+				// Try to get a reference to the default <netTiersService> section
+				_section = WebConfigurationManager.GetSection("netTiersService") as NetTiersServiceSection;
+
+				if ( _section == null )
+				{
+					// otherwise look for section based on the assembly name
+					_section = WebConfigurationManager.GetSection("Northwind.DAL") as NetTiersServiceSection;
+				}
+
+				<% if ( IncludeDesignTimeSupport ) { %>
+				#region Design-Time Support
+
+				if ( _section == null )
+				{
+					// lastly, try to find the specific NetTiersServiceSection for this assembly
+					foreach ( ConfigurationSection temp in Configuration.Sections )
+					{
+						if ( temp is NetTiersServiceSection )
+						{
+							_section = temp as NetTiersServiceSection;
+							break;
+						}
+					}
+				}
+
+				#endregion Design-Time Support
+				
+				<% } // end if ( IncludeDesignTimeSupport ) { %>
+				if ( _section == null )
+				{
+					throw new ProviderException("Unable to load NetTiersServiceSection");
+				}
+
+				return _section;
+			}
+		}
+
+		<% if ( IncludeDesignTimeSupport ) { %>
+		#region Design-Time Support
+
+		/// <summary>
+		/// Gets a reference to the application configuration object.
+		/// </summary>
+		public static Configuration Configuration
+		{
+			get
+			{
+				if ( _config == null )
+				{
+					// load specific config file
+					if ( HttpContext.Current != null )
+					{
+						_config = WebConfigurationManager.OpenWebConfiguration("~");
+					}
+					else
+					{
+						String configFile = AppDomain.CurrentDomain.SetupInformation.ConfigurationFile.Replace(".config", "").Replace(".temp", "");
+
+						// check for design mode
+						if ( configFile.ToLower().Contains("devenv.exe") )
+						{
+							_config = GetDesignTimeConfig();
+						}
+						else
+						{
+							_config = ConfigurationManager.OpenExeConfiguration(configFile);
+						}
+					}
+				}
+
+				return _config;
+			}
+		}
+
+		private static Configuration GetDesignTimeConfig()
+		{
+			ExeConfigurationFileMap configMap = null;
+			Configuration config = null;
+			String path = null;
+
+			// Get an instance of the currently running Visual Studio IDE.
+			EnvDTE80.DTE2 dte = (EnvDTE80.DTE2) System.Runtime.InteropServices.Marshal.GetActiveObject("VisualStudio.DTE.8.0");
+			if ( dte != null )
+			{
+				dte.SuppressUI = true;
+
+				EnvDTE.ProjectItem item = dte.Solution.FindProjectItem("web.config");
+				if ( item != null )
+				{
+					System.IO.FileInfo info = new System.IO.FileInfo(item.ContainingProject.FullName);
+					path = String.Format("{0}\\{1}", info.Directory.FullName, item.Name);
+					configMap = new ExeConfigurationFileMap();
+					configMap.ExeConfigFilename = path;
+				}
+
+				/*
+				Array projects = (Array) dte2.ActiveSolutionProjects;
+				EnvDTE.Project project = (EnvDTE.Project) projects.GetValue(0);
+				System.IO.FileInfo info;
+
+				foreach ( EnvDTE.ProjectItem item in project.ProjectItems )
+				{
+					if ( String.Compare(item.Name, "web.config", true) == 0 )
+					{
+						info = new System.IO.FileInfo(project.FullName);
+						path = String.Format("{0}\\{1}", info.Directory.FullName, item.Name);
+						configMap = new ExeConfigurationFileMap();
+						configMap.ExeConfigFilename = path;
+						break;
+					}
+				}
+				*/
+			}
+
+			config = ConfigurationManager.OpenMappedExeConfiguration(configMap, ConfigurationUserLevel.None);
+			return config;
+		}
+
+		#endregion Design-Time Support
+
+		<% } // end if ( IncludeDesignTimeSupport ) { %>
+		#endregion Configuration
+
 		#region Connections
+
+		/// <summary>
+		/// Gets a reference to the ConnectionStringSettings collection.
+		/// </summary>
+		public static ConnectionStringSettingsCollection ConnectionStrings
+		{
+			get
+			{
+				<% if ( IncludeDesignTimeSupport ) { %>
+				return Configuration.ConnectionStrings.ConnectionStrings;
+				<% } else { %>
+				return WebConfigurationManager.ConnectionStrings;
+				<% } // end if ( IncludeDesignTimeSupport ) { %>
+			}
+		}
 
 		// dictionary of connection providers
 		private static Dictionary<String, ConnectionProvider> _connections;
@@ -131,7 +264,7 @@ namespace <%=DALNameSpace%>
 							_connections = new Dictionary<String, ConnectionProvider>();
 		
 							// add a connection provider for each configured connection string
-							foreach( ConnectionStringSettings conn in WebConfigurationManager.ConnectionStrings )
+							foreach ( ConnectionStringSettings conn in ConnectionStrings )
 							{
 								_connections.Add(conn.Name, new ConnectionProvider(conn.Name));
 							}
@@ -220,23 +353,23 @@ namespace <%=DALNameSpace%>
 						if ( _providers == null )
 						{
 							// apply connection information to each provider
-							for ( int i = 0; i < section.Providers.Count; i++ )
+							for ( int i = 0; i < NetTiersSection.Providers.Count; i++ )
 							{
-								section.Providers[i].Parameters["connectionStringName"] = _connectionStringName;
+								NetTiersSection.Providers[i].Parameters["connectionStringName"] = _connectionStringName;
 								// remove previous connection string, if any
-								section.Providers[i].Parameters.Remove("connectionString");
+								NetTiersSection.Providers[i].Parameters.Remove("connectionString");
 
 								if ( !String.IsNullOrEmpty(_connectionString) )
 								{
-									section.Providers[i].Parameters["connectionString"] = _connectionString;
+									NetTiersSection.Providers[i].Parameters["connectionString"] = _connectionString;
 								}
 							}
 
 							// Load registered providers and point _provider to the default provider
 							_providers = new NetTiersProviderCollection();
 
-							ProvidersHelper.InstantiateProviders(section.Providers, _providers, typeof(NetTiersProvider));
-							_provider = _providers[section.DefaultProvider];
+							ProvidersHelper.InstantiateProviders(NetTiersSection.Providers, _providers, typeof(NetTiersProvider));
+							_provider = _providers[NetTiersSection.DefaultProvider];
 						}
 					}
 				}
