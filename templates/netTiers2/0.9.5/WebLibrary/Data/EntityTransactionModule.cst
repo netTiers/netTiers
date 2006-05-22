@@ -103,14 +103,19 @@ namespace <%= WebNameSpace %>.Data
 			get
 			{
 				HttpContext context = HttpContext.Current;
-				TransactionManager mgr = context.Items[ManagerKey] as TransactionManager;
+				TransactionManager mgr = null;
 
-				if ( mgr == null )
+				if ( context != null )
 				{
-					mgr = DataRepository.Provider.CreateTransaction();
-					mgr.BeginTransaction();
+					mgr = context.Items[ManagerKey] as TransactionManager;
 
-					context.Items[ManagerKey] = mgr;
+					if ( mgr == null )
+					{
+						mgr = DataRepository.Provider.CreateTransaction();
+						mgr.BeginTransaction();
+
+						context.Items[ManagerKey] = mgr;
+					}
 				}
 
 				return mgr;

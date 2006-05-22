@@ -121,6 +121,7 @@
 %>
 #region Using Directives
 using System;
+using System.Collections.Generic;
 using System.Collections.Specialized;
 using System.ComponentModel;
 using System.ComponentModel.Design;
@@ -255,10 +256,10 @@ namespace <%= WebNameSpace %>.Data
 		/// </summary>
 		/// <param name="count">The total number of rows in the DataSource.</param>
 		/// <returns>A collection of Entity objects.</returns>
-		protected override ListBase<<%= className %>> GetSelectData(out int count)
+		protected override IList<<%= className %>> GetSelectData(out int count)
 		{
 			IOrderedDictionary values = Owner.GetParameterValues();
-			ListBase<<%= className %>> results = null;
+			IList<<%= className %>> results = null;
 			count = 0;
 			<%= WriteParameterDeclarations(indexes, fkeys) %>
 			switch ( SelectMethod )
@@ -273,12 +274,12 @@ namespace <%= WebNameSpace %>.Data
 				case <%= className %>SelectMethod.GetPaged:
 					results = <%= providerName %>.GetPaged(GetTransactionManager(), WhereClause, OrderBy, PageIndex, PageSize, out count);
 					break;
-				<% } %>
+				<% } // end if ( IncludeGetList ) { %>
 				<% if ( IncludeFind ) { %>
 				case <%= className %>SelectMethod.Find:
 					results = <%= providerName %>.Find(GetTransactionManager(), WhereClause, StartIndex, PageSize, out count);
                     break;
-				<% }
+				<% } // end if ( IncludeFind ) {
 				if ( IncludeGetListByIX )
 				{
 					Response.Write("\t\t\t\t// IX" + Environment.NewLine);
@@ -350,8 +351,8 @@ namespace <%= WebNameSpace %>.Data
 			get
 			{
 				DesignerActionListCollection actions = new DesignerActionListCollection();
-				actions.AddRange(base.ActionLists);
 				actions.Add(new <%= className %>DataSourceActionList(this));
+				actions.AddRange(base.ActionLists);
 				return actions;
 			}
 		}

@@ -41,6 +41,7 @@ namespace <%= WebNameSpace %>.Data
 	/// <typeparam name="Entity">The class of the business object being accessed.</typeparam>
 	/// <typeparam name="EntityKey">The class of the key
 	/// property of the specified business object class.</typeparam>
+	[CLSCompliant(true)]
 	[ParseChildren(true), PersistChildren(false)]
 	public abstract class BaseDataSource<Entity, EntityKey> : DataSourceControl
 		where Entity : new()
@@ -301,7 +302,7 @@ namespace <%= WebNameSpace %>.Data
 		/// </summary>
 		/// <returns>A collection of Entity objects returned by the method specified
 		/// by the SelectMethod property.</returns>
-		public ListBase<Entity> Select()
+		public IList<Entity> Select()
 		{
 			DataSourceSelectArguments arguments = new DataSourceSelectArguments();
 			return Select(arguments);
@@ -313,7 +314,7 @@ namespace <%= WebNameSpace %>.Data
 		/// <param name="arguments">A <see cref="DataSourceSelectArguments"/> object.</param>
 		/// <returns>A collection of Entity objects returned by the method specified
 		/// by the SelectMethod property.</returns>
-		public ListBase<Entity> Select(DataSourceSelectArguments arguments)
+		public IList<Entity> Select(DataSourceSelectArguments arguments)
 		{
 			return View.Select(arguments);
 		}
@@ -471,10 +472,13 @@ namespace <%= WebNameSpace %>.Data
 		/// <returns></returns>
 		internal CachedDataSource<Entity, EntityKey> GetDataFromCache(int start, int page)
 		{
+			// check for design time
+			if ( DesignMode ) return null;
+
 			Hashtable cachedData = (Hashtable) Context.Cache.Get(GetType().Name);
 			CachedDataSource<Entity, EntityKey> data = null;
 			string hashKey = CacheHashKey(start, page);
-			
+
 			if ( cachedData != null && cachedData.ContainsKey(hashKey) )
 			{
 				Context.Trace.Write(GetType().Name, "Getting Cached Data " + hashKey);
@@ -492,6 +496,9 @@ namespace <%= WebNameSpace %>.Data
 		/// <param name="page"></param>
 		internal void SaveDataToCache(CachedDataSource<Entity, EntityKey> data, int start, int page)
 		{
+			// check for design time
+			if ( DesignMode ) return;
+
 			Context.Trace.Write(GetType().Name, "Saving Cache Data");
 			Hashtable cacheData = (Hashtable) Context.Cache.Get(GetType().Name);
 			string hashKey = CacheHashKey(start, page);
@@ -658,8 +665,8 @@ namespace <%= WebNameSpace %>.Data
 
 		private BaseDataSource<Entity, EntityKey> _owner;
 		private TransactionManager _transactionManager;
-		private ListBase<Entity> _prevTempList;
-		private ListBase<Entity> _tempList;
+		private IList<Entity> _prevTempList;
+		private IList<Entity> _tempList;
 		private EntityKey _prevEntityId;
 		private int _prevRowCount;
 		private int _totalRowCount;
@@ -882,7 +889,7 @@ namespace <%= WebNameSpace %>.Data
 		/// </summary>
 		public override bool CanPage
 		{
-			get { return EnablePaging; }
+			get { return true; }
 		}
 
 		/// <summary>
@@ -892,7 +899,7 @@ namespace <%= WebNameSpace %>.Data
 		/// </summary>
 		public override bool CanSort
 		{
-			get { return EnableSorting; }
+			get { return true; }
 		}
 
 		/// <summary>
@@ -902,7 +909,7 @@ namespace <%= WebNameSpace %>.Data
 		/// </summary>
 		public override bool CanRetrieveTotalRowCount
 		{
-			get { return CanPage; }
+			get { return true; }
 		}
 
 		#endregion Properties
@@ -915,7 +922,7 @@ namespace <%= WebNameSpace %>.Data
 		/// <param name="arguments">A System.Web.UI.DataSourceSelectArguments that
 		/// is used to request operations on the data beyond basic data retrieval.</param>
 		/// <returns>A collection of Entity objects from the underlying data storage.</returns>
-		internal ListBase<Entity> Select(DataSourceSelectArguments arguments)
+		internal IList<Entity> Select(DataSourceSelectArguments arguments)
 		{
 			return ExecuteSelectCore(arguments);
 		}
@@ -937,11 +944,11 @@ namespace <%= WebNameSpace %>.Data
 		/// <param name="arguments">A System.Web.UI.DataSourceSelectArguments that
 		/// is used to request operations on the data beyond basic data retrieval.</param>
 		/// <returns>A collection of Entity objects from the underlying data storage.</returns>
-		private ListBase<Entity> ExecuteSelectCore(DataSourceSelectArguments arguments)
+		private IList<Entity> ExecuteSelectCore(DataSourceSelectArguments arguments)
 		{
 			arguments.RaiseUnsupportedCapabilitiesError(this);
 
-			ListBase<Entity> entityList = null;
+			IList<Entity> entityList = null;
 			IOrderedDictionary values = GetParameterValues();
 
 			ObjectDataSourceSelectingEventArgs methodArgs = new ObjectDataSourceSelectingEventArgs(values, arguments, true);
@@ -981,7 +988,7 @@ namespace <%= WebNameSpace %>.Data
 		/// is used to request operations on the data beyond basic data retrieval.</param>
 		/// <param name="values">An IOrderedDictionary object of name/value pairs.</param>
 		/// <returns>A collection of Entity objects from the underlying data storage.</returns>
-		private ListBase<Entity> GetEntityList(DataSourceSelectArguments arguments, IOrderedDictionary values)
+		private IList<Entity> GetEntityList(DataSourceSelectArguments arguments, IOrderedDictionary values)
 		{
 			StartIndex = arguments.StartRowIndex;
 			PageSize = arguments.MaximumRows;
@@ -1011,7 +1018,7 @@ namespace <%= WebNameSpace %>.Data
 			GetSelectParameters(values);
 
 			int count = 0;
-			ListBase<Entity> entityList = GetCachedData(out count);
+			IList<Entity> entityList = GetCachedData(out count);
 			arguments.TotalRowCount = count;
 			return entityList;
 		}
@@ -1020,7 +1027,7 @@ namespace <%= WebNameSpace %>.Data
 		/// Gets a collection of previously selected Entity objects.
 		/// </summary>
 		/// <returns>A collection of Entity objects from the underlying data storage.</returns>
-		private ListBase<Entity> GetEntityList()
+		private IList<Entity> GetEntityList()
 		{
 			int count = 0;
 			return GetCachedData(out count);
@@ -1031,10 +1038,10 @@ namespace <%= WebNameSpace %>.Data
 		/// </summary>
 		/// <param name="count">The total number of rows in the DataSource.</param>
 		/// <returns>A collection of Entity objects from the underlying data storage.</returns>
-		private ListBase<Entity> GetCachedData(out int count)
+		private IList<Entity> GetCachedData(out int count)
 		{
 			// check temporary cache first
-			ListBase<Entity> entityList = _tempList;
+			IList<Entity> entityList = _tempList;
 			count = _totalRowCount;
 
 			if ( entityList == null )
@@ -1042,7 +1049,7 @@ namespace <%= WebNameSpace %>.Data
 				if ( EnableCaching )
 				{
 					//get cached datasource
-					CachedDataSource<Entity, EntityKey> data = _owner.GetDataFromCache(StartIndex, PageSize);
+					CachedDataSource<Entity, EntityKey> data = Owner.GetDataFromCache(StartIndex, PageSize);
 					//if there is cached data use it and the record count returned and
 					if (data != null)
 					{
@@ -1055,23 +1062,23 @@ namespace <%= WebNameSpace %>.Data
 					entityList = GetSelectData(out count);
 
 					// make sure paging and sorting were not enabled
-					if ( !EnablePaging && !EnableSorting )
+					if ( entityList is ListBase<Entity> && !EnablePaging && !EnableSorting )
 					{
 						// apply filter
 						if ( !String.IsNullOrEmpty(Filter) )
 						{
-							entityList.Filter = Filter;
+							((ListBase<Entity>) entityList).Filter = Filter;
 						}
 						// apply sort
 						if ( !String.IsNullOrEmpty(Sort) )
 						{
-							entityList.Sort(Sort);
+							((ListBase<Entity>) entityList).Sort(Sort);
 						}
 					}
 
 					if ( EnableCaching )
 					{
-						_owner.SaveDataToCache(new CachedDataSource<Entity,EntityKey>(entityList,count),StartIndex,PageSize);
+						Owner.SaveDataToCache(new CachedDataSource<Entity,EntityKey>(entityList, count), StartIndex, PageSize);
 					}
 				}
 
@@ -1092,7 +1099,7 @@ namespace <%= WebNameSpace %>.Data
 		/// <returns>A collection of Entity objects.</returns>
 		/// <remarks>This method can be overridden by sub-classes needing to provide
 		/// additional data retrieval functionality.</remarks>
-		protected virtual ListBase<Entity> GetSelectData(out int count)
+		protected virtual IList<Entity> GetSelectData(out int count)
 		{
 			count = 0;
 			return null;
@@ -1251,7 +1258,7 @@ namespace <%= WebNameSpace %>.Data
 				return 0;
 			}
 
-			ListBase<Entity> entityList = GetEntityList();
+			IList<Entity> entityList = GetEntityList();
 			Entity entity = GetCurrentEntity(entityList, keys);
 			int count = 0;
 
@@ -1347,7 +1354,7 @@ namespace <%= WebNameSpace %>.Data
 				return 0;
 			}
 
-			ListBase<Entity> entityList = GetEntityList();
+			IList<Entity> entityList = GetEntityList();
 			Entity entity = GetCurrentEntity(entityList, keys);
 			int count = 0;
 
@@ -1414,7 +1421,7 @@ namespace <%= WebNameSpace %>.Data
 		/// <param name="entityList">A collection of Entity objects.</param>
 		/// <param name="keys">An IDictionary of name/value pairs representing a unique identifier.</param>
 		/// <returns>The Entity object that matches the supplied unique identifier.</returns>
-		protected virtual Entity GetCurrentEntity(ListBase<Entity> entityList, IDictionary keys)
+		protected virtual Entity GetCurrentEntity(IList<Entity> entityList, IDictionary keys)
 		{
 			// special processing when keys parameter is null
 			if ( keys == null && entityList.Count == 1 )
@@ -1495,7 +1502,7 @@ namespace <%= WebNameSpace %>.Data
 		/// </summary>
 		/// <param name="entity">The Entity object to cache.</param>
 		/// <param name="entityList">The list of Entity objects to cache.</param>
-		protected virtual void SetTempCache(Entity entity, out ListBase<Entity> entityList)
+		protected virtual void SetTempCache(Entity entity, out IList<Entity> entityList)
 		{
 			entityList = null;
 		}
@@ -1704,18 +1711,18 @@ namespace <%= WebNameSpace %>.Data
 		/// Initializes a new instance of the CachedDataSource class
 		/// using the specifed collection and total count.
 		/// </summary>
-		public CachedDataSource(ListBase<Entity> data, int count)
+		public CachedDataSource(IList<Entity> data, int count)
 		{
 			this._data = data;
 			this._virtualRecordCount = count;
 		}
 		
-		private ListBase<Entity> _data;
+		private IList<Entity> _data;
 		
 		/// <summary>
 		/// Gets or sets the cached data.
 		/// </summary>
-		public ListBase<Entity> Data
+		public IList<Entity> Data
 		{
 			get { return _data; }
 			set { _data = value; }
