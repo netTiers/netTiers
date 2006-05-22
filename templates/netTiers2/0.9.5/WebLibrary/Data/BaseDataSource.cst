@@ -948,8 +948,8 @@ namespace <%= WebNameSpace %>.Data
 		{
 			arguments.RaiseUnsupportedCapabilitiesError(this);
 
-			IList<Entity> entityList = null;
 			IOrderedDictionary values = GetParameterValues();
+			IList<Entity> entityList = null;
 
 			ObjectDataSourceSelectingEventArgs methodArgs = new ObjectDataSourceSelectingEventArgs(values, arguments, true);
 			OnSelecting(methodArgs);
@@ -986,9 +986,9 @@ namespace <%= WebNameSpace %>.Data
 		/// </summary>
 		/// <param name="arguments">A System.Web.UI.DataSourceSelectArguments that
 		/// is used to request operations on the data beyond basic data retrieval.</param>
-		/// <param name="values">An IOrderedDictionary object of name/value pairs.</param>
+		/// <param name="values">An IDictionary object of name/value pairs.</param>
 		/// <returns>A collection of Entity objects from the underlying data storage.</returns>
-		private IList<Entity> GetEntityList(DataSourceSelectArguments arguments, IOrderedDictionary values)
+		private IList<Entity> GetEntityList(DataSourceSelectArguments arguments, IDictionary values)
 		{
 			StartIndex = arguments.StartRowIndex;
 			PageSize = arguments.MaximumRows;
@@ -998,13 +998,16 @@ namespace <%= WebNameSpace %>.Data
 			{
 				OrderBy = SortExpression;
 			}
-
+			
+			// allow case-insensitive parameter names
+			values = CollectionsUtil.CreateCaseInsensitiveHashtable(values);
+			
 			// known parameters
-			WhereClause = (String) values["whereClause"];
+			WhereClause = (String) param["WhereClause"];
 
-			if ( values["orderBy"] != null )
+			if ( values["OrderBy"] != null )
 			{
-				OrderBy = (String) values["orderBy"];
+				OrderBy = (String) values["OrderBy"];
 			}
 			if ( values["PageIndex"] != null )
 			{
@@ -1108,10 +1111,10 @@ namespace <%= WebNameSpace %>.Data
 		/// <summary>
 		/// Gets the values of any supplied parameters for internal caching.
 		/// </summary>
-		/// <param name="values">An IOrderedDictionary object of name/value pairs.</param>
+		/// <param name="values">An IDictionary object of name/value pairs.</param>
 		/// <remarks>This method can be overridden by sub-classes needing to provide
 		/// additional data retrieval functionality.</remarks>
-		protected virtual void GetSelectParameters(IOrderedDictionary values)
+		protected virtual void GetSelectParameters(IDictionary values)
 		{
 		}
 
