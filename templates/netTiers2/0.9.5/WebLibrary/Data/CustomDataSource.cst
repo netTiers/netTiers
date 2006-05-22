@@ -561,6 +561,21 @@ namespace <%= WebNameSpace %>.Data
 			// invoke method
 			Object data = EntityUtil.InvokeMethod(Provider, SelectMethod, args, types);
 
+			// make sure paging and sorting were not enabled
+			if ( !EnablePaging && !EnableSorting )
+			{
+				// apply filter
+				if ( !String.IsNullOrEmpty(Filter) )
+				{
+					EntityUtil.SetPropertyValue(data, "Filter", Filter);
+				}
+				// apply sort
+				if ( !String.IsNullOrEmpty(Sort) )
+				{
+					EntityUtil.InvokeMethod(data, "Sort", new Object[] { Sort });
+				}
+			}
+			
 			// try to convert to IList<Object>
 			IList<Object> list = data as IList<Object>;
 
@@ -594,6 +609,7 @@ namespace <%= WebNameSpace %>.Data
 
 		#endregion Select Methods
 
+		<% if ( IncludeInsert ) { %>
 		#region Insert Methods
 
 		/// <summary>
@@ -611,6 +627,8 @@ namespace <%= WebNameSpace %>.Data
 
 		#endregion Insert Methods
 
+		<%	} // end if ( IncludeInsert ) %>
+		<% if ( IncludeUpdate ) { %>
 		#region Update Methods
 
 		/// <summary>
@@ -627,6 +645,8 @@ namespace <%= WebNameSpace %>.Data
 
 		#endregion UpdateMethods
 
+		<% } // end if ( IncludeUpdate ) %>
+		<% if ( IncludeDelete ) { %>
 		#region Delete Methods
 
 		/// <summary>
@@ -643,6 +663,7 @@ namespace <%= WebNameSpace %>.Data
 
 		#endregion Delete Methods
 
+		<% } // end if ( IncludeDelete ) %>
 		#region Helper Methods
 
 		/// <summary>
