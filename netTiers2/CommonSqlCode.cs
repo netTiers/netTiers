@@ -1926,7 +1926,7 @@ namespace MoM.Templates
 				case DbType.AnsiStringFixedLength: 
 				case DbType.String: 
 				case DbType.StringFixedLength: 
-				case DbType.Binary: 
+				//case DbType.Binary: 
 					return true;
 					
 				default: 
