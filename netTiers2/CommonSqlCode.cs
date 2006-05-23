@@ -1951,6 +1951,29 @@ namespace MoM.Templates
 		}
 		
 		/// <summary>
+		/// Determines whether base DataObjectBase is a string type, and not a blob column of text or ntext
+		/// </summary>
+		public bool CanCheckLength(DataObjectBase column)
+		{
+			switch (column.DataType)
+			{
+				case DbType.AnsiString: 
+				case DbType.AnsiStringFixedLength: 
+				case DbType.String: 
+				case DbType.StringFixedLength: 
+					return 
+					(
+						column.NativeType != "text" && 
+						column.NativeType != "ntext" && 
+						column.Size > 0
+					);
+					
+				default: 
+						return false;
+			}
+		}
+		
+		/// <summary>
 		/// Returns true if the column is represented as a reference data type
 		/// rather than a value type. In other words, the C# code can set a
 		/// column of this data type to 'null'

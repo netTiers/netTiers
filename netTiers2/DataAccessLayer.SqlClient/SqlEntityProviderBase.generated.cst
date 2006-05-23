@@ -1,4 +1,4 @@
-<%--
+﻿<%--
  * $Id: SqlEntityProviderBase.generated.cst,v 1.3 2006/02/27 22:06:45 bgjohnso Exp $
  * Last modified by $Author$
  * Last modified at $Date$
@@ -34,7 +34,6 @@
 <%@ Property Name="IncludeGetListByIX" Type="System.Boolean" Default="True" Category="Options" Description="If true getlist functions will be generated." %>
 <%@ Property Name="IncludeFind" Type="System.Boolean" Default="False" Category="Options" Description="If true find functions will be generated." %>
 <%@ Property Name="IncludeManyToMany" Type="System.Boolean" Default="True" Category="Options" Description="If true select statements will be generated for any many to many relationship." %>
-<%@ Property Name="IncludeRefreshEntity" Type="System.Boolean" Default="True" Category="Options" Description="If true the RefreshEntity function is generated for an entity to update itself without going to the DB." %>
 
 <%@ Property Name="InsertSuffix" Type="System.String" Default="_Insert" Category="Style" Description="Suffix to use for all generated INSERT functions." %>
 <%@ Property Name="UpdateSuffix" Type="System.String" Default="_Update" Category="Style" Description="Suffix to use for all generated UPDATE functions." %>
@@ -127,15 +126,15 @@ namespace <%=DALNameSpace%>.SqlClient
 	///</summary>
 	public partial class <%=abstractRepositoryClassName%> : <%=providerBaseName%>
 	{
-		#region "Declarations"	
+		#region Declarations
 		
 		string _connectionString;
 	    bool _useStoredProcedure;
 	    string _providerInvariantName;
 			
-		#endregion "Declarations"
+		#endregion Declarations
 			
-		#region "Constructors"
+		#region Constructors
 		
 		/// <summary>
 		/// Creates a new <see cref="<%=abstractRepositoryClassName%>"/> instance.
@@ -158,9 +157,9 @@ namespace <%=DALNameSpace%>.SqlClient
 		this._providerInvariantName = providerInvariantName;
 	}
 		
-	#endregion "Constructors"
+	#endregion Constructors
 	
-		#region "Public properties"
+		#region Public properties
 	/// <summary>
     /// Gets or sets the connection string.
     /// </summary>
@@ -193,7 +192,7 @@ namespace <%=DALNameSpace%>.SqlClient
 	#endregion
 	
 	<% if(IncludeManyToMany) { %>
-		#region "Get from  Many To Many Relationship Functions"
+		#region Get from  Many To Many Relationship Functions
 	<%
 		TableSchema primaryTable = SourceTable;
 		
@@ -282,7 +281,7 @@ namespace <%=DALNameSpace%>.SqlClient
 	<%} //end if many to many %>
 	
 <% if (IncludeDelete && SourceTable.PrimaryKey != null) {%>
-		#region "Delete Functions"
+		#region Delete Functions
 		/// <summary>
 		/// 	Deletes a row from the DataSource.
 		/// </summary>
@@ -338,7 +337,7 @@ namespace <%=DALNameSpace%>.SqlClient
 		-------------------------------
 	*/%>
 	<% if (IncludeFind) { %>
-		#region "Find Functions"	
+		#region Find Functions
 		/// <summary>
 		/// 	Returns rows meeting the whereclause condition from the DataSource.
 		/// </summary>
@@ -439,7 +438,7 @@ namespace <%=DALNameSpace%>.SqlClient
 			return rows;
 		}
 		
-		#endregion "Find Functions"
+		#endregion Find Functions
 	<% } %>
 	
 	<%/*	
@@ -448,7 +447,7 @@ namespace <%=DALNameSpace%>.SqlClient
 		-------------------------------
 	*/%>
 <% if (IncludeGetList) { %>
-		#region "GetList Functions"
+		#region GetList Functions
 				
 		/// <summary>
 		/// 	Gets All rows from the DataSource.
@@ -571,72 +570,16 @@ namespace <%=DALNameSpace%>.SqlClient
 <%
  	} //end IncludeGetList
 
-	/*	
-		-------------------------------
-		ENTITY REFRESH
-		-------------------------------
-	*/
-
-	if (IncludeRefreshEntity && SourceTable.PrimaryKey != null) 
-	{
-		// now we cna refresh an entity from the DB without generating a new entity - with new (X-number of) validation handlers
-		// - this saves a bunch of memory
-%>
-		#region "RefreshEntity"
-		/// <summary>
-		/// Update the <%=GetClassName(SourceTable.Name)%> entity from the database without using GetByPrimaryKey
-		///  - which creates a new entity every time and adds validation event handlers to it (that's bad memory-wise and CPU-wise at high DB refresh/update rates).
-		/// </summary>
-		/// <param name="transactionManager"><see cref="TransactionManager"/> object</param>
-		/// <param name="entity">The <see cref="<%=GetClassName(SourceTable.Name)%>"/> object to refresh.</param>
-	        public override void RefreshEntity(TransactionManager transactionManager, <%=className%> entity)
-	        {
-			if (entity == null) return;
-
-			SqlDatabase database = GetDatabase(this._connectionString);
-			DbCommand commandWrapper = StoredProcedureProvider.GetCommandWrapper(database, "<%=owner + ProcedurePrefix + commandStem + SelectSuffix + "By" + GetKeysName(SourceTable.PrimaryKey.MemberColumns)%>", _useStoredProcedure);
-			
-			<% foreach(ColumnSchema col in SourceTable.PrimaryKey.MemberColumns) { %>
-			database.AddInParameter(commandWrapper, "@<%=GetPropertyName(col.Name)%>", DbType.<%=col.DataType%>, entity.<%=GetPropertyName(col.Name)%>);
-			<% } %>
-			<% if (RowVersion != null){ %>
-			database.AddInParameter(commandWrapper, "@<%=GetPropertyName(RowVersion.Name)%>", DbType.<%= RowVersion.DataType.ToString() %>, entity.<%=GetPropertyName(RowVersion.Name)%>);
-			<% } %>
-
-			IDataReader reader = null;
-			try
-			{
-				if (transactionManager != null)
-				{
-					reader = Utility.ExecuteReader(transactionManager, commandWrapper);
-				}
-				else
-				{
-					reader = Utility.ExecuteReader(database, commandWrapper);
-				}		
-
-				RefreshEntity(reader, entity);
-			}
-			finally 
-			{
-				if (reader != null) 
-					reader.Close();
-			}
-	            
-	        }
-		#endregion
-
-<%
-	} // if (IncludeRefreshEntity && SourceTable.PrimaryKey != null) 
 
 	/*---------------------------------------------------------------------------------
 								Cache DB objects
 	  -------------------------------------------------------------------------------*/
-	
-	if (CacheDatabases) { %>
-		#region "Database Caching Functions"
+%>	
+<%	if (CacheDatabases) { %>
+		#region Database Caching Functions
 
-		#region "ClearDatabaseCache"
+
+		#region ClearDatabaseCache
 		/// <summary>
 		/// Clears the cached DB handles - cached in GetDatabase( )
 		/// </summary>
@@ -651,7 +594,7 @@ namespace <%=DALNameSpace%>.SqlClient
 
 		#endregion
 
-		#region "GetDatabase"
+		#region GetDatabase
 		/// <summary>
 		/// Inits and caches DB handles to improve performance - especially at high CPU/Memory usage rates - use ClearDatabaseCache( ) to clear the cache
 		/// </summary>
@@ -680,7 +623,7 @@ namespace <%=DALNameSpace%>.SqlClient
 		#endregion
 <% 	} else { %>
 
-		#region "GetDatabase"
+		#region GetDatabase
 	        public SqlDatabase GetDatabase(string connectionString)
 		{
 			return new SqlDatabase(connectionString);
@@ -696,7 +639,7 @@ namespace <%=DALNameSpace%>.SqlClient
 	  -------------------------------------------------------------------------------*/
 	
 	if (IncludeGetListByFK) { %>
-		#region "Get By Foreign Key Functions"
+		#region Get By Foreign Key Functions
 <%
 		for (int j=0; j < fkeys.Count;j++)
 		{
@@ -712,7 +655,7 @@ namespace <%=DALNameSpace%>.SqlClient
 			getbyKeys.Add(GetKeysName(fkeys[j].ForeignKeyMemberColumns));
 %>	
 
-		#region "GetBy<%=GetKeysName(fkeys[j].ForeignKeyMemberColumns)%>"
+		#region GetBy<%=GetKeysName(fkeys[j].ForeignKeyMemberColumns)%>
 		/// <summary>
 		/// 	Gets rows from the datasource based on the <%=fkeys[j].Name%> key.
 		///		<%=fkeys[j].Name%> Description: <%=GetColumnXmlComment(fkeys[j],2)%>
@@ -780,8 +723,65 @@ namespace <%=DALNameSpace%>.SqlClient
 	  -------------------------------------------------------------------------------*/
 	
 	if (IncludeGetListByIX) {
+	
+	/*	
+		-------------------------------
+		ENTITY REFRESH
+		-------------------------------
+	*/
+
+	if (SourceTable.PrimaryKey != null) 
+	{
+		// now we cna refresh an entity from the DB without generating a new entity - with new (X-number of) validation handlers
+		// - this saves a bunch of memory
+%>
+		#region RefreshEntity
+		/// <summary>
+		/// Update the <%=GetClassName(SourceTable.Name)%> entity from the database without using GetByPrimaryKey
+		///  - which creates a new entity every time and adds validation event handlers to it (that's bad memory-wise and CPU-wise at high DB refresh/update rates).
+		/// </summary>
+		/// <param name="transactionManager"><see cref="TransactionManager"/> object</param>
+		/// <param name="entity">The <see cref="<%=GetClassName(SourceTable.Name)%>"/> object to refresh.</param>
+	        public override void RefreshEntity(TransactionManager transactionManager, <%=className%> entity)
+	        {
+			if (entity == null) return;
+
+			SqlDatabase database = GetDatabase(this._connectionString);
+			DbCommand commandWrapper = StoredProcedureProvider.GetCommandWrapper(database, "<%=owner + ProcedurePrefix + commandStem + SelectSuffix + "By" + GetKeysName(SourceTable.PrimaryKey.MemberColumns)%>", _useStoredProcedure);
+			
+			<% foreach(ColumnSchema col in SourceTable.PrimaryKey.MemberColumns) { %>
+			database.AddInParameter(commandWrapper, "@<%=GetPropertyName(col.Name)%>", DbType.<%=col.DataType%>, entity.<%=GetPropertyName(col.Name)%>);
+			<% } %>
+			<% if (RowVersion != null){ %>
+			database.AddInParameter(commandWrapper, "@<%=GetPropertyName(RowVersion.Name)%>", DbType.<%= RowVersion.DataType.ToString() %>, entity.<%=GetPropertyName(RowVersion.Name)%>);
+			<% } %>
+
+			IDataReader reader = null;
+			try
+			{
+				if (transactionManager != null)
+				{
+					reader = Utility.ExecuteReader(transactionManager, commandWrapper);
+				}
+				else
+				{
+					reader = Utility.ExecuteReader(database, commandWrapper);
+				}		
+
+				RefreshEntity(reader, entity);
+			}
+			finally 
+			{
+				if (reader != null) 
+					reader.Close();
+			}
+	            
+	        }
+		#endregion
+	<%
+		} // if (SourceTable.PrimaryKey != null) 
 	%>	
-		#region "Get By Index Functions"
+		#region Get By Index Functions
 	<%	
 		for (int j=0; j < indexes.Count;j++)
 		{
@@ -809,7 +809,7 @@ namespace <%=DALNameSpace%>.SqlClient
 			string returnTypeForComment = returnType.Replace("<", "&lt;").Replace(">", "&gt;");
 	%>
 
-		#region "GetBy<%=GetKeysName(indexes[j].MemberColumns)%>"
+		#region GetBy<%=GetKeysName(indexes[j].MemberColumns)%>
 					
 		/// <summary>
 		/// 	Gets rows from the datasource based on the <%=indexes[j].Name%> index.
@@ -897,7 +897,7 @@ namespace <%=DALNameSpace%>.SqlClient
 	{
 %>
 
-		#region "Insert Functions"
+		#region Insert Functions
 		/// <summary>
 		/// Lets you efficiently bulk many entity to the database.
 		/// </summary>
@@ -1071,7 +1071,7 @@ namespace <%=DALNameSpace%>.SqlClient
 	{
 		
 %>	
-		#region "Update Functions"
+		#region Update Functions
 				
 		/// <summary>
 		/// 	Update an existing row in the datasource.
@@ -1182,7 +1182,7 @@ namespace <%=DALNameSpace%>.SqlClient
 							CUSTOM STORED PROCEDURES
   -------------------------------------------------------------------------------*/%>
 <% if (IncludeCustoms) { %>
-		#region "Custom Methods"
+		#region Custom Methods
 	
 <% 
 	string prefix = string.Format(CustomProcedureStartsWith, SourceTable.Name, ProcedurePrefix);
@@ -1209,7 +1209,7 @@ namespace <%=DALNameSpace%>.SqlClient
 			
 			string returnTypeForComment = returnType.Replace("<", "&lt;").Replace(">", "&gt;");
 %>
-		#region "<%=command.Name%>"
+		#region <%=command.Name%>
 					
 		/// <summary>
 		///	This method wrap the '<%=command.Name%>' stored procedure. 

@@ -111,23 +111,24 @@ namespace <%=DALNameSpace%>.WebServiceClient
 	///</summary>
 	public partial class <%=abstractRepositoryClassName%> : <%=providerBaseName%>
 	{
-		#region "Declarations"	
+		#region Declarations
 	
 		/// <summary>
 		/// the Url of the webservice.
 		/// </summary>
 		protected string _url;
 			
-		#endregion "Declarations"
+		#endregion Declarations
 		
-		#region "Constructors"
-	
+		#region Constructors
+		
 		/// <summary>
 		/// Creates a new <see cref="<%=abstractRepositoryClassName%>"/> instance.
 		/// Uses connection string to connect to datasource.
 		/// </summary>
 		public <%=abstractRepositoryClassName%>()
-		{		
+		{  
+		this._url = System.Configuration.ConfigurationManager.AppSettings["URL"];
 		}
 		
 		/// <summary>
@@ -137,18 +138,21 @@ namespace <%=DALNameSpace%>.WebServiceClient
 		/// <param name="url">The url to the nettiers webservice.</param>
 		public <%=abstractRepositoryClassName%>(string url)
 		{
+		if (url == string.Empty)
+			this._url = System.Configuration.ConfigurationManager.AppSettings["URL"];
+		else
 			this._url = url;
 		}
-			
-		#endregion "Constructors"
 		
+		#endregion Constructors
+			
 		public string Url
         {
         	get {return this._url;}
         	set {this._url = value;}
         }
 		
-		#region "Convertion utility"
+		#region Convertion utility
 		
 		/// <summary>
 		/// Convert a collection from the ws proxy to a nettiers collection.
@@ -234,7 +238,7 @@ namespace <%=DALNameSpace%>.WebServiceClient
 		#endregion
 		
 		<% if(IncludeManyToMany) { %>
-		#region "Get from  Many To Many Relationship Functions"
+		#region Get from  Many To Many Relationship Functions
 		<%
 		TableSchema primaryTable = SourceTable;
 		
@@ -291,7 +295,7 @@ namespace <%=DALNameSpace%>.WebServiceClient
 		
 		
 		<% if (IncludeDelete && SourceTable.PrimaryKey != null) {%>
-		#region "Delete Functions"			
+		#region Delete Functions		
 			
 			/// <summary>
 			/// 	Deletes a row from the DataSource.
@@ -317,7 +321,7 @@ namespace <%=DALNameSpace%>.WebServiceClient
 	
 		
 		<% if (IncludeFind) { %>
-		#region "Find Functions"
+		#region Find Functions
 		
 		
 		/// <summary>
@@ -340,12 +344,13 @@ namespace <%=DALNameSpace%>.WebServiceClient
 			return Convert(items); 
 		}
 		
-		#endregion "Find Functions"
+		#endregion Find Functions
 		<% } //endif (IncludeFind) %>
 		
 		
 		<% if (IncludeGetList) { %>
-		#region "GetList Functions"
+		
+		#region GetList Functions
 				
 		/// <summary>
 		/// 	Gets All rows from the DataSource.
@@ -397,7 +402,7 @@ namespace <%=DALNameSpace%>.WebServiceClient
 	
 		
 	<% if (IncludeGetListByFK) { %>
-		#region "Get By Foreign Key Functions"
+		#region Get By Foreign Key Functions
 	<%
 			for (int j=0; j < fkeys.Count;j++)
 			{
@@ -443,7 +448,33 @@ namespace <%=DALNameSpace%>.WebServiceClient
 		
 		
 	<% if (IncludeGetListByIX) { %>	
-		#region "Get By Index Functions"
+	
+		#region RefreshEntity
+		/// <summary>
+		/// Update the <%=className%> entity from the database without using GetByPrimaryKey
+		///  - which creates a new entity every time and adds validation event handlers to it (that's bad memory-wise and CPU-wise at high DB refresh/update rates).
+		/// </summary>
+		/// <param name="transactionManager"><see cref="TransactionManager"/> object</param>
+		/// <param name="entity"><see cref="<%=className%>"/> object to refresh </param>
+        public override void RefreshEntity(TransactionManager transactionManager, <%=className%> entity)
+		{
+			<%=WebReferenceName%>.<%=ProxyClassName%> proxy = new <%=WebReferenceName%>.<%=ProxyClassName%>();
+			proxy.Url = this._url;
+			
+			try
+			{
+				<%=WebReferenceName%>.<%=GetClassName(SourceTable.Name)%> result = proxy.<%=providerName%>_RefreshEntity(Convert(entity));
+				Convert(entity, result);
+			}
+			catch(Exception ex)
+			{
+				System.Diagnostics.Debug.WriteLine(ex);
+				return;
+			}
+		}
+		#endregion 
+
+		#region Get By Index Functions
 		<%	
 		for (int j=0; j < indexes.Count;j++)
 		{
@@ -468,7 +499,7 @@ namespace <%=DALNameSpace%>.WebServiceClient
 				isUnique = true;
 			}
 	%>
-					
+		
 		/// <summary>
 		/// 	Gets rows from the datasource based on the <%=indexes[j].Name%> index.
 		/// </summary>
@@ -491,12 +522,12 @@ namespace <%=DALNameSpace%>.WebServiceClient
 		}
 		
 	<%		}//endfor %>
-		#endregion "Get By Index Functions"
+		#endregion Get By Index Functions
 	<%	}//end if includegetlistbyix %>
 	
 	
 	<% if (IncludeInsert) { %>
-		#region "Insert Functions"
+		#region Insert Functions
 		/// <summary>
 		/// 	Inserts a <%=className%> object into the datasource using a transaction.
 		/// </summary>
@@ -550,7 +581,7 @@ namespace <%=DALNameSpace%>.WebServiceClient
 	
 	
 	<% if (IncludeUpdate) { %>	
-		#region "Update Functions"
+		#region Update Functions
 						
 		/// <summary>
 		/// 	Update an existing row in the datasource.
@@ -582,7 +613,7 @@ namespace <%=DALNameSpace%>.WebServiceClient
 	<%	}//endif %>
 			
 	<% if (IncludeCustoms) { %>
-		#region "Custom Methods"
+		#region Custom Methods
 		
 	<% 
 	System.Diagnostics.Trace.WriteLine(string.Format("{0},{1},{2}", CustomProcedureStartsWith, SourceTable.Name, ProcedurePrefix));
@@ -607,7 +638,7 @@ namespace <%=DALNameSpace%>.WebServiceClient
 			}
 	%>
 	
-		#region "<%=command.Name%>"
+		#region <%=command.Name%>
 				
 		/// <summary>
 		///	This method wrap the '<%=command.Name%>' stored procedure. 
