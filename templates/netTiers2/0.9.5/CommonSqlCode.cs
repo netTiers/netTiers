@@ -625,7 +625,9 @@ namespace MoM.Templates
 		/// with the exception of a period (.)
 		/// so that it may be used in code
 		/// </summary>
-		///<remarks>Meant to be used to format things like namespaces and database names
+		/// <remarks>
+		///		Meant to be used to format things like namespaces and database names.
+		///	</remarks>
 		/// <param name="name">name to be cleaned</param>
 		/// <returns>Cleaned up object name</returns>
 		public string GetCleanName2(string name)

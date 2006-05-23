@@ -42,6 +42,8 @@
 
 <%@ Property Name="SignAssembly" Type="System.Boolean" Category="Option" Description="" Default="false" %>
 
+<%@ Property Name="CustomCodeFolderName" Type="System.String" Category="General" Description="the name of a folder that can contains custom class to dynamically add to the entity project." Default="App_Code" %>
+
 <%@ Property Name="WebServiceUrl" Type="System.String" Category="WebService" Description="The webservice base URL. The asmx filename will be added programmatically." Default="http://localhost/Services/" %>
 <%@ Property Name="rootPathWS" Type="System.String" Category="WebService" Description="The folder where the webservice code is generated." Default="" %>
 
@@ -324,6 +326,19 @@
 	</ItemGroup>
 	<% } %>
 		
+	<%if (IncludeBll && CustomCodeFolderName.Length > 0) {  %>
+	
+	<!-- BLL Custom code folder: <%=OutputDirectory + "\\" + BLLNameSpace + "\\" + CustomCodeFolderName %> -->
+		<ItemGroup>	
+		<% 
+		System.IO.DirectoryInfo dir = new System.IO.DirectoryInfo(OutputDirectory + "\\" + BLLNameSpace + "\\" + CustomCodeFolderName);
+		foreach(System.IO.FileInfo file in dir.GetFiles("*.cs")) { %>
+	<Compile Include="<%=CustomCodeFolderName%>\<%=file.Name%>" />
+<% } %>
+	</ItemGroup>
+	<% } %>
+	
+	
 	<ItemGroup>
 <%	
 	// Loop on each view
