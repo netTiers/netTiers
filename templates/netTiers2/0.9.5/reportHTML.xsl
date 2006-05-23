@@ -9,7 +9,7 @@
 				<style>
 					span.executionTime {font-style: italic; color: #003366;}
 				TD.menu {
-					FONT-FAMILY: Tahoma, Arial; HEIGHT: 30px; BACKGROUND-COLOR: #99cc99
+					FONT-FAMILY: Tahoma, Arial; HEIGHT: 30px; BACKGROUND-COLOR: #99cc99; padding: 4px;
 				}
 				.handCursor {  cursor: hand}
 				.pointerCursor {  cursor: pointer}
@@ -55,7 +55,7 @@
             <xsl:apply-templates select="summary"/>
           </div>
           <div id="Configuration" style="display:none">
-			<p> Below are the steps to to configure the .netTiers components.  These are samples from Northwind.</p>
+			<p> Below are the steps to to configure the .netTiers components.</p>
 			
                         <p>To Configure your application to use .netTiers, add the following sections to 
               your App / Web config files.
@@ -67,14 +67,14 @@
             
 <pre>
   &lt;section name="netTiersService"
-		type="Northwind.DataAccessLayer.Bases.NetTiersServiceSection, Northwind.DataAccessLayer"
+		type="<xsl:value-of select="//NetTiersReport/@DALNameSpace" />.Bases.NetTiersServiceSection, <xsl:value-of select="//NetTiersReport/@DALNameSpace" />"
 		allowDefinition="MachineToApplication"
 		restartOnExternalChanges="true" /&gt;
 </pre>
           <p>2.  Add an item to the ConnectionStrings Section</p>
 <pre>
 &lt;connectionStrings>
-  &lt;add name="netTiersConnectionString" connectionString="Data Source=(local);Initial Catalog=Northwind;Integrated Security=true;Connection Timeout=1;" /&gt;
+  &lt;add name="netTiersConnectionString" connectionString="<xsl:value-of select="//NetTiersReport/@ConnectionString" />" /&gt;
 &lt;/connectionStrings&gt;
 </pre>
          <p>3.  Add the netTierService configuration section to your configuration file. Comment / Uncomment which provider you plan on using / not using</p>
@@ -88,7 +88,7 @@
     -->
     &lt;add 
 	    name="SqlNetTiersProvider" 
-	    type="Northwind.DataAccessLayer.SqlClient.SqlNetTiersProvider, Northwind.DataAccessLayer.SqlClient"
+	    type="<xsl:value-of select="//NetTiersReport/@DALNameSpace" />.SqlClient.SqlNetTiersProvider, <xsl:value-of select="//NetTiersReport/@DALNameSpace" />.SqlClient"
 	    connectionStringName="netTiersConnectionString"
 	    useStoredProcedure="false"
 	    providerInvariantName="System.Data.SqlClient" /&gt;
@@ -97,7 +97,7 @@
       The url parameter indicates the webservices url (ex: http://localhost/NorthWind/NorthWindServices.aspx)
     &lt;add 
       name="WsNetTiersProvider" 
-      type="Northwind.DataAccessLayer.WebServiceClient.WsNetTiersProvider, Northwind.DataAccessLayer.WebServiceClient"
+      type="<xsl:value-of select="//NetTiersReport/@DALNameSpace" />.WebServiceClient.WsNetTiersProvider, <xsl:value-of select="//NetTiersReport/@DALNameSpace" />.WebServiceClient"
       url="http://localhost/NetTiersCTPWSNorthwindServices.asmx"
       />
     -->
