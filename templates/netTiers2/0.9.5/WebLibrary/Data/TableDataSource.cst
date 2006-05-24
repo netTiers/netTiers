@@ -554,10 +554,10 @@ private string WriteCaseStatement(string tableName, string methodName)
 	return sb.ToString();
 }
 
-private string WriteParameterStatements(MemberColumnSchemaCollection memberColumns, string tableName)
+private string WriteParameterStatements(ColumnSchemaCollection memberColumns, string tableName) //(MemberColumnSchemaCollection memberColumns, string tableName)
 {
 	StringBuilder sb = new StringBuilder();
-	foreach(MemberColumnSchema memberSchema in memberColumns)
+	foreach(ColumnSchema memberSchema in memberColumns)
 	{
 		sb.AppendFormat("\t\t\t\t\t{0} = ({2}) EntityUtil.ChangeType(values[\"{1}\"], typeof({2}));{3}",
 						GetPrivateName(memberSchema),
@@ -574,31 +574,31 @@ private string WriteParameterStatements(MemberColumnSchemaCollection memberColum
 	return sb.ToString();
 }
 
-private string WriteTotalRowCountStatement(MemberColumnSchemaCollection memberColumns, string tableName)
+private string WriteTotalRowCountStatement(ColumnSchemaCollection memberColumns, string tableName)
 {
 	return WriteTotalRowCountStatement(memberColumns, tableName, null);
 }
-private string WriteTotalRowCountStatement(MemberColumnSchemaCollection memberColumns, string tableName, string functionName)
+private string WriteTotalRowCountStatement(ColumnSchemaCollection memberColumns, string tableName, string functionName)
 {
 	StringBuilder sb = new StringBuilder();
 	sb.AppendFormat("\t\t\t\t\tcount = {0}.GetBy{1}({2}).Count;{3}",
 					GetProviderName(tableName),
-					functionName ?? GetKeysName(memberColumns),
+					functionName == null ? GetKeysName(memberColumns) : functionName,
 					GetFunctionCallParameters(memberColumns),
 					Environment.NewLine);
 	return sb.ToString();
 }
 
-private string WriteGetByStatement(MemberColumnSchemaCollection memberColumns, string tableName)
+private string WriteGetByStatement(ColumnSchemaCollection memberColumns, string tableName)
 {
 	return WriteGetByStatement(memberColumns, tableName, null);
 }
-private string WriteGetByStatement(MemberColumnSchemaCollection memberColumns, string tableName, string functionName)
+private string WriteGetByStatement(ColumnSchemaCollection memberColumns, string tableName, string functionName)
 {
 	StringBuilder sb = new StringBuilder();
 	sb.AppendFormat("\t\t\t\t\tresults = {0}.GetBy{1}(GetTransactionManager(), {2}, this.StartIndex, this.PageSize, out count);{3}",
 					GetProviderName(tableName),
-					functionName ?? GetKeysName(memberColumns),
+					functionName == null ? GetKeysName(memberColumns) : functionName,
 					GetFunctionCallParameters(memberColumns),
 					Environment.NewLine);
 	return sb.ToString();
@@ -618,7 +618,7 @@ private string WriteParameterDeclarations(IndexSchemaCollection indexes, TableKe
 	
 	foreach ( IndexSchema index in indexes )
 	{
-		foreach ( MemberColumnSchema column in index.MemberColumns )
+		foreach ( ColumnSchema column in index.MemberColumns )
 		{
 			if( !columns.Contains(column.Name) )
 			{
@@ -629,7 +629,7 @@ private string WriteParameterDeclarations(IndexSchemaCollection indexes, TableKe
 	}
 	foreach ( TableKeySchema tableKey in fkeys )
 	{
-		foreach ( MemberColumnSchema column in tableKey.ForeignKeyMemberColumns )
+		foreach ( ColumnSchema column in tableKey.ForeignKeyMemberColumns )
 		{
 			if( !columns.Contains(column.Name) )
 			{
@@ -654,7 +654,7 @@ private string WriteParameterDeclarations(IndexSchemaCollection indexes, TableKe
 					
 					foreach(TableKeySchema tableKey in secondaryTable.PrimaryKeys)
 					{
-						foreach ( MemberColumnSchema column in tableKey.PrimaryKeyMemberColumns )
+						foreach ( ColumnSchema column in tableKey.PrimaryKeyMemberColumns )
 						{
 							if( !columns.Contains(column.Name) )
 							{

@@ -853,6 +853,7 @@ public void Go()
 	
 	// Build output pathes
 	string rootPathBLL = OutputDirectory + "\\" + BLLNameSpace;
+	string rootPathCustomCode = rootPathBLL + "\\" + (CustomCodeFolderName != null ? CustomCodeFolderName : string.Empty);
 	string rootPathComponents = OutputDirectory + "\\" +  ComponentsNameSpace;
 	string rootPathDAL = OutputDirectory + "\\" + DALNameSpace;
 	string rootPathDALSql = OutputDirectory + "\\" + DALSqlNameSpace;
@@ -986,7 +987,7 @@ public void Go()
 		{
 			//throwing a NullReferenceException on the following line, changed to use HasPrimaryKey property
 			//if (_tmp[i].PrimaryKey == null || _tmp[i].PrimaryKey.MemberColumns.Count == 0)
-			if (!_tmp[i].HasPrimaryKey)
+			if (!HasPrimaryKey(_tmp[i]))
 			{
 				AddMessageNode(initNode, 1, "Table " + _tmp[i].Name + " does not have a primary key, it will not be generated.");
 				_sourceTables.Remove(_tmp[i]);
@@ -1048,7 +1049,14 @@ public void Go()
 		SafeCreateDirectory(rootPathComponents);
 		SafeCreateDirectory(rootPathComponents + "\\Processors");
 	}
-		
+	
+	if (CustomCodeFolderName != null && CustomCodeFolderName.Length > 0)
+	{
+		if(!Directory.Exists(rootPathCustomCode))
+			SafeCreateDirectory(rootPathCustomCode);
+	}
+	
+	
 	if (GenerateDataAccessLayer)
 	{
 		// base classes for any provider implementations

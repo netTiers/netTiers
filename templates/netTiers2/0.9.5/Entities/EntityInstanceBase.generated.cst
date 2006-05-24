@@ -1,4 +1,4 @@
-﻿<%--
+<%--
  * $Id: EntityInstanceBase.generated.cst,v 1.11 2006/03/03 03:09:36 bgjohnso Exp $
  * Last modified by $Author: goofsr $
  * Last modified at $Date: 2006-04-09 14:39:46 -0500 (Sun, 09 Apr 2006) $
@@ -44,8 +44,10 @@
 	string constructorAccessModifier = UsePartialClass ? "public" : "protected";
 	
 	// Collection of primary key columns
-	MemberColumnSchemaCollection pkCols = SourceTable.PrimaryKey.MemberColumns;
-
+	//NOT IN 2.6 API 
+	//MemberColumnSchemaCollection pkCols = SourceTable.PrimaryKey.MemberColumns; 
+	ColumnSchemaCollection pkCols = SourceTable.PrimaryKey.MemberColumns;
+	
 	// Collection of all columns in the table.
 	ColumnSchemaCollection cols = SourceTable.Columns;
 		
@@ -1024,7 +1026,7 @@ WriteRelationshipPropertyString();
 
 			if ( entity != null )
 			{
-				<% foreach ( MemberColumnSchema column in pkCols ) { %>
+				<% foreach ( ColumnSchema column in pkCols ) { %>
 				this.<%= GetPrivateName(column.Name) %> = entity.<%= GetPropertyName(column.Name) %>;
 				<% } %>
 			}
@@ -1039,7 +1041,7 @@ WriteRelationshipPropertyString();
 		{
 			#region Init Properties
 
-			<% foreach ( MemberColumnSchema column in pkCols ) { %>
+			<% foreach ( ColumnSchema column in pkCols ) { %>
 			this.<%= GetPrivateName(column.Name) %> = <%= GetPrivateName(column.Name) %>;
 			<% } %>
 
@@ -1062,7 +1064,7 @@ WriteRelationshipPropertyString();
 			set { _entity = value; }
 		}
 		
-		<% foreach ( MemberColumnSchema column in pkCols ) { %>
+		<% foreach ( ColumnSchema column in pkCols ) { %>
 		// member variable for the <%= GetPropertyName(column.Name) %> property
 		private <%= GetCSType(column) %> <%= GetPrivateName(column.Name) %>;
 		
@@ -1098,7 +1100,7 @@ WriteRelationshipPropertyString();
 		{
 			#region Init Properties
 
-			<% foreach ( MemberColumnSchema column in pkCols ) { %>
+			<% foreach ( ColumnSchema column in pkCols ) { %>
 			<%= GetPropertyName(column.Name) %> = (<%= GetCSType(column) %>) EntityUtil.ChangeType(values["<%= GetPropertyName(column.Name) %>"], typeof(<%= GetCSType(column) %>));
 			<% } %>
 
@@ -1111,7 +1113,7 @@ WriteRelationshipPropertyString();
 		public override string ToString()
 		{
 			return String.Format("<% for ( int i=0; i<pkCols.Count; i++ ) { %><%= GetPropertyName(pkCols[i].Name) %>: {<%= i %>}{<%= pkCols.Count %>}<% } %>",
-						<% foreach ( MemberColumnSchema column in pkCols ) { %>
+						<% foreach ( ColumnSchema column in pkCols ) { %>
 							<% if ( column.AllowDBNull ) { %>
 								(<%= GetPropertyName(column.Name) %> ?? String.Empty),
 							<% } else { %>

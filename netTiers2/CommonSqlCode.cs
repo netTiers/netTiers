@@ -802,7 +802,10 @@ namespace MoM.Templates
 		/// <param name="table">The table to check.</param>
 		public bool HasPrimaryKey(TableSchema table)
 		{
-			if (!table.HasPrimaryKey) return false; // requires CodeSmith 3.2
+            if (table.GetType().GetProperty("HasPrimaryKey") != null)
+            {
+                if (!(bool)table.GetType().GetProperty("HasPrimaryKey").GetValue(table, null)) return false;
+            }
 			if (table.PrimaryKey == null || table.PrimaryKey.MemberColumns.Count == 0) return false;
 			return true;
 		}
