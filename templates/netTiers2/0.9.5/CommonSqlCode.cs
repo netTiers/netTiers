@@ -1309,6 +1309,7 @@ namespace MoM.Templates
 		/// <returns>string representation of the default value</returns>
 		public string GetColumnDefaultValue(ColumnSchema column)
 		{
+			/*
 			// for sql server
 			if (column.ExtendedProperties["CS_Default"] != null)
 			{
@@ -1327,7 +1328,7 @@ namespace MoM.Templates
 				return column.ExtendedProperties["DefaultValue"].Value.ToString();
 			
 			// test mysql
-			
+			*/
 			return "";			
 		} 
 		
