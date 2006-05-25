@@ -170,10 +170,10 @@ namespace <%= WebNameSpace %>.Data
 		/// <summary>
 		/// Gets or sets the name of the primary key property of the entity.
 		/// </summary>
-		public String EntityKeyName
+		public String EntityKeyNames
 		{
-			get { return EntityView.EntityKeyName; }
-			set { EntityView.EntityKeyName = value; }
+			get { return EntityView.EntityKeyNames; }
+			set { EntityView.EntityKeyNames = value; }
 		}
 
 		#endregion Entity
@@ -270,7 +270,7 @@ namespace <%= WebNameSpace %>.Data
 		private String _typeInstanceProperty;
 		private String _entityTypeName;
 		private String _entityKeyTypeName;
-		private String _entityKeyName;
+		private String _entityKeyNames;
 
 		private String _selectMethod = "GetAll";
 		private String _insertMethod = "Insert";
@@ -440,10 +440,10 @@ namespace <%= WebNameSpace %>.Data
 		/// <summary>
 		/// Gets or sets the name of the primary key property of the entity.
 		/// </summary>
-		internal String EntityKeyName
+		internal String EntityKeyNames
 		{
-			get { return _entityKeyName; }
-			set { _entityKeyName = value; }
+			get { return _entityKeyNames; }
+			set { _entityKeyNames = value; }
 		}
 
 		#endregion Entity
@@ -621,7 +621,10 @@ namespace <%= WebNameSpace %>.Data
 		{
 			Object[] args = GetArgs(entity);
 			Object result = EntityUtil.InvokeMethod(Provider, InsertMethod, args);
-			EntityId = EntityUtil.GetPropertyValue(entity, EntityKeyName);
+			
+			// save primary key value
+			EntityId = GetEntityId(entity);
+			
 			return ( result == null || Convert.ToBoolean(result) );
 		}
 
@@ -665,6 +668,44 @@ namespace <%= WebNameSpace %>.Data
 
 		<% } // end if ( IncludeDelete ) %>
 		#region Helper Methods
+
+		/// <summary>
+		/// Gets the unique identifier of the specified entity object.
+		/// </summary>
+		/// <returns>A single value or an array of values.</returns>
+		protected Object GetEntityId(Object entity)
+		{
+			String[] names = GetEntityKeyNames();
+			Object[] values = new Object[names.Length];
+			Object entityId = null;
+
+			for ( int i = 0; i < names.Length; i++ )
+			{
+				values[i] = EntityUtil.GetPropertyValue(entity, names[i]);
+			}
+			if ( values.Length > 0 )
+			{
+				if ( values.Length > 1 )
+				{
+					entityId = values;
+				}
+				else
+				{
+					entityId = values[0];
+				}
+			}
+
+			return entityId;
+		}
+
+		/// <summary>
+		/// Gets an array of unique identifier property names.
+		/// </summary>
+		/// <returns>An array of property names.</returns>
+		protected String[] GetEntityKeyNames()
+		{
+			return GetNames(EntityKeyNames);
+		}
 
 		/// <summary>
 		/// Gets the Entity object within the collection of Entity objects that matches
