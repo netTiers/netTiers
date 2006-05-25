@@ -271,6 +271,26 @@ namespace <%= WebNameSpace %>.Data
 			set { ViewState["EntityId"] = value; }
 		}
 
+		/// <summary>
+		/// Gets or sets a comma-separated list of the entity's property names that
+		/// will be initialized to the current system time during an insert operation.
+		/// </summary>
+		public String InsertDateTimeNames
+		{
+			get { return View.InsertDateTimeNames; }
+			set { View.InsertDateTimeNames = value; }
+		}
+
+		/// <summary>
+		/// Gets or sets a comma-separated list of the entity's property names that
+		/// will be initialized to the current system time during an update operation.
+		/// </summary>
+		public String UpdateDateTimeNames
+		{
+			get { return View.UpdateDateTimeNames; }
+			set { View.UpdateDateTimeNames = value; }
+		}
+
 		#endregion Properties
 
 		#region Methods
@@ -673,6 +693,8 @@ namespace <%= WebNameSpace %>.Data
 
 		private String _filter;
 		private String _sort;
+		private String _insertDateTimeNames;
+		private String _updateDateTimeNames;
 		
 		private bool _enableTransaction = true;
 		private bool _enableCaching;
@@ -768,6 +790,26 @@ namespace <%= WebNameSpace %>.Data
 		{
 			get { return _owner.EntityId; }
 			set { _owner.EntityId = value; }
+		}
+
+		/// <summary>
+		/// Gets or sets a comma-separated list of the entity's property names that
+		/// will be initialized to the current system time during an insert operation.
+		/// </summary>
+		internal String InsertDateTimeNames
+		{
+			get { return _insertDateTimeNames; }
+			set { _insertDateTimeNames = value; }
+		}
+
+		/// <summary>
+		/// Gets or sets a comma-separated list of the entity's property names that
+		/// will be initialized to the current system time during an update operation.
+		/// </summary>
+		internal String UpdateDateTimeNames
+		{
+			get { return _updateDateTimeNames; }
+			set { _updateDateTimeNames = value; }
 		}
 
 		/// <summary>
@@ -1167,6 +1209,9 @@ namespace <%= WebNameSpace %>.Data
 			Entity entity = new Entity();
 			int count = 0;
 
+			// set date/time values
+			String[] names = GetInsertDateTimeNames();
+			EntityUtil.InitEntityDateTimeValues(entity, names);
 			// set property values
 			SetPropertyValues(entity, values);
 
@@ -1267,6 +1312,9 @@ namespace <%= WebNameSpace %>.Data
 
 			ValidateEntity(entity);
 
+			// set date/time values
+			String[] names = GetUpdateDateTimeNames();
+			EntityUtil.InitEntityDateTimeValues(entity, names);
 			// set property values
 			SetPropertyValues(entity, values);
 
@@ -1456,6 +1504,48 @@ namespace <%= WebNameSpace %>.Data
 		protected virtual void SetPropertyValues(Entity entity, IDictionary values)
 		{
 			EntityUtil.SetEntityValues(entity, values);
+		}
+
+		/// <summary>
+		/// Gets an array of valid DateTime property names to
+		/// initialize during an insert operation.
+		/// </summary>
+		/// <returns>Returns an array of property names.</returns>
+		internal String[] GetInsertDateTimeNames()
+		{
+			return GetNames(InsertDateTimeNames);
+		}
+
+		/// <summary>
+		/// Gets an array of valid DateTime property names to
+		/// initialize during an update operation.
+		/// </summary>
+		/// <returns>Returns an array of property names.</returns>
+		internal String[] GetUpdateDateTimeNames()
+		{
+			return GetNames(UpdateDateTimeNames);
+		}
+
+		/// <summary>
+		/// Converts the specified comma-separated list of property names
+		/// into a valid string array.
+		/// </summary>
+		/// <param name="value">A comma-separated list of property names.</param>
+		/// <returns>Returns an array of property names.</returns>
+		internal String[] GetNames(String value)
+		{
+			String[] names = new String[0];
+
+			if ( !String.IsNullOrEmpty(value) )
+			{
+				names = value.Split(new String[] { "," }, StringSplitOptions.RemoveEmptyEntries);
+				for ( int i = 0; i < names.Length; i++ )
+				{
+					names[i] = names[i].Trim();
+				}
+			}
+
+			return names;
 		}
 
 		/// <summary>

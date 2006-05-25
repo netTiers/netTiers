@@ -43,6 +43,8 @@
 	string providerName = GetProviderName(tableName);
 	string providerBaseName = GetProviderBaseName(tableName);
 	
+	// holds method names
+	ArrayList methods = new ArrayList();
 	// holds all of the method names created
 	ArrayList methodNames = new ArrayList();
 	// fk method names
@@ -52,9 +54,12 @@
 	// m:m method names
 	ArrayList manyToManyMethodNames = new ArrayList();
 
-	if ( IncludeGetList )
+	if ( IncludeGetListByIX )
 	{
 		methodNames.Add("Get");
+	}
+	if ( IncludeGetList )
+	{
 		methodNames.Add("GetAll");
 		methodNames.Add("GetPaged");
 	}
@@ -64,12 +69,12 @@
 	}
 	if ( IncludeGetListByIX )
 	{
-		Debug.WriteLine("GetByIX:");
+		//Debug.WriteLine("GetByIX:");
 		
 		for(int j = 0; j < indexes.Count; j++)
 		{
 			string ixName = "GetBy" + GetKeysName(indexes[j].MemberColumns);
-			Debug.WriteLine(ixName);
+			//Debug.WriteLine(ixName);
 			if(!ixMethodNames.Contains(ixName) && !methodNames.Contains(ixName)){
 				ixMethodNames.Add(ixName);
 			}
@@ -78,11 +83,11 @@
 	}
 	if ( IncludeGetListByFK )
 	{
-		Debug.WriteLine("GetByFK:");
+		//Debug.WriteLine("GetByFK:");
 		for(int j = 0; j < fkeys.Count; j++)
 		{
 			string fkName = "GetBy" + GetKeysName(fkeys[j].ForeignKeyMemberColumns);
-			Debug.WriteLine(fkName);
+			//Debug.WriteLine(fkName);
 			if(!fkMethodNames.Contains(fkName) && !methodNames.Contains(fkName)){
 				fkMethodNames.Add(fkName);
 			}
@@ -91,7 +96,7 @@
 	}
 	if ( IncludeManyToMany )
 	{
-		Debug.WriteLine("Many to Many");
+		//Debug.WriteLine("Many to Many");
 		TableSchema primaryTable = SourceTable;
 		
 		foreach(TableKeySchema key in SourceTable.PrimaryKeys)
@@ -261,14 +266,19 @@ namespace <%= WebNameSpace %>.Data
 		{
 			Hashtable values = CollectionsUtil.CreateCaseInsensitiveHashtable(GetParameterValues());
 			IList<<%= className %>> results = null;
+			<%= className %> item;
 			count = 0;
 			<%= WriteParameterDeclarations(indexes, fkeys) %>
 			switch ( SelectMethod )
 			{
-				<% if ( IncludeGetList ) { %>
-				case <%= className %>SelectMethod.Get:
-				
-					break;
+				<%
+				if ( IncludeGetListByIX )
+				{
+					Response.Write(WriteUniqueIndexSelectStatements(tableName, SourceTable.PrimaryKey.MemberColumns, methods, true));
+				}
+				if ( IncludeGetList )
+				{
+				%>
 				case <%= className %>SelectMethod.GetAll:
                     results = <%= providerName %>.GetAll(GetTransactionManager(), StartIndex, PageSize, out count);
                     break;
@@ -283,18 +293,20 @@ namespace <%= WebNameSpace %>.Data
 				<% } // end if ( IncludeFind ) {
 				if ( IncludeGetListByIX )
 				{
+					Response.Write("\t\t\t\t// PK" + Environment.NewLine);
+					Response.Write(WriteUniqueIndexSelectStatements(tableName, SourceTable.PrimaryKey.MemberColumns, methods));
 					Response.Write("\t\t\t\t// IX" + Environment.NewLine);
-					Response.Write(WriteIndexSelectStatements(tableName, indexes));
+					Response.Write(WriteIndexSelectStatements(tableName, methods));
 				}
 				if ( IncludeGetListByFK )
 				{
 					Response.Write("\t\t\t\t// FK" + Environment.NewLine);
-					Response.Write(WriteFKSelectStatements(tableName, fkeys));
+					Response.Write(WriteFKSelectStatements(tableName, methods));
 				}
 				if ( IncludeManyToMany )
 				{
 					Response.Write("\t\t\t\t// M:M" + Environment.NewLine);
-					Response.Write(WriteManyToManySelectStatements());
+					Response.Write(WriteManyToManySelectStatements(tableName, methods));
 				}
 				%>
 				default:
@@ -423,75 +435,91 @@ namespace <%= WebNameSpace %>.Data
 }
 
 <script runat="template">
-ArrayList methodNames = new ArrayList();
+//ArrayList methodNames = new ArrayList();
 
-private string WriteIndexSelectStatements(string tableName, IndexSchemaCollection indexes)
+private string WriteUniqueIndexSelectStatements(string tableName, ColumnSchemaCollection columns, IList methods)
+{
+	return WriteUniqueIndexSelectStatements(tableName, columns, methods, false);
+}
+private string WriteUniqueIndexSelectStatements(string tableName, ColumnSchemaCollection columns, IList methods, bool isGet)
 {
 	StringBuilder sb = new StringBuilder();
-	//primaryKey
-	methodNames.Add(GetKeysName(SourceTable.PrimaryKey.MemberColumns));
 	
-	sb.Append(WriteCaseStatement(tableName, GetKeysName(SourceTable.PrimaryKey.MemberColumns)));
-	sb.Append(WriteParameterStatements(SourceTable.PrimaryKey.MemberColumns, tableName));
-	
-	sb.AppendFormat("\t\t\t\t\t{0} data = {1}.GetBy{2}(GetTransactionManager(), {3}, this.StartIndex, this.PageSize);{4}",
-					GetClassName(tableName),
-					GetProviderName(tableName),
-					GetKeysName(SourceTable.PrimaryKey.MemberColumns),
-					GetFunctionCallParameters(SourceTable.PrimaryKey.MemberColumns),
-					Environment.NewLine);
-					
-	sb.AppendFormat("\t\t\t\t\tresults = new {0}();{1}", GetCollectionClassName(tableName), Environment.NewLine);
-	sb.AppendFormat("\t\t\t\t\tif ( data != null ) results.Add(data);{0}", Environment.NewLine);
-	sb.AppendFormat("\t\t\t\t\tcount = results.Count;{0}", Environment.NewLine);
-	sb.Append(WriteBreakStatement());
-	
-	foreach(IndexSchema indexSchema in indexes)
+	if ( isGet )
 	{
-		//skip primary key
-		if(indexSchema.Name == SourceTable.PrimaryKey.Name)
-			continue;
-		//check for dups
-		if(!methodNames.Contains(GetKeysName(indexSchema.MemberColumns)))
-		{
-			methodNames.Add(GetKeysName(indexSchema.MemberColumns));
-			
-			sb.Append(WriteCaseStatement(tableName, GetKeysName(indexSchema.MemberColumns)));
-			sb.Append(WriteParameterStatements(indexSchema.MemberColumns, tableName));
-			//sb.Append(WriteTotalRowCountStatement(indexSchema.MemberColumns, tableName));
-			
-			if(indexSchema.IsUnique)
-			{
-					sb.AppendFormat("\t\t\t\t\t{0} data{2} = {1}.GetBy{2}(GetTransactionManager(), {3}, this.StartIndex, this.PageSize);{4}",
+		methods.Add("Get");
+		sb.AppendFormat("\t\t\t\tcase {0}SelectMethod.Get:{1}", GetClassName(tableName), Environment.NewLine);
+		sb.AppendFormat("\t\t\t\t\t{0} key = new {0}();{1}", GetKeyClassName(tableName), Environment.NewLine);
+		sb.AppendFormat("\t\t\t\t\tkey.Load(values);{0}", Environment.NewLine);
+		sb.AppendFormat("\t\t\t\t\titem = {1}.Get(GetTransactionManager(), key, this.StartIndex, this.PageSize);{2}",
 						GetClassName(tableName),
 						GetProviderName(tableName),
-						GetKeysName(indexSchema.MemberColumns),
-						GetFunctionCallParameters(indexSchema.MemberColumns),
 						Environment.NewLine);
-
-				sb.AppendFormat("\t\t\t\t\tresults = new {0}();{1}", GetCollectionClassName(tableName), Environment.NewLine);
-				sb.AppendFormat("\t\t\t\t\tif ( data{0} != null ) results.Add(data{0});{1}", GetKeysName(indexSchema.MemberColumns), Environment.NewLine );
-			}
-			else
-			{
-				sb.Append(WriteGetByStatement(indexSchema.MemberColumns, tableName));
-			}
-			
-			sb.Append(WriteBreakStatement());
-		}
 	}
+	else
+	{
+		methods.Add(GetKeysName(columns));
+		sb.Append(WriteCaseStatement(tableName, GetKeysName(columns)));
+		sb.Append(WriteParameterStatements(columns, tableName));
+		sb.AppendFormat("\t\t\t\t\titem = {1}.GetBy{2}(GetTransactionManager(), {3}, this.StartIndex, this.PageSize);{4}",
+						GetClassName(tableName),
+						GetProviderName(tableName),
+						GetKeysName(columns),
+						GetFunctionCallParameters(columns),
+						Environment.NewLine);
+	}
+					
+	sb.AppendFormat("\t\t\t\t\tresults = new {0}();{1}", GetCollectionClassName(tableName), Environment.NewLine);
+	sb.AppendFormat("\t\t\t\t\tif ( item != null ) results.Add(item);{0}", Environment.NewLine);
+	sb.AppendFormat("\t\t\t\t\tcount = results.Count;{0}", Environment.NewLine);
+	sb.Append(WriteBreakStatement());
 	return sb.ToString();
 }
 
-private string WriteFKSelectStatements(string tableName, TableKeySchemaCollection fk)
+private string WriteIndexSelectStatements(string tableName, IList methods)
 {
 	StringBuilder sb = new StringBuilder();
-	foreach(TableKeySchema tableKey in fk)
+	
+	foreach ( IndexSchema indexSchema in SourceTable.Indexes )
 	{
-		//dupe check
-		if(!methodNames.Contains(GetKeysName(tableKey.ForeignKeyMemberColumns)))
+		// skip primary key
+		if ( indexSchema.Name == SourceTable.PrimaryKey.Name )
 		{
-			methodNames.Add(GetKeysName(tableKey.ForeignKeyMemberColumns));
+			continue;
+		}
+		// check for dups
+		if( !methods.Contains(GetKeysName(indexSchema.MemberColumns)) )
+		{
+			if ( indexSchema.IsUnique )
+			{
+				sb.Append(WriteUniqueIndexSelectStatements(tableName, indexSchema.MemberColumns, methods));
+			}
+			else
+			{
+				methods.Add(GetKeysName(indexSchema.MemberColumns));
+				
+				sb.Append(WriteCaseStatement(tableName, GetKeysName(indexSchema.MemberColumns)));
+				sb.Append(WriteParameterStatements(indexSchema.MemberColumns, tableName));
+				//sb.Append(WriteTotalRowCountStatement(indexSchema.MemberColumns, tableName));
+				sb.Append(WriteGetByStatement(indexSchema.MemberColumns, tableName));
+				sb.Append(WriteBreakStatement());
+			}
+			
+		}
+	}
+
+	return sb.ToString();
+}
+
+private string WriteFKSelectStatements(string tableName, IList methods)
+{
+	StringBuilder sb = new StringBuilder();
+	foreach ( TableKeySchema tableKey in SourceTable.ForeignKeys )
+	{
+		// dupe check
+		if ( !methods.Contains(GetKeysName(tableKey.ForeignKeyMemberColumns)) )
+		{
+			methods.Add(GetKeysName(tableKey.ForeignKeyMemberColumns));
 
 			sb.Append(WriteCaseStatement(tableName, GetKeysName(tableKey.ForeignKeyMemberColumns)));
 			sb.Append(WriteParameterStatements(tableKey.ForeignKeyMemberColumns, tableName));
@@ -503,38 +531,31 @@ private string WriteFKSelectStatements(string tableName, TableKeySchemaCollectio
 	return sb.ToString();
 }
 
-private string WriteManyToManySelectStatements()
+private string WriteManyToManySelectStatements(string tableName, IList methods)
 {
 	StringBuilder sb = new StringBuilder();
-	TableSchema primaryTable = SourceTable;
-	
-	foreach(TableKeySchema key in SourceTable.PrimaryKeys)
+	foreach ( TableKeySchema key in SourceTable.PrimaryKeys )
 	{
 		// Check that the key is related to a junction table
-		if ( IsJunctionTable(key.ForeignKeyTable) && IsJunctionKey(key))
+		if ( IsJunctionTable(key.ForeignKeyTable) && IsJunctionKey(key) )
 		{
 			TableSchema junctionTable = key.ForeignKeyTable;
 			
 			// Search for the other(s) key(s) of the junction table' primary key
-			foreach(TableKeySchema junctionTableKey in junctionTable.ForeignKeys)
+			foreach ( TableKeySchema junctionTableKey in junctionTable.ForeignKeys )
 			{				
 				if ( IsJunctionKey(junctionTableKey) && junctionTableKey.Name != key.Name )
 				{
 					TableSchema secondaryTable = junctionTableKey.PrimaryKeyTable;
-					string functionname = GetManyToManyName(junctionTableKey, GetCleanName(junctionTable.Name));
+					string methodName = GetManyToManyName(junctionTableKey, GetCleanName(junctionTable.Name));
 					
-					if(!methodNames.Contains(functionname))
+					if ( !methods.Contains(methodName) )
 					{
-						methodNames.Add(functionname);
-						sb.Append(WriteCaseStatement(primaryTable.Name, functionname));
-						
-						foreach(TableKeySchema table in secondaryTable.PrimaryKeys)
-						{
-							sb.Append(WriteParameterStatements(table.PrimaryKey.MemberColumns, primaryTable.Name));
-						}
-						
-						//sb.Append(WriteTotalRowCountStatement(junctionTableKey.ForeignKeyMemberColumns, primaryTable.Name, functionname));
-						sb.Append(WriteGetByStatement(junctionTableKey.ForeignKeyMemberColumns, primaryTable.Name, functionname));
+						methods.Add(methodName);
+						sb.Append(WriteCaseStatement(tableName, methodName));
+						sb.Append(WriteParameterStatements(secondaryTable.PrimaryKey.MemberColumns, tableName));
+						//sb.Append(WriteTotalRowCountStatement(junctionTableKey.ForeignKeyMemberColumns, tableName, methodName));
+						sb.Append(WriteGetByStatement(junctionTableKey.ForeignKeyMemberColumns, tableName, methodName));
 						sb.Append(WriteBreakStatement());
 					}
 				}
@@ -564,12 +585,6 @@ private string WriteParameterStatements(ColumnSchemaCollection memberColumns, st
 						GetPropertyName(memberSchema),
 						GetCSTypeWithoutNullable(memberSchema),
 						Environment.NewLine);
-		/*
-		sb.AppendFormat("\t\t\t\t\t{1} = ({0}) GetParameterValue(\"{1}\");{2}", 
-						GetCSType(memberSchema), 
-						GetPrivateName(memberSchema.Name),
-						Environment.NewLine);
-		*/
 	}
 	return sb.ToString();
 }
