@@ -13,6 +13,8 @@ using System;
 using System.Data;
 using System.Data.Common;
 using Microsoft.Practices.EnterpriseLibrary.Data;
+//PSB 2006-05-26: should we use EntLib ExceptionPolicy.HandleException?
+//using Microsoft.Practices.EnterpriseLibrary.ExceptionHandling;
 
 namespace <%=DALNameSpace%>
 {
@@ -66,10 +68,14 @@ namespace <%=DALNameSpace%>
 	/// </summary>
 	public sealed class Utility
 	{
-		private Utility()
-		{
-			// All static methods
-		}
+		#region Fields
+		//PSB 2006-05-26: should we use EntLib ExceptionPolicy.HandleException?
+		//private const string exceptionPolicy = "<%=DALNameSpace%> Exception Policy";
+		#endregion
+		
+		#region Constructors
+		private Utility() {/*All static methods*/}
+		#endregion
 
 		#region Helper Methods
 		/// <summary>
@@ -248,21 +254,29 @@ namespace <%=DALNameSpace%>
 
     	#region ExecuteReader
         /// <summary>
-        /// 
+        /// Executes the <paramref name="dbCommand"/> and returns an <see cref="IDataReader"/> through which the result can be read. 
+        /// It is the responsibility of the caller to close the connection and reader when finished. 
         /// </summary>
-        /// <param name="transactionManager"></param>
-        /// <param name="dbCommand"></param>
-        /// <returns></returns>
+        /// <param name="transactionManager">The transaction to execute the command within.</param>
+        /// <param name="dbCommand">The command that contains the query to execute.</param>
+        /// <returns>An <see cref="IDataReader"/> object.</returns>
+        /// <exception cref="System.Exception">The command could not be executed.</exception>
+        /// <exception cref="System.Data.DataException">The <paramref name="transactionManager"/> is not open.</exception>
+        /// <exception cref="System.Data.Common.DbException">The command could not be executed.</exception>
         public static IDataReader ExecuteReader(TransactionManager transactionManager, DbCommand dbCommand)
         {
 			<% WriteExecuteMethod(ExecuteType.Reader, true); %>
 		}
 		
         /// <summary>
+        /// Executes the <paramref name="dbCommand"/> and returns an <see cref="IDataReader"/> through which the result can be read. 
+        /// It is the responsibility of the caller to close the connection and reader when finished. 
         /// </summary>
-        /// <param name="database"></param>
-        /// <param name="dbCommand"></param>
-        /// <returns></returns>
+        /// <param name="database">The database to execute the command within.</param>
+        /// <param name="dbCommand">The command that contains the query to execute.</param>
+        /// <returns>An <see cref="IDataReader"/> object.</returns>
+        /// <exception cref="System.Exception">The command could not be executed.</exception>
+        /// <exception cref="System.Data.Common.DbException">The command could not be executed.</exception>
 		public static IDataReader ExecuteReader(Database database, DbCommand dbCommand)
 		{
 			<% WriteExecuteMethod(ExecuteType.Reader, false); %>
@@ -271,20 +285,27 @@ namespace <%=DALNameSpace%>
         
         #region ExecuteNonQuery 
         /// <summary>
+        /// Executes the <paramref name="dbCommand"/> and returns the number of rows affected. 
         /// </summary>
-        /// <param name="transactionManager"></param>
-        /// <param name="dbCommand"></param>
-        /// <returns></returns>
+        /// <param name="transactionManager">The transaction to execute the command within.</param>
+        /// <param name="dbCommand">The command that contains the query to execute.</param>
+        /// <returns>The number of rows affected.</returns>
+        /// <exception cref="System.Exception">The command could not be executed.</exception>
+        /// <exception cref="System.Data.DataException">The <paramref name="transactionManager"/> is not open.</exception>
+        /// <exception cref="System.Data.Common.DbException">The command could not be executed.</exception>
         public static int ExecuteNonQuery(TransactionManager transactionManager, DbCommand dbCommand)
         {
 			<% WriteExecuteMethod(ExecuteType.NonQuery, true); %>
         }
 		
         /// <summary>
+        /// Executes the <paramref name="dbCommand"/> and returns the number of rows affected. 
         /// </summary>
-        /// <param name="database"></param>
-        /// <param name="dbCommand"></param>
-        /// <returns></returns>
+        /// <param name="database">The database to execute the command within.</param>
+        /// <param name="dbCommand">The command that contains the query to execute.</param>
+        /// <returns>The number of rows affected.</returns>
+        /// <exception cref="System.Exception">The command could not be executed.</exception>
+        /// <exception cref="System.Data.Common.DbException">The command could not be executed.</exception>
 		public static int ExecuteNonQuery(Database database, DbCommand dbCommand)
 		{
 			<% WriteExecuteMethod(ExecuteType.NonQuery, false); %>
@@ -293,20 +314,27 @@ namespace <%=DALNameSpace%>
 		
 		#region ExecuteDataSet
 		/// <summary>
+        /// Executes the <paramref name="dbCommand"/> and returns the results in a new <see cref="DataSet"/>. 
         /// </summary>
-        /// <param name="transactionManager"></param>
-        /// <param name="dbCommand"></param>
-        /// <returns></returns>
+        /// <param name="transactionManager">The transaction to execute the command within.</param>
+        /// <param name="dbCommand">The command that contains the query to execute.</param>
+        /// <returns>A <see cref="DataSet"/> containing the results of the command.</returns>
+        /// <exception cref="System.Exception">The command could not be executed.</exception>
+        /// <exception cref="System.Data.DataException">The <paramref name="transactionManager"/> is not open.</exception>
+        /// <exception cref="System.Data.Common.DbException">The command could not be executed.</exception>
         public static DataSet ExecuteDataSet(TransactionManager transactionManager, DbCommand dbCommand)
         {
 			<% WriteExecuteMethod(ExecuteType.DataSet, true); %>
         }
 
 		/// <summary>
+        /// Executes the <paramref name="dbCommand"/> and returns the results in a new <see cref="DataSet"/>. 
         /// </summary>
-        /// <param name="database"></param>
-        /// <param name="dbCommand"></param>
-        /// <returns></returns>
+        /// <param name="database">The database to execute the command within.</param>
+        /// <param name="dbCommand">The command that contains the query to execute.</param>
+        /// <returns>A <see cref="DataSet"/> containing the results of the command.</returns>
+        /// <exception cref="System.Exception">The command could not be executed.</exception>
+        /// <exception cref="System.Data.Common.DbException">The command could not be executed.</exception>
 		public static DataSet ExecuteDataSet(Database database, DbCommand dbCommand)
 		{
 			<% WriteExecuteMethod(ExecuteType.DataSet, false); %>
@@ -326,8 +354,8 @@ private enum ExecuteType
 	Scalar
 }
 
-private static string RetryExecuteCode = @"
-			{6}{3} results = {7};
+private static string RetryExecuteCode = 
+@"			{6}{3} results = {7};
 			for (int attempt = 1; attempt <= {1}; attempt++)
 			{{
 				try
@@ -348,8 +376,18 @@ private static string RetryExecuteCode = @"
 			
 			return results;";
 
-private static string NoRetryExecuteCode = @"
-			{6}{3} results = {5}.Execute{0}(dbCommand{4});
+private static string NoRetryExecuteCode = 
+@"			{6}{3} results = {7};
+			try
+			{{
+				results = {5}.Execute{0}(dbCommand{4});
+			}}
+			catch (Exception /*ex*/)
+			{{
+				//PSB 2006-05-26: should we use EntLib ExceptionPolicy.HandleException?
+                //if (ExceptionPolicy.HandleException(ex, exceptionPolicy)) throw;
+				throw;
+			}}
 			return results;";
 
 private void WriteExecuteMethod(ExecuteType executeType, bool useTransactions)
