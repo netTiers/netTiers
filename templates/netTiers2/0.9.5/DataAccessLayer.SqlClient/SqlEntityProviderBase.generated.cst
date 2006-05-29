@@ -1,4 +1,4 @@
-<%--
+﻿<%--
  * $Id: SqlEntityProviderBase.generated.cst,v 1.3 2006/02/27 22:06:45 bgjohnso Exp $
  * Last modified by $Author: rockmaster1 $
  * Last modified at $Date: 2006-04-28 17:19:22 -0500 (Fri, 28 Apr 2006) $
@@ -292,16 +292,20 @@ namespace <%=DALNameSpace%>.SqlClient
 		/// <param name="<%=GetPrivateName(RowVersion.Name)%>">The timestamp field used for concurrency check.</param><% } %>
 		/// <remarks>Deletes based on primary key(s).</remarks>
 		/// <returns>Returns true if operation suceeded.</returns>
+        /// <exception cref="System.Exception">The command could not be executed.</exception>
+        /// <exception cref="System.Data.DataException">The <paramref name="transactionManager"/> is not open.</exception>
+        /// <exception cref="System.Data.Common.DbException">The command could not be executed.</exception>
+		<% if (RowVersion != null){ %>
+        /// <exception cref="DBConcurrencyException">The record has been modified by an other user. Please reload the instance before deleting.</exception>
+		<%}%>
 		public override bool Delete(TransactionManager transactionManager, <%= GetFunctionHeaderParameters(SourceTable.PrimaryKey.MemberColumns) %><% if(RowVersion != null) {Response.Write(", byte[] " + GetPrivateName(RowVersion.Name));}%>)
 		{
 			SqlDatabase database = new SqlDatabase(this._connectionString);
 			DbCommand commandWrapper = StoredProcedureProvider.GetCommandWrapper(database, "<%=owner + ProcedurePrefix + commandStem + DeleteSuffix%>", _useStoredProcedure);
-			object[] pkItems = new object[<%= SourceTable.PrimaryKey.MemberColumns.Count %>];
 			<% for(int i = 0; i < SourceTable.PrimaryKey.MemberColumns.Count; i++) { 
 				ColumnSchema col = SourceTable.PrimaryKey.MemberColumns[i];
 			%>
 			database.AddInParameter(commandWrapper, "@<%=GetPropertyName(col.Name)%>", DbType.<%=col.DataType%>, <%=GetPrivateName(col.Name)%>);
-			pkItems[<%= i %>] = <%=GetPrivateName(col.Name)%>;
 			<% } %>
 			<% if (RowVersion != null){ %>
 			database.AddInParameter(commandWrapper, "@<%=GetPropertyName(RowVersion.Name)%>", DbType.<%= RowVersion.DataType.ToString() %>, <%= GetPrivateName(RowVersion.Name) %>);
@@ -320,7 +324,13 @@ namespace <%=DALNameSpace%>.SqlClient
 			
 			//Stop Tracking Now that it has been updated and persisted.
 			if (DataRepository.Provider.EnableEntityTracking)
-				EntityManager.StopTracking(EntityLocator.ConstructKeyFromPkItems(typeof(<%= entityClassName %>), pkItems));
+			{
+				<% if (SourceTable.PrimaryKey.MemberColumns.Count > 0) { %>
+				string entityKey = EntityLocator.ConstructKeyFromPkItems(typeof(<%= entityClassName %>)
+					<% foreach (ColumnSchema col in SourceTable.PrimaryKey.MemberColumns){%>,<%=GetPrivateName(col.Name)%><%}%>);
+				EntityManager.StopTracking(entityKey);
+				<%}%>
+			}
 			
 			if (results == 0)
 			{
@@ -464,6 +474,9 @@ namespace <%=DALNameSpace%>.SqlClient
 		/// <param name="count">out. The number of rows that match this query.</param>
 		/// <remarks></remarks>
 		/// <returns>Returns a typed collection of <%=className%> objects.</returns>
+        /// <exception cref="System.Exception">The command could not be executed.</exception>
+        /// <exception cref="System.Data.DataException">The <paramref name="transactionManager"/> is not open.</exception>
+        /// <exception cref="System.Data.Common.DbException">The command could not be executed.</exception>
 		public override <%=collectionClassName%> GetAll(TransactionManager transactionManager, int start, int pageLength, out int count)
 		{
 			SqlDatabase database = new SqlDatabase(this._connectionString);
@@ -611,6 +624,9 @@ namespace <%=DALNameSpace%>.SqlClient
 		/// <param name="count">out parameter to get total records for query</param>
 		/// <remarks></remarks>
 		/// <returns>Returns a typed collection of <%=className%> objects.</returns>
+        /// <exception cref="System.Exception">The command could not be executed.</exception>
+        /// <exception cref="System.Data.DataException">The <paramref name="transactionManager"/> is not open.</exception>
+        /// <exception cref="System.Data.Common.DbException">The command could not be executed.</exception>
 		public override <%=collectionClassName%> GetBy<%=GetKeysName(fkeys[j].ForeignKeyMemberColumns)%>(TransactionManager transactionManager, <%= GetFunctionHeaderParameters(fkeys[j].ForeignKeyMemberColumns) %>, int start, int pageLength, out int count)
 		{
 			SqlDatabase database = new SqlDatabase(this._connectionString);
@@ -707,6 +723,9 @@ namespace <%=DALNameSpace%>.SqlClient
 		/// <param name="count">out parameter to get total records for query</param>
 		/// <returns>Returns an instance of the <see cref="<%=returnTypeForComment%>"/> class.</returns>
 		/// <remarks></remarks>
+        /// <exception cref="System.Exception">The command could not be executed.</exception>
+        /// <exception cref="System.Data.DataException">The <paramref name="transactionManager"/> is not open.</exception>
+        /// <exception cref="System.Data.Common.DbException">The command could not be executed.</exception>
 		public override <%=returnType%> GetBy<%=GetKeysName(indexes[j].MemberColumns)%>(TransactionManager transactionManager, <%= GetFunctionHeaderParameters(indexes[j].MemberColumns) %>, int start, int pageLength, out int count)
 		{
 			SqlDatabase database = new SqlDatabase(this._connectionString);
@@ -864,6 +883,9 @@ namespace <%=DALNameSpace%>.SqlClient
 		/// 	to refelect any changes made by the datasource. (ie: identity or computed columns)
 		/// </remarks>	
 		/// <returns>Returns true if operation is successful.</returns>
+        /// <exception cref="System.Exception">The command could not be executed.</exception>
+        /// <exception cref="System.Data.DataException">The <paramref name="transactionManager"/> is not open.</exception>
+        /// <exception cref="System.Data.Common.DbException">The command could not be executed.</exception>
 		public override bool Insert(TransactionManager transactionManager, <%=className%> entity)
 		{
 			SqlDatabase database = new SqlDatabase(this._connectionString);
@@ -951,6 +973,9 @@ namespace <%=DALNameSpace%>.SqlClient
 		/// 	to refelect any changes made by the datasource. (ie: identity or computed columns)
 		/// </remarks>
 		/// <returns>Returns true if operation is successful.</returns>
+        /// <exception cref="System.Exception">The command could not be executed.</exception>
+        /// <exception cref="System.Data.DataException">The <paramref name="transactionManager"/> is not open.</exception>
+        /// <exception cref="System.Data.Common.DbException">The command could not be executed.</exception>
 		public override bool Update(TransactionManager transactionManager, <%=className%> entity)
 		{
 			SqlDatabase database = new SqlDatabase(this._connectionString);

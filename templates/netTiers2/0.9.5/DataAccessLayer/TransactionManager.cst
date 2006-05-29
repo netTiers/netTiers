@@ -22,13 +22,15 @@ namespace <%=DALNameSpace%>
 	/// </summary>
 	public class TransactionManager
 	{
+		#region Fields
 		private Database database;
 		
-		private DbConnection connection ;
+		private DbConnection connection;
 		private DbTransaction transaction;
 
 		private string connectionString;
 		private bool _transactionOpen = false;	
+		#endregion
 
 		/// <summary>
 		///		Initializes a new instance of the <see cref="TransactionManager"/> class.
@@ -53,13 +55,16 @@ namespace <%=DALNameSpace%>
 		///		Gets or sets the configuration key for database service.
 		/// </summary>
 		/// <remark>Do not change during a transaction.</remark>
+        /// <exception cref="InvalidOperationException">
+		/// If an attempt to set when the connection is currently open.
+		/// </exception>
 		public string ConnectionString
 		{
 			get { return this.connectionString; }
 			set
 			{//make sure transaction is open
-				if (IsOpen)
-					throw new InvalidOperationException ("Database cannot be changed during a transaction");
+				if (this.IsOpen)
+					throw new InvalidOperationException("Database cannot be changed during a transaction");
 
                 this.connectionString = value;
                 this.database = new SqlDatabase(connectionString);
@@ -78,7 +83,7 @@ namespace <%=DALNameSpace%>
 
 
 		/// <summary>
-		///	Allows for objects to access the underlying <see cref="DbTransaction"/> object.
+		///	Gets the underlying <see cref="DbTransaction"/> object.
 		/// </summary>
 		public DbTransaction TransactionObject
 		{
@@ -97,6 +102,8 @@ namespace <%=DALNameSpace%>
 		/// <summary>
 		///		Begins a transaction.
 		/// </summary>
+		/// <remarks>The default <see cref="IsolationLevel"/> mode is ReadCommitted</remarks>
+        /// <exception cref="InvalidOperationException">If a transaction is already open.</exception>
 		public void BeginTransaction()
 		{
 			BeginTransaction(IsolationLevel.ReadCommitted);
@@ -106,7 +113,10 @@ namespace <%=DALNameSpace%>
 		/// <summary>
 		///		Begins a transaction.
 		/// </summary>
-		/// <param name="isolationLevel">The isolation level of the transaction</param>
+        /// <param name="isolationLevel">The <see cref="IsolationLevel"/> level of the transaction</param>
+        /// <exception cref="InvalidOperationException">If a transaction is already open.</exception>
+        /// <exception cref="DataException"></exception>
+        /// <exception cref="DbException"></exception>
 		public void BeginTransaction(IsolationLevel isolationLevel)
 		{
 			if(IsOpen)
@@ -119,21 +129,26 @@ namespace <%=DALNameSpace%>
 				this.transaction = this.connection.BeginTransaction(isolationLevel);
 				this._transactionOpen = true;
 			}
-			// in the event of an error, close the connection and destroy the transobject.
 			catch(DataException)
 			{
-				if (this.connection != null) this.connection.Close();
-				if (this.transaction != null) this.transaction.Dispose();
 				throw;
-				//this.connection.Close();
-				//this.transaction.Dispose();
-				//throw new DataException("Error while creating connection for transaction.", e);
-			}			
+			}
+            catch (DbException) // NET20 required
+            {
+                throw;
+            }
+			finally
+			{
+				// in the event of an error, close the connection and destroy the transobject.
+                if (this.connection != null) this.connection.Close();
+                if (this.transaction != null) this.transaction.Dispose();
+			}
 		}
 	
 		/// <summary>
 		///		Commit the transaction to the datasource.
 		/// </summary>
+        /// <exception cref="InvalidOperationException">If a transaction is not open.</exception>
 		public void Commit()
 		{
 			if(!this.IsOpen)
@@ -141,16 +156,23 @@ namespace <%=DALNameSpace%>
 				throw new InvalidOperationException("Transaction needs to begin first.");
 			}
 			
-			this.transaction.Commit();
-			//assuming the commit was sucessful.
-			this.connection.Close();
-			this.transaction.Dispose();
-			this._transactionOpen = false;
+			try
+			{
+				this.transaction.Commit(); // SqlClient could throw Exception or InvalidOperationException
+			}
+			finally
+			{
+				//assuming the commit was sucessful.
+				this.connection.Close();
+				this.transaction.Dispose();
+				this._transactionOpen = false;
+			}
 		}
 
 		/// <summary>
 		///	Rollback the transaction.
 		/// </summary>
+        /// <exception cref="InvalidOperationException">If a transaction is not open.</exception>
 		public void Rollback()
 		{	
 			if(!this.IsOpen)
@@ -158,11 +180,16 @@ namespace <%=DALNameSpace%>
 				throw new InvalidOperationException("Transaction needs to begin first.");			
 			}
 			
-			this.transaction.Rollback();
-			this.connection.Close();
-			this.transaction.Dispose();
-			this._transactionOpen = false;
+			try
+			{
+				this.transaction.Rollback(); // SqlClient could throw Exception or InvalidOperationException
+			}
+			finally
+			{
+				this.connection.Close();
+				this.transaction.Dispose();
+				this._transactionOpen = false;
+			}
 		}
-		
 	}
 }
