@@ -40,6 +40,7 @@
 	string partialClassInternalPrefix = UsePartialClass ? "" : "";
 	string constructorAccessModifier = ""; 
 	string constructorAccessModifierOnMembers = "";
+	string interfaceImplModifier = "";
 	string memberMethodEntity = ", " + className + " entity";
 	string memberMethodEntityCall = "entity";
 	
@@ -58,6 +59,7 @@
 
 		constructorAccessModifier = "public static";
 		constructorAccessModifierOnMembers = "public";
+		interfaceImplModifier = "public static";
 		IsDomainModel = true;
 		// To a typed component list
 		newCollectionClassName = string.Format("new {0} (", collectionClassName);
@@ -74,6 +76,7 @@
 		IsServiceLayer = true;
 		constructorAccessModifier = "public virtual";
 		constructorAccessModifierOnMembers  = constructorAccessModifier;
+		interfaceImplModifier = "public override";
 	}
 	
 	// Collection of all columns in the table.
@@ -368,6 +371,8 @@
 					newCollectionEnd = " as " + returnType;
 					isUnique = true;
 				}
+				
+				string returnTypeForComment = returnType.Replace("<", "{").Replace(">", "}");
 		%>
 
 		<% if (RenderOverload) {%>
@@ -377,7 +382,7 @@
 		<% for (int i = 0; i < indexes[j].MemberColumns.Count; i++) { %>
 		/// <param name="<%= GetPrivateName(indexes[j].MemberColumns[i].Name)%>"><%= indexes[j].MemberColumns[i].Description%></param>
 		<% } %>
-		/// <returns>Returns an instance of the <see cref="<%=returnType.Replace("<", "&lt;").Replace(">", "&gt;")%>"/> class.</returns>
+		/// <returns>Returns an instance of the <see cref="<%= returnTypeForComment %>"/> class.</returns>
 		[DataObjectMethod(DataObjectMethodType.Select)]
 		<%= constructorAccessModifier %> <%=returnType%> <%=partialClassInternalPrefix%>GetBy<%=GetKeysName(indexes[j].MemberColumns)%>(<%= GetFunctionHeaderParameters(indexes[j].MemberColumns) %>)
 		{
@@ -392,7 +397,7 @@
 		<% for (int i = 0; i < indexes[j].MemberColumns.Count; i++) { %>
 		/// <param name="<%= GetPrivateName(indexes[j].MemberColumns[i].Name)%>"><%= indexes[j].MemberColumns[i].Description%></param>
 		<% } %>
-		/// <returns>Returns an instance of the <see cref="<%=returnType.Replace("<", "{").Replace(">", "}")%>"/> class.</returns>
+		/// <returns>Returns an instance of the <see cref="<%= returnTypeForComment %>"/> class.</returns>
 		[DataObjectMethod(DataObjectMethodType.Select)]
 		<%= constructorAccessModifier %> <%=returnType%> <%=partialClassInternalPrefix%>GetBy<%=GetKeysName(indexes[j].MemberColumns)%>(TransactionManager transactionManager, <%= GetFunctionHeaderParameters(indexes[j].MemberColumns) %>)
 		{
@@ -409,7 +414,7 @@
 		/// <param name="start">Row number at which to start reading.</param>
 		/// <param name="pageLength">Page length of records you would like to retrieve</param>
 		/// <param name="totalCount">out parameter, number of total rows in given query.</param>
-		/// <returns>Returns an instance of the <see cref="<%=returnType.Replace("<", "{").Replace(">", "}")%>"/> class.</returns>
+		/// <returns>Returns an instance of the <see cref="<%= returnTypeForComment %>"/> class.</returns>
 		[DataObjectMethod(DataObjectMethodType.Select)]
 		<%= constructorAccessModifier %> <%=returnType%> <%=partialClassInternalPrefix%>GetBy<%=GetKeysName(indexes[j].MemberColumns)%>(<%= GetFunctionHeaderParameters(indexes[j].MemberColumns) %>, int start, int pageLength, out int totalCount)
 		{
@@ -426,7 +431,7 @@
 		/// <param name="start">Row number at which to start reading.</param>
 		/// <param name="pageLength">Page length of records you would like to retrieve</param>
 		/// <param name="totalCount">out parameter, number of total rows in given query.</param>
-		/// <returns>Returns an instance of the <see cref="<%=returnType.Replace("<", "{").Replace(">", "}")%>"/> class.</returns>
+		/// <returns>Returns an instance of the <see cref="<%= returnTypeForComment %>"/> class.</returns>
 		[DataObjectMethod(DataObjectMethodType.Select)]
 		<%= constructorAccessModifier %> <%=returnType%> <%=partialClassInternalPrefix%>GetBy<%=GetKeysName(indexes[j].MemberColumns)%>(TransactionManager transactionManager, <%= GetFunctionHeaderParameters(indexes[j].MemberColumns) %>, int start, int pageLength, out int totalCount)
 		{
@@ -437,7 +442,7 @@
 		
 		<% if (RenderImplementation) { %>
 		/// <summary>
-		/// 	Gets <%=returnType%> from the datasource based on the <%=indexes[j].Name%> index.
+		/// 	Gets <%= returnTypeForComment %> from the datasource based on the <%=indexes[j].Name%> index.
 		/// </summary>
 		/// <param name="transactionManager">a <c>TransactionManager</c>  that allows to set to the Isolation level for the query.</param>
 		<% for (int i = 0; i < indexes[j].MemberColumns.Count; i++) { %>
@@ -448,7 +453,7 @@
 		/// <param name="totalCount">out parameter, number of total rows in given query.</param>
 		/// <param name="connectionStringKey">A pre-configured key for usage of another dataprovider.</param>
 		/// <param name="dynamicConnectionString">A dynamic connection string to use for this particular instance.</param>
-		/// <returns>Returns an instance of the <see cref="<%=returnType.Replace("<", "{").Replace(">", "}")%>"/> class.</returns>
+		/// <returns>Returns an instance of the <see cref="<%= returnTypeForComment %>"/> class.</returns>
 		[DataObjectMethod(DataObjectMethodType.Select)]
 		<%= constructorAccessModifier %> <%=returnType%> <%=partialClassInternalPrefix%>GetBy<%=GetKeysName(indexes[j].MemberColumns)%>(TransactionManager transactionManager, <%= GetFunctionHeaderParameters(indexes[j].MemberColumns) %>, int start, int pageLength, out int totalCount, string connectionStringKey, string dynamicConnectionString)
 		{
@@ -567,7 +572,7 @@
 		/// <param name="connectionStringKey">A pre-configured key for usage of another dataprovider.</param>
 		/// <param name="dynamicConnectionString">A dynamic connection string to use for this particular instance.</param>
 		/// <returns>a <see cref="<%= collectionClassNameComment %>"/> </returns>
-		<%= constructorAccessModifier %> <%=collectionClassName %> <%=partialClassInternalPrefix%>GetAll(TransactionManager transactionManager, int start, int pageLength, out int totalCount, string connectionStringKey, string dynamicConnectionString) 
+		<%= interfaceImplModifier %> <%=collectionClassName %> <%=partialClassInternalPrefix%>GetAll(TransactionManager transactionManager, int start, int pageLength, out int totalCount, string connectionStringKey, string dynamicConnectionString) 
 		{
 			// throws security exception if not authorized
 			SecurityContext.IsAuthorized("GetAll");
@@ -722,7 +727,7 @@
 		/// <param name="dynamicConnectionString">A dynamic connection string to use for this particular instance.</param>
 		/// <remarks></remarks>
 		/// <returns>Returns a typed collection of <c><%= className %></c> objects.</returns>
-		<%= constructorAccessModifier %> <%=collectionClassName %> <%=partialClassInternalPrefix%>GetPaged(TransactionManager transactionManager, string whereClause,string orderBy, int start, int pageLength, out int totalCount, string connectionStringKey, string dynamicConnectionString)
+		<%= interfaceImplModifier %> <%=collectionClassName %> <%=partialClassInternalPrefix%>GetPaged(TransactionManager transactionManager, string whereClause,string orderBy, int start, int pageLength, out int totalCount, string connectionStringKey, string dynamicConnectionString)
 		{
 			// throws security exception if not authorized
 			SecurityContext.IsAuthorized("GetPaged");
@@ -848,7 +853,7 @@
 		/// <param name="dynamicConnectionString">A dynamic connection string to use for this particular instance.</param>
 		/// <remarks>Does Support Advanced Operations such as SubSelects.  See GetPaged for that functionality.</remarks>
 		/// <returns>Returns a typed collection <%=collectionClassNameComment %> of <c><%= className %></c> objects.</returns>
-		<%= constructorAccessModifier %> <%=collectionClassName%> Find(TransactionManager transactionManager, string whereClause, int start, int pageLength, out int totalCount, string connectionStringKey, string dynamicConnectionString)
+		<%= interfaceImplModifier %> <%=collectionClassName%> Find(TransactionManager transactionManager, string whereClause, int start, int pageLength, out int totalCount, string connectionStringKey, string dynamicConnectionString)
 		{
 			// throws security exception if not authorized
 			SecurityContext.IsAuthorized("Find");
@@ -909,6 +914,7 @@
 		%>
 		
 		#region <%=partialClassInternalPrefix%><%= action %>
+
 		#region <%= action %> Entity
 		<% if (RenderOverload) { %>
 		/// <summary>
@@ -1058,7 +1064,7 @@
         /// </code>
         /// </example>
 		[DataObjectMethod(DataObjectMethodType.<%= (action == "Save" ? "Update" : action) %>)]
-		<%= constructorAccessModifierOnMembers %> <%= returnEntity %> <%=partialClassInternalPrefix%><%= action %>(TransactionManager transactionManager, bool isBorrowedTransaction <%= memberMethodEntity %>, string connectionStringKey, string dynamicConnectionString)
+		<%= (action == "Insert" || action == "Update") ? interfaceImplModifier : constructorAccessModifierOnMembers %> <%= returnEntity %> <%=partialClassInternalPrefix%><%= action %>(TransactionManager transactionManager, bool isBorrowedTransaction <%= memberMethodEntity %>, string connectionStringKey, string dynamicConnectionString)
 		{
 			// throws security exception if not authorized
 			SecurityContext.IsAuthorized("<%= action %>");
@@ -1270,8 +1276,8 @@
 		}
 		<% } // end if implementation %>
 		#endregion <%= action %> Collection
+
 		<% } %>
-		
 		#endregion <%= action %> 
 		<%	}//end for loop %>
 
@@ -1711,9 +1717,11 @@
 					returnType = className;
 					isUnique = true;
 				}
+				
+				String returnTypeForComment = returnType.Replace("<", "&lt;").Replace(">", "&gt;");
 				%>		
 		/// <summary>
-		/// <%= constructorAccessModifier %>Deep Loads the requested <see cref="<%=returnType.Replace("<", "&lt;").Replace(">", "&gt;")%>"/> by the entity keys.  The criteria of the child 
+		/// <%= constructorAccessModifier %>Deep Loads the requested <see cref="<%= returnTypeForComment %>"/> by the entity keys.  The criteria of the child 
 		/// property collections only N Levels Deep based on the <see cref="DeepLoadType"/>.
 		/// </summary>
 	<% for (int i = 0; i < indexes[j].MemberColumns.Count; i++) { %>
@@ -1722,7 +1730,7 @@
 		/// <param name="deep">Boolean. A flag that indicates whether to recursively save all Property Collection that are descendants of this instance. If True, saves the complete object graph below this object. If False, saves this object only. </param>
 		/// <param name="deepLoadType">DeepLoadType Enumeration to Include/Exclude object property collections from Load.</param>
 		/// <param name="childTypes"><%= className %> Property Collection Type Array To Include or Exclude from Load</param>
-		/// <returns>Returns an instance of the <see cref="<%=returnType.Replace("<", "&lt;").Replace(">", "&gt;")%>"/> class and DeepLoaded.</returns>
+		/// <returns>Returns an instance of the <see cref="<%= returnTypeForComment %>"/> class and DeepLoaded.</returns>
 		[DataObjectMethod(DataObjectMethodType.Select)]
 		<%=constructorAccessModifier %> <%= returnType %> <%=partialClassInternalPrefix%>DeepLoadBy<%=GetKeysName(indexes[j].MemberColumns)%>(<%= GetFunctionHeaderParameters(indexes[j].MemberColumns) %>, bool deep, DeepLoadType deepLoadType, params System.Type[] childTypes)
 		{
@@ -1730,7 +1738,7 @@
 		}
 		
 		/// <summary>
-		/// <%= constructorAccessModifier %>Deep Loads the requested <see cref="<%=returnType.Replace("<", "&lt;").Replace(">", "&gt;")%>"/> by the entity keys.  The criteria of the child 
+		/// <%= constructorAccessModifier %>Deep Loads the requested <see cref="<%= returnTypeForComment %>"/> by the entity keys.  The criteria of the child 
 		/// property collections only N Levels Deep based on the <see cref="DeepLoadType"/>.
 		/// </summary>
 		/// <param name="transactionManager"><see cref="TransactionManager"/> object</param>
@@ -1740,7 +1748,7 @@
 		/// <param name="deep">Boolean. A flag that indicates whether to recursively save all Property Collection that are descendants of this instance. If True, saves the complete object graph below this object. If False, saves this object only. </param>
 		/// <param name="deepLoadType">DeepLoadType Enumeration to Include/Exclude object property collections from Load.</param>
 		/// <param name="childTypes"><%= className %> Property Collection Type Array To Include or Exclude from Load</param>
-		/// <returns>Returns an instance of the <see cref="<%=returnType.Replace("<", "&lt;").Replace(">", "&gt;")%>"/> class and DeepLoaded.</returns>
+		/// <returns>Returns an instance of the <see cref="<%= returnTypeForComment %>"/> class and DeepLoaded.</returns>
 		[DataObjectMethod(DataObjectMethodType.Select)]
 		<%=constructorAccessModifier %> <%= returnType %> <%=partialClassInternalPrefix%>DeepLoadBy<%=GetKeysName(indexes[j].MemberColumns)%>(TransactionManager transactionManager, <%= GetFunctionHeaderParameters(indexes[j].MemberColumns) %>, bool deep, DeepLoadType deepLoadType, params System.Type[] childTypes)
 		{
@@ -1748,7 +1756,7 @@
 		}
 		
 		/// <summary>
-		/// <%= constructorAccessModifier %>Deep Loads the requested <see cref="<%=returnType.Replace("<", "&lt;").Replace(">", "&gt;")%>"/> by the entity keys.  The criteria of the child 
+		/// <%= constructorAccessModifier %>Deep Loads the requested <see cref="<%= returnTypeForComment %>"/> by the entity keys.  The criteria of the child 
 		/// property collections only N Levels Deep based on the <see cref="DeepLoadType"/>.
 		/// </summary>
 		/// <param name="transactionManager"><see cref="TransactionManager"/> object</param>
@@ -1760,7 +1768,7 @@
 		/// <param name="childTypes"><%= className %> Property Collection Type Array To Include or Exclude from Load</param>
 		/// <param name="connectionStringKey">a pre-configured connection string to use.</param>
 		/// <param name="dynamicConnectionString">a runtime dynamic connection string to use (connectionStringKey is required if you supply a dynamicConnectionString).  If already added to the DataRepository.Connections, only the connectionStringKey is required.</param>
-		/// <returns>Returns an instance of the <see cref="<%=returnType.Replace("<", "&lt;").Replace(">", "&gt;")%>"/> class and DeepLoaded.</returns>
+		/// <returns>Returns an instance of the <see cref="<%= returnTypeForComment %>"/> class and DeepLoaded.</returns>
 		[DataObjectMethod(DataObjectMethodType.Select)]
 		<%=constructorAccessModifier %> <%= returnType %> <%=partialClassInternalPrefix%>DeepLoadBy<%=GetKeysName(indexes[j].MemberColumns)%>(TransactionManager transactionManager, <%= GetFunctionHeaderParameters(indexes[j].MemberColumns) %>, bool deep, DeepLoadType deepLoadType, string connectionStringKey, string dynamicConnectionString, params System.Type[] childTypes)
 		{
