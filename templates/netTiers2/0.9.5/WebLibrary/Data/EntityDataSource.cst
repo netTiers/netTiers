@@ -69,6 +69,10 @@ namespace <%= WebNameSpace %>.Data
 		/// </summary>
 		public static readonly String RecordCountParameterName = "RecordCount";
 		/// <summary>
+		/// The NullableRecordCount parameter name.
+		/// </summary>
+		public static readonly String NullableRecordCountParameterName = "NullableRecordCount";
+		/// <summary>
 		/// The SortExpression parameter name.
 		/// </summary>
 		public static readonly String SortExpressionParameterName = "SortExpression";
@@ -807,6 +811,8 @@ namespace <%= WebNameSpace %>.Data
 			private bool _isDeepLoaded;
 			private int _entityIndex = 0;
 			private int _prevEntityIndex = 0;
+			private int _entityCount = -1;
+			private int _prevEntityCount = -1;
 
 			private String _typeName;
 			private String _typeInstanceProperty;
@@ -1438,6 +1444,8 @@ namespace <%= WebNameSpace %>.Data
 
 					// reset EntityIndex property
 					EntityIndex = 0;
+					// reset _entityCount property
+					_entityCount = -1;
 
 					if ( entityId != null )
 					{
@@ -1481,6 +1489,11 @@ namespace <%= WebNameSpace %>.Data
 							_entityList = new Object[] { entity };
 						}
 					}
+				}
+				else if ( arguments != null && _entityCount > -1 )
+				{
+					// be sure to set the total row count if using the cached list
+					arguments.TotalRowCount = _entityCount;
 				}
 
 				return _entityList;
@@ -1685,6 +1698,17 @@ namespace <%= WebNameSpace %>.Data
 							countIndex++;
 						}
 					}
+					else if ( NullableRecordCountParameterName.Equals(param.Name) )
+					{
+						type = EntityUtil.GetType("System.Nullable`1[System.Int32]&");
+						countIndex = i;
+
+						// increment to account for TransactionManager argument
+						if ( EnableTransaction )
+						{
+							countIndex++;
+						}
+					}
 
 					args[i] = value;
 					types[i] = type;
@@ -1699,6 +1723,7 @@ namespace <%= WebNameSpace %>.Data
 				{
 					int count = (int) args[countIndex];
 					arguments.TotalRowCount = count;
+					_entityCount = count;
 				}
 
 				return entity;
@@ -1709,6 +1734,7 @@ namespace <%= WebNameSpace %>.Data
 				_prevEntityId = _owner.EntityId;
 				_prevEntityIndex = _entityIndex;
 				_prevEntityList = _entityList;
+				_prevEntityCount = _entityCount;
 			}
 
 			private void ResetPreviousValues()
@@ -1716,10 +1742,12 @@ namespace <%= WebNameSpace %>.Data
 				_owner.UpdateEntityId(_prevEntityId);
 				_entityList = _prevEntityList;
 				_entityIndex = _prevEntityIndex;
+				_entityCount = _prevEntityCount;
 
 				_prevEntityId = null;
 				_prevEntityList = null;
 				_prevEntityIndex = 0;
+				_prevEntityCount = -1;
 			}
 
 			internal String[] GetInsertDateTimeNames()
