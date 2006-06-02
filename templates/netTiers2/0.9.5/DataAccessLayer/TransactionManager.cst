@@ -129,19 +129,13 @@ namespace <%=DALNameSpace%>
 				this.transaction = this.connection.BeginTransaction(isolationLevel);
 				this._transactionOpen = true;
 			}
-			catch(DataException)
-			{
-				throw;
-			}
-            catch (DbException) // NET20 required
-            {
-                throw;
-            }
-			finally
+			catch ( Exception )
 			{
 				// in the event of an error, close the connection and destroy the transobject.
                 if (this.connection != null) this.connection.Close();
                 if (this.transaction != null) this.transaction.Dispose();
+				this._transactionOpen = false;
+				throw;
 			}
 		}
 	
