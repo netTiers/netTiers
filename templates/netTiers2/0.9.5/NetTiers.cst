@@ -96,6 +96,7 @@
 
 
 <script runat="template">
+
 	private string _outputDirectory = String.Empty;
 	private string _WebServiceOutputPath = String.Empty; 
 	
@@ -828,6 +829,7 @@ public void Go()
 	this.vsnetVersion = VSNetVersion.v2005;
 	
 	_CurrentPhase = "Initialization";
+	DebugWriteLine("Current Phase: "+_CurrentPhase);
 	
 	// some settings are only targeting framework 2
 	if (vsnetVersion != VSNetVersion.v2005)
@@ -837,7 +839,7 @@ public void Go()
 	}
 	
 	MoM.Templates.ComponentPatternType ComponentPattern = IncludeComponentLayer;
-	System.Diagnostics.Debug.Write(ComponentPattern.ToString());
+	DebugWriteLine("ComponentPattern: "+ComponentPattern.ToString());
 	
 	// Build Namespaces
 	if (BusinessLogicLayerNameSpace == null) BusinessLogicLayerNameSpace = string.Empty;
@@ -923,10 +925,12 @@ public void Go()
 		}		
 	}
 	
-	System.Diagnostics.Debug.WriteLine(string.Format("sdkInstallRoot: {0}", sdkInstallRoot));
+	DebugWriteLine(string.Format("sdkInstallRoot: {0}", sdkInstallRoot));
 	
 	//Validate necessary parameters
 	_CurrentPhase = "Parameter Validation";
+	DebugWriteLine("Current Phase: "+_CurrentPhase);
+	
 	XmlElement parametersNode = AddFileNode(initNode, "Validating parameters.");
 	
 	//Check to see if path has been specified
@@ -944,13 +948,13 @@ public void Go()
 	// load all the sub templates
 	XmlElement templatesNode = AddFileNode(initNode, "Loading templates.");
 	_CurrentPhase = "Templates compilation";
+	DebugWriteLine("Current Phase: "+_CurrentPhase);
+
 	LoadTemplates();
 	AddExecutionTime(templatesNode);
 	
-	
 	_CurrentPhase = "Check datasource";
-	
-	
+	DebugWriteLine("Current Phase: "+_CurrentPhase);
 	
 	// ----------------------------------------------------------------------------
 	// Build the correct list of used tables (filtering tables without primary key)
@@ -991,12 +995,14 @@ public void Go()
 			{
 				AddMessageNode(initNode, 1, "Table " + _tmp[i].Name + " does not have a primary key, it will not be generated.");
 				_sourceTables.Remove(_tmp[i]);
+				DebugWriteLine("Remove table (no PK): "+_tmp[i].Name);
 			}
 		}
-		catch(ApplicationException)
+		catch(ApplicationException e)
 		{
 			AddMessageNode(initNode, 1, "Table " + _tmp[i].Name + " does not have a primary key, it will not be generated.");
 			_sourceTables.Remove(_tmp[i]);
+			DebugWriteLine("ApplicationException: "+e.Message);
 		}
 	}
 	
@@ -1025,11 +1031,12 @@ public void Go()
 			//Debugger.Break();
 			AddMessageNode(initNode, 1, "Table " + _enums[i].Name + " is not eligible for enum generation: " + e.Message);
 			_enumTables.Remove(_enums[i]);
+			DebugWriteLine("ApplicationException: "+e.Message);
 		}
 	}
-
 	
 	_CurrentPhase = "CREATING FOLDERS AND COPYING DEPENDENCIES ";
+	DebugWriteLine("Current Phase: "+_CurrentPhase);
 	
 	//----------------------------------------------------------------------------------------------------------------------------------------------
 	// CREATING FOLDERS AND COPYING DEPENDENCIES.
@@ -1172,6 +1179,7 @@ public void Go()
 	
 	
 	_CurrentPhase = "Generating global file ";
+	DebugWriteLine("Current Phase: "+_CurrentPhase);
 	
 	//------------------------
 	// start code generation
@@ -2730,7 +2738,6 @@ public void Go()
 	{
 		TableSchema SourceTable = _sourceTables[x];
 		_CurrentPhase = string.Format("Generating {0} files", SourceTable.Name);
-	
 		XmlElement tableNode = AddTableNode(SourceTable);
 				
 	
@@ -3356,8 +3363,8 @@ private string IncrementBuildVersion(string assemblyInfoFilename)
 	}
 	return "1.0.0.0";
 }
-
 </script>
 <%
+	Verbose = false; // change this to true if you want verbose output in this template
 	this.Go();
 %>

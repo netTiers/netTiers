@@ -74,6 +74,26 @@ namespace MoM.Templates
 			return new String('\t', n);
 		}
 		
+		#region Diagnostics
+		
+		/// <summary>
+		/// Gets or sets a value that indicates if output during generation should
+		/// be verbose or not.
+		/// </summary>
+		protected bool Verbose { get { return verbose; } set { verbose = value; } }
+		private bool verbose = false;
+
+		
+		/// <summary>
+		/// Write a message to the debug log.
+		/// </summary>
+		protected void DebugWriteLine(string msg)
+		{
+			if (Verbose && !string.IsNullOrEmpty(msg))
+				System.Diagnostics.Debug.WriteLine(msg);
+		}
+		#endregion
+		
 		
 		#region "9. Code Style public properties"
 		
