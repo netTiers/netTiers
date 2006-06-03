@@ -214,6 +214,39 @@ namespace <%=NameSpace%>
 				
 		#endregion Constructors
 		
+		<% if (IncludeWCFDataAttributes ) { %>
+		
+		#region DataContract serialization
+		
+		bool _deserializing = false;
+		
+		/// <summary>
+		/// Called before deserializing the type.
+		/// </summary>
+		[OnDeserializingAttribute]
+		private void Initialize_BeforeDeserializing(StreamingContext context)
+		{
+			this._deserializing = true;
+		
+			this.entityData = new <%=structName%>();
+			this.backupData = null;
+			
+			AddValidationRules();
+		}
+		
+		/// <summary>
+		/// Called after deserializing the type.
+		/// </summary>
+		[OnDeserializedAttribute ]
+		private void Initialize_Deserialized(StreamingContext context)
+		{
+			this._deserializing = false;
+		}
+				
+		#endregion
+		
+		<% } %>
+		
 		#region Events trigger
 		/// <summary>
 		/// Raises the <see cref="ColumnChanging" /> event.
@@ -317,7 +350,7 @@ namespace <%=NameSpace%>
 				<% if ( cols[x].IsPrimaryKeyMember ) { %>
 				this.EntityId.<%= GetPropertyName(cols[x]) %> = value;
 				<% } %>
-				if (this.EntityState == EntityState.Unchanged)
+				if (<% if (IncludeWCFDataAttributes ) { %> !this._deserializing && <% } %>this.EntityState == EntityState.Unchanged)
 				{
 					this.EntityState = EntityState.Changed;
 				}
@@ -1155,7 +1188,7 @@ protected static string MANY_TO_MANY = @"
 		///	Holds a collection of {3} objects
 		///	which are related to this object through the junction table {2}
 		/// </summary>	
-		[BindableAttribute()]
+		[BindableAttribute(){4}]
 		public {1} {0}
 		{{
 			get {{ return entityData.{0}; }}
@@ -1171,7 +1204,7 @@ protected static string ONE_TO_ONE = @"
 		///	Holds a {0} object
 		///	which is related to this object through the relation {1}
 		/// </summary>
-		[BindableAttribute()]
+		[BindableAttribute(){2}]
 		public {0} {0}
 		{{
 			get {{ return entityData.{0}; }}
@@ -1187,7 +1220,7 @@ protected static string ONE_TO_MANY = @"
 		///	Holds a collection of {2} objects
 		///	which are related to this object through the relation {1}
 		/// </summary>	
-		[BindableAttribute()]
+		[BindableAttribute(){4}]
 		public {0} {3}
 		{{
 			get {{ return entityData.{3}; }}
@@ -1213,7 +1246,9 @@ private void WriteRelationshipPropertyString() {
 								GetClassName(item.SecondaryTable), 
 								GetClassName(item.PkIdxName)
 					};
-					item.PropertyString = string.Format(ONE_TO_ONE, oneToOneParams);
+					item.PropertyString = string.Format(ONE_TO_ONE
+						, oneToOneParams
+						, IncludeWCFDataAttributes ? ", DataMember" : string.Empty);
 					break;
 					
 				///One To Many, Many To One
@@ -1224,6 +1259,7 @@ private void WriteRelationshipPropertyString() {
 							, item.PkIdxName
 							, GetClassName(item.SecondaryTable)
 							, GetCollectionPropertyName(item.SecondaryTable)
+							, IncludeWCFDataAttributes ? ", DataMember" : string.Empty
 					};
 				item.PropertyString = string.Format(ONE_TO_MANY, oneToManyParams);
 				break;
@@ -1232,10 +1268,11 @@ private void WriteRelationshipPropertyString() {
 				case (int)RelationshipType.ManyToMany:
 					object[] manyToManyParams = {
 							//GetCollectionPropertyName(item.CleanName) + "_From_" + GetClassName(item.JunctionTable), 
-							item.CollectionName,
-							GetCollectionClassName(item.SecondaryTable),
-							item.JunctionTable,
-							item.CleanName
+							item.CollectionName
+							,	GetCollectionClassName(item.SecondaryTable)
+							,	item.JunctionTable
+							, item.CleanName
+							, IncludeWCFDataAttributes ? ", DataMember" : string.Empty
 					};
 					item.PropertyString = string.Format(MANY_TO_MANY, manyToManyParams);
 					break;
