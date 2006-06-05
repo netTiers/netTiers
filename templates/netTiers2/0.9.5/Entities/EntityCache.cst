@@ -24,9 +24,9 @@ namespace <%=NameSpace%>
     /// </summary>
     public static class EntityCache
     {
-        private static CacheManagerFactory cacheManagerFactory;
-        private static CacheManager cacheManager;
-        private static readonly string cacheManagerKey = "<%=NameSpace%>.EntityCache";
+        private static volatile CacheManagerFactory cacheManagerFactory;
+        private static volatile CacheManager cacheManager;
+        private static string cacheManagerKey = "<%=NameSpace%>.EntityCache";
 		private static object syncObject = new object(); 
 		private static string configurationFile;
         
@@ -66,7 +66,7 @@ namespace <%=NameSpace%>
             settings.BackingStores.Add(new CacheStorageData("inMemoryWithEncryptor", typeof(NullBackingStore), "dpapiEncryptor"));
             settings.EncryptionProviders.Add(new SymmetricStorageEncryptionProviderData("dpapiEncryptor", "dpapi1"));
             settings.CacheManagers.Add(
-                new CacheManagerData("InMemoryPersistenceWithNullEncryption",
+                new CacheManagerData(cacheManagerKey,
                         10000, //Polling time
                         1000, //Items to store
                         100, //Items to remove 
@@ -102,23 +102,35 @@ namespace <%=NameSpace%>
         public static CacheManagerFactory CacheManagerFactory
         {
             get {
-            	    //TODO: Ensure that configurable default configuration takes precedence.
-                    if (cacheManagerFactory == null)
+            	    if (cacheManagerFactory == null)
 					{
-						IConfigurationSource configurationSource = null;
 						lock(syncObject)
 						{
+							IConfigurationSource configurationSource = null;
 							//From specified config
 							if (ConfigurationFile != null && System.IO.File.Exists(ConfigurationFile))
 							{
 								 configurationSource = new FileConfigurationSource(ConfigurationFile);
+                                 cacheManagerFactory = new CacheManagerFactory(configurationSource);
 							}
-							else 
-							{
-								configurationSource = GenerateConfiguration();
+							else
+                            {
+                                try
+                                {
+                                    //Try reading from default Configuration Source web/app config
+                                    IConfigurationSource userConfiguration = new SystemConfigurationSource();
+                                    cacheManagerFactory = new CacheManagerFactory(userConfiguration);
+									
+									//Test if CacheManagerKey is Configured
+                                    cacheManagerFactory.Create(CacheManagerKey);
+                                }
+                                catch(System.Configuration.ConfigurationErrorsException)
+                                {
+                                    // Currently not configured, generate configuration
+                                    configurationSource = GenerateConfiguration();
+                                    cacheManagerFactory = new CacheManagerFactory(configurationSource);
+                                }
 							}
-                        	
-							cacheManagerFactory = new CacheManagerFactory(configurationSource);
 						}
 					}
                     return cacheManagerFactory; 
@@ -126,7 +138,27 @@ namespace <%=NameSpace%>
             set { cacheManagerFactory = value; }
         }
 		#endregion 
-	
+		
+		#region CacheManagerKey
+		/// <summary>
+	    /// Assigns the Default CacheManagerKey To Be Used.
+	    /// </summary>
+	    public static string CacheManagerKey
+	    {
+	        get
+	        {
+	            return cacheManagerKey;
+	        }
+	        set
+	        {
+	            lock(syncObject)
+                {
+	                cacheManagerKey = value;
+                }
+	        }
+	    }
+		#endregion 
+		
         #region RemoveItem
         /// <summary>
         /// Removes the item.
