@@ -20,11 +20,13 @@ GO
 </xsl:template>
 
 <xsl:template match="procedure">
+	
+<xsl:if test="/root/database[@includeDrop='true']">
 -- Drop the <xsl:value-of select="@owner"/>.<xsl:value-of select="@name"/> procedure
 IF EXISTS (SELECT * FROM dbo.sysobjects WHERE id = object_id(N'<xsl:value-of select="@owner"/>.<xsl:value-of select="@name"/>') AND OBJECTPROPERTY(id, N'IsProcedure') = 1)
 DROP PROCEDURE <xsl:value-of select="@owner"/>.<xsl:value-of select="@name"/>
 GO
-
+</xsl:if>
 <xsl:value-of select="comment"/>
 
 CREATE PROCEDURE <xsl:value-of select="@owner"/>.<xsl:value-of select="@name"/>
