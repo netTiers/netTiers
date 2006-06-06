@@ -36,7 +36,7 @@
 <%@ Property Name="IncludeUnitTest" Type="MoM.Templates.UnitTestStyle" Default="None" Category="02. Framework Generation - Optional" Description="Indicates type of Unit tests to be generated." %>
 <%@ Property Name="IncludeComponentLayer" Type="MoM.Templates.ComponentPatternType" Category="02. Framework Generation - Optional" Description="The pattern type to implement in the Component Layer." Default="None" %>
 <%@ Property Name="IncludeWCFDataAttributes" Type="System.Boolean" Default="False" Category="02. Framework Generation - Optional" Description="Indicates if the WCF attributes, [DataContract] and [DataMember], should be included on the entity classes." %>
-<%@ Property Name="CustomCodeFolderName" Type="System.String" Category="02. Framework Generation - Optional" Description="If specified, indicates the name of a folder that can contains custom classes to dynamically add to the entity project." Default="App_Code" %>
+<%@ Property Name="CustomCodeFolderName" Type="System.String" Category="02. Framework Generation - Optional" Description="If specified, indicates the name of a folder that can contains custom classes to dynamically add to each project." Default="App_Code" %>
 
 <%-- 3. Namespaces Category --%>
 <%@ Property Name="BusinessLogicLayerNameSpace" Type="System.String" Category="03. Namespaces - Required" Description="The sub namespace that is added to the root namespace for the entities." Default="Entities" Optional="False" %>
@@ -855,7 +855,7 @@ public void Go()
 	
 	// Build output pathes
 	string rootPathBLL = OutputDirectory + "\\" + BLLNameSpace;
-	string rootPathCustomCode = rootPathBLL + "\\" + (CustomCodeFolderName != null ? CustomCodeFolderName : string.Empty);
+	//string rootPathCustomCode = rootPathBLL + "\\" + (CustomCodeFolderName != null ? CustomCodeFolderName : string.Empty);
 	string rootPathComponents = OutputDirectory + "\\" +  ComponentsNameSpace;
 	string rootPathDAL = OutputDirectory + "\\" + DALNameSpace;
 	string rootPathDALSql = OutputDirectory + "\\" + DALSqlNameSpace;
@@ -868,6 +868,7 @@ public void Go()
 	string specialPath = vsnetIntegration == VSNetIntegration.SeparatedProjects ? ((IncludeUnitTest != MoM.Templates.UnitTestStyle.None) ? rootPathUT : rootPathDAL) : OutputDirectory;
 	string rootPathWebAdmin = WebAdminOutputPath;
 	
+	bool HasCustomCode = (CustomCodeFolderName != null && CustomCodeFolderName.Trim().Length > 0 );
 	if (ProcedurePrefix == null)	ProcedurePrefix = string.Empty;
 	if (WebServiceUrl == null) WebServiceUrl = string.Empty;
 	
@@ -1049,20 +1050,23 @@ public void Go()
 		SafeCreateDirectory(rootPathBLL);
 		SafeCreateDirectory(rootPathBLL + "\\Views");	
 		SafeCreateDirectory(rootPathBLL + "\\Validation");
+
+		if ( HasCustomCode )
+		{
+			SafeCreateDirectory(rootPathBLL + "\\" + CustomCodeFolderName);
+		}
 	}
 		
 	if (ComponentPattern != MoM.Templates.ComponentPatternType.None)
 	{
 		SafeCreateDirectory(rootPathComponents);
 		SafeCreateDirectory(rootPathComponents + "\\Processors");
+
+		if ( HasCustomCode )
+		{
+			SafeCreateDirectory(rootPathComponents + "\\" + CustomCodeFolderName);
+		}
 	}
-	
-	if (CustomCodeFolderName != null && CustomCodeFolderName.Length > 0)
-	{
-		if(!Directory.Exists(rootPathCustomCode))
-			SafeCreateDirectory(rootPathCustomCode);
-	}
-	
 	
 	if (GenerateDataAccessLayer)
 	{
@@ -1076,6 +1080,12 @@ public void Go()
 				
 		//SafeCreateDirectory(rootPathDAL + "\\SqlClient");
 		//SafeCreateDirectory(rootPathDAL + "\\SqlClient\\Views");
+
+		if ( HasCustomCode )
+		{
+			SafeCreateDirectory(rootPathDAL + "\\" + CustomCodeFolderName);
+			SafeCreateDirectory(rootPathDALSql + "\\" + CustomCodeFolderName);
+		}
 		
 		// ws implementation
 		if (GenerateWebservice)
@@ -1094,6 +1104,11 @@ public void Go()
 	{
 		SafeCreateDirectory(rootPathUT);
 		SafeCreateDirectory(rootPathUT + "\\Views");
+
+		if ( HasCustomCode )
+		{
+			SafeCreateDirectory(rootPathUT + "\\" + CustomCodeFolderName);
+		}
 	}
 	
 	if (GenerateSql)
@@ -1105,6 +1120,11 @@ public void Go()
 	{
 		SafeCreateDirectory(rootPathWS);
 		SafeCreateDirectory(rootPathWS + "\\Bin");
+
+		if ( HasCustomCode )
+		{
+			SafeCreateDirectory(rootPathWS + "\\" + CustomCodeFolderName);
+		}
 		
 		// TODO check if the virtual directory exists, if not create it.
 	}	
@@ -1131,6 +1151,11 @@ public void Go()
 		SafeCreateDirectory(rootPathWebLib + "\\Data");
 		SafeCreateDirectory(rootPathWebLib + "\\DataSourceControls");
 		SafeCreateDirectory(rootPathWebLib + "\\UI");
+
+		if ( HasCustomCode )
+		{
+			SafeCreateDirectory(rootPathWebLib + "\\" + CustomCodeFolderName);
+		}
 	}
 		
 	//----------------------------------------------------------------------------------------------------------------------------------------------
@@ -1416,12 +1441,16 @@ public void Go()
 			this.GetTemplate("IComponentService.cst").SetProperty("NameSpace", ComponentsNameSpace);
 			this.GetTemplate("IComponentService.cst").SetProperty("BLLNameSpace", BLLNameSpace);
 			this.RenderToFile("IComponentService.cst", rootPathComponents + "\\IComponentService.cs", true);
-	
-			XmlElement iServiceBaseNode = AddFileNode(commonNode, "ServiceBase.cst.cs");
-			this.GetTemplate("ServiceBase.cst").SetProperty("NameSpace", ComponentsNameSpace);
-			this.GetTemplate("ServiceBase.cst").SetProperty("BLLNameSpace", BLLNameSpace);
-			this.GetTemplate("ServiceBase.cst").SetProperty("DALNameSpace", DALNameSpace);
-			this.RenderToFile("ServiceBase.cst", rootPathComponents + "\\ServiceBase.cs", true);
+
+			// only generate stub once
+			if ( !File.Exists(rootPathComponents + "\\ServiceBase.cs") )
+			{
+				XmlElement iServiceBaseNode = AddFileNode(commonNode, "ServiceBase.cst.cs");
+				this.GetTemplate("ServiceBase.cst").SetProperty("NameSpace", ComponentsNameSpace);
+				this.GetTemplate("ServiceBase.cst").SetProperty("BLLNameSpace", BLLNameSpace);
+				this.GetTemplate("ServiceBase.cst").SetProperty("DALNameSpace", DALNameSpace);
+				this.RenderToFile("ServiceBase.cst", rootPathComponents + "\\ServiceBase.cs", true);
+			}
 			
 			XmlElement iServiceBaseCoreNode = AddFileNode(commonNode, "ServiceBaseCore.cst.cs");
 			this.GetTemplate("ServiceBaseCore.cst").SetProperty("NameSpace", ComponentsNameSpace);
@@ -2022,30 +2051,44 @@ public void Go()
 	//----------------------------------------------------------------------------------------------------------------------------------------------
 	//-- Generating VS.Net projects
 	//----------------------------------------------------------------------------------------------------------------------------------------------
-					
-				
+
+	// BEGIN: common project properties
+	this.GetTemplate(projectTemplate).SetProperty("SourceDatabase", SourceDatabase);
+	this.GetTemplate(projectTemplate).SetProperty("SourceTables", _sourceTables);
+	this.GetTemplate(projectTemplate).SetProperty("SourceViews", _sourceViews);
+	this.GetTemplate(projectTemplate).SetProperty("EnumTables", _enumTables);
+
+	this.GetTemplate(projectTemplate).SetProperty("SignAssembly", SignAssembly);
+	this.GetTemplate(projectTemplate).SetProperty("OutputDirectory", OutputDirectory);
+	this.GetTemplate(projectTemplate).SetProperty("CustomCodeFolderName", CustomCodeFolderName);
+	this.GetTemplate(projectTemplate).SetProperty("WebServiceUrl", WebServiceUrl);
+	this.GetTemplate(projectTemplate).SetProperty("rootPathWS", rootPathWS);
+
+	this.GetTemplate(projectTemplate).SetProperty("BLLGuid", bllGuid);
+	this.GetTemplate(projectTemplate).SetProperty("DALGuid", dalGuid);
+	this.GetTemplate(projectTemplate).SetProperty("DALSqlGuid", DALSqlGuid);
+	this.GetTemplate(projectTemplate).SetProperty("DALWSGuid", DALWSGuid);
+	this.GetTemplate(projectTemplate).SetProperty("UTGuid", utGuid);
+	this.GetTemplate(projectTemplate).SetProperty("WSGuid", wsGuid);
+	this.GetTemplate(projectTemplate).SetProperty("WebLibGuid", webLibGuid);
+	this.GetTemplate(projectTemplate).SetProperty("ComponentsGuid", componentGuid);
+	this.GetTemplate(projectTemplate).SetProperty("ComponentPattern", ComponentPattern);
+
+	this.GetTemplate(projectTemplate).SetProperty("NameSpace", NameSpace);
+	this.GetTemplate(projectTemplate).SetProperty("BLLNameSpace", BLLNameSpace);
+	this.GetTemplate(projectTemplate).SetProperty("DALNameSpace", DALNameSpace);
+	this.GetTemplate(projectTemplate).SetProperty("ComponentLayerNameSpace", ComponentsNameSpace);
+	this.GetTemplate(projectTemplate).SetProperty("DALSqlNameSpace", DALSqlNameSpace);
+	this.GetTemplate(projectTemplate).SetProperty("DALWSNameSpace", DALWSNameSpace);
+	this.GetTemplate(projectTemplate).SetProperty("WebLibNameSpace", WebLibNameSpace);
+	this.GetTemplate(projectTemplate).SetProperty("UTNameSpace", UTNameSpace);
+	this.GetTemplate(projectTemplate).SetProperty("WSNameSpace", WSNameSpace);
+	// END: common project properties
+	
 	// Entities project
 	if (ComponentPattern != MoM.Templates.ComponentPatternType.None) 
 	{
 		AddFileNode(commonNode, ComponentLayerNameSpace + ".csproj");
-		
-		this.GetTemplate(projectTemplate).SetProperty("SourceDatabase", SourceDatabase);
-		this.GetTemplate(projectTemplate).SetProperty("SourceTables", _sourceTables);
-		this.GetTemplate(projectTemplate).SetProperty("SourceViews", _sourceViews);
-		this.GetTemplate(projectTemplate).SetProperty("EnumTables", _enumTables);
-
-		this.GetTemplate(projectTemplate).SetProperty("SignAssembly", SignAssembly);
-
-		this.GetTemplate(projectTemplate).SetProperty("BLLGuid", bllGuid);
-		this.GetTemplate(projectTemplate).SetProperty("DALGuid", dalGuid);
-		this.GetTemplate(projectTemplate).SetProperty("DALSqlGuid", DALSqlGuid);
-		this.GetTemplate(projectTemplate).SetProperty("DALWSGuid", DALWSGuid);
-		this.GetTemplate(projectTemplate).SetProperty("UTGuid", utGuid);
-		this.GetTemplate(projectTemplate).SetProperty("WSGuid", wsGuid);
-		this.GetTemplate(projectTemplate).SetProperty("WebLibGuid", webLibGuid);
-		this.GetTemplate(projectTemplate).SetProperty("ComponentsGuid", componentGuid);
-		this.GetTemplate(projectTemplate).SetProperty("ComponentLayerNameSpace", ComponentsNameSpace);
-		this.GetTemplate(projectTemplate).SetProperty("ComponentPattern", ComponentPattern);
 		
 		this.GetTemplate(projectTemplate).SetProperty("IncludeBll", false);
 		this.GetTemplate(projectTemplate).SetProperty("IncludeDALBase", false);	
@@ -2058,20 +2101,6 @@ public void Go()
 		this.GetTemplate(projectTemplate).SetProperty("IncludeWCFDataAttributes", false);
 		this.GetTemplate(projectTemplate).SetProperty("IncludeDesignTimeSupport", false);
 											
-		this.GetTemplate(projectTemplate).SetProperty("WebServiceUrl", WebServiceUrl);
-		this.GetTemplate(projectTemplate).SetProperty("rootPathWS", rootPathWS);
-		
-		this.GetTemplate(projectTemplate).SetProperty("NameSpace", NameSpace);
-		this.GetTemplate(projectTemplate).SetProperty("DALNameSpace", DALNameSpace);
-		this.GetTemplate(projectTemplate).SetProperty("BLLNameSpace", BLLNameSpace);
-		this.GetTemplate(projectTemplate).SetProperty("DALSqlNameSpace", DALSqlNameSpace);
-		
-		this.GetTemplate(projectTemplate).SetProperty("DALWSNameSpace", DALWSNameSpace);
-		this.GetTemplate(projectTemplate).SetProperty("WebLibNameSpace", WebLibNameSpace);
-		this.GetTemplate(projectTemplate).SetProperty("UTNameSpace", UTNameSpace);
-		this.GetTemplate(projectTemplate).SetProperty("WSNameSpace", WSNameSpace);
-								
-		this.GetTemplate(projectTemplate).SetProperty("OutputDirectory", OutputDirectory);
 		this.RenderToFile(projectTemplate, rootPathComponents + "\\" + ComponentsNameSpace + ".csproj", true);
 	}
 
@@ -2081,25 +2110,6 @@ public void Go()
 	{
 		AddFileNode(commonNode, BLLNameSpace + ".csproj");
 		
-		this.GetTemplate(projectTemplate).SetProperty("SourceDatabase", SourceDatabase);
-		this.GetTemplate(projectTemplate).SetProperty("SourceTables", _sourceTables);
-		this.GetTemplate(projectTemplate).SetProperty("SourceViews", _sourceViews);
-		this.GetTemplate(projectTemplate).SetProperty("EnumTables", _enumTables);
-
-		this.GetTemplate(projectTemplate).SetProperty("SignAssembly", SignAssembly);
-		
-		this.GetTemplate(projectTemplate).SetProperty("CustomCodeFolderName", CustomCodeFolderName);
-
-		this.GetTemplate(projectTemplate).SetProperty("BLLGuid", bllGuid);
-		this.GetTemplate(projectTemplate).SetProperty("DALGuid", dalGuid);
-		this.GetTemplate(projectTemplate).SetProperty("DALSqlGuid", DALSqlGuid);
-		this.GetTemplate(projectTemplate).SetProperty("DALWSGuid", DALWSGuid);
-		this.GetTemplate(projectTemplate).SetProperty("UTGuid", utGuid);
-		this.GetTemplate(projectTemplate).SetProperty("WSGuid", wsGuid);
-		this.GetTemplate(projectTemplate).SetProperty("ComponentGuid", componentGuid);
-		this.GetTemplate(projectTemplate).SetProperty("WebLibGuid", webLibGuid);
-		this.GetTemplate(projectTemplate).SetProperty("ComponentsGuid", componentGuid);
-								
 		this.GetTemplate(projectTemplate).SetProperty("IncludeBll", true);
 		this.GetTemplate(projectTemplate).SetProperty("IncludeDALBase", false);	
 		this.GetTemplate(projectTemplate).SetProperty("IncludeSqlClient", false);	
@@ -2110,22 +2120,6 @@ public void Go()
 		this.GetTemplate(projectTemplate).SetProperty("IncludeUnitTest", MoM.Templates.UnitTestStyle.None);
 		this.GetTemplate(projectTemplate).SetProperty("IncludeWCFDataAttributes", IncludeWCFDataAttributes);
 		this.GetTemplate(projectTemplate).SetProperty("IncludeDesignTimeSupport", false);
-											
-		this.GetTemplate(projectTemplate).SetProperty("WebServiceUrl", WebServiceUrl);
-		this.GetTemplate(projectTemplate).SetProperty("rootPathWS", rootPathWS);
-		
-		this.GetTemplate(projectTemplate).SetProperty("NameSpace", NameSpace);
-		this.GetTemplate(projectTemplate).SetProperty("DALNameSpace", DALNameSpace);
-		this.GetTemplate(projectTemplate).SetProperty("BLLNameSpace", BLLNameSpace);
-		this.GetTemplate(projectTemplate).SetProperty("DALSqlNameSpace", DALSqlNameSpace);
-		this.GetTemplate(projectTemplate).SetProperty("DALWSNameSpace", DALWSNameSpace);
-		this.GetTemplate(projectTemplate).SetProperty("WebLibNameSpace", WebLibNameSpace);
-		this.GetTemplate(projectTemplate).SetProperty("UTNameSpace", UTNameSpace);
-		this.GetTemplate(projectTemplate).SetProperty("WSNameSpace", WSNameSpace);
-		this.GetTemplate(projectTemplate).SetProperty("ComponentLayerNameSpace", ComponentsNameSpace);
-								
-		this.GetTemplate(projectTemplate).SetProperty("OutputDirectory", OutputDirectory);
-				
 				
 		//this.GetTemplate(projectTemplate).RenderToFile(rootPathBLL + "\\" + BLLNameSpace + ".csproj", true);
 		this.RenderToFile(projectTemplate, rootPathBLL + "\\" + BLLNameSpace + ".csproj", true);
@@ -2136,71 +2130,24 @@ public void Go()
 	{
 		// dal base
 		AddFileNode(commonNode, DALNameSpace + "." + DataAccessLayerNameSpace + ".csproj");
-		
-		this.GetTemplate(projectTemplate).SetProperty("SourceDatabase", SourceDatabase);
-		this.GetTemplate(projectTemplate).SetProperty("SourceTables", _sourceTables);
-		this.GetTemplate(projectTemplate).SetProperty("SourceViews", _sourceViews);
-		this.GetTemplate(projectTemplate).SetProperty("EnumTables", _enumTables);
-					
-		this.GetTemplate(projectTemplate).SetProperty("BLLGuid", bllGuid);
-		this.GetTemplate(projectTemplate).SetProperty("DALGuid", dalGuid);
-		this.GetTemplate(projectTemplate).SetProperty("DALSqlGuid", DALSqlGuid);
-		this.GetTemplate(projectTemplate).SetProperty("DALWSGuid", DALWSGuid);
-		this.GetTemplate(projectTemplate).SetProperty("UTGuid", utGuid);
-		this.GetTemplate(projectTemplate).SetProperty("WSGuid", wsGuid);
-		this.GetTemplate(projectTemplate).SetProperty("WebLibGuid", webLibGuid);
-		this.GetTemplate(projectTemplate).SetProperty("ComponentsGuid", componentGuid);
-					
+
 		this.GetTemplate(projectTemplate).SetProperty("IncludeBll", false);
 		this.GetTemplate(projectTemplate).SetProperty("IncludeDALBase", true);	
 		this.GetTemplate(projectTemplate).SetProperty("IncludeSqlClient", false);			
 		this.GetTemplate(projectTemplate).SetProperty("IncludeWebservice", false);
 		this.GetTemplate(projectTemplate).SetProperty("IncludeWebserviceClient", false);
 		this.GetTemplate(projectTemplate).SetProperty("IncludeWebLibrary", false);
-		this.GetTemplate(projectTemplate).SetProperty("ComponentsGuid", componentGuid);
-		this.GetTemplate(projectTemplate).SetProperty("ComponentLayerNameSpace", ComponentsNameSpace);
 		this.GetTemplate(projectTemplate).SetProperty("IncludeComponents", false);
 		this.GetTemplate(projectTemplate).SetProperty("IncludeUnitTest", MoM.Templates.UnitTestStyle.None);			
 		this.GetTemplate(projectTemplate).SetProperty("IncludeWCFDataAttributes", false);
 		this.GetTemplate(projectTemplate).SetProperty("IncludeDesignTimeSupport", IncludeDesignTimeSupport);
-								
-		this.GetTemplate(projectTemplate).SetProperty("WebServiceUrl", WebServiceUrl);
-		this.GetTemplate(projectTemplate).SetProperty("rootPathWS", rootPathWS);
-		
-		this.GetTemplate(projectTemplate).SetProperty("NameSpace", NameSpace);
-		this.GetTemplate(projectTemplate).SetProperty("DALNameSpace", DALNameSpace);
-		this.GetTemplate(projectTemplate).SetProperty("BLLNameSpace", BLLNameSpace);
-		this.GetTemplate(projectTemplate).SetProperty("DALSqlNameSpace", DALSqlNameSpace);
-		this.GetTemplate(projectTemplate).SetProperty("DALWSNameSpace", DALWSNameSpace);
-		this.GetTemplate(projectTemplate).SetProperty("WebLibNameSpace", WebLibNameSpace);
-		this.GetTemplate(projectTemplate).SetProperty("UTNameSpace", UTNameSpace);
-		this.GetTemplate(projectTemplate).SetProperty("WSNameSpace", WSNameSpace);
-		this.GetTemplate(projectTemplate).SetProperty("ComponentLayerNameSpace", ComponentsNameSpace);
-								
-		this.GetTemplate(projectTemplate).SetProperty("OutputDirectory", OutputDirectory);
-						
+
 		//this.GetTemplate(projectTemplate).RenderToFile(rootPathDAL + "\\" + DALNameSpace + ".csproj", true);
 		this.RenderToFile(projectTemplate, rootPathDAL + "\\" + DALNameSpace + ".csproj", true);
 		
-		
 		// DAL sqlclient
 		AddFileNode(commonNode, BLLNameSpace + "."+DataAccessLayerNameSpace+".SqlClient.csproj");
-		
-		this.GetTemplate(projectTemplate).SetProperty("SourceDatabase", SourceDatabase);
-		this.GetTemplate(projectTemplate).SetProperty("SourceTables", _sourceTables);
-		this.GetTemplate(projectTemplate).SetProperty("SourceViews", _sourceViews);
-		this.GetTemplate(projectTemplate).SetProperty("EnumTables", _enumTables);
-		
-		
-		this.GetTemplate(projectTemplate).SetProperty("BLLGuid", bllGuid);
-		this.GetTemplate(projectTemplate).SetProperty("DALGuid", dalGuid);
-		this.GetTemplate(projectTemplate).SetProperty("DALSqlGuid", DALSqlGuid);
-		this.GetTemplate(projectTemplate).SetProperty("DALWSGuid", DALWSGuid);
-		this.GetTemplate(projectTemplate).SetProperty("UTGuid", utGuid);
-		this.GetTemplate(projectTemplate).SetProperty("WSGuid", wsGuid);
-		this.GetTemplate(projectTemplate).SetProperty("WebLibGuid", webLibGuid);
-		this.GetTemplate(projectTemplate).SetProperty("ComponentsGuid", componentGuid);
-					
+
 		this.GetTemplate(projectTemplate).SetProperty("IncludeBll", false);
 		this.GetTemplate(projectTemplate).SetProperty("IncludeDALBase", false);	
 		this.GetTemplate(projectTemplate).SetProperty("IncludeSqlClient", true);			
@@ -2211,27 +2158,10 @@ public void Go()
 		this.GetTemplate(projectTemplate).SetProperty("IncludeUnitTest", MoM.Templates.UnitTestStyle.None);			
 		this.GetTemplate(projectTemplate).SetProperty("IncludeWCFDataAttributes", false);
 		this.GetTemplate(projectTemplate).SetProperty("IncludeDesignTimeSupport", false);
-								
-		this.GetTemplate(projectTemplate).SetProperty("WebServiceUrl", WebServiceUrl);
-		this.GetTemplate(projectTemplate).SetProperty("rootPathWS", rootPathWS);
-		
-		this.GetTemplate(projectTemplate).SetProperty("NameSpace", NameSpace);
-		this.GetTemplate(projectTemplate).SetProperty("DALNameSpace", DALNameSpace);
-		this.GetTemplate(projectTemplate).SetProperty("BLLNameSpace", BLLNameSpace);
-		this.GetTemplate(projectTemplate).SetProperty("DALSqlNameSpace", DALSqlNameSpace);
-		this.GetTemplate(projectTemplate).SetProperty("DALWSNameSpace", DALWSNameSpace);
-		this.GetTemplate(projectTemplate).SetProperty("WebLibNameSpace", WebLibNameSpace);
-		this.GetTemplate(projectTemplate).SetProperty("UTNameSpace", UTNameSpace);
-		this.GetTemplate(projectTemplate).SetProperty("WSNameSpace", WSNameSpace);
-		this.GetTemplate(projectTemplate).SetProperty("ComponentLayerNameSpace", ComponentsNameSpace);
-		
-		this.GetTemplate(projectTemplate).SetProperty("OutputDirectory", OutputDirectory);
-				
-		
+
 		//this.GetTemplate(projectTemplate).RenderToFile(rootPathDALSql + "\\" + DALSqlNameSpace + ".csproj", true);
 		this.RenderToFile(projectTemplate, rootPathDALSql + "\\" + DALSqlNameSpace + ".csproj", true);
 		
-	
 		/*--------------------
 			WebServiceClient
 		-----------------------*/
@@ -2242,20 +2172,6 @@ public void Go()
 			{
 				AddFileNode(commonNode, rootPathWS + "\\" + NameSpace + "." + DataAccessLayerNameSpace + ".WebService.csproj");
 				
-				this.GetTemplate(projectTemplate).SetProperty("SourceDatabase", SourceDatabase);
-				this.GetTemplate(projectTemplate).SetProperty("SourceTables", _sourceTables);
-				this.GetTemplate(projectTemplate).SetProperty("SourceViews", _sourceViews);
-				this.GetTemplate(projectTemplate).SetProperty("EnumTables", _enumTables);
-								
-				this.GetTemplate(projectTemplate).SetProperty("BLLGuid", bllGuid);
-				this.GetTemplate(projectTemplate).SetProperty("DALGuid", dalGuid);
-				this.GetTemplate(projectTemplate).SetProperty("DALSqlGuid", DALSqlGuid);
-				this.GetTemplate(projectTemplate).SetProperty("DALWSGuid", DALWSGuid);
-				this.GetTemplate(projectTemplate).SetProperty("UTGuid", utGuid);
-				this.GetTemplate(projectTemplate).SetProperty("WSGuid", wsGuid);
-				this.GetTemplate(projectTemplate).SetProperty("WebLibGuid", webLibGuid);
-				this.GetTemplate(projectTemplate).SetProperty("ComponentsGuid", componentGuid);
-									
 				this.GetTemplate(projectTemplate).SetProperty("IncludeBll", false);
 				this.GetTemplate(projectTemplate).SetProperty("IncludeDALBase", false);	
 				this.GetTemplate(projectTemplate).SetProperty("IncludeSqlClient", false);			
@@ -2266,44 +2182,14 @@ public void Go()
 				this.GetTemplate(projectTemplate).SetProperty("IncludeUnitTest", MoM.Templates.UnitTestStyle.None);			
 				this.GetTemplate(projectTemplate).SetProperty("IncludeWCFDataAttributes", false);
 				this.GetTemplate(projectTemplate).SetProperty("IncludeDesignTimeSupport", false);
-															
-				this.GetTemplate(projectTemplate).SetProperty("WebServiceUrl", WebServiceUrl);
-				this.GetTemplate(projectTemplate).SetProperty("rootPathWS", rootPathWS);
-				
-				this.GetTemplate(projectTemplate).SetProperty("NameSpace", NameSpace);
-				this.GetTemplate(projectTemplate).SetProperty("DALNameSpace", DALNameSpace);
-				this.GetTemplate(projectTemplate).SetProperty("BLLNameSpace", BLLNameSpace);
-				this.GetTemplate(projectTemplate).SetProperty("DALSqlNameSpace", DALSqlNameSpace);
-				this.GetTemplate(projectTemplate).SetProperty("DALWSNameSpace", DALWSNameSpace);
-				this.GetTemplate(projectTemplate).SetProperty("WebLibNameSpace", WebLibNameSpace);
-				this.GetTemplate(projectTemplate).SetProperty("UTNameSpace", UTNameSpace);
-				this.GetTemplate(projectTemplate).SetProperty("WSNameSpace", WSNameSpace);
-				this.GetTemplate(projectTemplate).SetProperty("ComponentLayerNameSpace", ComponentsNameSpace);
-										
-				this.GetTemplate(projectTemplate).SetProperty("OutputDirectory", OutputDirectory);
-										
+
 				//this.GetTemplate(projectTemplate).RenderToFile(rootPathWS + "\\" + NameSpace + "." + DataAccessLayerNameSpace + ".WebService.csproj", true);
 				this.RenderToFile(projectTemplate, rootPathWS + "\\" + NameSpace + "." + DataAccessLayerNameSpace + ".WebService.csproj", true);
 			}	
 			
 			// webservice Client
 			AddFileNode(commonNode, rootPathDALWS + "\\" + NameSpace + "." + DataAccessLayerNameSpace + ".WebServiceClient.csproj");
-			
-			this.GetTemplate(projectTemplate).SetProperty("SourceDatabase", SourceDatabase);
-			this.GetTemplate(projectTemplate).SetProperty("SourceTables", _sourceTables);
-			this.GetTemplate(projectTemplate).SetProperty("SourceViews", _sourceViews);
-			this.GetTemplate(projectTemplate).SetProperty("EnumTables", _enumTables);
-			
-			
-			this.GetTemplate(projectTemplate).SetProperty("BLLGuid", bllGuid);
-			this.GetTemplate(projectTemplate).SetProperty("DALGuid", dalGuid);
-			this.GetTemplate(projectTemplate).SetProperty("DALSqlGuid", DALSqlGuid);
-			this.GetTemplate(projectTemplate).SetProperty("DALWSGuid", DALWSGuid);
-			this.GetTemplate(projectTemplate).SetProperty("UTGuid", utGuid);
-			this.GetTemplate(projectTemplate).SetProperty("WSGuid", wsGuid);
-			this.GetTemplate(projectTemplate).SetProperty("WebLibGuid", webLibGuid);
-			this.GetTemplate(projectTemplate).SetProperty("ComponentsGuid", componentGuid);
-			
+
 			this.GetTemplate(projectTemplate).SetProperty("IncludeBll", false);
 			this.GetTemplate(projectTemplate).SetProperty("IncludeDALBase", false);	
 			this.GetTemplate(projectTemplate).SetProperty("IncludeSqlClient", false);			
@@ -2314,23 +2200,7 @@ public void Go()
 			this.GetTemplate(projectTemplate).SetProperty("IncludeUnitTest", MoM.Templates.UnitTestStyle.None);			
 			this.GetTemplate(projectTemplate).SetProperty("IncludeWCFDataAttributes", false);
 			this.GetTemplate(projectTemplate).SetProperty("IncludeDesignTimeSupport", false);
-									
-			this.GetTemplate(projectTemplate).SetProperty("WebServiceUrl", WebServiceUrl);
-			this.GetTemplate(projectTemplate).SetProperty("rootPathWS", rootPathWS);
-			
-			this.GetTemplate(projectTemplate).SetProperty("NameSpace", NameSpace);
-			this.GetTemplate(projectTemplate).SetProperty("BLLNameSpace", BLLNameSpace);
-			this.GetTemplate(projectTemplate).SetProperty("DALNameSpace", DALNameSpace);
-			this.GetTemplate(projectTemplate).SetProperty("DALSqlNameSpace", DALSqlNameSpace);
-			this.GetTemplate(projectTemplate).SetProperty("DALWSNameSpace", DALWSNameSpace);
-			this.GetTemplate(projectTemplate).SetProperty("WebLibNameSpace", WebLibNameSpace);
-			this.GetTemplate(projectTemplate).SetProperty("UTNameSpace", UTNameSpace);
-			this.GetTemplate(projectTemplate).SetProperty("WSNameSpace", WSNameSpace);
-			this.GetTemplate(projectTemplate).SetProperty("ComponentLayerNameSpace", ComponentsNameSpace);
-			
-			this.GetTemplate(projectTemplate).SetProperty("OutputDirectory", OutputDirectory);
-						
-			
+
 			//this.GetTemplate(projectTemplate).RenderToFile(rootPathDALWS + "\\" + DALWSNameSpace + ".csproj", true);
 			this.RenderToFile(projectTemplate, rootPathDALWS + "\\" + DALWSNameSpace + ".csproj", true);
 		}
@@ -2340,22 +2210,7 @@ public void Go()
 	if (GenerateWebLibrary)
 	{
 		AddFileNode(commonNode, WebLibNameSpace + ".csproj");
-		
-		this.GetTemplate(projectTemplate).SetProperty("SourceDatabase", SourceDatabase);
-		this.GetTemplate(projectTemplate).SetProperty("SourceTables", _sourceTables);
-		this.GetTemplate(projectTemplate).SetProperty("SourceViews", _sourceViews);
-		this.GetTemplate(projectTemplate).SetProperty("EnumTables", _enumTables);
-					
-		this.GetTemplate(projectTemplate).SetProperty("BLLGuid", bllGuid);
-		this.GetTemplate(projectTemplate).SetProperty("DALGuid", dalGuid);
-		this.GetTemplate(projectTemplate).SetProperty("DALSqlGuid", DALSqlGuid);
-		this.GetTemplate(projectTemplate).SetProperty("DALWSGuid", DALWSGuid);
-		this.GetTemplate(projectTemplate).SetProperty("UTGuid", utGuid);
-		this.GetTemplate(projectTemplate).SetProperty("WSGuid", wsGuid);
-		this.GetTemplate(projectTemplate).SetProperty("WebLibGuid", webLibGuid);
-		this.GetTemplate(projectTemplate).SetProperty("ComponentsGuid", componentGuid);
-		this.GetTemplate(projectTemplate).SetProperty("ComponentLayerNameSpace", ComponentsNameSpace);
-				
+
 		this.GetTemplate(projectTemplate).SetProperty("IncludeBll", false);
 		this.GetTemplate(projectTemplate).SetProperty("IncludeDALBase", false);	
 		this.GetTemplate(projectTemplate).SetProperty("IncludeSqlClient", false);			
@@ -2366,22 +2221,7 @@ public void Go()
 		this.GetTemplate(projectTemplate).SetProperty("IncludeUnitTest", MoM.Templates.UnitTestStyle.None);
 		this.GetTemplate(projectTemplate).SetProperty("IncludeWCFDataAttributes", false);
 		this.GetTemplate(projectTemplate).SetProperty("IncludeDesignTimeSupport", false);
-					
-		this.GetTemplate(projectTemplate).SetProperty("WebServiceUrl", WebServiceUrl);
-		this.GetTemplate(projectTemplate).SetProperty("rootPathWS", rootPathWS);
-		
-		this.GetTemplate(projectTemplate).SetProperty("NameSpace", NameSpace);
-		this.GetTemplate(projectTemplate).SetProperty("BLLNameSpace", BLLNameSpace);
-		this.GetTemplate(projectTemplate).SetProperty("DALNameSpace", DALNameSpace);
-		this.GetTemplate(projectTemplate).SetProperty("DALSqlNameSpace", DALSqlNameSpace);
-		this.GetTemplate(projectTemplate).SetProperty("DALWSNameSpace", DALWSNameSpace);
-		this.GetTemplate(projectTemplate).SetProperty("WebLibNameSpace", WebLibNameSpace);
-		this.GetTemplate(projectTemplate).SetProperty("UTNameSpace", UTNameSpace);
-		this.GetTemplate(projectTemplate).SetProperty("WSNameSpace", WSNameSpace);
-		this.GetTemplate(projectTemplate).SetProperty("ComponentLayerNameSpace", ComponentsNameSpace);
-					
-		this.GetTemplate(projectTemplate).SetProperty("OutputDirectory", OutputDirectory);
-												
+
 		this.RenderToFile(projectTemplate, rootPathWebLib + "\\" + WebLibNameSpace + ".csproj", true);
 	}
 	
@@ -2389,21 +2229,7 @@ public void Go()
 	if (IncludeUnitTest != MoM.Templates.UnitTestStyle.None) // && !File.Exists(rootPathDAL + "\\" + NameSpace + ".DataAccessLayer.csproj"))
 	{
 		AddFileNode(commonNode, NameSpace + "." + UnitTestsNameSpace + ".csproj");
-		
-		this.GetTemplate(projectTemplate).SetProperty("SourceDatabase", SourceDatabase);
-		this.GetTemplate(projectTemplate).SetProperty("SourceTables", _sourceTables);
-		this.GetTemplate(projectTemplate).SetProperty("SourceViews", _sourceViews);
-		this.GetTemplate(projectTemplate).SetProperty("EnumTables", _enumTables);
-					
-		this.GetTemplate(projectTemplate).SetProperty("BLLGuid", bllGuid);
-		this.GetTemplate(projectTemplate).SetProperty("DALGuid", dalGuid);
-		this.GetTemplate(projectTemplate).SetProperty("DALSqlGuid", DALSqlGuid);
-		this.GetTemplate(projectTemplate).SetProperty("DALWSGuid", DALWSGuid);
-		this.GetTemplate(projectTemplate).SetProperty("UTGuid", utGuid);
-		this.GetTemplate(projectTemplate).SetProperty("WSGuid", wsGuid);
-		this.GetTemplate(projectTemplate).SetProperty("WebLibGuid", webLibGuid);
-		this.GetTemplate(projectTemplate).SetProperty("ComponentsGuid", componentGuid);
-				
+
 		this.GetTemplate(projectTemplate).SetProperty("IncludeBll", false);
 		this.GetTemplate(projectTemplate).SetProperty("IncludeDALBase", false);	
 		this.GetTemplate(projectTemplate).SetProperty("IncludeSqlClient", false);			
@@ -2414,22 +2240,7 @@ public void Go()
 		this.GetTemplate(projectTemplate).SetProperty("IncludeUnitTest", IncludeUnitTest);
 		this.GetTemplate(projectTemplate).SetProperty("IncludeWCFDataAttributes", false);
 		this.GetTemplate(projectTemplate).SetProperty("IncludeDesignTimeSupport", false);
-					
-		this.GetTemplate(projectTemplate).SetProperty("WebServiceUrl", WebServiceUrl);
-		this.GetTemplate(projectTemplate).SetProperty("rootPathWS", rootPathWS);
-		
-		this.GetTemplate(projectTemplate).SetProperty("NameSpace", NameSpace);
-		this.GetTemplate(projectTemplate).SetProperty("BLLNameSpace", BLLNameSpace);
-		this.GetTemplate(projectTemplate).SetProperty("DALNameSpace", DALNameSpace);
-		this.GetTemplate(projectTemplate).SetProperty("DALSqlNameSpace", DALSqlNameSpace);
-		this.GetTemplate(projectTemplate).SetProperty("DALWSNameSpace", DALWSNameSpace);
-		this.GetTemplate(projectTemplate).SetProperty("WebLibNameSpace", WebLibNameSpace);
-		this.GetTemplate(projectTemplate).SetProperty("UTNameSpace", UTNameSpace);
-		this.GetTemplate(projectTemplate).SetProperty("WSNameSpace", WSNameSpace);
-		this.GetTemplate(projectTemplate).SetProperty("ComponentLayerNameSpace", ComponentsNameSpace);
-					
-		this.GetTemplate(projectTemplate).SetProperty("OutputDirectory", OutputDirectory);
-												
+
 		//this.GetTemplate(projectTemplate).RenderToFile(rootPathUT + "\\" + UTNameSpace + ".csproj", true);
 		this.RenderToFile(projectTemplate, rootPathUT + "\\" + UTNameSpace + ".csproj", true);
 	}
@@ -2774,13 +2585,41 @@ public void Go()
 			this.GetTemplate("EntityInstanceBase.generated.cst").SetProperty("IncludeWCFDataAttributes", IncludeWCFDataAttributes);
 			
 			this.RenderToFile("EntityInstanceBase.generated.cst", rootPathBLL + "\\" + GetPartialClassName(GetAbstractClassName(SourceTable.Name)) + ".cs", true);
-			
 			AddExecutionTime(boBaseNode);
+			
+			//----------------------------------------------------------------------------------------------------------------------------------------------
+			//-- Entity file - generated only once
+			//----------------------------------------------------------------------------------------------------------------------------------------------
+			if (!File.Exists(rootPathBLL + "\\" + GetClassName(SourceTable.Name) + ".cs")) // || OverwritePartialClassStub)
+			{
+				XmlElement boNode = AddFileNode(tableNode, GetClassName(SourceTable.Name) + ".cs");
+								
+				this.GetTemplate("EntityInstance.cst").SetProperty("SourceTable", SourceTable);
+				this.GetTemplate("EntityInstance.cst").SetProperty("NameSpace", BLLNameSpace);
+				
+				this.RenderToFile("EntityInstance.cst", rootPathBLL + "\\" + GetClassName(SourceTable.Name) + ".cs", false);
+				AddExecutionTime(boNode);
+			}
+
+			//----------------------------------------------------------------------------------------------------------------------------------------------
+			//-- Business Object Enum
+			//----------------------------------------------------------------------------------------------------------------------------------------------
+			if (_enumTables.Contains(SourceTable.Owner, SourceTable.Name))
+			{
+				XmlElement boNode = AddFileNode(tableNode, GetEnumName(SourceTable.Name) + ".cs");
+								
+				this.GetTemplate("Enum.cst").SetProperty("SourceTable", SourceTable);
+				this.GetTemplate("Enum.cst").SetProperty("NameSpace", BLLNameSpace);
+				
+				this.RenderToFile("Enum.cst", rootPathBLL + "\\" + GetEnumName(SourceTable.Name) + ".cs", true);
+				AddExecutionTime(boNode);
+			}
+			
 			///Components
 			//XmlElement coNode = AddFileNode(tableNode, GetPartialClassName(GetClassName(SourceTable.Name)) + ".cs");
 			if (ComponentPattern == MoM.Templates.ComponentPatternType.DomainModel)
 			{
-				if (!File.Exists(rootPathBLL + "\\" + GetClassName(SourceTable.Name) + ".cs")) // || OverwritePartialClassStub)
+				if (!File.Exists(rootPathComponents + "\\" + GetClassName(SourceTable.Name) + ".cs")) // || OverwritePartialClassStub)
 				{
 					XmlElement coBaseNode = AddFileNode(tableNode,  GetClassName(SourceTable.Name) + ".cs");
 					
@@ -2799,8 +2638,7 @@ public void Go()
 					this.GetTemplate("Component.cst").SetProperty("ProcedurePrefix", ProcedurePrefix.Replace(" ", ""));
 		
 					this.RenderToFile("Component.cst", rootPathComponents + "\\" + GetClassName(SourceTable.Name) + ".cs", true);
-				AddExecutionTime(coBaseNode);
-				
+					AddExecutionTime(coBaseNode);
 				}
 	
 				///Components
@@ -2826,7 +2664,7 @@ public void Go()
 			}
 			else if (ComponentPattern == MoM.Templates.ComponentPatternType.ServiceLayer)
 			{
-				if (!File.Exists(rootPathBLL + "\\" + GetServiceClassName(SourceTable.Name) + ".cs")) // || OverwritePartialClassStub)
+				if (!File.Exists(rootPathComponents + "\\" + GetServiceClassName(SourceTable.Name) + ".cs")) // || OverwritePartialClassStub)
 				{
 					///Components
 					XmlElement coBaseNode = AddFileNode(tableNode,  GetServiceClassName(SourceTable.Name) + ".cs");
@@ -2871,42 +2709,7 @@ public void Go()
 	
 				AddExecutionTime(coBaseNode2);
 			}
-			
-			
-			//----------------------------------------------------------------------------------------------------------------------------------------------
-			//-- Entity file - generated only once
-			//----------------------------------------------------------------------------------------------------------------------------------------------
-			if (!File.Exists(rootPathBLL + "\\" + GetClassName(SourceTable.Name) + ".cs")) // || OverwritePartialClassStub)
-			{
-				XmlElement boNode = AddFileNode(tableNode, GetClassName(SourceTable.Name) + ".cs");
-								
-				this.GetTemplate("EntityInstance.cst").SetProperty("SourceTable", SourceTable);
-				this.GetTemplate("EntityInstance.cst").SetProperty("NameSpace", BLLNameSpace);
-				
-				this.RenderToFile("EntityInstance.cst", rootPathBLL + "\\" + GetClassName(SourceTable.Name) + ".cs", false);
-				
-				AddExecutionTime(boNode);
-			}
-			
-			
-			//----------------------------------------------------------------------------------------------------------------------------------------------
-			//-- Business Object Enum
-			//----------------------------------------------------------------------------------------------------------------------------------------------
-			
-			if (_enumTables.Contains(SourceTable.Owner, SourceTable.Name))
-			{
-				XmlElement boNode = AddFileNode(tableNode, GetEnumName(SourceTable.Name) + ".cs");
-								
-				this.GetTemplate("Enum.cst").SetProperty("SourceTable", SourceTable);
-				this.GetTemplate("Enum.cst").SetProperty("NameSpace", BLLNameSpace);
-				
-				this.RenderToFile("Enum.cst", rootPathBLL + "\\" + GetEnumName(SourceTable.Name) + ".cs", true);
-				AddExecutionTime(boNode);
-			}
-						
 		}
-		
-		
 		
 		if (GenerateDataAccessLayer)
 		{

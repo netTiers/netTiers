@@ -204,7 +204,7 @@
 					
 				getbyKeys.Add(GetKeysName(fkeys[j].ForeignKeyMemberColumns));
 		%>	
-		<% if (RenderOverload) { %>
+		<% if (RenderOverload || RenderImplementation) { %>
 		/// <summary>
 		/// 	<%= constructorAccessModifier %> method that Gets rows in a <see cref="<%=collectionClassNameComment %>" /> from the datasource based on the <%=fkeys[j].Name%> key.
 		///		<%=fkeys[j].Name%> Description: <%=fkeys[j].Description%>
@@ -375,7 +375,7 @@
 				string returnTypeForComment = returnType.Replace("<", "{").Replace(">", "}");
 		%>
 
-		<% if (RenderOverload) {%>
+		<% if (RenderOverload || RenderImplementation) {%>
 		/// <summary>
 		///  method that Gets rows in a <see cref="<%=collectionClassNameComment %>" /> from the datasource based on the primary key <%=indexes[j].Name%> index.
 		/// </summary>
@@ -904,10 +904,10 @@
 				actions.Add("Insert");
 			if (IncludeUpdate)
 				actions.Add("Update");
-			if (IncludeDelete)
-				actions.Add("Delete");
 			if (IncludeSave)
 				actions.Add("Save");
+			if (IncludeDelete)
+				actions.Add("Delete");
 			
 			foreach(string action in actions)
 			{
@@ -1296,7 +1296,7 @@
 		}
 		<% } %>
 		
-		<% if (RenderOverload) {%>
+		<% if (RenderOverload || RenderImplementation) {%>
 		/// <summary>
 		/// 	Deletes a row from the DataSource based on the PK'S <%= GetFunctionHeaderParameters(keys) %>
 		/// </summary>
@@ -1391,7 +1391,7 @@
 						string functionname = GetManyToManyName(junctionTableKey, GetCleanName(junctionTable.Name));
 		%>
 		#region GetBy<%=functionname%>
-		<% if (RenderOverload) { %>
+		<% if (RenderOverload || RenderImplementation) { %>
 		/// <summary>
 		///		Gets <%=primaryTable.Name%> objects from the datasource by <%=junctionTableKey.ForeignKeyMemberColumns[0].Name%> in the
 		///		<%=junctionTable.Name%> table. Table <%=primaryTable.Name%> is related to table <%=secondaryTable.Name%>
@@ -1591,7 +1591,7 @@
 		%>
 		
 		#region <%=command.Name%>
-		<% if (RenderOverload) { %>
+		<% if (RenderOverload || RenderImplementation) { %>
 		/// <summary>
 		///	This method wrap the '<%=command.Name%>' stored procedure. 
 		/// </summary><%=TransformStoredProcedureInputsToMethodComments(command.InputParameters) + TransformStoredProcedureOutputsToMethodComments(command.AllOutputParameters)%>
@@ -1687,8 +1687,7 @@
 		<% // Going to require knowing the foreign key indexes in order to do deep loading.
 		if (IncludeGetListByFK) { %>  
 		#region DeepLoad
-		
-		<% if (RenderOverload) { %>
+		<% if (RenderOverload || RenderImplementation) { %>
 		<% if (IncludeGetListByIX) { %>	
 		#region Deep Load By Entity Keys
 		<%	if (getbyKeys != null)
@@ -1789,8 +1788,8 @@
 		
 		<%	}//end Deep Load By IX %>
 		#endregion 
-		<%  } // end if render overload%>
-		
+
+		<%  } // end if render overload %>
 		#region Deep Load By Entity
 		<% if (RenderOverload) { %>
 		/// <summary>
@@ -1890,7 +1889,7 @@
 		/// <param name="dynamicConnectionString">a runtime dynamic connection string to use (connectionStringKey is required if you supply a dynamicConnectionString).  If already added to the DataRepository.Connections, only the connectionStringKey is required.</param>
 		/// <param name="childTypes"><%= className %> Property Collection Type Array To Include or Exclude from Load</param>
 		[DataObjectMethod(DataObjectMethodType.Select)]
-		<%= constructorAccessModifier %> void <%=partialClassInternalPrefix%>DeepLoad(TransactionManager transactionManager, <%= className %> entity, bool deep, DeepLoadType deepLoadType, string connectionStringKey, string dynamicConnectionString, params System.Type[] childTypes)
+		<%= interfaceImplModifier %> void <%=partialClassInternalPrefix%>DeepLoad(TransactionManager transactionManager, <%= className %> entity, bool deep, DeepLoadType deepLoadType, string connectionStringKey, string dynamicConnectionString, params System.Type[] childTypes)
 		{
 			// throws security exception if not authorized
 			SecurityContext.IsAuthorized("DeepLoad");
@@ -2013,7 +2012,7 @@
 		/// <param name="dynamicConnectionString">a runtime dynamic connection string to use (connectionStringKey is required if you supply a dynamicConnectionString).  If already added to the DataRepository.Connections, only the connectionStringKey is required.</param>
 		/// <param name="childTypes"><see cref="<%= className %>"/> Property Collection Type Array To Include or Exclude from Load</param>
 		[DataObjectMethod(DataObjectMethodType.Select, false)]
-		<%= constructorAccessModifier %> void <%=partialClassInternalPrefix%>DeepLoad(TransactionManager transactionManager, <%= collectionClassName %> entityCollection, bool deep, DeepLoadType deepLoadType, string connectionStringKey, string dynamicConnectionString, params System.Type[] childTypes)
+		<%= interfaceImplModifier %> void <%=partialClassInternalPrefix%>DeepLoad(TransactionManager transactionManager, <%= collectionClassName %> entityCollection, bool deep, DeepLoadType deepLoadType, string connectionStringKey, string dynamicConnectionString, params System.Type[] childTypes)
 		{	
 			// throws security exception if not authorized
 			SecurityContext.IsAuthorized("DeepLoad");
@@ -2047,9 +2046,10 @@
 		<% } // end if render implementation %>
 		
 		#endregion
-		#endregion
-		<%	}//endif %>
 
+		#endregion
+		
+		<%	} // end if %>
 		<%  if (IncludeSave) { %>
 		#region DeepSave
 		
@@ -2119,7 +2119,7 @@
 		/// <param name="dynamicConnectionString">a runtime dynamic connection string to use (connectionStringKey is required if you supply a dynamicConnectionString).  If already added to the DataRepository.Connections, only the connectionStringKey is required.</param>		
 		/// <param name="childTypes"><c><%= className %></c> property Type Array To Include or Exclude from Save</param>
 		[DataObjectMethod(DataObjectMethodType.Update)]
-		<%= constructorAccessModifier %> bool <%=partialClassInternalPrefix%>DeepSave(TransactionManager transactionManager, <%= className %> entity, DeepSaveType deepSaveType, bool isBorrowedTransaction, string connectionStringKey, string dynamicConnectionString,  params System.Type[] childTypes)
+		<%= interfaceImplModifier %> bool <%=partialClassInternalPrefix%>DeepSave(TransactionManager transactionManager, <%= className %> entity, DeepSaveType deepSaveType, bool isBorrowedTransaction, string connectionStringKey, string dynamicConnectionString,  params System.Type[] childTypes)
 		{
 			// throws security exception if not authorized
 			SecurityContext.IsAuthorized("DeepSave");
@@ -2227,7 +2227,7 @@
 		/// <param name="dynamicConnectionString">a runtime dynamic connection string to use (connectionStringKey is required if you supply a dynamicConnectionString).  If already added to the DataRepository.Connections, only the connectionStringKey is required.</param>		
 		/// <param name="childTypes"><%= className %> Property Collection Type Array To Include or Exclude from Save</param>
 		[DataObjectMethod(DataObjectMethodType.Update)]
-		<%= constructorAccessModifier %> bool <%=partialClassInternalPrefix%>DeepSave(TransactionManager transactionManager, <%= collectionClassName %> entityCollection, DeepSaveType deepSaveType, bool isBorrowedTransaction, string connectionStringKey, string dynamicConnectionString,  params System.Type[] childTypes)
+		<%= interfaceImplModifier %> bool <%=partialClassInternalPrefix%>DeepSave(TransactionManager transactionManager, <%= collectionClassName %> entityCollection, DeepSaveType deepSaveType, bool isBorrowedTransaction, string connectionStringKey, string dynamicConnectionString,  params System.Type[] childTypes)
 		{				
 			// throws security exception if not authorized
 			SecurityContext.IsAuthorized("DeepSave");
@@ -2264,8 +2264,9 @@
 		}
 		<% } //end if render implementation %>
 		#endregion
-		#endregion 
-		<%	}//endif %>
 
+		#endregion 
+
+		<%	} // end if %>
 		#endregion Data Access Methods
 		
