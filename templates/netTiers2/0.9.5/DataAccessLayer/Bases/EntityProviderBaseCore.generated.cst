@@ -288,15 +288,8 @@ namespace <%=DALNameSpace%>.Bases
 		<%
 			for (int j=0; j < fkeys.Count;j++)
 			{
-				bool skipkey = false;
-				foreach(IndexSchema i in indexes)
-				{
-					//if(i.MemberColumns.Contains(fkeys[j].ForeignKeyMemberColumns[0]))
-					//	skipkey = true;
-					if(i.MemberColumns.Equals(fkeys[j].ForeignKeyMemberColumns))
-						skipkey = true;	
-				}
-				if(skipkey)
+				
+				if(IsForeignKeyCoveredByIndex(fkeys[j]))
 					continue;
 					
 				getbyKeys.Add(GetKeysName(fkeys[j].ForeignKeyMemberColumns));
@@ -927,28 +920,22 @@ namespace <%=DALNameSpace%>.Bases
 				|| (deepLoadType == DeepLoadType.ExcludeChildren && innerList["<%= listTypeName %>"] == null))
 			{
 				Trace.WriteLine("- property '<%=item.CleanName%>' loaded.");
-				<%=GetCollectionClassName(item.CleanName)%> _<%=item.CollectionName%> = DataRepository.<%=GetProviderClassName(item.SecondaryTable)%>.<%=item.GetByKeysName%>(transactionManager, <%=item.CallParams%>);
-				if (_<%=item.CollectionName%>.Count == 1)
-				{
-					entity.<%=item.CleanName%> = _<%=item.CollectionName%>[0];
+				entity.<%=item.CleanName%> = DataRepository.<%=GetProviderClassName(item.SecondaryTable)%>.<%=item.GetByKeysName%>(transactionManager, <%=item.CallParams%>);
 				
-					//Filled, don't need to fill anymore, prevents circular references
-					if (deepLoadType == DeepLoadType.IncludeChildren)
-						innerList.Remove("<%= listTypeName %>");
-					else 
-						innerList.Add("<%= listTypeName %>", typeof(<%= item.CollectionTypeName %>));
-					
-					Type[] updatedChildTypes = (Type[]) new ArrayList(innerList.Values).ToArray(typeof(Type));
-					
-					if (deep)
-					{
-						DataRepository.<%=GetProviderClassName(item.SecondaryTable)%>.DeepLoad(transactionManager, entity.<%=item.CleanName%>, deep, deepLoadType, updatedChildTypes);
-					}
-				}
-				else
+				
+				//Filled, don't need to fill anymore, prevents circular references
+				if (deepLoadType == DeepLoadType.IncludeChildren)
+					innerList.Remove("<%= listTypeName %>");
+				else 
+					innerList.Add("<%= listTypeName %>", typeof(<%= item.CollectionTypeName %>));
+				
+				Type[] updatedChildTypes = (Type[]) new ArrayList(innerList.Values).ToArray(typeof(Type));
+				
+				if (deep)
 				{
-					// the one to one linked object is not found
+					DataRepository.<%=GetProviderClassName(item.SecondaryTable)%>.DeepLoad(transactionManager, entity.<%=item.CleanName%>, deep, deepLoadType, updatedChildTypes);
 				}
+
 			}
 			#endregion 
 			

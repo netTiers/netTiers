@@ -1330,25 +1330,35 @@ namespace MoM.Templates
 		public string GetColumnDefaultValue(ColumnSchema column)
 		{
 			/*
+			return "";
+			
 			// for sql server
 			if (column.ExtendedProperties["CS_Default"] != null)
 			{
 				string value = column.ExtendedProperties["CS_Default"].Value.ToString().ToLower();
 				value = value.Replace("getdate()", "DateTime.Now");
 				value = value.Replace("newid()", "Guid.NewGuid()");
-				value = value.TrimStart('(');
-				value = value.TrimEnd(')');
-				if (!IsNumericType(column) || value.IndexOf("DateTime.Now") > -1 || value.IndexOf("Guid.NewGuid()") > -1)
+				
+				while(value.StartsWith("(") && value.EndsWith(")"))
+    			 	value= value.TrimStart('(').TrimEnd(')');
+	
+				if (column.DataType == DbType.Boolean)
+					value = value.Contains("1") ? "true" : "false";
+				else if (!IsNumericType(column) || value.IndexOf("DateTime.Now") > -1 || value.IndexOf("Guid.NewGuid()") > -1)
 					value = string.Format("\"{0}\"", value);
+					
 				return value;
-			}
+	
 				
 			// for access
 			if (column.ExtendedProperties["DefaultValue"] != null)
 				return column.ExtendedProperties["DefaultValue"].Value.ToString();
 			
 			// test mysql
+			}
+			
 			*/
+
 			return "";			
 		} 
 		
@@ -3316,6 +3326,43 @@ namespace MoM.Templates
 			return false;
 		}
 		*/
+		
+		public bool IsForeignKeyCoveredByIndex(TableKeySchema fKey)
+		{
+			bool isCovered = false;
+				
+			//If the Foreign key is also covered by an index, let the index 
+			//processing handle the Get methods
+			foreach(IndexSchema i in fKey.ForeignKeyTable.Indexes)
+			{
+				ColumnSchemaCollection fkCols = fKey.ForeignKeyMemberColumns;
+				
+				//First, the index must contain the same number of columns as the key
+				if (fkCols.Count != i.MemberColumns.Count)
+					continue;
+					
+				//Index must contain the same columns
+				bool hasAllColumns = true;
+				foreach(ColumnSchema column in fkCols)
+				{
+					if(!i.MemberColumns.Contains(column.Name))
+					{
+						hasAllColumns = false;
+						break;
+					}
+				}
+				
+				if ( hasAllColumns )
+				{
+					//Index is a match - stop looking
+					isCovered = true;
+					break;
+					
+				}	
+			}
+			
+			return isCovered;
+		}
 		
 		/// <summary>
 		/// 

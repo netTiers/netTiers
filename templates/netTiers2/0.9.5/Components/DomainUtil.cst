@@ -36,13 +36,16 @@ namespace <%= NameSpace %>
         /// <returns>a valid TransactionManager</returns>
 		public static TransactionManager ValidateOrCreateTransaction(TransactionManager transactionManager, NetTiersProvider dataProvider, bool isBorrowedTransaction)
 		{
-			if (isBorrowedTransaction && dataProvider.IsTransactionSupported)
+			if (isBorrowedTransaction && !dataProvider.IsTransactionSupported)
 			{
 				if (transactionManager != null)
-					throw new Exception("Transaction Support is not included with the current DataRepository provider.");
-				
+					throw new Exception("Transaction Support is not included with the current DataRepository provider.  If using a provider that doesn't support transactions, such as a webservice, you should turn off transaction management.");
+			}
+			else if (isBorrowedTransaction && dataProvider.IsTransactionSupported)
+			{
 				if (transactionManager == null || !transactionManager.IsOpen )
 					throw new ArgumentException("The transactionManager is in an invalid state for this method.  \nYou must begin the tranasction prior to using this method.");
+
 			}
 			else if (!isBorrowedTransaction && dataProvider.IsTransactionSupported)
 			{
