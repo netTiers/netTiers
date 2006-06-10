@@ -13,9 +13,13 @@
 <%@ Property Name="IncludeGetListByIX" Type="System.Boolean" Default="True" Category="CRUD Options" Description="If true getlist statements will be generated." %>
 <%@ Property Name="IncludeManyToMany" Type="System.Boolean" Default="True" Category="CRUD Options" Description="If true select statements will be generated for any many to many relationship." %>
 <%@ Property Name="IncludeRelations" Type="System.Boolean" Default="True" Category="CRUD Options" Description="If true, the child collection relationships will be generated within your entities, if set to false, these child collections will not be generated, and Deep Load/Save will not be generated." %>
+<%@ Property Name="IncludeComponentLayer" Type="MoM.Templates.ComponentPatternType" Category="02. Framework Generation - Optional" Description="The pattern type to implement in the Component Layer." Default="None" %>
 
 <%@ Assembly Name="SchemaExplorer" %>
 <%@ Assembly Name="System.Design" %>
+<%
+	bool HasComponentLayer = (IncludeComponentLayer != MoM.Templates.ComponentPatternType.None);
+%>
 #region Using directives
 using System;
 using System.Collections.Generic;
@@ -41,61 +45,73 @@ namespace <%= DALNameSpace %>
 		/// <summary>
 		/// Gets a row from the DataSource based on its primary key.
 		/// </summary>
+		<% if (!HasComponentLayer) { %>
 		/// <param name="mgr">A <see cref="TransactionManager"/> object.</param>
+		<% } %>
 		/// <param name="key">The unique identifier of the row to retrieve.</param>
 		/// <returns>Returns an instance of the Entity class.</returns>
-		Entity Get(TransactionManager mgr, EntityKey key);
+		Entity Get(<% if(!HasComponentLayer){ %>TransactionManager mgr, <% } %>EntityKey key);
 
 		<%	} // end if ( IncludeGetListByIX ) %>
 		<% if ( IncludeGetList ) { %>
 		/// <summary>
 		/// Gets all rows from the DataSource.
 		/// </summary>
+		<% if (!HasComponentLayer) { %>
 		/// <param name="mgr">A <see cref="TransactionManager"/> object.</param>
+		<% } %>
 		/// <returns>Returns a TList of Entity objects.</returns>
-		TList<Entity> GetAll(TransactionManager mgr);
+		TList<Entity> GetAll(<% if(!HasComponentLayer){ %>TransactionManager mgr<% } %>);
 
 		/// <summary>
 		/// Gets a page of rows from the DataSource.
 		/// </summary>
+		<% if (!HasComponentLayer) { %>
 		/// <param name="mgr">A <see cref="TransactionManager"/> object.</param>
+		<% } %>
 		/// <param name="whereClause">Specifies the condition for the rows returned by a query (Name='John Doe', Name='John Doe' AND Id='1', Name='John Doe' OR Id='1').</param>
 		/// <param name="orderBy">Specifies the sort criteria for the rows in the DataSource (Name ASC; BirthDay DESC, Name ASC).</param>
 		/// <param name="start">Row number at which to start reading.</param>
 		/// <param name="pageLength">Number of rows to return.</param>
 		/// <param name="count">Number of rows in the DataSource.</param>
 		/// <returns>Returns a TList of Entity objects.</returns>
-		TList<Entity> GetPaged(TransactionManager mgr, String whereClause, String orderBy, int start, int pageLength, out int count);
+		TList<Entity> GetPaged(<% if(!HasComponentLayer){ %>TransactionManager mgr, <% } %>String whereClause, String orderBy, int start, int pageLength, out int count);
 
 		<% } // end if ( IncludeGetList ) %>
 		<% if ( IncludeInsert ) { %>
 		/// <summary>
 		/// Inserts a row into the DataSource.
 		/// </summary>
+		<% if (!HasComponentLayer) { %>
 		/// <param name="mgr">A <see cref="TransactionManager"/> object.</param>
+		<% } %>
 		/// <param name="entity">The Entity object to insert.</param>
 		/// <returns>Returns true if the operation is successful.</returns>
-		bool Insert(TransactionManager mgr, Entity entity);
+		bool Insert(<% if(!HasComponentLayer){ %>TransactionManager mgr, <% } %>Entity entity);
 
 		<%	} // end if ( IncludeInsert ) %>
 		<% if ( IncludeUpdate ) { %>
 		/// <summary>
 		/// Updates an existing row in the DataSource.
 		/// </summary>
+		<% if (!HasComponentLayer) { %>
 		/// <param name="mgr">A <see cref="TransactionManager"/> object.</param>
+		<% } %>
 		/// <param name="entity">The Entity object to update.</param>
 		/// <returns>Returns true if the operation is successful.</returns>
-		bool Update(TransactionManager mgr, Entity entity);
+		bool Update(<% if(!HasComponentLayer){ %>TransactionManager mgr, <% } %>Entity entity);
 
 		<% } // end if ( IncludeUpdate ) %>
 		<% if ( IncludeDelete ) { %>
 		/// <summary>
 		/// Deletes a row from the DataSource.
 		/// </summary>
+		<% if (!HasComponentLayer) { %>
 		/// <param name="mgr">A <see cref="TransactionManager"/> object.</param>
+		<% } %>
 		/// <param name="entity">The Entity object to delete.</param>
 		/// <returns>Returns true if the operation is successful.</returns>
-		bool Delete(TransactionManager mgr, Entity entity);
+		bool Delete(<% if(!HasComponentLayer){ %>TransactionManager mgr, <% } %>Entity entity);
 
 		<% } // end if ( IncludeDelete ) %>
 		#region Full Implementation

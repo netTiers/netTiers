@@ -59,7 +59,6 @@ namespace <%= WebNameSpace %>.Data
 		/// Gets or sets an instance of EntityRelationshipMember that
 		/// represents the primary table in the relationship.
 		/// </summary>
-		[Bindable]
 		[PersistenceMode(PersistenceMode.InnerProperty)]
 		public EntityRelationshipMember PrimaryMember
 		{
@@ -71,7 +70,6 @@ namespace <%= WebNameSpace %>.Data
 		/// Gets or sets an instance of EntityRelationshipMember that
 		/// represents the join table in the relationship.
 		/// </summary>
-		[Bindable]
 		[PersistenceMode(PersistenceMode.InnerProperty)]
 		public EntityRelationshipMember LinkMember
 		{
@@ -83,7 +81,6 @@ namespace <%= WebNameSpace %>.Data
 		/// Gets or sets an instance of EntityRelationshipMember that
 		/// represents the foreign key table in the relationship.
 		/// </summary>
-		[Bindable]
 		[PersistenceMode(PersistenceMode.InnerProperty)]
 		public EntityRelationshipMember ReferenceMember
 		{
@@ -117,142 +114,44 @@ namespace <%= WebNameSpace %>.Data
 				this.Controls.Add(ReferenceMember);
 			}
 
-			EntityDataSource PrimaryDataSource = PrimaryMember.GetEntityDataSource();
+			ILinkedDataSource PrimaryDataSource = PrimaryMember.GetLinkedDataSource();
 			if ( PrimaryDataSource != null )
 			{
-				//PrimaryDataSource.Selecting += new EntityDataSourceSelectingEventHandler(PrimaryDataSource_Selecting);
-				PrimaryDataSource.Selected += new EntityDataSourceMethodEventHandler(PrimaryDataSource_Selected);
-				PrimaryDataSource.Inserting += new EntityDataSourceMethodEventHandler(PrimaryDataSource_Inserting);
-				PrimaryDataSource.Inserted += new EntityDataSourceMethodEventHandler(PrimaryDataSource_Inserted);
-				PrimaryDataSource.Updating += new EntityDataSourceMethodEventHandler(PrimaryDataSource_Updating);
-				//PrimaryDataSource.Updated += new EntityDataSourceMethodEventHandler(PrimaryDataSource_Updated);
-				//PrimaryDataSource.Deleting += new EntityDataSourceMethodEventHandler(PrimaryDataSource_Deleting);
-				//PrimaryDataSource.Deleted += new EntityDataSourceMethodEventHandler(PrimaryDataSource_Deleted);
+				PrimaryDataSource.AfterSelected += new LinkedDataSourceEventHandler(OnAfterSelected);
+				PrimaryDataSource.AfterInserting += new LinkedDataSourceEventHandler(OnAfterInserting);
+				PrimaryDataSource.AfterInserted += new LinkedDataSourceEventHandler(OnAfterInserted);
+				PrimaryDataSource.AfterUpdating += new LinkedDataSourceEventHandler(OnAfterUpdating);
 			}
 		}
 
-		#region EntityDataSource Event Handlers
-		private void PrimaryDataSource_Selecting(object sender, EntityDataSourceSelectingEventArgs args)
+		private void OnAfterSelected(object sender, LinkedDataSourceEventArgs e)
 		{
-			OnSelecting(args);
-		}
-
-		private void PrimaryDataSource_Selected(object sender, EntityDataSourceMethodEventArgs args)
-		{
-			OnSelected(args);
-		}
-
-		private void PrimaryDataSource_Inserting(object sender, EntityDataSourceMethodEventArgs args)
-		{
-			OnInserting(args);
-		}
-
-		private void PrimaryDataSource_Inserted(object sender, EntityDataSourceMethodEventArgs args)
-		{
-			OnInserted(args);
-		}
-
-		private void PrimaryDataSource_Updating(object sender, EntityDataSourceMethodEventArgs args)
-		{
-			OnUpdating(args);
-		}
-
-		private void PrimaryDataSource_Updated(object sender, EntityDataSourceMethodEventArgs args)
-		{
-			OnUpdated(args);
-		}
-
-		private void PrimaryDataSource_Deleting(object sender, EntityDataSourceMethodEventArgs args)
-		{
-			OnDeleting(args);
-		}
-
-		private void PrimaryDataSource_Deleted(object sender, EntityDataSourceMethodEventArgs args)
-		{
-			OnDeleted(args);
-		}
-		#endregion
-
-		#region EntityRelationship Event Handlers
-
-		/// <summary>
-		/// Handles the EntityDataSource.Selecting event.
-		/// </summary>
-		/// <param name="args">An EntityDataSourceSelectingEventArgs object that contains the event data.</param>
-		protected void OnSelecting(EntityDataSourceSelectingEventArgs args)
-		{
-		}
-
-		/// <summary>
-		/// Handles the EntityDataSource.Selected event.
-		/// </summary>
-		/// <param name="args">An EntityDataSourceMethodEventArgs object that contains the event data.</param>
-		protected void OnSelected(EntityDataSourceMethodEventArgs args)
-		{
-			if ( args.Index == PrimaryMember.EntityIndex )
+			if ( e.Index == PrimaryMember.EntityIndex )
 			{
 				PrimaryMember.DeepLoad();
-				UpdateControl(args.EntityList, args.Index);
+				UpdateControl(e.Entity);
 			}
 		}
 
-		/// <summary>
-		/// Handles the EntityDataSource.Inserting event.
-		/// </summary>
-		/// <param name="args">An EntityDataSourceMethodEventArgs object that contains the event data.</param>
-		protected void OnInserting(EntityDataSourceMethodEventArgs args)
+		private void OnAfterInserting(object sender, LinkedDataSourceEventArgs e)
 		{
-			UpdateRelationships(args.EntityList, args.Index);
+			UpdateRelationships(e.Entity);
 		}
 
-		/// <summary>
-		/// Handles the EntityDataSource.Inserted event.
-		/// </summary>
-		/// <param name="args">An EntityDataSourceMethodEventArgs object that contains the event data.</param>
-		protected void OnInserted(EntityDataSourceMethodEventArgs args)
+		private void OnAfterInserted(object sender, LinkedDataSourceEventArgs e)
 		{
 			InsertLinks();
 			InsertReferences();
 		}
 
-		/// <summary>
-		/// Handles the EntityDataSource.Updating event.
-		/// </summary>
-		/// <param name="args">An EntityDataSourceMethodEventArgs object that contains the event data.</param>
-		protected void OnUpdating(EntityDataSourceMethodEventArgs args)
+		private void OnAfterUpdating(object sender, LinkedDataSourceEventArgs e)
 		{
-			if ( args.Index == PrimaryMember.EntityIndex )
+			if ( e.Index == PrimaryMember.EntityIndex )
 			{
 				PrimaryMember.DeepLoad();
-				UpdateRelationships(args.EntityList, args.Index);
+				UpdateRelationships(e.Entity);
 			}
 		}
-
-		/// <summary>
-		/// Handles the EntityDataSource.Updated event.
-		/// </summary>
-		/// <param name="args">An EntityDataSourceMethodEventArgs object that contains the event data.</param>
-		protected void OnUpdated(EntityDataSourceMethodEventArgs args)
-		{
-		}
-
-		/// <summary>
-		/// Handles the EntityDataSource.Deleting event.
-		/// </summary>
-		/// <param name="args">An EntityDataSourceMethodEventArgs object that contains the event data.</param>
-		protected void OnDeleting(EntityDataSourceMethodEventArgs args)
-		{
-		}
-
-		/// <summary>
-		/// Handles the EntityDataSource.Deleted event.
-		/// </summary>
-		/// <param name="args">An EntityDataSourceMethodEventArgs object that contains the event data.</param>
-		protected void OnDeleted(EntityDataSourceMethodEventArgs args)
-		{
-		}
-
-		#endregion
 
 		#endregion
 
@@ -261,10 +160,8 @@ namespace <%= WebNameSpace %>.Data
 		/// Initializes and updates the control with the relationships
 		/// held within the specified business object.
 		/// </summary>
-		/// <param name="entityList">The collection of business objects containing
-		/// the current relationships with which to update the control.</param>
-		/// <param name="index">The position within entityList that contains the current item.</param>
-		protected virtual void UpdateControl(IEnumerable entityList, int index)
+		/// <param name="entity"></param>
+		protected virtual void UpdateControl(Object entity)
 		{
 		}
 
@@ -272,10 +169,8 @@ namespace <%= WebNameSpace %>.Data
 		/// Updates the specified business object with values bound to the
 		/// control which represent the current relationships.
 		/// </summary>
-		/// <param name="entityList">The collection of business objects containing
-		/// the current relationships with which to update the control.</param>
-		/// <param name="index">The position within entityList that contains the current item.</param>
-		protected virtual void UpdateRelationships(IEnumerable entityList, int index)
+		/// <param name="entity"></param>
+		protected virtual void UpdateRelationships(Object entity)
 		{
 		}
 
@@ -284,13 +179,12 @@ namespace <%= WebNameSpace %>.Data
 		/// <summary>
 		/// Gets the collection of business objects from the associated <paramref name="LinkMember"/>.
 		/// </summary>
-		/// <param name="entityList">The list of data retrieved by the associated <see cref="EntityDataSource"/>.</param>
-		/// <param name="index">The position of the current entity object within the <paramref name="entityList"/>.</param>
+		/// <param name="entity"></param>
 		/// <returns>A collection of business objects which represent the
 		/// relationship defined by the <paramref name="LinkMember"/> property.</returns>
-		protected IList GetLinkList(IEnumerable entityList, int index)
+		protected IList GetLinkList(Object entity)
 		{
-			return GetList(entityList, index, LinkMember, PrimaryMember.LinkProperty);
+			return GetList(entity, LinkMember, PrimaryMember.LinkProperty);
 		}
 
 		/// <summary>
@@ -305,12 +199,11 @@ namespace <%= WebNameSpace %>.Data
 		/// Inserts the specified <paramref name="foreignKeyValue"/> into the
 		/// relationship defined by the <paramref name="LinkMember"/> property.
 		/// </summary>
-		/// <param name="entityList">The list of data retrieved by the associated <see cref="EntityDataSource"/>.</param>
-		/// <param name="index">The position of the current entity object within the <paramref name="entityList"/>.</param>
+		/// <param name="entity"></param>
 		/// <param name="foreignKeyValue">The value to insert.</param>
-		protected void InsertLink(IEnumerable entityList, int index, Object foreignKeyValue)
+		protected void InsertLink(Object entity, Object foreignKeyValue)
 		{
-			IList links = GetLinkList(entityList, index);
+			IList links = GetLinkList(entity);
 			InsertLink(links, foreignKeyValue);
 		}
 
@@ -362,13 +255,12 @@ namespace <%= WebNameSpace %>.Data
 		/// <summary>
 		/// Gets the collection of business objects from the associated <paramref name="ReferenceMember"/>.
 		/// </summary>
-		/// <param name="entityList">The list of data retrieved by the associated <see cref="EntityDataSource"/>.</param>
-		/// <param name="index">The position of the current entity object within the <paramref name="entityList"/>.</param>
+		/// <param name="entity"></param>
 		/// <returns>A collection of business objects which represent the
 		/// relationship defined by the <paramref name="ReferenceMember"/> property.</returns>
-		protected IList GetReferenceList(IEnumerable entityList, int index)
+		protected IList GetReferenceList(Object entity)
 		{
-			return GetList(entityList, index, ReferenceMember, PrimaryMember.ReferenceProperty);
+			return GetList(entity, ReferenceMember, PrimaryMember.ReferenceProperty);
 		}
 
 		/// <summary>
@@ -427,13 +319,12 @@ namespace <%= WebNameSpace %>.Data
 		/// <summary>
 		/// Gets the collection of business objects from the specified relationship member.
 		/// </summary>
-		/// <param name="entityList">The list of data retrieved by the associated <see cref="EntityDataSource"/>.</param>
-		/// <param name="index">The position of the current entity object within the <paramref name="entityList"/>.</param>
+		/// <param name="entity"></param>
 		/// <param name="member">The relationship member.</param>
 		/// <param name="listPropertyName">The property name.</param>
 		/// <returns>A collection of business objects which represent the
 		/// relationship defined by the specified relationship member.</returns>
-		protected IList GetList(IEnumerable entityList, int index, EntityRelationshipMember member, String listPropertyName)
+		protected IList GetList(Object entity, EntityRelationshipMember member, String listPropertyName)
 		{
 			IList list;
 
@@ -445,7 +336,6 @@ namespace <%= WebNameSpace %>.Data
 			else
 			{
 				// get list from DeepLoaded entity
-				Object entity = EntityUtil.GetEntity(entityList, index);
 				list = EntityUtil.GetEntityList(entity, listPropertyName);
 			}
 
@@ -465,7 +355,7 @@ namespace <%= WebNameSpace %>.Data
 				foreach ( IDictionary values in member.Inserts )
 				{
 					values[member.EntityKeyName] = entityKeyValue;
-					member.GetEntityDataSource().Insert(values);
+					member.GetLinkedDataSource().Insert(values);
 				}
 
 				member.Inserts.Clear();
@@ -497,7 +387,7 @@ namespace <%= WebNameSpace %>.Data
 		{
 			if ( member != null && member.HasDataSource )
 			{
-				member.GetEntityDataSource().Insert(values);
+				member.GetLinkedDataSource().Insert(values);
 			}
 			else
 			{
@@ -523,7 +413,7 @@ namespace <%= WebNameSpace %>.Data
 		{
 			if ( member != null && member.HasDataSource )
 			{
-				member.GetEntityDataSource().Update(link, values);
+				member.GetLinkedDataSource().Update(link, values);
 			}
 			else
 			{
@@ -543,7 +433,7 @@ namespace <%= WebNameSpace %>.Data
 
 			if ( member != null && member.HasDataSource )
 			{
-				member.GetEntityDataSource().Delete(link);
+				member.GetLinkedDataSource().Delete(link);
 			}
 		}
 

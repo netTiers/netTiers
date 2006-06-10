@@ -17,6 +17,7 @@ using System;
 using System.Data;
 using System.Collections;
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.Configuration;
 using System.Web;
 using System.Web.Security;
@@ -72,7 +73,6 @@ namespace <%= WebNameSpace %>.Data
 		/// <summary>
 		/// Gets or set the name of the class of the entity that is returned by the Provider.
 		/// </summary>
-		[Bindable]
 		public String EntityTypeName
 		{
 			get { return _entityTypeName; }
@@ -82,7 +82,7 @@ namespace <%= WebNameSpace %>.Data
 		/// <summary>
 		/// Gets or sets the System.Type of entity that is returned by the Provider.
 		/// </summary>
-		[Bindable]
+		[Browsable(false)]
 		public Type EntityType
 		{
 			get
@@ -100,7 +100,6 @@ namespace <%= WebNameSpace %>.Data
 		/// <summary>
 		/// Gets or sets the name of the primary key property of the entity.
 		/// </summary>
-		[Bindable]
 		public String EntityKeyName
 		{
 			get { return _entityKeyName; }
@@ -111,7 +110,6 @@ namespace <%= WebNameSpace %>.Data
 		/// Gets or sets the index of the current entity when dealing with
 		/// a collection of entities.
 		/// </summary>
-		[Bindable]
 		public int EntityIndex
 		{
 			get { return (int) (ViewState["EntityIndex"] ?? 0); }
@@ -121,7 +119,6 @@ namespace <%= WebNameSpace %>.Data
 		/// <summary>
 		/// Gets or sets the foreign key property name.
 		/// </summary>
-		[Bindable]
 		public String ForeignKeyName
 		{
 			get { return _foreignKeyName; }
@@ -131,7 +128,6 @@ namespace <%= WebNameSpace %>.Data
 		/// <summary>
 		/// Gets or sets the reference collection property name.
 		/// </summary>
-		[Bindable]
 		public String ReferenceProperty
 		{
 			get { return _referenceProperty; }
@@ -141,7 +137,6 @@ namespace <%= WebNameSpace %>.Data
 		/// <summary>
 		/// Gets or sets the link collection property name.
 		/// </summary>
-		[Bindable]
 		public String LinkProperty
 		{
 			get { return _linkProperty; }
@@ -151,7 +146,6 @@ namespace <%= WebNameSpace %>.Data
 		/// <summary>
 		/// Gets or sets the ListControl's ID property value.
 		/// </summary>
-		[Bindable]
 		public String ListControlID
 		{
 			get { return _listControlID; }
@@ -161,7 +155,7 @@ namespace <%= WebNameSpace %>.Data
 		/// <summary>
 		/// Gets or sets a reference to the ListControl.
 		/// </summary>
-		[Bindable]
+		[Browsable(false)]
 		public ListControl ListControl
 		{
 			get
@@ -182,7 +176,6 @@ namespace <%= WebNameSpace %>.Data
 		/// <summary>
 		/// Gets or sets the GridView control's ID property value.
 		/// </summary>
-		[Bindable]
 		public String GridControlID
 		{
 			get { return _gridControlID; }
@@ -192,7 +185,7 @@ namespace <%= WebNameSpace %>.Data
 		/// <summary>
 		/// Gets or sets a reference to the GridView control.
 		/// </summary>
-		[Bindable]
+		[Browsable(false)]
 		public GridView GridControl
 		{
 			get
@@ -213,7 +206,6 @@ namespace <%= WebNameSpace %>.Data
 		/// <summary>
 		/// Gets or sets the FormView control's ID property value.
 		/// </summary>
-		[Bindable]
 		public String ViewControlID
 		{
 			get { return _viewControlID; }
@@ -223,7 +215,7 @@ namespace <%= WebNameSpace %>.Data
 		/// <summary>
 		/// Gets or sets a reference to the FormView control.
 		/// </summary>
-		[Bindable]
+		[Browsable(false)]
 		public Control ViewControl
 		{
 			get
@@ -244,7 +236,6 @@ namespace <%= WebNameSpace %>.Data
 		/// <summary>
 		/// Gets a reference to the collection of EntityProperty objects.
 		/// </summary>
-		[Bindable]
 		[PersistenceMode(PersistenceMode.InnerProperty)]
 		public IList PropertyMappings
 		{
@@ -280,7 +271,6 @@ namespace <%= WebNameSpace %>.Data
 		/// Gets or sets a value indicating whether the primary
 		/// business object should be DeepLoaded.
 		/// </summary>
-		[Bindable]
 		public bool EnableDeepLoad
 		{
 			get { return _enableDeepLoad; }
@@ -293,7 +283,7 @@ namespace <%= WebNameSpace %>.Data
 		/// </summary>
 		public bool HasDataSource
 		{
-			get { return GetEntityDataSource() != null; }
+			get { return GetLinkedDataSource() != null; }
 		}
 
 		#endregion
@@ -306,9 +296,9 @@ namespace <%= WebNameSpace %>.Data
 		/// Gets a reference to the associated EntityDataSource control.
 		/// </summary>
 		/// <returns>An <see cref="EntityDataSource"/> object.</returns>
-		public EntityDataSource GetEntityDataSource()
+		public ILinkedDataSource GetLinkedDataSource()
 		{
-			return GetDataSource() as EntityDataSource;
+			return GetDataSource() as ILinkedDataSource;
 		}
 
 		/// <summary>
@@ -331,7 +321,7 @@ namespace <%= WebNameSpace %>.Data
 
 			if ( HasDataSource )
 			{
-				entity = GetEntityDataSource().GetCurrentEntity();
+				entity = GetLinkedDataSource().GetCurrentEntity();
 			}
 
 			return entity;
@@ -347,7 +337,7 @@ namespace <%= WebNameSpace %>.Data
 
 			if ( HasDataSource )
 			{
-				IEnumerable list = GetEntityDataSource().GetEntityList();
+				IEnumerable list = GetLinkedDataSource().GetEntityList();
 				entityList = EntityUtil.GetEntityList(list);
 			}
 
@@ -361,9 +351,10 @@ namespace <%= WebNameSpace %>.Data
 		{
 			if ( HasDataSource && EnableDeepLoad )
 			{
-				GetEntityDataSource().DeepLoad();
+				GetLinkedDataSource().DeepLoad();
 			}
 		}
+
 		#endregion
 
 		#region Control Methods
@@ -878,7 +869,6 @@ namespace <%= WebNameSpace %>.Data
 		/// <summary>
 		/// Gets or sets the mapped control's ID property value.
 		/// </summary>
-		[Bindable]
 		public String ControlID
 		{
 			get { return _controlID; }
@@ -888,7 +878,6 @@ namespace <%= WebNameSpace %>.Data
 		/// <summary>
 		/// Gets or sets the mapped control's value property name.
 		/// </summary>
-		[Bindable]
 		public String ControlProperty
 		{
 			get { return _controlProperty; }
@@ -899,7 +888,6 @@ namespace <%= WebNameSpace %>.Data
 		/// Gets or sets the mapped control's ID property value.
 		/// This control contains the original property value.
 		/// </summary>
-		[Bindable]
 		public String OriginalValueControlID
 		{
 			get { return _originalValueControlID; }
@@ -910,7 +898,6 @@ namespace <%= WebNameSpace %>.Data
 		/// Gets or sets the mapped control's value property name.
 		/// This control contains the original property value.
 		/// </summary>
-		[Bindable]
 		public String OriginalValueControlProperty
 		{
 			get { return _originalValueControlProperty; }
@@ -921,7 +908,6 @@ namespace <%= WebNameSpace %>.Data
 		/// Gets or sets the name of the property that the mapped
 		/// control is bound to.
 		/// </summary>
-		[Bindable]
 		public String DataField
 		{
 			get { return _dataField; }
@@ -931,7 +917,6 @@ namespace <%= WebNameSpace %>.Data
 		/// <summary>
 		/// Gets or sets the zero-based column index.
 		/// </summary>
-		[Bindable]
 		public int ColumnIndex
 		{
 			get { return _columnIndex; }
@@ -942,7 +927,6 @@ namespace <%= WebNameSpace %>.Data
 		/// Gets or sets a value indicating whether the property
 		/// should be treated as a key field.
 		/// </summary>
-		[Bindable]
 		public bool IsKey
 		{
 			get { return _isKey; }

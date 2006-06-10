@@ -1394,7 +1394,8 @@
 		[DataObjectMethod(DataObjectMethodType.Select)]
 		<%= constructorAccessModifier %> <%=GetCollectionClassName(primaryTable.Name)%> <%=partialClassInternalPrefix%>GetBy<%=functionname%>(<%=GetFunctionHeaderParameters(junctionTableKey.ForeignKeyMemberColumns)%>)
 		{
-			return <%=partialClassInternalPrefix%>GetBy<%=functionname%>(null, <%=GetFunctionCallParameters(junctionTableKey.ForeignKeyMemberColumns)%>, 0, int.MaxValue, null, null);
+			int count;
+			return <%=partialClassInternalPrefix%>GetBy<%=functionname%>(null, <%=GetFunctionCallParameters(junctionTableKey.ForeignKeyMemberColumns)%>, 0, int.MaxValue, out count, null, null);
 		}
 		
 		/// <summary>
@@ -1410,7 +1411,8 @@
 		[DataObjectMethod(DataObjectMethodType.Select)]
 		<%= constructorAccessModifier %> <%=GetCollectionClassName(primaryTable.Name)%> <%=partialClassInternalPrefix%>GetBy<%=functionname%>(TransactionManager transactionManager, <%=GetFunctionHeaderParameters(junctionTableKey.ForeignKeyMemberColumns)%>)
 		{
-			return <%=partialClassInternalPrefix%>GetBy<%=functionname%>(transactionManager, <%=GetFunctionCallParameters(junctionTableKey.ForeignKeyMemberColumns)%>, 0, int.MaxValue, null, null);
+			int count;
+			return <%=partialClassInternalPrefix%>GetBy<%=functionname%>(transactionManager, <%=GetFunctionCallParameters(junctionTableKey.ForeignKeyMemberColumns)%>, 0, int.MaxValue, out count, null, null);
 		}
 		
 		/// <summary>
@@ -1423,11 +1425,12 @@
 		<% } %>	
 		/// <param name="start">Row number at which to start reading.</param>
 		/// <param name="pageLength">Number of rows to return.</param>
+		/// <param name="count">The total number of rows in the DataSource.</param>
 		/// <returns>Returns a typed collection of <%=GetClassName(primaryTable.Name)%> objects.</returns>
 		[DataObjectMethod(DataObjectMethodType.Select)]
-		<%= constructorAccessModifier %> <%=GetCollectionClassName(primaryTable.Name)%> <%=partialClassInternalPrefix%>GetBy<%=functionname%>(<%=GetFunctionHeaderParameters(junctionTableKey.ForeignKeyMemberColumns)%>, int start, int pageLength)
+		<%= constructorAccessModifier %> <%=GetCollectionClassName(primaryTable.Name)%> <%=partialClassInternalPrefix%>GetBy<%=functionname%>(<%=GetFunctionHeaderParameters(junctionTableKey.ForeignKeyMemberColumns)%>, int start, int pageLength, out int count)
 		{
-			return <%=partialClassInternalPrefix%>GetBy<%=functionname%>(null, <%=GetFunctionCallParameters(junctionTableKey.ForeignKeyMemberColumns)%>, start, pageLength, null, null);
+			return <%=partialClassInternalPrefix%>GetBy<%=functionname%>(null, <%=GetFunctionCallParameters(junctionTableKey.ForeignKeyMemberColumns)%>, start, pageLength, out count, null, null);
 		}
 		
 		/// <summary>
@@ -1441,11 +1444,12 @@
 		<% } %>	
 		/// <param name="start">Row number at which to start reading.</param>
 		/// <param name="pageLength">Number of rows to return.</param>
+		/// <param name="count">The total number of rows in the DataSource.</param>
 		/// <returns>Returns a typed collection of <%=GetClassName(primaryTable.Name)%> objects.</returns>
 		[DataObjectMethod(DataObjectMethodType.Select)]
-		<%= constructorAccessModifier %> <%=GetCollectionClassName(primaryTable.Name)%> <%=partialClassInternalPrefix%>GetBy<%=functionname%>(TransactionManager transactionManager, <%=GetFunctionHeaderParameters(junctionTableKey.ForeignKeyMemberColumns)%>, int start, int pageLength)
+		<%= constructorAccessModifier %> <%=GetCollectionClassName(primaryTable.Name)%> <%=partialClassInternalPrefix%>GetBy<%=functionname%>(TransactionManager transactionManager, <%=GetFunctionHeaderParameters(junctionTableKey.ForeignKeyMemberColumns)%>, int start, int pageLength, out int count)
 		{
-			return <%=partialClassInternalPrefix%>GetBy<%=functionname%>(transactionManager, <%=GetFunctionCallParameters(junctionTableKey.ForeignKeyMemberColumns)%>, start, pageLength, null, null);
+			return <%=partialClassInternalPrefix%>GetBy<%=functionname%>(transactionManager, <%=GetFunctionCallParameters(junctionTableKey.ForeignKeyMemberColumns)%>, start, pageLength, out count, null, null);
 		}
 		<%} //end if renderoverload %>
 		
@@ -1461,18 +1465,20 @@
 		<% } %>
 		/// <param name="start">Row number at which to start reading.</param>
 		/// <param name="pageLength">Number of rows to return.</param>
+		/// <param name="count">The total number of rows in the DataSource.</param>
 		/// <param name="connectionStringKey">a pre-configured connection string to use.</param>
 		/// <param name="dynamicConnectionString">a runtime dynamic connection string to use (connectionStringKey is required if you supply a dynamicConnectionString).  If already added to the DataRepository.Connections, only the connectionStringKey is required.</param>
 		/// <remarks></remarks>
 		/// <returns>Returns a typed collection of <%=GetClassName(primaryTable.Name)%> objects.</returns>
 		[DataObjectMethod(DataObjectMethodType.Select)]
-		<%= constructorAccessModifier %> <%=GetCollectionClassName(primaryTable.Name)%> <%=partialClassInternalPrefix%>GetBy<%=functionname%>(TransactionManager transactionManager, <%=GetFunctionHeaderParameters(junctionTableKey.ForeignKeyMemberColumns)%>, int start, int pageLength, string connectionStringKey, string dynamicConnectionString)
+		<%= constructorAccessModifier %> <%=GetCollectionClassName(primaryTable.Name)%> <%=partialClassInternalPrefix%>GetBy<%=functionname%>(TransactionManager transactionManager, <%=GetFunctionHeaderParameters(junctionTableKey.ForeignKeyMemberColumns)%>, int start, int pageLength, out int count, string connectionStringKey, string dynamicConnectionString)
 		{
 			// throws security exception if not authorized
 			SecurityContext.IsAuthorized("GetBy<%=functionname%>");
 			bool isBorrowedTransaction = (transactionManager != null && transactionManager.IsOpen);
 
 			<%=GetCollectionClassName(primaryTable.Name)%> list = null;
+			count = 0;
 			
 			try
             {
@@ -1482,7 +1488,7 @@
 					transactionManager = DomainUtil.ValidateOrCreateTransaction(transactionManager, CurrentDataProvider, false);
                 
 				//call data provider
-				list = <%= newCollectionClassName %>dataProvider.<%= GetProviderName(className) %>.GetBy<%=functionname%>(transactionManager, <%=GetFunctionCallParameters(junctionTableKey.ForeignKeyMemberColumns)%>, start,  pageLength)<%=newCollectionClassNameEnd%>;
+				list = <%= newCollectionClassName %>dataProvider.<%= GetProviderName(className) %>.GetBy<%=functionname%>(transactionManager, <%=GetFunctionCallParameters(junctionTableKey.ForeignKeyMemberColumns)%>, start,  pageLength, out count)<%=newCollectionClassNameEnd%>;
 	        
 				//This is read only transaction, let tran go if open 
             	

@@ -14,9 +14,13 @@
 <%@ Property Name="IncludeGetListByIX" Type="System.Boolean" Default="True" Category="CRUD Options" Description="If true getlist statements will be generated." %>
 <%@ Property Name="IncludeManyToMany" Type="System.Boolean" Default="True" Category="CRUD Options" Description="If true select statements will be generated for any many to many relationship." %>
 <%@ Property Name="IncludeRelations" Type="System.Boolean" Default="True" Category="CRUD Options" Description="If true, the child collection relationships will be generated within your entities, if set to false, these child collections will not be generated, and Deep Load/Save will not be generated." %>
+<%@ Property Name="IncludeComponentLayer" Type="MoM.Templates.ComponentPatternType" Category="02. Framework Generation - Optional" Description="The pattern type to implement in the Component Layer." Default="None" %>
 
 <%@ Assembly Name="SchemaExplorer" %>
 <%@ Assembly Name="System.Design" %>
+<%
+	bool HasComponentLayer = (IncludeComponentLayer != MoM.Templates.ComponentPatternType.None);
+%>
 #region Using directives
 using System;
 using System.Collections;
@@ -41,7 +45,7 @@ namespace <%= WebNameSpace %>.Data
 	/// <typeparam name="Entity">The class of the business object being accessed.</typeparam>
 	/// <typeparam name="EntityKey">The class of the EntityId
 	/// property of the specified business object class.</typeparam>
-	public abstract class ProviderDataSource<Entity, EntityKey> : BaseDataSource<Entity, EntityKey>
+	public abstract class ProviderDataSource<Entity, EntityKey> : BaseDataSource<Entity, EntityKey>, ILinkedDataSource
 		where Entity : IEntityId<EntityKey>, new()
 		where EntityKey : IEntityKey, new()
 	{
@@ -159,9 +163,7 @@ namespace <%= WebNameSpace %>.Data
 		/// <returns>Returns true if successful, otherwise false.</returns>
 		protected override bool ExecuteInsert(Entity entity)
 		{
-			bool success = Provider.Insert(GetTransactionManager(), entity);
-			EntityId = entity.EntityId;
-			return success;
+			return Provider.Insert(<% if(!HasComponentLayer){ %>GetTransactionManager(), <% } %>entity);
 		}
 
 		#endregion Insert Methods
@@ -177,7 +179,7 @@ namespace <%= WebNameSpace %>.Data
 		/// <returns>Returns true if successful, otherwise false.</returns>
 		protected override bool ExecuteUpdate(Entity entity)
 		{
-			return Provider.Update(GetTransactionManager(), entity);
+			return Provider.Update(<% if(!HasComponentLayer){ %>GetTransactionManager(), <% } %>entity);
 		}
 
 		#endregion UpdateMethods
@@ -193,7 +195,7 @@ namespace <%= WebNameSpace %>.Data
 		/// <returns>Returns true if successful, otherwise false.</returns>
 		protected override bool ExecuteDelete(Entity entity)
 		{
-			return Provider.Delete(GetTransactionManager(), entity);
+			return Provider.Delete(<% if(!HasComponentLayer){ %>GetTransactionManager(), <% } %>entity);
 		}
 
 		#endregion Delete Methods
@@ -202,38 +204,32 @@ namespace <%= WebNameSpace %>.Data
 		#region Helper Methods
 
 		/// <summary>
-		/// Create an instance of the EntityKey class based on the values
-		/// contained within the specified IDictionary object.
+		/// Gets the unique identifier of the specified entity object.
 		/// </summary>
-		/// <param name="values">An IDictionary object of name/value pairs.</param>
-		/// <returns>An EntityKey object representing the Entity.EntityId property.</returns>
-		protected override EntityKey GetEntityKey(IDictionary values)
+		/// <param name="entity">The current business object.</param>
+		/// <returns>Returns the unique identifier for the specified entity.</returns>
+		protected override EntityKey GetEntityId(Entity entity)
 		{
-			EntityKey key = new EntityKey();
-			key.Load(values);
-			return key;
+			if ( entity != null )
+			{
+				return entity.EntityId;
+			}
+
+			return base.GetEntityId(entity);
 		}
 
 		/// <summary>
 		/// Gets the Entity object within the collection of Entity objects that matches
-		/// the values found in the specified IDictionary object.
+		/// the values found in the specified EntityKey object.
 		/// </summary>
 		/// <param name="entityList">A collection of Entity objects.</param>
-		/// <param name="keys">An IDictionary of name/value pairs representing a unique identifier.</param>
-		/// <returns>The Entity object that matches the supplied unique identifier.</returns>
-		protected override Entity GetCurrentEntity(IList<Entity> entityList, IDictionary keys)
+		/// <param name="entityKey">An <see cref="T:EntityKey"/> object.</param>
+		/// <returns></returns>
+		protected override Entity GetCurrentEntity(IList<Entity> entityList, EntityKey entityKey)
 		{
-			// special processing when keys parameter is null
-			if ( keys == null && entityList.Count == 1 )
+			return ( (ListBase<Entity>) entityList ).Find(delegate(Entity entity)
 			{
-				return entityList[0];
-			}
-
-			EntityKey key = GetEntityKey(keys);
-
-			return ((ListBase<Entity>) entityList).Find(delegate(Entity entity)
-			{
-				return key.Equals(entity.EntityId);
+				return entityKey.Equals(entity.EntityId);
 			});
 		}
 

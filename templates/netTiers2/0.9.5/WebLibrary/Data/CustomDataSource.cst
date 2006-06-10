@@ -39,7 +39,7 @@ namespace <%= WebNameSpace %>.Data
 	/// controls in multi-tier Web application architectures.
 	/// </summary>
 	[Designer(typeof(CustomDataSourceDesigner))]
-	public class CustomDataSource : BaseDataSource<Object, Object>
+	public class CustomDataSource : BaseDataSource<Object, Object>, ILinkedDataSource
 	{
 		#region Constructors
 
@@ -621,10 +621,6 @@ namespace <%= WebNameSpace %>.Data
 		{
 			Object[] args = GetArgs(entity);
 			Object result = EntityUtil.InvokeMethod(Provider, InsertMethod, args);
-			
-			// save primary key value
-			EntityId = GetEntityId(entity);
-			
 			return ( result == null || Convert.ToBoolean(result) );
 		}
 
@@ -670,28 +666,23 @@ namespace <%= WebNameSpace %>.Data
 		#region Helper Methods
 
 		/// <summary>
-		/// Gets the unique identifier of the specified entity object.
+		/// Gets the unique identifier of the specified entity object
+		/// as an <see cref="IDictionary"/> object.
 		/// </summary>
-		/// <returns>A single value or an array of values.</returns>
-		protected Object GetEntityId(Object entity)
+		/// <param name="entity">The current business object.</param>
+		/// <returns>A collection of name/value pairs.</returns>
+		protected override Object GetEntityId(Object entity)
 		{
+			IDictionary<String, Object> entityId = new Dictionary<String, Object>();
 			String[] names = GetEntityKeyNames();
-			Object[] values = new Object[names.Length];
-			Object entityId = null;
+			Object value;
 
-			for ( int i = 0; i < names.Length; i++ )
+			if ( entity != null )
 			{
-				values[i] = EntityUtil.GetPropertyValue(entity, names[i]);
-			}
-			if ( values.Length > 0 )
-			{
-				if ( values.Length > 1 )
+				for ( int i = 0; i < names.Length; i++ )
 				{
-					entityId = values;
-				}
-				else
-				{
-					entityId = values[0];
+					value = EntityUtil.GetPropertyValue(entity, names[i]);
+					entityId.Add(names[i], value);
 				}
 			}
 
@@ -743,6 +734,25 @@ namespace <%= WebNameSpace %>.Data
 			}
 
 			return currEntity;
+		}
+
+		/// <summary>
+		/// Gets the Entity object within the collection of Entity objects that matches
+		/// the values found in the specified entityKey object.
+		/// </summary>
+		/// <param name="entityList">A collection of Entity objects.</param>
+		/// <param name="entityKey">The entity's unique identifier.</param>
+		/// <returns></returns>
+		protected override Object GetCurrentEntity(IList<Object> entityList, Object entityKey)
+		{
+			Object entity = null;
+
+			if ( entityKey is IDictionary )
+			{
+				entity = GetCurrentEntity(entityList, entityKey as IDictionary);
+			}
+
+			return entity;
 		}
 
 		/// <summary>

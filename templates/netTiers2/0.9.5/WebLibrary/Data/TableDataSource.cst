@@ -2,6 +2,7 @@
 <%@ Property Name="BLLNameSpace" Optional="False" Type="System.String" Category="Style" Description="Object Namespace." %>
 <%@ Property Name="DALNameSpace" Optional="False" Type="System.String" Category="Style" Description="DAL Namespace." %>
 <%@ Property Name="WebNameSpace" Optional="False" Type="System.String" Category="Style" Description="Web Namespace." %>
+<%@ Property Name="ComponentLayerNameSpace" Optional="False" Type="System.String" Category="Style" Description="Component Namespace." %>
 
 <%@ Property Name="IncludeFind" Type="System.Boolean" Default="True" Category="CRUD Options" Description="If true find statements will be generated." %>
 <%@ Property Name="IncludeSave" Type="System.Boolean" Default="True" Category="CRUD Options" Description="If true combined insert/update/delete procedures will be generated. In consequence, if this option is selected IncludeInsert, IncludeUpdate and IncludeDelete are automatically activated." %>
@@ -14,6 +15,7 @@
 <%@ Property Name="IncludeGetListByIX" Type="System.Boolean" Default="True" Category="CRUD Options" Description="If true getlist statements will be generated." %>
 <%@ Property Name="IncludeManyToMany" Type="System.Boolean" Default="True" Category="CRUD Options" Description="If true select statements will be generated for any many to many relationship." %>
 <%@ Property Name="IncludeRelations" Type="System.Boolean" Default="True" Category="CRUD Options" Description="If true, the child collection relationships will be generated within your entities, if set to false, these child collections will not be generated, and Deep Load/Save will not be generated." %>
+<%@ Property Name="IncludeComponentLayer" Type="MoM.Templates.ComponentPatternType" Category="02. Framework Generation - Optional" Description="The pattern type to implement in the Component Layer." Default="None" %>
 
 <%@ Property Name="SourceTables" Type="SchemaExplorer.TableSchemaCollection" Category="Connection" Description="Tables of the system." %>
 <%@ Property Name="SourceTable" Type="SchemaExplorer.TableSchema" Category="Connection" Description="Table that the data access class should be based on." %>
@@ -26,6 +28,8 @@
 <%@ Import Namespace="System.Text" %>
 <%@ Import Namespace="System" %>
 <% 
+	bool HasComponentLayer = (IncludeComponentLayer != MoM.Templates.ComponentPatternType.None);
+	
 	// Collection of ForeignKeys. Provides information about the foreign keys 
 	//(keys where the current table is the foreign table) contained in the table. 
 	TableKeySchemaCollection fkeys = SourceTable.ForeignKeys;
@@ -42,6 +46,13 @@
 	string keyClassName = GetKeyClassName(tableName);
 	string providerName = GetProviderName(tableName);
 	string providerBaseName = GetProviderBaseName(tableName);
+	string providerObject = "DataRepository." + providerName;
+	
+	if ( HasComponentLayer )
+	{
+		providerBaseName = GetServiceClassName(tableName);
+		providerObject = String.Format("new {0}()", providerBaseName);
+	}
 	
 	// holds method names
 	ArrayList methods = new ArrayList();
@@ -137,6 +148,7 @@ using System.Web.UI.Design;
 using <%= BLLNameSpace %>;
 using <%= DALNameSpace %>;
 using <%= DALNameSpace %>.Bases;
+using <%= ComponentLayerNameSpace %>;
 #endregion
 
 namespace <%= WebNameSpace %>.Data
@@ -153,7 +165,7 @@ namespace <%= WebNameSpace %>.Data
 		/// <summary>
 		/// Initializes a new instance of the <%= className %>DataSource class.
 		/// </summary>
-		public <%= className %>DataSource() : base(DataRepository.<%= providerName %>)
+		public <%= className %>DataSource() : base(<%= providerObject %>)
 		{
 		}
 
@@ -280,15 +292,15 @@ namespace <%= WebNameSpace %>.Data
 				{
 				%>
 				case <%= className %>SelectMethod.GetAll:
-                    results = <%= providerName %>.GetAll(GetTransactionManager(), StartIndex, PageSize, out count);
+                    results = <%= providerName %>.GetAll(<%= TransactionManager %>StartIndex, PageSize, out count);
                     break;
 				case <%= className %>SelectMethod.GetPaged:
-					results = <%= providerName %>.GetPaged(GetTransactionManager(), WhereClause, OrderBy, PageIndex, PageSize, out count);
+					results = <%= providerName %>.GetPaged(<%= TransactionManager %>WhereClause, OrderBy, PageIndex, PageSize, out count);
 					break;
 				<% } // end if ( IncludeGetList ) { %>
 				<% if ( IncludeFind ) { %>
 				case <%= className %>SelectMethod.Find:
-					results = <%= providerName %>.Find(GetTransactionManager(), WhereClause, StartIndex, PageSize, out count);
+					results = <%= providerName %>.Find(<%= TransactionManager %>WhereClause, StartIndex, PageSize, out count);
                     break;
 				<% } // end if ( IncludeFind ) {
 				if ( IncludeGetListByIX )
@@ -437,6 +449,11 @@ namespace <%= WebNameSpace %>.Data
 <script runat="template">
 //ArrayList methodNames = new ArrayList();
 
+private string TransactionManager
+{
+	get { return (IncludeComponentLayer == MoM.Templates.ComponentPatternType.None) ? "" : ""; }
+}
+
 private string WriteUniqueIndexSelectStatements(string tableName, ColumnSchemaCollection columns, IList methods)
 {
 	return WriteUniqueIndexSelectStatements(tableName, columns, methods, false);
@@ -451,8 +468,8 @@ private string WriteUniqueIndexSelectStatements(string tableName, ColumnSchemaCo
 		sb.AppendFormat("\t\t\t\tcase {0}SelectMethod.Get:{1}", GetClassName(tableName), Environment.NewLine);
 		sb.AppendFormat("\t\t\t\t\t{0} key = new {0}();{1}", GetKeyClassName(tableName), Environment.NewLine);
 		sb.AppendFormat("\t\t\t\t\tkey.Load(values);{0}", Environment.NewLine);
-		sb.AppendFormat("\t\t\t\t\titem = {1}.Get(GetTransactionManager(), key, this.StartIndex, this.PageSize);{2}",
-						GetClassName(tableName),
+		sb.AppendFormat("\t\t\t\t\titem = {1}.Get({0}key);{2}",
+						TransactionManager,
 						GetProviderName(tableName),
 						Environment.NewLine);
 	}
@@ -461,8 +478,8 @@ private string WriteUniqueIndexSelectStatements(string tableName, ColumnSchemaCo
 		methods.Add(GetKeysName(columns));
 		sb.Append(WriteCaseStatement(tableName, GetKeysName(columns)));
 		sb.Append(WriteParameterStatements(columns, tableName));
-		sb.AppendFormat("\t\t\t\t\titem = {1}.GetBy{2}(GetTransactionManager(), {3}, this.StartIndex, this.PageSize);{4}",
-						GetClassName(tableName),
+		sb.AppendFormat("\t\t\t\t\titem = {1}.GetBy{2}({0}{3});{4}",
+						TransactionManager,
 						GetProviderName(tableName),
 						GetKeysName(columns),
 						GetFunctionCallParameters(columns),
@@ -611,7 +628,8 @@ private string WriteGetByStatement(ColumnSchemaCollection memberColumns, string 
 private string WriteGetByStatement(ColumnSchemaCollection memberColumns, string tableName, string functionName)
 {
 	StringBuilder sb = new StringBuilder();
-	sb.AppendFormat("\t\t\t\t\tresults = {0}.GetBy{1}(GetTransactionManager(), {2}, this.StartIndex, this.PageSize, out count);{3}",
+	sb.AppendFormat("\t\t\t\t\tresults = {1}.GetBy{2}({0}{3}, this.StartIndex, this.PageSize, out count);{4}",
+					TransactionManager,
 					GetProviderName(tableName),
 					functionName == null ? GetKeysName(memberColumns) : functionName,
 					GetFunctionCallParameters(memberColumns),

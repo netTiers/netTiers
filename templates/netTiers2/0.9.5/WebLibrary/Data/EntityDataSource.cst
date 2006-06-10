@@ -12,7 +12,7 @@
 
 <%@ Assembly Name="System.Data" %>
 <%@ Import Namespace="System.Data" %>
-#region Imports...
+#region Using Directives
 using System;
 using System.Data;
 using System.Collections;
@@ -37,7 +37,7 @@ namespace <%= WebNameSpace %>.Data
 	/// controls in multi-tier Web application architectures.
 	/// </summary>
 	[ ParseChildren(true), PersistChildren(false) ]
-	public class EntityDataSource : DataSourceControl
+	public class EntityDataSource : DataSourceControl, ILinkedDataSource
 	{
 		#region Declarations
 		/// <summary>
@@ -105,6 +105,7 @@ namespace <%= WebNameSpace %>.Data
 		#endregion
 
 		#region Properties
+
 		/// <summary>
 		/// Gets or sets the primary key value used when retreiving a single entity.
 		/// </summary>
@@ -188,6 +189,7 @@ namespace <%= WebNameSpace %>.Data
 		/// <summary>
 		/// Gets or sets the object that the EntityDataSource object represents.
 		/// </summary>
+		[Browsable(false)]
 		public Object Provider
 		{
 			get { return EntityView.Provider; }
@@ -224,18 +226,18 @@ namespace <%= WebNameSpace %>.Data
 		}
 
 		/// <summary>
-		/// Gets or sets the index of the current entity when dealing with
+		/// Gets the index of the current entity when dealing with
 		/// a collection of entities.
 		/// </summary>
 		public int EntityIndex
 		{
 			get { return EntityView.EntityIndex; }
-			set { EntityView.EntityIndex = value; }
 		}
 
 		/// <summary>
 		/// Gets or sets the System.Type of entity that is returned by the Provider.
 		/// </summary>
+		[Browsable(false)]
 		public Type EntityType
 		{
 			get { return EntityView.EntityType; }
@@ -272,6 +274,7 @@ namespace <%= WebNameSpace %>.Data
 		/// <summary>
 		/// Gets or sets the System.Type of the primary key property of the entity.
 		/// </summary>
+		[Browsable(false)]
 		public Type EntityKeyType
 		{
 			get { return EntityView.EntityKeyType; }
@@ -394,6 +397,7 @@ namespace <%= WebNameSpace %>.Data
 		#endregion
 
 		#region EntityDataSourceView Events
+
 		/// <summary>
 		/// Occurs before a select operation.
 		/// </summary>
@@ -433,9 +437,35 @@ namespace <%= WebNameSpace %>.Data
 		/// Occurs when a delete operation has completed.
 		/// </summary>
 		public event EntityDataSourceMethodEventHandler Deleted;
+
+		#endregion
+
+		#region ILinkedDataSource Events
+
+		/// <summary>
+		/// Occurs when a select operation has completed.
+		/// </summary>
+		public event LinkedDataSourceEventHandler AfterSelected;
+
+		/// <summary>
+		/// Occurs before an insert operation.
+		/// </summary>
+		public event LinkedDataSourceEventHandler AfterInserting;
+
+		/// <summary>
+		/// Occurs when an insert operation has completed.
+		/// </summary>
+		public event LinkedDataSourceEventHandler AfterInserted;
+
+		/// <summary>
+		/// Occurs before an update operation
+		/// </summary>
+		public event LinkedDataSourceEventHandler AfterUpdating;
+
 		#endregion
 
 		#region Methods
+
 		/// <summary>
 		/// Retrieves the named data source view that is associated with the data source control.
 		/// </summary>
@@ -609,6 +639,7 @@ namespace <%= WebNameSpace %>.Data
 		{
 			return EntityView.Delete(entity);
 		}
+
 		#endregion
 
 		#region Parameter Helper Methods
@@ -892,13 +923,12 @@ namespace <%= WebNameSpace %>.Data
 			}
 
 			/// <summary>
-			/// Gets or sets the index of the current entity when dealing with
+			/// Gets the index of the current entity when dealing with
 			/// a collection of entities.
 			/// </summary>
 			public int EntityIndex
 			{
 				get { return _entityIndex; }
-				set { _entityIndex = Math.Max(value, 0); }
 			}
 
 			public String EntityTypeName
@@ -1116,15 +1146,22 @@ namespace <%= WebNameSpace %>.Data
 
 					if ( entityList != null )
 					{
+						IList list = EntityUtil.GetEntityList(entityList);
+
 						// make sure we have a valid TotalRowCount
 						if ( arguments.TotalRowCount < 1 )
 						{
-							IList list = EntityUtil.GetEntityList(entityList);
 							arguments.TotalRowCount = list.Count;
 						}
 
 						UpdateEntityId(entityList);
 						OnSelected(new EntityDataSourceMethodEventArgs(entityList, EntityIndex, param, arguments.TotalRowCount));
+
+						if ( arguments.TotalRowCount > 0 )
+						{
+							// raise linked event
+							OnAfterSelected(new LinkedDataSourceEventArgs(list[EntityIndex], EntityIndex));
+						}
 					}
 				}
 				catch ( Exception ex )
@@ -1191,6 +1228,9 @@ namespace <%= WebNameSpace %>.Data
 					return 0;
 				}
 
+				// raise linked event
+				OnAfterInserting(new LinkedDataSourceEventArgs(entity, 0));
+
 				// set date/time values
 				String[] names = GetInsertDateTimeNames();
 				EntityUtil.InitEntityDateTimeValues(entity, names);
@@ -1215,6 +1255,7 @@ namespace <%= WebNameSpace %>.Data
 						count = 1;
 						UpdateEntityId(entityList);
 						OnInserted(new EntityDataSourceMethodEventArgs(entityList, 0, values, count));
+						OnAfterInserted(new LinkedDataSourceEventArgs(entity, 0));
 					}
 				}
 				catch ( Exception ex )
@@ -1252,7 +1293,7 @@ namespace <%= WebNameSpace %>.Data
 					SetPreviousValues();
 
 					// set initial index
-					_owner.EntityIndex = 0;
+					_entityIndex = 0;
 					// set temporary reference
 					_entityList = new Object[] { entity };
 					// perform delete operation
@@ -1293,6 +1334,9 @@ namespace <%= WebNameSpace %>.Data
 
 				// get the current item in the collection
 				Object entity = GetCurrentEntity();
+
+				// raise linked event
+				OnAfterUpdating(new LinkedDataSourceEventArgs(entity, EntityIndex));
 
 				// set date/time values
 				String[] names = GetUpdateDateTimeNames();
@@ -1347,7 +1391,7 @@ namespace <%= WebNameSpace %>.Data
 					SetPreviousValues();
 
 					// set initial index
-					_owner.EntityIndex = 0;
+					_entityIndex = 0;
 					// set temporary reference
 					_entityList = new Object[] { entity };
 					// perform delete operation
@@ -1442,8 +1486,8 @@ namespace <%= WebNameSpace %>.Data
 					Object entityId = GetEntityId();
 					Object entity = null;
 
-					// reset EntityIndex property
-					EntityIndex = 0;
+					// reset _entityIndex property
+					_entityIndex = 0;
 					// reset _entityCount property
 					_entityCount = -1;
 
@@ -1646,7 +1690,7 @@ namespace <%= WebNameSpace %>.Data
 					}
 
 					Object entity = EntityUtil.GetEntity(list, propertyName, value);
-					EntityIndex = list.IndexOf(entity);
+					_entityIndex = list.IndexOf(entity);
 				}
 			}
 
@@ -1794,6 +1838,7 @@ namespace <%= WebNameSpace %>.Data
 			#endregion
 
 			#region Event Methods
+
 			/// <summary>
 			/// Raises the DataSourceView.OnDataSourceViewChanged event.
 			/// </summary>
@@ -1898,6 +1943,55 @@ namespace <%= WebNameSpace %>.Data
 					_owner.Deleted(_owner, args);
 				}
 			}
+
+			/// <summary>
+			/// Raises the AfterSelected event.
+			/// </summary>
+			/// <param name="e">An instance of LinkedDataSourceEventArgs containing the event data.</param>
+			public void OnAfterSelected(LinkedDataSourceEventArgs e)
+			{
+				if ( _owner.AfterSelected != null )
+				{
+					_owner.AfterSelected(this, e);
+				}
+			}
+
+			/// <summary>
+			/// Raises the AfterInserting event.
+			/// </summary>
+			/// <param name="e">An instance of LinkedDataSourceEventArgs containing the event data.</param>
+			public void OnAfterInserting(LinkedDataSourceEventArgs e)
+			{
+				if ( _owner.AfterInserting != null )
+				{
+					_owner.AfterInserting(this, e);
+				}
+			}
+
+			/// <summary>
+			/// Raises the AfterInserted event.
+			/// </summary>
+			/// <param name="e">An instance of LinkedDataSourceEventArgs containing the event data.</param>
+			public void OnAfterInserted(LinkedDataSourceEventArgs e)
+			{
+				if ( _owner.AfterInserted != null )
+				{
+					_owner.AfterInserted(this, e);
+				}
+			}
+
+			/// <summary>
+			/// Raises the AfterUpdating event.
+			/// </summary>
+			/// <param name="e">An instance of LinkedDataSourceEventArgs containing the event data.</param>
+			public void OnAfterUpdating(LinkedDataSourceEventArgs e)
+			{
+				if ( _owner.AfterUpdating != null )
+				{
+					_owner.AfterUpdating(this, e);
+				}
+			}
+
 			#endregion
 		}
 	}
