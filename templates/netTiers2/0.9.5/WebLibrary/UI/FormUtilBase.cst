@@ -1122,12 +1122,42 @@ namespace <%= WebNameSpace %>.UI
 		/// <returns>The property value.</returns>
 		public static Object GetValue(Control control, String propertyName)
 		{
+			if ( control == null )
+			{
+				return null;
+			}
 			if ( String.IsNullOrEmpty(propertyName) )
 			{
 				propertyName = GetDefaultPropertyName(control);
 			}
 
-			return EntityUtil.GetPropertyValue(control, propertyName);
+			Object value = null;
+
+			if ( control is CheckBox )
+			{
+				value = ( control as CheckBox ).Checked ? 1 : 0;
+			}
+			else if ( control is ListControl )
+			{
+				CommaDelimitedStringCollection values = new CommaDelimitedStringCollection();
+				ListControl list = control as ListControl;
+
+				foreach ( ListItem item in list.Items )
+				{
+					if ( item.Selected )
+					{
+						values.Add(item.Value);
+					}
+				}
+
+				value = values.ToString();
+			}
+			else
+			{
+				value = EntityUtil.GetPropertyValue(control, propertyName);
+			}
+
+			return value;
 		}
 
 		/// <summary>
