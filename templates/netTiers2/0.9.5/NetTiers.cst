@@ -494,12 +494,12 @@
    
 														
 	private string[] _templatesFileNames = new string[] {
-														"vsnet2005.project.cst",
-														"vsnet2005.solution.cst",
-														"vsnet2005.vsmdi.cst",
-														"vsnet2005.localtestrun.testrunconfig.cst",
-														"nAnt.cst",
-														"AssemblyInfo.cst", 
+														"VisualStudio\\vsnet2005.project.cst",
+														"VisualStudio\\vsnet2005.solution.cst",
+														"VisualStudio\\vsnet2005.vsmdi.cst",
+														"VisualStudio\\vsnet2005.localtestrun.testrunconfig.cst",
+														"VisualStudio\\nAnt.cst",
+														"VisualStudio\\AssemblyInfo.cst", 
 																																										
 														"Entities\\Enum.cst",
 														"Entities\\IEntity.cst",
@@ -551,6 +551,7 @@
 														//Single Output
 														"Components\\IComponentEntity.cst",
 														"Components\\CList.cst",
+														"Components\\ConnectionScope.cst",
 														"Components\\DomainUtil.cst",
 														"Components\\IComponentService.cst",
 														"Components\\ServiceBase.cst",
@@ -772,6 +773,7 @@ public void LoadTemplates()
 	
 		// Set the properties that all the commonsqlcode inherited templates should set
 		// TODO : use reflection to check that the templates inherits from commonsql
+		//this.CopyPropertiesTo(((CodeSmith.Engine.CodeTemplate)_CodeTemplates[key]));
 		try
 		{
 			((CodeSmith.Engine.CodeTemplate)_CodeTemplates[key]).SetProperty("EntityFormat", EntityFormat);
@@ -783,6 +785,7 @@ public void LoadTemplates()
 			((CodeSmith.Engine.CodeTemplate)_CodeTemplates[key]).SetProperty("ManyToManyFormat", ManyToManyFormat);
 			((CodeSmith.Engine.CodeTemplate)_CodeTemplates[key]).SetProperty("AliasFilePath", AliasFilePath);
 			((CodeSmith.Engine.CodeTemplate)_CodeTemplates[key]).SetProperty("StrippedTablePrefixes", StrippedTablePrefixes);
+		
 		}
 		catch(Exception) {}
 	}
@@ -1424,7 +1427,14 @@ public void Go()
 		this.GetTemplate("DomainUtil.cst").SetProperty("BLLNameSpace", BLLNameSpace);
 		this.GetTemplate("DomainUtil.cst").SetProperty("DALNameSpace", DALNameSpace);
 		this.RenderToFile("DomainUtil.cst", rootPathComponents + "\\DomainUtil.cs", true);
+
 			
+		XmlElement connectionScopeNode = AddFileNode(commonNode, "ConnectionScope.cs");
+		this.GetTemplate("ConnectionScope.cst").SetProperty("NameSpace", ComponentsNameSpace);
+		this.GetTemplate("ConnectionScope.cst").SetProperty("BLLNameSpace", BLLNameSpace);
+		this.GetTemplate("ConnectionScope.cst").SetProperty("DALNameSpace", DALNameSpace);
+		this.RenderToFile("ConnectionScope.cst", rootPathComponents + "\\ConnectionScope.cs", true);
+
 		if (ComponentPattern == MoM.Templates.ComponentPatternType.DomainModel)
 		{
 			XmlElement iComponentEntityNode = AddFileNode(commonNode, "IComponentEntity.cs");
@@ -1440,7 +1450,7 @@ public void Go()
 			XmlElement cListNode = AddFileNode(commonNode, "CList.cs");
 			this.GetTemplate("CList.cst").SetProperty("NameSpace", ComponentsNameSpace);
 			this.GetTemplate("CList.cst").SetProperty("BLLNameSpace", BLLNameSpace);
-			this.GetTemplate("CList.cst").SetProperty("DALNameSpace", BLLNameSpace);
+			this.GetTemplate("CList.cst").SetProperty("DALNameSpace", DALNameSpace);
 			this.RenderToFile("CList.cst", rootPathComponents + "\\CList.cs", true);
 
 		}
@@ -3052,7 +3062,7 @@ public void Go()
 	{
 		//XPathDocument doc = new XPathDocument(OutputDirectory + "\\report.xml");
 		XslTransform xslt = new XslTransform();
-		xslt.Load(this.CodeTemplateInfo.DirectoryName + "\\reportHTML.xsl");               
+		xslt.Load(this.CodeTemplateInfo.DirectoryName + "\\VisualStudio\\reportHTML.xsl");
 		XmlTextWriter xmlWriter = new XmlTextWriter(OutputDirectory + "\\report.html", Encoding.UTF8);
 		xmlWriter.Formatting = Formatting.Indented;               
 		xslt.Transform(docOutput, null, xmlWriter);

@@ -37,7 +37,7 @@
 	string constructorAccessModifier = ""; 
 	string constructorAccessModifierOnMembers = "";
 	string interfaceImplModifier = "";
-	string memberMethodEntity = ", " + className + " entity";
+	string memberMethodEntity = className + " entity";
 	string memberMethodEntityCall = "entity";
 	
 	bool IsDomainModel = false;
@@ -50,7 +50,7 @@
 	
 	if (ComponentPattern == MoM.Templates.ComponentPatternType.DomainModel)
 	{		
-	    collectionClassName = collectionClassName.Replace("TList", "CList");
+	    collectionClassName = collectionClassName; //.Replace("TList", "TList");
 	    collectionClassNameComment = collectionClassName.Replace("<", "{").Replace(">","}");
 
 		constructorAccessModifier = "public static";
@@ -69,7 +69,7 @@
 	}
 	else 
 	{
-		IsServiceLayer = true;
+		IsServiceLayer = true; 
 		constructorAccessModifier = "public virtual";
 		constructorAccessModifierOnMembers  = constructorAccessModifier;
 		interfaceImplModifier = "public override";
@@ -133,7 +133,8 @@
 		#region Fields
 		private static SecurityContext<<%= className %>> securityContext = new SecurityContext<<%= className %>>();
 		private static readonly string layerExceptionPolicy = "<%= ComponentPattern %>ExceptionPolicy";
-		private static volatile NetTiersProvider currentDataProvider = null;
+		private static readonly bool noTranByDefault = false;
+		private static readonly int defaultMaxRecords = 10000;
 		private static object syncObject = new object();
 		#endregion 
 		
@@ -150,37 +151,6 @@
 			}	
 		}
 		#endregion 
-
-		#region CurrentDataProvider
-		///<summary>
-		///  Static Current Data Provider
-		///  Allows for the GUI to change dynamically change the calling provider
-		///</summary>
-		protected static NetTiersProvider CurrentDataProvider
-		{
-			get
-			{
-				if(currentDataProvider == null)
-				{
-					lock(syncObject)
-					{
-						currentDataProvider = DataRepository.Provider; 
-					}
-				}
-				return currentDataProvider;	
-			}	
-			set
-			{
-				if (value != null)
-				{
-					lock(syncObject)
-					{
-						currentDataProvider = value;
-					}
-				}
-			}
-		}
-		#endregion 
 		
 		#region Data Access Methods
 		
@@ -194,7 +164,6 @@
 					
 				getbyKeys.Add(GetKeysName(fkeys[j].ForeignKeyMemberColumns));
 		%>	
-		<% if (RenderOverload || RenderImplementation) { %>
 		/// <summary>
 		/// 	<%= constructorAccessModifier %> method that Gets rows in a <see cref="<%=collectionClassNameComment %>" /> from the datasource based on the <%=fkeys[j].Name%> key.
 		///		<%=fkeys[j].Name%> Description: <%=fkeys[j].Description%>
@@ -207,7 +176,7 @@
 		<%= constructorAccessModifier %> <%=collectionClassName%> <%=partialClassInternalPrefix%>GetBy<%=GetKeysName(fkeys[j].ForeignKeyMemberColumns)%>(<%= GetFunctionHeaderParameters(fkeys[j].ForeignKeyMemberColumns) %>)
 		{
 			int totalCount = -1;
-			return <%=partialClassInternalPrefix%>GetBy<%=GetKeysName(fkeys[j].ForeignKeyMemberColumns)%>(null, <%= GetFunctionCallParameters(fkeys[j].ForeignKeyMemberColumns) %>, 0, int.MaxValue, out totalCount, null, null);
+			return <%=partialClassInternalPrefix%>GetBy<%=GetKeysName(fkeys[j].ForeignKeyMemberColumns)%>(<%= GetFunctionCallParameters(fkeys[j].ForeignKeyMemberColumns) %>, 0, defaultMaxRecords, out totalCount);
 		}
 		
 		/// <summary>
@@ -224,69 +193,25 @@
 		[DataObjectMethod(DataObjectMethodType.Select)]
 		<%= constructorAccessModifier %> <%=collectionClassName%> <%=partialClassInternalPrefix%>GetBy<%=GetKeysName(fkeys[j].ForeignKeyMemberColumns)%>(<%= GetFunctionHeaderParameters(fkeys[j].ForeignKeyMemberColumns) %>, int start, int pageLength, out int totalCount)
 		{
-			return <%=partialClassInternalPrefix%>GetBy<%=GetKeysName(fkeys[j].ForeignKeyMemberColumns)%>(null, <%= GetFunctionCallParameters(fkeys[j].ForeignKeyMemberColumns) %>, start, pageLength, out totalCount, null, null);
-		}
-		
-		/// <summary>
-		/// 	<%= constructorAccessModifier %> method that Gets rows in a <see cref="<%=collectionClassNameComment %>" /> from the datasource based on the <%=fkeys[j].Name%> key.
-		///		<%=fkeys[j].Name%> Description: <%=fkeys[j].Description%>
-		/// </summary>
-		/// <param name="transactionManager">a <c>TransactionManager</c>  that allows to set to the Isolation level for the query.</param>
-		<% for (int i = 0; i < fkeys[j].ForeignKeyMemberColumns.Count; i++) { %>
-		/// <param name="<%= GetPrivateName(fkeys[j].ForeignKeyMemberColumns[i].Name)%>"><%=fkeys[j].ForeignKeyMemberColumns[i].Description%></param>
-		<% } %>
-		/// <param name="start">Row number at which to start reading.</param>
-		/// <param name="pageLength">Page length of records you would like to retrieve</param>
-		/// <param name="totalCount">Out parameter, number of total rows in given query.</param>
-		/// <returns>Returns a collection <see cref="<%= collectionClassNameComment %>" /> of <c><%=className%></c> objects.</returns>
-		[DataObjectMethod(DataObjectMethodType.Select)]
-		<%= constructorAccessModifier %> <%=collectionClassName%> <%=partialClassInternalPrefix%>GetBy<%=GetKeysName(fkeys[j].ForeignKeyMemberColumns)%>(TransactionManager transactionManager, <%= GetFunctionHeaderParameters(fkeys[j].ForeignKeyMemberColumns) %>, int start, int pageLength, out int totalCount)
-		{
-			return <%=partialClassInternalPrefix%>GetBy<%=GetKeysName(fkeys[j].ForeignKeyMemberColumns)%>(transactionManager, <%= GetFunctionCallParameters(fkeys[j].ForeignKeyMemberColumns) %>, start, pageLength, out totalCount, null, null);
-		}
-		<% } %>
-		
-		<% if (RenderImplementation){ %>
-		/// <summary>
-		/// 	<%= constructorAccessModifier %> method that gets rows in a <see cref="<%=collectionClassNameComment %>" /> from the datasource based on the <%=fkeys[j].Name%> key.
-		///		<%=fkeys[j].Name%> Description: <%=fkeys[j].Description%>
-		/// </summary>
-		/// <param name="transactionManager">a <c>TransactionManager</c>  that allows to set to the Isolation level for the query.</param>
-		<% for (int i = 0; i < fkeys[j].ForeignKeyMemberColumns.Count; i++) { %>
-		/// <param name="<%= GetPrivateName(fkeys[j].ForeignKeyMemberColumns[i].Name)%>"><%=fkeys[j].ForeignKeyMemberColumns[i].Description%></param>
-		<% } %>
-		/// <param name="start">Row number at which to start reading.</param>
-		/// <param name="pageLength">Page length of records you would like to retrieve</param>
-		/// <param name="totalCount">out parameter, number of total rows in given query.</param>
-		/// <param name="connectionStringKey">A pre-configured key for usage of another dataprovider.</param>
-		/// <param name="dynamicConnectionString">A dynamic connection string to use for this particular instance.</param>
-		/// <returns>Returns a typed collection of <%=className%> objects.</returns>
-		[DataObjectMethod(DataObjectMethodType.Select)]
-		<%= constructorAccessModifier %> <%=collectionClassName%> <%=partialClassInternalPrefix%>GetBy<%=GetKeysName(fkeys[j].ForeignKeyMemberColumns)%>(TransactionManager transactionManager, <%= GetFunctionHeaderParameters(fkeys[j].ForeignKeyMemberColumns) %>, int start, int pageLength, out int totalCount, string connectionStringKey, string dynamicConnectionString)
-		{			
 			// throws security exception if not authorized
 			SecurityContext.IsAuthorized("GetBy<%=GetKeysName(fkeys[j].ForeignKeyMemberColumns)%>");
-			
-			// check if borrowed transaction
-			bool isBorrowedTransaction = (transactionManager != null && transactionManager.IsOpen);
 			
 			// get this data
 			<%= collectionClassName %> list = null;
 			totalCount = -1;
-			
+			TransactionManager transactionManager = null; 
+
 			try
-            {	
-				NetTiersProvider dataProvider = null; 				
-				dataProvider = DomainUtil.GetDataProvider(connectionStringKey, dynamicConnectionString, CurrentDataProvider);	
-				
+            {					
 				//since this is a read operation, don't create a tran by default, only use tran if provided to us for custom isolation level
-				if(isBorrowedTransaction)
-					transactionManager = DomainUtil.ValidateOrCreateTransaction(transactionManager, dataProvider, isBorrowedTransaction);
-					
+				transactionManager = ConnectionScope.ValidateOrCreateTransaction(noTranByDefault);
+				NetTiersProvider dataProvider = ConnectionScope.Current.DataProvider;
+				
 				//Access repository
 				list = new <%=collectionClassName%>(dataProvider.<%= GetProviderName(className) %>.GetBy<%=GetKeysName(fkeys[j].ForeignKeyMemberColumns)%>(<%= GetFunctionCallParameters(fkeys[j].ForeignKeyMemberColumns) %>, start, pageLength, out totalCount));
 				
-				//if borrowed tran, leave open for next call
+				//intentionally leave transaction open on a read operation.
+				
 			}
             catch (Exception exc)
             {
@@ -300,27 +225,23 @@
 			}
 			return list;
 		}
-		<% } %>
+		
 		<% 		}//endfor %>
 		#endregion <%=partialClassInternalPrefix%>GetByForeignKey Methods
 		<% } %>
 		
 		<% if (IncludeGetListByIX) { %>		
 		#region <%=partialClassInternalPrefix%>GetByIndexes
-				<% if (IsServiceLayer) { %>
+		<% if (IsServiceLayer) { %>
 		/// <summary>
 		/// 	Gets a row from the DataSource based on its primary key.
 		/// </summary>
-		/// <param name="transactionManager">A <see cref="TransactionManager"/> object.</param>
 		/// <param name="key">The unique identifier of the row to retrieve.</param>
-		/// <param name="start">Row number at which to start reading.</param>
-		/// <param name="pageLength">Number of rows to return.</param>
 		/// <returns>Returns an instance of the Entity class.</returns>
 		[DataObjectMethod(DataObjectMethodType.Select)]
-		public override <%=className%>  Get(TransactionManager transactionManager, <%= keyClassName %> key, int start, int pageLength)
+		public override <%=className%>  Get(<%= keyClassName %> key)
 		{
-			int totalCount = -1;
-			return <%=partialClassInternalPrefix%>GetBy<%=GetKeysName(keys)%>(transactionManager, <%= GetFunctionObjectParameters(keys, "key") %>, start, pageLength, out totalCount, null, null);
+			return <%=partialClassInternalPrefix%>GetBy<%=GetKeysName(keys)%>(<%= GetFunctionObjectParameters(keys, "key") %>);
 		}
 		<% } %>
 		
@@ -348,8 +269,14 @@
 				
 				string returnTypeVar = "list";
 				string returnType = collectionClassName;
-				string newCollection = string.Format("new {0}(", collectionClassName);
-				string newCollectionEnd = ")";
+				string newCollection = string.Empty;
+				string newCollectionEnd = string.Empty;
+					
+				if (!IsServiceLayer)
+				{
+					newCollection = string.Format("new {0}(", collectionClassName);
+					newCollectionEnd = ")";
+				}
 				bool isUnique = false;
 				
 				//if (IsPrimaryKey(indexes[j]))
@@ -365,7 +292,6 @@
 				string returnTypeForComment = returnType.Replace("<", "{").Replace(">", "}");
 		%>
 
-		<% if (RenderOverload || RenderImplementation) {%>
 		/// <summary>
 		///  method that Gets rows in a <see cref="<%=collectionClassNameComment %>" /> from the datasource based on the primary key <%=indexes[j].Name%> index.
 		/// </summary>
@@ -376,27 +302,12 @@
 		[DataObjectMethod(DataObjectMethodType.Select)]
 		<%= constructorAccessModifier %> <%=returnType%> <%=partialClassInternalPrefix%>GetBy<%=GetKeysName(indexes[j].MemberColumns)%>(<%= GetFunctionHeaderParameters(indexes[j].MemberColumns) %>)
 		{
-			int totalCount = -1;	
-			return <%=partialClassInternalPrefix%>GetBy<%=GetKeysName(indexes[j].MemberColumns)%>(null, <%= GetFunctionCallParameters(indexes[j].MemberColumns) %>, 0, int.MaxValue, out totalCount, null, null);
+			int totalCount = -1;
+			return <%=partialClassInternalPrefix%>GetBy<%=GetKeysName(indexes[j].MemberColumns)%>(<%= GetFunctionCallParameters(indexes[j].MemberColumns) %>, 0, defaultMaxRecords, out totalCount);
 		}
 		
 		/// <summary>
-		///  method that Gets rows in a <see cref="<%=collectionClassNameComment %>" /> from the datasource based on the primary key <%=indexes[j].Name%> index.
-		/// </summary>
-		/// <param name="transactionManager">a <c>TransactionManager</c>  that allows to set to the Isolation level for the query.</param>
-		<% for (int i = 0; i < indexes[j].MemberColumns.Count; i++) { %>
-		/// <param name="<%= GetPrivateName(indexes[j].MemberColumns[i].Name)%>"><%= indexes[j].MemberColumns[i].Description%></param>
-		<% } %>
-		/// <returns>Returns an instance of the <see cref="<%= returnTypeForComment %>"/> class.</returns>
-		[DataObjectMethod(DataObjectMethodType.Select)]
-		<%= constructorAccessModifier %> <%=returnType%> <%=partialClassInternalPrefix%>GetBy<%=GetKeysName(indexes[j].MemberColumns)%>(TransactionManager transactionManager, <%= GetFunctionHeaderParameters(indexes[j].MemberColumns) %>)
-		{
-			int totalCount = -1; 
-			return <%=partialClassInternalPrefix%>GetBy<%=GetKeysName(indexes[j].MemberColumns)%>(transactionManager, <%= GetFunctionCallParameters(indexes[j].MemberColumns) %>, 0, int.MaxValue, out totalCount, null, null);
-		}
-		
-		/// <summary>
-		///  method that Gets rows in a <see cref="<%=collectionClassNameComment %>" /> from the datasource based on the primary key <%=indexes[j].Name%> index.
+		///  Method that Gets rows in a <see cref="<%=collectionClassNameComment %>" /> from the datasource based on the primary key <%=indexes[j].Name%> index.
 		/// </summary>
 		<% for (int i = 0; i < indexes[j].MemberColumns.Count; i++) { %>
 		/// <param name="<%= GetPrivateName(indexes[j].MemberColumns[i].Name)%>"><%= indexes[j].MemberColumns[i].Description%></param>
@@ -408,62 +319,19 @@
 		[DataObjectMethod(DataObjectMethodType.Select)]
 		<%= constructorAccessModifier %> <%=returnType%> <%=partialClassInternalPrefix%>GetBy<%=GetKeysName(indexes[j].MemberColumns)%>(<%= GetFunctionHeaderParameters(indexes[j].MemberColumns) %>, int start, int pageLength, out int totalCount)
 		{
-			return <%=partialClassInternalPrefix%>GetBy<%=GetKeysName(indexes[j].MemberColumns)%>(null, <%= GetFunctionCallParameters(indexes[j].MemberColumns) %>, start, pageLength, out totalCount, null, null);
-		}
-
-		/// <summary>
-		///  method that Gets rows in a <see cref="<%=collectionClassNameComment %>" /> from the datasource based on the primary key <%=indexes[j].Name%> index.
-		/// </summary>
-		/// <param name="transactionManager">a <c>TransactionManager</c>  that allows to set to the Isolation level for the query.</param>
-		<% for (int i = 0; i < indexes[j].MemberColumns.Count; i++) { %>
-		/// <param name="<%= GetPrivateName(indexes[j].MemberColumns[i].Name)%>"><%= indexes[j].MemberColumns[i].Description%></param>
-		<% } %>
-		/// <param name="start">Row number at which to start reading.</param>
-		/// <param name="pageLength">Page length of records you would like to retrieve</param>
-		/// <param name="totalCount">out parameter, number of total rows in given query.</param>
-		/// <returns>Returns an instance of the <see cref="<%= returnTypeForComment %>"/> class.</returns>
-		[DataObjectMethod(DataObjectMethodType.Select)]
-		<%= constructorAccessModifier %> <%=returnType%> <%=partialClassInternalPrefix%>GetBy<%=GetKeysName(indexes[j].MemberColumns)%>(TransactionManager transactionManager, <%= GetFunctionHeaderParameters(indexes[j].MemberColumns) %>, int start, int pageLength, out int totalCount)
-		{
-			return <%=partialClassInternalPrefix%>GetBy<%=GetKeysName(indexes[j].MemberColumns)%>(transactionManager, <%= GetFunctionCallParameters(indexes[j].MemberColumns) %>, start, pageLength, out totalCount, null, null);
-		}
-		
-		<% } //end if render Overload%>
-		
-		<% if (RenderImplementation) { %>
-		/// <summary>
-		/// 	Gets <%= returnTypeForComment %> from the datasource based on the <%=indexes[j].Name%> index.
-		/// </summary>
-		/// <param name="transactionManager">a <c>TransactionManager</c>  that allows to set to the Isolation level for the query.</param>
-		<% for (int i = 0; i < indexes[j].MemberColumns.Count; i++) { %>
-		/// <param name="<%= GetPrivateName(indexes[j].MemberColumns[i].Name)%>"><%= indexes[j].MemberColumns[i].Description%></param>
-		<% } %>
-		/// <param name="start">Row number at which to start reading.</param>
-		/// <param name="pageLength">Page length of records you would like to retrieve</param>
-		/// <param name="totalCount">out parameter, number of total rows in given query.</param>
-		/// <param name="connectionStringKey">A pre-configured key for usage of another dataprovider.</param>
-		/// <param name="dynamicConnectionString">A dynamic connection string to use for this particular instance.</param>
-		/// <returns>Returns an instance of the <see cref="<%= returnTypeForComment %>"/> class.</returns>
-		[DataObjectMethod(DataObjectMethodType.Select)]
-		<%= constructorAccessModifier %> <%=returnType%> <%=partialClassInternalPrefix%>GetBy<%=GetKeysName(indexes[j].MemberColumns)%>(TransactionManager transactionManager, <%= GetFunctionHeaderParameters(indexes[j].MemberColumns) %>, int start, int pageLength, out int totalCount, string connectionStringKey, string dynamicConnectionString)
-		{
 			// throws security exception if not authorized
 			SecurityContext.IsAuthorized("GetBy<%=GetKeysName(indexes[j].MemberColumns)%>");
-						
-			// check if borrowed transaction
-			bool isBorrowedTransaction = (transactionManager != null && transactionManager.IsOpen);
 			totalCount = -1;
-			// get this data
+			
 			<%=returnType%> <%= returnTypeVar %> = null;
+			TransactionManager transactionManager = null; 
+			
 			try
             {	
-				NetTiersProvider dataProvider = null;
-				dataProvider = DomainUtil.GetDataProvider(connectionStringKey, dynamicConnectionString, CurrentDataProvider);					
-				
 				//since this is a read operation, don't create a tran by default, only use tran if provided to us for custom isolation level
-				if(isBorrowedTransaction)
-					transactionManager = DomainUtil.ValidateOrCreateTransaction(transactionManager, dataProvider, isBorrowedTransaction);
-					
+				 transactionManager = ConnectionScope.ValidateOrCreateTransaction(noTranByDefault);
+				NetTiersProvider dataProvider = ConnectionScope.Current.DataProvider;					
+				
 				//Access Repository
 				<%= returnTypeVar %> = <%=newCollection%>dataProvider.<%= GetProviderName(className) %>.GetBy<%=GetKeysName(indexes[j].MemberColumns)%>(<%= GetFunctionCallParameters(indexes[j].MemberColumns) %>, start, pageLength)  <%=newCollectionEnd%>;
 			
@@ -481,112 +349,49 @@
 					throw;
 			}
 			return <%= returnTypeVar %>;
-
 		}
-		<% } //endi if render Implementation %>
+	
 		<%		}//endfor %>
 		#endregion <%=partialClassInternalPrefix%>GetByIndexes
 		<% } %>
 	
 		<% if (IncludeGetList) { %>
 		#region <%=partialClassInternalPrefix%>GetList
-		<% if (RenderOverload) { %>
 		/// <summary>
 		/// Get a complete collection of <see cref="<%= className %>" /> entities.
 		/// </summary>
 		/// <returns></returns>
-		<%= constructorAccessModifier %> <%=collectionClassName %> <%=partialClassInternalPrefix%>GetAll() 
+		<%= interfaceImplModifier %> <%=collectionClassName %> <%=partialClassInternalPrefix%>GetAll() 
 		{
 			int totalCount = -1;
-			return <%=partialClassInternalPrefix%>GetAll(null, 0, int.MaxValue, out totalCount, null, null);
+			return <%=partialClassInternalPrefix%>GetAll(0, defaultMaxRecords, out totalCount);
 		}
 
 		/// <summary>
-		/// Get a complete collection of <see cref="<%= className %>" /> entities.
+		/// Get a set portion of a complete list of <see cref="<%= className %>" /> entities
 		/// </summary>
-		/// <param name="transactionManager">a <c>TransactionManager</c>  that allows to set to the Isolation level for the query.</param>
-		/// <returns>a <see cref="<%= collectionClassNameComment %>"/> </returns>
-		<%= constructorAccessModifier %> <%=collectionClassName %> <%=partialClassInternalPrefix%>GetAll(TransactionManager transactionManager) 
-		{
-			int totalCount = -1;
-			return <%=partialClassInternalPrefix%>GetAll(transactionManager, 0, int.MaxValue, out totalCount, null, null);
-		}
-		
-		/// <summary>
-		/// Get a complete collection <see cref="<%= collectionClassNameComment %>"/> of <see cref="<%= className %>" /> entities.
-		/// </summary>
-		/// <param name="start">Row number at which to start reading.</param>
-		/// <param name="pageLength">Number of rows to return.</param>
-		/// <returns>a <see cref="<%= collectionClassNameComment %>"/> </returns>
-		<%= constructorAccessModifier %> <%=collectionClassName %> <%=partialClassInternalPrefix%>GetAll(int start, int pageLength) 
-		{
-			int totalCount = -1;
-			return <%=partialClassInternalPrefix%>GetAll(null, start, pageLength, out totalCount, null, null);
-		}
-		
-		/// <summary>
-		/// Get a complete collection <see cref="<%= collectionClassNameComment %>"/> of <see cref="<%= className %>" /> entities.
-		/// </summary>
-		/// <param name="transactionManager">a <c>TransactionManager</c>  that allows to set to the Isolation level for the query.</param>
-		/// <param name="start">Row number at which to start reading.</param>
-		/// <param name="pageLength">Number of rows to return.</param>
-		/// <returns>a <see cref="<%= collectionClassNameComment %>"/> </returns>
-		<%= constructorAccessModifier %> <%=collectionClassName %> <%=partialClassInternalPrefix%>GetAll(TransactionManager transactionManager, int start, int pageLength) 
-		{
-			int totalCount = -1;
-			return <%=partialClassInternalPrefix%>GetAll(transactionManager, start, pageLength, out totalCount, null, null);
-		}
-		
-		/// <summary>
-		/// Get a complete collection <see cref="<%= collectionClassNameComment %>"/> of <see cref="<%= className %>" /> entities.
-		/// </summary>
-		/// <param name="transactionManager">a <c>TransactionManager</c>  that allows to set to the Isolation level for the query.</param>
 		/// <param name="start">Row number at which to start reading.</param>
 		/// <param name="pageLength">Number of rows to return.</param>
 		/// <param name="totalCount">out parameter, number of total rows in given query.</param>
 		/// <returns>a <see cref="<%= collectionClassNameComment %>"/> </returns>
-		<%= constructorAccessModifier %> <%=collectionClassName %> <%=partialClassInternalPrefix%>GetAll(TransactionManager transactionManager, int start, int pageLength, out int totalCount) 
-		{
-			return <%=partialClassInternalPrefix%>GetAll(transactionManager, start, pageLength, out totalCount, null, null);
-		}
-		
-		<% } %>
-		<% if (RenderImplementation) { %>
-		/// <summary>
-		/// Get a set portion of a complete list of <see cref="<%= className %>" /> entities 
-		/// </summary>
-		/// <param name="transactionManager">a <c>TransactionManager</c>  that allows to set to the Isolation level for the query.</param>
-		/// <param name="start">Row number at which to start reading.</param>
-		/// <param name="pageLength">Number of rows to return.</param>
-		/// <param name="totalCount">out parameter, number of total rows in given query.</param>
-		/// <param name="connectionStringKey">A pre-configured key for usage of another dataprovider.</param>
-		/// <param name="dynamicConnectionString">A dynamic connection string to use for this particular instance.</param>
-		/// <returns>a <see cref="<%= collectionClassNameComment %>"/> </returns>
-		<%= interfaceImplModifier %> <%=collectionClassName %> <%=partialClassInternalPrefix%>GetAll(TransactionManager transactionManager, int start, int pageLength, out int totalCount, string connectionStringKey, string dynamicConnectionString) 
+		<%= constructorAccessModifier %> <%=collectionClassName %> <%=partialClassInternalPrefix%>GetAll(int start, int pageLength, out int totalCount) 
 		{
 			// throws security exception if not authorized
 			SecurityContext.IsAuthorized("GetAll");
 			
-			// check if borrowed transaction
-			bool isBorrowedTransaction = (transactionManager != null && transactionManager.IsOpen);
-			
 			// get this data
 			<%= collectionClassName %> list = null;
 			totalCount = -1;
+			TransactionManager transactionManager = null; 
 			
 			try
             {	
-				NetTiersProvider dataProvider = null; 				
-				dataProvider = DomainUtil.GetDataProvider(connectionStringKey, dynamicConnectionString, CurrentDataProvider);	
-				
 				//since this is a read operation, don't create a tran by default, only use tran if provided to us for custom isolation level
-				if(isBorrowedTransaction)
-					transactionManager = DomainUtil.ValidateOrCreateTransaction(transactionManager, dataProvider, isBorrowedTransaction);
-					
+				transactionManager = ConnectionScope.ValidateOrCreateTransaction(noTranByDefault);
+				NetTiersProvider dataProvider = ConnectionScope.Current.DataProvider;					
+
 				//Access repository
-				list = <%=newCollectionClassName%>dataProvider.<%= GetProviderName(className) %>.GetAll(transactionManager, start, pageLength, out totalCount)<%=newCollectionClassNameEnd%>;
-				
-				//if borrowed tran, leave open for next call
+				list = <%=newCollectionClassName%>dataProvider.<%= GetProviderName(className) %>.GetAll(transactionManager, start, pageLength, out totalCount)<%=newCollectionClassNameEnd%>;	
 			}
             catch (Exception exc)
             {
@@ -600,11 +405,9 @@
 			}
 			return list;
 		}
-		<% } // end renderedImplementation %>
 		#endregion <%=partialClassInternalPrefix%>GetAll
 
 		#region <%=partialClassInternalPrefix%>GetPaged
-		<% if (RenderOverload) { %>
 		/// <summary>
 		/// Gets a page of <see cref="<%=collectionClassNameComment %>" /> rows from the DataSource.
 		/// </summary>
@@ -613,19 +416,7 @@
 		/// <returns>Returns a typed collection of <c><%= className %></c> objects.</returns>
 		<%= constructorAccessModifier %> <%=collectionClassName %> <%=partialClassInternalPrefix%>GetPaged(out int totalCount)
 		{
-			return <%=partialClassInternalPrefix%>GetPaged(null, null, null, 0, int.MaxValue, out totalCount, null, null);
-		}
-		
-		/// <summary>
-		/// Gets a page of <see cref="<%=collectionClassNameComment %>" /> rows from the DataSource.
-		/// </summary>
-		/// <param name="transactionManager">a <c>TransactionManager</c>  that allows to set to the Isolation level for the query.</param>
-		/// <param name="totalCount">Out Parameter, Number of rows in the DataSource.</param>
-		/// <remarks></remarks>
-		/// <returns>Returns a typed collection of <c><%= className %></c> objects.</returns>
-		<%= constructorAccessModifier %> <%=collectionClassName %> <%=partialClassInternalPrefix%>GetPaged(TransactionManager transactionManager, out int totalCount)
-		{
-			return <%=partialClassInternalPrefix%>GetPaged(transactionManager, null, null, 0, int.MaxValue, out totalCount, null, null);
+			return <%=partialClassInternalPrefix%>GetPaged(null, null, 0, defaultMaxRecords, out totalCount);
 		}
 		
 		/// <summary>
@@ -638,105 +429,34 @@
 		/// <returns>Returns a typed collection of <c><%= className %></c> objects.</returns>
 		<%= constructorAccessModifier %> <%=collectionClassName %> <%=partialClassInternalPrefix%>GetPaged(int start, int pageLength, out int totalCount)
 		{
-			return <%=partialClassInternalPrefix%>GetPaged(null, null, null, start, pageLength, out totalCount, null, null);
-		}
-		
-		/// <summary>
-		/// Gets a page of <see cref="<%=collectionClassNameComment %>" /> rows from the DataSource.
-		/// </summary>
-		/// <param name="whereClause">Specifies the condition for the rows returned by a query (Name='John Doe', Name='John Doe' AND Id='1', Name='John Doe' OR Id='1').</param>
-		/// <param name="orderBy">Specifies the sort criteria for the rows in the DataSource (Name ASC; BirthDay DESC, Name ASC).</param>
-		/// <param name="start">Row number at which to start reading.</param>
-		/// <param name="pageLength">Number of rows to return.</param>
-		/// <param name="totalCount">Out Parameter, Number of rows in the DataSource.</param>
-		/// <remarks></remarks>
-		/// <returns>Returns a typed collection of Community objects.</returns>
-		<%= constructorAccessModifier %> <%=collectionClassName %> <%=partialClassInternalPrefix%>GetPaged(string whereClause, string orderBy, int start, int pageLength, out int totalCount)
-		{
-			return <%=partialClassInternalPrefix%>GetPaged(null, whereClause, orderBy, start, pageLength, out totalCount, null, null);
-		}
-		
-		/// <summary>
-		/// Gets a page of <see cref="<%=collectionClassNameComment %>" /> rows from the DataSource.
-		/// </summary>
-		/// <param name="transactionManager">a <c>TransactionManager</c>  that allows to set to the Isolation level for the query.</param>
-		/// <param name="whereClause">Specifies the condition for the rows returned by a query (Name='John Doe', Name='John Doe' AND Id='1', Name='John Doe' OR Id='1').</param>
-		/// <param name="orderBy">Specifies the sort criteria for the rows in the DataSource (Name ASC; BirthDay DESC, Name ASC).</param>
-		/// <param name="start">Row number at which to start reading.</param>
-		/// <param name="pageLength">Number of rows to return.</param>
-		/// <param name="totalCount">Out Parameter, Number of rows in the DataSource.</param>
-		/// <remarks></remarks>
-		/// <returns>Returns a typed collection of <c><%= className %></c> objects.</returns>
-		<%= constructorAccessModifier %> <%=collectionClassName %> <%=partialClassInternalPrefix%>GetPaged(TransactionManager transactionManager, string whereClause, string orderBy, int start, int pageLength, out int totalCount)
-		{
-			return <%=partialClassInternalPrefix%>GetPaged(transactionManager, whereClause, orderBy, start, pageLength, out totalCount, null, null);
-		}
-		
-		/// <summary>
-		/// Gets the number of rows in the DataSource that match the specified whereClause.
-		/// This method is only provided as a workaround for the ObjectDataSource's need to 
-		/// execute another method to discover the total count instead of using another param, like our out param.  
-		/// This method should be avoided if using the ObjectDataSource or another method.
-		/// </summary>
-		/// <param name="whereClause">Specifies the condition for the rows returned by a query (Name='John Doe', Name='John Doe' AND Id='1', Name='John Doe' OR Id='1').</param>
-		/// <param name="totalCount">Number of rows in the DataSource.</param>
-		/// <returns>Returns the number of rows.</returns>
-		public int GetTotalItems(String whereClause, out int totalCount)
-		{
-			return GetTotalItems(null, whereClause, out totalCount);
+			return <%=partialClassInternalPrefix%>GetPaged(null, null, start, pageLength, out totalCount);
 		}
 
 		/// <summary>
-		/// Gets the number of rows in the DataSource that match the specified whereClause.
-		/// This method is only provided as a workaround for the ObjectDataSource's need to 
-		/// execute another method to discover the total count instead of using another param, like our out param.  
-		/// This method should be avoided if using the ObjectDataSource or another method.
-		/// </summary>
-		/// <param name="mgr">A <see cref="TransactionManager"/> object.</param>
-		/// <param name="whereClause">Specifies the condition for the rows returned by a query (Name='John Doe', Name='John Doe' AND Id='1', Name='John Doe' OR Id='1').</param>
-		/// <param name="totalCount">Number of rows in the DataSource.</param>
-		/// <returns>Returns the number of rows.</returns>
-		public int GetTotalItems(TransactionManager mgr, String whereClause, out int totalCount)
-		{
-            <%=partialClassInternalPrefix%>GetPaged(mgr, whereClause, String.Empty, 0, 0, out totalCount, null, null);
-            return totalCount;
-		}
-		<% } %>
-				
-		<% if (RenderImplementation) { %>
-		/// <summary>
 		/// Gets a page of entity rows with a <see cref="<%=collectionClassNameComment %>" /> from the DataSource with a where clause and order by clause.
 		/// </summary>
-		/// <param name="transactionManager">a <c>TransactionManager</c>  that allows to set to the Isolation level for the query.</param>
 		/// <param name="whereClause">Specifies the condition for the rows returned by a query (Name='John Doe', Name='John Doe' AND Id='1', Name='John Doe' OR Id='1').</param>
 		/// <param name="orderBy">Specifies the sort criteria for the rows in the DataSource (Name ASC; BirthDay DESC, Name ASC).</param>
 		/// <param name="start">Row number at which to start reading.</param>
 		/// <param name="pageLength">Number of rows to return.</param>
 		/// <param name="totalCount">Out Parameter, Number of rows in the DataSource.</param>
-		/// <param name="connectionStringKey">A pre-configured key for usage of another dataprovider.</param>
-		/// <param name="dynamicConnectionString">A dynamic connection string to use for this particular instance.</param>
 		/// <remarks></remarks>
 		/// <returns>Returns a typed collection of <c><%= className %></c> objects.</returns>
-		<%= interfaceImplModifier %> <%=collectionClassName %> <%=partialClassInternalPrefix%>GetPaged(TransactionManager transactionManager, string whereClause,string orderBy, int start, int pageLength, out int totalCount, string connectionStringKey, string dynamicConnectionString)
+		<%= interfaceImplModifier %> <%=collectionClassName %> <%=partialClassInternalPrefix%>GetPaged(string whereClause,string orderBy, int start, int pageLength, out int totalCount)
 		{
 			// throws security exception if not authorized
 			SecurityContext.IsAuthorized("GetPaged");
 			
-			// check if borrowed transaction
-			bool isBorrowedTransaction = (transactionManager != null && transactionManager.IsOpen);
-			
 			// get this data
 			<%= collectionClassName %> list = null;
 			totalCount = -1;
+			TransactionManager transactionManager = null; 
 			
 			try
             {	
-				NetTiersProvider dataProvider = null; 				
-				dataProvider = DomainUtil.GetDataProvider(connectionStringKey, dynamicConnectionString, CurrentDataProvider);	
-				
 				//since this is a read operation, don't create a tran by default, only use tran if provided to us for custom isolation level
-				if(isBorrowedTransaction)
-					transactionManager = DomainUtil.ValidateOrCreateTransaction(transactionManager, dataProvider, isBorrowedTransaction);
+				transactionManager = ConnectionScope.ValidateOrCreateTransaction(noTranByDefault);
+				NetTiersProvider dataProvider = ConnectionScope.Current.DataProvider;
 					
 				//Access repository
 				list = <%=newCollectionClassName%>dataProvider.<%= GetProviderName(className) %>.GetPaged(transactionManager, whereClause, orderBy, start, pageLength, out totalCount)<%=newCollectionClassNameEnd%>;
@@ -755,114 +475,63 @@
 			}
 			return list;			
 		}
-		<% } %>
+		
+		/// <summary>
+		/// Gets the number of rows in the DataSource that match the specified whereClause.
+		/// This method is only provided as a workaround for the ObjectDataSource's need to 
+		/// execute another method to discover the total count instead of using another param, like our out param.  
+		/// This method should be avoided if using the ObjectDataSource or another method.
+		/// </summary>
+		/// <param name="whereClause">Specifies the condition for the rows returned by a query (Name='John Doe', Name='John Doe' AND Id='1', Name='John Doe' OR Id='1').</param>
+		/// <param name="totalCount">Number of rows in the DataSource.</param>
+		/// <returns>Returns the number of rows.</returns>
+		public int GetTotalItems(string whereClause, out int totalCount)
+		{
+			GetPaged(whereClause, null, 0, defaultMaxRecords, out totalCount);
+			return totalCount;
+		}
 		#endregion <%=partialClassInternalPrefix%>GetPaged	
 		<% } %>
 				
 		<% if (IncludeFind) { %>
 		#region <%=partialClassInternalPrefix%>Find 
-		<% if (RenderOverload) { %>
 		/// <summary>
 		/// Attempts to do a parameterized version of a simple whereclause. 
 		/// Returns rows meeting the whereClause condition from the DataSource.
 		/// </summary>
 		/// <param name="whereClause">Specifies the condition for the rows returned by a query (Name='John Doe', Name='John Doe' AND Id='1', Name='John Doe' OR Id='1').</param>
-		/// <remarks>Does Support Advanced Operations such as SubSelects.  See GetPaged for that functionality.</remarks>
+		/// <remarks>Does NOT Support Advanced Operations such as SubSelects.  See GetPaged for that functionality.</remarks>
 		/// <returns>Returns a typed collection of Entity objects.</returns>
 		<%= constructorAccessModifier %> <%=collectionClassName%> Find(string whereClause)
 		{
 			int totalCount = -1;
-			return Find(null, whereClause, 0, int.MaxValue, out totalCount, null, null);
+			return Find(whereClause, 0, defaultMaxRecords, out totalCount);
 		}	
 		
 		/// <summary>
 		/// Returns rows meeting the whereClause condition from the DataSource.
 		/// </summary>
-		/// <param name="transactionManager">A <see cref="TransactionManager"/> object.</param>
-		/// <param name="whereClause">Specifies the condition for the rows returned by a query (Name='John Doe', Name='John Doe' AND Id='1', Name='John Doe' OR Id='1').</param>
-		/// <remarks>Does Support Advanced Operations such as SubSelects.  See GetPaged for that functionality.</remarks>
-		/// <returns>Returns a typed collection of Entity objects.</returns>
-		<%= constructorAccessModifier %> <%=collectionClassName%> Find(TransactionManager transactionManager, string whereClause)
-		{
-			int totalCount = -1;
-			return Find(transactionManager, whereClause, 0, int.MaxValue, out totalCount, null, null);
-		}
-		
-		/// <summary>
-		/// Returns rows meeting the whereClause condition from the DataSource.
-		/// </summary>
-		/// <param name="whereClause">Specifies the condition for the rows returned by a query (Name='John Doe', Name='John Doe' AND Id='1', Name='John Doe' OR Id='1').</param>
-		/// <param name="start">Row number at which to start reading.</param>
-		/// <param name="pageLength">Number of rows to return.</param>
-		/// <remarks>Does Support Advanced Operations such as SubSelects.  See GetPaged for that functionality.</remarks>
-		/// <returns>Returns a typed collection of Entity objects.</returns>
-		<%= constructorAccessModifier %> <%=collectionClassName%> Find(string whereClause, int start, int pageLength)
-		{
-			int totalCount = -1;
-			return Find(null, whereClause, start, pageLength, out totalCount, null, null);
-		}
-		
-		/// <summary>
-		/// Returns rows meeting the whereClause condition from the DataSource.
-		/// </summary>
-		/// <param name="transactionManager">A <see cref="TransactionManager"/> object.</param>
-		/// <param name="whereClause">Specifies the condition for the rows returned by a query (Name='John Doe', Name='John Doe' AND Id='1', Name='John Doe' OR Id='1').</param>
-		/// <param name="totalCount">out parameter to get total records for query</param>
-		/// <remarks>Does Support Advanced Operations such as SubSelects.  See GetPaged for that functionality.</remarks>
-		/// <returns>Returns a typed collection of Entity objects.</returns>
-		<%= constructorAccessModifier %> <%=collectionClassName%> Find(TransactionManager transactionManager, string whereClause, out int totalCount)
-		{
-			return Find(transactionManager, whereClause, 0, int.MaxValue, out totalCount, null, null);
-		}
-		
-		/// <summary>
-		/// Returns rows meeting the whereClause condition from the DataSource.
-		/// </summary>
 		/// <param name="whereClause">Specifies the condition for the rows returned by a query (Name='John Doe', Name='John Doe' AND Id='1', Name='John Doe' OR Id='1').</param>
 		/// <param name="start">Row number at which to start reading.</param>
 		/// <param name="pageLength">Number of rows to return.</param>
 		/// <param name="totalCount">out parameter to get total records for query</param>
-		/// <remarks>Does Support Advanced Operations such as SubSelects.  See GetPaged for that functionality.</remarks>
-		/// <returns>Returns a typed collection of Entity objects.</returns>
-		<%= constructorAccessModifier %> <%=collectionClassName%> Find(string whereClause, int start, int pageLength, out int totalCount)
-		{
-			return Find(null, whereClause, start, pageLength, out totalCount, null, null);
-		}
-		<% } %>
-		
-		<% if (RenderImplementation) { %>
-		/// <summary>
-		/// Returns rows meeting the whereClause condition from the DataSource.
-		/// </summary>
-		/// <param name="transactionManager">A <see cref="TransactionManager"/> object.</param>
-		/// <param name="whereClause">Specifies the condition for the rows returned by a query (Name='John Doe', Name='John Doe' AND Id='1', Name='John Doe' OR Id='1').</param>
-		/// <param name="start">Row number at which to start reading.</param>
-		/// <param name="pageLength">Number of rows to return.</param>
-		/// <param name="totalCount">out parameter to get total records for query</param>
-		/// <param name="connectionStringKey">A pre-configured key for usage of another dataprovider.</param>
-		/// <param name="dynamicConnectionString">A dynamic connection string to use for this particular instance.</param>
-		/// <remarks>Does Support Advanced Operations such as SubSelects.  See GetPaged for that functionality.</remarks>
+		/// <remarks>Does NOT Support Advanced Operations such as SubSelects.  See GetPaged for that functionality.</remarks>
 		/// <returns>Returns a typed collection <%=collectionClassNameComment %> of <c><%= className %></c> objects.</returns>
-		<%= interfaceImplModifier %> <%=collectionClassName%> Find(TransactionManager transactionManager, string whereClause, int start, int pageLength, out int totalCount, string connectionStringKey, string dynamicConnectionString)
+		<%= interfaceImplModifier %> <%=collectionClassName%> Find(string whereClause, int start, int pageLength, out int totalCount)
 		{
 			// throws security exception if not authorized
 			SecurityContext.IsAuthorized("Find");
-					
-			// check if borrowed transaction
-			bool isBorrowedTransaction = (transactionManager != null && transactionManager.IsOpen);
-			
+								
 			// get this data
 			<%= collectionClassName %> list = null;
 			totalCount = -1;
+			TransactionManager transactionManager = null; 
 			
 			try
             {	
-				NetTiersProvider dataProvider = null; 				
-				dataProvider = DomainUtil.GetDataProvider(connectionStringKey, dynamicConnectionString, CurrentDataProvider);	
-				
 				//since this is a read operation, don't create a tran by default, only use tran if provided to us for custom isolation level
-				if(isBorrowedTransaction)
-					transactionManager = DomainUtil.ValidateOrCreateTransaction(transactionManager, dataProvider, isBorrowedTransaction);
+				transactionManager = ConnectionScope.ValidateOrCreateTransaction(noTranByDefault);
+				NetTiersProvider dataProvider = ConnectionScope.Current.DataProvider;
 					
 				//Access repository
 				list = <%=newCollectionClassName%>dataProvider.<%= GetProviderName(className) %>.Find(transactionManager, whereClause, start, pageLength, out totalCount)<%=newCollectionClassNameEnd%>;
@@ -881,11 +550,10 @@
 			}
 			return list;
 		}
-		<% } //end if render Implementation %>
 		
 		#endregion
-		<% } //endif (IncludeFind) %>
-		<%
+		<% } //endif (IncludeFind) 
+		
 			string returnEntity = IsServiceLayer ? className : "void";
 			string useReturn = IsServiceLayer ? "return " : "";
 			
@@ -898,7 +566,7 @@
 				actions.Add("Save");
 			if (IncludeDelete)
 				actions.Add("Delete");
-			
+				
 			foreach(string action in actions)
 			{
 		%>
@@ -906,9 +574,8 @@
 		#region <%=partialClassInternalPrefix%><%= action %>
 
 		#region <%= action %> Entity
-		<% if (RenderOverload) { %>
 		/// <summary>
-		/// 	<%= constructorAccessModifier %> method that <%= action %>s a <%=className%> object into the datasource using a transaction.
+		/// 	<%= constructorAccessModifier %>method that <%= action %>s a <%=className%> object into the datasource using a transaction.
 		/// </summary>
 		<% if (IsServiceLayer) { %>
 		/// <param name="entity"><%=className%> object to <%= action %>.</param>
@@ -916,11 +583,9 @@
 		/// <remarks>After <%= action %>ing into the datasource, the <%=className%> object will be updated
 		/// to refelect any changes made by the datasource. (ie: identity or computed columns)
 		/// </remarks>
-		<% if (returnEntity == "") {%>
-		/// <returns>Returns the entity if the operation is successful.</returns>
-		<% } %>
+		/// <returns>Returns bool that the operation is successful.</returns>
 		/// <example>
-        /// The following code shows the usage of the <%= action %> Method.
+        /// The following code shows the usage of the <%= action %> Method with an already open transaction.
         /// <code>
 		<% if (action == "Insert") {%>
 		/// <%= className %> entity = new <%= className %>();
@@ -930,146 +595,52 @@
 		<%  }%>
 		/// entity.StringProperty = "foo";
 		/// entity.IntProperty = 12;
+		/// entity.ChildObjectSource.StringProperty = "bar";
+		/// TransactionManager tm = null;
 		/// try
         ///	{
+		/// 	tm = ConnectionContext.CreateTransaction();
 		<%if (IsServiceLayer)  {%>
+		///		//<%= action %> Child entity, Then Parent Entity
+		/// 	<%= GetServiceClassName("ChildObjectType") %>.<%= action %>(entity.ChildObjectSource);
 		///		<%= GetServiceClassName(className) %>.<%= action %>(entity);
 		<% } %>
-		<% else if (IsDomainModel) {%>
+		<% else if (IsDomainModel){%>
+		///		//<%= action %> Child entity, Then Parent Entity
+		/// 	entity.ChildObjectSource.<%= action %>();
 		///		entity.<%= action %>();
 		<% } %>
 		///	}
         ///	catch (Exception e)
         ///	{
-        ///		if (DomainUtil.HandleException(e, name)) throw;
-        ///	}
-        /// </code>
-        /// </example>
-		[DataObjectMethod(DataObjectMethodType.<%= (action == "Save" ? "Update" : action) %>)]
-		<%= constructorAccessModifierOnMembers %> <%= returnEntity %> <%=partialClassInternalPrefix%><%= action %>(<%= memberMethodEntity.TrimStart(',') %>)
-		{
-			<%= useReturn %><%=partialClassInternalPrefix%><%= action %>(null, false, <%= memberMethodEntityCall != "this" ? memberMethodEntityCall + "," : "" %> null, null);
-		}
-		
-		
-		/// <summary>
-		/// 	<%= constructorAccessModifier %>method that <%= action %>s a <%=className%> object into the datasource using a transaction.
-		/// </summary>
-		/// <param name="transactionManager"><see cref="TransactionManager"/> object to ensure IsolationLevel and Atomicity.</param>
-		<% if (IsServiceLayer) { %>
-		/// <param name="entity"><%=className%> object to <%= action %>.</param>
-		<% } %>
-		/// <remarks>After <%= action %>ing into the datasource, the <%=className%> object will be updated
-		/// to refelect any changes made by the datasource. (ie: identity or computed columns)
-		/// </remarks>
-		/// <returns>Returns the entity if the operation is successful.</returns>
-		/// <example>
-        /// The following code shows the usage of the <%= action %> Method with an already open transaction.
-        /// <code>
-		<% if (action == "Insert") {%>
-		/// <%= className %> entity = new <%= className %>();
-		<% }
-		else {%>
-		///	<%= className %> entity = <%= (IsServiceLayer ? GetServiceClassName(className) : className) %>.GetByPrimaryKeyColumn(1234);
-		<%  }%>
-		/// entity.StringProperty = "foo";
-		/// entity.IntProperty = 12;
-		/// entity.ChildObjectSource.StringProperty = "bar";
-		/// TransactionManager tm = null;
-		/// try
-        ///	{
-		/// 	tm = <%= className %>.CurrentDataProvider.CreateTransaction();
-		<%if (IsServiceLayer)  {%>
-		///		//<%= action %> Child entity, Then Parent Entity
-		/// 	<%= GetServiceClassName("ChildObject") %>.<%= action %>(tm, entity.ChildObjectSource);
-		///		<%= GetServiceClassName(className) %>.<%= action %>(tm, entity);
-		<% } %>
-		<% else if (IsDomainModel){%>
-		///		//<%= action %> Child entity, Then Parent Entity
-		/// 	entity.ChildObjectSource.<%= action %>(tm);
-		///		entity.<%= action %>(tm);
-		<% } %>
-		///	}
-        ///	catch (Exception e)
-        ///	{
 		///		if (tm != null &amp;&amp; tm.IsOpen) tm.Rollback();
         ///		if (DomainUtil.HandleException(e, name)) throw;
         ///	}
         /// </code>
         /// </example>
 		[DataObjectMethod(DataObjectMethodType.<%= (action == "Save" ? "Update" : action) %>)]
-		<%= constructorAccessModifierOnMembers %> <%= returnEntity %> <%=partialClassInternalPrefix%><%= action %>(TransactionManager transactionManager <%= memberMethodEntity %>)
-		{
-			<%= useReturn %><%=partialClassInternalPrefix%><%= action %>(transactionManager, true, <%= memberMethodEntityCall != "this" ? memberMethodEntityCall + "," : "" %> null, null);
-		}
-		<% } //end if overload %>
-		
-		<% if (RenderImplementation) { %>
-		/// <summary>
-		/// 	<%= constructorAccessModifier %>method that <%= action %>s a <%=className%> object into the datasource using a transaction.
-		/// </summary>
-		/// <param name="transactionManager"><see cref="TransactionManager"/> object to ensure IsolationLevel and ACID conformity.</param>
-		<% if (IsServiceLayer) { %>
-		/// <param name="entity"><%=className%> object to <%= action %>.</param>
-		<% } %>
-		/// <param name="isBorrowedTransaction" > Bool, determines if the call is already made in the context of a transaction. </param>
-		/// <param name="connectionStringKey" >Already Configured Connection String Key</param>
-		/// <param name="dynamicConnectionString" >Dynamic Connection String</param>
-		/// <remarks>After <%= action %>ing into the datasource, the <%=className%> object will be updated
-		/// to refelect any changes made by the datasource. (ie: identity or computed columns)
-		/// </remarks>
-		/// <returns>Returns the entity if operation is successful.</returns>
-		/// <example>
-        /// The following code shows the usage of the <%= action %> Method with an already open transaction.
-        /// <code>
-		<% if (action == "Insert") {%>
-		/// <%= className %> entity = new <%= className %>();
-		<% }
-		else {%>
-		///	<%= className %> entity = <%= (IsServiceLayer ? GetServiceClassName(className) : className) %>.GetByPrimaryKeyColumn(1234);
-		<%  }%>
-		/// entity.StringProperty = "foo";
-		/// entity.IntProperty = 12;
-		/// entity.ChildObjectSource.StringProperty = "bar";
-		/// TransactionManager tm = null;
-		/// try
-        ///	{
-		/// 	tm = <%= className %>.CurrentDataProvider.CreateTransaction();
-		<%if (IsServiceLayer)  {%>
-		///		//<%= action %> Child entity, Then Parent Entity
-		/// 	<%= GetServiceClassName("ChildObjectType") %>.<%= action %>(tm, true, entity.ChildObjectSource, "ClientDatabase1", null);
-		///		<%= GetServiceClassName(className) %>.<%= action %>(tm, true, entity, "ClientDatabase1", null);
-		<% } %>
-		<% else if (IsDomainModel){%>
-		///		//<%= action %> Child entity, Then Parent Entity
-		/// 	entity.ChildObjectSource.<%= action %>(tm, true, "ClientDatabase1", null);
-		///		entity.<%= action %>(tm, true, "ClientDatabase1", null);
-		<% } %>
-		///	}
-        ///	catch (Exception e)
-        ///	{
-		///		if (tm != null &amp;&amp; tm.IsOpen) tm.Rollback();
-        ///		if (DomainUtil.HandleException(e, name)) throw;
-        ///	}
-        /// </code>
-        /// </example>
-		[DataObjectMethod(DataObjectMethodType.<%= (action == "Save" ? "Update" : action) %>)]
-		<%= (IsServiceLayer && (action == "Insert" || action == "Update")) ? interfaceImplModifier : constructorAccessModifierOnMembers %> <%= returnEntity %> <%=partialClassInternalPrefix%><%= action %>(TransactionManager transactionManager, bool isBorrowedTransaction <%= memberMethodEntity %>, string connectionStringKey, string dynamicConnectionString)
+		<%= (IsServiceLayer && (action != "Save")) ? interfaceImplModifier : constructorAccessModifierOnMembers %> <%= (action != "Save" ? "bool" : returnEntity) %> <%=partialClassInternalPrefix%><%= action %>(<%= memberMethodEntity %>)
 		{
 			// throws security exception if not authorized
 			SecurityContext.IsAuthorized("<%= action %>");
 			
 			if (!<%= memberMethodEntityCall %>.IsValid)
 				throw new Entities.EntityNotValidException(<%= memberMethodEntityCall %>, "<%= action %>");
-				
+			
+			TransactionManager transactionManager = null; 
+			<% if (action != "Save") { %>
+			bool result = false;
+			<% } %>
 			try
             {	
-				NetTiersProvider dataProvider = null; 
-				dataProvider = DomainUtil.GetDataProvider(connectionStringKey, dynamicConnectionString, CurrentDataProvider);
-				transactionManager = DomainUtil.ValidateOrCreateTransaction(transactionManager, dataProvider, isBorrowedTransaction);
+				bool isBorrowedTransaction = ConnectionScope.Current.HasTransaction;
+				
+				//since this is a read operation, don't create a tran by default, only use tran if provided to us for custom isolation level
+				transactionManager = ConnectionScope.ValidateOrCreateTransaction();
+				NetTiersProvider dataProvider = ConnectionScope.Current.DataProvider;
 					
 				//Persist Entity
-				dataProvider.<%= GetProviderName(className) %>.<%= action %>(transactionManager, <%= memberMethodEntityCall %>); 
+				<% if (action != "Save") { %>result = <% } %>dataProvider.<%= GetProviderName(className) %>.<%= action %>(transactionManager, <%= memberMethodEntityCall %>); 
 				
 				//if persisted and tran not borrowed, commit
 				if(!isBorrowedTransaction && transactionManager != null && transactionManager.IsOpen)
@@ -1086,114 +657,15 @@
 					throw;
 			}
 				
-			return<%= IsServiceLayer ? " entity" : "" %>;
+			return <%= ((action != "Save") ? "result" : memberMethodEntityCall ) %>;
 		}
-		<% } // end if implementation %>
 		#endregion <%= action %> Entity
 		
-		<% if (action != "Save"){ %>
 		#region <%= action %> Collection
-		<% if (RenderOverload) { %>
-		/// <summary>
-		/// 	<%= constructorAccessModifier %> method that <%= action %>s rows in the datasource using a <see cref="<%=collectionClassNameComment %>" />.
-		/// </summary>
-		/// <param name="entityCollection"><c><%=className%></c> objects in a <see cref="<%=collectionClassNameComment %>" /> object to <%= action %>.</param>
-		/// <remarks>
-		///		This function will only <%= action %> entity objects marked as dirty
-		///		and have an identity field equal to zero.
-		///		Upon <%= action %>ing the objects, each dirty object will have the public
-		///		method <c>Object.AcceptChanges()</c> called to make it clean.
-		/// 	After <%= action %>ing into the datasource, the <c><%=className%></c> objects will be updated
-		/// 	to refelect any changes made by the datasource. (ie: identity or computed columns)
-		///</remarks>
-		/// <returns>Returns the number of successful <%= action %>.</returns>
-		/// <example>
-        /// The following code shows the usage of the <%= action %> Method with a collection of <%= className %>.
-        /// <code><![CDATA[
-		/// CList<<%= className %>> list = new CList<<%= className %>>();
-		/// <%= className %> entity = new <%= className %>();
-		/// entity.StringProperty = "foo";
-		/// <%= className %> entity2 = new <%= className %>();
-		/// entity.StringProperty = "bar";
-		/// list.Add(entity);
-		/// list.Add(entity2);
-		<%if (IsServiceLayer)  {%>
-		///	<%= GetServiceClassName(className) %>.<%= action %>(list);
-		<% } %>
-		<% else if (IsDomainModel){%>
-		///	<%= className %>.<%= action %>(list);
-		<% } %>
-		///	}
-        ///	catch (Exception e)
-        ///	{
-        ///		if (DomainUtil.HandleException(e, name)) throw;
-        ///	}
-        /// ]]></code>
-        /// </example>
-		[DataObjectMethod(DataObjectMethodType.<%= action %>)]
-		<%= constructorAccessModifier %> <%=collectionClassName%> <%=partialClassInternalPrefix%><%= action %>(<%=collectionClassName%> entityCollection)
-		{
-			return <%=partialClassInternalPrefix%><%= action %>(null, entityCollection, false, null, null);
-		}
-
-		/// <summary>
-		/// 	<%= constructorAccessModifier %> method that <%= action %>s rows in a <see cref="<%=collectionClassNameComment %>" /> to the datasource.
-		/// </summary>
-		/// <param name="transactionManager"><see cref="TransactionManager"/> object to ensure IsolationLevel and Atomicity.</param>
-		/// <param name="entityCollection"><c><%=className%></c> objects in a <see cref="<%=collectionClassNameComment %>" /> object to <%= action %>.</param>
-		/// <remarks>
-		///		This function will only <%= action %> entity objects marked as dirty
-		///		and have an identity field equal to zero.
-		///		Upon <%= action %>ing the objects, each dirty object will have the public
-		///		method <c>Object.AcceptChanges()</c> called to make it clean.
-		/// 	After <%= action %>ing into the datasource, the <c><%=className%></c> objects will be updated
-		/// 	to refelect any changes made by the datasource. (ie: identity or computed columns)
-		///</remarks>
-		/// <returns>Returns the number of successful <%= action %>.</returns>
-		/// <example>
-        /// The following code shows the usage of the <%= action %> Method with a collection of <%= className %>.
-        /// <code><![CDATA[
-		/// CList<<%= className %>> list = new CList<<%= className %>>();
-		/// <%= className %> entity = new <%= className %>();
-		/// entity.StringProperty = "foo";
-		/// <%= className %> entity2 = new <%= className %>();
-		/// entity.StringProperty = "bar";
-		/// list.Add(entity);
-		/// list.Add(entity2);
-		/// TransactionManager tm = null;
-		/// try
-        ///	{
-		/// 	tm = <%= className %>.CurrentDataProvider.CreateTransaction();
-		<%if (IsServiceLayer)  {%>
-		///		<%= GetServiceClassName(className) %>.<%= action %>(tm, true, list);
-		<% } %>
-		<% else if (IsDomainModel){%>
-		///		<%= className %>.<%= action %>(tm, true, list);
-		<% } %>
-		///	}
-        ///	catch (Exception e)
-        ///	{
-		///		if (tm != null && tm.IsOpen) tm.Rollback();
-        ///		if (DomainUtil.HandleException(e, name)) throw;
-        ///	}
-        /// ]]></code>
-        /// </example>
-		[DataObjectMethod(DataObjectMethodType.<%= action %>)]
-		<%= constructorAccessModifier %> <%=collectionClassName%> <%=partialClassInternalPrefix%><%= action %>(TransactionManager transactionManager, <%=collectionClassName%> entityCollection)
-		{
-			return <%=partialClassInternalPrefix%><%= action %>(transactionManager, entityCollection, true, null, null);
-		}
-		<% } //end if RenderOverload%>
-		
-		<% if (RenderImplementation) {%>
 		/// <summary>
 		/// 	<%= constructorAccessModifier %> method that <%= action %>s rows in <see cref="<%=collectionClassNameComment %>" /> to the datasource.
 		/// </summary>
-		/// <param name="transactionManager"><see cref="TransactionManager"/> object to ensure IsolationLevel and Atomicity.</param>
 		/// <param name="entityCollection"><c><%=className%></c> objects in a <see cref="<%=collectionClassNameComment %>" /> object to <%= action %>.</param>
-		/// <param name="isBorrowedTransaction" > Bool, determines if the call is already made in the context of a transaction. </param>
-		/// <param name="connectionStringKey" >Already Configured Connection String Key</param>
-		/// <param name="dynamicConnectionString" >Dynamic Connection String</param>
 		/// <remarks>
 		///		This function will only <%= action %> entity objects marked as dirty
 		///		and have an identity field equal to zero.
@@ -1226,8 +698,8 @@
         ///	}
         /// ]]></code>
         /// </example>
-		[DataObjectMethod(DataObjectMethodType.<%= action %>)]
-		<%= constructorAccessModifier %> <%=collectionClassName%> <%=partialClassInternalPrefix%><%= action %>(TransactionManager transactionManager, <%=collectionClassName%> entityCollection, bool isBorrowedTransaction, string connectionStringKey, string dynamicConnectionString)
+		[DataObjectMethod(DataObjectMethodType.<%= (action == "Save" ? "Update" : action) %>)]
+		<%= constructorAccessModifier %> <%=collectionClassName%> <%=partialClassInternalPrefix%><%= action %>(<%=collectionClassName%> entityCollection)
 		{
 			// throws security exception if not authorized
 			SecurityContext.IsAuthorized("<%= action %>");
@@ -1236,12 +708,15 @@
 			{
 				throw new Entities.EntityNotValidException(entityCollection, "<%= action %>");
 			}
-
+			
+			TransactionManager transactionManager = null; 
 			try
             {
-				NetTiersProvider dataProvider = null; 
-				dataProvider = DomainUtil.GetDataProvider(connectionStringKey, dynamicConnectionString, CurrentDataProvider);
-				transactionManager = DomainUtil.ValidateOrCreateTransaction(transactionManager, CurrentDataProvider, isBorrowedTransaction);
+				bool isBorrowedTransaction = ConnectionScope.Current.HasTransaction;
+				
+				//since this is a read operation, don't create a tran by default, only use tran if provided to us for custom isolation level
+				transactionManager = ConnectionScope.ValidateOrCreateTransaction();
+				NetTiersProvider dataProvider = ConnectionScope.Current.DataProvider;
                 
 				//Persist <%= action %>
 				dataProvider.<%= GetProviderName(className) %>.<%= action %>(transactionManager, <%= newEntityCollectionClassName %>entityCollection<%= newEntityCollectionClassNameEnd %>); 
@@ -1264,10 +739,8 @@
 			
 			return entityCollection;		
 		}
-		<% } // end if implementation %>
 		#endregion <%= action %> Collection
 
-		<% } %>
 		#endregion <%= action %> 
 		<%	}//end for loop %>
 
@@ -1277,16 +750,14 @@
 		/// <summary>
 		/// 	Deletes a row from the DataSource.
 		/// </summary>
-		/// <param name="transactionManager">A <see cref="TransactionManager"/> object.</param>
 		/// <param name="key">The unique identifier of the row to delete.</param>
 		/// <returns>Returns true if operation suceeded.</returns>
-		public override bool Delete(TransactionManager transactionManager, <%= keyClassName %> key)
+		public bool Delete(<%= keyClassName %> key)
 		{
-			return Delete(transactionManager, <%= GetFunctionObjectParameters(keys, "key") %>, null, null<% if(RowVersion != null) {Response.Write(String.Format(", ((key.Entity != null) ? key.Entity.{0} : new byte[0])", GetPropertyName(RowVersion.Name)));}%>);
+			return Delete(<%= GetFunctionObjectParameters(keys, "key") %> <% if(RowVersion != null) {Response.Write(String.Format(", ((key.Entity != null) ? key.Entity.{0} : new byte[0])", GetPropertyName(RowVersion.Name)));}%>);
 		}
 		<% } %>
 		
-		<% if (RenderOverload || RenderImplementation) {%>
 		/// <summary>
 		/// 	Deletes a row from the DataSource based on the PK'S <%= GetFunctionHeaderParameters(keys) %>
 		/// </summary>
@@ -1301,38 +772,18 @@
 		[DataObjectMethod(DataObjectMethodType.Delete)]
 		<%= constructorAccessModifierOnMembers %> bool <%=partialClassInternalPrefix%>Delete(<%= GetFunctionHeaderParameters(keys) %><% if(RowVersion != null) {Response.Write(", byte[] " + GetPrivateName(RowVersion.Name));}%>)
 		{
-			return <%=partialClassInternalPrefix%>Delete(null, <%= GetFunctionCallParameters(keys) %>, null, null<% if(RowVersion != null) {Response.Write(", " + GetPrivateName(RowVersion.Name));}%>);
-		}
-		<% } // end RenderOverload %>
-		
-		<% if (RenderImplementation) { %>
-		/// <summary>
-		/// 	Deletes a row from the DataSource based on the PK'S <%= GetFunctionHeaderParameters(keys) %>
-		/// </summary>
-		/// <param name="transactionManager"><see cref="TransactionManager"/> object to ensure IsolationLevel and Atomicity.</param>
-		<% foreach(string item in GetFunctionCallParameters(keys).Split(',')) { %>
-		/// <param name="<%= item.Trim() %>"><%=className%> pk id.</param>
-		<% } %>
-		/// <param name="connectionStringKey">a pre-configured connection string to use.</param>
-		/// <param name="dynamicConnectionString">a runtime dynamic connection string to use (connectionStringKey is required if you supply a dynamicConnectionString).  If already added to the DataRepository.Connections, only the connectionStringKey is required.</param>
-		<% if (RowVersion != null){ %>
-		/// <param name="<%=GetPrivateName(RowVersion.Name)%>">The timestamp field used for concurrency check.</param>
-		<% }  %>
-		/// <remarks>Deletes based on primary key(s).</remarks>
-		/// <returns>Returns true if operation suceeded.</returns>
-		[DataObjectMethod(DataObjectMethodType.Delete)]
-		<%= constructorAccessModifierOnMembers %> bool <%=partialClassInternalPrefix%>Delete(TransactionManager transactionManager, <%= GetFunctionHeaderParameters(keys) %>, string connectionStringKey, string dynamicConnectionString<% if(RowVersion != null) {Response.Write(", byte[] " + GetPrivateName(RowVersion.Name));}%>)
-		{
 			// throws security exception if not authorized
 			SecurityContext.IsAuthorized("Delete");
-			bool isBorrowedTransaction = (transactionManager != null && transactionManager.IsOpen);
 
 			bool result = false;
+			TransactionManager transactionManager = null; 
 			try
             {
-				NetTiersProvider dataProvider = null;
-				dataProvider = DomainUtil.GetDataProvider(connectionStringKey, dynamicConnectionString, CurrentDataProvider);
-				transactionManager = DomainUtil.ValidateOrCreateTransaction(transactionManager, CurrentDataProvider, false);
+				bool isBorrowedTransaction = ConnectionScope.Current.HasTransaction;
+				
+				//since this is a read operation, don't create a tran by default, only use tran if provided to us for custom isolation level
+				transactionManager = ConnectionScope.ValidateOrCreateTransaction();
+				NetTiersProvider dataProvider = ConnectionScope.Current.DataProvider;
                 
 				//Delete
 				result = dataProvider.<%= GetProviderName(className) %>.Delete(transactionManager, <%= GetFunctionCallParameters(keys) %><% if(RowVersion != null) {Response.Write(", " + GetPrivateName(RowVersion.Name));}%>);
@@ -1357,8 +808,7 @@
 			
 		}
 		#endregion 
-		<% } //end if RenderImplementation
-		} //endif(includedelete) %>
+		<% } //endif(includedelete) %>
 		
 		<% if(IncludeManyToMany) { %>
 		#region <%=partialClassInternalPrefix%> GetBy m:m Aggregate Relationships
@@ -1381,7 +831,6 @@
 						string functionname = GetManyToManyName(junctionTableKey, GetCleanName(junctionTable.Name));
 		%>
 		#region GetBy<%=functionname%>
-		<% if (RenderOverload || RenderImplementation) { %>
 		/// <summary>
 		///		Gets <%=primaryTable.Name%> objects from the datasource by <%=junctionTableKey.ForeignKeyMemberColumns[0].Name%> in the
 		///		<%=junctionTable.Name%> table. Table <%=primaryTable.Name%> is related to table <%=secondaryTable.Name%>
@@ -1394,8 +843,8 @@
 		[DataObjectMethod(DataObjectMethodType.Select)]
 		<%= constructorAccessModifier %> <%=GetCollectionClassName(primaryTable.Name)%> <%=partialClassInternalPrefix%>GetBy<%=functionname%>(<%=GetFunctionHeaderParameters(junctionTableKey.ForeignKeyMemberColumns)%>)
 		{
-			int count;
-			return <%=partialClassInternalPrefix%>GetBy<%=functionname%>(null, <%=GetFunctionCallParameters(junctionTableKey.ForeignKeyMemberColumns)%>, 0, int.MaxValue, out count, null, null);
+			int totalRecords = -1;
+			return <%=partialClassInternalPrefix%>GetBy<%=functionname%>(<%=GetFunctionCallParameters(junctionTableKey.ForeignKeyMemberColumns)%>, 0, defaultMaxRecords, out totalRecords);
 		}
 		
 		/// <summary>
@@ -1403,92 +852,30 @@
 		///		<%=junctionTable.Name%> table. Table <%=primaryTable.Name%> is related to table <%=secondaryTable.Name%>
 		///		through the (M:N) relationship defined in the <%=junctionTable.Name%> table.
 		/// </summary>
-		/// <param name="transactionManager"><see cref="TransactionManager"/> object to ensure IsolationLevel and Atomicity.</param>
-		<% for (int i = 0; i < junctionTableKey.ForeignKeyMemberColumns.Count; i++) { %>
-		/// <param name="<%= GetPrivateName(junctionTableKey.ForeignKeyMemberColumns[i].Name)%>"><%=junctionTableKey.ForeignKeyMemberColumns[i].Description%></param>
-		<% } %>	
-		/// <returns>Returns a typed collection of <%=GetClassName(primaryTable.Name)%> objects.</returns>
-		[DataObjectMethod(DataObjectMethodType.Select)]
-		<%= constructorAccessModifier %> <%=GetCollectionClassName(primaryTable.Name)%> <%=partialClassInternalPrefix%>GetBy<%=functionname%>(TransactionManager transactionManager, <%=GetFunctionHeaderParameters(junctionTableKey.ForeignKeyMemberColumns)%>)
-		{
-			int count;
-			return <%=partialClassInternalPrefix%>GetBy<%=functionname%>(transactionManager, <%=GetFunctionCallParameters(junctionTableKey.ForeignKeyMemberColumns)%>, 0, int.MaxValue, out count, null, null);
-		}
-		
-		/// <summary>
-		///		Gets <%=primaryTable.Name%> objects from the datasource by <%=junctionTableKey.ForeignKeyMemberColumns[0].Name%> in the
-		///		<%=junctionTable.Name%> table. Table <%=primaryTable.Name%> is related to table <%=secondaryTable.Name%>
-		///		through the (M:N) relationship defined in the <%=junctionTable.Name%> table.
-		/// </summary>
-		<% for (int i = 0; i < junctionTableKey.ForeignKeyMemberColumns.Count; i++) { %>
-		/// <param name="<%= GetPrivateName(junctionTableKey.ForeignKeyMemberColumns[i].Name)%>"><%=junctionTableKey.ForeignKeyMemberColumns[i].Description%></param>
-		<% } %>	
-		/// <param name="start">Row number at which to start reading.</param>
-		/// <param name="pageLength">Number of rows to return.</param>
-		/// <param name="count">The total number of rows in the DataSource.</param>
-		/// <returns>Returns a typed collection of <%=GetClassName(primaryTable.Name)%> objects.</returns>
-		[DataObjectMethod(DataObjectMethodType.Select)]
-		<%= constructorAccessModifier %> <%=GetCollectionClassName(primaryTable.Name)%> <%=partialClassInternalPrefix%>GetBy<%=functionname%>(<%=GetFunctionHeaderParameters(junctionTableKey.ForeignKeyMemberColumns)%>, int start, int pageLength, out int count)
-		{
-			return <%=partialClassInternalPrefix%>GetBy<%=functionname%>(null, <%=GetFunctionCallParameters(junctionTableKey.ForeignKeyMemberColumns)%>, start, pageLength, out count, null, null);
-		}
-		
-		/// <summary>
-		///		Gets <%=primaryTable.Name%> objects from the datasource by <%=junctionTableKey.ForeignKeyMemberColumns[0].Name%> in the
-		///		<%=junctionTable.Name%> table. Table <%=primaryTable.Name%> is related to table <%=secondaryTable.Name%>
-		///		through the (M:N) relationship defined in the <%=junctionTable.Name%> table.
-		/// </summary>
-		/// <param name="transactionManager"><see cref="TransactionManager"/> object to ensure IsolationLevel and Atomicity.</param>
-		<% for (int i = 0; i < junctionTableKey.ForeignKeyMemberColumns.Count; i++) { %>
-		/// <param name="<%= GetPrivateName(junctionTableKey.ForeignKeyMemberColumns[i].Name)%>"><%=junctionTableKey.ForeignKeyMemberColumns[i].Description%></param>
-		<% } %>	
-		/// <param name="start">Row number at which to start reading.</param>
-		/// <param name="pageLength">Number of rows to return.</param>
-		/// <param name="count">The total number of rows in the DataSource.</param>
-		/// <returns>Returns a typed collection of <%=GetClassName(primaryTable.Name)%> objects.</returns>
-		[DataObjectMethod(DataObjectMethodType.Select)]
-		<%= constructorAccessModifier %> <%=GetCollectionClassName(primaryTable.Name)%> <%=partialClassInternalPrefix%>GetBy<%=functionname%>(TransactionManager transactionManager, <%=GetFunctionHeaderParameters(junctionTableKey.ForeignKeyMemberColumns)%>, int start, int pageLength, out int count)
-		{
-			return <%=partialClassInternalPrefix%>GetBy<%=functionname%>(transactionManager, <%=GetFunctionCallParameters(junctionTableKey.ForeignKeyMemberColumns)%>, start, pageLength, out count, null, null);
-		}
-		<%} //end if renderoverload %>
-		
-		<% if (RenderImplementation) { %>
-		/// <summary>
-		///		Gets <%=primaryTable.Name%> objects from the datasource by <%=junctionTableKey.ForeignKeyMemberColumns[0].Name%> in the
-		///		<%=junctionTable.Name%> table. Table <%=primaryTable.Name%> is related to table <%=secondaryTable.Name%>
-		///		through the (M:N) relationship defined in the <%=junctionTable.Name%> table.
-		/// </summary>
-		/// <param name="transactionManager"><see cref="TransactionManager"/> object to ensure IsolationLevel and Atomicity.</param>
 		<% for (int i = 0; i < junctionTableKey.ForeignKeyMemberColumns.Count; i++) { %>
 		/// <param name="<%= GetPrivateName(junctionTableKey.ForeignKeyMemberColumns[i].Name)%>"><%=junctionTableKey.ForeignKeyMemberColumns[i].Description%></param>
 		<% } %>
 		/// <param name="start">Row number at which to start reading.</param>
 		/// <param name="pageLength">Number of rows to return.</param>
-		/// <param name="count">The total number of rows in the DataSource.</param>
-		/// <param name="connectionStringKey">a pre-configured connection string to use.</param>
-		/// <param name="dynamicConnectionString">a runtime dynamic connection string to use (connectionStringKey is required if you supply a dynamicConnectionString).  If already added to the DataRepository.Connections, only the connectionStringKey is required.</param>
+		/// <param name="totalCount">Out param: Total Number of results returned.</param>
 		/// <remarks></remarks>
 		/// <returns>Returns a typed collection of <%=GetClassName(primaryTable.Name)%> objects.</returns>
 		[DataObjectMethod(DataObjectMethodType.Select)]
-		<%= constructorAccessModifier %> <%=GetCollectionClassName(primaryTable.Name)%> <%=partialClassInternalPrefix%>GetBy<%=functionname%>(TransactionManager transactionManager, <%=GetFunctionHeaderParameters(junctionTableKey.ForeignKeyMemberColumns)%>, int start, int pageLength, out int count, string connectionStringKey, string dynamicConnectionString)
+		<%= constructorAccessModifier %> <%=GetCollectionClassName(primaryTable.Name)%> <%=partialClassInternalPrefix%>GetBy<%=functionname%>(<%=GetFunctionHeaderParameters(junctionTableKey.ForeignKeyMemberColumns)%>, int start, int pageLength, out int totalCount)
 		{
 			// throws security exception if not authorized
 			SecurityContext.IsAuthorized("GetBy<%=functionname%>");
-			bool isBorrowedTransaction = (transactionManager != null && transactionManager.IsOpen);
-
 			<%=GetCollectionClassName(primaryTable.Name)%> list = null;
-			count = 0;
-			
+			TransactionManager transactionManager = null; 
+			totalCount = -1;
 			try
-            {
-				NetTiersProvider dataProvider = null;
-				dataProvider = DomainUtil.GetDataProvider(connectionStringKey, dynamicConnectionString, CurrentDataProvider);
-				if (isBorrowedTransaction)
-					transactionManager = DomainUtil.ValidateOrCreateTransaction(transactionManager, CurrentDataProvider, false);
+            {	
+				//since this is a read operation, don't create a tran by default, only use tran if provided to us for custom isolation level
+				transactionManager = ConnectionScope.ValidateOrCreateTransaction(noTranByDefault);
+				NetTiersProvider dataProvider = ConnectionScope.Current.DataProvider;
                 
 				//call data provider
-				list = <%= newCollectionClassName %>dataProvider.<%= GetProviderName(className) %>.GetBy<%=functionname%>(transactionManager, <%=GetFunctionCallParameters(junctionTableKey.ForeignKeyMemberColumns)%>, start,  pageLength, out count)<%=newCollectionClassNameEnd%>;
+				list = <%= newCollectionClassName %>dataProvider.<%= GetProviderName(className) %>.GetBy<%=functionname%>(transactionManager, <%=GetFunctionCallParameters(junctionTableKey.ForeignKeyMemberColumns)%>, start,  pageLength, out totalCount)<%=newCollectionClassNameEnd%>;
 	        
 				//This is read only transaction, let tran go if open 
             	
@@ -1506,7 +893,6 @@
 			
 			return list;			
 		}
-		<% }//end render Implementation  %>
 		#endregion GetBy<%=functionname%>
 		
 					<%
@@ -1587,7 +973,6 @@
 		%>
 		
 		#region <%=command.Name%>
-		<% if (RenderOverload || RenderImplementation) { %>
 		/// <summary>
 		///	This method wrap the '<%=command.Name%>' stored procedure. 
 		/// </summary><%=TransformStoredProcedureInputsToMethodComments(command.InputParameters) + TransformStoredProcedureOutputsToMethodComments(command.AllOutputParameters)%>
@@ -1595,9 +980,9 @@
 		/// <returns>A <see cref="<%=returnTypeForComment%>"/> instance.</returns>
 		<%= constructorAccessModifier %>  <%=returnType%> <%=methodName%>(<%=TransformStoredProcedureInputsToMethod(false, command.InputParameters) + TransformStoredProcedureOutputsToMethod(command.InputParameters.Count > 0, command.AllOutputParameters)%>)
 		{
-			return <%=methodName%>(null, 0, int.MaxValue <%=TransformStoredProcedureInputsToDataAccess(true, command.InputParameters) + TransformStoredProcedureOutputsToDataAccess(true, command.AllOutputParameters)%>, null, null);
+			return <%=methodName%>(<%=TransformStoredProcedureInputsToDataAccess(true, command.InputParameters) + TransformStoredProcedureOutputsToDataAccess(true, command.AllOutputParameters)%>, 0, defaultMaxRecords );
 		}
-		
+	
 		/// <summary>
 		///	This method wrap the '<%=command.Name%>' stored procedure. 
 		/// </summary><%=TransformStoredProcedureInputsToMethodComments(command.InputParameters) + TransformStoredProcedureOutputsToMethodComments(command.AllOutputParameters)%>
@@ -1605,48 +990,22 @@
 		/// <param name="pageLength">Number of rows to return.</param>
 		/// <remark>This method is generate from a stored procedure.</remark>
 		/// <returns>A <see cref="<%=returnTypeForComment%>"/> instance.</returns>
-		<%= constructorAccessModifier %>  <%=returnType%> <%=methodName%>(int start, int pageLength<%=TransformStoredProcedureInputsToMethod(true, command.InputParameters) + TransformStoredProcedureOutputsToMethod(true, command.AllOutputParameters)%>)
-		{
-			return <%=methodName%>(null, start, pageLength <%=TransformStoredProcedureInputsToDataAccess(true, command.InputParameters) + TransformStoredProcedureOutputsToDataAccess(true, command.AllOutputParameters)%>, null, null);
-		}
-				
-		/// <summary>
-		///	This method wrap the '<%=command.Name%>' stored procedure. 
-		/// </summary><%=TransformStoredProcedureInputsToMethodComments(command.InputParameters) + TransformStoredProcedureOutputsToMethodComments(command.AllOutputParameters)%>
-		/// <remark>This method is generate from a stored procedure.</remark><% if (returnType != "void") {%>
-		/// <param name="transactionManager"><see cref="TransactionManager"/> object</param>
-		/// <returns>A <see cref="<%=returnTypeForComment%>"/> instance.</returns><%}%>
-		<%= constructorAccessModifier %>  <%=returnType%> <%=methodName%>(TransactionManager transactionManager<%=TransformStoredProcedureInputsToMethod(true, command.InputParameters) + TransformStoredProcedureOutputsToMethod(true, command.AllOutputParameters)%>)
-		{
-			return <%=methodName%>(null, 0, int.MaxValue <%=TransformStoredProcedureInputsToDataAccess(true, command.InputParameters) + TransformStoredProcedureOutputsToDataAccess(true, command.AllOutputParameters)%>, null, null);
-		}
-		<% } //end if RenderOverload %>
-		
-		<% if (RenderImplementation) { %>
-		/// <summary>
-		///	This method wrap the '<%=command.Name%>' stored procedure. 
-		/// </summary><%=TransformStoredProcedureInputsToMethodComments(command.InputParameters) + TransformStoredProcedureOutputsToMethodComments(command.AllOutputParameters)%>
-		/// <param name="start">Row number at which to start reading.</param>
-		/// <param name="pageLength">Number of rows to return.</param>
-		/// <param name="transactionManager"><see cref="TransactionManager"/> object</param>
-		/// <param name="connectionStringKey">a pre-configured connection string to use.</param>
-		/// <param name="dynamicConnectionString">a runtime dynamic connection string to use (connectionStringKey is required if you supply a dynamicConnectionString).  If already added to the DataRepository.Connections, only the connectionStringKey is required.</param>
-		/// <remark>This method is generate from a stored procedure.</remark>
-		/// <returns>A <see cref="<%=returnTypeForComment%>"/> instance.</returns>
-		<%= constructorAccessModifier %>  <%=returnType%> <%=methodName%>(TransactionManager transactionManager, int start, int pageLength <%=TransformStoredProcedureInputsToMethod(true, command.InputParameters) + TransformStoredProcedureOutputsToMethod(true, command.AllOutputParameters)%>, string connectionStringKey, string dynamicConnectionString)
+		<%= constructorAccessModifier %>  <%=returnType%> <%=methodName%>(<%=TransformStoredProcedureInputsToMethod(true, command.InputParameters) + TransformStoredProcedureOutputsToMethod(true, command.AllOutputParameters)%>, int start, int pageLength)
 		{
 			// throws security exception if not authorized
 			SecurityContext.IsAuthorized("<%=methodName%>");
 			
-			bool isBorrowedTransaction = (transactionManager != null && transactionManager.IsOpen);
-
+		
 			<%=returnType != "void"  ? string.Format("{0} result = null;" , returnType) : "" %> 
+			TransactionManager transactionManager = null; 
+			
 			try
             {
-				NetTiersProvider dataProvider = null;
-				dataProvider = DomainUtil.GetDataProvider(connectionStringKey, dynamicConnectionString, CurrentDataProvider);
-				<%= returnType != "void" ? "if (isBorrowedTransaction)" : "" %>
-					transactionManager = DomainUtil.ValidateOrCreateTransaction(transactionManager, CurrentDataProvider, false);
+				bool isBorrowedTransaction = ConnectionScope.Current.HasTransaction;				
+				
+				//since this is a read operation, don't create a tran by default, only use tran if provided to us for custom isolation level
+				transactionManager = ConnectionScope.ValidateOrCreateTransaction();
+				NetTiersProvider dataProvider = ConnectionScope.Current.DataProvider;
                 
 				//Call Custom Procedure from Repository
 				<%= returnType != "void" ? "result = " : ""  %><%= newCollection %>dataProvider.<%= GetProviderName(className) %>.<%=methodName%>(transactionManager, start, pageLength <%=TransformStoredProcedureInputsToDataAccess(true, command.InputParameters) + TransformStoredProcedureOutputsToDataAccess(true, command.AllOutputParameters)%>)<%= newCollectionEnd %>;
@@ -1671,7 +1030,6 @@
 			
 			return <%= returnType != "void" ? "result" : "" %>;
 		}
-		<% } //end if RenderImplementation %>
 		#endregion 
 		<%
 		//}
@@ -1683,7 +1041,6 @@
 		<% // Going to require knowing the foreign key indexes in order to do deep loading.
 		if (IncludeGetListByFK) { %>  
 		#region DeepLoad
-		<% if (RenderOverload || RenderImplementation) { %>
 		<% if (IncludeGetListByIX) { %>	
 		#region Deep Load By Entity Keys
 		<%	if (getbyKeys != null)
@@ -1715,6 +1072,7 @@
 				
 				String returnTypeForComment = returnType.Replace("<", "&lt;").Replace(">", "&gt;");
 				%>		
+		
 		/// <summary>
 		/// <%= constructorAccessModifier %>Deep Loads the requested <see cref="<%= returnTypeForComment %>"/> by the entity keys.  The criteria of the child 
 		/// property collections only N Levels Deep based on the <see cref="DeepLoadType"/>.
@@ -1729,53 +1087,14 @@
 		[DataObjectMethod(DataObjectMethodType.Select)]
 		<%=constructorAccessModifier %> <%= returnType %> <%=partialClassInternalPrefix%>DeepLoadBy<%=GetKeysName(indexes[j].MemberColumns)%>(<%= GetFunctionHeaderParameters(indexes[j].MemberColumns) %>, bool deep, DeepLoadType deepLoadType, params System.Type[] childTypes)
 		{
-			return <%=partialClassInternalPrefix%>DeepLoadBy<%=GetKeysName(indexes[j].MemberColumns)%>(null, <%= GetFunctionCallParameters(indexes[j].MemberColumns) %>, deep, deepLoadType, null, null, childTypes);
-		}
-		
-		/// <summary>
-		/// <%= constructorAccessModifier %>Deep Loads the requested <see cref="<%= returnTypeForComment %>"/> by the entity keys.  The criteria of the child 
-		/// property collections only N Levels Deep based on the <see cref="DeepLoadType"/>.
-		/// </summary>
-		/// <param name="transactionManager"><see cref="TransactionManager"/> object</param>
-	<% for (int i = 0; i < indexes[j].MemberColumns.Count; i++) { %>
-		/// <param name="<%= GetPrivateName(indexes[j].MemberColumns[i].Name)%>"><%=GetColumnXmlComment(indexes[j].MemberColumns[i],2)%></param>
-	<% } %>
-		/// <param name="deep">Boolean. A flag that indicates whether to recursively save all Property Collection that are descendants of this instance. If True, saves the complete object graph below this object. If False, saves this object only. </param>
-		/// <param name="deepLoadType">DeepLoadType Enumeration to Include/Exclude object property collections from Load.</param>
-		/// <param name="childTypes"><%= className %> Property Collection Type Array To Include or Exclude from Load</param>
-		/// <returns>Returns an instance of the <see cref="<%= returnTypeForComment %>"/> class and DeepLoaded.</returns>
-		[DataObjectMethod(DataObjectMethodType.Select)]
-		<%=constructorAccessModifier %> <%= returnType %> <%=partialClassInternalPrefix%>DeepLoadBy<%=GetKeysName(indexes[j].MemberColumns)%>(TransactionManager transactionManager, <%= GetFunctionHeaderParameters(indexes[j].MemberColumns) %>, bool deep, DeepLoadType deepLoadType, params System.Type[] childTypes)
-		{
-			return <%=partialClassInternalPrefix%>DeepLoadBy<%=GetKeysName(indexes[j].MemberColumns)%>(transactionManager, <%= GetFunctionCallParameters(indexes[j].MemberColumns) %>, deep, deepLoadType, null, null, childTypes);
-		}
-		
-		/// <summary>
-		/// <%= constructorAccessModifier %>Deep Loads the requested <see cref="<%= returnTypeForComment %>"/> by the entity keys.  The criteria of the child 
-		/// property collections only N Levels Deep based on the <see cref="DeepLoadType"/>.
-		/// </summary>
-		/// <param name="transactionManager"><see cref="TransactionManager"/> object</param>
-	<% for (int i = 0; i < indexes[j].MemberColumns.Count; i++) { %>
-		/// <param name="<%= GetPrivateName(indexes[j].MemberColumns[i].Name)%>"><%=GetColumnXmlComment(indexes[j].MemberColumns[i],2)%></param>
-	<% } %>
-		/// <param name="deep">Boolean. A flag that indicates whether to recursively save all Property Collection that are descendants of this instance. If True, saves the complete object graph below this object. If False, saves this object only. </param>
-		/// <param name="deepLoadType">DeepLoadType Enumeration to Include/Exclude object property collections from Load.</param>
-		/// <param name="childTypes"><%= className %> Property Collection Type Array To Include or Exclude from Load</param>
-		/// <param name="connectionStringKey">a pre-configured connection string to use.</param>
-		/// <param name="dynamicConnectionString">a runtime dynamic connection string to use (connectionStringKey is required if you supply a dynamicConnectionString).  If already added to the DataRepository.Connections, only the connectionStringKey is required.</param>
-		/// <returns>Returns an instance of the <see cref="<%= returnTypeForComment %>"/> class and DeepLoaded.</returns>
-		[DataObjectMethod(DataObjectMethodType.Select)]
-		<%=constructorAccessModifier %> <%= returnType %> <%=partialClassInternalPrefix%>DeepLoadBy<%=GetKeysName(indexes[j].MemberColumns)%>(TransactionManager transactionManager, <%= GetFunctionHeaderParameters(indexes[j].MemberColumns) %>, bool deep, DeepLoadType deepLoadType, string connectionStringKey, string dynamicConnectionString, params System.Type[] childTypes)
-		{
 			// throws security exception if not authorized
 			SecurityContext.IsAuthorized("DeepLoadBy<%=GetKeysName(indexes[j].MemberColumns)%>");
 		    
-			int totalCount = -1;
-			<%= returnType %> <%= returnTypeVar %> = <%=partialClassInternalPrefix%>GetBy<%=GetKeysName(indexes[j].MemberColumns)%>(transactionManager, <%= GetFunctionCallParameters(indexes[j].MemberColumns) %>, 0, int.MaxValue, out totalCount, connectionStringKey, dynamicConnectionString);
+			<%= returnType %> <%= returnTypeVar %> = <%=partialClassInternalPrefix%>GetBy<%=GetKeysName(indexes[j].MemberColumns)%>(<%= GetFunctionCallParameters(indexes[j].MemberColumns) %>);
 			
 			//Check to see if <%= returnTypeVar %> is not null, before attempting to Deep Load
 			if (<%= returnTypeVar %> != null)
-				<%= partialClassInternalPrefix %>DeepLoad(transactionManager, <%= returnTypeVar %>, deep, deepLoadType, connectionStringKey, dynamicConnectionString, childTypes);
+				<%= partialClassInternalPrefix %>DeepLoad(<%= returnTypeVar %>, deep, deepLoadType, childTypes);
 			
 			return <%= returnTypeVar %>;
 		}
@@ -1785,9 +1104,7 @@
 		<%	}//end Deep Load By IX %>
 		#endregion 
 
-		<%  } // end if render overload %>
 		#region Deep Load By Entity
-		<% if (RenderOverload) { %>
 		/// <summary>
 		/// <%= constructorAccessModifier %>Deep Load the IEntity object with all of the child 
 		/// property collections only 1 Level Deep.
@@ -1799,7 +1116,7 @@
 		[DataObjectMethod(DataObjectMethodType.Select)]
 		<%= constructorAccessModifier %> void <%=partialClassInternalPrefix%>DeepLoad(<%= className %> entity)
 		{
-			<%=partialClassInternalPrefix%>DeepLoad(null, entity, false, DeepLoadType.ExcludeChildren, null, null, Type.EmptyTypes);
+			<%=partialClassInternalPrefix%>DeepLoad(entity, false, DeepLoadType.ExcludeChildren, Type.EmptyTypes);
 		}
 		
 		/// <summary>
@@ -1814,61 +1131,9 @@
 		[DataObjectMethod(DataObjectMethodType.Select)]
 		<%= constructorAccessModifier %> void <%=partialClassInternalPrefix%>DeepLoad(<%= className %> entity, bool deep)
 		{
-			<%=partialClassInternalPrefix%>DeepLoad(null, entity, deep, DeepLoadType.ExcludeChildren, null, null, Type.EmptyTypes);
+			<%=partialClassInternalPrefix%>DeepLoad(entity, deep, DeepLoadType.ExcludeChildren, Type.EmptyTypes);
 		}
-		
-		/// <summary>
-		/// <%= constructorAccessModifier %>Deep Load the IEntity object with all of the child 
-		/// property collections only 1 Level Deep.
-		/// </summary>
-		/// <param name="transactionManager"><see cref="TransactionManager"/> object</param>
-		/// <param name="entity"><%= className %> Object</param>
-		/// <remarks>
-		/// <seealso cref="DeepLoad(<%= className %>)"/> overloaded methods for a recursive N Level deep loading method.
-		/// </remarks>		
-		[DataObjectMethod(DataObjectMethodType.Select)]
-		<%= constructorAccessModifier %> void <%=partialClassInternalPrefix%>DeepLoad(TransactionManager transactionManager, <%= className %> entity)
-		{
-			<%=partialClassInternalPrefix%>DeepLoad(transactionManager, entity, false, DeepLoadType.ExcludeChildren, null, null, Type.EmptyTypes);
-		}
-		
-		/// <summary>
-		/// <%= constructorAccessModifier %>Deep Load the IEntity object with all of the child 
-		/// property collections only 1 Level Deep.
-		/// </summary>
-		/// <param name="entity"><%= className %> Object</param>
-		/// <param name="deep">Boolean. A flag that indicates whether to recursively save all Property Collection that are descendants of this instance. If True, saves the complete object graph below this object. If False, saves this object only. </param>
-		/// <param name="deepLoadType">DeepLoadType Enumeration to Include/Exclude object property collections from Load.</param>
-		/// <param name="childTypes"><%= className %> Property Collection Type Array To Include or Exclude from Load</param>
-		/// <remarks>
-		/// <seealso cref="DeepLoad(<%= className %>)"/> overloaded methods for a recursive N Level deep loading method.
-		/// </remarks>
-		[DataObjectMethod(DataObjectMethodType.Select)]
-		<%= constructorAccessModifier %> void <%=partialClassInternalPrefix%>DeepLoad(<%= className %> entity, bool deep, DeepLoadType deepLoadType, params System.Type[] childTypes)
-		{
-			<%=partialClassInternalPrefix%>DeepLoad(null, entity, deep, deepLoadType, null, null, childTypes);
-		}
-		
-		/// <summary>
-		/// <%= constructorAccessModifier %>Deep Load the IEntity object with all of the child 
-		/// property collections only 1 Level Deep.
-		/// </summary>
-		/// <param name="transactionManager"><see cref="TransactionManager"/> object</param>
-		/// <param name="entity"><%= className %> Object</param>
-		/// <param name="deep">Boolean. A flag that indicates whether to recursively save all Property Collection that are descendants of this instance. If True, saves the complete object graph below this object. If False, saves this object only. </param>
-		/// <param name="deepLoadType">DeepLoadType Enumeration to Include/Exclude object property collections from Load.</param>
-		/// <param name="childTypes"><%= className %> Property Collection Type Array To Include or Exclude from Load</param>
-		/// <remarks>
-		/// <seealso cref="DeepLoad(<%= className %>)"/> overloaded methods for a recursive N Level deep loading method.
-		/// </remarks>
-		[DataObjectMethod(DataObjectMethodType.Select)]
-		<%= constructorAccessModifier %> void <%=partialClassInternalPrefix%>DeepLoad(TransactionManager transactionManager, <%= className %> entity, bool deep, DeepLoadType deepLoadType, params System.Type[] childTypes)
-		{
-			<%=partialClassInternalPrefix%>DeepLoad(transactionManager, entity, deep, deepLoadType, null, null, childTypes);
-		}
-		<% }  //end if RenderOverload %>
-		
-		<% if (RenderImplementation) { %>
+			
 		/// <summary>
 		/// <%= constructorAccessModifier %>Deep Loads the <see cref="IEntity"/> object with criteria based of the child 
 		/// property collections only N Levels Deep based on the <see cref="DeepLoadType"/>.
@@ -1876,31 +1141,26 @@
 		/// <remarks>
 		/// Use this method with caution as it is possible to DeepLoad with Recursion and traverse an entire object graph.
 		/// </remarks>
-		/// <param name="transactionManager"><see cref="TransactionManager"/> object</param>
 		/// <param name="entity">The <see cref="<%= className %>"/> object to load.</param>
 		/// <param name="deep">Boolean. A flag that indicates whether to recursively load all Property Collections that are descendants of this instance. 
 		/// If True, saves the complete object graph below this object. If False, saves this object only. </param>
 		/// <param name="deepLoadType">DeepLoadType Enumeration to Include/Exclude object property collections from Load.</param>
-		/// <param name="connectionStringKey">a pre-configured connection string to use.</param>
-		/// <param name="dynamicConnectionString">a runtime dynamic connection string to use (connectionStringKey is required if you supply a dynamicConnectionString).  If already added to the DataRepository.Connections, only the connectionStringKey is required.</param>
 		/// <param name="childTypes"><%= className %> Property Collection Type Array To Include or Exclude from Load</param>
 		[DataObjectMethod(DataObjectMethodType.Select)]
-		<%= interfaceImplModifier %> void <%=partialClassInternalPrefix%>DeepLoad(TransactionManager transactionManager, <%= className %> entity, bool deep, DeepLoadType deepLoadType, string connectionStringKey, string dynamicConnectionString, params System.Type[] childTypes)
+		<%= constructorAccessModifier %> void <%=partialClassInternalPrefix%>DeepLoad(<%= className %> entity, bool deep, DeepLoadType deepLoadType, params System.Type[] childTypes)
 		{
 			// throws security exception if not authorized
 			SecurityContext.IsAuthorized("DeepLoad");
-			
-			bool isBorrowedTransaction = (transactionManager != null && transactionManager.IsOpen);
+			TransactionManager transactionManager = null; 
 
 			try
             {
-				NetTiersProvider dataProvider = null;
-				dataProvider = DomainUtil.GetDataProvider(connectionStringKey, dynamicConnectionString, CurrentDataProvider);
-				if (isBorrowedTransaction)
-					transactionManager = DomainUtil.ValidateOrCreateTransaction(transactionManager, CurrentDataProvider, false);
-                
+				//since this is a read operation, don't create a tran by default, only use tran if provided to us for custom isolation level
+				transactionManager = ConnectionScope.ValidateOrCreateTransaction(noTranByDefault);
+				NetTiersProvider dataProvider = ConnectionScope.Current.DataProvider;
+				
 				//Call Deep Load from the Repository
-				dataProvider.<%= GetProviderName(className) %>.DeepLoad(entity, deep, deepLoadType, childTypes);
+				dataProvider.<%= GetProviderName(className) %>.DeepLoad(transactionManager, entity, deep, deepLoadType, childTypes);
 	        
 				//leave tran open if used
             	
@@ -1917,11 +1177,9 @@
             }
 			return;
 		}
-		<% } // end if RenderImplementation %>
 		#endregion
 		
 		#region Deep Load By Entity Collection
-		<% if (RenderOverload) { %>
 		/// <summary>
 		/// Deep Loads the <see cref="<%=collectionClassNameComment %>" /> object with all of the child 
 		/// property collections only 1 Level Deep.
@@ -1933,7 +1191,7 @@
 		[DataObjectMethod(DataObjectMethodType.Select)]
 		<%= constructorAccessModifier %> void <%=partialClassInternalPrefix%>DeepLoad(<%= collectionClassName %> entityCollection)
 		{
-			<%=partialClassInternalPrefix%>DeepLoad(null, entityCollection, false, DeepLoadType.ExcludeChildren, null, null, Type.EmptyTypes);
+			<%=partialClassInternalPrefix%>DeepLoad(entityCollection, false, DeepLoadType.ExcludeChildren, Type.EmptyTypes);
 		}
 		
 		/// <summary>
@@ -1947,7 +1205,7 @@
 		[DataObjectMethod(DataObjectMethodType.Select)]
 		<%= constructorAccessModifier %> void <%=partialClassInternalPrefix%>DeepLoad(<%= collectionClassName %> entityCollection, bool deep)
 		{
-			<%=partialClassInternalPrefix%>DeepLoad(null, entityCollection, deep, DeepLoadType.ExcludeChildren, null, null, Type.EmptyTypes);
+			<%=partialClassInternalPrefix%>DeepLoad(entityCollection, deep, DeepLoadType.ExcludeChildren, Type.EmptyTypes);
 		}	
 
 		/// <summary>
@@ -1960,68 +1218,22 @@
 		/// <param name="entityCollection">The <see cref="<%=collectionClassNameComment %>" /> instance to load.</param>
 		/// <param name="deep">Boolean. A flag that indicates whether to recursively save all Property Collection that are descendants of this instance. If True, saves the complete object graph below this object. If False, saves this object only. </param>
 		/// <param name="deepLoadType"><see cref="DeepLoadType"/> Enumeration to Include/Exclude object property collections from Load.
-		///		Use DeepLoadType.[IncludeChildren/ExcludeChildren]WithRecursion to traverse the entire object graph.
-		///	</param>
-		/// <param name="childTypes"><see cref="<%= className %>"/> Property Collection Type Array To Include or Exclude from Load</param>
-		[DataObjectMethod(DataObjectMethodType.Select)]
-		<%= constructorAccessModifier %> void <%=partialClassInternalPrefix%>DeepLoad(<%= collectionClassName %> entityCollection, bool deep, DeepLoadType deepLoadType, params System.Type[] childTypes)
-		{	
-			<%=partialClassInternalPrefix%>DeepLoad(null, entityCollection, deep, deepLoadType, null, null, childTypes);
-		}
-		
-		/// <summary>
-		/// Deep Loads the entire <see cref="<%=collectionClassNameComment %>" /> object with criteria based of the child 
-		/// property collections only N Levels Deep based on the DeepLoadType.
-		/// </summary>
-		/// <remarks>
-		/// Use this method with caution as it is possible to DeepLoad with Recursion and traverse an entire collection's object graph.
-		/// </remarks>
-		/// <param name="transactionManager"><see cref="TransactionManager"/> object</param>
-		/// <param name="entityCollection">The <see cref="<%=collectionClassNameComment %>" /> instance to load.</param>
-		/// <param name="deep">Boolean. A flag that indicates whether to recursively save all Property Collection that are descendants of this instance. If True, saves the complete object graph below this object. If False, saves this object only. </param>
-		/// <param name="deepLoadType"><see cref="DeepLoadType"/> Enumeration to Include/Exclude object property collections from Load.
-		///		Use DeepLoadType.[IncludeChildren/ExcludeChildren]WithRecursion to traverse the entire object graph.
-		///	</param>
-		/// <param name="childTypes"><see cref="<%= className %>"/> Property Collection Type Array To Include or Exclude from Load</param>
-		[DataObjectMethod(DataObjectMethodType.Select)]
-		<%= constructorAccessModifier %> void <%=partialClassInternalPrefix%>DeepLoad(TransactionManager transactionManager, <%= collectionClassName %> entityCollection, bool deep, DeepLoadType deepLoadType, params System.Type[] childTypes)
-		{	
-			<%=partialClassInternalPrefix%>DeepLoad(transactionManager, entityCollection, deep, deepLoadType, null, null, childTypes);
-		}
-		<% } //end render overload %>
-		
-		<% if (RenderImplementation) { %>
-		/// <summary>
-		/// Deep Loads the entire <see cref="<%=collectionClassNameComment %>" /> object with criteria based of the child 
-		/// property collections only N Levels Deep based on the DeepLoadType.
-		/// </summary>
-		/// <remarks>
-		/// Use this method with caution as it is possible to DeepLoad with Recursion and traverse an entire collection's object graph.
-		/// </remarks>
-		/// <param name="transactionManager"><see cref="TransactionManager"/> object</param>
-		/// <param name="entityCollection">The <see cref="<%=collectionClassNameComment %>" /> instance to load.</param>
-		/// <param name="deep">Boolean. A flag that indicates whether to recursively save all Property Collection that are descendants of this instance. If True, saves the complete object graph below this object. If False, saves this object only. </param>
-		/// <param name="deepLoadType"><see cref="DeepLoadType"/> Enumeration to Include/Exclude object property collections from Load.
 		///		Use DeepLoadType.IncludeChildren, ExcludeChildren to traverse the entire object graph.
 		///	</param>
-		/// <param name="connectionStringKey">a pre-configured connection string to use.</param>
-		/// <param name="dynamicConnectionString">a runtime dynamic connection string to use (connectionStringKey is required if you supply a dynamicConnectionString).  If already added to the DataRepository.Connections, only the connectionStringKey is required.</param>
 		/// <param name="childTypes"><see cref="<%= className %>"/> Property Collection Type Array To Include or Exclude from Load</param>
 		[DataObjectMethod(DataObjectMethodType.Select, false)]
-		<%= interfaceImplModifier %> void <%=partialClassInternalPrefix%>DeepLoad(TransactionManager transactionManager, <%= collectionClassName %> entityCollection, bool deep, DeepLoadType deepLoadType, string connectionStringKey, string dynamicConnectionString, params System.Type[] childTypes)
+		<%= interfaceImplModifier %> void <%=partialClassInternalPrefix%>DeepLoad(<%= collectionClassName %> entityCollection, bool deep, DeepLoadType deepLoadType, params System.Type[] childTypes)
 		{	
 			// throws security exception if not authorized
 			SecurityContext.IsAuthorized("DeepLoad");
-						
-			bool isBorrowedTransaction = (transactionManager != null && transactionManager.IsOpen);
+			TransactionManager transactionManager = null; 
 
 			try
             {
-				NetTiersProvider dataProvider = null;
-				dataProvider = DomainUtil.GetDataProvider(connectionStringKey, dynamicConnectionString, CurrentDataProvider);
-				if (isBorrowedTransaction)
-					transactionManager = DomainUtil.ValidateOrCreateTransaction(transactionManager, CurrentDataProvider, isBorrowedTransaction);
-                
+				//since this is a read operation, don't create a tran by default, only use tran if provided to us for custom isolation level
+				transactionManager = ConnectionScope.ValidateOrCreateTransaction(noTranByDefault);
+				NetTiersProvider dataProvider = ConnectionScope.Current.DataProvider;
+				
 				//Call Deep Load from the Repository
 				dataProvider.<%= GetProviderName(className) %>.DeepLoad(transactionManager, <%=newEntityCollectionClassName%>entityCollection<%=newEntityCollectionClassNameEnd%>, deep, deepLoadType, childTypes);
 	        
@@ -2039,8 +1251,6 @@
             }
 			return;		
 		}
-		<% } // end if render implementation %>
-		
 		#endregion
 
 		#endregion
@@ -2050,7 +1260,6 @@
 		#region DeepSave
 		
 		#region Deep Save By Entity
-		<% if (RenderOverload) { %>
 		/// <summary>
 		/// <%= constructorAccessModifier %>Deep Saves the <see cref="<%= className %>"/> object with all of the child
 		/// property collections N Levels Deep.
@@ -2059,63 +1268,18 @@
 		[DataObjectMethod(DataObjectMethodType.Update)]
 		<%= constructorAccessModifier %> bool <%=partialClassInternalPrefix%>DeepSave(<%= className %> entity)
 		{
-			return <%=partialClassInternalPrefix%>DeepSave(null, entity, DeepSaveType.ExcludeChildren, false, null, null, Type.EmptyTypes);
+			return <%=partialClassInternalPrefix%>DeepSave(entity, DeepSaveType.ExcludeChildren, Type.EmptyTypes);
 		}
 		
-		/// <summary>
-		/// <%= constructorAccessModifier %>Deep Saves the <see cref="<%= className %>"/> object with all of the child
-		/// property collections N Levels Deep.
-		/// </summary>
-		/// <param name="transactionManager"><see cref="TransactionManager"/> object</param>
-		/// <param name="entity"><%= className %> Object</param>
-		[DataObjectMethod(DataObjectMethodType.Update)]
-		<%= constructorAccessModifier %> bool <%=partialClassInternalPrefix%>DeepSave(TransactionManager transactionManager, <%= className %> entity)
-		{
-			return <%=partialClassInternalPrefix%>DeepSave(transactionManager, entity, DeepSaveType.ExcludeChildren, true, null, null, Type.EmptyTypes);
-		}
-		
-		/// <summary>
-		/// <%= constructorAccessModifier %>Deep Saves the <see cref="<%= className %>"/> object with all of the child
-		/// property collections N Levels Deep.
-		/// </summary>
-		/// <param name="entity"><%= className %> Object</param>
-		/// <param name="deepSaveType">DeepSaveType Enumeration to Include/Exclude object property collections from Save.</param>
-		/// <param name="childTypes"><c><%= className %></c> property Type Array To Include or Exclude from Save</param>
-		[DataObjectMethod(DataObjectMethodType.Update)]
-		<%= constructorAccessModifier %> bool <%=partialClassInternalPrefix%>DeepSave(<%= className %> entity, DeepSaveType deepSaveType, params Type[] childTypes)
-		{
-			return <%=partialClassInternalPrefix%>DeepSave(null, entity, DeepSaveType.ExcludeChildren, false, null, null, childTypes);
-		}
-		
-		/// <summary>
-		/// <%= constructorAccessModifier %>Deep Saves the <see cref="<%= className %>"/> object with all of the child
-		/// property collections N Levels Deep.
-		/// </summary>
-		/// <param name="transactionManager"><see cref="TransactionManager"/> object</param>
-		/// <param name="entity"><%= className %> Object</param>
-		/// <param name="deepSaveType">DeepSaveType Enumeration to Include/Exclude object property collections from Save.</param>
-		/// <param name="childTypes"><c><%= className %></c> property Type Array To Include or Exclude from Save</param>
-		[DataObjectMethod(DataObjectMethodType.Update)]
-		<%= constructorAccessModifier %> bool <%=partialClassInternalPrefix%>DeepSave(TransactionManager transactionManager, <%= className %> entity, DeepSaveType deepSaveType, params Type[] childTypes)
-		{
-			return <%=partialClassInternalPrefix%>DeepSave(transactionManager, entity, DeepSaveType.ExcludeChildren, true, null, null, childTypes);
-		}
-		<% } //end if  %>
-		
-		<% if (RenderImplementation) { %>
 		/// <summary>
 		/// <%= constructorAccessModifier %>Deep Saves the entire object graph of the <%= className %> object with criteria based of the child 
 		/// Type property array and DeepSaveType.
 		/// </summary>
-		/// <param name="transactionManager"><see cref="TransactionManager"/> object</param>
 		/// <param name="entity"><%= className %> Object</param>
-		/// <param name="isBorrowedTransaction">specifies whether the transaction is part of a larger transaction context, if true the transaction must be created and open.</param>
 		/// <param name="deepSaveType">DeepSaveType Enumeration to Include/Exclude object property collections from Save.</param>
-		/// <param name="connectionStringKey">a pre-configured connection string to use.</param>
-		/// <param name="dynamicConnectionString">a runtime dynamic connection string to use (connectionStringKey is required if you supply a dynamicConnectionString).  If already added to the DataRepository.Connections, only the connectionStringKey is required.</param>		
 		/// <param name="childTypes"><c><%= className %></c> property Type Array To Include or Exclude from Save</param>
 		[DataObjectMethod(DataObjectMethodType.Update)]
-		<%= interfaceImplModifier %> bool <%=partialClassInternalPrefix%>DeepSave(TransactionManager transactionManager, <%= className %> entity, DeepSaveType deepSaveType, bool isBorrowedTransaction, string connectionStringKey, string dynamicConnectionString,  params System.Type[] childTypes)
+		<%= interfaceImplModifier %> bool <%=partialClassInternalPrefix%>DeepSave(<%= className %> entity, DeepSaveType deepSaveType, params System.Type[] childTypes)
 		{
 			// throws security exception if not authorized
 			SecurityContext.IsAuthorized("DeepSave");
@@ -2126,13 +1290,16 @@
 			}
 			
 			bool result = false;
+			TransactionManager transactionManager = null; 
 			
 			try
             {	
-				NetTiersProvider dataProvider = null;
-				dataProvider = DomainUtil.GetDataProvider(connectionStringKey, dynamicConnectionString, CurrentDataProvider);
-				transactionManager = DomainUtil.ValidateOrCreateTransaction(transactionManager, CurrentDataProvider, isBorrowedTransaction);
-
+				bool isBorrowedTransaction = ConnectionScope.Current.HasTransaction;
+				
+				//since this is a read operation, don't create a tran by default, only use tran if provided to us for custom isolation level
+				transactionManager = ConnectionScope.ValidateOrCreateTransaction();
+				NetTiersProvider dataProvider = ConnectionScope.Current.DataProvider;
+				
 				//Save
 				result = dataProvider.<%= GetProviderName(className) %>.DeepSave(transactionManager, entity, deepSaveType, childTypes);
 				
@@ -2154,11 +1321,9 @@
             }
 			return result;		
 		}
-		<% } %>
 		#endregion
 		
 		#region Deep Save By Entity Collection
-		<% if (RenderOverload) { %>
 		/// <summary>
 		/// Deep Save the entire <see cref="<%=collectionClassNameComment %>" /> object with all of the child 
 		/// property collections.
@@ -2169,18 +1334,6 @@
 		{
 			return <%=partialClassInternalPrefix%>DeepSave(entityCollection, DeepSaveType.ExcludeChildren, Type.EmptyTypes);
 		}
-
-		/// <summary>
-		/// Deep Save the entire <see cref="<%=collectionClassNameComment %>" /> object with all of the child 
-		/// property collections.
-		/// </summary>
-		/// <param name="transactionManager"><see cref="TransactionManager"/> object</param>
-		/// <param name="entityCollection"><%= collectionClassNameComment %> Object</param>
-		[DataObjectMethod(DataObjectMethodType.Update)]
-		<%= constructorAccessModifier %> bool <%=partialClassInternalPrefix%>DeepSave(TransactionManager transactionManager, <%= collectionClassName %> entityCollection)
-		{
-			return <%=partialClassInternalPrefix%>DeepSave(transactionManager, entityCollection, DeepSaveType.ExcludeChildren, true, null, null, Type.EmptyTypes);
-		}
 		
 		/// <summary>
 		/// Deep Save the entire object graph of the <see cref="<%=collectionClassNameComment %>" /> object with criteria based of the child 
@@ -2190,40 +1343,7 @@
 		/// <param name="deepSaveType">DeepSaveType Enumeration to Include/Exclude object property collections from Save.</param>
 		/// <param name="childTypes"><%= className %> Property Collection Type Array To Include or Exclude from Save</param>
 		[DataObjectMethod(DataObjectMethodType.Update)]
-		<%= constructorAccessModifier %> bool <%=partialClassInternalPrefix%>DeepSave(<%= collectionClassName %> entityCollection, DeepSaveType deepSaveType, params System.Type[] childTypes)
-		{
-			return <%=partialClassInternalPrefix%>DeepSave(null, entityCollection, DeepSaveType.ExcludeChildren, false, null, null, childTypes);
-		}
-		
-		/// <summary>
-		/// Deep Save the entire object graph of the <see cref="<%=collectionClassNameComment %>" /> object with criteria based of the child 
-		/// property collections.
-		/// </summary>
-		/// <param name="transactionManager"><see cref="TransactionManager"/> object</param>
-		/// <param name="entityCollection"><see cref="<%=collectionClassNameComment %>" /> Object</param>
-		/// <param name="deepSaveType">DeepSaveType Enumeration to Include/Exclude object property collections from Save.</param>
-		/// <param name="childTypes"><%= className %> Property Collection Type Array To Include or Exclude from Save</param>
-		[DataObjectMethod(DataObjectMethodType.Update)]
-		<%= constructorAccessModifier %> bool <%=partialClassInternalPrefix%>DeepSave(TransactionManager transactionManager, <%= collectionClassName %> entityCollection, DeepSaveType deepSaveType, params System.Type[] childTypes)
-		{
-			return <%=partialClassInternalPrefix%>DeepSave(transactionManager, entityCollection, DeepSaveType.ExcludeChildren, true, null, null, childTypes);
-		}
-		<% } %>
-		
-		<% if (RenderImplementation) {%>
-		/// <summary>
-		/// Deep Save the entire object graph of the <see cref="<%=collectionClassNameComment %>" /> object with criteria based of the child 
-		/// property collections.
-		/// </summary>
-		/// <param name="transactionManager"><see cref="TransactionManager"/> object</param>
-		/// <param name="entityCollection"><see cref="<%=collectionClassNameComment %>" /> Object</param>
-		/// <param name="deepSaveType">DeepSaveType Enumeration to Include/Exclude object property collections from Save.</param>
-		/// <param name="isBorrowedTransaction">specifies whether the transaction is part of a larger transaction context, if true the transaction must be created and open.</param>
-		/// <param name="connectionStringKey">a pre-configured connection string to use.</param>
-		/// <param name="dynamicConnectionString">a runtime dynamic connection string to use (connectionStringKey is required if you supply a dynamicConnectionString).  If already added to the DataRepository.Connections, only the connectionStringKey is required.</param>		
-		/// <param name="childTypes"><%= className %> Property Collection Type Array To Include or Exclude from Save</param>
-		[DataObjectMethod(DataObjectMethodType.Update)]
-		<%= interfaceImplModifier %> bool <%=partialClassInternalPrefix%>DeepSave(TransactionManager transactionManager, <%= collectionClassName %> entityCollection, DeepSaveType deepSaveType, bool isBorrowedTransaction, string connectionStringKey, string dynamicConnectionString,  params System.Type[] childTypes)
+		<%= interfaceImplModifier %> bool <%=partialClassInternalPrefix%>DeepSave(<%= collectionClassName %> entityCollection, DeepSaveType deepSaveType, params System.Type[] childTypes)
 		{				
 			// throws security exception if not authorized
 			SecurityContext.IsAuthorized("DeepSave");
@@ -2233,17 +1353,21 @@
 				throw new Entities.EntityNotValidException(entityCollection, "DeepSave");
 			}
 			
-			NetTiersProvider dataProvider = null;
-			dataProvider = DomainUtil.GetDataProvider(connectionStringKey, dynamicConnectionString, CurrentDataProvider);
-			transactionManager = DomainUtil.ValidateOrCreateTransaction(transactionManager, CurrentDataProvider, isBorrowedTransaction);
-
 			bool result = false;
+			TransactionManager transactionManager = null; 
+			
 			try
             {
-            	//Save
+				bool isBorrowedTransaction = ConnectionScope.Current.HasTransaction;
+				
+				//since this is a read operation, don't create a tran by default, only use tran if provided to us for custom isolation level
+				transactionManager = ConnectionScope.ValidateOrCreateTransaction();
+				NetTiersProvider dataProvider = ConnectionScope.Current.DataProvider;
 				result = dataProvider.<%= GetProviderName(className) %>.DeepSave(transactionManager, <%= newEntityCollectionClassName %>entityCollection<%= newEntityCollectionClassNameEnd %>,  deepSaveType, childTypes);
 				
-				//No Commit here, caller responsible for commiting
+				//If success and not borrowed, Commit
+				if (!isBorrowedTransaction && transactionManager != null && transactionManager.IsOpen)
+					transactionManager.Commit();
 			}
             catch (Exception exc)
             {
@@ -2258,7 +1382,6 @@
             }
 			return result;
 		}
-		<% } //end if render implementation %>
 		#endregion
 
 		#endregion 

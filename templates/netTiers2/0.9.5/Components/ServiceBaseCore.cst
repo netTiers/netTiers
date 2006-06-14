@@ -43,7 +43,7 @@ namespace <%=NameSpace%>
 	/// <summary>
 	/// The interface that each component business domain service of the model implements.
 	/// </summary>
-	public abstract class ServiceBaseCore<Entity, EntityKey> : EntityProviderBase<Entity, EntityKey>, IComponentService
+	public abstract class ServiceBaseCore<Entity, EntityKey> : MarshalByRefObject, IComponentService, IEntityProvider<Entity, EntityKey>
 		where Entity : IEntityId<EntityKey>, new() 
 		where EntityKey : IEntityKey, new()
 	{
@@ -240,31 +240,24 @@ namespace <%=NameSpace%>
 		
 		<% if ( IncludeGetList ) { %>
 		#region GetAll Methods
-
 		/// <summary>
-		/// Gets all rows from the DataSource.
-		/// </summary>
-		/// <param name="mgr">A <see cref="TransactionManager"/> object.</param>
-		/// <param name="start">Row number at which to start reading.</param>
-		/// <param name="pageLength">Number of rows to return.</param>
-		/// <param name="count">out. The number of rows that match this query.</param>
-		/// <returns>Returns a TList of Entity objects.</returns>
-		public override TList<Entity> GetAll(TransactionManager mgr, int start, int pageLength, out int count)
+        /// Gets a row from the DataSource based on its primary key.
+        /// </summary>
+        /// <param name="key">The unique identifier of the row to retrieve.</param>
+        /// <returns>Returns an instance of the Entity class.</returns>
+		public virtual Entity Get(EntityKey key)
 		{
-			return GetAll(mgr, start, pageLength, out count, null, null);
+			throw new NotImplementedException();	
 		}
-
+		
 		/// <summary>
 		/// Gets all rows from the DataSource.
 		/// </summary>
-		/// <param name="mgr">A <see cref="TransactionManager"/> object.</param>
-		/// <param name="start">Row number at which to start reading.</param>
-		/// <param name="pageLength">Number of rows to return.</param>
-		/// <param name="count">out. The number of rows that match this query.</param>
-		/// <param name="connectionStringKey">A pre-configured key for usage of another dataprovider.</param>
-		/// <param name="dynamicConnectionString">A dynamic connection string to use for this particular instance.</param>
 		/// <returns>Returns a TList of Entity objects.</returns>
-		public abstract TList<Entity> GetAll(TransactionManager mgr, int start, int pageLength, out int count, string connectionStringKey, string dynamicConnectionString);
+		public virtual TList<Entity> GetAll()
+		{
+			throw new NotImplementedException();
+		}
 
 		#endregion
 
@@ -273,31 +266,16 @@ namespace <%=NameSpace%>
 		/// <summary>
 		/// Gets a page of rows from the DataSource.
 		/// </summary>
-		/// <param name="mgr">A <see cref="TransactionManager"/> object.</param>
 		/// <param name="whereClause">Specifies the condition for the rows returned by a query (Name='John Doe', Name='John Doe' AND Id='1', Name='John Doe' OR Id='1').</param>
 		/// <param name="orderBy">Specifies the sort criteria for the rows in the DataSource (Name ASC; BirthDay DESC, Name ASC).</param>
 		/// <param name="start">Row number at which to start reading.</param>
 		/// <param name="pageLength">Number of rows to return.</param>
 		/// <param name="count">Number of rows in the DataSource.</param>
 		/// <returns>Returns a TList of Entity objects.</returns>
-		public override TList<Entity> GetPaged(TransactionManager mgr, String whereClause, String orderBy, int start, int pageLength, out int count)
+		public virtual TList<Entity> GetPaged(string whereClause, string orderBy, int start, int pageLength, out int count)
 		{
-			return GetPaged(mgr, whereClause, orderBy, start, pageLength, out count, null, null);
+			throw new NotImplementedException();
 		}
-
-		/// <summary>
-		/// Gets a page of rows from the DataSource.
-		/// </summary>
-		/// <param name="mgr">A <see cref="TransactionManager"/> object.</param>
-		/// <param name="whereClause">Specifies the condition for the rows returned by a query (Name='John Doe', Name='John Doe' AND Id='1', Name='John Doe' OR Id='1').</param>
-		/// <param name="orderBy">Specifies the sort criteria for the rows in the DataSource (Name ASC; BirthDay DESC, Name ASC).</param>
-		/// <param name="start">Row number at which to start reading.</param>
-		/// <param name="pageLength">Number of rows to return.</param>
-		/// <param name="count">Number of rows in the DataSource.</param>
-		/// <param name="connectionStringKey">A pre-configured key for usage of another dataprovider.</param>
-		/// <param name="dynamicConnectionString">A dynamic connection string to use for this particular instance.</param>
-		/// <returns>Returns a TList of Entity objects.</returns>
-		public abstract TList<Entity> GetPaged(TransactionManager mgr, String whereClause, String orderBy, int start, int pageLength, out int count, string connectionStringKey, string dynamicConnectionString);
 
 		#endregion
 
@@ -308,33 +286,18 @@ namespace <%=NameSpace%>
 		/// <summary>
 		/// Returns rows meeting the whereClause condition from the DataSource.
 		/// </summary>
-		/// <param name="transactionManager">A <see cref="TransactionManager"/> object.</param>
 		/// <param name="whereClause">Specifies the condition for the rows returned by a query (Name='John Doe', Name='John Doe' AND Id='1', Name='John Doe' OR Id='1').</param>
 		/// <param name="start">Row number at which to start reading.</param>
 		/// <param name="pageLength">Number of rows to return.</param>
 		/// <param name="count">out parameter to get total records for query</param>
 		/// <remarks>Operators must be capitalized (OR, AND)</remarks>
 		/// <returns>Returns a typed collection of Entity objects.</returns>
-		public override TList<Entity> Find(TransactionManager transactionManager, string whereClause, int start, int pageLength, out int count)
+		public virtual TList<Entity> Find(string whereClause, int start, int pageLength, out int count)
 		{
-			return Find(transactionManager, whereClause, start, pageLength, out count, null, null);
+			throw new NotImplementedException();
 		}
-		
-		/// <summary>
-		/// Returns rows meeting the whereClause condition from the DataSource.
-		/// </summary>
-		/// <param name="transactionManager">A <see cref="TransactionManager"/> object.</param>
-		/// <param name="whereClause">Specifies the condition for the rows returned by a query (Name='John Doe', Name='John Doe' AND Id='1', Name='John Doe' OR Id='1').</param>
-		/// <param name="start">Row number at which to start reading.</param>
-		/// <param name="pageLength">Number of rows to return.</param>
-		/// <param name="count">out parameter to get total records for query</param>
-		/// <param name="connectionStringKey">A pre-configured key for usage of another dataprovider.</param>
-		/// <param name="dynamicConnectionString">A dynamic connection string to use for this particular instance.</param>
-		/// <remarks>Operators must be capitalized (OR, AND)</remarks>
-		/// <returns>Returns a typed collection of Entity objects.</returns>
-		public abstract TList<Entity> Find(TransactionManager transactionManager, string whereClause, int start, int pageLength, out int count, string connectionStringKey, string dynamicConnectionString);
-		
-		#endregion "Find Functions"
+	
+		#endregion Find Functions
 		
 		<% } // end if ( IncludeFind ) %>
 		<% if ( IncludeInsert ) { %>
@@ -343,34 +306,18 @@ namespace <%=NameSpace%>
 		/// <summary>
 		/// Inserts a row into the DataSource.
 		/// </summary>
-		/// <param name="mgr">A <see cref="TransactionManager"/> object.</param>
 		/// <param name="entity">The Entity object to insert.</param>
 		/// <returns>Returns true if the operation is successful.</returns>
-		public override bool Insert(TransactionManager mgr, Entity entity)
+		public virtual bool Insert(Entity entity)
 		{
-			// check if borrowed transaction
-			bool isBorrowedTransaction = (mgr != null && mgr.IsOpen);
-			Insert(mgr, isBorrowedTransaction, entity, null, null);
-			return true;
+			throw new NotImplementedException();
 		}
-
-		/// <summary>
-		/// Inserts a row into the DataSource.
-		/// </summary>
-		/// <param name="mgr">A <see cref="TransactionManager"/> object.</param>
-		/// <param name="isBorrowedTransaction">Bool, determines if the call is already made in the context of a transaction.</param>
-		/// <param name="entity">The Entity object to insert.</param>
-		/// <param name="connectionStringKey" >Already Configured Connection String Key</param>
-		/// <param name="dynamicConnectionString" >Dynamic Connection String</param>
-		/// <returns>Returns true if the operation is successful.</returns>
-		public abstract Entity Insert(TransactionManager mgr, bool isBorrowedTransaction, Entity entity, string connectionStringKey, string dynamicConnectionString);
 
 		/// <summary>
 		/// Efficiently inserts multiple rows into the DataSource.
 		/// </summary>
-		/// <param name="mgr">A <see cref="TransactionManager"/> object.</param>
 		/// <param name="entities">TList of Entity objects to insert.</param>
-		public override void BulkInsert(TransactionManager mgr, TList<Entity> entities)
+		public virtual void BulkInsert(TList<Entity> entities)
 		{
 			throw new NotImplementedException("The BulkInsert method has not been implemented.");
 		}
@@ -384,28 +331,22 @@ namespace <%=NameSpace%>
 		/// <summary>
 		/// Updates an existing row in the DataSource.
 		/// </summary>
-		/// <param name="mgr">A <see cref="TransactionManager"/> object.</param>
 		/// <param name="entity">The Entity object to update.</param>
 		/// <returns>Returns true if the operation is successful.</returns>
-		public override bool Update(TransactionManager mgr, Entity entity)
+		public virtual bool Update(Entity entity)
 		{
-			// check if borrowed transaction
-			bool isBorrowedTransaction = (mgr != null && mgr.IsOpen);
-			Update(mgr, isBorrowedTransaction, entity, null, null);
-			return true;
+			throw new NotImplementedException();
 		}
-
-		/// <summary>
-		/// Updates an existing row in the DataSource.
-		/// </summary>
-		/// <param name="mgr">A <see cref="TransactionManager"/> object.</param>
-		/// <param name="isBorrowedTransaction">Bool, determines if the call is already made in the context of a transaction.</param>
-		/// <param name="entity">The Entity object to update.</param>
-		/// <param name="connectionStringKey" >Already Configured Connection String Key</param>
-		/// <param name="dynamicConnectionString" >Dynamic Connection String</param>
-		/// <returns>Returns true if the operation is successful.</returns>
-		public abstract Entity Update(TransactionManager mgr, bool isBorrowedTransaction, Entity entity, string connectionStringKey, string dynamicConnectionString);
-
+	  
+	    /// <summary>
+	    /// Deletes a row from the DataSource.
+	    /// </summary>
+	    /// <param name="entity">The Entity object to delete.</param>
+	    /// <returns>Returns true if the operation is successful.</returns>
+	    public virtual bool Delete(Entity entity)
+		{
+			throw new NotImplementedException();	
+		}
 		#endregion
 
 		<%	} // end if ( IncludeUpdate ) %>
@@ -413,74 +354,25 @@ namespace <%=NameSpace%>
 		#region DeepLoad
 
 		#region DeepLoad Entity
-
 		/// <summary>
 		/// Deep Load the entire Entity object with criteria based on the child types array and the DeepLoadType.
 		/// </summary>
 		/// <remarks>
 		/// Use this method with caution as it is possible to DeepLoad with recursion and traverse an entire collection's object graph.
 		/// </remarks>
-		/// <param name="mgr">A <see cref="TransactionManager"/> object.</param>
-		/// <param name="entity">The Entity object to load.</param>
-		/// <param name="deep">A flag that indicates whether to recursively load all Property Collections that are descendants of this instance. If True, loads the complete object graph below this object. If False, loads this object only.</param>
-		/// <param name="deepLoadType">DeepLoadType Enumeration to Include/Exclude object property collections from Load.</param>
-		/// <param name="childTypes">Entity Property Collection Type Array To Include or Exclude from Load.</param>
-		public override void DeepLoad(TransactionManager mgr, Entity entity, bool deep, DeepLoadType deepLoadType, params System.Type[] childTypes)
-		{
-			DeepLoad(mgr, entity, deep, deepLoadType, null, null, childTypes);
-		}
-
-		/// <summary>
-		/// Deep Load the entire Entity object with criteria based on the child types array and the DeepLoadType.
-		/// </summary>
-		/// <remarks>
-		/// Use this method with caution as it is possible to DeepLoad with recursion and traverse an entire collection's object graph.
-		/// </remarks>
-		/// <param name="mgr">A <see cref="TransactionManager"/> object.</param>
 		/// <param name="entity">The Entity object to load.</param>
 		/// <param name="deep">A flag that indicates whether to recursively load all Property Collections that are descendants of this instance. If True, loads the complete object graph below this object. If False, loads this object only.</param>
 		/// <param name="deepLoadType">DeepLoadType Enumeration to Include/Exclude object property collections from Load.</param>
 		/// <param name="childTypes">Entity Property Collection Type Array To Include or Exclude from Load.</param>
 		/// <param name="innerList">A Hashtable of child types for easy access.</param>
-		protected override void DeepLoad(TransactionManager mgr, Entity entity, bool deep, DeepLoadType deepLoadType, System.Type[] childTypes, Hashtable innerList)
+		protected virtual void DeepLoad(Entity entity, bool deep, DeepLoadType deepLoadType, System.Type[] childTypes, Hashtable innerList)
 		{
-			DeepLoad(mgr, entity, deep, deepLoadType, null, null, childTypes);
+			throw new NotImplementedException();
 		}
-
-		/// <summary>
-		/// Deep Load the entire Entity object with criteria based on the child types array and the DeepLoadType.
-		/// </summary>
-		/// <remarks>
-		/// Use this method with caution as it is possible to DeepLoad with recursion and traverse an entire collection's object graph.
-		/// </remarks>
-		/// <param name="mgr">A <see cref="TransactionManager"/> object.</param>
-		/// <param name="entity">The Entity object to load.</param>
-		/// <param name="deep">A flag that indicates whether to recursively load all Property Collections that are descendants of this instance. If True, loads the complete object graph below this object. If False, loads this object only.</param>
-		/// <param name="deepLoadType">DeepLoadType Enumeration to Include/Exclude object property collections from Load.</param>
-		/// <param name="connectionStringKey">a pre-configured connection string to use.</param>
-		/// <param name="dynamicConnectionString">a runtime dynamic connection string to use (connectionStringKey is required if you supply a dynamicConnectionString).  If already added to the DataRepository.Connections, only the connectionStringKey is required.</param>
-		/// <param name="childTypes">Entity Property Collection Type Array To Include or Exclude from Load.</param>
-		public abstract void DeepLoad(TransactionManager mgr, Entity entity, bool deep, DeepLoadType deepLoadType, string connectionStringKey, string dynamicConnectionString, params System.Type[] childTypes);
 
 		#endregion DeepLoad Entity
 
 		#region DeepLoad Entity Collection
-
-		/// <summary>
-		/// Deep Load the Entity objects with criteria based on the child types array and the DeepLoadType.
-		/// </summary>
-		/// <remarks>
-		/// Use this method with caution as it is possible to DeepLoad with recursion and traverse an entire collection's object graph.
-		/// </remarks>
-		/// <param name="mgr">A <see cref="TransactionManager"/> object.</param>
-		/// <param name="entities">TList of Entity objects to load.</param>
-		/// <param name="deep">A flag that indicates whether to recursively load all Property Collections that are descendants of this instance. If True, loads the complete object graph below this object. If False, loads this object only.</param>
-		/// <param name="deepLoadType">DeepLoadType Enumeration to Include/Exclude object property collections from Load.</param>
-		/// <param name="childTypes">Entity Property Collection Type Array To Include or Exclude from Load.</param>
-		public override void DeepLoad(TransactionManager mgr, TList<Entity> entities, bool deep, DeepLoadType deepLoadType, params System.Type[] childTypes)
-		{
-			DeepLoad(mgr, entities, deep, deepLoadType, null, null, childTypes);
-		}
 
 		/// <summary>
 		/// Deep Loads the entire <see cref="TList{Entity}" /> object with criteria based of the child 
@@ -489,16 +381,14 @@ namespace <%=NameSpace%>
 		/// <remarks>
 		/// Use this method with caution as it is possible to DeepLoad with Recursion and traverse an entire collection's object graph.
 		/// </remarks>
-		/// <param name="transactionManager"><see cref="TransactionManager"/> object</param>
-		/// <param name="entityCollection">The <see cref="TList{Entity}" /> instance to load.</param>
-		/// <param name="deep">Boolean. A flag that indicates whether to recursively save all Property Collection that are descendants of this instance. If True, saves the complete object graph below this object. If False, saves this object only. </param>
-		/// <param name="deepLoadType"><see cref="DeepLoadType"/> Enumeration to Include/Exclude object property collections from Load.
-		///		Use DeepLoadType.IncludeChildren, ExcludeChildren to traverse the entire object graph.
-		///	</param>
-		/// <param name="connectionStringKey">a pre-configured connection string to use.</param>
-		/// <param name="dynamicConnectionString">a runtime dynamic connection string to use (connectionStringKey is required if you supply a dynamicConnectionString).  If already added to the DataRepository.Connections, only the connectionStringKey is required.</param>
-		/// <param name="childTypes">Entity Property Collection Type Array To Include or Exclude from Load</param>
-		public abstract void DeepLoad(TransactionManager transactionManager, TList<Entity> entityCollection, bool deep, DeepLoadType deepLoadType, string connectionStringKey, string dynamicConnectionString, params System.Type[] childTypes);
+		/// <param name="entities">TList of Entity objects to load.</param>
+		/// <param name="deep">A flag that indicates whether to recursively load all Property Collections that are descendants of this instance. If True, loads the complete object graph below this object. If False, loads this object only.</param>
+		/// <param name="deepLoadType">DeepLoadType Enumeration to Include/Exclude object property collections from Load.</param>
+		/// <param name="childTypes">Entity Property Collection Type Array To Include or Exclude from Load.</param>
+		public virtual void DeepLoad(TList<Entity> entities, bool deep, DeepLoadType deepLoadType, params System.Type[] childTypes)
+		{
+			throw new NotImplementedException();
+		}
 
 		#endregion DeepLoad Entity Collection
 
@@ -513,16 +403,18 @@ namespace <%=NameSpace%>
 		/// <summary>
 		/// Deep Save the entire Entity object with criteria based on the child types array and the DeepSaveType.
 		/// </summary>
-		/// <param name="mgr">A <see cref="TransactionManager"/> object.</param>
 		/// <param name="entity">The Entity object to save.</param>
 		/// <param name="deepSaveType">DeepSaveType Enumeration to Include/Exclude object property collections from Save.</param>
 		/// <param name="childTypes">Entity Property Collection Type Array To Include or Exclude from Save.</param>
-		public override bool DeepSave(TransactionManager mgr, Entity entity, DeepSaveType deepSaveType, params System.Type[] childTypes)
+		public virtual bool DeepSave(Entity entity, DeepSaveType deepSaveType, params System.Type[] childTypes)
 		{
+			/*
 			// check if borrowed transaction
 			bool isBorrowedTransaction = ( mgr != null && mgr.IsOpen );
 			DeepSave(mgr, entity, deepSaveType, isBorrowedTransaction, null, null, childTypes);
 			return true;
+			*/
+			throw new NotImplementedException();
 		}
 
 		/// <summary>
@@ -531,30 +423,19 @@ namespace <%=NameSpace%>
 		/// <remarks>
 		/// This method should be implemented by sub-classes to provide specific deep save functionality.
 		/// </remarks>
-		/// <param name="mgr">A <see cref="TransactionManager"/> object.</param>
 		/// <param name="entity">The Entity object to save.</param>
 		/// <param name="deepSaveType">DeepSaveType Enumeration to Include/Exclude object property collections from Save.</param>
 		/// <param name="childTypes">Entity Property Collection Type Array To Include or Exclude from Save.</param>
 		/// <param name="innerList">A Hashtable of child types for easy access.</param>
-		protected override void DeepSave(TransactionManager mgr, Entity entity, DeepSaveType deepSaveType, System.Type[] childTypes, Hashtable innerList)
+		protected virtual void DeepSave(Entity entity, DeepSaveType deepSaveType, System.Type[] childTypes, Hashtable innerList)
 		{
 			// check if borrowed transaction
-			bool isBorrowedTransaction = ( mgr != null && mgr.IsOpen );
+			/*bool isBorrowedTransaction = ( mgr != null && mgr.IsOpen );
 			DeepSave(mgr, entity, deepSaveType, isBorrowedTransaction, null, null, childTypes);
+			*/
+			throw new NotImplementedException();
 		}
 
-		/// <summary>
-		/// public virtualDeep Saves the entire object graph of the Entity object with criteria based of the child 
-		/// Type property array and DeepSaveType.
-		/// </summary>
-		/// <param name="transactionManager"><see cref="TransactionManager"/> object</param>
-		/// <param name="entity">The Entity object to save.</param>
-		/// <param name="isBorrowedTransaction">specifies whether the transaction is part of a larger transaction context, if true the transaction must be created and open.</param>
-		/// <param name="deepSaveType">DeepSaveType Enumeration to Include/Exclude object property collections from Save.</param>
-		/// <param name="connectionStringKey">a pre-configured connection string to use.</param>
-		/// <param name="dynamicConnectionString">a runtime dynamic connection string to use (connectionStringKey is required if you supply a dynamicConnectionString).  If already added to the DataRepository.Connections, only the connectionStringKey is required.</param>		
-		/// <param name="childTypes">Entity property Type Array To Include or Exclude from Save</param>
-		public abstract bool DeepSave(TransactionManager transactionManager, Entity entity, DeepSaveType deepSaveType, bool isBorrowedTransaction, string connectionStringKey, string dynamicConnectionString, params System.Type[] childTypes);
 
 		#endregion DeepSave Entity
 
@@ -563,30 +444,19 @@ namespace <%=NameSpace%>
 		/// <summary>
 		/// Deep Save the Entity objects with criteria based on the child types array and the DeepSaveType.
 		/// </summary>
-		/// <param name="mgr">A <see cref="TransactionManager"/> object.</param>
 		/// <param name="entities">TList of Entity objects to save.</param>
 		/// <param name="deepSaveType">DeepSaveType Enumeration to Include/Exclude object property collections from Save.</param>
 		/// <param name="childTypes">Entity Property Collection Type Array To Include or Exclude from Save.</param>
-		public override bool DeepSave(TransactionManager mgr, TList<Entity> entities, DeepSaveType deepSaveType, params System.Type[] childTypes)
+		public virtual bool DeepSave(TList<Entity> entities, DeepSaveType deepSaveType, params System.Type[] childTypes)
 		{
 			// check if borrowed transaction
+			/*
 			bool isBorrowedTransaction = ( mgr != null && mgr.IsOpen );
-			DeepSave(mgr, entities, deepSaveType, isBorrowedTransaction, null, null, childTypes);
+			DeepSave(entities, deepSaveType, childTypes);
 			return true;
+			*/
+			throw new NotImplementedException();
 		}
-
-		/// <summary>
-		/// Deep Save the entire object graph of the <see cref="TList{Entity}" /> object with criteria based of the child 
-		/// property collections.
-		/// </summary>
-		/// <param name="transactionManager"><see cref="TransactionManager"/> object</param>
-		/// <param name="entityCollection"><see cref="TList{Entity}" /> Object</param>
-		/// <param name="deepSaveType">DeepSaveType Enumeration to Include/Exclude object property collections from Save.</param>
-		/// <param name="isBorrowedTransaction">specifies whether the transaction is part of a larger transaction context, if true the transaction must be created and open.</param>
-		/// <param name="connectionStringKey">a pre-configured connection string to use.</param>
-		/// <param name="dynamicConnectionString">a runtime dynamic connection string to use (connectionStringKey is required if you supply a dynamicConnectionString).  If already added to the DataRepository.Connections, only the connectionStringKey is required.</param>		
-		/// <param name="childTypes">Entity Property Collection Type Array To Include or Exclude from Save</param>
-		public abstract bool DeepSave(TransactionManager transactionManager, TList<Entity> entityCollection, DeepSaveType deepSaveType, bool isBorrowedTransaction, string connectionStringKey, string dynamicConnectionString, params System.Type[] childTypes);
 
 		#endregion DeepSave Entity Collection
 
