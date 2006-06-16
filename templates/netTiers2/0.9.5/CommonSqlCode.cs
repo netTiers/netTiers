@@ -2734,6 +2734,9 @@ namespace MoM.Templates
 		/// <param name="table">The table</param>
 		public bool IsMatching(CommandSchema command, TableSchema table)
 		{
+			if (command.CommandResults.Count == 0)
+				return false;
+				
 			if (command.CommandResults[0].Columns.Count != table.Columns.Count)
 			{
 				return false;
