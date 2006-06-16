@@ -7,6 +7,7 @@
 <%@ Import Namespace="System.Data" %>
 #region Using Directives
 using System;
+using System.Configuration;
 using System.Text;
 #endregion
 
@@ -93,6 +94,7 @@ namespace <%= DALNameSpace %>
 		/// <returns></returns>
 		public static String Equals(String column, String value, bool ignoreCase)
 		{
+			if ( String.IsNullOrEmpty(value) ) return IsNull(column);
 			String format = ignoreCase ? "UPPER({0}) = UPPER('{1}')" : "{0} = '{1}'";
 			return String.Format(format, column, Encode(value));
 		}
@@ -121,6 +123,7 @@ namespace <%= DALNameSpace %>
 		/// <returns></returns>
 		public static String Contains(String column, String value, bool ignoreCase)
 		{
+			if ( String.IsNullOrEmpty(value) ) return IsNull(column);
 			String format = ignoreCase ? "UPPER({0}) LIKE UPPER('%{1}%')" : "{0} LIKE '%{1}%'";
 			return String.Format(format, column, Encode(value));
 		}
@@ -149,6 +152,7 @@ namespace <%= DALNameSpace %>
 		/// <returns></returns>
 		public static String StartsWith(String column, String value, bool ignoreCase)
 		{
+			if ( String.IsNullOrEmpty(value) ) return IsNull(column);
 			String format = ignoreCase ? "UPPER({0}) LIKE UPPER('{1}%')" : "{0} LIKE '{1}%'";
 			return String.Format(format, column, Encode(value));
 		}
@@ -177,6 +181,7 @@ namespace <%= DALNameSpace %>
 		/// <returns></returns>
 		public static String EndsWith(String column, String value, bool ignoreCase)
 		{
+			if ( String.IsNullOrEmpty(value) ) return IsNull(column);
 			String format = ignoreCase ? "UPPER({0}) LIKE UPPER('%{1}')" : "{0} LIKE '%{1}'";
 			return String.Format(format, column, Encode(value));
 		}
@@ -205,11 +210,36 @@ namespace <%= DALNameSpace %>
 		/// <returns></returns>
 		public static String Like(String column, String value, bool ignoreCase)
 		{
+			if ( String.IsNullOrEmpty(value) ) return IsNull(column);
 			String format = ignoreCase ? "UPPER({0}) LIKE UPPER('{1}')" : "{0} LIKE '{1}'";
 			return String.Format(format, column, Encode(value));
 		}
 
 		#endregion Like
+
+		#region Null/Not Null
+
+		/// <summary>
+		/// Creates an IS NULL expression.
+		/// </summary>
+		/// <param name="column"></param>
+		/// <returns></returns>
+		public static String IsNull(String column)
+		{
+			return String.Format("{0} IS NULL", column);
+		}
+
+		/// <summary>
+		/// Creates an IS NOT NULL expression.
+		/// </summary>
+		/// <param name="column"></param>
+		/// <returns></returns>
+		public static String IsNotNull(String column)
+		{
+			return String.Format("{0} IS NOT NULL", column);
+		}
+
+		#endregion Null/Not Null
 
 		#region Encode
 
@@ -220,7 +250,58 @@ namespace <%= DALNameSpace %>
 		/// <returns></returns>
 		public static String Encode(String value)
 		{
-			return String.Format("{0}", value).Replace("'", "''");
+			return Encode(value, false);
+		}
+
+		/// <summary>
+		/// Encodes the specified value for use in SQL expressions and
+		/// optionally surrounds the value with single-quotes.
+		/// </summary>
+		/// <param name="value"></param>
+		/// <param name="surround"></param>
+		/// <returns></returns>
+		public static String Encode(String value, bool surround)
+		{
+			if ( String.IsNullOrEmpty(value) ) return SqlUtil.NULL;
+			String format = surround ? "'{0}'" : "{0}";
+			return String.Format(format, value.Replace("'", "''"));
+		}
+
+		/// <summary>
+		/// Encodes the specified values for use in SQL expressions.
+		/// </summary>
+		/// <param name="values"></param>
+		/// <returns></returns>
+		public static String Encode(String[] values)
+		{
+			return Encode(values, false);
+		}
+
+		/// <summary>
+		/// Encodes the specified values for use in SQL expressions and
+		/// optionally surrounds the value with single-quotes.
+		/// </summary>
+		/// <param name="values"></param>
+		/// <param name="surround"></param>
+		/// <returns></returns>
+		public static String Encode(String[] values, bool surround)
+		{
+			if ( values == null || values.Length < 1 )
+			{
+				return SqlUtil.NULL;
+			}
+
+			CommaDelimitedStringCollection csv = new CommaDelimitedStringCollection();
+
+			foreach ( String value in values )
+			{
+				if ( !String.IsNullOrEmpty(value) )
+				{
+					csv.Add(SqlUtil.Encode(value.Trim(), surround));
+				}
+			}
+
+			return csv.ToString();
 		}
 
 		#endregion Encode

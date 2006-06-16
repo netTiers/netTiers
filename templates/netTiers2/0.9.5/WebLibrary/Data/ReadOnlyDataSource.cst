@@ -63,7 +63,7 @@ namespace <%= WebNameSpace %>.Data
 		/// Gets or sets the name of the method or function that
 		/// the ReadOnlyDataSource control invokes to retrieve data.
 		/// </summary>
-		public ReadOnlyDataSourceMethod SelectMethod
+		public ReadOnlyDataSourceSelectMethod SelectMethod
 		{
 			get { return ReadOnlyView.SelectMethod; }
 			set { ReadOnlyView.SelectMethod = value; }
@@ -91,6 +91,17 @@ namespace <%= WebNameSpace %>.Data
 			return new ReadOnlyDataSourceView<Entity>(this, DefaultViewName);
 		}
 
+		/// <summary>
+		/// Creates a cache hashing key based on the startIndex, pageSize and the SelectMethod being used.
+		/// </summary>
+		/// <param name="startIndex">The current start row index.</param>
+		/// <param name="pageSize">The current page size.</param>
+		/// <returns>A string that can be used as a key for caching purposes.</returns>
+		protected override string CacheHashKey(int startIndex, int pageSize)
+		{
+			return String.Format("{0}:{1}:{2}", SelectMethod, startIndex, pageSize);
+		}
+
 		#endregion Methods
 	}
 
@@ -104,7 +115,7 @@ namespace <%= WebNameSpace %>.Data
 		#region Declarations
 
 		private IEntityViewProvider<Entity> _provider;
-		private ReadOnlyDataSourceMethod _selectMethod;
+		private ReadOnlyDataSourceSelectMethod _selectMethod;
 
 		#endregion Declarations
 
@@ -137,7 +148,7 @@ namespace <%= WebNameSpace %>.Data
 		/// Gets or sets the name of the method or function that
 		/// the ReadOnlyDataSource control invokes to retrieve data.
 		/// </summary>
-		internal ReadOnlyDataSourceMethod SelectMethod
+		internal ReadOnlyDataSourceSelectMethod SelectMethod
 		{
 			get { return _selectMethod; }
 			set { _selectMethod = value; }
@@ -190,11 +201,11 @@ namespace <%= WebNameSpace %>.Data
 			switch ( SelectMethod )
 			{
 				<% if ( IncludeGetList ) { %>
-				case ReadOnlyDataSourceMethod.Get:
+				case ReadOnlyDataSourceSelectMethod.Get:
 					entityList = Provider.Get(GetTransactionManager(), WhereClause, OrderBy, StartIndex, PageSize);
 					count = Provider.Get(GetTransactionManager(), WhereClause, OrderBy).Count;
 					break;
-				case ReadOnlyDataSourceMethod.GetAll:
+				case ReadOnlyDataSourceSelectMethod.GetAll:
 					entityList = Provider.GetAll(GetTransactionManager());
 					count = entityList.Count;
 					break;
@@ -209,22 +220,25 @@ namespace <%= WebNameSpace %>.Data
 		#endregion Methods
 	}
 
+	#region ReadOnlyDataSourceSelectMethod
+
 	/// <summary>
 	/// Enumeration of method names available for the ReadOnlyDataSource.SelectMethod property.
 	/// </summary>
 	[Serializable]
-	public enum ReadOnlyDataSourceMethod
+	public enum ReadOnlyDataSourceSelectMethod
 	{
 		<% if ( IncludeGetList ) { %>
 		/// <summary>
 		/// Represents the IEntityViewProvider&lt;Entity&gt;.Get method.
 		/// </summary>
 		Get,
-
 		/// <summary>
 		/// Represents the IEntityViewProvider&lt;Entity&gt;.GetAll method.
 		/// </summary>
 		GetAll
 		<% } // end if ( IncludeGetList ) %>
 	}
+
+	#endregion ReadOnlyDataSourceSelectMethod
 }

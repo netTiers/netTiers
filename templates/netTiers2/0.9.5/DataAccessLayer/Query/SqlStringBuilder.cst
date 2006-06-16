@@ -129,13 +129,47 @@ namespace <%= DALNameSpace %>
 		{
 			if ( !String.IsNullOrEmpty(value) )
 			{
-				AppendInternal(junction, column, " = ", SqlUtil.Encode(value));
+				AppendInternal(junction, column, "=", SqlUtil.Encode(value, true));
 			}
 
 			return this;
 		}
 
 		#endregion AppendEquals
+
+		#region AppendNotEquals
+
+		/// <summary>
+		/// Appends the specified column and value to the current filter.
+		/// as a NOT EQUALS expression.
+		/// </summary>
+		/// <param name="column"></param>
+		/// <param name="value"></param>
+		/// <returns></returns>
+		public SqlStringBuilder AppendNotEquals(String column, String value)
+		{
+			return AppendNotEquals(this.junction, column, value);
+		}
+
+		/// <summary>
+		/// Appends the specified column and value to the current filter
+		/// as a NOT EQUALS expression.
+		/// </summary>
+		/// <param name="junction"></param>
+		/// <param name="column"></param>
+		/// <param name="value"></param>
+		/// <returns></returns>
+		public SqlStringBuilder AppendNotEquals(String junction, String column, String value)
+		{
+			if ( !String.IsNullOrEmpty(value) )
+			{
+				AppendInternal(junction, column, "<>", SqlUtil.Encode(value, true));
+			}
+
+			return this;
+		}
+
+		#endregion AppendNotEquals
 
 		#region AppendIn
 
@@ -147,7 +181,19 @@ namespace <%= DALNameSpace %>
 		/// <returns></returns>
 		public SqlStringBuilder AppendIn(String column, String values)
 		{
-			return AppendIn(this.junction, column, values);
+			return AppendIn(this.junction, column, values, true);
+		}
+
+		/// <summary>
+		/// Appends the specified column and list of values to the current filter.
+		/// </summary>
+		/// <param name="column"></param>
+		/// <param name="values"></param>
+		/// <param name="encode"></param>
+		/// <returns></returns>
+		public SqlStringBuilder AppendIn(String column, String values, bool encode)
+		{
+			return AppendIn(this.junction, column, values, encode);
 		}
 
 		/// <summary>
@@ -159,15 +205,181 @@ namespace <%= DALNameSpace %>
 		/// <returns></returns>
 		public SqlStringBuilder AppendIn(String junction, String column, String values)
 		{
+			return AppendIn(junction, column, values, true);
+		}
+
+		/// <summary>
+		/// Appends the specified column and list of values to the current filter.
+		/// </summary>
+		/// <param name="junction"></param>
+		/// <param name="column"></param>
+		/// <param name="values"></param>
+		/// <param name="encode"></param>
+		/// <returns></returns>
+		public SqlStringBuilder AppendIn(String junction, String column, String values, bool encode)
+		{
 			if ( !String.IsNullOrEmpty(values) )
 			{
-				AppendInternal(junction, column, " IN ", "(" + values + ")");
+				if ( encode )
+				{
+					String[] split = values.Split(',');
+					values = SqlUtil.Encode(split, encode);
+
+					if ( !String.IsNullOrEmpty(values) )
+					{
+						AppendInQuery(junction, column, values);
+					}
+				}
+				else
+				{
+					AppendInQuery(junction, column, values);
+				}
 			}
 
 			return this;
 		}
 
 		#endregion AppendIn
+
+		#region AppendNotIn
+
+		/// <summary>
+		/// Appends the specified column and list of values to the current filter.
+		/// as a NOT IN expression.
+		/// </summary>
+		/// <param name="column"></param>
+		/// <param name="values"></param>
+		/// <returns></returns>
+		public SqlStringBuilder AppendNotIn(String column, String values)
+		{
+			return AppendNotIn(this.junction, column, values, true);
+		}
+
+		/// <summary>
+		/// Appends the specified column and list of values to the current filter.
+		/// as a NOT IN expression.
+		/// </summary>
+		/// <param name="column"></param>
+		/// <param name="values"></param>
+		/// <param name="encode"></param>
+		/// <returns></returns>
+		public SqlStringBuilder AppendNotIn(String column, String values, bool encode)
+		{
+			return AppendNotIn(this.junction, column, values, encode);
+		}
+
+		/// <summary>
+		/// Appends the specified column and list of values to the current filter.
+		/// as a NOT IN expression.
+		/// </summary>
+		/// <param name="junction"></param>
+		/// <param name="column"></param>
+		/// <param name="values"></param>
+		/// <returns></returns>
+		public SqlStringBuilder AppendNotIn(String junction, String column, String values)
+		{
+			return AppendNotIn(junction, column, values, true);
+		}
+
+		/// <summary>
+		/// Appends the specified column and list of values to the current filter
+		/// as a NOT IN expression.
+		/// </summary>
+		/// <param name="junction"></param>
+		/// <param name="column"></param>
+		/// <param name="values"></param>
+		/// <param name="encode"></param>
+		/// <returns></returns>
+		public SqlStringBuilder AppendNotIn(String junction, String column, String values, bool encode)
+		{
+			if ( !String.IsNullOrEmpty(values) )
+			{
+				if ( encode )
+				{
+					String[] split = values.Split(',');
+					values = SqlUtil.Encode(split, encode);
+
+					if ( !String.IsNullOrEmpty(values) )
+					{
+						AppendNotInQuery(junction, column, values);
+					}
+				}
+				else
+				{
+					AppendNotInQuery(junction, column, values);
+				}
+			}
+
+			return this;
+		}
+
+		#endregion AppendNotIn
+
+		#region AppendInQuery
+
+		/// <summary>
+		/// Appends the specified sub-query to the current filter.
+		/// </summary>
+		/// <param name="column"></param>
+		/// <param name="query"></param>
+		/// <returns></returns>
+		public SqlStringBuilder AppendInQuery(String column, String query)
+		{
+			return AppendInQuery(this.junction, column, query);
+		}
+
+		/// <summary>
+		/// Appends the specified sub-query to the current filter.
+		/// </summary>
+		/// <param name="junction"></param>
+		/// <param name="column"></param>
+		/// <param name="query"></param>
+		/// <returns></returns>
+		public SqlStringBuilder AppendInQuery(String junction, String column, String query)
+		{
+			if ( !String.IsNullOrEmpty(query) )
+			{
+				AppendInternal(junction, column, "IN", "(" + query + ")");
+			}
+
+			return this;
+		}
+
+		#endregion AppendInQuery
+
+		#region AppendNotInQuery
+
+		/// <summary>
+		/// Appends the specified sub-query to the current filter
+		/// as a NOT IN expression.
+		/// </summary>
+		/// <param name="column"></param>
+		/// <param name="query"></param>
+		/// <returns></returns>
+		public SqlStringBuilder AppendNotInQuery(String column, String query)
+		{
+			return AppendNotInQuery(this.junction, column, query);
+		}
+
+		/// <summary>
+		/// Appends the specified sub-query to the current filter
+		/// as a NOT IN expression.
+		/// </summary>
+		/// <param name="junction"></param>
+		/// <param name="column"></param>
+		/// <param name="query"></param>
+		/// <returns></returns>
+		public SqlStringBuilder AppendNotInQuery(String junction, String column, String query)
+		{
+			if ( !String.IsNullOrEmpty(query) )
+			{
+				AppendInternal(junction, column, "NOT IN", "(" + query + ")");
+			}
+
+			return this;
+		}
+
+		#endregion AppendNotInQuery
 
 		#region AppendRange
 
@@ -199,7 +411,7 @@ namespace <%= DALNameSpace %>
 
 				if ( !String.IsNullOrEmpty(from) )
 				{
-					sb.AppendFormat("{0} >= {1}", column, from);
+					sb.AppendFormat("{0} >= {1}", column, SqlUtil.Encode(from, true));
 				}
 				if ( !String.IsNullOrEmpty(from) && !String.IsNullOrEmpty(to) )
 				{
@@ -207,7 +419,7 @@ namespace <%= DALNameSpace %>
 				}
 				if ( !String.IsNullOrEmpty(to) )
 				{
-					sb.AppendFormat("{0} <= {1}", column, to);
+					sb.AppendFormat("{0} <= {1}", column, SqlUtil.Encode(to, true));
 				}
 
 				AppendInternal(junction, sb.ToString());
@@ -222,15 +434,20 @@ namespace <%= DALNameSpace %>
 
 		private void AppendInternal(String junction, String column, String compare, String value)
 		{
-			AppendInternal(junction, String.Format("{0}{1}{2}", column, compare, value));
+			AppendInternal(junction, String.Format("{0} {1} {2}", column, compare, value));
 		}
 
 		private void AppendInternal(String junction, String query)
 		{
 			if ( !String.IsNullOrEmpty(query) )
 			{
+				#if DEBUG
+				String end = Environment.NewLine;
+				#else
+				String end = String.Empty;
+				#endif
 				String format = ( sql.Length > 0 ) ? " {0} ({1}){2}" : " ({1}){2}";
-				sql.AppendFormat(format, junction, query, Environment.NewLine);
+				sql.AppendFormat(format, junction, query, end);
 			}
 		}
 
@@ -252,6 +469,20 @@ namespace <%= DALNameSpace %>
 		public override string ToString()
 		{
 			return sql.ToString();
+		}
+		
+		/// <summary>
+		/// Converts the value of this instance to a System.String and
+		/// prepends the specified junction if the expression is not empty.
+		/// </summary>
+		public string ToString(String junction)
+		{
+			if( sql.Length > 0 )
+			{
+				return new StringBuilder(" ").Append(junction).Append(" ").Append(sql).ToString();
+			}
+			
+			return String.Empty;
 		}
 
 		#endregion Methods
@@ -388,6 +619,36 @@ namespace <%= DALNameSpace %>
 
 		#endregion AppendEquals
 
+		#region AppendNotEquals
+
+		/// <summary>
+		/// Appends the specified column and value to the current filter
+		/// as a NOT EQUALS expression.
+		/// </summary>
+		/// <param name="column"></param>
+		/// <param name="value"></param>
+		/// <returns></returns>
+		public SqlFilterBuilder<EntityColumn> AppendNotEquals(EntityColumn column, String value)
+		{
+			return AppendNotEquals(this.Junction, column, value);
+		}
+
+		/// <summary>
+		/// Appends the specified column and value to the current filter.
+		/// as a NOT EQUALS expression.
+		/// </summary>
+		/// <param name="junction"></param>
+		/// <param name="column"></param>
+		/// <param name="value"></param>
+		/// <returns></returns>
+		public SqlFilterBuilder<EntityColumn> AppendNotEquals(String junction, EntityColumn column, String value)
+		{
+			AppendNotEquals(junction, GetColumnName(column), value);
+			return this;
+		}
+
+		#endregion AppendNotEquals
+
 		#region AppendIn
 
 		/// <summary>
@@ -398,7 +659,19 @@ namespace <%= DALNameSpace %>
 		/// <returns></returns>
 		public SqlFilterBuilder<EntityColumn> AppendIn(EntityColumn column, String values)
 		{
-			return AppendIn(this.Junction, column, values);
+			return AppendIn(this.Junction, column, values, true);
+		}
+
+		/// <summary>
+		/// Appends the specified column and list of values to the current filter.
+		/// </summary>
+		/// <param name="column"></param>
+		/// <param name="values"></param>
+		/// <param name="encode"></param>
+		/// <returns></returns>
+		public SqlFilterBuilder<EntityColumn> AppendIn(EntityColumn column, String values, bool encode)
+		{
+			return AppendIn(this.Junction, column, values, encode);
 		}
 
 		/// <summary>
@@ -410,11 +683,139 @@ namespace <%= DALNameSpace %>
 		/// <returns></returns>
 		public SqlFilterBuilder<EntityColumn> AppendIn(String junction, EntityColumn column, String values)
 		{
-			AppendIn(junction, GetColumnName(column), values);
+			return AppendIn(junction, column, values, true);
+		}
+
+		/// <summary>
+		/// Appends the specified column and list of values to the current filter.
+		/// </summary>
+		/// <param name="junction"></param>
+		/// <param name="column"></param>
+		/// <param name="values"></param>
+		/// <param name="encode"></param>
+		/// <returns></returns>
+		public SqlFilterBuilder<EntityColumn> AppendIn(String junction, EntityColumn column, String values, bool encode)
+		{
+			AppendIn(junction, GetColumnName(column), values, encode);
 			return this;
 		}
 
 		#endregion AppendIn
+
+		#region AppendNotIn
+
+		/// <summary>
+		/// Appends the specified column and list of values to the current filter
+		/// as a NOT IN expression.
+		/// </summary>
+		/// <param name="column"></param>
+		/// <param name="values"></param>
+		/// <returns></returns>
+		public SqlFilterBuilder<EntityColumn> AppendNotIn(EntityColumn column, String values)
+		{
+			return AppendNotIn(this.Junction, column, values, true);
+		}
+
+		/// <summary>
+		/// Appends the specified column and list of values to the current filter.
+		/// as a NOT IN expression.
+		/// </summary>
+		/// <param name="column"></param>
+		/// <param name="values"></param>
+		/// <param name="encode"></param>
+		/// <returns></returns>
+		public SqlFilterBuilder<EntityColumn> AppendNotIn(EntityColumn column, String values, bool encode)
+		{
+			return AppendNotIn(this.Junction, column, values, encode);
+		}
+
+		/// <summary>
+		/// Appends the specified column and list of values to the current filter.
+		/// as a NOT IN expression.
+		/// </summary>
+		/// <param name="junction"></param>
+		/// <param name="column"></param>
+		/// <param name="values"></param>
+		/// <returns></returns>
+		public SqlFilterBuilder<EntityColumn> AppendNotIn(String junction, EntityColumn column, String values)
+		{
+			return AppendNotIn(junction, column, values, true);
+		}
+
+		/// <summary>
+		/// Appends the specified column and list of values to the current filter.
+		/// as a NOT IN expression.
+		/// </summary>
+		/// <param name="junction"></param>
+		/// <param name="column"></param>
+		/// <param name="values"></param>
+		/// <param name="encode"></param>
+		/// <returns></returns>
+		public SqlFilterBuilder<EntityColumn> AppendNotIn(String junction, EntityColumn column, String values, bool encode)
+		{
+			AppendNotIn(junction, GetColumnName(column), values, encode);
+			return this;
+		}
+
+		#endregion AppendIn
+
+		#region AppendInQuery
+
+		/// <summary>
+		/// Appends the specified sub-query to the current filter.
+		/// </summary>
+		/// <param name="column"></param>
+		/// <param name="query"></param>
+		/// <returns></returns>
+		public SqlFilterBuilder<EntityColumn> AppendInQuery(EntityColumn column, String query)
+		{
+			return AppendInQuery(this.Junction, column, query);
+		}
+
+		/// <summary>
+		/// Appends the specified sub-query to the current filter.
+		/// </summary>
+		/// <param name="junction"></param>
+		/// <param name="column"></param>
+		/// <param name="query"></param>
+		/// <returns></returns>
+		public SqlFilterBuilder<EntityColumn> AppendInQuery(String junction, EntityColumn column, String query)
+		{
+			AppendInQuery(junction, GetColumnName(column), query);
+			return this;
+		}
+
+		#endregion AppendInQuery
+
+		#region AppendNotInQuery
+
+		/// <summary>
+		/// Appends the specified sub-query to the current filter.
+		/// as a NOT IN expression.
+		/// </summary>
+		/// <param name="column"></param>
+		/// <param name="query"></param>
+		/// <returns></returns>
+		public SqlFilterBuilder<EntityColumn> AppendNotInQuery(EntityColumn column, String query)
+		{
+			return AppendNotInQuery(this.Junction, column, query);
+		}
+
+		/// <summary>
+		/// Appends the specified sub-query to the current filter
+		/// as a NOT IN expression.
+		/// </summary>
+		/// <param name="junction"></param>
+		/// <param name="column"></param>
+		/// <param name="query"></param>
+		/// <returns></returns>
+		public SqlFilterBuilder<EntityColumn> AppendNotInQuery(String junction, EntityColumn column, String query)
+		{
+			AppendNotInQuery(junction, GetColumnName(column), query);
+			return this;
+		}
+
+		#endregion AppendNotInQuery
 
 		#region AppendRange
 
