@@ -26,7 +26,7 @@
 <%@ Property Name="NameSpace" Type="System.String" Category="Style" Description="Class Namespace." %>
 <%@ Property Name="DALNameSpace" Type="System.String" Category="Data" Description="DAL Namespace." %>
 <%@ Property Name="ProcedurePrefix" Optional="True" Type="System.String" Category="Style" Description="Prefix for Strored Procedures" %>
-
+<%@ Property Name="IncludeDatabaseFeatures" Type="MoM.Templates.DatabaseType" Category="02. Framework Generation - Optional" Description="Indicates which database specific features to generate." Default="None" %>
 <%
 	// Name of the table being worked on.
 	string name = SourceView.Name;
@@ -152,12 +152,13 @@ public partial class <%=providerBaseName%> : <%=GetProviderBaseName(SourceView.N
 	/// <summary>
 	/// 	Gets All rows from the DataSource.
 	/// </summary>
+	/// <param name="transactionManager"><see cref="TransactionManager"/> object</param>
 	/// <param name="start">Row number at which to start reading.</param>
 	/// <param name="pageLength">Number of rows to return.</param>
-	/// <param name="transactionManager"><see cref="TransactionManager"/> object</param>
+	/// <param name="count">The total number of rows in the data source</param>
 	/// <remarks></remarks>
 	/// <returns>Returns a typed collection of <%=className%> objects.</returns>
-	public override <%=collectionClassName%> GetAll(TransactionManager transactionManager, int start, int pageLength)
+	public override <%=collectionClassName%> GetAll(TransactionManager transactionManager, int start, int pageLength, out int count)
 	{
 		SqlDatabase database = new SqlDatabase(this._connectionString);
 		DbCommand commandWrapper = StoredProcedureProvider.GetCommandWrapper(database, "<%=ProcedurePrefix + GetCleanName(name) + SelectSuffix + SelectAllSuffix%>", _useStoredProcedure);
@@ -165,6 +166,7 @@ public partial class <%=providerBaseName%> : <%=GetProviderBaseName(SourceView.N
 		IDataReader reader = null;
 		//Create Collection
 		<%=collectionClassName%> rows = new <%=collectionClassName%>();
+		
 		try
 		{
 			if (transactionManager != null)
@@ -177,9 +179,21 @@ public partial class <%=providerBaseName%> : <%=GetProviderBaseName(SourceView.N
 			}
 		
 			Fill(reader, rows, start, pageLength);
+			count = rows.Count;
+
+			if(reader.NextResult())
+			{
+				if(reader.Read())
+				{
+					count = reader.GetInt32(0);
+				}
+			}
 		}
-		finally {	if (reader != null) reader.Close();	}
-		
+		finally
+		{
+			if (reader != null)
+				reader.Close();
+		}
 		return rows;
 	}//end getall
 	
@@ -190,26 +204,30 @@ public partial class <%=providerBaseName%> : <%=GetProviderBaseName(SourceView.N
 	/// <summary>
 	/// Gets a page of rows from the DataSource.
 	/// </summary>
-	/// <param name="start">Row number at which to start reading.</param>
-	/// <param name="pageLength">Number of rows to return.</param>
 	/// <param name="whereClause">Specifies the condition for the rows returned by a query (Name='John Doe', Name='John Doe' AND Id='1', Name='John Doe' OR Id='1').</param>
 	/// <param name="orderBy">Specifies the sort criteria for the rows in the DataSource (Name ASC; BirthDay DESC, Name ASC);</param>
+	/// <param name="start">Row number at which to start reading.</param>
+	/// <param name="pageLength">Number of rows to return.</param>
+	/// <param name="count">The total number of rows in the data source</param>
 	/// <param name="transactionManager"><see cref="TransactionManager"/> object</param>
 	/// <remarks></remarks>
 	/// <returns>Returns a typed collection of <%=className%> objects.</returns>
-	public override <%=collectionClassName%> Get(TransactionManager transactionManager, string whereClause, string orderBy, int start, int pageLength)
+	public override <%=collectionClassName%> Get(TransactionManager transactionManager, string whereClause, string orderBy, int start, int pageLength, out int count)
 	{
 		SqlDatabase database = new SqlDatabase(this._connectionString);
 		DbCommand commandWrapper = StoredProcedureProvider.GetCommandWrapper(database, "<%=ProcedurePrefix + GetCleanName(name) + SelectSuffix%>", _useStoredProcedure);
 
-		//commandWrapper.AddInParameter("@PageIndex", DbType.Int32, start);
-		//commandWrapper.AddInParameter("@PageSize", DbType.Int32, pageLength);
 		database.AddInParameter(commandWrapper, "@WhereClause", DbType.String, whereClause);
 		database.AddInParameter(commandWrapper, "@OrderBy", DbType.String, orderBy);
+		<% if ( IncludeDatabaseFeatures == MoM.Templates.DatabaseType.SQLServer2005 ) { %>
+		commandWrapper.AddInParameter("@PageIndex", DbType.Int32, start);
+		commandWrapper.AddInParameter("@PageSize", DbType.Int32, pageLength);
+		<% } %>
 	
 		IDataReader reader = null;
 		//Create Collection
-		<%=collectionClassName%> rows = new <%=collectionClassName%>();	
+		<%=collectionClassName%> rows = new <%=collectionClassName%>();
+		
 		try
 		{
 			if (transactionManager != null)
@@ -221,12 +239,20 @@ public partial class <%=providerBaseName%> : <%=GetProviderBaseName(SourceView.N
 				reader = Utility.ExecuteReader(database, commandWrapper);
 			}
 
-
-			//reader.Read();
-			//count = reader.GetInt32(0);
-			//reader.NextResult();
-	
+			<% if ( IncludeDatabaseFeatures == MoM.Templates.DatabaseType.SQLServer2005 ) { %>
+			Fill(reader, rows, 0, int.MaxValue);
+			<% } else { %>
 			Fill(reader, rows, start, pageLength);
+			<% } %>
+			count = rows.Count;
+
+			if(reader.NextResult())
+			{
+				if(reader.Read())
+				{
+					count = reader.GetInt32(0);
+				}
+			}
 		}
 		finally
 		{

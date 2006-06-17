@@ -3512,5 +3512,23 @@ namespace MoM.Templates
 		DomainModel
 	}
 	#endregion
+	
+	#region DatabaseType
+	public enum DatabaseType
+	{
+		/// <summary>No specific database type.</summary>
+		None,
+		/// <summary>SQL Server 2000.</summary>
+		//SQLServer2000,
+		/// <summary>SQL Server 2005.</summary>
+		SQLServer2005
+		/// <summary>Oracle 8i.</summary>
+		//Oracle8i,
+		/// <summary>Oracle 9i.</summary>
+		//Oracle9i,
+		/// <summary>Oracle 10g.</summary>
+		//Oracle10g,
+	}
+	#endregion
 }
 

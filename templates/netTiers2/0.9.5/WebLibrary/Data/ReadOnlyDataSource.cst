@@ -4,9 +4,18 @@
 <%@ Property Name="WebNameSpace" Optional="False" Type="System.String" Category="Style" Description="Web Namespace." %>
 
 <%@ Property Name="IncludeGetList" Type="System.Boolean" Default="True" Category="Options" Description="If true getlist functions will be generated." %>
+<%@ Property Name="IncludeDatabaseFeatures" Type="MoM.Templates.DatabaseType" Category="02. Framework Generation - Optional" Description="Indicates which database specific features to generate." Default="None" %>
 
 <%@ Assembly Name="SchemaExplorer" %>
 <%@ Assembly Name="System.Design" %>
+<%
+	string pagingProperty = "StartIndex";
+	
+	if ( IncludeDatabaseFeatures == MoM.Templates.DatabaseType.SQLServer2005 )
+	{
+		pagingProperty = "PageIndex";
+	}
+%>
 #region Using directives
 using System;
 using System.Collections.Generic;
@@ -202,8 +211,10 @@ namespace <%= WebNameSpace %>.Data
 			{
 				<% if ( IncludeGetList ) { %>
 				case ReadOnlyDataSourceSelectMethod.Get:
-					entityList = Provider.Get(GetTransactionManager(), WhereClause, OrderBy, StartIndex, PageSize);
-					count = Provider.Get(GetTransactionManager(), WhereClause, OrderBy).Count;
+					entityList = Provider.Get(GetTransactionManager(), WhereClause, OrderBy, <%= pagingProperty %>, PageSize, out count);
+					break;
+				case ReadOnlyDataSourceSelectMethod.GetPaged:
+					entityList = Provider.GetPaged(GetTransactionManager(), WhereClause, OrderBy, <%= pagingProperty %>, PageSize, out count);
 					break;
 				case ReadOnlyDataSourceSelectMethod.GetAll:
 					entityList = Provider.GetAll(GetTransactionManager());
@@ -233,6 +244,10 @@ namespace <%= WebNameSpace %>.Data
 		/// Represents the IEntityViewProvider&lt;Entity&gt;.Get method.
 		/// </summary>
 		Get,
+		/// <summary>
+		/// Represents the IEntityViewProvider&lt;Entity&gt;.GetPaged method.
+		/// </summary>
+		GetPaged,
 		/// <summary>
 		/// Represents the IEntityViewProvider&lt;Entity&gt;.GetAll method.
 		/// </summary>

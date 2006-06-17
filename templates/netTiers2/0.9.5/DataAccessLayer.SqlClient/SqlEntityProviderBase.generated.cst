@@ -536,39 +536,35 @@ namespace <%=DALNameSpace%>.SqlClient
 			SqlDatabase database = new SqlDatabase(this._connectionString);
 			DbCommand commandWrapper = StoredProcedureProvider.GetCommandWrapper(database, "<%=owner + ProcedurePrefix + commandStem + SelectSuffix + "Paged"%>", _useStoredProcedure);
 			
-			database.AddInParameter(commandWrapper, "@PageIndex", DbType.Int32, start);
-			database.AddInParameter(commandWrapper, "@PageSize", DbType.Int32, pageLength);
 			database.AddInParameter(commandWrapper, "@WhereClause", DbType.String, whereClause);
 			database.AddInParameter(commandWrapper, "@OrderBy", DbType.String, orderBy);
+			database.AddInParameter(commandWrapper, "@PageIndex", DbType.Int32, start);
+			database.AddInParameter(commandWrapper, "@PageSize", DbType.Int32, pageLength);
 		
 			IDataReader reader = null;
-			
-			if (transactionManager != null)
-			{
-				reader = Utility.ExecuteReader(transactionManager, commandWrapper);
-			}
-			else
-			{
-				reader = Utility.ExecuteReader(database, commandWrapper);
-			}
-			
-			
 			//Create Collection
 			<%=collectionClassName%> rows = new <%=collectionClassName%>();
 			
 			try
 			{
-				if (reader.Read())
+				if (transactionManager != null)
 				{
-					count = reader.GetInt32(0);
-					if (reader.NextResult())
-					{	
-						Fill(reader, rows, 0, int.MaxValue);
-					}
+					reader = Utility.ExecuteReader(transactionManager, commandWrapper);
 				}
 				else
 				{
-					count = 0;
+					reader = Utility.ExecuteReader(database, commandWrapper);
+				}
+				
+				Fill(reader, rows, 0, int.MaxValue);
+				count = rows.Count;
+
+				if(reader.NextResult())
+				{
+					if(reader.Read())
+					{
+						count = reader.GetInt32(0);
+					}
 				}
 			}
 			catch(Exception)

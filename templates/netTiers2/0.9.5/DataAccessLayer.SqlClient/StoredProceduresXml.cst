@@ -17,6 +17,7 @@
 <%@ Property Name="IncludeGetListByIX" Type="System.Boolean" Default="True" Category="Options" Description="If true getlist statements will be generated." %>
 <%@ Property Name="IncludeFind" Type="System.Boolean" Default="True" Category="Options" Description="If true find statements will be generated." %>
 <%@ Property Name="IncludeManyToMany" Type="System.Boolean" Default="True" Category="Options" Description="If true select statements will be generated for any many to many relationship." %>
+<%@ Property Name="IncludeDatabaseFeatures" Type="MoM.Templates.DatabaseType" Category="02. Framework Generation - Optional" Description="Indicates which database specific features to generate." Default="None" %>
 
 <%@ Property Name="IsolationLevel" Type="TransactionIsolationLevelEnum" Default="None" Category="Options" Description="Isolation level to use in generated procedures." %>
 <%@ Property Name="ExcludeFields" Type="System.String[]" Optional="True" Category="Options" Description="Enter a list of fields to exclude from parameter generation" %>
@@ -139,17 +140,48 @@
 				BEGIN
 				DECLARE @PageLowerBound int
 				DECLARE @PageUpperBound int
-				DECLARE @RowsToReturn int
-				DECLARE @RowCount int
-				
-				-- First set the rowcount
-				SET @RowsToReturn = @PageSize * (@PageIndex + 1)
-				--SET ROWCOUNT @RowsToReturn
 				
 				-- Set the page bounds
 				SET @PageLowerBound = @PageSize * @PageIndex
 				SET @PageUpperBound = @PageLowerBound + @PageSize
+
+<% if ( IncludeDatabaseFeatures == MoM.Templates.DatabaseType.SQLServer2005 ) { %>
+				IF (@OrderBy is null or LEN(@OrderBy) < 1)
+				BEGIN
+					-- default order by to first column
+					SET @OrderBy = '[<%= cols[0].Name %>]'
+				END
+
+				-- SQL Server 2005 Paging
+				declare @SQL as nvarchar(4000)
+				SET @SQL = 'WITH PageIndex AS ('
+				SET @SQL = @SQL + ' SELECT'
+				IF @PageSize > 0
+				BEGIN
+					SET @SQL = @SQL + ' TOP ' + convert(nvarchar, @PageUpperBound)
+				END
+				SET @SQL = @SQL + ' ROW_NUMBER() OVER (ORDER BY ' + @OrderBy + ') as RowIndex'
+				<% for (int i = 0; i < cols.Count; i++) { %>
+				SET @SQL = @SQL + ', [<%= cols[i].Name %>]'
+				<% } %>
+				SET @SQL = @SQL + ' FROM <%=owner%>[<%= SourceTable.Name %>]'
+				IF LEN(@WhereClause) > 0
+				BEGIN
+					SET @SQL = @SQL + ' WHERE ' + @WhereClause
+				END
+				SET @SQL = @SQL + ' ) SELECT'
+				<% for (int i = 0; i < cols.Count; i++) { %>
+				SET @SQL = @SQL + ' [<%= cols[i].Name %>]<% if (i < cols.Count - 1) { %>,<% } %>'
+				<% } %>
+				SET @SQL = @SQL + ' FROM PageIndex'
+				SET @SQL = @SQL + ' WHERE RowIndex > ' + convert(nvarchar, @PageLowerBound)
+				IF @PageSize > 0
+				BEGIN
+					SET @SQL = @SQL + ' AND RowIndex <= ' + convert(nvarchar, @PageUpperBound)
+				END
+				exec sp_executesql @SQL
 				
+<% } else { %>
 				-- Create a temp table to store the select results
 				CREATE TABLE #PageIndex
 				(
@@ -158,15 +190,19 @@
 				)
 				
 				-- Insert into the temp table
-				declare @SQL as nvarchar(3500)
+				declare @SQL as nvarchar(4000)
 				SET @SQL = 'INSERT INTO #PageIndex (<% for(int i=0; i<SourceTable.PrimaryKey.MemberColumns.Count; i++) { Response.Write(GetPropertyName(SourceTable.PrimaryKey.MemberColumns[i].Name)); if (i < SourceTable.PrimaryKey.MemberColumns.Count-1) {Response.Write(", ");} } %>)'
-				SET @SQL = @SQL + ' SELECT <% for(int i=0; i<SourceTable.PrimaryKey.MemberColumns.Count; i++) { Response.Write("[" + SourceTable.PrimaryKey.MemberColumns[i].Name + "]"); if (i < SourceTable.PrimaryKey.MemberColumns.Count-1) {Response.Write(", ");} } %>'
+				SET @SQL = @SQL + ' SELECT'
+				IF @PageSize > 0
+				BEGIN
+					SET @SQL = @SQL + ' TOP ' + convert(nvarchar, @PageUpperBound)
+				END
+				SET @SQL = @SQL + ' <% for(int i=0; i<SourceTable.PrimaryKey.MemberColumns.Count; i++) { Response.Write("[" + SourceTable.PrimaryKey.MemberColumns[i].Name + "]"); if (i < SourceTable.PrimaryKey.MemberColumns.Count-1) {Response.Write(", ");} } %>'
 				SET @SQL = @SQL + ' FROM <%=owner%>[<%= SourceTable.Name %>]'
 				IF LEN(@WhereClause) > 0
 				BEGIN
 					SET @SQL = @SQL + ' WHERE ' + @WhereClause
 				END
-				 
 				IF LEN(@OrderBy) > 0
 				BEGIN
 					SET @SQL = @SQL + ' ORDER BY ' + @OrderBy
@@ -175,40 +211,33 @@
 				-- Populate the temp table
 				exec sp_executesql @SQL
 
-				-- Return total count
-				SELECT @RowCount = @@ROWCOUNT
-				
-				IF @PageSize <= 0
-				BEGIN
-				--Return all rows
-				SET @PageUpperBound = @RowCount
-				END
-				
-				-- Return total count
-				SELECT @RowCount 
-					
-				--Set RowCount After Total Rows is determined
-				SET ROWCOUNT @RowsToReturn
-
 				-- Return paged results
 				SELECT <% for (int i = 0; i < cols.Count; i++) { %>O.[<%= cols[i].Name %>]<% if (i < cols.Count - 1) { %>, <% }} %>
 				FROM
 				    <%=owner%>[<%= SourceTable.Name %>] O,
 				    #PageIndex PageIndex
 				WHERE
+				    PageIndex.IndexID > @PageLowerBound
 					<%
 					foreach (ColumnSchema column in SourceTable.PrimaryKey.MemberColumns)
 					{
-						Response.Write("O.[" + column.Name + "] = PageIndex.[" + column.Name + "] AND ");
+						Response.Write("\t\t\t\t\tAND O.[" + column.Name + "] = PageIndex.[" + column.Name + "]" + Environment.NewLine);
 					}
 					%>
-				    PageIndex.IndexID > @PageLowerBound AND
-				    PageIndex.IndexID <= @PageUpperBound
 				ORDER BY
 				    PageIndex.IndexID
 				
+<% } // end if ( IncludeDatabaseFeatures ) %>
+				-- get row count
+				SET @SQL = 'SELECT COUNT(*) as TotalRowCount'
+				SET @SQL = @SQL + ' FROM <%=owner%>[<%= SourceTable.Name %>]'
+				IF LEN(@WhereClause) > 0
+				BEGIN
+					SET @SQL = @SQL + ' WHERE ' + @WhereClause
 				END
+				exec sp_executesql @SQL
 			
+				END
 			]]></body>
 		</procedure>
 		
@@ -692,6 +721,7 @@ SELECT <% for (int i = 0; i < primaryTable.Columns.Count; i++)
 	for (int vi = 0; vi < SourceViews.Count; vi++)
 	{
 		ViewSchema SourceView = SourceViews[vi];
+		ViewColumnSchemaCollection cols = SourceView.Columns;
 		
 		string owner = GetOwner(SourceView);
 		string name = GetSafeName(SourceView);
@@ -711,8 +741,8 @@ SELECT <% for (int i = 0; i < primaryTable.Columns.Count; i++)
 					<% } %>
 				FROM
 					<%=owner%>[<%= SourceView.Name %>]
+					
 				Select @@ROWCOUNT			
-										
 			]]></body>
 		</procedure>
 		
@@ -721,11 +751,68 @@ SELECT <% for (int i = 0; i < primaryTable.Columns.Count; i++)
 			<parameters>
 				<parameter name="@WhereClause" type="varchar" direction="Input" size="2000" precision="0" scale="0" param="(2000)" />
 				<parameter name="@OrderBy" type="varchar" direction="Input" size="2000" precision="0" scale="0" param="(2000)"/>			
+				<% if ( IncludeDatabaseFeatures == MoM.Templates.DatabaseType.SQLServer2005 ) { %>
+				<parameter name="@PageIndex" type="int" direction="Input" size="0" precision="10" scale="0" />
+				<parameter name="@PageSize" type="int" direction="Input" size="0" precision="10" scale="0" /> 
+				<% } %>
 			</parameters>
 			<body><![CDATA[
 				<%= GetSetTransactionIsolationLevelStatement() %>
 				BEGIN
 
+<% if ( IncludeDatabaseFeatures == MoM.Templates.DatabaseType.SQLServer2005 ) { %>
+				DECLARE @PageLowerBound int
+				DECLARE @PageUpperBound int
+				
+				-- Set the page bounds
+				SET @PageLowerBound = @PageSize * @PageIndex
+				SET @PageUpperBound = @PageLowerBound + @PageSize
+
+				IF (@OrderBy is null or LEN(@OrderBy) < 1)
+				BEGIN
+					-- default order by to first column
+					SET @OrderBy = '[<%= cols[0].Name %>]'
+				END
+
+				-- SQL Server 2005 Paging
+				declare @SQL as nvarchar(4000)
+				SET @SQL = 'WITH PageIndex AS ('
+				SET @SQL = @SQL + ' SELECT'
+				IF @PageSize > 0
+				BEGIN
+					SET @SQL = @SQL + ' TOP ' + convert(nvarchar, @PageUpperBound)
+				END
+				SET @SQL = @SQL + ' ROW_NUMBER() OVER (ORDER BY ' + @OrderBy + ') as RowIndex'
+				<% for (int i = 0; i < cols.Count; i++) { %>
+				SET @SQL = @SQL + ', [<%= cols[i].Name %>]'
+				<% } %>
+				SET @SQL = @SQL + ' FROM <%=owner%>[<%= SourceView.Name %>]'
+				IF LEN(@WhereClause) > 0
+				BEGIN
+					SET @SQL = @SQL + ' WHERE ' + @WhereClause
+				END
+				SET @SQL = @SQL + ' ) SELECT'
+				<% for (int i = 0; i < cols.Count; i++) { %>
+				SET @SQL = @SQL + ' [<%= cols[i].Name %>]<% if (i < cols.Count - 1) { %>,<% } %>'
+				<% } %>
+				SET @SQL = @SQL + ' FROM PageIndex'
+				SET @SQL = @SQL + ' WHERE RowIndex > ' + convert(nvarchar, @PageLowerBound)
+				IF @PageSize > 0
+				BEGIN
+					SET @SQL = @SQL + ' AND RowIndex <= ' + convert(nvarchar, @PageUpperBound)
+				END
+				exec sp_executesql @SQL
+
+				-- get row count
+				SET @SQL = 'SELECT COUNT(*) as TotalRowCount'
+				SET @SQL = @SQL + ' FROM <%=owner%>[<%= SourceView.Name %>]'
+				IF LEN(@WhereClause) > 0
+				BEGIN
+					SET @SQL = @SQL + ' WHERE ' + @WhereClause
+				END
+				exec sp_executesql @SQL
+				
+<% } else { %>
 				-- Build the sql query
 				declare @SQL as nvarchar(4000)
 				SET @SQL = ' SELECT * FROM <%=owner%>[<%= SourceView.Name %>]'
@@ -733,17 +820,19 @@ SELECT <% for (int i = 0; i < primaryTable.Columns.Count; i++)
 				BEGIN
 					SET @SQL = @SQL + ' WHERE ' + @WhereClause
 				END
-				 
 				IF LEN(@OrderBy) > 0
 				BEGIN
 					SET @SQL = @SQL + ' ORDER BY ' + @OrderBy
 				END
-				SET @SQL = @SQL + ';Select @@ROWCOUNT'
+				
 				-- Execution the query
 				exec sp_executesql @SQL
-								
+				
+				-- Return total count
+				Select @@ROWCOUNT as TotalRowCount
+				
+<% } // end if ( IncludeDatabaseFeatures ) %>
 				END
-								
 			]]></body>
 		</procedure>
 		
