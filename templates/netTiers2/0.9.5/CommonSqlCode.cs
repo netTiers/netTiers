@@ -46,7 +46,7 @@ namespace MoM.Templates
 		
 		private string entityFormat 		= "{0}";
 		private string componentServiceFormat = "{0}Service";
-		private string entityDataFormat 	= "{0}Data";
+		private string entityDataFormat 	= "{0}EntityData";
 		private string collectionFormat 	= "{0}Collection";
 		private string genericListFormat 	= "TList<{0}>";
 		private string genericViewFormat 	= "VList<{0}>";
@@ -2989,7 +2989,6 @@ namespace MoM.Templates
 		///</summary>
 		public ArrayList GetChildrenCollections(SchemaExplorer.TableSchema table, SchemaExplorer.TableSchemaCollection tables) 
 		{
-			//Debugger.Break();
 			//CleanUp
 			if(CurrentTable != table.Name)
 			{
@@ -3021,11 +3020,14 @@ namespace MoM.Templates
 						
 				//Add 1-1 relations				
 				// we do not manage here primary key with multiple columns 
-				if(keyschema.PrimaryKeyTable.PrimaryKey.MemberColumns.Count == 1 
-					&& keyschema.PrimaryKeyTable.PrimaryKey.MemberColumns[0].Name == keyschema.ForeignKeyMemberColumns[0].Name
-					&& IsRelationOneToOne(keyschema)
-				)
+				//if(keyschema.PrimaryKeyTable.PrimaryKey.MemberColumns.Count == 1 
+				//	&& keyschema.PrimaryKeyTable.PrimaryKey.MemberColumns[0].Name == keyschema.ForeignKeyMemberColumns[0].Name
+				//	&& IsRelationOneToOne(keyschema)
+				//)
 				//!HasCommonColumn(keyschema.PrimaryKeyMemberColumns, table.PrimaryKey.MemberColumns) && IsRelationOneToOne(keyschema))
+				
+				
+				if (IsRelationOneToOne(keyschema))
 				{
 					//Response.Write(table.Name);
 					CollectionInfo collectionInfo = new CollectionInfo();
@@ -3065,7 +3067,7 @@ namespace MoM.Templates
 		    }
 			
 			//Add N-N relations
-			// TODO -> only if option is activated			
+			// TODO -> only if option is activated
 			foreach(TableKeySchema key in primaryKeyCollection)
 			{
 				// Check that the key is related to a junction table and that this key relate a PK in this junction table
@@ -3091,15 +3093,10 @@ namespace MoM.Templates
 							collectionInfo.CollectionName = string.Format("{0}_From_{1}", GetCollectionPropertyName( collectionInfo.SecondaryTable), GetClassName(collectionInfo.JunctionTable)); //GetManyToManyName(GetCollectionClassName( collectionInfo.SecondaryTable), collectionInfo.JunctionTable);
 							collectionInfo.CollectionTypeName = GetCollectionClassName( collectionInfo.SecondaryTable);
 							collectionInfo.CollectionRelationshipType = RelationshipType.ManyToMany;
-							//collectionInfo.CallParams = "entity." + GetPropertyName(collectionInfo.PkColName);
-																				
 							
 							///Find FK junc table key, used for loading scenarios
 							collectionInfo.FkColNames = GetColumnNames(secondaryTable.PrimaryKey.MemberColumns);
-
-							collectionInfo.CallParams = GetFunctionRelationshipCallParameters(table.PrimaryKey.MemberColumns);
-							//collectionInfo.GetByKeysName = collectionInfo.PkColName + "From" + GetClassName(junctionTable.Name);							
-														
+							collectionInfo.CallParams = GetFunctionRelationshipCallParameters(table.PrimaryKey.MemberColumns);						
 							collectionInfo.GetByKeysName = GetManyToManyName(key, GetCleanName(junctionTable.Name));
 							
 							collectionInfo.TableKey = key;		

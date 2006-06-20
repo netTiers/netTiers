@@ -970,6 +970,10 @@
 			}
 			
 			string returnTypeForComment = returnType.Replace("<", "{").Replace(">", "}");
+			string overloadParms = TransformStoredProcedureInputsToMethod(false, command.InputParameters) + TransformStoredProcedureOutputsToMethod(command.InputParameters.Count > 0, command.AllOutputParameters);
+			string overloadCall = TransformStoredProcedureInputsToDataAccess(true, command.InputParameters) + TransformStoredProcedureOutputsToDataAccess(true, command.AllOutputParameters);
+			string parms = TransformStoredProcedureInputsToMethod(true, command.InputParameters) + TransformStoredProcedureOutputsToMethod(true, command.AllOutputParameters);
+			
 		%>
 		
 		#region <%=command.Name%>
@@ -978,9 +982,9 @@
 		/// </summary><%=TransformStoredProcedureInputsToMethodComments(command.InputParameters) + TransformStoredProcedureOutputsToMethodComments(command.AllOutputParameters)%>
 		/// <remark>This method is generate from a stored procedure.</remark>
 		/// <returns>A <see cref="<%=returnTypeForComment%>"/> instance.</returns>
-		<%= constructorAccessModifier %>  <%=returnType%> <%=methodName%>(<%=TransformStoredProcedureInputsToMethod(false, command.InputParameters) + TransformStoredProcedureOutputsToMethod(command.InputParameters.Count > 0, command.AllOutputParameters)%>)
+		<%= constructorAccessModifier %>  <%=returnType%> <%=methodName%>(<%= overloadParms %>)
 		{
-			return <%=methodName%>(<%=TransformStoredProcedureInputsToDataAccess(true, command.InputParameters) + TransformStoredProcedureOutputsToDataAccess(true, command.AllOutputParameters)%>, 0, defaultMaxRecords );
+			return <%=methodName%>(<%= overloadCall.Length > 0 ? overloadCall.TrimStart(',') + "," : "" %> 0, defaultMaxRecords );
 		}
 	
 		/// <summary>
@@ -990,7 +994,7 @@
 		/// <param name="pageLength">Number of rows to return.</param>
 		/// <remark>This method is generate from a stored procedure.</remark>
 		/// <returns>A <see cref="<%=returnTypeForComment%>"/> instance.</returns>
-		<%= constructorAccessModifier %>  <%=returnType%> <%=methodName%>(<%=TransformStoredProcedureInputsToMethod(true, command.InputParameters) + TransformStoredProcedureOutputsToMethod(true, command.AllOutputParameters)%>, int start, int pageLength)
+		<%= constructorAccessModifier %>  <%=returnType%> <%=methodName%>(<%= (parms.Length > 0 ? parms.TrimStart(',') + "," : "") %> int start, int pageLength)
 		{
 			// throws security exception if not authorized
 			SecurityContext.IsAuthorized("<%=methodName%>");

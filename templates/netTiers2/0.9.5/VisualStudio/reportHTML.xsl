@@ -9,7 +9,7 @@
 				<style>
 					span.executionTime {font-style: italic; color: #003366;}
 				TD.menu {
-					FONT-FAMILY: Tahoma, Arial; HEIGHT: 30px; BACKGROUND-COLOR: #99cc99; padding: 4px;
+					FONT-FAMILY: Tahoma, Arial; HEIGHT: 30px; BACKGROUND-COLOR: #99cc99; padding: 4px; border-style: outset; border-color:lightgreen; border-width: 4px;
 				}
 				.handCursor {  cursor: hand}
 				.pointerCursor {  cursor: pointer}

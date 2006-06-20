@@ -384,13 +384,20 @@ namespace <%=NameSpace%>
 		#region Source Foreign Key Property
 				
 		<%	//Generate a Source property for each foreign key relation		
+		System.Collections.ArrayList filled = new System.Collections.ArrayList();
 		foreach(TableKeySchema tableKey in SourceTable.ForeignKeys)
 		{	
 			// related table must be in the selection
 			if (SourceTables.Contains(tableKey.PrimaryKeyTable)) {
 			
-			string pkClassName = GetClassName(tableKey.PrimaryKeyTable.Name);
 			string fkPropertyName = GetKeysName(tableKey.ForeignKeyMemberColumns);
+			
+			if(filled.Contains(fkPropertyName))
+				continue;
+				
+			filled.Add(fkPropertyName);
+			
+			string pkClassName = GetClassName(tableKey.PrimaryKeyTable.Name);
 			string memberVarName = "_" + GetCamelCaseName(fkPropertyName) + "Source";
 		%>
 		private <%=pkClassName%> <%=memberVarName%> = null;
