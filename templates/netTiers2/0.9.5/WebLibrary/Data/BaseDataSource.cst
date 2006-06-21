@@ -773,12 +773,21 @@ namespace <%= WebNameSpace %>.Data
 		}
 
 		/// <summary>
-		/// Occurs before an update operation
+		/// Occurs before an update operation.
 		/// </summary>
 		public event LinkedDataSourceEventHandler AfterUpdating
 		{
 			add { View.AfterUpdating += value; }
 			remove { View.AfterUpdating -= value; }
+		}
+
+		/// <summary>
+		/// Occurs when an update operation has completed.
+		/// </summary>
+		public event LinkedDataSourceEventHandler AfterUpdated
+		{
+			add { View.AfterUpdated += value; }
+			remove { View.AfterUpdated -= value; }
 		}
 
 		#endregion Events
@@ -1446,7 +1455,8 @@ namespace <%= WebNameSpace %>.Data
 			ValidateEntity(entity);
 
 			// raise linked event
-			OnAfterUpdating(new LinkedDataSourceEventArgs(entity, entityList.IndexOf(entity)));
+			int entityIndex = entityList.IndexOf(entity);
+			OnAfterUpdating(new LinkedDataSourceEventArgs(entity, entityIndex));
 
 			// set date/time values
 			String[] names = GetUpdateDateTimeNames();
@@ -1465,6 +1475,7 @@ namespace <%= WebNameSpace %>.Data
 					count = 1;
 
 					OnUpdated(statusArgs);
+					OnAfterUpdated(new LinkedDataSourceEventArgs(entity, entityIndex));
 				}
 			}
 			catch ( Exception ex )
@@ -1659,28 +1670,33 @@ namespace <%= WebNameSpace %>.Data
 		/// <summary>
 		/// Occurs when a select operation has completed.
 		/// </summary>
-		public event LinkedDataSourceEventHandler AfterSelected;
+		internal event LinkedDataSourceEventHandler AfterSelected;
 
 		/// <summary>
 		/// Occurs before an insert operation.
 		/// </summary>
-		public event LinkedDataSourceEventHandler AfterInserting;
+		internal event LinkedDataSourceEventHandler AfterInserting;
 
 		/// <summary>
 		/// Occurs when an insert operation has completed.
 		/// </summary>
-		public event LinkedDataSourceEventHandler AfterInserted;
+		internal event LinkedDataSourceEventHandler AfterInserted;
 
 		/// <summary>
-		/// Occurs before an update operation
+		/// Occurs before an update operation.
 		/// </summary>
-		public event LinkedDataSourceEventHandler AfterUpdating;
+		internal event LinkedDataSourceEventHandler AfterUpdating;
+
+		/// <summary>
+		/// Occurs when an update operation has completed.
+		/// </summary>
+		internal event LinkedDataSourceEventHandler AfterUpdated;
 
 		/// <summary>
 		/// Raises the AfterSelected event.
 		/// </summary>
 		/// <param name="e">An instance of LinkedDataSourceEventArgs containing the event data.</param>
-		public void OnAfterSelected(LinkedDataSourceEventArgs e)
+		internal void OnAfterSelected(LinkedDataSourceEventArgs e)
 		{
 			if ( AfterSelected != null )
 			{
@@ -1692,7 +1708,7 @@ namespace <%= WebNameSpace %>.Data
 		/// Raises the AfterInserting event.
 		/// </summary>
 		/// <param name="e">An instance of LinkedDataSourceEventArgs containing the event data.</param>
-		public void OnAfterInserting(LinkedDataSourceEventArgs e)
+		internal void OnAfterInserting(LinkedDataSourceEventArgs e)
 		{
 			if ( AfterInserting != null )
 			{
@@ -1704,7 +1720,7 @@ namespace <%= WebNameSpace %>.Data
 		/// Raises the AfterInserted event.
 		/// </summary>
 		/// <param name="e">An instance of LinkedDataSourceEventArgs containing the event data.</param>
-		public void OnAfterInserted(LinkedDataSourceEventArgs e)
+		internal void OnAfterInserted(LinkedDataSourceEventArgs e)
 		{
 			if ( AfterInserted != null )
 			{
@@ -1716,11 +1732,23 @@ namespace <%= WebNameSpace %>.Data
 		/// Raises the AfterUpdating event.
 		/// </summary>
 		/// <param name="e">An instance of LinkedDataSourceEventArgs containing the event data.</param>
-		public void OnAfterUpdating(LinkedDataSourceEventArgs e)
+		internal void OnAfterUpdating(LinkedDataSourceEventArgs e)
 		{
 			if ( AfterUpdating != null )
 			{
 				AfterUpdating(this, e);
+			}
+		}
+
+		/// <summary>
+		/// Raises the AfterUpdated event.
+		/// </summary>
+		/// <param name="e">An instance of LinkedDataSourceEventArgs containing the event data.</param>
+		internal void OnAfterUpdated(LinkedDataSourceEventArgs e)
+		{
+			if ( AfterUpdated != null )
+			{
+				AfterUpdated(this, e);
 			}
 		}
 

@@ -121,6 +121,7 @@ namespace <%= WebNameSpace %>.Data
 				PrimaryDataSource.AfterInserting += new LinkedDataSourceEventHandler(OnAfterInserting);
 				PrimaryDataSource.AfterInserted += new LinkedDataSourceEventHandler(OnAfterInserted);
 				PrimaryDataSource.AfterUpdating += new LinkedDataSourceEventHandler(OnAfterUpdating);
+				PrimaryDataSource.AfterUpdated += new LinkedDataSourceEventHandler(OnAfterUpdated);
 			}
 		}
 
@@ -135,11 +136,19 @@ namespace <%= WebNameSpace %>.Data
 
 		private void OnAfterInserting(object sender, LinkedDataSourceEventArgs e)
 		{
-			UpdateRelationships(e.Entity);
+			if ( PrimaryMember.EnableDeepSave )
+			{
+				UpdateRelationships(e.Entity);
+			}
 		}
 
 		private void OnAfterInserted(object sender, LinkedDataSourceEventArgs e)
 		{
+			if ( !PrimaryMember.EnableDeepSave )
+			{
+				UpdateRelationships(e.Entity);
+			}
+			
 			InsertLinks();
 			InsertReferences();
 		}
@@ -149,10 +158,25 @@ namespace <%= WebNameSpace %>.Data
 			if ( e.Index == PrimaryMember.EntityIndex )
 			{
 				PrimaryMember.DeepLoad();
-				UpdateRelationships(e.Entity);
+				
+				if ( PrimaryMember.EnableDeepSave )
+				{
+					UpdateRelationships(e.Entity);
+				}
 			}
 		}
 
+		private void OnAfterUpdated(object sender, LinkedDataSourceEventArgs e)
+		{
+			if ( e.Index == PrimaryMember.EntityIndex )
+			{
+				if ( !PrimaryMember.EnableDeepSave )
+				{
+					UpdateRelationships(e.Entity);
+				}
+			}
+		}
+		
 		#endregion
 
 		#region Methods

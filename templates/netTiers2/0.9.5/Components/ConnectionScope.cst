@@ -129,8 +129,8 @@ namespace <%= NameSpace %>
 		}
 
 		/// <summary>
-		/// Validates an existing <c cref="TransactionManager" /> if one exists, otherwise create
-		/// a new Transaction to use.
+		/// Validates an existing <c cref="TransactionManager" /> if one exists,
+		/// otherwise creates a new <c cref="TransactionManager" /> to use.
 		/// </summary>
 		public static TransactionManager ValidateOrCreateTransaction()
 		{
@@ -138,8 +138,8 @@ namespace <%= NameSpace %>
 		}
 		
 		/// <summary>
-		/// Validates an existing <c cref="TransactionManager" /> if one exists, otherwise create
-		/// a new Transaction to use.
+		/// Validates an existing <c cref="TransactionManager" /> if one exists,
+		/// otherwise creates a new <c cref="TransactionManager" /> to use.
 		/// </summary>
 		/// <param name="createTransaction">determines whether to create a new transaction</param>
 		public static TransactionManager ValidateOrCreateTransaction(bool createTransaction)
@@ -161,20 +161,30 @@ namespace <%= NameSpace %>
 			}
 			else if (createTransaction && !isBorrowedTransaction && dataProvider.IsTransactionSupported)
 			{
-				CreateTransaction(IsolationLevel.ReadCommitted);
+				transactionManager = CreateTransaction();
 			}
 			
 			return transactionManager;
 		}
 		
 		/// <summary>
-		/// Creates a new transaction based on the provided <c cref="System.Data.IsolationLevel" /> on the current <c>ConnectionScope</c>
+		/// Creates a new transaction on the current <c>ConnectionScope</c>.
 		/// </summary>
-		/// <param name="level">Determines which <c cref="System.Data.IsolationLevel" /> to use for the </param>
-		public static void CreateTransaction(IsolationLevel level)
+		public static TransactionManager CreateTransaction()
+		{
+			return CreateTransaction(IsolationLevel.ReadCommitted);
+		}
+		
+		/// <summary>
+		/// Creates a new transaction on the current <c>ConnectionScope</c>
+		/// with the specified <c cref="System.Data.IsolationLevel" />.
+		/// </summary>
+		/// <param name="level">Determines which <c cref="System.Data.IsolationLevel" /> to use for the transaction.</param>
+		public static TransactionManager CreateTransaction(IsolationLevel level)
 		{
 			Current.TransactionManager = Current.DataProvider.CreateTransaction();
 			Current.TransactionManager.BeginTransaction(level);
+			return Current.TransactionManager;
 		}
 		
 		#endregion Helper Methods
