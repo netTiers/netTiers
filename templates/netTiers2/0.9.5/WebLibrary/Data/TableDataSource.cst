@@ -337,7 +337,7 @@ namespace <%= WebNameSpace %>.Data
 		protected override void GetSelectParameters(IDictionary values)
 		{
 			<% if ( IncludeGetListByIX ) { %>
-			if ( SelectMethod == <%= className %>SelectMethod.GetBy<%= GetKeysName(SourceTable.PrimaryKey.MemberColumns) %> )
+			if ( SelectMethod == <%= className %>SelectMethod.Get || SelectMethod == <%= className %>SelectMethod.GetBy<%= GetKeysName(SourceTable.PrimaryKey.MemberColumns) %> )
 			{
 				EntityId = GetEntityKey(values);
 			}
@@ -466,7 +466,7 @@ namespace <%= WebNameSpace %>.Data
 
 private string TransactionManager
 {
-	get { return (IncludeComponentLayer == MoM.Templates.ComponentPatternType.None) ? "" : ""; }
+	get { return (IncludeComponentLayer != MoM.Templates.ComponentPatternType.ServiceLayer) ? "GetTransactionManager(), " : ""; }
 }
 
 private string WriteUniqueIndexSelectStatements(string tableName, ColumnSchemaCollection columns, IList methods)
@@ -610,13 +610,25 @@ private string WriteCaseStatement(string tableName, string methodName)
 private string WriteParameterStatements(ColumnSchemaCollection memberColumns, string tableName) //(MemberColumnSchemaCollection memberColumns, string tableName)
 {
 	StringBuilder sb = new StringBuilder();
-	foreach(ColumnSchema memberSchema in memberColumns)
+	foreach(ColumnSchema column in memberColumns)
 	{
-		sb.AppendFormat("\t\t\t\t\t{0} = ({2}) EntityUtil.ChangeType(values[\"{1}\"], typeof({2}));{3}",
-						GetPrivateName(memberSchema),
-						GetPropertyName(memberSchema),
-						GetCSTypeWithoutNullable(memberSchema),
-						Environment.NewLine);
+		if ( column.AllowDBNull )
+		{
+			sb.AppendFormat("\t\t\t\t\t{0} = ({2}) EntityUtil.ChangeType(values[\"{1}\"], typeof({2}));{3}",
+							GetPrivateName(column),
+							GetPropertyName(column),
+							GetCSType(column),
+							Environment.NewLine);
+		}
+		else
+		{
+			sb.AppendFormat("\t\t\t\t\t{0} = ( values[\"{1}\"] != null ) ? ({2}) EntityUtil.ChangeType(values[\"{1}\"], typeof({2})) : {3};{4}",
+							GetPrivateName(column),
+							GetPropertyName(column),
+							GetCSType(column),
+							GetCSDefaultByType(column),
+							Environment.NewLine);
+		}
 	}
 	return sb.ToString();
 }
@@ -698,17 +710,12 @@ private string WriteParameterDeclarations(IndexSchemaCollection indexes, TableKe
 			{				
 				if ( IsJunctionKey(junctionTableKey) && junctionTableKey.Name != key.Name )
 				{
-					TableSchema secondaryTable = junctionTableKey.PrimaryKeyTable;
-					
-					foreach(TableKeySchema tableKey in secondaryTable.PrimaryKeys)
+					foreach( ColumnSchema column in junctionTableKey.ForeignKeyMemberColumns )
 					{
-						foreach ( ColumnSchema column in tableKey.ForeignKeyMemberColumns )
+						if( !columns.Contains(column.Name) )
 						{
-							if( !columns.Contains(column.Name) )
-							{
-								columns.Add(column.Name);
-								WriteParameterDeclaration(column, sb);
-							}
+							columns.Add(column.Name);
+							WriteParameterDeclaration(column, sb);
 						}
 					}
 				}
@@ -723,7 +730,7 @@ private void WriteParameterDeclaration(ColumnSchema column, StringBuilder sb)
 {
 	sb.AppendFormat("\t\t\t{1} {0};{2}",
 					GetPrivateName(column),
-					GetCSTypeWithoutNullable(column),
+					GetCSType(column),
 					Environment.NewLine);
 }
 </script>
