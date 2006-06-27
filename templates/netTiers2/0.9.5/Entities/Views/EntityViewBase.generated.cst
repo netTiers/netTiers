@@ -14,6 +14,7 @@
 <%@ Property Name="SourceTables" Type="SchemaExplorer.TableSchemaCollection" Category="Connection" Description="Tables of the sytem." %>
 <%@ Property Name="IncludeRelations" Type="System.Boolean" Default="False" Category="Options" Description="Include Collections for Related Entities."%>
 <%@ Property Name="IncludeWCFDataAttributes" Type="System.Boolean" Default="False" Category="02. Framework Generation - Optional" Description="Indicates if the WCF attributes, [DataContract] and [DataMember], should be included on the entity classes." %>
+<%@ Property Name="IncludeXmlAttributes" Type="System.Boolean" Default="False" Category="02. Framework Generation - Optional" Description="Indicates if the Xml attributes, [XmlElement(IsNullable=true)], should be included on the entity classes." %>
 <%
 	string abstractClassName = GetAbstractClassName(SourceView.Name);	
 	string className = GetClassName(SourceView.Name);
@@ -116,6 +117,9 @@ namespace <%=NameSpace%>
 		<%}%>
 		<% if ( IncludeWCFDataAttributes ) { %>
 		[DataMember]
+		<% } %>
+		<% if ( IncludeXmlAttributes && SourceView.Columns[x].AllowDBNull ) { %>
+		[XmlElement(IsNullable=true)]
 		<% } %>
 		[DescriptionAttribute("<%=GetDescriptionAttributeText(SourceView.Columns[x].Description)%>"), BindableAttribute()]
 		public virtual <%= GetCSType(SourceView.Columns[x])%> <%= GetPropertyName(SourceView.Columns[x].Name) %>

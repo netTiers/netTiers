@@ -25,6 +25,7 @@
 <%@ Property Name="IncludeManyToMany" Type="System.Boolean" Default="False" Category="Options" Description="Include Collections for Related Entities."%>
 <%@ Property Name="IncludeGetListByFK" Type="System.Boolean" Default="True" Category="Options" Description="If true get functions will be generated." %>
 <%@ Property Name="IncludeWCFDataAttributes" Type="System.Boolean" Default="False" Category="02. Framework Generation - Optional" Description="Indicates if the WCF attributes, [DataContract] and [DataMember], should be included on the entity classes." %>
+<%@ Property Name="IncludeXmlAttributes" Type="System.Boolean" Default="False" Category="02. Framework Generation - Optional" Description="Indicates if the Xml attributes, [XmlElement(IsNullable=true)], should be included on the entity classes." %>
 
 <%@ Property Name="NameSpace" Optional="True" Type="System.String" Category="Style" Description="Object Namespace." %>
 	
@@ -313,6 +314,9 @@ namespace <%=NameSpace%>
 		<% if ( IncludeWCFDataAttributes ) { %>
 		[DataMember]
 		<% } %>
+		<% if ( IncludeXmlAttributes && cols[x].AllowDBNull ) { %>
+		[XmlElement(IsNullable=true)]
+		<% } %>
 		[<%if (cols[x].IsPrimaryKeyMember && (IsIdentityColumn(cols[x]) || IsComputed(cols[x])) ) {%>ReadOnlyAttribute(false)/*, XmlIgnoreAttribute()*/, <%}%>DescriptionAttribute("<%=GetDescriptionAttributeText(cols[x].Description)%>"), BindableAttribute()]
 		[DataObjectField(<%= dataObjectFieldParams  %>)<%= defaultValue %>]
 		public <%if (commonColumns.IndexOf(cols[x].Name) != -1) Response.Write ("override "); else Response.Write ("virtual ");%><%= GetCSType(cols[x])%> <%= GetPropertyName(cols[x]) %>
@@ -368,6 +372,9 @@ namespace <%=NameSpace%>
 		/// </summary>
 		/// <remarks>This is the original value of the <%= cols[x].Name %> property.</remarks>
 		/// <value>This type is <%=cols[x].NativeType%></value>
+		<% if ( IncludeXmlAttributes && cols[x].AllowDBNull ) { %>
+		[XmlElement(IsNullable=true)]
+		<% } %>
 		[BrowsableAttribute(false)/*, XmlIgnoreAttribute()*/<% if ( IncludeWCFDataAttributes ) { %>, DataMember	<% } %>]
 		public  virtual <%= GetCSType(cols[x])%> Original<%= GetPropertyName(cols[x].Name) %>
 		{
@@ -1141,9 +1148,16 @@ WriteRelationshipPropertyString();
 		{
 			#region Init Properties
 
+			if ( values != null )
+			{
 			<% foreach ( ColumnSchema column in pkCols ) { %>
-			<%= GetPropertyName(column.Name) %> = (<%= GetCSType(column) %>) EntityUtil.ChangeType(values["<%= GetPropertyName(column.Name) %>"], typeof(<%= GetCSType(column) %>));
+				<% if ( column.AllowDBNull ) { %>
+				<%= GetPropertyName(column.Name) %> = (<%= GetCSType(column) %>) EntityUtil.ChangeType(values["<%= GetPropertyName(column.Name) %>"], typeof(<%= GetCSType(column) %>));
+				<% } else { %>
+				<%= GetPropertyName(column.Name) %> = ( values["<%= GetPropertyName(column.Name) %>"] != null ) ? (<%= GetCSType(column) %>) EntityUtil.ChangeType(values["<%= GetPropertyName(column.Name) %>"], typeof(<%= GetCSType(column) %>)) : <%= GetCSDefaultByType(column) %>;
+				<% } %>
 			<% } %>
+			}
 
 			#endregion
 		}
