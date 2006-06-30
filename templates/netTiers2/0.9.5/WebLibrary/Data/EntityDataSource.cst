@@ -478,13 +478,7 @@ namespace <%= WebNameSpace %>.Data
 		/// <returns>The EntityDataSourceView named EntityView that is associated with the EntityDataSource.</returns>
 		protected override DataSourceView GetView(string viewName)
 		{
-			if ( String.IsNullOrEmpty(viewName) ||
-				(String.Compare(viewName, EntityViewName, StringComparison.OrdinalIgnoreCase) == 0) )
-			{
-				return EntityView;
-			}
-
-			throw new ArgumentOutOfRangeException("viewName");
+			return EntityView;
 		}
 
 		/// <summary>
@@ -501,37 +495,27 @@ namespace <%= WebNameSpace %>.Data
 		/// <summary>
 		/// Gets the current value of the EntityId parameter.
 		/// </summary>
-		/// <returns>The current value of the EntityId parameter if present,
-		/// otherwise the value of the EntityId property.</returns>
+		/// <returns>The current value of the EntityId property if not null or empty,
+		/// otherwise the value of the EntityId parameter, if present.</returns>
 		public String GetSelectedEntityId()
 		{
-			String entityId = GetParameterStringValue(EntityIdParameterName);
+			String entityId = EntityId;
 
-			if ( !String.IsNullOrEmpty(entityId) )
+			if ( String.IsNullOrEmpty(entityId) )
 			{
-				UpdateEntityId(entityId);
+				entityId = GetParameterStringValue(EntityIdParameterName);
 			}
 
-			return EntityId;
+			return entityId;
 		}
 
 		/// <summary>
-		/// Sets the value of the EntityId property and makes sure that it
-		/// always matches the result of the GetSelectedEntityId method.
+		/// Sets the value of the EntityId property.
 		/// </summary>
 		/// <param name="entityId">The entityId to update.</param>
 		private void UpdateEntityId(String entityId)
 		{
-			// remove parameter
-			if ( _parameters != null )
-			{
-				Parameter param = _parameters[EntityIdParameterName];
-				if ( param != null )
-				{
-					_parameters.Remove(param);
-					ViewState[EntityIdParameterName] = entityId;
-				}
-			}
+			ViewState[EntityIdParameterName] = entityId;
 		}
 
 		/// <summary>
