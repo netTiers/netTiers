@@ -112,7 +112,12 @@ public class PetShopProfileProvider : System.Web.Profile.ProfileProvider
                 {
                     System.Reflection.PropertyInfo pi = account.GetType().GetProperty(property.Name);
                     object o = pi.GetValue(account, null);
-                    if (o != null)
+                    
+                    if (o == "null")
+                    {
+                        value = null;
+                    }
+                    else if (o != null)
                     {
                         value = o;
                     }
@@ -155,6 +160,8 @@ public class PetShopProfileProvider : System.Web.Profile.ProfileProvider
                 System.Configuration.SettingsProperty property = new System.Configuration.SettingsProperty(propertyValue.Name);
 
                 System.Reflection.PropertyInfo pi = account.GetType().GetProperty(property.Name);
+                if (propertyValue.PropertyValue == "null")
+                    propertyValue.PropertyValue = null;
                 pi.SetValue(account, propertyValue.PropertyValue, null);
             }
             

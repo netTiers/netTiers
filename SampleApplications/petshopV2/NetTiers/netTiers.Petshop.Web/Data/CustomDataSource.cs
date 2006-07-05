@@ -791,6 +791,22 @@ namespace netTiers.Petshop.Web.Data
 			return types;
 		}
 
+		/// <summary>
+		/// Performs a DeepLoad operation for the current entity if it has
+		/// not already been performed.
+		/// </summary>
+		internal override void DeepLoad()
+		{
+			if ( !IsDeepLoaded )
+			{
+				IsDeepLoaded = true;
+				Object entity = GetCurrentEntity();
+				Object[] args = GetArgs(entity);
+
+				EntityUtil.InvokeMethod(Provider, "DeepLoad", args);
+			}
+		}
+
 		#endregion Helper Methods
 	}
 }

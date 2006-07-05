@@ -788,6 +788,7 @@ namespace netTiers.Petshop.Web.Data
 		private bool _enableCaching;
 		private bool _enablePaging;
 		private bool _enableSorting;
+		private bool _isDeepLoaded;
 
 		#endregion Declarations
 
@@ -909,6 +910,15 @@ namespace netTiers.Petshop.Web.Data
 		{
 			get { return _filter; }
 			set { _filter = value; }
+		}
+		
+		/// <summary>
+		/// Gets or sets the IsDeepLoaded property.
+		/// </summary>
+		internal bool IsDeepLoaded
+		{
+			get { return _isDeepLoaded; }
+			set { _isDeepLoaded = value; }
 		}
 
 		/// <summary>
@@ -1616,10 +1626,9 @@ namespace netTiers.Petshop.Web.Data
 		/// Performs a DeepLoad operation for the current entity if it has
 		/// not already been performed.
 		/// </summary>
-		internal void DeepLoad()
+		/// <remarks>To be implemented by subclasses requiring DeepLoad functionality</remarks>
+		internal virtual void DeepLoad()
 		{
-			// TODO:
-			//Provider.DeepLoad();
 		}
 
 		#endregion Methods

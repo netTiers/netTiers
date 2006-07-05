@@ -27,12 +27,11 @@
 <data:ItemDataSource runat="server" id="uxItemsObjectDataSource" 
     enablepaging="True" 
     enablesorting="True" 
-    selectmethod="GetByProductId">
-<Parameters>
-    <asp:QueryStringParameter Type="String" Name="productId" QueryStringField="ProductId"/>
-    <asp:ControlParameter PropertyName="CurrentPageIndex" Type="Int32" DefaultValue="0" Name="currentPage" ControlID="PagerProduct" />
-    <asp:ControlParameter PropertyName="ItemsPerPage" Type="Int32" DefaultValue="0" Name="itemsPerPage" ControlID="PagerProduct" />
-    <asp:Parameter Type="Int32" Direction="Output" Name="itemsCount" />
+    selectmethod="GetByProductId" cacheduration="30" enablecaching="False" enabletransaction="True" ><Parameters>
+<asp:QueryStringParameter Type="String" Name="productId" QueryStringField="ProductId"></asp:QueryStringParameter>
+<asp:ControlParameter PropertyName="CurrentPageIndex" Type="Int32" DefaultValue="0" Name="currentPage" ControlID="PagerProduct"></asp:ControlParameter>
+<asp:ControlParameter PropertyName="ItemsPerPage" Type="Int32" DefaultValue="0" Name="itemsPerPage" ControlID="PagerProduct"></asp:ControlParameter>
+<asp:Parameter Type="Int32" Direction="Output" Name="itemsCount"></asp:Parameter>
 </Parameters>
 </data:ItemDataSource>
 
@@ -46,48 +45,49 @@
     id="uxProductObjectDataSource" 
     enablepaging="False" 
     enablesorting="False" 
-    selectmethod="GetById">
-    <Parameters>
-        <asp:QueryStringParameter Type="String" 
-            Name="id" 
-            QueryStringField="ProductId" />
-    </Parameters>
+    selectmethod="GetById" cacheduration="30" enablecaching="False" enabletransaction="True" ><Parameters>
+<asp:QueryStringParameter Type="String" Name="id" QueryStringField="ProductId"></asp:QueryStringParameter>
+</Parameters>
 </data:ProductDataSource>
 
-    <asp:FormView ID="uxProductFormView" runat="server" DataSourceID="uxProductObjectDataSource">
-    <HeaderTemplate> <h3><%#Eval("Name") %> items</h3></HeaderTemplate>
+    <asp:FormView ID="uxProductFormView" runat="server" DataSourceID="uxProductObjectDataSource" meta:resourcekey="uxProductFormViewResource1">
+    <HeaderTemplate> <h3>
+        <%# Eval("Name") %>
+        items</h3></HeaderTemplate>
     </asp:FormView>
     
     <asp:MultiView runat="server" ID="uxProductItemsMultiView" ActiveViewIndex="0">
         <asp:View runat="server" ID="uxItemsListView">
-            <asp:DataList ID="datalist1" runat="server" DataSourceID="uxItemsObjectDataSource" Width="100%">
+            <asp:DataList ID="datalist1" runat="server" DataSourceID="uxItemsObjectDataSource" Width="100%" meta:resourcekey="datalist1Resource1">
            
                 <ItemTemplate>
                         
-                                <b><a href='item.aspx?ItemId=<%#Eval("Id") %>'><%# Eval("Name")%></a></b><br />
-                                <%# Eval("Description")%><br />
+                                <b><a href='item.aspx?ItemId=<%# Eval("Id") %>'>
+                                    <%# Eval("Name") %>
+                                </a></b><br />
+                    <%# Eval("Description") %>
+                    <br />
                                 <div style="width: 100%; text-align:right;">
-                                &nbsp;<span class="price"><%# Eval("Price")%><%# Eval("currency")%></span>
+                                &nbsp;<span class="price"><%# Eval("Price") %><%# Eval("currency") %></span>
                                 
                                <Cart:AddToCartButton 
 					                id="Addtocartimagebutton1"
-					                runat="Server" 
-					                Description='<%#Eval("Description") %>'
-					                Code='<%#Eval("Name") %>'
+					                runat="server" 
+					                Description='<%# Eval("Description") %>'
+					                Code='<%# Eval("Name") %>'
 					                Text="Add to cart"
 					                TaxRate="0" 
 					                Reduce="0" 
-					                UnitSale="1" 
-					                PublicPrice='<%#Convert.ToDecimal(Eval("Price"))%>'
-					                ImageUrl='images/<%#Eval("Photo") %>' 
-					                ProductId='<%#Eval("Id") %>'
-					                ProductLink='<%#Eval("Id","item.aspx?itemid={0}")%>'
+					                PublicPrice='<%# Convert.ToDecimal(Eval("Price")) %>'
+					                ImageUrl='images/&lt;%#Eval(&quot;Photo&quot;) %&gt;' 
+					                ProductId='<%# Eval("Id") %>'
+					                ProductLink='<%# Eval("Id","item.aspx?itemid={0}") %>' availability="" badquantityerrortext="bad quantity" meta:resourcekey="Addtocartimagebutton1Resource1" quantity="1"
 					                 ></Cart:AddToCartButton>					 
                                  
                            </div>
                      </ItemTemplate>
-                <ItemStyle BackColor="#ffffee" Width="100%" />
-                <AlternatingItemStyle BackColor=white />
+                <ItemStyle BackColor="#FFFFEE" Width="100%" />
+                <AlternatingItemStyle BackColor="White" />
             
             </asp:DataList>
             
@@ -98,13 +98,6 @@
     </asp:MultiView>
     
     
-    <PG:Pager runat="server" ItemsPerPage="10" id="PagerProduct" NumericPageCount="10">
-        <FirstPageTemplate><a href='<%#Container.NavigateUrl%>'><<</a></FirstPageTemplate>
-        <PreviousPageTemplate><a href='<%#Container.NavigateUrl%>'><</a></PreviousPageTemplate>
-        <PagesTemplate><a href='<%#Container.NavigateUrl%>'><%#Container.PageLabel%></a></PagesTemplate>
-        <CurrentPageTemplate><%#Container.PageLabel%></CurrentPageTemplate>
-        <NextPageTemplate><a href='<%#Container.NavigateUrl%>'>></a></NextPageTemplate>
-        <LastPageTemplate><a href='<%#Container.NavigateUrl%>'>>></a></LastPageTemplate>
-    </PG:Pager>
+    <PG:Pager runat="server" ItemsPerPage="10" id="PagerProduct" NumericPageCount="10" itemscount="0" pageidparametername="pageId" ></PG:Pager>
 </asp:Content>
 

@@ -20,12 +20,16 @@ namespace netTiers.Petshop.Web.Data
 	[ParseChildren(true), PersistChildren(false)]
 	public class SqlParameter : Parameter
 	{
+		#region Constructors
+		
 		/// <summary>
 		/// Initializes a new instance of the SqlParameter class.
 		/// </summary>
 		public SqlParameter() : base()
 		{
 		}
+		
+		#endregion Constructors
 
 		#region Properties
 
@@ -102,13 +106,15 @@ namespace netTiers.Petshop.Web.Data
 
 		#endregion Evaluate
 	}
+	
+	#region SqlFilter<EntityColumn>
 
 	/// <summary>
 	/// Provides SQL filter expressions for the <see cref="SqlParameter"/> class.
 	/// </summary>
 	/// <typeparam name="EntityColumn">An enumeration of entity column names.</typeparam>
 	[CLSCompliant(true)]
-	public class SqlFilter<EntityColumn> : ISqlFilter
+	public abstract class SqlFilter<EntityColumn> : ISqlFilter
 	{
 		#region Properties
 
@@ -244,6 +250,8 @@ namespace netTiers.Petshop.Web.Data
 
 		#endregion ISqlFilter Members
 	}
+	
+	#endregion SqlFilter<EntityColumn>
 
 	#region SqlFilterEventHandler
 

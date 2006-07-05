@@ -57,7 +57,7 @@ namespace netTiers.Petshop.Data
 			bool needToInsertAND = false;
 
 			String outStr = ParseQuotes(searchText, quotedValues);
-			StringTokenizer tokenizer = new StringTokenizer(outStr, "(),\t\r\n", true);
+			StringTokenizer tokenizer = new StringTokenizer(outStr, "( ),\t\r\n", true);
 			String nextToken;
 
 			while ( tokenizer.HasMoreTokens )

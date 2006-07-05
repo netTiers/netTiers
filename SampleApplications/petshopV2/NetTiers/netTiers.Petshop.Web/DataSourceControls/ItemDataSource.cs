@@ -130,7 +130,7 @@ namespace netTiers.Petshop.Web.Data
 
 		#endregion Properties
 		
-		#region Select Methods
+		#region Methods
 		
 		/// <summary>
 		/// Gets a collection of Entity objects based on the value of the SelectMethod property.
@@ -200,6 +200,19 @@ namespace netTiers.Petshop.Web.Data
 			}
 		}
 		
+		/// <summary>
+		/// Performs a DeepLoad operation for the current entity if it has
+		/// not already been performed.
+		/// </summary>
+		internal override void DeepLoad()
+		{
+			if ( !IsDeepLoaded )
+			{
+				IsDeepLoaded = true;
+				ItemProvider.DeepLoad(GetCurrentEntity());
+			}
+		}
+
 		#endregion Select Methods
 	}
 	

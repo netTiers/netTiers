@@ -15,7 +15,7 @@ GO
 
 /*
 ----------------------------------------------------------------------------------------------------
--- Date Created: Wednesday, June 28, 2006
+-- Date Created: Monday, July 03, 2006
 
 -- Created By:  ()
 -- Purpose: Gets all records from the Account table
@@ -69,7 +69,7 @@ GO
 
 /*
 ----------------------------------------------------------------------------------------------------
--- Date Created: Wednesday, June 28, 2006
+-- Date Created: Monday, July 03, 2006
 
 -- Created By:  ()
 -- Purpose: Gets records from the Account table passing page index and page count parameters
@@ -192,7 +192,7 @@ GO
 
 /*
 ----------------------------------------------------------------------------------------------------
--- Date Created: Wednesday, June 28, 2006
+-- Date Created: Monday, July 03, 2006
 
 -- Created By:  ()
 -- Purpose: Inserts a record into the Account table
@@ -310,7 +310,7 @@ GO
 
 /*
 ----------------------------------------------------------------------------------------------------
--- Date Created: Wednesday, June 28, 2006
+-- Date Created: Monday, July 03, 2006
 
 -- Created By:  ()
 -- Purpose: Updates a record in the Account table
@@ -415,7 +415,7 @@ GO
 
 /*
 ----------------------------------------------------------------------------------------------------
--- Date Created: Wednesday, June 28, 2006
+-- Date Created: Monday, July 03, 2006
 
 -- Created By:  ()
 -- Purpose: Deletes a record in the Account table
@@ -454,7 +454,7 @@ GO
 
 /*
 ----------------------------------------------------------------------------------------------------
--- Date Created: Wednesday, June 28, 2006
+-- Date Created: Monday, July 03, 2006
 
 -- Created By:  ()
 -- Purpose: Select records from the Account table through a foreign key
@@ -513,7 +513,7 @@ GO
 
 /*
 ----------------------------------------------------------------------------------------------------
--- Date Created: Wednesday, June 28, 2006
+-- Date Created: Monday, July 03, 2006
 
 -- Created By:  ()
 -- Purpose: Select records from the Account table through a foreign key
@@ -572,7 +572,7 @@ GO
 
 /*
 ----------------------------------------------------------------------------------------------------
--- Date Created: Wednesday, June 28, 2006
+-- Date Created: Monday, July 03, 2006
 
 -- Created By:  ()
 -- Purpose: Select records from the Account table through an index
@@ -630,7 +630,7 @@ GO
 
 /*
 ----------------------------------------------------------------------------------------------------
--- Date Created: Wednesday, June 28, 2006
+-- Date Created: Monday, July 03, 2006
 
 -- Created By:  ()
 -- Purpose: Select records from the Account table through an index
@@ -688,7 +688,7 @@ GO
 
 /*
 ----------------------------------------------------------------------------------------------------
--- Date Created: Wednesday, June 28, 2006
+-- Date Created: Monday, July 03, 2006
 
 -- Created By:  ()
 -- Purpose: Select records from the Account table through an index
@@ -746,7 +746,7 @@ GO
 
 /*
 ----------------------------------------------------------------------------------------------------
--- Date Created: Wednesday, June 28, 2006
+-- Date Created: Monday, July 03, 2006
 
 -- Created By:  ()
 -- Purpose: Finds records in the Account table passing nullable parameters
@@ -902,7 +902,7 @@ GO
 
 /*
 ----------------------------------------------------------------------------------------------------
--- Date Created: Wednesday, June 28, 2006
+-- Date Created: Monday, July 03, 2006
 
 -- Created By:  ()
 -- Purpose: Gets all records from the Category table
@@ -942,7 +942,7 @@ GO
 
 /*
 ----------------------------------------------------------------------------------------------------
--- Date Created: Wednesday, June 28, 2006
+-- Date Created: Monday, July 03, 2006
 
 -- Created By:  ()
 -- Purpose: Gets records from the Category table passing page index and page count parameters
@@ -1037,7 +1037,7 @@ GO
 
 /*
 ----------------------------------------------------------------------------------------------------
--- Date Created: Wednesday, June 28, 2006
+-- Date Created: Monday, July 03, 2006
 
 -- Created By:  ()
 -- Purpose: Inserts a record into the Category table
@@ -1099,7 +1099,7 @@ GO
 
 /*
 ----------------------------------------------------------------------------------------------------
--- Date Created: Wednesday, June 28, 2006
+-- Date Created: Monday, July 03, 2006
 
 -- Created By:  ()
 -- Purpose: Updates a record in the Category table
@@ -1162,7 +1162,7 @@ GO
 
 /*
 ----------------------------------------------------------------------------------------------------
--- Date Created: Wednesday, June 28, 2006
+-- Date Created: Monday, July 03, 2006
 
 -- Created By:  ()
 -- Purpose: Deletes a record in the Category table
@@ -1201,7 +1201,7 @@ GO
 
 /*
 ----------------------------------------------------------------------------------------------------
--- Date Created: Wednesday, June 28, 2006
+-- Date Created: Monday, July 03, 2006
 
 -- Created By:  ()
 -- Purpose: Select records from the Category table through an index
@@ -1245,7 +1245,7 @@ GO
 
 /*
 ----------------------------------------------------------------------------------------------------
--- Date Created: Wednesday, June 28, 2006
+-- Date Created: Monday, July 03, 2006
 
 -- Created By:  ()
 -- Purpose: Finds records in the Category table passing nullable parameters
@@ -1317,7 +1317,7 @@ GO
 
 /*
 ----------------------------------------------------------------------------------------------------
--- Date Created: Wednesday, June 28, 2006
+-- Date Created: Monday, July 03, 2006
 
 -- Created By:  ()
 -- Purpose: Gets all records from the CreditCard table
@@ -1359,7 +1359,7 @@ GO
 
 /*
 ----------------------------------------------------------------------------------------------------
--- Date Created: Wednesday, June 28, 2006
+-- Date Created: Monday, July 03, 2006
 
 -- Created By:  ()
 -- Purpose: Gets records from the CreditCard table passing page index and page count parameters
@@ -1458,7 +1458,7 @@ GO
 
 /*
 ----------------------------------------------------------------------------------------------------
--- Date Created: Wednesday, June 28, 2006
+-- Date Created: Monday, July 03, 2006
 
 -- Created By:  ()
 -- Purpose: Inserts a record into the CreditCard table
@@ -1528,7 +1528,7 @@ GO
 
 /*
 ----------------------------------------------------------------------------------------------------
--- Date Created: Wednesday, June 28, 2006
+-- Date Created: Monday, July 03, 2006
 
 -- Created By:  ()
 -- Purpose: Updates a record in the CreditCard table
@@ -1597,7 +1597,7 @@ GO
 
 /*
 ----------------------------------------------------------------------------------------------------
--- Date Created: Wednesday, June 28, 2006
+-- Date Created: Monday, July 03, 2006
 
 -- Created By:  ()
 -- Purpose: Deletes a record in the CreditCard table
@@ -1636,7 +1636,7 @@ GO
 
 /*
 ----------------------------------------------------------------------------------------------------
--- Date Created: Wednesday, June 28, 2006
+-- Date Created: Monday, July 03, 2006
 
 -- Created By:  ()
 -- Purpose: Select records from the CreditCard table through an index
@@ -1682,7 +1682,7 @@ GO
 
 /*
 ----------------------------------------------------------------------------------------------------
--- Date Created: Wednesday, June 28, 2006
+-- Date Created: Monday, July 03, 2006
 
 -- Created By:  ()
 -- Purpose: Finds records in the CreditCard table passing nullable parameters
@@ -1766,7 +1766,7 @@ GO
 
 /*
 ----------------------------------------------------------------------------------------------------
--- Date Created: Wednesday, June 28, 2006
+-- Date Created: Monday, July 03, 2006
 
 -- Created By:  ()
 -- Purpose: Gets all records from the Item table
@@ -1810,7 +1810,7 @@ GO
 
 /*
 ----------------------------------------------------------------------------------------------------
--- Date Created: Wednesday, June 28, 2006
+-- Date Created: Monday, July 03, 2006
 
 -- Created By:  ()
 -- Purpose: Gets records from the Item table passing page index and page count parameters
@@ -1913,7 +1913,7 @@ GO
 
 /*
 ----------------------------------------------------------------------------------------------------
--- Date Created: Wednesday, June 28, 2006
+-- Date Created: Monday, July 03, 2006
 
 -- Created By:  ()
 -- Purpose: Inserts a record into the Item table
@@ -1991,7 +1991,7 @@ GO
 
 /*
 ----------------------------------------------------------------------------------------------------
--- Date Created: Wednesday, June 28, 2006
+-- Date Created: Monday, July 03, 2006
 
 -- Created By:  ()
 -- Purpose: Updates a record in the Item table
@@ -2066,7 +2066,7 @@ GO
 
 /*
 ----------------------------------------------------------------------------------------------------
--- Date Created: Wednesday, June 28, 2006
+-- Date Created: Monday, July 03, 2006
 
 -- Created By:  ()
 -- Purpose: Deletes a record in the Item table
@@ -2105,7 +2105,7 @@ GO
 
 /*
 ----------------------------------------------------------------------------------------------------
--- Date Created: Wednesday, June 28, 2006
+-- Date Created: Monday, July 03, 2006
 
 -- Created By:  ()
 -- Purpose: Select records from the Item table through a foreign key
@@ -2154,7 +2154,7 @@ GO
 
 /*
 ----------------------------------------------------------------------------------------------------
--- Date Created: Wednesday, June 28, 2006
+-- Date Created: Monday, July 03, 2006
 
 -- Created By:  ()
 -- Purpose: Select records from the Item table through an index
@@ -2202,7 +2202,7 @@ GO
 
 /*
 ----------------------------------------------------------------------------------------------------
--- Date Created: Wednesday, June 28, 2006
+-- Date Created: Monday, July 03, 2006
 
 -- Created By:  ()
 -- Purpose: Finds records in the Item table passing nullable parameters
@@ -2298,7 +2298,7 @@ GO
 
 /*
 ----------------------------------------------------------------------------------------------------
--- Date Created: Wednesday, June 28, 2006
+-- Date Created: Monday, July 03, 2006
 
 -- Created By:  ()
 -- Purpose: Gets all records from the Product table
@@ -2339,7 +2339,7 @@ GO
 
 /*
 ----------------------------------------------------------------------------------------------------
--- Date Created: Wednesday, June 28, 2006
+-- Date Created: Monday, July 03, 2006
 
 -- Created By:  ()
 -- Purpose: Gets records from the Product table passing page index and page count parameters
@@ -2436,7 +2436,7 @@ GO
 
 /*
 ----------------------------------------------------------------------------------------------------
--- Date Created: Wednesday, June 28, 2006
+-- Date Created: Monday, July 03, 2006
 
 -- Created By:  ()
 -- Purpose: Inserts a record into the Product table
@@ -2502,7 +2502,7 @@ GO
 
 /*
 ----------------------------------------------------------------------------------------------------
--- Date Created: Wednesday, June 28, 2006
+-- Date Created: Monday, July 03, 2006
 
 -- Created By:  ()
 -- Purpose: Updates a record in the Product table
@@ -2568,7 +2568,7 @@ GO
 
 /*
 ----------------------------------------------------------------------------------------------------
--- Date Created: Wednesday, June 28, 2006
+-- Date Created: Monday, July 03, 2006
 
 -- Created By:  ()
 -- Purpose: Deletes a record in the Product table
@@ -2607,7 +2607,7 @@ GO
 
 /*
 ----------------------------------------------------------------------------------------------------
--- Date Created: Wednesday, June 28, 2006
+-- Date Created: Monday, July 03, 2006
 
 -- Created By:  ()
 -- Purpose: Select records from the Product table through a foreign key
@@ -2653,7 +2653,7 @@ GO
 
 /*
 ----------------------------------------------------------------------------------------------------
--- Date Created: Wednesday, June 28, 2006
+-- Date Created: Monday, July 03, 2006
 
 -- Created By:  ()
 -- Purpose: Select records from the Product table through an index
@@ -2698,7 +2698,7 @@ GO
 
 /*
 ----------------------------------------------------------------------------------------------------
--- Date Created: Wednesday, June 28, 2006
+-- Date Created: Monday, July 03, 2006
 
 -- Created By:  ()
 -- Purpose: Finds records in the Product table passing nullable parameters
@@ -2776,7 +2776,7 @@ GO
 
 /*
 ----------------------------------------------------------------------------------------------------
--- Date Created: Wednesday, June 28, 2006
+-- Date Created: Monday, July 03, 2006
 
 -- Created By:  ()
 -- Purpose: Gets all records from the ExtendedItem view
@@ -2822,7 +2822,7 @@ GO
 
 /*
 ----------------------------------------------------------------------------------------------------
--- Date Created: Wednesday, June 28, 2006
+-- Date Created: Monday, July 03, 2006
 
 -- Created By:  ()
 -- Purpose: Gets records from the ExtendedItem view passing page index and page count parameters

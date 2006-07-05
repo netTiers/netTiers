@@ -20,7 +20,7 @@
     <asp:ObjectDataSource ID="uxSearchObjectDataSource" runat="server"
         TypeName="DataWrapper" SelectMethod="Search" OnSelected="uxSearchObjectDataSource_Selected" >
         <SelectParameters>
-            <asp:QueryStringParameter Name="queryString" Direction="Input" QueryStringField="q" Type="string" DefaultValue="" />
+            <asp:QueryStringParameter Name="queryString" QueryStringField="q" Type="String" DefaultValue="" />
         </SelectParameters>
     </asp:ObjectDataSource>
        
@@ -30,15 +30,15 @@
                  <HeaderTemplate>
                  <table width="100%">
                     <tr>
-                        <td><h3>Search results for : <%=HttpContext.Current.Request["q"] %></h3></td>
+                        <td><h3>Search results for : </h3></td>
                         <td></td>
                     </tr>
                  </table>
                  </HeaderTemplate>
                  <ItemTemplate>
                  <p>
-                    <img alt="" src='images/<%#Eval("ItemPhoto") %>' align="left" hspace="10" width="80"/>
-                    <b><a href='Item.aspx?ItemId=<%#Eval("ItemId") %>'><%# Eval("ItemName") %></a></b><br />
+                    <img alt="" src='images/<%# Eval("ItemPhoto") %>' align="left" hspace="10" width="80"/>
+                    <b><a href='Item.aspx?ItemId=<%# Eval("ItemId") %>'><%# Eval("ItemName") %></a></b><br />
                     
                     <%# Eval("ItemDescription") %>
                  </p>
@@ -47,7 +47,7 @@
             </asp:Repeater>
         </asp:View>
         <asp:View ID="NoResultView" runat="server">
-            Your search - <b><%=HttpContext.Current.Request["q"] %></b> - did not match any documents.
+            Your search - <b></b> - did not match any documents.
             <br />
             <br />
             Suggestions:

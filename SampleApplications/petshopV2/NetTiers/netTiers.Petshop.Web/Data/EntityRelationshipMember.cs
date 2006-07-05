@@ -276,7 +276,7 @@ namespace netTiers.Petshop.Web.Data
 
 		/// <summary>
 		/// Gets or sets a value indicating whether the current relationship
-		/// member has a reference to an EntityDataSource control.
+		/// member has a reference to an <see cref="ILinkedDataSource"/> control.
 		/// </summary>
 		public bool HasDataSource
 		{
@@ -290,9 +290,9 @@ namespace netTiers.Petshop.Web.Data
 		#region Entity Methods
 
 		/// <summary>
-		/// Gets a reference to the associated EntityDataSource control.
+		/// Gets a reference to the associated <see cref="ILinkedDataSource"/> control.
 		/// </summary>
-		/// <returns>An <see cref="EntityDataSource"/> object.</returns>
+		/// <returns>An <see cref="ILinkedDataSource"/> object.</returns>
 		public ILinkedDataSource GetLinkedDataSource()
 		{
 			return GetDataSource() as ILinkedDataSource;
@@ -325,7 +325,7 @@ namespace netTiers.Petshop.Web.Data
 		}
 
 		/// <summary>
-		/// Gets the list of data retrieved by the associated EntityDataSource object.
+		/// Gets the list of data retrieved by the associated <see cref="ILinkedDataSource"/> object.
 		/// </summary>
 		/// <returns>A collection of business objects.</returns>
 		public IList GetEntityList()
@@ -342,7 +342,7 @@ namespace netTiers.Petshop.Web.Data
 		}
 
 		/// <summary>
-		/// Performs a DeepLoad operation on the associated EntityDataSource class.
+		/// Performs a DeepLoad operation on the associated <see cref="ILinkedDataSource"/> object.
 		/// </summary>
 		public void DeepLoad()
 		{
