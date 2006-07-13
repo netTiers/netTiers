@@ -343,7 +343,26 @@ namespace <%= WebNameSpace %>.Data
 			}
 			<%	} // end if ( IncludeGetListByIX ) %>
 		}
+
+		<% if ( HasGuidColumns(SourceTable.PrimaryKey.MemberColumns) ) { %>
+		/// <summary>
+		/// Sets the primary key values of the specified Entity object.
+		/// </summary>
+		/// <param name="entity">The Entity object to update.</param>
+		protected override void SetEntityKeyValues(<%= className %> entity)
+		{
+			base.SetEntityKeyValues(entity);
+			
+			// make sure primary key column(s) have been set
+			<% foreach ( ColumnSchema column in SourceTable.PrimaryKey.MemberColumns ) { %>
+			<% if ( IsGuidColumn(column) ) { %>
+			if ( entity.<%= GetPropertyName(column.Name) %> == Guid.Empty )
+				entity.<%= GetPropertyName(column.Name) %> = Guid.NewGuid();
+			<% } %>
+			<% } %>
+		}
 		
+		<% } // end if ( HasGuidColumns() ) { %>
 		<% if ( IncludeRelations && IncludeGetListByFK ) { %>
 		/// <summary>
 		/// Performs a DeepLoad operation for the current entity if it has
@@ -353,8 +372,13 @@ namespace <%= WebNameSpace %>.Data
 		{
 			if ( !IsDeepLoaded )
 			{
-				IsDeepLoaded = true;
-				<%= providerName %>.DeepLoad(<%= TransactionManager %>GetCurrentEntity());
+				<%= className %> entity = GetCurrentEntity();
+				
+				if ( entity != null )
+				{
+					<%= providerName %>.DeepLoad(<%= TransactionManager %>GetCurrentEntity());
+					IsDeepLoaded = true;
+				}
 			}
 		}
 
@@ -747,5 +771,16 @@ private void WriteParameterDeclaration(ColumnSchema column, StringBuilder sb)
 					GetPrivateName(column),
 					GetCSType(column),
 					Environment.NewLine);
+}
+
+private bool HasGuidColumns(ColumnSchemaCollection columns)
+{
+	foreach ( ColumnSchema column in columns )
+	{
+		if ( IsGuidColumn(column) )
+			return true;
+	}
+	
+	return false;
 }
 </script>
