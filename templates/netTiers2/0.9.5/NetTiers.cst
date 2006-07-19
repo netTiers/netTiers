@@ -502,7 +502,8 @@
 														"VisualStudio\\vsnet2005.localtestrun.testrunconfig.cst",
 														"VisualStudio\\nAnt.cst",
 														"VisualStudio\\AssemblyInfo.cst", 
-																																										
+														"VisualStudio\\entlib.config.cst",																												
+														
 														"Entities\\Enum.cst",
 														"Entities\\IEntity.cst",
 														"Entities\\IEntityId.cst",
@@ -550,6 +551,10 @@
 														"Components\\ComponentService.cst",
 														"Components\\ComponentServiceBase.cst",
 														
+														//Foreach View
+														"Components\\Views\\ComponentViewService.cst",
+														"Components\\Views\\ComponentViewServiceBase.cst",														
+														
 														//Single Output
 														"Components\\IComponentEntity.cst",
 														"Components\\CList.cst",
@@ -558,6 +563,10 @@
 														"Components\\IComponentService.cst",
 														"Components\\ServiceBase.cst",
 														"Components\\ServiceBaseCore.cst",
+
+														"Components\\Views\\ServiceViewBase.cst",
+														"Components\\Views\\ServiceViewBaseCore.cst",
+														
 														"Components\\ServiceResult.cst",
 														"Components\\ComponentEntityFactory.cst",
 														"Components\\Processors\\IProcessor.cst",
@@ -567,6 +576,7 @@
 														"Components\\SecurityContext.cst",														
 																												
 														"DataAccessLayer\\App.config.2005.cst",
+
 																																										
 														"DataAccessLayer\\DataRepository.cst",
 														"DataAccessLayer\\Utility.cst",
@@ -1081,7 +1091,9 @@ public void Go()
 	{
 		SafeCreateDirectory(rootPathComponents);
 		SafeCreateDirectory(rootPathComponents + "\\Processors");
-
+		SafeCreateDirectory(rootPathComponents);
+		SafeCreateDirectory(rootPathComponents + "\\Views");
+		
 		if ( HasCustomCode )
 		{
 			SafeCreateDirectory(rootPathComponents + "\\" + CustomCodeFolderName);
@@ -1487,6 +1499,24 @@ public void Go()
 			this.GetTemplate("ServiceBaseCore.cst").SetProperty("DALNameSpace", DALNameSpace);
 			this.RenderToFile("ServiceBaseCore.cst", rootPathComponents + "\\ServiceBaseCore.generated.cs", true);
 			
+			//For Views
+			// only generate stub once
+			if ( !File.Exists(rootPathComponents + "\\Views\\ServiceViewBase.cs") )
+			{
+				XmlElement iServiceViewBaseNode = AddFileNode(commonNode, "ServiceViewBase.cst.cs");
+				this.GetTemplate("ServiceViewBase.cst").SetProperty("NameSpace", ComponentsNameSpace);
+				this.GetTemplate("ServiceViewBase.cst").SetProperty("BLLNameSpace", BLLNameSpace);
+				this.GetTemplate("ServiceViewBase.cst").SetProperty("DALNameSpace", DALNameSpace);
+				this.RenderToFile("ServiceViewBase.cst", rootPathComponents + "\\Views\\ServiceViewBase.cs", true);
+			}
+			
+			XmlElement iServiceViewBaseCoreNode = AddFileNode(commonNode, "ServiceViewBaseCore.cst.cs");
+			this.GetTemplate("ServiceViewBaseCore.cst").SetProperty("NameSpace", ComponentsNameSpace);
+			this.GetTemplate("ServiceViewBaseCore.cst").SetProperty("BLLNameSpace", BLLNameSpace);
+			this.GetTemplate("ServiceViewBaseCore.cst").SetProperty("DALNameSpace", DALNameSpace);
+			this.RenderToFile("ServiceViewBaseCore.cst", rootPathComponents + "\\Views\\ServiceViewBaseCore.generated.cs", true);
+			//--------------------------------------------------
+			
 			XmlElement iServiceResultNode = AddFileNode(commonNode, "ServiceResult.cs");
 			this.GetTemplate("ServiceResult.cst").SetProperty("NameSpace", ComponentsNameSpace);
 			this.GetTemplate("ServiceResult.cst").SetProperty("BLLNameSpace", BLLNameSpace);
@@ -1629,6 +1659,12 @@ public void Go()
 			this.GetTemplate(configFile).SetProperty("WebServiceUrl", WebServiceUrl + "/" + GetClassName(SourceDatabase.Name) + "Services.asmx");
 			
 			this.RenderToFile(configFile, specialPath + "\\" + NameSpace + (vsnetIntegration == VSNetIntegration.SeparatedProjects && (IncludeUnitTest != MoM.Templates.UnitTestStyle.None) ? "." + UnitTestsNameSpace : string.Empty) + ".dll.config", true);
+			
+			AddFileNode(commonNode, "entlib unit test configuration files");
+			this.GetTemplate("entlib.config.cst").SetProperty("NameSpace", NameSpace);
+			this.GetTemplate("entlib.config.cst").SetProperty("BLLNameSpace", BLLNameSpace);
+
+			this.RenderToFile("entlib.config.cst", specialPath + "\\entlib.config", true);
 		}	
 		
 		// Configuration files for the webservice
@@ -1882,7 +1918,6 @@ public void Go()
 		this.GetTemplate("BaseDataSource.cst").SetProperty("BLLNameSpace", BLLNameSpace);
 		this.GetTemplate("BaseDataSource.cst").SetProperty("DALNameSpace", DALNameSpace);
 		this.GetTemplate("BaseDataSource.cst").SetProperty("WebNameSpace", WebLibNameSpace);
-		this.GetTemplate("BaseDataSource.cst").SetProperty("IncludeComponentLayer", IncludeComponentLayer);
 		this.RenderToFile("BaseDataSource.cst", rootPathWebLib + "\\Data\\BaseDataSource.cs", true);
 		
 		AddFileNode(commonNode, "BaseDataSourceDesigner.cs");
@@ -2528,6 +2563,67 @@ public void Go()
 			//AddExecutionTime(sqlDalcNode);
 		}
 		
+		//----------------------------------------------------------------------------------------------------------------------------------------------
+		//	BLL class
+		//----------------------------------------------------------------------------------------------------------------------------------------------
+		///Components
+		//XmlElement coNode = AddFileNode(tableNode, GetPartialClassName(GetClassName(SourceTable.Name)) + ".cs");
+		if (ComponentPattern == MoM.Templates.ComponentPatternType.DomainModel)
+		{
+		}
+		else if (ComponentPattern == MoM.Templates.ComponentPatternType.ServiceLayer)
+		{
+			if (!File.Exists(rootPathComponents + "\\Views\\" + GetServiceClassName(SourceView.Name) + ".cs")) // || OverwritePartialClassStub)
+			{
+				///Components
+				XmlElement coBaseNode = AddFileNode(tableNode,  GetServiceClassName(SourceView.Name) + ".cs");
+								
+				this.GetTemplate("ComponentViewService.cst").SetProperty("NameSpace", ComponentsNameSpace);
+				this.GetTemplate("ComponentViewService.cst").SetProperty("BLLNameSpace", BLLNameSpace);
+				this.GetTemplate("ComponentViewService.cst").SetProperty("DALNameSpace", DALNameSpace);
+				this.GetTemplate("ComponentViewService.cst").SetProperty("UsePartialClass", UsePartialClass);
+				
+				this.GetTemplate("ComponentViewService.cst").SetProperty("SourceView", SourceView);
+
+				this.GetTemplate("ComponentViewService.cst").SetProperty("ComponentPattern", ComponentPattern);
+				this.GetTemplate("ComponentViewService.cst").SetProperty("CustomNonMatchingReturnType", CustomNonMatchingReturnType);				
+				this.GetTemplate("ComponentViewService.cst").SetProperty("CustomProcedureStartsWith", CustomProcedureStartsWith);			
+				this.GetTemplate("ComponentViewService.cst").SetProperty("ProcedurePrefix", ProcedurePrefix.Replace(" ", ""));
+	
+				this.RenderToFile("ComponentViewService.cst", rootPathComponents + "\\Views\\" + GetServiceClassName(SourceView.Name) + ".cs", true);
+			
+				AddExecutionTime(coBaseNode);
+			}			
+						
+			if (!File.Exists(rootPathComponents + "\\Views\\" + GetPartialClassName(GetAbstractServiceClassName(SourceView.Name)) + ".cs"))
+			{
+					///Components
+				XmlElement coBaseNode1 = AddFileNode(tableNode, GetPartialClassName(GetAbstractServiceClassName(SourceView.Name) + ".cs"));
+						
+				this.GetTemplate("ComponentViewServiceBase.cst").SetProperty("NameSpace", ComponentsNameSpace);
+				this.GetTemplate("ComponentViewServiceBase.cst").SetProperty("BLLNameSpace", BLLNameSpace);
+				this.GetTemplate("ComponentViewServiceBase.cst").SetProperty("DALNameSpace", DALNameSpace);
+				this.GetTemplate("ComponentViewServiceBase.cst").SetProperty("UsePartialClass", UsePartialClass);
+
+				this.GetTemplate("ComponentViewServiceBase.cst").SetProperty("SourceView", SourceView);
+				//this.GetTemplate("ComponentViewServiceBase.cst").SetProperty("SourceViews", _sourceViews);
+				
+				this.GetTemplate("ComponentViewServiceBase.cst").SetProperty("IncludeCustoms", IncludeCustoms);
+				this.GetTemplate("ComponentViewServiceBase.cst").SetProperty("IncludeGetList", IncludeGetList);
+				this.GetTemplate("ComponentViewServiceBase.cst").SetProperty("IncludeFind", IncludeFind);
+
+				this.GetTemplate("ComponentViewServiceBase.cst").SetProperty("ComponentPatternType", ComponentPattern);
+				this.GetTemplate("ComponentViewServiceBase.cst").SetProperty("CustomNonMatchingReturnType", CustomNonMatchingReturnType);				
+				this.GetTemplate("ComponentViewServiceBase.cst").SetProperty("CustomProcedureStartsWith", CustomProcedureStartsWith);			
+				this.GetTemplate("ComponentViewServiceBase.cst").SetProperty("ProcedurePrefix", ProcedurePrefix.Replace(" ", ""));
+
+
+				this.RenderToFile("ComponentViewServiceBase.cst", rootPathComponents + "\\Views\\" + GetPartialClassName(GetAbstractServiceClassName(SourceView.Name)) + ".cs", true);
+	
+				AddExecutionTime(coBaseNode1);
+			
+			}
+		}		
 		//----------------------------------------------------------------------------------------------------------------------------------------------
 		//	entity and provider nUnit Test class
 		//----------------------------------------------------------------------------------------------------------------------------------------------

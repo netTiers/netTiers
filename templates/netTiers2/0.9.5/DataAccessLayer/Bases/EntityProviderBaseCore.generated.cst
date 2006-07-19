@@ -799,15 +799,11 @@ namespace <%=DALNameSpace%>.Bases
 		/// <param name="innerList">A Hashtable of child types for easy access.</param>
 	    /// <exception cref="ArgumentNullException">entity or childTypes is null.</exception>
 	    /// <exception cref="ArgumentException">deepLoadType has invalid value.</exception>
-		protected override void DeepLoad(TransactionManager transactionManager, <%= className %> entity, bool deep, DeepLoadType deepLoadType, System.Type[] childTypes, Hashtable innerList)
+		internal override void DeepLoad(TransactionManager transactionManager, <%= className %> entity, bool deep, DeepLoadType deepLoadType, System.Type[] childTypes, Hashtable innerList)
 		{
-			
-			#region Composite Source Children
-			//Fill Source Composite Properties, however, don't call deep load on them.  
-			//So they only get filled a single level deep.
 			<%	//Generate a Source property for each foreign key relation		
 			System.Collections.ArrayList addedList2 = new System.Collections.ArrayList();
-			
+			bool showOnce = false;			
 			foreach(TableKeySchema tableKey in SourceTable.ForeignKeys)
 			{
 				// related table must be in the selection
@@ -828,10 +824,23 @@ namespace <%=DALNameSpace%>.Bases
 				
 				string callParams = GetFunctionThisParametersWithNullable(tableKey.ForeignKeyMemberColumns, "entity");
 			%>
-			
+			<%
+			if (showOnce)
+			{
+			%>
+			#region Composite Source Children
+			//Fill Source Composite Properties, however, don't call deep load on them.  
+			//So they only get filled a single level deep.
+			<%
+			}			
+			%>
+			if (innerList["<%=pkClassName%>"] == null)
+				innerList.Add("<%=pkClassName%>", new ArrayList());
+				
 			#region <%=compositePropertyName%>
 			if ((deepLoadType == DeepLoadType.IncludeChildren && innerList["<%=pkClassName.Trim()%>"] != null)
-				|| (deepLoadType == DeepLoadType.ExcludeChildren && innerList["<%=pkClassName.Trim()%>"] == null))
+				|| (deepLoadType == DeepLoadType.ExcludeChildren && innerList["<%=pkClassName.Trim()%>"] == null)
+				&& !((ArrayList)innerList["<%=pkClassName%>"]).Contains("<%=compositePropertyName%>"))
 			{
 				if (entity.<%=compositePropertyName%> == null)
 				{
@@ -847,33 +856,27 @@ namespace <%=DALNameSpace%>.Bases
 					else
 						entity.<%=compositePropertyName%> = DataRepository.<%= GetProviderName(pkClassName) %>.GetBy<%= pkProperty %>(<%= callParams %>);
 				}
-				if (deepLoadType == DeepLoadType.IncludeChildren)
-					innerList.Remove("<%=pkClassName%>");
-				else 
-					innerList.Add("<%=pkClassName%>", typeof(<%=pkClassName%>));
+				
+				//track so it's not fetched again
+				((ArrayList)innerList["<%=pkClassName%>"]).Add("<%=compositePropertyName%>");
+				
+				if (deep)
+				{
+					DataRepository.<%=GetProviderClassName(pkClassName)%>.DeepLoad(transactionManager, entity.<%=compositePropertyName%>, deep, deepLoadType, childTypes, innerList);
+				}
 			}
 			#endregion <%=compositePropertyName%>
 				<%	} //end if in SourceTables
+				
+					if (showOnce)
+					{
+					%>
+					#endregion 
+					<%
+						showOnce = false;
+					}
 				} // end foreach
 			  %>
-			#endregion
-			
-			<%
-			// option 1a: clear all collections
-			// entity.My1Collection.Clear(); entity.My2Collection.Clear(); etc...
-			// option 1b: check the count below to decide if we should set the value directly or call CopyTo
-			// if (entity.My1Collection.Count > 0)
-
-			// option 2a: use an 'AlreadySeen' list to decide if need to set or copy-to
-			%>
-			ArrayList alreadySetCollections = new ArrayList();
-			<%
-			// option 2b: check the 'AlreadySeen' list below to decide if we should set the value directly or call CopyTo
-			// if (alreadySetCollections.IndexOf("My1Collection") > -1)
-
-			// option 3a: same as option 1a - clear all collections first
-			// option 3b: always use CopyTo - but that's probably less efficient
-			%>
 			
 			// Load Entity through Provider
 			<% 
@@ -888,35 +891,26 @@ namespace <%=DALNameSpace%>.Bases
 			<% if (item.CollectionRelationshipType == RelationshipType.ManyToMany) { %>
 			
 			#region <%=item.CollectionName%>
+			if (innerList["List<<%=GetClassName(item.SecondaryTable).Trim()%>>"] == null)
+				innerList.Add("List<<%=GetClassName(item.SecondaryTable).Trim()%>>", new ArrayList());
+
 			// RelationshipType.ManyToMany
 			if ((deepLoadType == DeepLoadType.IncludeChildren && innerList["List<<%=GetClassName(item.SecondaryTable).Trim()%>>"] != null)
-				|| (deepLoadType == DeepLoadType.ExcludeChildren && innerList["List<<%=GetClassName(item.SecondaryTable).Trim()%>>"]  == null))
-			{
+				|| (deepLoadType == DeepLoadType.ExcludeChildren && innerList["List<<%=GetClassName(item.SecondaryTable).Trim()%>>"]  == null)
+				&& !((ArrayList)innerList["List<<%=GetClassName(item.SecondaryTable).Trim()%>>"]).Contains("<%=item.CollectionName%>"))
+			{		
+				entity.<%=item.CollectionName%> = DataRepository.<%=GetProviderClassName(item.SecondaryTable)%>.GetBy<%=item.GetByKeysName%>(transactionManager, <%=item.CallParams%>);			 
+			
 				#if NETTIERS_DEBUG
 				Debug.WriteLine("- property '<%=item.CollectionName%>' loaded.");
 				#endif 
-				if (alreadySetCollections.IndexOf("<%=item.CollectionName%>") > -1)
-				{
-					DataRepository.<%=GetProviderClassName(item.SecondaryTable)%>.GetBy<%=item.GetByKeysName%>(transactionManager,<%=item.CallParams%>).CopyTo(entity.<%=item.CollectionName%>);
-				} 
-				else 
-				{
-					entity.<%=item.CollectionName%> = DataRepository.<%=GetProviderClassName(item.SecondaryTable)%>.GetBy<%=item.GetByKeysName%>(transactionManager, <%=item.CallParams%>);			 
-					alreadySetCollections.Add("<%=item.CollectionName%>");
-				}
+		
+				//track so it's not fetched again
+				((ArrayList)innerList["List<<%=GetClassName(item.SecondaryTable)%>>"]).Add("<%=item.CollectionName%>");
 				
-				//Filled, don't need to fill anymore, prevents circular references
-				if (deepLoadType == DeepLoadType.IncludeChildren)
-					innerList.Remove("List<<%=GetClassName(item.SecondaryTable)%>>");
-				else 
-					innerList.Add("List<<%=GetClassName(item.SecondaryTable)%>>", typeof(<%= GetCollectionClassName(item.SecondaryTable) %>));
-				
-				Type[] updatedChildTypes = (Type[]) new ArrayList(innerList.Values).ToArray(typeof(Type));
-					
-
 				if (deep)
 				{
-					DataRepository.<%=GetProviderClassName(item.SecondaryTable)%>.DeepLoad(transactionManager, entity.<%=item.CollectionName%>, deep, deepLoadType, updatedChildTypes);
+					DataRepository.<%=GetProviderClassName(item.SecondaryTable)%>.DeepLoad(transactionManager, entity.<%=item.CollectionName%>, deep, deepLoadType, childTypes, innerList);
 				}
 			}
 			#endregion <%=item.CollectionName%>
@@ -924,62 +918,50 @@ namespace <%=DALNameSpace%>.Bases
 			<% } else if (item.CollectionRelationshipType == RelationshipType.OneToOne) { %>
 			
 			#region <%=item.CleanName%>
+			if (innerList["<%=listTypeName.Trim()%>"] == null)
+				innerList.Add("<%=listTypeName.Trim()%>", new ArrayList());
+
 			// RelationshipType.OneToOne
 			if ((deepLoadType == DeepLoadType.IncludeChildren && innerList["<%= listTypeName.Trim() %>"] != null)
-				|| (deepLoadType == DeepLoadType.ExcludeChildren && innerList["<%= listTypeName.Trim() %>"] == null))
+				|| (deepLoadType == DeepLoadType.ExcludeChildren && innerList["<%= listTypeName.Trim() %>"] == null)
+				&& !((ArrayList)innerList["<%= listTypeName.Trim() %>"]).Contains("<%=item.CleanName%>"))
 			{
-				Trace.WriteLine("- property '<%=item.CleanName%>' loaded.");
 				entity.<%=item.CleanName%> = DataRepository.<%=GetProviderClassName(item.SecondaryTable)%>.<%=item.GetByKeysName%>(transactionManager, <%=item.CallParams%>);
-				
-				
-				//Filled, don't need to fill anymore, prevents circular references
-				if (deepLoadType == DeepLoadType.IncludeChildren)
-					innerList.Remove("<%= listTypeName %>");
-				else 
-					innerList.Add("<%= listTypeName %>", typeof(<%= item.CollectionTypeName %>));
-				
-				Type[] updatedChildTypes = (Type[]) new ArrayList(innerList.Values).ToArray(typeof(Type));
-				
+				Trace.WriteLine("- property '<%=item.CleanName%>' loaded.");
+			
+				//track so it's not fetched again
+				((ArrayList)innerList["<%=listTypeName%>"]).Add("<%=item.CleanName%>");
+			
 				if (deep)
 				{
-					DataRepository.<%=GetProviderClassName(item.SecondaryTable)%>.DeepLoad(transactionManager, entity.<%=item.CleanName%>, deep, deepLoadType, updatedChildTypes);
+					DataRepository.<%=GetProviderClassName(item.SecondaryTable)%>.DeepLoad(transactionManager, entity.<%=item.CleanName%>, deep, deepLoadType, childTypes, innerList);
 				}
-
 			}
 			#endregion 
 			
 			<% } else { %>
 			
 			#region <%=item.CollectionName%>
+			if (innerList["<%=listTypeName.Trim()%>"] == null)
+				innerList.Add("<%=listTypeName.Trim()%>", new ArrayList());
+				
 			//Relationship Type One : Many
 			if ((deepLoadType == DeepLoadType.IncludeChildren && innerList["<%= listTypeName.Trim() %>"] != null)
-				|| (deepLoadType == DeepLoadType.ExcludeChildren && innerList["<%= listTypeName.Trim() %>"] == null))
+				|| (deepLoadType == DeepLoadType.ExcludeChildren && innerList["<%= listTypeName.Trim() %>"] == null)
+				&& !((ArrayList)innerList["<%= listTypeName.Trim() %>"]).Contains("<%=item.CollectionName%>"))
 			{
 				#if NETTIERS_DEBUG
 				Debug.WriteLine("- property '<%=item.CollectionName%>' loaded.");
 				#endif 
 
-				if (alreadySetCollections.IndexOf("<%=item.CollectionName%>") > -1)
-				{
-					DataRepository.<%=GetProviderClassName(item.SecondaryTable)%>.<%=item.GetByKeysName%>(transactionManager, <%=item.CallParams%>).CopyTo(entity.<%=item.CollectionName%>);
-				} 
-				else 
-				{
-					entity.<%=item.CollectionName%> = DataRepository.<%=GetProviderClassName(item.SecondaryTable)%>.<%=item.GetByKeysName%>(transactionManager, <%=item.CallParams%>);			 
-					alreadySetCollections.Add("<%=item.CollectionName%>");
-				}
+				entity.<%=item.CollectionName%> = DataRepository.<%=GetProviderClassName(item.SecondaryTable)%>.<%=item.GetByKeysName%>(transactionManager, <%=item.CallParams%>);
 
-				//Filled, don't need to fill anymore, prevents circular references
-				if (deepLoadType == DeepLoadType.IncludeChildren)
-					innerList.Remove("<%= listTypeName %>");
-				else 
-					innerList.Add("<%= listTypeName %>", typeof(<%=item.CollectionTypeName%>));
-				
-				Type[] updatedChildTypes = (Type[]) new ArrayList(innerList.Values).ToArray(typeof(Type));
+				//track so it's not fetched again
+				((ArrayList)innerList["<%=listTypeName%>"]).Add("<%=item.CollectionName%>");
 				
 				if (deep)
 				{
-					DataRepository.<%=GetProviderClassName(item.SecondaryTable)%>.DeepLoad(transactionManager, entity.<%=item.CollectionName%>, deep, deepLoadType, updatedChildTypes);
+					DataRepository.<%=GetProviderClassName(item.SecondaryTable)%>.DeepLoad(transactionManager, entity.<%=item.CollectionName%>, deep, deepLoadType, childTypes, innerList);
 				}
 			}		
 			#endregion 
@@ -1001,7 +983,7 @@ namespace <%=DALNameSpace%>.Bases
 		/// <param name="deepSaveType">DeepSaveType Enumeration to Include/Exclude object property collections from Save.</param>
 		/// <param name="childTypes"><%= className %> Property Collection Type Array To Include or Exclude from Save</param>
 		/// <param name="innerList">A Hashtable of child types for easy access.</param>
-		protected override void DeepSave(TransactionManager transactionManager, <%= className %> entity, DeepSaveType deepSaveType, System.Type[] childTypes, Hashtable innerList)
+		internal override void DeepSave(TransactionManager transactionManager, <%= className %> entity, DeepSaveType deepSaveType, System.Type[] childTypes, Hashtable innerList)
 		{	
 			// Save Root Entity through Provider
 			this.Save(transactionManager, entity);

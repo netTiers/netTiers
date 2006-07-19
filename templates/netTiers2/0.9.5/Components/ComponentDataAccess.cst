@@ -208,7 +208,7 @@
 				NetTiersProvider dataProvider = ConnectionScope.Current.DataProvider;
 				
 				//Access repository
-				list = new <%=collectionClassName%>(dataProvider.<%= GetProviderName(className) %>.GetBy<%=GetKeysName(fkeys[j].ForeignKeyMemberColumns)%>(<%= GetFunctionCallParameters(fkeys[j].ForeignKeyMemberColumns) %>, start, pageLength, out totalCount));
+				list = new <%=collectionClassName%>(dataProvider.<%= GetProviderName(className) %>.GetBy<%=GetKeysName(fkeys[j].ForeignKeyMemberColumns)%>(transactionManager, <%= GetFunctionCallParameters(fkeys[j].ForeignKeyMemberColumns) %>, start, pageLength, out totalCount));
 				
 				//intentionally leave transaction open on a read operation.
 				
@@ -333,7 +333,7 @@
 				NetTiersProvider dataProvider = ConnectionScope.Current.DataProvider;					
 				
 				//Access Repository
-				<%= returnTypeVar %> = <%=newCollection%>dataProvider.<%= GetProviderName(className) %>.GetBy<%=GetKeysName(indexes[j].MemberColumns)%>(<%= GetFunctionCallParameters(indexes[j].MemberColumns) %>, start, pageLength)  <%=newCollectionEnd%>;
+				<%= returnTypeVar %> = <%=newCollection%>dataProvider.<%= GetProviderName(className) %>.GetBy<%=GetKeysName(indexes[j].MemberColumns)%>(transactionManager, <%= GetFunctionCallParameters(indexes[j].MemberColumns) %>, start, pageLength)  <%=newCollectionEnd%>;
 			
 				//if borrowed tran, leave open for next call
 				
@@ -395,7 +395,7 @@
 			}
             catch (Exception exc)
             {
-				//if open, rollback, it's possible this is part of a larger commit
+				//if open, rollback, it's possible this is part of a  larger commit
                 if (transactionManager != null && transactionManager.IsOpen) 
 					transactionManager.Rollback();
 				
@@ -1095,8 +1095,9 @@
 		<%=constructorAccessModifier %> <%= returnType %> <%=partialClassInternalPrefix%>DeepLoadBy<%=GetKeysName(indexes[j].MemberColumns)%>(<%= GetFunctionHeaderParameters(indexes[j].MemberColumns) %>, bool deep, DeepLoadType deepLoadType, params System.Type[] childTypes)
 		{
 			// throws security exception if not authorized
-			SecurityContext.IsAuthorized("DeepLoadBy<%=GetKeysName(indexes[j].MemberColumns)%>");
-		    
+			SecurityContext.IsAuthorized("DeepLoadBy<%=GetKeysName(indexes[j].MemberColumns)%>");		    
+			bool isBorrowedTransaction = ConnectionScope.Current.HasTransaction;				
+	
 			<%= returnType %> <%= returnTypeVar %> = <%=partialClassInternalPrefix%>GetBy<%=GetKeysName(indexes[j].MemberColumns)%>(<%= GetFunctionCallParameters(indexes[j].MemberColumns) %>);
 			
 			//Check to see if <%= returnTypeVar %> is not null, before attempting to Deep Load

@@ -2578,10 +2578,17 @@ namespace MoM.Templates
 		/// <param name="keys"> the key instance.</param>
 		public string GetKeysName(ColumnSchemaCollection keys)
 		{	
-			StringBuilder Name = new StringBuilder();
-			for(int x=0; x < keys.Count;x++)
+			ArrayList cols = new ArrayList();
+			for(int x=0; x < keys.Count; x++)
 			{
-				Name.Append( GetPropertyName(keys[x].Name) );
+				cols.Add(keys[x].Name);
+			}
+			cols.Sort();
+			
+			StringBuilder Name = new StringBuilder();
+			for(int x=0; x < cols.Count; x++)
+			{
+				Name.Append(GetPropertyName(keys[keys.IndexOf(cols[x].ToString())]));
 			}
 			return Name.ToString();
 		}
@@ -2772,19 +2779,27 @@ namespace MoM.Templates
 		/// <param name="view">The view</param>
 		public bool IsMatching(CommandSchema command, ViewSchema view)
 		{
+			if (command.CommandResults.Count == 0)
+				return false;
+				
 			if (command.CommandResults[0].Columns.Count != view.Columns.Count)
 			{
 				return false;
 			}
 			
 			for(int i=0; i<view.Columns.Count; i++)
-			{
-				if (command.CommandResults[0].Columns[i].Name != view.Columns[i].Name)
+			{	
+				if (!command.CommandResults[0].Columns.Contains(view.Columns[i].Name.ToLower()))
 				{
 					return false;
 				}
 				
-				if (command.CommandResults[0].Columns[i].NativeType != view.Columns[i].NativeType)
+				// manage the xml column type separately
+				if ( view.Columns[i].NativeType == "xml" && (command.CommandResults[0].Columns[i].NativeType == "sql_variant" || command.CommandResults[0].Columns[i].NativeType == "ntext"))
+				{
+					continue;
+				}
+				else if (command.CommandResults[0].Columns[i].NativeType != view.Columns[i].NativeType )
 				{
 					return false;
 				}
@@ -3000,13 +3015,15 @@ namespace MoM.Templates
 			if (_collections.Count > 0)
 				return _collections;
 			
-
 			//Provides Informatoin about the foreign keys
 			TableKeySchemaCollection fkeys = table.ForeignKeys;
 			
 			//Provides information about the indexes contained in the table. 
 			IndexSchemaCollection indexes = table.Indexes;
-
+			
+			//if (table.Name == "T_Symbol")
+				//System.Diagnostics.Debugger.Break();
+				
 			TableKeySchemaCollection primaryKeyCollection = table.PrimaryKeys;
 			
 			foreach(TableKeySchema keyschema in primaryKeyCollection)
@@ -3017,16 +3034,8 @@ namespace MoM.Templates
 				{
 					continue;
 				}
-						
-				//Add 1-1 relations				
-				// we do not manage here primary key with multiple columns 
-				//if(keyschema.PrimaryKeyTable.PrimaryKey.MemberColumns.Count == 1 
-				//	&& keyschema.PrimaryKeyTable.PrimaryKey.MemberColumns[0].Name == keyschema.ForeignKeyMemberColumns[0].Name
-				//	&& IsRelationOneToOne(keyschema)
-				//)
-				//!HasCommonColumn(keyschema.PrimaryKeyMemberColumns, table.PrimaryKey.MemberColumns) && IsRelationOneToOne(keyschema))
 				
-				
+				//Add 1-1 relations	
 				if (IsRelationOneToOne(keyschema))
 				{
 					//Response.Write(table.Name);
@@ -3040,7 +3049,8 @@ namespace MoM.Templates
 					collectionInfo.CleanName = GetClassName(collectionInfo.SecondaryTable);//GetClassName(keyschema.ForeignKeyTable.Name);		
 					collectionInfo.CollectionName = GetCollectionPropertyName(collectionInfo.SecondaryTable);
 					collectionInfo.CollectionTypeName = GetCollectionClassName(collectionInfo.SecondaryTable);
-					collectionInfo.CallParams = GetFunctionRelationshipCallParameters(table.PrimaryKey.MemberColumns);
+					//collectionInfo.CallParams = GetFunctionRelationshipCallParameters(table.PrimaryKey.MemberColumns);
+					collectionInfo.CallParams = GetFunctionRelationshipCallParameters(keyschema.PrimaryKeyMemberColumns);
 					collectionInfo.GetByKeysName = "GetBy" + GetKeysName(keyschema.ForeignKeyMemberColumns);
 					collectionInfo.TableKey = keyschema;
 					
@@ -3056,10 +3066,11 @@ namespace MoM.Templates
 					collectionInfo.SecondaryTable = GetClassName(keyschema.ForeignKeyTable);
 					collectionInfo.SecondaryTablePkColNames = GetColumnNames(keyschema.ForeignKeyTable.PrimaryKey.MemberColumns);
 					collectionInfo.CollectionRelationshipType = RelationshipType.OneToMany;
-					collectionInfo.CleanName = GetClassName(collectionInfo.SecondaryTable); //GetClassName(keyschema.ForeignKeyTable.Name);
+					collectionInfo.CleanName = GetClassName(collectionInfo.SecondaryTable); 
 					collectionInfo.CollectionName = GetCollectionPropertyName(collectionInfo.SecondaryTable);
 					collectionInfo.CollectionTypeName = GetCollectionClassName(collectionInfo.SecondaryTable);
-					collectionInfo.CallParams = GetFunctionRelationshipCallParameters(table.PrimaryKey.MemberColumns);
+					//collectionInfo.CallParams = GetFunctionRelationshipCallParameters(table.PrimaryKey.MemberColumns);
+					collectionInfo.CallParams = GetFunctionRelationshipCallParameters(keyschema.PrimaryKeyMemberColumns);
 					collectionInfo.GetByKeysName = "GetBy" + GetKeysName(keyschema.ForeignKeyMemberColumns);
 					collectionInfo.TableKey = keyschema;
 					_collections.Add(collectionInfo);
@@ -3126,6 +3137,37 @@ namespace MoM.Templates
 			return output.ToString();
 		}
 
+	
+		///<summary>
+		/// Workaround for when a method in the DAL is using Indexes to create the method
+		/// instead of the keys
+		/// Sometimes when working with composite primary keys, the orders could be 
+		/// different in the index than in the key.
+		/// So it could be Col1 Col2 in TableKeySchema.ForeignKeyMemberColumns 
+		/// But in Index.MemberColumns it could be Col2, Col1
+		///</summary>
+		public ColumnSchemaCollection GetCorrectColumnOrder(TableKeySchema key)
+		{		
+			if(IsForeignKeyCoveredByIndex(key))
+			{
+				bool found = true;
+				foreach (IndexSchema idx in key.PrimaryKeyTable.Indexes)
+				{
+					foreach(MemberColumnSchema col in key.ForeignKeyMemberColumns)
+					{
+						if (!idx.MemberColumns.Contains(col.Name))
+							found = false;
+					}
+					
+					if (found)
+					{
+						return idx.MemberColumns;
+					}
+				}
+			}
+			
+			return key.ForeignKeyMemberColumns;
+		}
 
 		/// <summary>
 		/// Determines if the table key represents a identifying relationship.

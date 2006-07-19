@@ -718,9 +718,9 @@ namespace <%= DALNameSpace %>.Bases
 				if (childTypes[i] == null) continue;
 				
 				if (!childTypes[i].IsGenericType)
-					innerList.Add(childTypes[i].Name, childTypes[i]);
+					innerList.Add(childTypes[i].Name, new ArrayList());
 				else 
-					innerList.Add(string.Format("List<{0}>" , childTypes[i].GetGenericArguments()[0].Name), childTypes[i]);
+					innerList.Add(string.Format("List<{0}>" , childTypes[i].GetGenericArguments()[0].Name), new ArrayList());
 			}
 			
 			#if NETTIERS_DEBUG
@@ -752,7 +752,53 @@ namespace <%= DALNameSpace %>.Bases
 		/// <param name="deepLoadType">DeepLoadType Enumeration to Include/Exclude object property collections from Load.</param>
 		/// <param name="childTypes">Entity Property Collection Type Array To Include or Exclude from Load.</param>
 		/// <param name="innerList">A Hashtable of child types for easy access.</param>
-		protected abstract void DeepLoad(TransactionManager mgr, Entity entity, bool deep, DeepLoadType deepLoadType, Type[] childTypes, Hashtable innerList);
+		internal abstract void DeepLoad(TransactionManager mgr, Entity entity, bool deep, DeepLoadType deepLoadType, System.Type[] childTypes, Hashtable innerList);
+
+
+		/// <summary>
+		/// Deep Load the entire Entity object with criteria based on the child types array and the DeepLoadType.
+		/// </summary>
+		/// <remarks>
+		/// This method should be implemented by sub-classes to provide specific deep load functionality.
+		/// </remarks>
+		/// <param name="mgr">A <see cref="TransactionManager"/> object.</param>
+		/// <param name="entities">The Entity List object to load.</param>
+		/// <param name="deep">A flag that indicates whether to recursively load all Property Collections that are descendants of this instance. If True, loads the complete object graph below this object. If False, loads this object only.</param>
+		/// <param name="deepLoadType">DeepLoadType Enumeration to Include/Exclude object property collections from Load.</param>
+		/// <param name="childTypes">Entity Property Collection Type Array To Include or Exclude from Load.</param>
+		/// <param name="innerList">A Hashtable of child types for easy access.</param>
+		internal void DeepLoad(TransactionManager mgr, TList<Entity> entities, bool deep, DeepLoadType deepLoadType, System.Type[] childTypes, Hashtable innerList)
+		{
+			#region Argument Validation
+			//Argument checks
+			if ( entities == null )
+			{
+				throw new ArgumentNullException("entities", "A valid non-null, TList<Entity> object is not present.");
+			}
+			if ( !Enum.IsDefined(typeof(DeepLoadType), deepLoadType) )
+			{
+				throw new ArgumentException("A valid DeepLoadType option is not present.", deepLoadType.ToString());
+			}
+			if ( childTypes == null )
+			{
+				throw new ArgumentNullException("childTypes", "A valid Type[] array is not present.");
+			}
+			#endregion
+
+			//In case an event can trigger the disabling of the deepload
+			if ( deepLoadType == DeepLoadType.Ignore )
+			{
+				return;
+			}
+
+			foreach ( Entity entity in entities )
+			{
+				DeepLoad(mgr, entity, deep, deepLoadType, childTypes, innerList);
+			}
+
+			return;
+		}
+
 
 		/// <summary>
 		/// Deep Load the Entity objects with all of the child property collections only 1 level deep.
@@ -947,7 +993,7 @@ namespace <%= DALNameSpace %>.Bases
 		/// <param name="deepSaveType">DeepSaveType Enumeration to Include/Exclude object property collections from Save.</param>
 		/// <param name="childTypes">Entity Property Collection Type Array To Include or Exclude from Save.</param>
 		/// <param name="innerList">A Hashtable of child types for easy access.</param>
-		protected abstract void DeepSave(TransactionManager mgr, Entity entity, DeepSaveType deepSaveType, Type[] childTypes, Hashtable innerList);
+		internal abstract void DeepSave(TransactionManager mgr, Entity entity, DeepSaveType deepSaveType, Type[] childTypes, Hashtable innerList);
 
 		/// <summary>
 		/// Deep Save the Entity objects with all of the child property collections only 1 level deep.

@@ -50,7 +50,7 @@ namespace <%=NameSpace%>
 
          base.InsertItem(index, item);
       }
-
+	
       /// <summary>
       /// Removes the item at the specified index.
       /// </summary>
@@ -72,6 +72,29 @@ namespace <%=NameSpace%>
       }
 
       #endregion
+	
+	  #region RemoveEntity
+	  /// <summary>
+      /// Removes the entity item at the specified index and places it in the DeletedItems collection.
+	  /// If this list were to be persisted, it would delete the entity from the repository.
+      /// </summary>
+      /// <param name="index">The zero-based index of the item to remove.</param>
+      public void RemoveEntity(int index)
+      {
+         T item = Items[index];
+
+         if (item != null)
+         {
+            //Move item to deleted collection(if not in added state)
+            if (item.EntityState != EntityState.Added)
+            {
+			   item.MarkToDelete();
+               DeletedItems.Add(item);
+            }
+            base.RemoveItem(index);
+         }
+      }
+	  #endregion 
 
       #region ICloneable
 

@@ -337,6 +337,9 @@
 		<None Include="<%=UTNameSpace%>.dll.config">
 			<CopyToOutputDirectory>Always</CopyToOutputDirectory>
 		</None>
+		<None Include="entlib.config">
+			<CopyToOutputDirectory>Always</CopyToOutputDirectory>
+		</None>
 	</ItemGroup>
 	<% } %>
 		
@@ -623,12 +626,56 @@
 			  <SubType>Code</SubType>
 			</Compile>
 		<% } %>
-		<% if (IncludeComponents) 
+		<% 
+		if (IncludeComponents) 
 		{
+		// Loop on each view
+		for (int i = 0; i < SourceViews.Count; i++)
+		{
+		
+			if (ComponentPattern == MoM.Templates.ComponentPatternType.DomainModel)
+			{
+			%>
+			<Compile Include="<%=ComponentsSubFolder%>Views\<%=GetClassName(SourceViews[i].Name)%>.cs">
+			  <SubType>Code</SubType>
+			</Compile>
+			<Compile Include="<%=ComponentsSubFolder%>Views\<%=GetPartialClassName(GetServiceClassName(SourceViews[i].Name))%>.cs">
+			  <DependentUpon><%=GetServiceClassName(SourceViews[i].Name)%>.cs</DependentUpon>
+			  <SubType>Code</SubType>
+			</Compile>
+		<%} 
+		  else 
+		  {
+		 %> 
+			<Compile Include="<%=ComponentsSubFolder%>Views\<%=GetServiceClassName(SourceViews[i].Name)%>.cs">
+			  <SubType>Code</SubType>
+			</Compile>
+			<Compile Include="<%=ComponentsSubFolder%>Views\<%=GetPartialClassName(GetAbstractServiceClassName(SourceViews[i].Name))%>.cs">
+			  <DependentUpon><%=GetServiceClassName(SourceViews[i].Name)%>.cs</DependentUpon>
+			  <SubType>Code</SubType>
+			</Compile>
+		   <%			
+		   }
+		}
 		%>
+		<!-- 
 			<Compile Include="<%=ComponentsSubFolder%>Processors\**\*.cs">
+			   <SubType>Code</SubType>
+			</Compile>		
+		 -->
+			<Compile Include="<%=ComponentsSubFolder%>Processors\GenericProcessorResult.cs">
 			  <SubType>Code</SubType>
 			</Compile>		
+			<Compile Include="<%=ComponentsSubFolder%>Processors\IProcessor.cs">
+			  <SubType>Code</SubType>
+			</Compile>		
+			<Compile Include="<%=ComponentsSubFolder%>Processors\IProcessorResult.cs">
+			  <SubType>Code</SubType>
+			</Compile>		
+			<Compile Include="<%=ComponentsSubFolder%>Processors\ProcessorBase.cs">
+			  <SubType>Code</SubType>
+			</Compile>		
+			
 			<Compile Include="<%=ComponentsSubFolder%>SecurityContext.cs">
 			  <SubType>Code</SubType>
 			</Compile>		
@@ -655,6 +702,13 @@
 			</Compile>
 			<Compile Include="<%=ComponentsSubFolder%>ServiceBase.cs">
 			  <SubType>Code</SubType>
+			</Compile>
+			<Compile Include="<%=ComponentsSubFolder%>Views\ServiceViewBase.cs">
+			  <SubType>Code</SubType>
+			</Compile>
+			<Compile Include="<%=ComponentsSubFolder%>Views\ServiceViewBaseCore.generated.cs">
+			  <SubType>Code</SubType>
+			  <DependentUpon>ServiceBase.cs</DependentUpon>
 			</Compile>
 			<Compile Include="<%=ComponentsSubFolder%>ServiceBaseCore.generated.cs">
 			  <SubType>Code</SubType>
