@@ -801,7 +801,8 @@ namespace <%=DALNameSpace%>.Bases
 	    /// <exception cref="ArgumentException">deepLoadType has invalid value.</exception>
 		internal override void DeepLoad(TransactionManager transactionManager, <%= className %> entity, bool deep, DeepLoadType deepLoadType, System.Type[] childTypes, Hashtable innerList)
 		{
-			
+			if(entity == null)
+				return;
 			<%	//Generate a Source property for each foreign key relation		
 			System.Collections.ArrayList addedList2 = new System.Collections.ArrayList();
 			bool showOnce = false;			
@@ -833,10 +834,11 @@ namespace <%=DALNameSpace%>.Bases
 			<%
 			}			
 			%>
+
+			#region <%=compositePropertyName%>
 			if (innerList["<%=pkClassName%>"] == null)
 				innerList.Add("<%=pkClassName%>", new ArrayList());
 				
-			#region <%=compositePropertyName%>
 			if (((deepLoadType == DeepLoadType.IncludeChildren && innerList["<%=pkClassName.Trim()%>"] != null)
 				|| (deepLoadType == DeepLoadType.ExcludeChildren && innerList["<%=pkClassName.Trim()%>"] == null))
 				&& !((ArrayList)innerList["<%=pkClassName%>"]).Contains("<%=compositePropertyName%>"))
@@ -859,7 +861,7 @@ namespace <%=DALNameSpace%>.Bases
 				//track so it's not fetched again
 				((ArrayList)innerList["<%=pkClassName%>"]).Add("<%=compositePropertyName%>");
 				
-				if (deep)
+				if (deep && entity.<%=compositePropertyName%> != null)
 				{
 					DataRepository.<%=GetProviderClassName(pkClassName)%>.DeepLoad(transactionManager, entity.<%=compositePropertyName%>, deep, deepLoadType, childTypes, innerList);
 				}
@@ -908,7 +910,7 @@ namespace <%=DALNameSpace%>.Bases
 				//track so it's not fetched again
 				((ArrayList)innerList["List<<%=GetClassName(item.SecondaryTable)%>>"]).Add("<%=item.CollectionName%>");
 				
-				if (deep)
+				if (deep && entity.<%=item.CollectionName%>.Count > 0)
 				{
 					DataRepository.<%=GetProviderClassName(item.SecondaryTable)%>.DeepLoad(transactionManager, entity.<%=item.CollectionName%>, deep, deepLoadType, childTypes, innerList);
 				}
@@ -932,7 +934,7 @@ namespace <%=DALNameSpace%>.Bases
 				//track so it's not fetched again
 				((ArrayList)innerList["<%=listTypeName%>"]).Add("<%=item.CleanName%>");
 			
-				if (deep)
+				if (deep && entity.<%=item.CleanName%> != null)
 				{
 					DataRepository.<%=GetProviderClassName(item.SecondaryTable)%>.DeepLoad(transactionManager, entity.<%=item.CleanName%>, deep, deepLoadType, childTypes, innerList);
 				}
@@ -959,7 +961,7 @@ namespace <%=DALNameSpace%>.Bases
 				//track so it's not fetched again
 				((ArrayList)innerList["<%=listTypeName%>"]).Add("<%=item.CollectionName%>");
 				
-				if (deep)
+				if (deep && entity.<%=item.CollectionName%>.Count > 0)
 				{
 					DataRepository.<%=GetProviderClassName(item.SecondaryTable)%>.DeepLoad(transactionManager, entity.<%=item.CollectionName%>, deep, deepLoadType, childTypes, innerList);
 				}
@@ -985,6 +987,9 @@ namespace <%=DALNameSpace%>.Bases
 		/// <param name="innerList">A Hashtable of child types for easy access.</param>
 		internal override void DeepSave(TransactionManager transactionManager, <%= className %> entity, DeepSaveType deepSaveType, System.Type[] childTypes, Hashtable innerList)
 		{	
+			if (entity == null)
+				return;
+				
 			// Save Root Entity through Provider
 			this.Save(transactionManager, entity);
 			
@@ -1017,10 +1022,7 @@ namespace <%=DALNameSpace%>.Bases
 				|| (deepSaveType == DeepSaveType.ExcludeChildren && innerList[" <%= pkClassName %>"] == null))
 			{
 				if (entity.<%=compositePropertyName%> != null )
-				{
-					//if (!entity.<%=compositePropertyName%>.IsValid)
-						//throw new <%= NameSpace %>.EntityNotValidException(entity, "DeepSave");
-					
+				{			
 					DataRepository.<%= GetProviderName(pkClassName) %>.Save(transactionManager, entity.<%=compositePropertyName%>);
 				}
 			}
@@ -1047,7 +1049,7 @@ namespace <%=DALNameSpace%>.Bases
 			#region <%= listTypeName %>
 			if ((deepSaveType == DeepSaveType.IncludeChildren && innerList["<%= listTypeName %>"] != null)
 				|| (deepSaveType == DeepSaveType.ExcludeChildren && innerList["<%= listTypeName %>"] == null))
-		{
+			{
 			// update each child parent id with the real parent id (mostly used on insert)
 			<%
 			for(int i=0; i<item.TableKey.ForeignKeyMemberColumns.Count; i++)
@@ -1055,9 +1057,9 @@ namespace <%=DALNameSpace%>.Bases
 				Response.Write("\t\t\t\tentity."+ item.CleanName +"." + GetPropertyName(item.TableKey.ForeignKeyMemberColumns[i].Name) + " = entity." + GetPropertyName(item.TableKey.PrimaryKeyMemberColumns[i].Name) + ";");
 			}
 			%>
-
-			DataRepository.<%=GetProviderClassName(item.SecondaryTable)%>.DeepSave(transactionManager, entity.<%=item.CleanName%>, deepSaveType, childTypes);
-		} 
+			if (entity.<%=item.CleanName%> != null)
+				DataRepository.<%=GetProviderClassName(item.SecondaryTable)%>.DeepSave(transactionManager, entity.<%=item.CleanName%>, deepSaveType, childTypes);
+			} 
 			#endregion 
 			<% 
 			} 
@@ -1067,7 +1069,7 @@ namespace <%=DALNameSpace%>.Bases
 			#region <%= listTypeName %>
 			if ((deepSaveType == DeepSaveType.IncludeChildren && innerList["<%= listTypeName %>"] != null)
 				|| (deepSaveType == DeepSaveType.ExcludeChildren && innerList["<%= listTypeName %>"] == null))
-		{
+			{
 			// update each child parent id with the real parent id (mostly used on insert)
 			foreach(<%=item.CleanName%> child in entity.<%=item.CollectionName %>)
 			{
@@ -1078,8 +1080,9 @@ namespace <%=DALNameSpace%>.Bases
 				%>
 			}
 			
-			DataRepository.<%=GetProviderClassName(item.SecondaryTable)%>.DeepSave(transactionManager, entity.<%=item.CollectionName%>, deepSaveType, childTypes);
-		} 
+			if (entity.<%=item.CollectionName%>.Count > 0)
+				DataRepository.<%=GetProviderClassName(item.SecondaryTable)%>.DeepSave(transactionManager, entity.<%=item.CollectionName%>, deepSaveType, childTypes);
+			} 
 			#endregion 
 			<% }
 			else if (item.CollectionRelationshipType == RelationshipType.ManyToMany && IncludeManyToMany) 
@@ -1088,7 +1091,8 @@ namespace <%=DALNameSpace%>.Bases
 			if ((deepSaveType == DeepSaveType.IncludeChildren && innerList["List<<%=item.SecondaryTable%>>"] != null)
 				|| (deepSaveType == DeepSaveType.ExcludeChildren && innerList["List<<%=item.SecondaryTable%>>"] == null))
 			{
-				DataRepository.<%=GetProviderClassName(item.SecondaryTable)%>.DeepSave(transactionManager, entity.<%=item.CollectionName %>, deepSaveType, childTypes); 
+				if (entity.<%=item.CollectionName%>.Count > 0)
+					DataRepository.<%=GetProviderClassName(item.SecondaryTable)%>.DeepSave(transactionManager, entity.<%=item.CollectionName %>, deepSaveType, childTypes); 
 			}
 			#endregion 
 		<% } %>
