@@ -801,16 +801,15 @@ namespace <%=DALNameSpace%>.Bases
 	    /// <exception cref="ArgumentException">deepLoadType has invalid value.</exception>
 		internal override void DeepLoad(TransactionManager transactionManager, <%= className %> entity, bool deep, DeepLoadType deepLoadType, System.Type[] childTypes, Hashtable innerList)
 		{
+			
 			<%	//Generate a Source property for each foreign key relation		
 			System.Collections.ArrayList addedList2 = new System.Collections.ArrayList();
 			bool showOnce = false;			
 			foreach(TableKeySchema tableKey in SourceTable.ForeignKeys)
 			{
 				// related table must be in the selection
-				if (SourceTables.Contains(tableKey.PrimaryKeyTable)) {
-
-				if (tableKey.PrimaryKeyTable.Name == tableKey.ForeignKeyTable.Name)
-					continue;
+				if (SourceTables.Contains(tableKey.PrimaryKeyTable)) 
+				{
 				
 				string pkClassName = GetClassName(tableKey.PrimaryKeyTable.Name);
 				string pkProperty = GetKeysName(tableKey.PrimaryKeyMemberColumns);
@@ -838,8 +837,8 @@ namespace <%=DALNameSpace%>.Bases
 				innerList.Add("<%=pkClassName%>", new ArrayList());
 				
 			#region <%=compositePropertyName%>
-			if ((deepLoadType == DeepLoadType.IncludeChildren && innerList["<%=pkClassName.Trim()%>"] != null)
-				|| (deepLoadType == DeepLoadType.ExcludeChildren && innerList["<%=pkClassName.Trim()%>"] == null)
+			if (((deepLoadType == DeepLoadType.IncludeChildren && innerList["<%=pkClassName.Trim()%>"] != null)
+				|| (deepLoadType == DeepLoadType.ExcludeChildren && innerList["<%=pkClassName.Trim()%>"] == null))
 				&& !((ArrayList)innerList["<%=pkClassName%>"]).Contains("<%=compositePropertyName%>"))
 			{
 				if (entity.<%=compositePropertyName%> == null)
@@ -881,6 +880,7 @@ namespace <%=DALNameSpace%>.Bases
 			// Load Entity through Provider
 			<% 
 			int ctr = 0;
+				
 			foreach(CollectionInfo item in GetChildrenCollections(SourceTable, SourceTables))
 			{				
 				string listTypeName = item.CollectionTypeName.StartsWith("List") ? item.CollectionTypeName : item.CollectionTypeName.Substring(1);
@@ -895,9 +895,9 @@ namespace <%=DALNameSpace%>.Bases
 				innerList.Add("List<<%=GetClassName(item.SecondaryTable).Trim()%>>", new ArrayList());
 
 			// RelationshipType.ManyToMany
-			if ((deepLoadType == DeepLoadType.IncludeChildren && innerList["List<<%=GetClassName(item.SecondaryTable).Trim()%>>"] != null)
+			if (((deepLoadType == DeepLoadType.IncludeChildren && innerList["List<<%=GetClassName(item.SecondaryTable).Trim()%>>"] != null)
 				|| (deepLoadType == DeepLoadType.ExcludeChildren && innerList["List<<%=GetClassName(item.SecondaryTable).Trim()%>>"]  == null)
-				&& !((ArrayList)innerList["List<<%=GetClassName(item.SecondaryTable).Trim()%>>"]).Contains("<%=item.CollectionName%>"))
+				&& !((ArrayList)innerList["List<<%=GetClassName(item.SecondaryTable).Trim()%>>"]).Contains("<%=item.CollectionName%>")))
 			{		
 				entity.<%=item.CollectionName%> = DataRepository.<%=GetProviderClassName(item.SecondaryTable)%>.GetBy<%=item.GetByKeysName%>(transactionManager, <%=item.CallParams%>);			 
 			
@@ -922,8 +922,8 @@ namespace <%=DALNameSpace%>.Bases
 				innerList.Add("<%=listTypeName.Trim()%>", new ArrayList());
 
 			// RelationshipType.OneToOne
-			if ((deepLoadType == DeepLoadType.IncludeChildren && innerList["<%= listTypeName.Trim() %>"] != null)
-				|| (deepLoadType == DeepLoadType.ExcludeChildren && innerList["<%= listTypeName.Trim() %>"] == null)
+			if (((deepLoadType == DeepLoadType.IncludeChildren && innerList["<%= listTypeName.Trim() %>"] != null)
+				|| (deepLoadType == DeepLoadType.ExcludeChildren && innerList["<%= listTypeName.Trim() %>"] == null))
 				&& !((ArrayList)innerList["<%= listTypeName.Trim() %>"]).Contains("<%=item.CleanName%>"))
 			{
 				entity.<%=item.CleanName%> = DataRepository.<%=GetProviderClassName(item.SecondaryTable)%>.<%=item.GetByKeysName%>(transactionManager, <%=item.CallParams%>);
@@ -946,8 +946,8 @@ namespace <%=DALNameSpace%>.Bases
 				innerList.Add("<%=listTypeName.Trim()%>", new ArrayList());
 				
 			//Relationship Type One : Many
-			if ((deepLoadType == DeepLoadType.IncludeChildren && innerList["<%= listTypeName.Trim() %>"] != null)
-				|| (deepLoadType == DeepLoadType.ExcludeChildren && innerList["<%= listTypeName.Trim() %>"] == null)
+			if (((deepLoadType == DeepLoadType.IncludeChildren && innerList["<%= listTypeName.Trim() %>"] != null)
+				|| (deepLoadType == DeepLoadType.ExcludeChildren && innerList["<%= listTypeName.Trim() %>"] == null))
 				&& !((ArrayList)innerList["<%= listTypeName.Trim() %>"]).Contains("<%=item.CollectionName%>"))
 			{
 				#if NETTIERS_DEBUG

@@ -3020,11 +3020,20 @@ namespace MoM.Templates
 			
 			//Provides information about the indexes contained in the table. 
 			IndexSchemaCollection indexes = table.Indexes;
-			
-			//if (table.Name == "T_Symbol")
-				//System.Diagnostics.Debugger.Break();
-				
+							
 			TableKeySchemaCollection primaryKeyCollection = table.PrimaryKeys;
+			
+			//SchemaExplorer BugFix - PrimaryKey will not be added if the foreign key is referencing the same table.
+			/*
+			if (primaryKeyCollection.Count == 0 && table.PrimaryKey != null)
+			{
+				primaryKeyCollection = new TableKeySchemaCollection();
+				foreach (TableKeySchema key in table.Keys)
+				{
+					if (key.ForeignKeyTable == table) primaryKeyCollection.Add(key);
+				}	
+			}
+			*/
 			
 			foreach(TableKeySchema keyschema in primaryKeyCollection)
 			{
