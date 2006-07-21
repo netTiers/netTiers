@@ -783,7 +783,6 @@ namespace <%=DALNameSpace%>.Bases
 		<%-- Going to require knowing the foreign key indexes in order to do deep loading. --%>
 		<% if ( IncludeRelations && IncludeGetListByFK ) { %>
 		#region DeepLoad
-		
 		/// <summary>
 		/// Deep Loads the <see cref="IEntity"/> object with criteria based of the child 
 		/// property collections only N Levels Deep based on the <see cref="DeepLoadType"/>.
@@ -839,25 +838,21 @@ namespace <%=DALNameSpace%>.Bases
 			if (innerList["<%=pkClassName%>"] == null)
 				innerList.Add("<%=pkClassName%>", new ArrayList());
 				
-			if (((deepLoadType == DeepLoadType.IncludeChildren && innerList["<%=pkClassName.Trim()%>"] != null)
-				|| (deepLoadType == DeepLoadType.ExcludeChildren && innerList["<%=pkClassName.Trim()%>"] == null))
-				&& !((ArrayList)innerList["<%=pkClassName%>"]).Contains("<%=compositePropertyName%>"))
+			if (CanPropertyDeepLoad("<%=pkClassName.Trim()%>", "<%=compositePropertyName%>", deepLoadType, innerList) 
+				&& entity.<%=compositePropertyName%> == null)
 			{
-				if (entity.<%=compositePropertyName%> == null)
-				{
-					object[] pkItems = new object[<%= tableKey.ForeignKeyMemberColumns.Count %>];
-					<% for(int i = 0; i < tableKey.ForeignKeyMemberColumns.Count; i++) { 
-						ColumnSchema col = tableKey.ForeignKeyMemberColumns[i];
-					%>
-					pkItems[<%= i %>] = <%=GetObjectPropertyAccessorWithDefault(col, "entity")%>;
-					<% } %>
-					<%= pkClassName %> tmpEntity = EntityManager.LocateEntity<<%= pkClassName %>>(EntityLocator.ConstructKeyFromPkItems(typeof(<%=  pkClassName %>), pkItems), DataRepository.Provider.EnableEntityTracking);
-					if (tmpEntity != null)
-						entity.<%=compositePropertyName%> = tmpEntity;
-					else
-						entity.<%=compositePropertyName%> = DataRepository.<%= GetProviderName(pkClassName) %>.GetBy<%= pkProperty %>(<%= callParams %>);
-				}
-				
+				object[] pkItems = new object[<%= tableKey.ForeignKeyMemberColumns.Count %>];
+				<% for(int i = 0; i < tableKey.ForeignKeyMemberColumns.Count; i++) { 
+					ColumnSchema col = tableKey.ForeignKeyMemberColumns[i];
+				%>
+				pkItems[<%= i %>] = <%=GetObjectPropertyAccessorWithDefault(col, "entity")%>;
+				<% } %>
+				<%= pkClassName %> tmpEntity = EntityManager.LocateEntity<<%= pkClassName %>>(EntityLocator.ConstructKeyFromPkItems(typeof(<%=  pkClassName %>), pkItems), DataRepository.Provider.EnableEntityTracking);
+				if (tmpEntity != null)
+					entity.<%=compositePropertyName%> = tmpEntity;
+				else
+					entity.<%=compositePropertyName%> = DataRepository.<%= GetProviderName(pkClassName) %>.GetBy<%= pkProperty %>(<%= callParams %>);
+			
 				//track so it's not fetched again
 				((ArrayList)innerList["<%=pkClassName%>"]).Add("<%=compositePropertyName%>");
 				
@@ -897,12 +892,10 @@ namespace <%=DALNameSpace%>.Bases
 				innerList.Add("List<<%=GetClassName(item.SecondaryTable).Trim()%>>", new ArrayList());
 
 			// RelationshipType.ManyToMany
-			if (((deepLoadType == DeepLoadType.IncludeChildren && innerList["List<<%=GetClassName(item.SecondaryTable).Trim()%>>"] != null)
-				|| (deepLoadType == DeepLoadType.ExcludeChildren && innerList["List<<%=GetClassName(item.SecondaryTable).Trim()%>>"]  == null))
-				&& !((ArrayList)innerList["List<<%=GetClassName(item.SecondaryTable).Trim()%>>"]).Contains("<%=item.CollectionName%>"))
-			{		
+			if (CanPropertyDeepLoad("List<<%=GetClassName(item.SecondaryTable).Trim()%>>", "<%=item.CollectionName%>", deepLoadType, innerList)) 
+			{
 				entity.<%=item.CollectionName%> = DataRepository.<%=GetProviderClassName(item.SecondaryTable)%>.GetBy<%=item.GetByKeysName%>(transactionManager, <%=item.CallParams%>);			 
-			
+		
 				#if NETTIERS_DEBUG
 				Debug.WriteLine("- property '<%=item.CollectionName%>' loaded.");
 				#endif 
@@ -924,9 +917,7 @@ namespace <%=DALNameSpace%>.Bases
 				innerList.Add("<%=listTypeName.Trim()%>", new ArrayList());
 
 			// RelationshipType.OneToOne
-			if (((deepLoadType == DeepLoadType.IncludeChildren && innerList["<%= listTypeName.Trim() %>"] != null)
-				|| (deepLoadType == DeepLoadType.ExcludeChildren && innerList["<%= listTypeName.Trim() %>"] == null))
-				&& !((ArrayList)innerList["<%= listTypeName.Trim() %>"]).Contains("<%=item.CleanName%>"))
+			if (CanPropertyDeepLoad("<%= listTypeName.Trim() %>", "<%=item.CleanName%>", deepLoadType, innerList))
 			{
 				entity.<%=item.CleanName%> = DataRepository.<%=GetProviderClassName(item.SecondaryTable)%>.<%=item.GetByKeysName%>(transactionManager, <%=item.CallParams%>);
 				Trace.WriteLine("- property '<%=item.CleanName%>' loaded.");
@@ -948,9 +939,7 @@ namespace <%=DALNameSpace%>.Bases
 				innerList.Add("<%=listTypeName.Trim()%>", new ArrayList());
 				
 			//Relationship Type One : Many
-			if (((deepLoadType == DeepLoadType.IncludeChildren && innerList["<%= listTypeName.Trim() %>"] != null)
-				|| (deepLoadType == DeepLoadType.ExcludeChildren && innerList["<%= listTypeName.Trim() %>"] == null))
-				&& !((ArrayList)innerList["<%= listTypeName.Trim() %>"]).Contains("<%=item.CollectionName%>"))
+			if (CanPropertyDeepLoad("<%= listTypeName.Trim() %>", "<%=item.CollectionName%>", deepLoadType, innerList)) 
 			{
 				#if NETTIERS_DEBUG
 				Debug.WriteLine("- property '<%=item.CollectionName%>' loaded.");
@@ -1054,7 +1043,7 @@ namespace <%=DALNameSpace%>.Bases
 			<%
 			for(int i=0; i<item.TableKey.ForeignKeyMemberColumns.Count; i++)
 			{
-				Response.Write("\t\t\t\tentity."+ item.CleanName +"." + GetPropertyName(item.TableKey.ForeignKeyMemberColumns[i].Name) + " = entity." + GetPropertyName(item.TableKey.PrimaryKeyMemberColumns[i].Name) + ";");
+				Response.Write("\n\t\t\t\tentity."+ item.CleanName +"." + GetPropertyName(item.TableKey.ForeignKeyMemberColumns[i].Name) + " = entity." + GetPropertyName(item.TableKey.PrimaryKeyMemberColumns[i].Name) + ";");
 			}
 			%>
 			if (entity.<%=item.CleanName%> != null)
@@ -1076,8 +1065,7 @@ namespace <%=DALNameSpace%>.Bases
 				<% for(int i=0; i<item.TableKey.ForeignKeyMemberColumns.Count; i++)
 				{
 					Response.Write("\t\t\t\t\tchild." + GetPropertyName(item.TableKey.ForeignKeyMemberColumns[i].Name) + " = entity." + GetPropertyName(item.TableKey.PrimaryKeyMemberColumns[i].Name) + ";");
-				}
-				%>
+				}%>
 			}
 			
 			if (entity.<%=item.CollectionName%>.Count > 0)
@@ -1099,10 +1087,128 @@ namespace <%=DALNameSpace%>.Bases
 		<% }//end foreach CollectionInfo%>
 		}
 		#endregion
+		
+		#region Deep  Helper Methods
+		///<summary>
+		/// Enforces the rules set in order to 
+		/// load this property for a given type.
+		///</summary>
+		protected bool CanPropertyDeepLoad(String key, String property, DeepLoadType deepLoadType, IDictionary innerList) 
+        { 
+			if ( deepLoadType == DeepLoadType.ExcludeChildren && innerList[key] == null ) 
+			{ 
+				MarkDeepLoaded(key, property, innerList); 
+				return true; 
+			} 
+ 
+			if ( deepLoadType == DeepLoadType.IncludeChildren && innerList[key] != null ) 
+			{ 
+				if (innerList[key] == null)
+					innerList[key] = new ArrayList();
+					
+				if ( !(innerList[key] as IList).Contains(property) ) 
+				{ 
+					MarkDeepLoaded(key, property, innerList); 
+					return true; 
+				} 
+			} 
+
+           return false; 
+        } 
+		
+		///<summary>
+		/// Helper method used to mark a property 
+		/// that is already loaded for a given type.
+		///</summary>
+		protected void MarkDeepLoaded(String key, String property, IDictionary innerList) 
+		{ 
+			if (innerList == null)
+				return;
+			
+			if (innerList[key] == null) 
+			{ 
+				innerList[key] = new ArrayList(); 
+			} 
+			
+			(innerList[key] as IList ).Add(property); 
+		}
+		#endregion 
 		<% 	} // end if ( IncludeSave ) %>
 		<% } // end if ( Include Relations ) %>
+	
+	#region DeepLoadTypes
+	///<summary>
+	/// Enumeration used to expose the different child entity types 
+	/// for child properties in <c><%= className %></c>
+	///</summary>
+	public enum DeepLoadTypes
+	{
+	<% 
+	if ( IncludeRelations && IncludeGetListByFK ) 
+	{ 
+	   //Generate enum for each child type foreign key relation		
+			System.Collections.ArrayList addedList = new System.Collections.ArrayList();
+			bool showOnce = false;			
+			foreach(TableKeySchema tableKey in SourceTable.ForeignKeys)
+			{
+				// related table must be in the selection
+				if (SourceTables.Contains(tableKey.PrimaryKeyTable)) 
+				{
+					string pkClassName = GetClassName(tableKey.PrimaryKeyTable.Name);
+					string pkProperty = GetKeysName(tableKey.PrimaryKeyMemberColumns);
+					string fkPropertyName = GetKeysName(tableKey.ForeignKeyMemberColumns);
+					string compositePropertyName =  fkPropertyName + "Source";
+				
+				if (addedList.Contains(pkClassName))
+					continue;
+									
+				addedList.Add(pkClassName); 	%>
+		
+		///<summary>
+		/// Composite Property for <c><%= pkClassName %></c> at <%= compositePropertyName %>
+		///</summary>
+		[DeepLoadType(typeof(<%= pkClassName %>))]
+		<%= pkClassName %>,
+	<%
+			} // end if
+		} // end foreach
+	%><%
+	foreach(CollectionInfo item in GetChildrenCollections(SourceTable, SourceTables))
+	{	
+		if (item.CollectionRelationshipType != RelationshipType.OneToOne)
+		{
+			if (addedList.Contains(item.CollectionName))
+				continue;
+			
+	%>
+		///<summary>
+		/// Collection of <c><%= item.PrimaryTable %></c> as <%= item.CollectionRelationshipType.ToString() %> for <%= item.CollectionName  %>
+		///</summary>
+		[DeepLoadType(typeof(<%= item.CollectionTypeName %>))]
+		<%= item.CollectionName %>,
+	<% 
+		addedList.Add(item.CollectionName);
+		}
+		else
+		{
+			if (addedList.Contains(item.CleanName))
+				continue;
+		%> 
+		///<summary>
+		/// Entity <c><%= item.CleanName %><c> as <%= item.CollectionRelationshipType.ToString() %> for <%= item.CleanName  %>
+		///</summary>
+		[DeepLoadType(typeof(<%= item.CleanName %>))]
+		<%= item.CleanName %>,
+		<%	
+		addedList.Add(item.CleanName);
+		}
+	  }
+	}
+	%>  
+	}
+	#endregion 
 	} // end class
-
+	
 	#region <%= entityClassName %>FilterBuilder
 	
 	/// <summary>
