@@ -834,10 +834,7 @@ namespace <%=DALNameSpace%>.Bases
 			}			
 			%>
 
-			#region <%=compositePropertyName%>
-			if (innerList["<%=pkClassName%>"] == null)
-				innerList.Add("<%=pkClassName%>", new ArrayList());
-				
+			#region <%=compositePropertyName%>	
 			if (CanPropertyDeepLoad("<%=pkClassName.Trim()%>", "<%=compositePropertyName%>", deepLoadType, innerList) 
 				&& entity.<%=compositePropertyName%> == null)
 			{
@@ -853,9 +850,6 @@ namespace <%=DALNameSpace%>.Bases
 				else
 					entity.<%=compositePropertyName%> = DataRepository.<%= GetProviderName(pkClassName) %>.GetBy<%= pkProperty %>(<%= callParams %>);
 			
-				//track so it's not fetched again
-				((ArrayList)innerList["<%=pkClassName%>"]).Add("<%=compositePropertyName%>");
-				
 				if (deep && entity.<%=compositePropertyName%> != null)
 				{
 					DataRepository.<%=GetProviderClassName(pkClassName)%>.DeepLoad(transactionManager, entity.<%=compositePropertyName%>, deep, deepLoadType, childTypes, innerList);
@@ -888,9 +882,6 @@ namespace <%=DALNameSpace%>.Bases
 			<% if (item.CollectionRelationshipType == RelationshipType.ManyToMany) { %>
 			
 			#region <%=item.CollectionName%>
-			if (innerList["List<<%=GetClassName(item.SecondaryTable).Trim()%>>"] == null)
-				innerList.Add("List<<%=GetClassName(item.SecondaryTable).Trim()%>>", new ArrayList());
-
 			// RelationshipType.ManyToMany
 			if (CanPropertyDeepLoad("List<<%=GetClassName(item.SecondaryTable).Trim()%>>", "<%=item.CollectionName%>", deepLoadType, innerList)) 
 			{
@@ -899,10 +890,7 @@ namespace <%=DALNameSpace%>.Bases
 				#if NETTIERS_DEBUG
 				Debug.WriteLine("- property '<%=item.CollectionName%>' loaded.");
 				#endif 
-		
-				//track so it's not fetched again
-				((ArrayList)innerList["List<<%=GetClassName(item.SecondaryTable)%>>"]).Add("<%=item.CollectionName%>");
-				
+			
 				if (deep && entity.<%=item.CollectionName%>.Count > 0)
 				{
 					DataRepository.<%=GetProviderClassName(item.SecondaryTable)%>.DeepLoad(transactionManager, entity.<%=item.CollectionName%>, deep, deepLoadType, childTypes, innerList);
@@ -913,18 +901,12 @@ namespace <%=DALNameSpace%>.Bases
 			<% } else if (item.CollectionRelationshipType == RelationshipType.OneToOne) { %>
 			
 			#region <%=item.CleanName%>
-			if (innerList["<%=listTypeName.Trim()%>"] == null)
-				innerList.Add("<%=listTypeName.Trim()%>", new ArrayList());
-
 			// RelationshipType.OneToOne
 			if (CanPropertyDeepLoad("<%= listTypeName.Trim() %>", "<%=item.CleanName%>", deepLoadType, innerList))
 			{
 				entity.<%=item.CleanName%> = DataRepository.<%=GetProviderClassName(item.SecondaryTable)%>.<%=item.GetByKeysName%>(transactionManager, <%=item.CallParams%>);
 				Trace.WriteLine("- property '<%=item.CleanName%>' loaded.");
-			
-				//track so it's not fetched again
-				((ArrayList)innerList["<%=listTypeName%>"]).Add("<%=item.CleanName%>");
-			
+
 				if (deep && entity.<%=item.CleanName%> != null)
 				{
 					DataRepository.<%=GetProviderClassName(item.SecondaryTable)%>.DeepLoad(transactionManager, entity.<%=item.CleanName%>, deep, deepLoadType, childTypes, innerList);
@@ -935,9 +917,6 @@ namespace <%=DALNameSpace%>.Bases
 			<% } else { %>
 			
 			#region <%=item.CollectionName%>
-			if (innerList["<%=listTypeName.Trim()%>"] == null)
-				innerList.Add("<%=listTypeName.Trim()%>", new ArrayList());
-				
 			//Relationship Type One : Many
 			if (CanPropertyDeepLoad("<%= listTypeName.Trim() %>", "<%=item.CollectionName%>", deepLoadType, innerList)) 
 			{
@@ -946,10 +925,7 @@ namespace <%=DALNameSpace%>.Bases
 				#endif 
 
 				entity.<%=item.CollectionName%> = DataRepository.<%=GetProviderClassName(item.SecondaryTable)%>.<%=item.GetByKeysName%>(transactionManager, <%=item.CallParams%>);
-
-				//track so it's not fetched again
-				((ArrayList)innerList["<%=listTypeName%>"]).Add("<%=item.CollectionName%>");
-				
+	
 				if (deep && entity.<%=item.CollectionName%>.Count > 0)
 				{
 					DataRepository.<%=GetProviderClassName(item.SecondaryTable)%>.DeepLoad(transactionManager, entity.<%=item.CollectionName%>, deep, deepLoadType, childTypes, innerList);
