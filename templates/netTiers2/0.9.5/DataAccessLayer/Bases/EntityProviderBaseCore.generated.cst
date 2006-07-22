@@ -795,10 +795,10 @@ namespace <%=DALNameSpace%>.Bases
 		/// <param name="deep">Boolean. A flag that indicates whether to recursively save all Property Collection that are descendants of this instance. If True, saves the complete object graph below this object. If False, saves this object only. </param>
 		/// <param name="deepLoadType">DeepLoadType Enumeration to Include/Exclude object property collections from Load.</param>
 		/// <param name="childTypes"><%= className %> Property Collection Type Array To Include or Exclude from Load</param>
-		/// <param name="innerList">A Hashtable of child types for easy access.</param>
+		/// <param name="innerList">A collection of child types for easy access.</param>
 	    /// <exception cref="ArgumentNullException">entity or childTypes is null.</exception>
 	    /// <exception cref="ArgumentException">deepLoadType has invalid value.</exception>
-		internal override void DeepLoad(TransactionManager transactionManager, <%= className %> entity, bool deep, DeepLoadType deepLoadType, System.Type[] childTypes, Hashtable innerList)
+		internal override void DeepLoad(TransactionManager transactionManager, <%= className %> entity, bool deep, DeepLoadType deepLoadType, System.Type[] childTypes, ChildEntityTypesList innerList)
 		{
 			if(entity == null)
 				return;
@@ -835,7 +835,7 @@ namespace <%=DALNameSpace%>.Bases
 			%>
 
 			#region <%=compositePropertyName%>	
-			if (CanPropertyDeepLoad("<%=pkClassName.Trim()%>", "<%=compositePropertyName%>", deepLoadType, innerList) 
+			if (CanDeepLoad(entity, "<%=pkClassName.Trim()%>", "<%=compositePropertyName%>", deepLoadType, innerList) 
 				&& entity.<%=compositePropertyName%> == null)
 			{
 				object[] pkItems = new object[<%= tableKey.ForeignKeyMemberColumns.Count %>];
@@ -883,14 +883,14 @@ namespace <%=DALNameSpace%>.Bases
 			
 			#region <%=item.CollectionName%>
 			// RelationshipType.ManyToMany
-			if (CanPropertyDeepLoad("List<<%=GetClassName(item.SecondaryTable).Trim()%>>", "<%=item.CollectionName%>", deepLoadType, innerList)) 
+			if (CanDeepLoad(entity, "List<<%=GetClassName(item.SecondaryTable).Trim()%>>", "<%=item.CollectionName%>", deepLoadType, innerList))
 			{
 				entity.<%=item.CollectionName%> = DataRepository.<%=GetProviderClassName(item.SecondaryTable)%>.GetBy<%=item.GetByKeysName%>(transactionManager, <%=item.CallParams%>);			 
 		
 				#if NETTIERS_DEBUG
 				Debug.WriteLine("- property '<%=item.CollectionName%>' loaded.");
 				#endif 
-			
+
 				if (deep && entity.<%=item.CollectionName%>.Count > 0)
 				{
 					DataRepository.<%=GetProviderClassName(item.SecondaryTable)%>.DeepLoad(transactionManager, entity.<%=item.CollectionName%>, deep, deepLoadType, childTypes, innerList);
@@ -902,7 +902,7 @@ namespace <%=DALNameSpace%>.Bases
 			
 			#region <%=item.CleanName%>
 			// RelationshipType.OneToOne
-			if (CanPropertyDeepLoad("<%= listTypeName.Trim() %>", "<%=item.CleanName%>", deepLoadType, innerList))
+			if (CanDeepLoad(entity, "<%= listTypeName.Trim() %>", "<%=item.CleanName%>", deepLoadType, innerList))
 			{
 				entity.<%=item.CleanName%> = DataRepository.<%=GetProviderClassName(item.SecondaryTable)%>.<%=item.GetByKeysName%>(transactionManager, <%=item.CallParams%>);
 				Trace.WriteLine("- property '<%=item.CleanName%>' loaded.");
@@ -918,14 +918,14 @@ namespace <%=DALNameSpace%>.Bases
 			
 			#region <%=item.CollectionName%>
 			//Relationship Type One : Many
-			if (CanPropertyDeepLoad("<%= listTypeName.Trim() %>", "<%=item.CollectionName%>", deepLoadType, innerList)) 
+			if (CanDeepLoad(entity, "<%= listTypeName.Trim() %>", "<%=item.CollectionName%>", deepLoadType, innerList)) 
 			{
 				#if NETTIERS_DEBUG
 				Debug.WriteLine("- property '<%=item.CollectionName%>' loaded.");
 				#endif 
 
 				entity.<%=item.CollectionName%> = DataRepository.<%=GetProviderClassName(item.SecondaryTable)%>.<%=item.GetByKeysName%>(transactionManager, <%=item.CallParams%>);
-	
+
 				if (deep && entity.<%=item.CollectionName%>.Count > 0)
 				{
 					DataRepository.<%=GetProviderClassName(item.SecondaryTable)%>.DeepLoad(transactionManager, entity.<%=item.CollectionName%>, deep, deepLoadType, childTypes, innerList);
@@ -1063,61 +1063,17 @@ namespace <%=DALNameSpace%>.Bases
 		<% }//end foreach CollectionInfo%>
 		}
 		#endregion
-		
-		#region Deep  Helper Methods
-		///<summary>
-		/// Enforces the rules set in order to 
-		/// load this property for a given type.
-		///</summary>
-		protected bool CanPropertyDeepLoad(String key, String property, DeepLoadType deepLoadType, IDictionary innerList) 
-        { 
-			if ( deepLoadType == DeepLoadType.ExcludeChildren && innerList[key] == null ) 
-			{ 
-				MarkDeepLoaded(key, property, innerList); 
-				return true; 
-			} 
- 
-			if ( deepLoadType == DeepLoadType.IncludeChildren && innerList[key] != null ) 
-			{ 
-				if (innerList[key] == null)
-					innerList[key] = new ArrayList();
-					
-				if ( !(innerList[key] as IList).Contains(property) ) 
-				{ 
-					MarkDeepLoaded(key, property, innerList); 
-					return true; 
-				} 
-			} 
-
-           return false; 
-        } 
-		
-		///<summary>
-		/// Helper method used to mark a property 
-		/// that is already loaded for a given type.
-		///</summary>
-		protected void MarkDeepLoaded(String key, String property, IDictionary innerList) 
-		{ 
-			if (innerList == null)
-				return;
-			
-			if (innerList[key] == null) 
-			{ 
-				innerList[key] = new ArrayList(); 
-			} 
-			
-			(innerList[key] as IList ).Add(property); 
-		}
-		#endregion 
 		<% 	} // end if ( IncludeSave ) %>
 		<% } // end if ( Include Relations ) %>
+	} // end class
 	
-	#region DeepLoadTypes
+	#region <%= entityClassName %>ChildEntityTypes
+	
 	///<summary>
 	/// Enumeration used to expose the different child entity types 
 	/// for child properties in <c><%= className %></c>
 	///</summary>
-	public enum DeepLoadTypes
+	public enum <%= entityClassName %>ChildEntityTypes
 	{
 	<% 
 	if ( IncludeRelations && IncludeGetListByFK ) 
@@ -1143,7 +1099,7 @@ namespace <%=DALNameSpace%>.Bases
 		///<summary>
 		/// Composite Property for <c><%= pkClassName %></c> at <%= compositePropertyName %>
 		///</summary>
-		[DeepLoadType(typeof(<%= pkClassName %>))]
+		[ChildEntityType(typeof(<%= pkClassName %>))]
 		<%= pkClassName %>,
 	<%
 			} // end if
@@ -1160,7 +1116,7 @@ namespace <%=DALNameSpace%>.Bases
 		///<summary>
 		/// Collection of <c><%= item.PrimaryTable %></c> as <%= item.CollectionRelationshipType.ToString() %> for <%= item.CollectionName  %>
 		///</summary>
-		[DeepLoadType(typeof(<%= item.CollectionTypeName %>))]
+		[ChildEntityType(typeof(<%= item.CollectionTypeName %>))]
 		<%= item.CollectionName %>,
 	<% 
 		addedList.Add(item.CollectionName);
@@ -1173,7 +1129,7 @@ namespace <%=DALNameSpace%>.Bases
 		///<summary>
 		/// Entity <c><%= item.CleanName %><c> as <%= item.CollectionRelationshipType.ToString() %> for <%= item.CleanName  %>
 		///</summary>
-		[DeepLoadType(typeof(<%= item.CleanName %>))]
+		[ChildEntityType(typeof(<%= item.CleanName %>))]
 		<%= item.CleanName %>,
 		<%	
 		addedList.Add(item.CleanName);
@@ -1182,8 +1138,8 @@ namespace <%=DALNameSpace%>.Bases
 	}
 	%>  
 	}
-	#endregion 
-	} // end class
+	
+	#endregion <%= entityClassName %>ChildEntityTypes
 	
 	#region <%= entityClassName %>FilterBuilder
 	
