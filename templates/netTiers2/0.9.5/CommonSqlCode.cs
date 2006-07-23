@@ -69,7 +69,7 @@ namespace MoM.Templates
 		/// </summary>
 		/// <param name="n">Number of tabs</param>
 		/// <returns>n tabs</returns>
-		public string Tab(int n)
+		public static string Tab(int n)
 		{
 			return new String('\t', n);
 		}
