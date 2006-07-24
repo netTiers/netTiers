@@ -3522,6 +3522,57 @@ namespace MoM.Templates
 			public TableKeySchema TableKey = null;
 		}
 	#endregion		
+	
+	///<summary>
+	/// Get's the parent tables if any based on a child table.
+	///</summary>
+	public TableSchemaCollection GetParentTables(SchemaExplorer.TableSchema table){
+            TableSchemaCollection _tbParent= new TableSchemaCollection();
+            if(CurrentTable != table.Name){
+                CurrentTable = table.Name;
+            }
+            DatabaseSchema _dbCurrent;
+            _dbCurrent=table.Database;
+            
+            foreach(TableSchema _tb in _dbCurrent.Tables){
+                if(CurrentTable!=_tb.Name){
+                    foreach(ColumnSchema _col in _tb.PrimaryKey.MemberColumns){
+                        foreach(ColumnSchema col in table.Columns){
+                            if (col.Name == _col.Name){
+                                _tbParent.Add(_tb);
+                            }
+                        }                        
+                    }
+                }
+            }
+            return _tbParent;
+        }
+		
+			
+		///<summary>
+		///  Get's all the child tables based on a parent table
+		///</summary>
+		public TableSchemaCollection GetChildTables(SchemaExplorer.TableSchema table)
+		{
+            TableSchemaCollection _tbChild= new TableSchemaCollection();
+                if(CurrentTable != table.Name){
+                    CurrentTable = table.Name;
+                }
+                DatabaseSchema _dbCurrent;
+                _dbCurrent=table.Database;
+                foreach(TableSchema _tb in _dbCurrent.Tables){
+                    if(CurrentTable!=_tb.Name){
+                        foreach(ColumnSchema _col in _tb.Columns){
+                            foreach(ColumnSchema primaryCol in table.PrimaryKey.MemberColumns){
+                                if (_col.Name == primaryCol.Name){
+                                    _tbChild.Add(_tb);
+                                }
+                            }                       
+                        }
+                    }
+                }
+            return _tbChild;
+        }
 	}
 
 	#region Retry
@@ -3578,5 +3629,6 @@ namespace MoM.Templates
 		//Oracle10g,
 	}
 	#endregion
+	
 }
 

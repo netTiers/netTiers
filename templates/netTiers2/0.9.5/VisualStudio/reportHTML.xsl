@@ -91,7 +91,11 @@
 	    type="<xsl:value-of select="//NetTiersReport/@DALNameSpace" />.SqlClient.SqlNetTiersProvider, <xsl:value-of select="//NetTiersReport/@DALNameSpace" />.SqlClient"
 	    connectionStringName="netTiersConnectionString"
 	    useStoredProcedure="false"
-	    providerInvariantName="System.Data.SqlClient" /&gt;
+	    providerInvariantName="System.Data.SqlClient" 
+		entityFactoryType="Namespace.Entities.EntityFactory"
+		enableEntityTracking="true"
+		enableMethodAuthorization="false"
+		/&gt;
     <!-- 
       *** WebserviceClient Provider ***
       The url parameter indicates the webservices url (ex: http://localhost/NorthWind/NorthWindServices.aspx)
