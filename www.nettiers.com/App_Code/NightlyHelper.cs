@@ -21,6 +21,7 @@ public class NightlyHelper
 	public static string rootPath = "nightly";
 	public static string fx1Mask = "nettiers-fx1.1-*.zip";
 	public static string fx2Mask = "nettiers-fx2.0-*.zip";
+	public static string fx2bMask = "nettiers-fx2.0b-*.zip";
 
 	public NightlyHelper()
 	{
@@ -58,18 +59,16 @@ public class NightlyHelper
 	[System.ComponentModel.DataObjectMethod( System.ComponentModel.DataObjectMethodType.Select)]
 	public List<NigtlyBuild> GetFiles(string mask)
 	{
+	    int startPos = (mask == fx2bMask ? 16 : 15);
 		List<NigtlyBuild> files = new List<NigtlyBuild>();
 		DirectoryInfo dir = new DirectoryInfo(HttpContext.Current.Server.MapPath(rootPath));
-		foreach (FileInfo file in dir.GetFiles(mask))
-		{
-			files.Add(new NigtlyBuild(string.Format("{0}/{1}/{2}", file.Name.Substring(15, 4), file.Name.Substring(19, 2), file.Name.Substring(21,2)), file.Name));
-		}
+	    foreach (FileInfo file in dir.GetFiles(mask))
+	    {
+		    files.Add(new NigtlyBuild(string.Format("{0}/{1}/{2}", file.Name.Substring(startPos, 4), file.Name.Substring(startPos + 4, 2), file.Name.Substring(startPos + 6, 2)), file.Name));
+	    }
 
 		files.Sort(delegate(NigtlyBuild n1, NigtlyBuild n2 ){return n1.Name.CompareTo(n2.Name);});
 		files.Reverse();
 		return files;
-	}
-
-	
-	
+	}	
 }

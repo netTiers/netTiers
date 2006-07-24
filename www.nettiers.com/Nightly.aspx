@@ -10,12 +10,24 @@
     -->
     </script>
 
-<h3>.netTier downloads</h3>
+<h3>.netTiers downloads</h3>
 
 <b>official releases: </b><br/>
 <ul>
 <li><a href="files/nettiers beta 2.msi">.netTiers 0.9.2 [2005/22/11]</a></li></ul>
 
+<b>NIGHTLY BUILDS :: .netTiers 2.0 Beta for .net 2.0 framework</b>
+<ul>
+<li>
+ <asp:dropdownlist 
+    id="DropDownList3" 
+    runat="server" 
+    datasourceid="ObjectDataSource3"
+    datatextfield="Name" 
+    datavaluefield="FileName"></asp:dropdownlist>
+    <asp:Button ID="Button3" runat="server" Text="Download" OnClick="Button3_Click" /> (date format: yyyy/mm/dd)
+    </li></ul>
+    
 <b>NIGHTLY BUILDS :: .netTiers for .net 1.1 framework</b>
 <ul>
 <li>
@@ -28,7 +40,7 @@
     <asp:Button ID="Button1" runat="server" Text="Download" OnClick="Button1_Click" />(date format: yyyy/mm/dd)
     </li></ul>
 
-<b>NIGHTLY BUILDS :: .netTiers for .net 2.0 framework</b>
+<b>NIGHTLY BUILDS :: .netTiers 2.0 CTP for .net 2.0 framework</b>
 <ul>
 <li>
  <asp:dropdownlist 
@@ -56,6 +68,11 @@
 </SelectParameters>
 </asp:objectdatasource>
 
+<asp:objectdatasource id="ObjectDataSource3" runat="server" oldvaluesparameterformatstring="original_{0}"
+        selectmethod="GetFiles" typename="NightlyHelper"><SelectParameters>
+<asp:Parameter Type="String" DefaultValue="nettiers-fx2.0b-*.zip" Name="mask"></asp:Parameter>
+</SelectParameters>
+</asp:objectdatasource>
 
 
 </asp:Content>

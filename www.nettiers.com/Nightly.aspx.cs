@@ -31,6 +31,7 @@ public partial class Nightly : System.Web.UI.Page
 		{
 			Button1.Attributes.Add("onclick", "swtag('scriptname=nightly-download', 'fx=11', 'SemWayId=" + SemWayId + "')");
 			Button2.Attributes.Add("onclick", "swtag('scriptname=nightly-download', 'fx=20', 'SemWayId=" + SemWayId + "')");
+			Button3.Attributes.Add("onclick", "swtag('scriptname=nightly-download', 'fx=20', 'SemWayId=" + SemWayId + "')");
 		
 			//Button1.Attributes.Add("onclick", "swtag('scriptname=nightly-download', 'fx=1.1');urchinTracker('/fx11_download.html')");
 			//Button2.Attributes.Add("onclick", "swtag('scriptname=nightly-download', 'fx=2.0');urchinTracker('/fx20_download.html')");
@@ -46,7 +47,12 @@ public partial class Nightly : System.Web.UI.Page
 		SWTracker.LogThis(62, SemWayId);
 		HttpContext.Current.Response.Redirect("nightly/" + DropDownList2.SelectedValue);
 	}
-
+    
+    protected void Button3_Click(object sender, EventArgs e)
+	{
+		SWTracker.LogThis(62, SemWayId);
+		HttpContext.Current.Response.Redirect("nightly/" + DropDownList3.SelectedValue);
+	}
 	
 
 }
