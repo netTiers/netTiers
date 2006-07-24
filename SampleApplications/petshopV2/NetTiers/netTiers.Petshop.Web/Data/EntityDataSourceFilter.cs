@@ -1,4 +1,4 @@
-#region Imports...
+#region Using Directives
 using System;
 using System.Data;
 using System.Collections;
@@ -75,12 +75,12 @@ namespace netTiers.Petshop.Web.Data
 		#region Methods
 
 		/// <summary>
-		/// Gets a reference to the associated EntityDataSource class.
+		/// Gets a reference to the associated <see cref="IListDataSource"/> object.
 		/// </summary>
-		/// <returns>An reference to an EntityDataSource object.</returns>
-		public EntityDataSource GetEntityDataSource()
+		/// <returns>An reference to an <see cref="IListDataSource"/> object.</returns>
+		public IListDataSource GetListDataSource()
 		{
-			return GetDataSource() as EntityDataSource;
+			return GetDataSource() as IListDataSource;
 		}
 
 		/// <summary>
@@ -204,7 +204,7 @@ namespace netTiers.Petshop.Web.Data
 			#region DataSourceView Members
 
 			/// <summary>
-			/// Gets the list of data from the associated EntityDataSource control and
+			/// Gets the list of data from the associated <see cref="IListDataSource"/> control and
 			/// applies the specified filter and sort expression.
 			/// </summary>
 			/// <param name="arguments">A System.Web.UI.DataSourceSelectArguments that
@@ -212,7 +212,7 @@ namespace netTiers.Petshop.Web.Data
 			/// <returns>An System.Collections.IEnumerable list of data from the associated EntityDataSource.</returns>
 			protected override IEnumerable ExecuteSelect(DataSourceSelectArguments arguments)
 			{
-				EntityDataSource dataSource = _owner.GetEntityDataSource();
+				IListDataSource dataSource = _owner.GetListDataSource();
 				IEnumerable entityList = null;
 
 				if ( dataSource != null )
@@ -290,7 +290,8 @@ namespace netTiers.Petshop.Web.Data
 			/// <summary>
 			/// Raises the ApplyFilter event.
 			/// </summary>
-			/// <param name="entityList">The list of data retrieved fromt he associated EntityDataSource control.</param>
+			/// <param name="entityList">The list of data retrieved from the associated
+			/// <see cref="IListDataSource"/> control.</param>
 			private void OnApplyFilter(IEnumerable entityList)
 			{
 				if ( ApplyFilter != null )
@@ -303,7 +304,8 @@ namespace netTiers.Petshop.Web.Data
 			/// <summary>
 			/// Raises the ApplySort event.
 			/// </summary>
-			/// <param name="entityList">The list of data retrieved fromt he associated EntityDataSource control.</param>
+			/// <param name="entityList">The list of data retrieved from the associated
+			/// <see cref="IListDataSource"/> control.</param>
 			private void OnApplySort(IEnumerable entityList)
 			{
 				if ( ApplySort != null )

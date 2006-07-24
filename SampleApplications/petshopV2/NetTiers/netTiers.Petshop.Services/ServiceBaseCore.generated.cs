@@ -329,8 +329,8 @@ namespace netTiers.Petshop.Services
 		/// <param name="deep">A flag that indicates whether to recursively load all Property Collections that are descendants of this instance. If True, loads the complete object graph below this object. If False, loads this object only.</param>
 		/// <param name="deepLoadType">DeepLoadType Enumeration to Include/Exclude object property collections from Load.</param>
 		/// <param name="childTypes">Entity Property Collection Type Array To Include or Exclude from Load.</param>
-		/// <param name="innerList">A Hashtable of child types for easy access.</param>
-		protected virtual void DeepLoad(Entity entity, bool deep, DeepLoadType deepLoadType, System.Type[] childTypes, Hashtable innerList)
+		/// <param name="innerList">A collection of child types for easy access.</param>
+		protected virtual void DeepLoad(Entity entity, bool deep, DeepLoadType deepLoadType, System.Type[] childTypes, ChildEntityTypesList innerList)
 		{
 			throw new NotImplementedException();
 		}
@@ -457,5 +457,15 @@ namespace netTiers.Petshop.Services
 		{
 			this.processor = processor;
 		}
+		
+		/// <summary>
+        /// Gets or sets the processor.
+        /// </summary>
+        /// <value>The processor.</value>
+		public ProcessorBase Processor
+	    {
+	        get { return processor; }
+	        set { processor = value; }
+	    }
 	}
 }

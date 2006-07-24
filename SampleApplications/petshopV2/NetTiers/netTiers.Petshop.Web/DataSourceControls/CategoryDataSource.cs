@@ -144,14 +144,14 @@ namespace netTiers.Petshop.Web.Data
 			Category item;
 			count = 0;
 			
-			System.String id;
+			System.Guid id;
 
 			switch ( SelectMethod )
 			{
 				case CategorySelectMethod.Get:
-					CategoryKey key = new CategoryKey();
-					key.Load(values);
-					item = CategoryProvider.Get(key);
+					CategoryKey entityKey  = new CategoryKey();
+					entityKey.Load(values);
+					item = CategoryProvider.Get(entityKey);
 					results = new TList<Category>();
 					if ( item != null ) results.Add(item);
 					count = results.Count;
@@ -167,7 +167,7 @@ namespace netTiers.Petshop.Web.Data
                     break;
 				// PK
 				case CategorySelectMethod.GetById:
-					id = ( values["Id"] != null ) ? (System.String) EntityUtil.ChangeType(values["Id"], typeof(System.String)) : string.Empty;
+					id = ( values["Id"] != null ) ? (System.Guid) EntityUtil.ChangeType(values["Id"], typeof(System.Guid)) : Guid.Empty;
 					item = CategoryProvider.GetById(id);
 					results = new TList<Category>();
 					if ( item != null ) results.Add(item);
@@ -194,6 +194,19 @@ namespace netTiers.Petshop.Web.Data
 				EntityId = GetEntityKey(values);
 			}
 		}
+
+		/// <summary>
+		/// Sets the primary key values of the specified Entity object.
+		/// </summary>
+		/// <param name="entity">The Entity object to update.</param>
+		protected override void SetEntityKeyValues(Category entity)
+		{
+			base.SetEntityKeyValues(entity);
+			
+			// make sure primary key column(s) have been set
+			if ( entity.Id == Guid.Empty )
+				entity.Id = Guid.NewGuid();
+		}
 		
 		/// <summary>
 		/// Performs a DeepLoad operation for the current entity if it has
@@ -203,8 +216,16 @@ namespace netTiers.Petshop.Web.Data
 		{
 			if ( !IsDeepLoaded )
 			{
-				IsDeepLoaded = true;
-				CategoryProvider.DeepLoad(GetCurrentEntity());
+				Category entity = GetCurrentEntity();
+				
+				if ( entity != null )
+				{
+					// init transaction manager
+					GetTransactionManager();
+					// execute deep load method
+					CategoryProvider.DeepLoad(GetCurrentEntity(), EnableRecursiveDeepLoad);
+					IsDeepLoaded = true;
+				}
 			}
 		}
 

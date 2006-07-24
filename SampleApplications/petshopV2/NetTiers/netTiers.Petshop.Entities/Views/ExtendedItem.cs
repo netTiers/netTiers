@@ -38,7 +38,7 @@ namespace netTiers.Petshop.Entities
 		///<param name="productDescription"></param>
 		///<param name="categoryId"></param>
 		///<param name="categoryName"></param>
-		public ExtendedItem(System.String itemId, System.String itemName, System.String itemDescription, System.Double? itemPrice, System.String itemPhoto, System.String productId, System.String productName, System.String productDescription, System.String categoryId, System.String categoryName)
+		public ExtendedItem(System.Guid itemId, System.String itemName, System.String itemDescription, System.Double? itemPrice, System.String itemPhoto, System.Guid productId, System.String productName, System.String productDescription, System.Guid categoryId, System.String categoryName)
 			:base(itemId, itemName, itemDescription, itemPrice, itemPhoto, productId, productName, productDescription, categoryId, categoryName){}
 		
 		#endregion

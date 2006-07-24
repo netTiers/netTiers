@@ -1,4 +1,4 @@
-#region Imports...
+#region Using Directives
 using System;
 using System.Data;
 using System.Collections;
@@ -17,11 +17,11 @@ using netTiers.Petshop.Web.UI;
 namespace netTiers.Petshop.Web.Data
 {
 	/// <summary>
-	/// Binds specific data from an EntityDataSource to a parameter object.
+	/// Binds specific data from an <see cref="IListDataSource"/> to a parameter object.
 	/// </summary>
 	public class DataParameter : Parameter
 	{
-		private EntityDataSource _dataSource;
+		private IListDataSource _dataSource;
 		private String _dataSourceID;
 		private String _entityKeyName;
 		private String _propertyName;
@@ -72,7 +72,7 @@ namespace netTiers.Petshop.Web.Data
 
 			if ( _dataSource == null && control != null )
 			{
-				_dataSource = control.FindControl(DataSourceID) as EntityDataSource;
+				_dataSource = control.FindControl(DataSourceID) as IListDataSource;
 			}
 			if ( _dataSource != null )
 			{
@@ -81,14 +81,13 @@ namespace netTiers.Petshop.Web.Data
 				if ( entityList != null )
 				{
 					CommaDelimitedStringCollection values = new CommaDelimitedStringCollection();
-					String keyName = EntityKeyName ?? _dataSource.EntityKeyName;
-					String propertyName = PropertyName ?? keyName;
+					String propertyName = PropertyName ?? EntityKeyName;
 					IList list = EntityUtil.GetEntityList(entityList);
 					Object temp;
 
 					foreach ( Object item in list )
 					{
-						temp = EntityUtil.GetPropertyValue(item, keyName);
+						temp = EntityUtil.GetPropertyValue(item, EntityKeyName);
 
 						if ( temp != null )
 						{

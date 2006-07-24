@@ -116,8 +116,7 @@ namespace netTiers.Petshop.Entities
 									//Test if CacheManagerKey is Configured
                                     cacheManagerFactory.Create(CacheManagerKey);
                                 }
-                                //catch(System.Configuration.ConfigurationErrorsException)
-                                catch
+                                catch(System.Configuration.ConfigurationErrorsException)
                                 {
                                     // Currently not configured, generate configuration
                                     configurationSource = GenerateConfiguration();
@@ -201,10 +200,7 @@ namespace netTiers.Petshop.Entities
         /// <returns></returns> 
 		public static T GetItem<T>(string id) where T : class
         {
-            if (CacheManager.Contains(id))
-                return CacheManager.GetData(id) as T;    
-            
-            return null;
+            return cacheManager.GetData(id) as T;    
         }
         #endregion
     

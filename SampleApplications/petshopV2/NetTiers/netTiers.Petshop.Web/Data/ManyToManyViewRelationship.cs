@@ -53,6 +53,13 @@ namespace netTiers.Petshop.Web.Data
 			{
 				if ( formView.CurrentMode == FormViewMode.Insert )
 				{
+					// handle the AfterInserted event
+					ReferenceMember.GetLinkedDataSource().AfterInserted += new LinkedDataSourceEventHandler(
+					delegate(object sender, LinkedDataSourceEventArgs e)
+					{
+						ReferenceMember.CurrentEntity = e.Entity;
+					});
+
 					// force the FormView object to call Insert
 					formView.InsertItem(true);
 					// get the value of the inserted item's id

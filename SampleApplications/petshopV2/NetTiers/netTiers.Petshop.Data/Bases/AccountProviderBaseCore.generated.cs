@@ -43,7 +43,7 @@ namespace netTiers.Petshop.Data.Bases
 		/// <param name="timestamp">The timestamp field used for concurrency check.</param>
 		/// <remarks>Deletes based on primary key(s).</remarks>
 		/// <returns>Returns true if operation suceeded.</returns>
-		public bool Delete(System.String id, byte[] timestamp)
+		public bool Delete(System.Guid id, byte[] timestamp)
 		{
 			return Delete(null, id, timestamp);
 		}
@@ -56,96 +56,11 @@ namespace netTiers.Petshop.Data.Bases
 		/// <param name="timestamp">The timestamp field used for concurrency check.</param>
 		/// <remarks>Deletes based on primary key(s).</remarks>
 		/// <returns>Returns true if operation suceeded.</returns>
-		public abstract bool Delete(TransactionManager transactionManager, System.String id, byte[] timestamp);		
+		public abstract bool Delete(TransactionManager transactionManager, System.Guid id, byte[] timestamp);		
 		
 		#endregion
 		
 		#region Get By Foreign Key Functions
-	
-		/// <summary>
-		/// 	Gets rows from the datasource based on the FK_Account_CreditCard key.
-		///		FK_Account_CreditCard Description: 
-		/// </summary>
-		/// <param name="creditCardId"></param>
-		/// <returns>Returns a typed collection of netTiers.Petshop.Entities.Account objects.</returns>
-		public netTiers.Petshop.Entities.TList<Account> GetByCreditCardId(System.String creditCardId)
-		{
-			int count = -1;
-			return GetByCreditCardId(creditCardId, 0,int.MaxValue, out count);
-		}
-		
-		/// <summary>
-		/// 	Gets rows from the datasource based on the FK_Account_CreditCard key.
-		///		FK_Account_CreditCard Description: 
-		/// </summary>
-		/// <param name="transactionManager"><see cref="TransactionManager"/> object</param>
-		/// <param name="creditCardId"></param>
-		/// <returns>Returns a typed collection of netTiers.Petshop.Entities.Account objects.</returns>
-		/// <remarks></remarks>
-		public netTiers.Petshop.Entities.TList<Account> GetByCreditCardId(TransactionManager transactionManager, System.String creditCardId)
-		{
-			int count = -1;
-			return GetByCreditCardId(transactionManager, creditCardId, 0, int.MaxValue, out count);
-		}
-		
-			/// <summary>
-		/// 	Gets rows from the datasource based on the FK_Account_CreditCard key.
-		///		FK_Account_CreditCard Description: 
-		/// </summary>
-		/// <param name="transactionManager"><see cref="TransactionManager"/> object</param>
-		/// <param name="creditCardId"></param>
-		/// <param name="start">Row number at which to start reading, the first row is 0.</param>
-		///  <param name="pageLength">Number of rows to return.</param>
-		/// <remarks></remarks>
-		/// <returns>Returns a typed collection of netTiers.Petshop.Entities.Account objects.</returns>
-		public netTiers.Petshop.Entities.TList<Account> GetByCreditCardId(TransactionManager transactionManager, System.String creditCardId, int start, int pageLength)
-		{
-			int count = -1;
-			return GetByCreditCardId(transactionManager, creditCardId, start, pageLength, out count);
-		}
-		
-		/// <summary>
-		/// 	Gets rows from the datasource based on the FK_Account_CreditCard key.
-		///		fK_Account_CreditCard Description: 
-		/// </summary>
-		/// <param name="start">Row number at which to start reading, the first row is 0.</param>
-		/// <param name="pageLength">Number of rows to return.</param>
-		/// <param name="creditCardId"></param>
-		/// <remarks></remarks>
-		/// <returns>Returns a typed collection of netTiers.Petshop.Entities.Account objects.</returns>
-		public netTiers.Petshop.Entities.TList<Account> GetByCreditCardId(System.String creditCardId, int start, int pageLength)
-		{
-			int count =  -1;
-			return GetByCreditCardId(null, creditCardId, start, pageLength,out count);	
-		}
-		
-		/// <summary>
-		/// 	Gets rows from the datasource based on the FK_Account_CreditCard key.
-		///		fK_Account_CreditCard Description: 
-		/// </summary>
-		/// <param name="start">Row number at which to start reading, the first row is 0.</param>
-		/// <param name="pageLength">Number of rows to return.</param>
-		/// <param name="creditCardId"></param>
-		/// <param name="count">out parameter to get total records for query</param>
-		/// <remarks></remarks>
-		/// <returns>Returns a typed collection of netTiers.Petshop.Entities.Account objects.</returns>
-		public netTiers.Petshop.Entities.TList<Account> GetByCreditCardId(System.String creditCardId, int start, int pageLength,out int count)
-		{
-			return GetByCreditCardId(null, creditCardId, start, pageLength, out count);	
-		}
-						
-		/// <summary>
-		/// 	Gets rows from the datasource based on the FK_Account_CreditCard key.
-		///		FK_Account_CreditCard Description: 
-		/// </summary>
-		/// <param name="transactionManager"><see cref="TransactionManager"/> object</param>
-		/// <param name="creditCardId"></param>
-		/// <param name="start">Row number at which to start reading, the first row is 0.</param>
-		/// <param name="pageLength">Number of rows to return.</param>
-		/// <param name="count">The total number of records.</param>
-		/// <returns>Returns a typed collection of netTiers.Petshop.Entities.Account objects.</returns>
-		public abstract netTiers.Petshop.Entities.TList<Account> GetByCreditCardId(TransactionManager transactionManager, System.String creditCardId, int start, int pageLength, out int count);
-		
 	
 		/// <summary>
 		/// 	Gets rows from the datasource based on the FK_Account_Category key.
@@ -153,7 +68,7 @@ namespace netTiers.Petshop.Data.Bases
 		/// </summary>
 		/// <param name="favoriteCategoryId"></param>
 		/// <returns>Returns a typed collection of netTiers.Petshop.Entities.Account objects.</returns>
-		public netTiers.Petshop.Entities.TList<Account> GetByFavoriteCategoryId(System.String favoriteCategoryId)
+		public netTiers.Petshop.Entities.TList<Account> GetByFavoriteCategoryId(System.Guid? favoriteCategoryId)
 		{
 			int count = -1;
 			return GetByFavoriteCategoryId(favoriteCategoryId, 0,int.MaxValue, out count);
@@ -167,7 +82,7 @@ namespace netTiers.Petshop.Data.Bases
 		/// <param name="favoriteCategoryId"></param>
 		/// <returns>Returns a typed collection of netTiers.Petshop.Entities.Account objects.</returns>
 		/// <remarks></remarks>
-		public netTiers.Petshop.Entities.TList<Account> GetByFavoriteCategoryId(TransactionManager transactionManager, System.String favoriteCategoryId)
+		public netTiers.Petshop.Entities.TList<Account> GetByFavoriteCategoryId(TransactionManager transactionManager, System.Guid? favoriteCategoryId)
 		{
 			int count = -1;
 			return GetByFavoriteCategoryId(transactionManager, favoriteCategoryId, 0, int.MaxValue, out count);
@@ -183,7 +98,7 @@ namespace netTiers.Petshop.Data.Bases
 		///  <param name="pageLength">Number of rows to return.</param>
 		/// <remarks></remarks>
 		/// <returns>Returns a typed collection of netTiers.Petshop.Entities.Account objects.</returns>
-		public netTiers.Petshop.Entities.TList<Account> GetByFavoriteCategoryId(TransactionManager transactionManager, System.String favoriteCategoryId, int start, int pageLength)
+		public netTiers.Petshop.Entities.TList<Account> GetByFavoriteCategoryId(TransactionManager transactionManager, System.Guid? favoriteCategoryId, int start, int pageLength)
 		{
 			int count = -1;
 			return GetByFavoriteCategoryId(transactionManager, favoriteCategoryId, start, pageLength, out count);
@@ -198,7 +113,7 @@ namespace netTiers.Petshop.Data.Bases
 		/// <param name="favoriteCategoryId"></param>
 		/// <remarks></remarks>
 		/// <returns>Returns a typed collection of netTiers.Petshop.Entities.Account objects.</returns>
-		public netTiers.Petshop.Entities.TList<Account> GetByFavoriteCategoryId(System.String favoriteCategoryId, int start, int pageLength)
+		public netTiers.Petshop.Entities.TList<Account> GetByFavoriteCategoryId(System.Guid? favoriteCategoryId, int start, int pageLength)
 		{
 			int count =  -1;
 			return GetByFavoriteCategoryId(null, favoriteCategoryId, start, pageLength,out count);	
@@ -214,7 +129,7 @@ namespace netTiers.Petshop.Data.Bases
 		/// <param name="count">out parameter to get total records for query</param>
 		/// <remarks></remarks>
 		/// <returns>Returns a typed collection of netTiers.Petshop.Entities.Account objects.</returns>
-		public netTiers.Petshop.Entities.TList<Account> GetByFavoriteCategoryId(System.String favoriteCategoryId, int start, int pageLength,out int count)
+		public netTiers.Petshop.Entities.TList<Account> GetByFavoriteCategoryId(System.Guid? favoriteCategoryId, int start, int pageLength,out int count)
 		{
 			return GetByFavoriteCategoryId(null, favoriteCategoryId, start, pageLength, out count);	
 		}
@@ -229,7 +144,92 @@ namespace netTiers.Petshop.Data.Bases
 		/// <param name="pageLength">Number of rows to return.</param>
 		/// <param name="count">The total number of records.</param>
 		/// <returns>Returns a typed collection of netTiers.Petshop.Entities.Account objects.</returns>
-		public abstract netTiers.Petshop.Entities.TList<Account> GetByFavoriteCategoryId(TransactionManager transactionManager, System.String favoriteCategoryId, int start, int pageLength, out int count);
+		public abstract netTiers.Petshop.Entities.TList<Account> GetByFavoriteCategoryId(TransactionManager transactionManager, System.Guid? favoriteCategoryId, int start, int pageLength, out int count);
+		
+	
+		/// <summary>
+		/// 	Gets rows from the datasource based on the FK_Account_CreditCard key.
+		///		FK_Account_CreditCard Description: 
+		/// </summary>
+		/// <param name="creditCardId"></param>
+		/// <returns>Returns a typed collection of netTiers.Petshop.Entities.Account objects.</returns>
+		public netTiers.Petshop.Entities.TList<Account> GetByCreditCardId(System.Guid? creditCardId)
+		{
+			int count = -1;
+			return GetByCreditCardId(creditCardId, 0,int.MaxValue, out count);
+		}
+		
+		/// <summary>
+		/// 	Gets rows from the datasource based on the FK_Account_CreditCard key.
+		///		FK_Account_CreditCard Description: 
+		/// </summary>
+		/// <param name="transactionManager"><see cref="TransactionManager"/> object</param>
+		/// <param name="creditCardId"></param>
+		/// <returns>Returns a typed collection of netTiers.Petshop.Entities.Account objects.</returns>
+		/// <remarks></remarks>
+		public netTiers.Petshop.Entities.TList<Account> GetByCreditCardId(TransactionManager transactionManager, System.Guid? creditCardId)
+		{
+			int count = -1;
+			return GetByCreditCardId(transactionManager, creditCardId, 0, int.MaxValue, out count);
+		}
+		
+			/// <summary>
+		/// 	Gets rows from the datasource based on the FK_Account_CreditCard key.
+		///		FK_Account_CreditCard Description: 
+		/// </summary>
+		/// <param name="transactionManager"><see cref="TransactionManager"/> object</param>
+		/// <param name="creditCardId"></param>
+		/// <param name="start">Row number at which to start reading, the first row is 0.</param>
+		///  <param name="pageLength">Number of rows to return.</param>
+		/// <remarks></remarks>
+		/// <returns>Returns a typed collection of netTiers.Petshop.Entities.Account objects.</returns>
+		public netTiers.Petshop.Entities.TList<Account> GetByCreditCardId(TransactionManager transactionManager, System.Guid? creditCardId, int start, int pageLength)
+		{
+			int count = -1;
+			return GetByCreditCardId(transactionManager, creditCardId, start, pageLength, out count);
+		}
+		
+		/// <summary>
+		/// 	Gets rows from the datasource based on the FK_Account_CreditCard key.
+		///		fK_Account_CreditCard Description: 
+		/// </summary>
+		/// <param name="start">Row number at which to start reading, the first row is 0.</param>
+		/// <param name="pageLength">Number of rows to return.</param>
+		/// <param name="creditCardId"></param>
+		/// <remarks></remarks>
+		/// <returns>Returns a typed collection of netTiers.Petshop.Entities.Account objects.</returns>
+		public netTiers.Petshop.Entities.TList<Account> GetByCreditCardId(System.Guid? creditCardId, int start, int pageLength)
+		{
+			int count =  -1;
+			return GetByCreditCardId(null, creditCardId, start, pageLength,out count);	
+		}
+		
+		/// <summary>
+		/// 	Gets rows from the datasource based on the FK_Account_CreditCard key.
+		///		fK_Account_CreditCard Description: 
+		/// </summary>
+		/// <param name="start">Row number at which to start reading, the first row is 0.</param>
+		/// <param name="pageLength">Number of rows to return.</param>
+		/// <param name="creditCardId"></param>
+		/// <param name="count">out parameter to get total records for query</param>
+		/// <remarks></remarks>
+		/// <returns>Returns a typed collection of netTiers.Petshop.Entities.Account objects.</returns>
+		public netTiers.Petshop.Entities.TList<Account> GetByCreditCardId(System.Guid? creditCardId, int start, int pageLength,out int count)
+		{
+			return GetByCreditCardId(null, creditCardId, start, pageLength, out count);	
+		}
+						
+		/// <summary>
+		/// 	Gets rows from the datasource based on the FK_Account_CreditCard key.
+		///		FK_Account_CreditCard Description: 
+		/// </summary>
+		/// <param name="transactionManager"><see cref="TransactionManager"/> object</param>
+		/// <param name="creditCardId"></param>
+		/// <param name="start">Row number at which to start reading, the first row is 0.</param>
+		/// <param name="pageLength">Number of rows to return.</param>
+		/// <param name="count">The total number of records.</param>
+		/// <returns>Returns a typed collection of netTiers.Petshop.Entities.Account objects.</returns>
+		public abstract netTiers.Petshop.Entities.TList<Account> GetByCreditCardId(TransactionManager transactionManager, System.Guid? creditCardId, int start, int pageLength, out int count);
 		
 		#endregion
 
@@ -253,7 +253,7 @@ namespace netTiers.Petshop.Data.Bases
 		/// </summary>
 		/// <param name="id"></param>
 		/// <returns>Returns an instance of the <see cref="netTiers.Petshop.Entities.Account"/> class.</returns>
-		public netTiers.Petshop.Entities.Account GetById(System.String id)
+		public netTiers.Petshop.Entities.Account GetById(System.Guid id)
 		{
 			int count = -1;
 			return GetById(null,id, 0, int.MaxValue, out count);
@@ -267,7 +267,7 @@ namespace netTiers.Petshop.Data.Bases
 		/// <param name="pageLength">Number of rows to return.</param>
 		/// <remarks></remarks>
 		/// <returns>Returns an instance of the <see cref="netTiers.Petshop.Entities.Account"/> class.</returns>
-		public netTiers.Petshop.Entities.Account GetById(System.String id, int start, int pageLength)
+		public netTiers.Petshop.Entities.Account GetById(System.Guid id, int start, int pageLength)
 		{
 			int count = -1;
 			return GetById(null, id, start, pageLength, out count);
@@ -280,7 +280,7 @@ namespace netTiers.Petshop.Data.Bases
 		/// <param name="id"></param>
 		/// <remarks></remarks>
 		/// <returns>Returns an instance of the <see cref="netTiers.Petshop.Entities.Account"/> class.</returns>
-		public netTiers.Petshop.Entities.Account GetById(TransactionManager transactionManager, System.String id)
+		public netTiers.Petshop.Entities.Account GetById(TransactionManager transactionManager, System.Guid id)
 		{
 			int count = -1;
 			return GetById(transactionManager, id, 0, int.MaxValue, out count);
@@ -295,7 +295,7 @@ namespace netTiers.Petshop.Data.Bases
 		/// <param name="pageLength">Number of rows to return.</param>
 		/// <remarks></remarks>
 		/// <returns>Returns an instance of the <see cref="netTiers.Petshop.Entities.Account"/> class.</returns>
-		public netTiers.Petshop.Entities.Account GetById(TransactionManager transactionManager, System.String id, int start, int pageLength)
+		public netTiers.Petshop.Entities.Account GetById(TransactionManager transactionManager, System.Guid id, int start, int pageLength)
 		{
 			int count = -1;
 			return GetById(transactionManager, id, start, pageLength, out count);
@@ -310,7 +310,7 @@ namespace netTiers.Petshop.Data.Bases
 		/// <param name="count">out parameter to get total records for query</param>
 		/// <remarks></remarks>
 		/// <returns>Returns an instance of the <see cref="netTiers.Petshop.Entities.Account"/> class.</returns>
-		public netTiers.Petshop.Entities.Account GetById(System.String id, int start, int pageLength, out int count)
+		public netTiers.Petshop.Entities.Account GetById(System.Guid id, int start, int pageLength, out int count)
 		{
 			return GetById(null, id, start, pageLength, out count);
 		}
@@ -325,7 +325,7 @@ namespace netTiers.Petshop.Data.Bases
 		/// <param name="pageLength">Number of rows to return.</param>
 		/// <param name="count">The total number of records.</param>
 		/// <returns>Returns an instance of the <see cref="netTiers.Petshop.Entities.Account"/> class.</returns>
-		public abstract netTiers.Petshop.Entities.Account GetById(TransactionManager transactionManager, System.String id, int start, int pageLength, out int count);
+		public abstract netTiers.Petshop.Entities.Account GetById(TransactionManager transactionManager, System.Guid id, int start, int pageLength, out int count);
 						
 		/// <summary>
 		/// 	Gets rows from the datasource based on the primary key IX_Account index.
@@ -522,7 +522,7 @@ namespace netTiers.Petshop.Data.Bases
 				if (DataRepository.Provider.UseEntityFactory)
 				{
 					key = @"Account" 
-							+ (reader.IsDBNull(reader.GetOrdinal("Id"))?string.Empty:(System.String)reader["Id"]).ToString();
+							+ (reader.IsDBNull(reader.GetOrdinal("Id"))?Guid.Empty:(System.Guid)reader["Id"]).ToString();
 
 					c = EntityManager.LocateOrCreate<Account>(
 						key.ToString(), // EntityTrackingKey 
@@ -538,8 +538,8 @@ namespace netTiers.Petshop.Data.Bases
 				if (!DataRepository.Provider.EnableEntityTracking || c.EntityState == EntityState.Added)
                 {
 					c.SuppressEntityEvents = true;
-					c.Id = (System.String)reader["Id"];
-					c.OriginalId = c.Id; //(reader.IsDBNull(reader.GetOrdinal("Id")))?string.Empty:(System.String)reader["Id"];
+					c.Id = (System.Guid)reader["Id"];
+					c.OriginalId = c.Id; //(reader.IsDBNull(reader.GetOrdinal("Id")))?Guid.Empty:(System.Guid)reader["Id"];
 					c.FirstName = (reader.IsDBNull(reader.GetOrdinal("FirstName")))?null:(System.String)reader["FirstName"];
 					c.LastName = (reader.IsDBNull(reader.GetOrdinal("LastName")))?null:(System.String)reader["LastName"];
 					c.StreetAddress = (reader.IsDBNull(reader.GetOrdinal("StreetAddress")))?null:(System.String)reader["StreetAddress"];
@@ -554,8 +554,8 @@ namespace netTiers.Petshop.Data.Bases
 					c.IWantMyList = (reader.IsDBNull(reader.GetOrdinal("IWantMyList")))?null:(System.Boolean?)reader["IWantMyList"];
 					c.IWantPetTips = (reader.IsDBNull(reader.GetOrdinal("IWantPetTips")))?null:(System.Boolean?)reader["IWantPetTips"];
 					c.FavoriteLanguage = (reader.IsDBNull(reader.GetOrdinal("FavoriteLanguage")))?null:(System.String)reader["FavoriteLanguage"];
-					c.CreditCardId = (reader.IsDBNull(reader.GetOrdinal("CreditCardId")))?null:(System.String)reader["CreditCardId"];
-					c.FavoriteCategoryId = (reader.IsDBNull(reader.GetOrdinal("FavoriteCategoryId")))?null:(System.String)reader["FavoriteCategoryId"];
+					c.CreditCardId = (reader.IsDBNull(reader.GetOrdinal("CreditCardId")))?null:(System.Guid?)reader["CreditCardId"];
+					c.FavoriteCategoryId = (reader.IsDBNull(reader.GetOrdinal("FavoriteCategoryId")))?null:(System.Guid?)reader["FavoriteCategoryId"];
 					c.Timestamp = (System.Byte[])reader["Timestamp"];
 					c.EntityTrackingKey = key;
 					c.AcceptChanges();
@@ -575,8 +575,8 @@ namespace netTiers.Petshop.Data.Bases
 		{
 			if (!reader.Read()) return;
 			
-			entity.Id = (System.String)reader["Id"];
-			entity.OriginalId = (System.String)reader["Id"];
+			entity.Id = (System.Guid)reader["Id"];
+			entity.OriginalId = (System.Guid)reader["Id"];
 			entity.FirstName = (reader.IsDBNull(reader.GetOrdinal("FirstName")))?null:(System.String)reader["FirstName"];
 			entity.LastName = (reader.IsDBNull(reader.GetOrdinal("LastName")))?null:(System.String)reader["LastName"];
 			entity.StreetAddress = (reader.IsDBNull(reader.GetOrdinal("StreetAddress")))?null:(System.String)reader["StreetAddress"];
@@ -591,8 +591,8 @@ namespace netTiers.Petshop.Data.Bases
 			entity.IWantMyList = (reader.IsDBNull(reader.GetOrdinal("IWantMyList")))?null:(System.Boolean?)reader["IWantMyList"];
 			entity.IWantPetTips = (reader.IsDBNull(reader.GetOrdinal("IWantPetTips")))?null:(System.Boolean?)reader["IWantPetTips"];
 			entity.FavoriteLanguage = (reader.IsDBNull(reader.GetOrdinal("FavoriteLanguage")))?null:(System.String)reader["FavoriteLanguage"];
-			entity.CreditCardId = (reader.IsDBNull(reader.GetOrdinal("CreditCardId")))?null:(System.String)reader["CreditCardId"];
-			entity.FavoriteCategoryId = (reader.IsDBNull(reader.GetOrdinal("FavoriteCategoryId")))?null:(System.String)reader["FavoriteCategoryId"];
+			entity.CreditCardId = (reader.IsDBNull(reader.GetOrdinal("CreditCardId")))?null:(System.Guid?)reader["CreditCardId"];
+			entity.FavoriteCategoryId = (reader.IsDBNull(reader.GetOrdinal("FavoriteCategoryId")))?null:(System.Guid?)reader["FavoriteCategoryId"];
 			entity.Timestamp = (System.Byte[])reader["Timestamp"];
 			entity.AcceptChanges();
 		}
@@ -606,8 +606,8 @@ namespace netTiers.Petshop.Data.Bases
 		{
 			DataRow dataRow = dataSet.Tables[0].Rows[0];
 			
-			entity.Id = (System.String)dataRow["Id"];
-			entity.OriginalId = (System.String)dataRow["Id"];
+			entity.Id = (System.Guid)dataRow["Id"];
+			entity.OriginalId = (System.Guid)dataRow["Id"];
 			entity.FirstName = (Convert.IsDBNull(dataRow["FirstName"]))?null:(System.String)dataRow["FirstName"];
 			entity.LastName = (Convert.IsDBNull(dataRow["LastName"]))?null:(System.String)dataRow["LastName"];
 			entity.StreetAddress = (Convert.IsDBNull(dataRow["StreetAddress"]))?null:(System.String)dataRow["StreetAddress"];
@@ -622,15 +622,14 @@ namespace netTiers.Petshop.Data.Bases
 			entity.IWantMyList = (Convert.IsDBNull(dataRow["IWantMyList"]))?null:(System.Boolean?)dataRow["IWantMyList"];
 			entity.IWantPetTips = (Convert.IsDBNull(dataRow["IWantPetTips"]))?null:(System.Boolean?)dataRow["IWantPetTips"];
 			entity.FavoriteLanguage = (Convert.IsDBNull(dataRow["FavoriteLanguage"]))?null:(System.String)dataRow["FavoriteLanguage"];
-			entity.CreditCardId = (Convert.IsDBNull(dataRow["CreditCardId"]))?null:(System.String)dataRow["CreditCardId"];
-			entity.FavoriteCategoryId = (Convert.IsDBNull(dataRow["FavoriteCategoryId"]))?null:(System.String)dataRow["FavoriteCategoryId"];
+			entity.CreditCardId = (Convert.IsDBNull(dataRow["CreditCardId"]))?null:(System.Guid?)dataRow["CreditCardId"];
+			entity.FavoriteCategoryId = (Convert.IsDBNull(dataRow["FavoriteCategoryId"]))?null:(System.Guid?)dataRow["FavoriteCategoryId"];
 			entity.Timestamp = (System.Byte[])dataRow["Timestamp"];
 			entity.AcceptChanges();
 		}
 		#endregion 
 		
 		#region DeepLoad
-		
 		/// <summary>
 		/// Deep Loads the <see cref="IEntity"/> object with criteria based of the child 
 		/// property collections only N Levels Deep based on the <see cref="DeepLoadType"/>.
@@ -643,62 +642,71 @@ namespace netTiers.Petshop.Data.Bases
 		/// <param name="deep">Boolean. A flag that indicates whether to recursively save all Property Collection that are descendants of this instance. If True, saves the complete object graph below this object. If False, saves this object only. </param>
 		/// <param name="deepLoadType">DeepLoadType Enumeration to Include/Exclude object property collections from Load.</param>
 		/// <param name="childTypes">netTiers.Petshop.Entities.Account Property Collection Type Array To Include or Exclude from Load</param>
-		/// <param name="innerList">A Hashtable of child types for easy access.</param>
+		/// <param name="innerList">A collection of child types for easy access.</param>
 	    /// <exception cref="ArgumentNullException">entity or childTypes is null.</exception>
 	    /// <exception cref="ArgumentException">deepLoadType has invalid value.</exception>
-		protected override void DeepLoad(TransactionManager transactionManager, netTiers.Petshop.Entities.Account entity, bool deep, DeepLoadType deepLoadType, System.Type[] childTypes, Hashtable innerList)
+		internal override void DeepLoad(TransactionManager transactionManager, netTiers.Petshop.Entities.Account entity, bool deep, DeepLoadType deepLoadType, System.Type[] childTypes, ChildEntityTypesList innerList)
 		{
-			
-			#region Composite Source Children
-			//Fill Source Composite Properties, however, don't call deep load on them.  
-			//So they only get filled a single level deep.
-			
-			#region CreditCardIdSource
-			if ((deepLoadType == DeepLoadType.IncludeChildren && innerList["CreditCard"] != null)
-				|| (deepLoadType == DeepLoadType.ExcludeChildren && innerList["CreditCard"] == null))
+			if(entity == null)
+				return;
+
+			#region FavoriteCategoryIdSource	
+			if (CanDeepLoad(entity, "Category", "FavoriteCategoryIdSource", deepLoadType, innerList) 
+				&& entity.FavoriteCategoryIdSource == null)
 			{
-				if (entity.CreditCardIdSource == null)
+				object[] pkItems = new object[1];
+				pkItems[0] = (entity.FavoriteCategoryId ?? Guid.Empty);
+				Category tmpEntity = EntityManager.LocateEntity<Category>(EntityLocator.ConstructKeyFromPkItems(typeof(Category), pkItems), DataRepository.Provider.EnableEntityTracking);
+				if (tmpEntity != null)
+					entity.FavoriteCategoryIdSource = tmpEntity;
+				else
+					entity.FavoriteCategoryIdSource = DataRepository.CategoryProvider.GetById((entity.FavoriteCategoryId ?? Guid.Empty));
+			
+				if (deep && entity.FavoriteCategoryIdSource != null)
 				{
-					object[] pkItems = new object[1];
-					pkItems[0] = (entity.CreditCardId ?? string.Empty);
-					CreditCard tmpEntity = EntityManager.LocateEntity<CreditCard>(EntityLocator.ConstructKeyFromPkItems(typeof(CreditCard), pkItems), DataRepository.Provider.EnableEntityTracking);
-					if (tmpEntity != null)
-						entity.CreditCardIdSource = tmpEntity;
-					else
-						entity.CreditCardIdSource = DataRepository.CreditCardProvider.GetById((entity.CreditCardId ?? string.Empty));
+					DataRepository.CategoryProvider.DeepLoad(transactionManager, entity.FavoriteCategoryIdSource, deep, deepLoadType, childTypes, innerList);
 				}
-				if (deepLoadType == DeepLoadType.IncludeChildren)
-					innerList.Remove("CreditCard");
-				else 
-					innerList.Add("CreditCard", typeof(CreditCard));
+			}
+			#endregion FavoriteCategoryIdSource
+
+			#region CreditCardIdSource	
+			if (CanDeepLoad(entity, "CreditCard", "CreditCardIdSource", deepLoadType, innerList) 
+				&& entity.CreditCardIdSource == null)
+			{
+				object[] pkItems = new object[1];
+				pkItems[0] = (entity.CreditCardId ?? Guid.Empty);
+				CreditCard tmpEntity = EntityManager.LocateEntity<CreditCard>(EntityLocator.ConstructKeyFromPkItems(typeof(CreditCard), pkItems), DataRepository.Provider.EnableEntityTracking);
+				if (tmpEntity != null)
+					entity.CreditCardIdSource = tmpEntity;
+				else
+					entity.CreditCardIdSource = DataRepository.CreditCardProvider.GetById((entity.CreditCardId ?? Guid.Empty));
+			
+				if (deep && entity.CreditCardIdSource != null)
+				{
+					DataRepository.CreditCardProvider.DeepLoad(transactionManager, entity.CreditCardIdSource, deep, deepLoadType, childTypes, innerList);
+				}
 			}
 			#endregion CreditCardIdSource
 			
-			#region FavoriteCategoryIdSource
-			if ((deepLoadType == DeepLoadType.IncludeChildren && innerList["Category"] != null)
-				|| (deepLoadType == DeepLoadType.ExcludeChildren && innerList["Category"] == null))
-			{
-				if (entity.FavoriteCategoryIdSource == null)
-				{
-					object[] pkItems = new object[1];
-					pkItems[0] = (entity.FavoriteCategoryId ?? string.Empty);
-					Category tmpEntity = EntityManager.LocateEntity<Category>(EntityLocator.ConstructKeyFromPkItems(typeof(Category), pkItems), DataRepository.Provider.EnableEntityTracking);
-					if (tmpEntity != null)
-						entity.FavoriteCategoryIdSource = tmpEntity;
-					else
-						entity.FavoriteCategoryIdSource = DataRepository.CategoryProvider.GetById((entity.FavoriteCategoryId ?? string.Empty));
-				}
-				if (deepLoadType == DeepLoadType.IncludeChildren)
-					innerList.Remove("Category");
-				else 
-					innerList.Add("Category", typeof(Category));
-			}
-			#endregion FavoriteCategoryIdSource
-			#endregion
-			
-			ArrayList alreadySetCollections = new ArrayList();
-			
 			// Load Entity through Provider
+			// Deep load child collections  - Call GetById methods when available
+			
+			#region OrdersCollection
+			//Relationship Type One : Many
+			if (CanDeepLoad(entity, "List<Orders>", "OrdersCollection", deepLoadType, innerList)) 
+			{
+				#if NETTIERS_DEBUG
+				Debug.WriteLine("- property 'OrdersCollection' loaded.");
+				#endif 
+
+				entity.OrdersCollection = DataRepository.OrdersProvider.GetByAccountId(transactionManager, entity.Id);
+
+				if (deep && entity.OrdersCollection.Count > 0)
+				{
+					DataRepository.OrdersProvider.DeepLoad(transactionManager, entity.OrdersCollection, deep, deepLoadType, childTypes, innerList);
+				}
+			}		
+			#endregion 
 		}
 		
 		#endregion 
@@ -714,8 +722,11 @@ namespace netTiers.Petshop.Data.Bases
 		/// <param name="deepSaveType">DeepSaveType Enumeration to Include/Exclude object property collections from Save.</param>
 		/// <param name="childTypes">netTiers.Petshop.Entities.Account Property Collection Type Array To Include or Exclude from Save</param>
 		/// <param name="innerList">A Hashtable of child types for easy access.</param>
-		protected override void DeepSave(TransactionManager transactionManager, netTiers.Petshop.Entities.Account entity, DeepSaveType deepSaveType, System.Type[] childTypes, Hashtable innerList)
+		internal override void DeepSave(TransactionManager transactionManager, netTiers.Petshop.Entities.Account entity, DeepSaveType deepSaveType, System.Type[] childTypes, Hashtable innerList)
 		{	
+			if (entity == null)
+				return;
+				
 			// Save Root Entity through Provider
 			this.Save(transactionManager, entity);
 			
@@ -723,39 +734,77 @@ namespace netTiers.Petshop.Data.Bases
 			//Save Source Composite Properties, however, don't call deep save on them.  
 			//So they only get saved a single level deep.
 			
-			#region CreditCardIdSource
-			if ((deepSaveType == DeepSaveType.IncludeChildren && innerList["CreditCard"] != null)
-				|| (deepSaveType == DeepSaveType.ExcludeChildren && innerList[" CreditCard"] == null))
-			{
-				if (entity.CreditCardIdSource != null )
-				{
-					//if (!entity.CreditCardIdSource.IsValid)
-						//throw new netTiers.Petshop.Entities.EntityNotValidException(entity, "DeepSave");
-					
-					DataRepository.CreditCardProvider.Save(transactionManager, entity.CreditCardIdSource);
-				}
-			}
-			#endregion 
-			
 			#region FavoriteCategoryIdSource
 			if ((deepSaveType == DeepSaveType.IncludeChildren && innerList["Category"] != null)
 				|| (deepSaveType == DeepSaveType.ExcludeChildren && innerList[" Category"] == null))
 			{
 				if (entity.FavoriteCategoryIdSource != null )
-				{
-					//if (!entity.FavoriteCategoryIdSource.IsValid)
-						//throw new netTiers.Petshop.Entities.EntityNotValidException(entity, "DeepSave");
-					
+				{			
 					DataRepository.CategoryProvider.Save(transactionManager, entity.FavoriteCategoryIdSource);
+				}
+			}
+			#endregion 
+			
+			#region CreditCardIdSource
+			if ((deepSaveType == DeepSaveType.IncludeChildren && innerList["CreditCard"] != null)
+				|| (deepSaveType == DeepSaveType.ExcludeChildren && innerList[" CreditCard"] == null))
+			{
+				if (entity.CreditCardIdSource != null )
+				{			
+					DataRepository.CreditCardProvider.Save(transactionManager, entity.CreditCardIdSource);
 				}
 			}
 			#endregion 
 			#endregion Composite Source Properties
 
+
+			#region List<Orders>
+			if ((deepSaveType == DeepSaveType.IncludeChildren && innerList["List<Orders>"] != null)
+				|| (deepSaveType == DeepSaveType.ExcludeChildren && innerList["List<Orders>"] == null))
+			{
+			// update each child parent id with the real parent id (mostly used on insert)
+			foreach(Orders child in entity.OrdersCollection)
+			{
+					child.AccountId = entity.Id;			}
+			
+			if (entity.OrdersCollection.Count > 0)
+				DataRepository.OrdersProvider.DeepSave(transactionManager, entity.OrdersCollection, deepSaveType, childTypes);
+			} 
+			#endregion 
 		}
 		#endregion
 	} // end class
-
+	
+	#region AccountChildEntityTypes
+	
+	///<summary>
+	/// Enumeration used to expose the different child entity types 
+	/// for child properties in <c>netTiers.Petshop.Entities.Account</c>
+	///</summary>
+	public enum AccountChildEntityTypes
+	{
+		
+		///<summary>
+		/// Composite Property for <c>Category</c> at FavoriteCategoryIdSource
+		///</summary>
+		[ChildEntityType(typeof(Category))]
+		Category,
+			
+		///<summary>
+		/// Composite Property for <c>CreditCard</c> at CreditCardIdSource
+		///</summary>
+		[ChildEntityType(typeof(CreditCard))]
+		CreditCard,
+	
+		///<summary>
+		/// Collection of <c>Account</c> as OneToMany for OrdersCollection
+		///</summary>
+		[ChildEntityType(typeof(TList<Orders>))]
+		OrdersCollection,
+	}
+	
+	#endregion AccountChildEntityTypes
+	
 	#region AccountFilterBuilder
 	
 	/// <summary>

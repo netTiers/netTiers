@@ -25,7 +25,7 @@ namespace netTiers.Petshop.Web.Data
 	/// property of the specified business object class.</typeparam>
 	[CLSCompliant(true)]
 	[ParseChildren(true), PersistChildren(false)]
-	public abstract class BaseDataSource<Entity, EntityKey> : DataSourceControl
+	public abstract class BaseDataSource<Entity, EntityKey> : DataSourceControl, IListDataSource
 		where Entity : new()
 		where EntityKey : new()
 	{
@@ -132,6 +132,16 @@ namespace netTiers.Petshop.Web.Data
 		{
 			get { return View.EnableTransaction; }
 			set { View.EnableTransaction = value; }
+		}
+
+		/// <summary>
+		/// Gets or sets a value indicating whether the data source control should
+		/// perform a recursive deep load when the DeepLoad method is called.
+		/// </summary>
+		public bool EnableRecursiveDeepLoad
+		{
+			get { return View.EnableRecursiveDeepLoad; }
+			set { View.EnableRecursiveDeepLoad = value; }
 		}
 
 		/// <summary>
@@ -788,6 +798,7 @@ namespace netTiers.Petshop.Web.Data
 		private bool _enableCaching;
 		private bool _enablePaging;
 		private bool _enableSorting;
+		private bool _enableRecursiveDeepLoad;
 		private bool _isDeepLoaded;
 
 		#endregion Declarations
@@ -870,6 +881,16 @@ namespace netTiers.Petshop.Web.Data
 		{
 			get { return _enableTransaction; }
 			set { _enableTransaction = value; }
+		}
+
+		/// <summary>
+		/// Gets or sets a value indicating whether the data source control should
+		/// perform a recursive deep load when the DeepLoad method is called.
+		/// </summary>
+		internal bool EnableRecursiveDeepLoad
+		{
+			get { return _enableRecursiveDeepLoad; }
+			set { _enableRecursiveDeepLoad = value; }
 		}
 
 		/// <summary>
@@ -1108,7 +1129,7 @@ namespace netTiers.Petshop.Web.Data
 				statusArgs.AffectedRows = arguments.TotalRowCount;
 				OnSelected(statusArgs);
 
-				if ( arguments.TotalRowCount > 0 )
+				if ( arguments.TotalRowCount > 0 && entityList.Count > 0 )
 				{
 					Entity entity = entityList[0];
 					EntityId = GetEntityId(entity);
@@ -1213,6 +1234,7 @@ namespace netTiers.Petshop.Web.Data
 				}
 				if ( entityList == null )
 				{
+					// execute select method
 					entityList = GetSelectData(out count);
 
 					// make sure paging and sorting were not enabled
@@ -1325,6 +1347,7 @@ namespace netTiers.Petshop.Web.Data
 			EntityUtil.InitEntityDateTimeValues(entity, names);
 			// set property values
 			SetPropertyValues(entity, values);
+			SetEntityKeyValues(entity);
 
 			try
 			{
@@ -1668,7 +1691,7 @@ namespace netTiers.Petshop.Web.Data
 		{
 			if ( AfterSelected != null )
 			{
-				AfterSelected(this, e);
+				AfterSelected(Owner, e);
 			}
 		}
 
@@ -1680,7 +1703,7 @@ namespace netTiers.Petshop.Web.Data
 		{
 			if ( AfterInserting != null )
 			{
-				AfterInserting(this, e);
+				AfterInserting(Owner, e);
 			}
 		}
 
@@ -1692,7 +1715,7 @@ namespace netTiers.Petshop.Web.Data
 		{
 			if ( AfterInserted != null )
 			{
-				AfterInserted(this, e);
+				AfterInserted(Owner, e);
 			}
 		}
 
@@ -1704,7 +1727,7 @@ namespace netTiers.Petshop.Web.Data
 		{
 			if ( AfterUpdating != null )
 			{
-				AfterUpdating(this, e);
+				AfterUpdating(Owner, e);
 			}
 		}
 
@@ -1716,7 +1739,7 @@ namespace netTiers.Petshop.Web.Data
 		{
 			if ( AfterUpdated != null )
 			{
-				AfterUpdated(this, e);
+				AfterUpdated(Owner, e);
 			}
 		}
 
@@ -1809,6 +1832,14 @@ namespace netTiers.Petshop.Web.Data
 			EntityUtil.SetEntityValues(entity, values);
 		}
 
+		/// <summary>
+		/// Sets the primary key values of the specified Entity object.
+		/// </summary>
+		/// <param name="entity">The Entity object to update.</param>
+		protected virtual void SetEntityKeyValues(Entity entity)
+		{
+		}
+		
 		/// <summary>
 		/// Gets an array of valid DateTime property names to
 		/// initialize during an insert operation.
@@ -1984,7 +2015,7 @@ namespace netTiers.Petshop.Web.Data
 		{
 			if ( Selecting != null )
 			{
-				Selecting(this, e);
+				Selecting(Owner, e);
 			}
 		}
 
@@ -1996,7 +2027,7 @@ namespace netTiers.Petshop.Web.Data
 		{
 			if ( Selected != null )
 			{
-				Selected(this, e);
+				Selected(Owner, e);
 			}
 		}
 
@@ -2008,7 +2039,7 @@ namespace netTiers.Petshop.Web.Data
 		{
 			if ( Inserting != null )
 			{
-				Inserting(this, e);
+				Inserting(Owner, e);
 			}
 		}
 
@@ -2020,7 +2051,7 @@ namespace netTiers.Petshop.Web.Data
 		{
 			if ( Inserted != null )
 			{
-				Inserted(this, e);
+				Inserted(Owner, e);
 			}
 		}
 
@@ -2032,7 +2063,7 @@ namespace netTiers.Petshop.Web.Data
 		{
 			if ( Updating != null )
 			{
-				Updating(this, e);
+				Updating(Owner, e);
 			}
 		}
 
@@ -2044,7 +2075,7 @@ namespace netTiers.Petshop.Web.Data
 		{
 			if ( Updated != null )
 			{
-				Updated(this, e);
+				Updated(Owner, e);
 			}
 		}
 
@@ -2056,7 +2087,7 @@ namespace netTiers.Petshop.Web.Data
 		{
 			if ( Deleting != null )
 			{
-				Deleting(this, e);
+				Deleting(Owner, e);
 			}
 		}
 
@@ -2068,7 +2099,7 @@ namespace netTiers.Petshop.Web.Data
 		{
 			if ( Deleted != null )
 			{
-				Deleted(this, e);
+				Deleted(Owner, e);
 			}
 		}
 

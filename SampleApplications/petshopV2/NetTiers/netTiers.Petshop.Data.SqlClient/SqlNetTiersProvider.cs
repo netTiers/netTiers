@@ -269,6 +269,45 @@ namespace netTiers.Petshop.Data.SqlClient
 		#endregion
 		
 		
+		#region "CourierProvider"
+			
+		private SqlCourierProvider innerSqlCourierProvider;
+
+		///<summary>
+		/// This class is the Data Access Logic Component for the <see cref="Courier"/> business entity.
+		/// It exposes CRUD methods as well as selecting on index, foreign keys and custom stored procedures.
+		///</summary>
+		/// <value></value>
+		public override CourierProviderBase CourierProvider
+		{
+			get
+			{
+				if (innerSqlCourierProvider == null) 
+				{
+					lock (syncRoot) 
+					{
+						if (innerSqlCourierProvider == null)
+						{
+							this.innerSqlCourierProvider = new SqlCourierProvider(_connectionString, _useStoredProcedure, _providerInvariantName);
+						}
+					}
+				}
+				return innerSqlCourierProvider;
+			}
+		}
+		
+		/// <summary>
+		/// Gets the current <c cref="SqlCourierProvider"/>.
+		/// </summary>
+		/// <value></value>
+		public SqlCourierProvider SqlCourierProvider
+		{
+			get {return CourierProvider as SqlCourierProvider;}
+		}
+		
+		#endregion
+		
+		
 		#region "CreditCardProvider"
 			
 		private SqlCreditCardProvider innerSqlCreditCardProvider;
@@ -303,6 +342,45 @@ namespace netTiers.Petshop.Data.SqlClient
 		public SqlCreditCardProvider SqlCreditCardProvider
 		{
 			get {return CreditCardProvider as SqlCreditCardProvider;}
+		}
+		
+		#endregion
+		
+		
+		#region "InventoryProvider"
+			
+		private SqlInventoryProvider innerSqlInventoryProvider;
+
+		///<summary>
+		/// This class is the Data Access Logic Component for the <see cref="Inventory"/> business entity.
+		/// It exposes CRUD methods as well as selecting on index, foreign keys and custom stored procedures.
+		///</summary>
+		/// <value></value>
+		public override InventoryProviderBase InventoryProvider
+		{
+			get
+			{
+				if (innerSqlInventoryProvider == null) 
+				{
+					lock (syncRoot) 
+					{
+						if (innerSqlInventoryProvider == null)
+						{
+							this.innerSqlInventoryProvider = new SqlInventoryProvider(_connectionString, _useStoredProcedure, _providerInvariantName);
+						}
+					}
+				}
+				return innerSqlInventoryProvider;
+			}
+		}
+		
+		/// <summary>
+		/// Gets the current <c cref="SqlInventoryProvider"/>.
+		/// </summary>
+		/// <value></value>
+		public SqlInventoryProvider SqlInventoryProvider
+		{
+			get {return InventoryProvider as SqlInventoryProvider;}
 		}
 		
 		#endregion
@@ -347,6 +425,162 @@ namespace netTiers.Petshop.Data.SqlClient
 		#endregion
 		
 		
+		#region "LineItemProvider"
+			
+		private SqlLineItemProvider innerSqlLineItemProvider;
+
+		///<summary>
+		/// This class is the Data Access Logic Component for the <see cref="LineItem"/> business entity.
+		/// It exposes CRUD methods as well as selecting on index, foreign keys and custom stored procedures.
+		///</summary>
+		/// <value></value>
+		public override LineItemProviderBase LineItemProvider
+		{
+			get
+			{
+				if (innerSqlLineItemProvider == null) 
+				{
+					lock (syncRoot) 
+					{
+						if (innerSqlLineItemProvider == null)
+						{
+							this.innerSqlLineItemProvider = new SqlLineItemProvider(_connectionString, _useStoredProcedure, _providerInvariantName);
+						}
+					}
+				}
+				return innerSqlLineItemProvider;
+			}
+		}
+		
+		/// <summary>
+		/// Gets the current <c cref="SqlLineItemProvider"/>.
+		/// </summary>
+		/// <value></value>
+		public SqlLineItemProvider SqlLineItemProvider
+		{
+			get {return LineItemProvider as SqlLineItemProvider;}
+		}
+		
+		#endregion
+		
+		
+		#region "OrdersProvider"
+			
+		private SqlOrdersProvider innerSqlOrdersProvider;
+
+		///<summary>
+		/// This class is the Data Access Logic Component for the <see cref="Orders"/> business entity.
+		/// It exposes CRUD methods as well as selecting on index, foreign keys and custom stored procedures.
+		///</summary>
+		/// <value></value>
+		public override OrdersProviderBase OrdersProvider
+		{
+			get
+			{
+				if (innerSqlOrdersProvider == null) 
+				{
+					lock (syncRoot) 
+					{
+						if (innerSqlOrdersProvider == null)
+						{
+							this.innerSqlOrdersProvider = new SqlOrdersProvider(_connectionString, _useStoredProcedure, _providerInvariantName);
+						}
+					}
+				}
+				return innerSqlOrdersProvider;
+			}
+		}
+		
+		/// <summary>
+		/// Gets the current <c cref="SqlOrdersProvider"/>.
+		/// </summary>
+		/// <value></value>
+		public SqlOrdersProvider SqlOrdersProvider
+		{
+			get {return OrdersProvider as SqlOrdersProvider;}
+		}
+		
+		#endregion
+		
+		
+		#region "OrderStatusProvider"
+			
+		private SqlOrderStatusProvider innerSqlOrderStatusProvider;
+
+		///<summary>
+		/// This class is the Data Access Logic Component for the <see cref="OrderStatus"/> business entity.
+		/// It exposes CRUD methods as well as selecting on index, foreign keys and custom stored procedures.
+		///</summary>
+		/// <value></value>
+		public override OrderStatusProviderBase OrderStatusProvider
+		{
+			get
+			{
+				if (innerSqlOrderStatusProvider == null) 
+				{
+					lock (syncRoot) 
+					{
+						if (innerSqlOrderStatusProvider == null)
+						{
+							this.innerSqlOrderStatusProvider = new SqlOrderStatusProvider(_connectionString, _useStoredProcedure, _providerInvariantName);
+						}
+					}
+				}
+				return innerSqlOrderStatusProvider;
+			}
+		}
+		
+		/// <summary>
+		/// Gets the current <c cref="SqlOrderStatusProvider"/>.
+		/// </summary>
+		/// <value></value>
+		public SqlOrderStatusProvider SqlOrderStatusProvider
+		{
+			get {return OrderStatusProvider as SqlOrderStatusProvider;}
+		}
+		
+		#endregion
+		
+		
+		#region "OrderStatusTypeProvider"
+			
+		private SqlOrderStatusTypeProvider innerSqlOrderStatusTypeProvider;
+
+		///<summary>
+		/// This class is the Data Access Logic Component for the <see cref="OrderStatusType"/> business entity.
+		/// It exposes CRUD methods as well as selecting on index, foreign keys and custom stored procedures.
+		///</summary>
+		/// <value></value>
+		public override OrderStatusTypeProviderBase OrderStatusTypeProvider
+		{
+			get
+			{
+				if (innerSqlOrderStatusTypeProvider == null) 
+				{
+					lock (syncRoot) 
+					{
+						if (innerSqlOrderStatusTypeProvider == null)
+						{
+							this.innerSqlOrderStatusTypeProvider = new SqlOrderStatusTypeProvider(_connectionString, _useStoredProcedure, _providerInvariantName);
+						}
+					}
+				}
+				return innerSqlOrderStatusTypeProvider;
+			}
+		}
+		
+		/// <summary>
+		/// Gets the current <c cref="SqlOrderStatusTypeProvider"/>.
+		/// </summary>
+		/// <value></value>
+		public SqlOrderStatusTypeProvider SqlOrderStatusTypeProvider
+		{
+			get {return OrderStatusTypeProvider as SqlOrderStatusTypeProvider;}
+		}
+		
+		#endregion
+		
+		
 		#region "ProductProvider"
 			
 		private SqlProductProvider innerSqlProductProvider;
@@ -381,6 +615,45 @@ namespace netTiers.Petshop.Data.SqlClient
 		public SqlProductProvider SqlProductProvider
 		{
 			get {return ProductProvider as SqlProductProvider;}
+		}
+		
+		#endregion
+		
+		
+		#region "SupplierProvider"
+			
+		private SqlSupplierProvider innerSqlSupplierProvider;
+
+		///<summary>
+		/// This class is the Data Access Logic Component for the <see cref="Supplier"/> business entity.
+		/// It exposes CRUD methods as well as selecting on index, foreign keys and custom stored procedures.
+		///</summary>
+		/// <value></value>
+		public override SupplierProviderBase SupplierProvider
+		{
+			get
+			{
+				if (innerSqlSupplierProvider == null) 
+				{
+					lock (syncRoot) 
+					{
+						if (innerSqlSupplierProvider == null)
+						{
+							this.innerSqlSupplierProvider = new SqlSupplierProvider(_connectionString, _useStoredProcedure, _providerInvariantName);
+						}
+					}
+				}
+				return innerSqlSupplierProvider;
+			}
+		}
+		
+		/// <summary>
+		/// Gets the current <c cref="SqlSupplierProvider"/>.
+		/// </summary>
+		/// <value></value>
+		public SqlSupplierProvider SqlSupplierProvider
+		{
+			get {return SupplierProvider as SqlSupplierProvider;}
 		}
 		
 		#endregion

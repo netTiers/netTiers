@@ -26,9 +26,6 @@ namespace netTiers.Petshop.Services
 		{
 			this.Identity = System.Threading.Thread.CurrentPrincipal.Identity;
 			this.Principal = System.Threading.Thread.CurrentPrincipal;
-			//TODO: Get Custom Profile?, use Web assembly's?
-			// Do we care about profile info?  Stuff it into IIdentity?
-			//this.Profile = 
 		}
 		
 		
@@ -95,13 +92,21 @@ namespace netTiers.Petshop.Services
 		/// Determine whether user is authorized for the rule based on the rule provider
 		/// </summary>
 		public bool IsAuthorized(string ruleToCheck)
-		{
-			//TODO: Implement Auditing.
-			// Auditor.Audit(Principal, type, ruleCheck);
+		{			
+			try
+			{
+				if (ConnectionScope.Current.DataProvider.EnableMethodAuthorization)
+				{
+					return RuleProvider.Authorize(Principal, string.Format("{0}.{1}", typeof(Entity).FullName , ruleToCheck));
+				}
+			}
+			catch ( Exception )
+			{
+				//Method has yet to be configured in config file
+				//throw;
+			}
 			
 			return true;
-			// authorization
-			//return RuleProvider.Authorize(Principal, string.Format("{0}.{1}", typeof(T).FullName , ruleToCheck)); 
 		}
 	}
 

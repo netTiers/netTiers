@@ -27,11 +27,11 @@ namespace netTiers.Petshop.Data.WebServiceClient.WsProxy {
     [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Web.Services", "2.0.50727.42")]
     [System.Diagnostics.DebuggerStepThroughAttribute()]
     [System.ComponentModel.DesignerCategoryAttribute("code")]
-    [System.Web.Services.WebServiceBindingAttribute(Name="petshopServicesSoap", Namespace="http://localhost/PetshopServices")]
+    [System.Web.Services.WebServiceBindingAttribute(Name="petshopDBServicesSoap", Namespace="http://localhost/PetshopServices")]
     [System.Xml.Serialization.XmlIncludeAttribute(typeof(ExtendedItemBase))]
     [System.Xml.Serialization.XmlIncludeAttribute(typeof(EntityBaseCore))]
     [System.Xml.Serialization.XmlIncludeAttribute(typeof(Account[]))]
-    public partial class petshopServices : System.Web.Services.Protocols.SoapHttpClientProtocol {
+    public partial class petshopDBServices : System.Web.Services.Protocols.SoapHttpClientProtocol {
         
         private System.Threading.SendOrPostCallback AccountProvider_DeleteOperationCompleted;
         
@@ -41,9 +41,9 @@ namespace netTiers.Petshop.Data.WebServiceClient.WsProxy {
         
         private System.Threading.SendOrPostCallback AccountProvider_GetPagedOperationCompleted;
         
-        private System.Threading.SendOrPostCallback AccountProvider_GetByCreditCardIdOperationCompleted;
-        
         private System.Threading.SendOrPostCallback AccountProvider_GetByFavoriteCategoryIdOperationCompleted;
+        
+        private System.Threading.SendOrPostCallback AccountProvider_GetByCreditCardIdOperationCompleted;
         
         private System.Threading.SendOrPostCallback AccountProvider_GetByIdOperationCompleted;
         
@@ -73,6 +73,22 @@ namespace netTiers.Petshop.Data.WebServiceClient.WsProxy {
         
         private System.Threading.SendOrPostCallback CategoryProvider_UpdateOperationCompleted;
         
+        private System.Threading.SendOrPostCallback CourierProvider_DeleteOperationCompleted;
+        
+        private System.Threading.SendOrPostCallback CourierProvider_FindOperationCompleted;
+        
+        private System.Threading.SendOrPostCallback CourierProvider_GetAllOperationCompleted;
+        
+        private System.Threading.SendOrPostCallback CourierProvider_GetPagedOperationCompleted;
+        
+        private System.Threading.SendOrPostCallback CourierProvider_GetByCourierIdOperationCompleted;
+        
+        private System.Threading.SendOrPostCallback CourierProvider_InsertOperationCompleted;
+        
+        private System.Threading.SendOrPostCallback CourierProvider_BulkInsertOperationCompleted;
+        
+        private System.Threading.SendOrPostCallback CourierProvider_UpdateOperationCompleted;
+        
         private System.Threading.SendOrPostCallback CreditCardProvider_DeleteOperationCompleted;
         
         private System.Threading.SendOrPostCallback CreditCardProvider_FindOperationCompleted;
@@ -88,6 +104,30 @@ namespace netTiers.Petshop.Data.WebServiceClient.WsProxy {
         private System.Threading.SendOrPostCallback CreditCardProvider_BulkInsertOperationCompleted;
         
         private System.Threading.SendOrPostCallback CreditCardProvider_UpdateOperationCompleted;
+        
+        private System.Threading.SendOrPostCallback InventoryProvider_DeleteOperationCompleted;
+        
+        private System.Threading.SendOrPostCallback InventoryProvider_FindOperationCompleted;
+        
+        private System.Threading.SendOrPostCallback InventoryProvider_GetAllOperationCompleted;
+        
+        private System.Threading.SendOrPostCallback InventoryProvider_GetPagedOperationCompleted;
+        
+        private System.Threading.SendOrPostCallback InventoryProvider_GetByItemIdOperationCompleted;
+        
+        private System.Threading.SendOrPostCallback InventoryProvider_GetBySuppIdOperationCompleted;
+        
+        private System.Threading.SendOrPostCallback InventoryProvider_GetByItemIdSuppIdOperationCompleted;
+        
+        private System.Threading.SendOrPostCallback InventoryProvider_InsertOperationCompleted;
+        
+        private System.Threading.SendOrPostCallback InventoryProvider_BulkInsertOperationCompleted;
+        
+        private System.Threading.SendOrPostCallback InventoryProvider_UpdateOperationCompleted;
+        
+        private System.Threading.SendOrPostCallback InventoryProvider_GetMaxSupplierOperationCompleted;
+        
+        private System.Threading.SendOrPostCallback ItemProvider_GetBySuppIdFromInventoryOperationCompleted;
         
         private System.Threading.SendOrPostCallback ItemProvider_DeleteOperationCompleted;
         
@@ -107,6 +147,86 @@ namespace netTiers.Petshop.Data.WebServiceClient.WsProxy {
         
         private System.Threading.SendOrPostCallback ItemProvider_UpdateOperationCompleted;
         
+        private System.Threading.SendOrPostCallback LineItemProvider_DeleteOperationCompleted;
+        
+        private System.Threading.SendOrPostCallback LineItemProvider_FindOperationCompleted;
+        
+        private System.Threading.SendOrPostCallback LineItemProvider_GetAllOperationCompleted;
+        
+        private System.Threading.SendOrPostCallback LineItemProvider_GetPagedOperationCompleted;
+        
+        private System.Threading.SendOrPostCallback LineItemProvider_GetByOrderIdOperationCompleted;
+        
+        private System.Threading.SendOrPostCallback LineItemProvider_GetByItemIdOperationCompleted;
+        
+        private System.Threading.SendOrPostCallback LineItemProvider_GetByLineNumOrderIdOperationCompleted;
+        
+        private System.Threading.SendOrPostCallback LineItemProvider_InsertOperationCompleted;
+        
+        private System.Threading.SendOrPostCallback LineItemProvider_BulkInsertOperationCompleted;
+        
+        private System.Threading.SendOrPostCallback LineItemProvider_UpdateOperationCompleted;
+        
+        private System.Threading.SendOrPostCallback OrdersProvider_DeleteOperationCompleted;
+        
+        private System.Threading.SendOrPostCallback OrdersProvider_FindOperationCompleted;
+        
+        private System.Threading.SendOrPostCallback OrdersProvider_GetAllOperationCompleted;
+        
+        private System.Threading.SendOrPostCallback OrdersProvider_GetPagedOperationCompleted;
+        
+        private System.Threading.SendOrPostCallback OrdersProvider_GetByAccountIdOperationCompleted;
+        
+        private System.Threading.SendOrPostCallback OrdersProvider_GetByCourierIdOperationCompleted;
+        
+        private System.Threading.SendOrPostCallback OrdersProvider_GetByCreditCardIdOperationCompleted;
+        
+        private System.Threading.SendOrPostCallback OrdersProvider_GetByOrderIdOperationCompleted;
+        
+        private System.Threading.SendOrPostCallback OrdersProvider_InsertOperationCompleted;
+        
+        private System.Threading.SendOrPostCallback OrdersProvider_BulkInsertOperationCompleted;
+        
+        private System.Threading.SendOrPostCallback OrdersProvider_UpdateOperationCompleted;
+        
+        private System.Threading.SendOrPostCallback OrderStatusProvider_DeleteOperationCompleted;
+        
+        private System.Threading.SendOrPostCallback OrderStatusProvider_FindOperationCompleted;
+        
+        private System.Threading.SendOrPostCallback OrderStatusProvider_GetAllOperationCompleted;
+        
+        private System.Threading.SendOrPostCallback OrderStatusProvider_GetPagedOperationCompleted;
+        
+        private System.Threading.SendOrPostCallback OrderStatusProvider_GetByOrderIdOperationCompleted;
+        
+        private System.Threading.SendOrPostCallback OrderStatusProvider_GetByOrderStatusIdOperationCompleted;
+        
+        private System.Threading.SendOrPostCallback OrderStatusProvider_GetByLineNumOrderIdOperationCompleted;
+        
+        private System.Threading.SendOrPostCallback OrderStatusProvider_InsertOperationCompleted;
+        
+        private System.Threading.SendOrPostCallback OrderStatusProvider_BulkInsertOperationCompleted;
+        
+        private System.Threading.SendOrPostCallback OrderStatusProvider_UpdateOperationCompleted;
+        
+        private System.Threading.SendOrPostCallback OrderStatusTypeProvider_DeleteOperationCompleted;
+        
+        private System.Threading.SendOrPostCallback OrderStatusTypeProvider_FindOperationCompleted;
+        
+        private System.Threading.SendOrPostCallback OrderStatusTypeProvider_GetAllOperationCompleted;
+        
+        private System.Threading.SendOrPostCallback OrderStatusTypeProvider_GetPagedOperationCompleted;
+        
+        private System.Threading.SendOrPostCallback OrderStatusTypeProvider_GetByOrderStatusIdOperationCompleted;
+        
+        private System.Threading.SendOrPostCallback OrderStatusTypeProvider_GetByOrderStatusOperationCompleted;
+        
+        private System.Threading.SendOrPostCallback OrderStatusTypeProvider_InsertOperationCompleted;
+        
+        private System.Threading.SendOrPostCallback OrderStatusTypeProvider_BulkInsertOperationCompleted;
+        
+        private System.Threading.SendOrPostCallback OrderStatusTypeProvider_UpdateOperationCompleted;
+        
         private System.Threading.SendOrPostCallback ProductProvider_DeleteOperationCompleted;
         
         private System.Threading.SendOrPostCallback ProductProvider_FindOperationCompleted;
@@ -124,6 +244,24 @@ namespace netTiers.Petshop.Data.WebServiceClient.WsProxy {
         private System.Threading.SendOrPostCallback ProductProvider_BulkInsertOperationCompleted;
         
         private System.Threading.SendOrPostCallback ProductProvider_UpdateOperationCompleted;
+        
+        private System.Threading.SendOrPostCallback SupplierProvider_GetByItemIdFromInventoryOperationCompleted;
+        
+        private System.Threading.SendOrPostCallback SupplierProvider_DeleteOperationCompleted;
+        
+        private System.Threading.SendOrPostCallback SupplierProvider_FindOperationCompleted;
+        
+        private System.Threading.SendOrPostCallback SupplierProvider_GetAllOperationCompleted;
+        
+        private System.Threading.SendOrPostCallback SupplierProvider_GetPagedOperationCompleted;
+        
+        private System.Threading.SendOrPostCallback SupplierProvider_GetBySuppIdOperationCompleted;
+        
+        private System.Threading.SendOrPostCallback SupplierProvider_InsertOperationCompleted;
+        
+        private System.Threading.SendOrPostCallback SupplierProvider_BulkInsertOperationCompleted;
+        
+        private System.Threading.SendOrPostCallback SupplierProvider_UpdateOperationCompleted;
         
         private System.Threading.SendOrPostCallback ExtendedItemProvider_GetAllOperationCompleted;
         
@@ -144,8 +282,8 @@ namespace netTiers.Petshop.Data.WebServiceClient.WsProxy {
         private bool useDefaultCredentialsSetExplicitly;
         
         /// <remarks/>
-        public petshopServices() {
-            this.Url = "http://localhost/PetshopServices/PetshopServices.asmx";
+        public petshopDBServices() {
+            this.Url = "http://localhost/PetshopServices/PetshopDBServices.asmx";
             if ((this.IsLocalFileSystemWebService(this.Url) == true)) {
                 this.UseDefaultCredentials = true;
                 this.useDefaultCredentialsSetExplicitly = false;
@@ -192,10 +330,10 @@ namespace netTiers.Petshop.Data.WebServiceClient.WsProxy {
         public event AccountProvider_GetPagedCompletedEventHandler AccountProvider_GetPagedCompleted;
         
         /// <remarks/>
-        public event AccountProvider_GetByCreditCardIdCompletedEventHandler AccountProvider_GetByCreditCardIdCompleted;
+        public event AccountProvider_GetByFavoriteCategoryIdCompletedEventHandler AccountProvider_GetByFavoriteCategoryIdCompleted;
         
         /// <remarks/>
-        public event AccountProvider_GetByFavoriteCategoryIdCompletedEventHandler AccountProvider_GetByFavoriteCategoryIdCompleted;
+        public event AccountProvider_GetByCreditCardIdCompletedEventHandler AccountProvider_GetByCreditCardIdCompleted;
         
         /// <remarks/>
         public event AccountProvider_GetByIdCompletedEventHandler AccountProvider_GetByIdCompleted;
@@ -240,6 +378,30 @@ namespace netTiers.Petshop.Data.WebServiceClient.WsProxy {
         public event CategoryProvider_UpdateCompletedEventHandler CategoryProvider_UpdateCompleted;
         
         /// <remarks/>
+        public event CourierProvider_DeleteCompletedEventHandler CourierProvider_DeleteCompleted;
+        
+        /// <remarks/>
+        public event CourierProvider_FindCompletedEventHandler CourierProvider_FindCompleted;
+        
+        /// <remarks/>
+        public event CourierProvider_GetAllCompletedEventHandler CourierProvider_GetAllCompleted;
+        
+        /// <remarks/>
+        public event CourierProvider_GetPagedCompletedEventHandler CourierProvider_GetPagedCompleted;
+        
+        /// <remarks/>
+        public event CourierProvider_GetByCourierIdCompletedEventHandler CourierProvider_GetByCourierIdCompleted;
+        
+        /// <remarks/>
+        public event CourierProvider_InsertCompletedEventHandler CourierProvider_InsertCompleted;
+        
+        /// <remarks/>
+        public event CourierProvider_BulkInsertCompletedEventHandler CourierProvider_BulkInsertCompleted;
+        
+        /// <remarks/>
+        public event CourierProvider_UpdateCompletedEventHandler CourierProvider_UpdateCompleted;
+        
+        /// <remarks/>
         public event CreditCardProvider_DeleteCompletedEventHandler CreditCardProvider_DeleteCompleted;
         
         /// <remarks/>
@@ -262,6 +424,42 @@ namespace netTiers.Petshop.Data.WebServiceClient.WsProxy {
         
         /// <remarks/>
         public event CreditCardProvider_UpdateCompletedEventHandler CreditCardProvider_UpdateCompleted;
+        
+        /// <remarks/>
+        public event InventoryProvider_DeleteCompletedEventHandler InventoryProvider_DeleteCompleted;
+        
+        /// <remarks/>
+        public event InventoryProvider_FindCompletedEventHandler InventoryProvider_FindCompleted;
+        
+        /// <remarks/>
+        public event InventoryProvider_GetAllCompletedEventHandler InventoryProvider_GetAllCompleted;
+        
+        /// <remarks/>
+        public event InventoryProvider_GetPagedCompletedEventHandler InventoryProvider_GetPagedCompleted;
+        
+        /// <remarks/>
+        public event InventoryProvider_GetByItemIdCompletedEventHandler InventoryProvider_GetByItemIdCompleted;
+        
+        /// <remarks/>
+        public event InventoryProvider_GetBySuppIdCompletedEventHandler InventoryProvider_GetBySuppIdCompleted;
+        
+        /// <remarks/>
+        public event InventoryProvider_GetByItemIdSuppIdCompletedEventHandler InventoryProvider_GetByItemIdSuppIdCompleted;
+        
+        /// <remarks/>
+        public event InventoryProvider_InsertCompletedEventHandler InventoryProvider_InsertCompleted;
+        
+        /// <remarks/>
+        public event InventoryProvider_BulkInsertCompletedEventHandler InventoryProvider_BulkInsertCompleted;
+        
+        /// <remarks/>
+        public event InventoryProvider_UpdateCompletedEventHandler InventoryProvider_UpdateCompleted;
+        
+        /// <remarks/>
+        public event InventoryProvider_GetMaxSupplierCompletedEventHandler InventoryProvider_GetMaxSupplierCompleted;
+        
+        /// <remarks/>
+        public event ItemProvider_GetBySuppIdFromInventoryCompletedEventHandler ItemProvider_GetBySuppIdFromInventoryCompleted;
         
         /// <remarks/>
         public event ItemProvider_DeleteCompletedEventHandler ItemProvider_DeleteCompleted;
@@ -291,6 +489,126 @@ namespace netTiers.Petshop.Data.WebServiceClient.WsProxy {
         public event ItemProvider_UpdateCompletedEventHandler ItemProvider_UpdateCompleted;
         
         /// <remarks/>
+        public event LineItemProvider_DeleteCompletedEventHandler LineItemProvider_DeleteCompleted;
+        
+        /// <remarks/>
+        public event LineItemProvider_FindCompletedEventHandler LineItemProvider_FindCompleted;
+        
+        /// <remarks/>
+        public event LineItemProvider_GetAllCompletedEventHandler LineItemProvider_GetAllCompleted;
+        
+        /// <remarks/>
+        public event LineItemProvider_GetPagedCompletedEventHandler LineItemProvider_GetPagedCompleted;
+        
+        /// <remarks/>
+        public event LineItemProvider_GetByOrderIdCompletedEventHandler LineItemProvider_GetByOrderIdCompleted;
+        
+        /// <remarks/>
+        public event LineItemProvider_GetByItemIdCompletedEventHandler LineItemProvider_GetByItemIdCompleted;
+        
+        /// <remarks/>
+        public event LineItemProvider_GetByLineNumOrderIdCompletedEventHandler LineItemProvider_GetByLineNumOrderIdCompleted;
+        
+        /// <remarks/>
+        public event LineItemProvider_InsertCompletedEventHandler LineItemProvider_InsertCompleted;
+        
+        /// <remarks/>
+        public event LineItemProvider_BulkInsertCompletedEventHandler LineItemProvider_BulkInsertCompleted;
+        
+        /// <remarks/>
+        public event LineItemProvider_UpdateCompletedEventHandler LineItemProvider_UpdateCompleted;
+        
+        /// <remarks/>
+        public event OrdersProvider_DeleteCompletedEventHandler OrdersProvider_DeleteCompleted;
+        
+        /// <remarks/>
+        public event OrdersProvider_FindCompletedEventHandler OrdersProvider_FindCompleted;
+        
+        /// <remarks/>
+        public event OrdersProvider_GetAllCompletedEventHandler OrdersProvider_GetAllCompleted;
+        
+        /// <remarks/>
+        public event OrdersProvider_GetPagedCompletedEventHandler OrdersProvider_GetPagedCompleted;
+        
+        /// <remarks/>
+        public event OrdersProvider_GetByAccountIdCompletedEventHandler OrdersProvider_GetByAccountIdCompleted;
+        
+        /// <remarks/>
+        public event OrdersProvider_GetByCourierIdCompletedEventHandler OrdersProvider_GetByCourierIdCompleted;
+        
+        /// <remarks/>
+        public event OrdersProvider_GetByCreditCardIdCompletedEventHandler OrdersProvider_GetByCreditCardIdCompleted;
+        
+        /// <remarks/>
+        public event OrdersProvider_GetByOrderIdCompletedEventHandler OrdersProvider_GetByOrderIdCompleted;
+        
+        /// <remarks/>
+        public event OrdersProvider_InsertCompletedEventHandler OrdersProvider_InsertCompleted;
+        
+        /// <remarks/>
+        public event OrdersProvider_BulkInsertCompletedEventHandler OrdersProvider_BulkInsertCompleted;
+        
+        /// <remarks/>
+        public event OrdersProvider_UpdateCompletedEventHandler OrdersProvider_UpdateCompleted;
+        
+        /// <remarks/>
+        public event OrderStatusProvider_DeleteCompletedEventHandler OrderStatusProvider_DeleteCompleted;
+        
+        /// <remarks/>
+        public event OrderStatusProvider_FindCompletedEventHandler OrderStatusProvider_FindCompleted;
+        
+        /// <remarks/>
+        public event OrderStatusProvider_GetAllCompletedEventHandler OrderStatusProvider_GetAllCompleted;
+        
+        /// <remarks/>
+        public event OrderStatusProvider_GetPagedCompletedEventHandler OrderStatusProvider_GetPagedCompleted;
+        
+        /// <remarks/>
+        public event OrderStatusProvider_GetByOrderIdCompletedEventHandler OrderStatusProvider_GetByOrderIdCompleted;
+        
+        /// <remarks/>
+        public event OrderStatusProvider_GetByOrderStatusIdCompletedEventHandler OrderStatusProvider_GetByOrderStatusIdCompleted;
+        
+        /// <remarks/>
+        public event OrderStatusProvider_GetByLineNumOrderIdCompletedEventHandler OrderStatusProvider_GetByLineNumOrderIdCompleted;
+        
+        /// <remarks/>
+        public event OrderStatusProvider_InsertCompletedEventHandler OrderStatusProvider_InsertCompleted;
+        
+        /// <remarks/>
+        public event OrderStatusProvider_BulkInsertCompletedEventHandler OrderStatusProvider_BulkInsertCompleted;
+        
+        /// <remarks/>
+        public event OrderStatusProvider_UpdateCompletedEventHandler OrderStatusProvider_UpdateCompleted;
+        
+        /// <remarks/>
+        public event OrderStatusTypeProvider_DeleteCompletedEventHandler OrderStatusTypeProvider_DeleteCompleted;
+        
+        /// <remarks/>
+        public event OrderStatusTypeProvider_FindCompletedEventHandler OrderStatusTypeProvider_FindCompleted;
+        
+        /// <remarks/>
+        public event OrderStatusTypeProvider_GetAllCompletedEventHandler OrderStatusTypeProvider_GetAllCompleted;
+        
+        /// <remarks/>
+        public event OrderStatusTypeProvider_GetPagedCompletedEventHandler OrderStatusTypeProvider_GetPagedCompleted;
+        
+        /// <remarks/>
+        public event OrderStatusTypeProvider_GetByOrderStatusIdCompletedEventHandler OrderStatusTypeProvider_GetByOrderStatusIdCompleted;
+        
+        /// <remarks/>
+        public event OrderStatusTypeProvider_GetByOrderStatusCompletedEventHandler OrderStatusTypeProvider_GetByOrderStatusCompleted;
+        
+        /// <remarks/>
+        public event OrderStatusTypeProvider_InsertCompletedEventHandler OrderStatusTypeProvider_InsertCompleted;
+        
+        /// <remarks/>
+        public event OrderStatusTypeProvider_BulkInsertCompletedEventHandler OrderStatusTypeProvider_BulkInsertCompleted;
+        
+        /// <remarks/>
+        public event OrderStatusTypeProvider_UpdateCompletedEventHandler OrderStatusTypeProvider_UpdateCompleted;
+        
+        /// <remarks/>
         public event ProductProvider_DeleteCompletedEventHandler ProductProvider_DeleteCompleted;
         
         /// <remarks/>
@@ -318,6 +636,33 @@ namespace netTiers.Petshop.Data.WebServiceClient.WsProxy {
         public event ProductProvider_UpdateCompletedEventHandler ProductProvider_UpdateCompleted;
         
         /// <remarks/>
+        public event SupplierProvider_GetByItemIdFromInventoryCompletedEventHandler SupplierProvider_GetByItemIdFromInventoryCompleted;
+        
+        /// <remarks/>
+        public event SupplierProvider_DeleteCompletedEventHandler SupplierProvider_DeleteCompleted;
+        
+        /// <remarks/>
+        public event SupplierProvider_FindCompletedEventHandler SupplierProvider_FindCompleted;
+        
+        /// <remarks/>
+        public event SupplierProvider_GetAllCompletedEventHandler SupplierProvider_GetAllCompleted;
+        
+        /// <remarks/>
+        public event SupplierProvider_GetPagedCompletedEventHandler SupplierProvider_GetPagedCompleted;
+        
+        /// <remarks/>
+        public event SupplierProvider_GetBySuppIdCompletedEventHandler SupplierProvider_GetBySuppIdCompleted;
+        
+        /// <remarks/>
+        public event SupplierProvider_InsertCompletedEventHandler SupplierProvider_InsertCompleted;
+        
+        /// <remarks/>
+        public event SupplierProvider_BulkInsertCompletedEventHandler SupplierProvider_BulkInsertCompleted;
+        
+        /// <remarks/>
+        public event SupplierProvider_UpdateCompletedEventHandler SupplierProvider_UpdateCompleted;
+        
+        /// <remarks/>
         public event ExtendedItemProvider_GetAllCompletedEventHandler ExtendedItemProvider_GetAllCompleted;
         
         /// <remarks/>
@@ -343,7 +688,7 @@ namespace netTiers.Petshop.Data.WebServiceClient.WsProxy {
         
         /// <remarks/>
         [System.Web.Services.Protocols.SoapDocumentMethodAttribute("http://localhost/PetshopServices/AccountProvider_Delete", RequestNamespace="http://localhost/PetshopServices", ResponseNamespace="http://localhost/PetshopServices", Use=System.Web.Services.Description.SoapBindingUse.Literal, ParameterStyle=System.Web.Services.Protocols.SoapParameterStyle.Wrapped)]
-        public bool AccountProvider_Delete(string id, [System.Xml.Serialization.XmlElementAttribute(DataType="base64Binary")] byte[] timestamp) {
+        public bool AccountProvider_Delete(System.Guid id, [System.Xml.Serialization.XmlElementAttribute(DataType="base64Binary")] byte[] timestamp) {
             object[] results = this.Invoke("AccountProvider_Delete", new object[] {
                         id,
                         timestamp});
@@ -351,12 +696,12 @@ namespace netTiers.Petshop.Data.WebServiceClient.WsProxy {
         }
         
         /// <remarks/>
-        public void AccountProvider_DeleteAsync(string id, byte[] timestamp) {
+        public void AccountProvider_DeleteAsync(System.Guid id, byte[] timestamp) {
             this.AccountProvider_DeleteAsync(id, timestamp, null);
         }
         
         /// <remarks/>
-        public void AccountProvider_DeleteAsync(string id, byte[] timestamp, object userState) {
+        public void AccountProvider_DeleteAsync(System.Guid id, byte[] timestamp, object userState) {
             if ((this.AccountProvider_DeleteOperationCompleted == null)) {
                 this.AccountProvider_DeleteOperationCompleted = new System.Threading.SendOrPostCallback(this.OnAccountProvider_DeleteOperationCompleted);
             }
@@ -475,42 +820,8 @@ namespace netTiers.Petshop.Data.WebServiceClient.WsProxy {
         }
         
         /// <remarks/>
-        [System.Web.Services.Protocols.SoapDocumentMethodAttribute("http://localhost/PetshopServices/AccountProvider_GetByCreditCardId", RequestNamespace="http://localhost/PetshopServices", ResponseNamespace="http://localhost/PetshopServices", Use=System.Web.Services.Description.SoapBindingUse.Literal, ParameterStyle=System.Web.Services.Protocols.SoapParameterStyle.Wrapped)]
-        public Account[] AccountProvider_GetByCreditCardId(string creditCardId, int start, int pageLength, out int count) {
-            object[] results = this.Invoke("AccountProvider_GetByCreditCardId", new object[] {
-                        creditCardId,
-                        start,
-                        pageLength});
-            count = ((int)(results[1]));
-            return ((Account[])(results[0]));
-        }
-        
-        /// <remarks/>
-        public void AccountProvider_GetByCreditCardIdAsync(string creditCardId, int start, int pageLength) {
-            this.AccountProvider_GetByCreditCardIdAsync(creditCardId, start, pageLength, null);
-        }
-        
-        /// <remarks/>
-        public void AccountProvider_GetByCreditCardIdAsync(string creditCardId, int start, int pageLength, object userState) {
-            if ((this.AccountProvider_GetByCreditCardIdOperationCompleted == null)) {
-                this.AccountProvider_GetByCreditCardIdOperationCompleted = new System.Threading.SendOrPostCallback(this.OnAccountProvider_GetByCreditCardIdOperationCompleted);
-            }
-            this.InvokeAsync("AccountProvider_GetByCreditCardId", new object[] {
-                        creditCardId,
-                        start,
-                        pageLength}, this.AccountProvider_GetByCreditCardIdOperationCompleted, userState);
-        }
-        
-        private void OnAccountProvider_GetByCreditCardIdOperationCompleted(object arg) {
-            if ((this.AccountProvider_GetByCreditCardIdCompleted != null)) {
-                System.Web.Services.Protocols.InvokeCompletedEventArgs invokeArgs = ((System.Web.Services.Protocols.InvokeCompletedEventArgs)(arg));
-                this.AccountProvider_GetByCreditCardIdCompleted(this, new AccountProvider_GetByCreditCardIdCompletedEventArgs(invokeArgs.Results, invokeArgs.Error, invokeArgs.Cancelled, invokeArgs.UserState));
-            }
-        }
-        
-        /// <remarks/>
         [System.Web.Services.Protocols.SoapDocumentMethodAttribute("http://localhost/PetshopServices/AccountProvider_GetByFavoriteCategoryId", RequestNamespace="http://localhost/PetshopServices", ResponseNamespace="http://localhost/PetshopServices", Use=System.Web.Services.Description.SoapBindingUse.Literal, ParameterStyle=System.Web.Services.Protocols.SoapParameterStyle.Wrapped)]
-        public Account[] AccountProvider_GetByFavoriteCategoryId(string favoriteCategoryId, int start, int pageLength, out int count) {
+        public Account[] AccountProvider_GetByFavoriteCategoryId([System.Xml.Serialization.XmlElementAttribute(IsNullable=true)] System.Nullable<System.Guid> favoriteCategoryId, int start, int pageLength, out int count) {
             object[] results = this.Invoke("AccountProvider_GetByFavoriteCategoryId", new object[] {
                         favoriteCategoryId,
                         start,
@@ -520,12 +831,12 @@ namespace netTiers.Petshop.Data.WebServiceClient.WsProxy {
         }
         
         /// <remarks/>
-        public void AccountProvider_GetByFavoriteCategoryIdAsync(string favoriteCategoryId, int start, int pageLength) {
+        public void AccountProvider_GetByFavoriteCategoryIdAsync(System.Nullable<System.Guid> favoriteCategoryId, int start, int pageLength) {
             this.AccountProvider_GetByFavoriteCategoryIdAsync(favoriteCategoryId, start, pageLength, null);
         }
         
         /// <remarks/>
-        public void AccountProvider_GetByFavoriteCategoryIdAsync(string favoriteCategoryId, int start, int pageLength, object userState) {
+        public void AccountProvider_GetByFavoriteCategoryIdAsync(System.Nullable<System.Guid> favoriteCategoryId, int start, int pageLength, object userState) {
             if ((this.AccountProvider_GetByFavoriteCategoryIdOperationCompleted == null)) {
                 this.AccountProvider_GetByFavoriteCategoryIdOperationCompleted = new System.Threading.SendOrPostCallback(this.OnAccountProvider_GetByFavoriteCategoryIdOperationCompleted);
             }
@@ -543,8 +854,42 @@ namespace netTiers.Petshop.Data.WebServiceClient.WsProxy {
         }
         
         /// <remarks/>
+        [System.Web.Services.Protocols.SoapDocumentMethodAttribute("http://localhost/PetshopServices/AccountProvider_GetByCreditCardId", RequestNamespace="http://localhost/PetshopServices", ResponseNamespace="http://localhost/PetshopServices", Use=System.Web.Services.Description.SoapBindingUse.Literal, ParameterStyle=System.Web.Services.Protocols.SoapParameterStyle.Wrapped)]
+        public Account[] AccountProvider_GetByCreditCardId([System.Xml.Serialization.XmlElementAttribute(IsNullable=true)] System.Nullable<System.Guid> creditCardId, int start, int pageLength, out int count) {
+            object[] results = this.Invoke("AccountProvider_GetByCreditCardId", new object[] {
+                        creditCardId,
+                        start,
+                        pageLength});
+            count = ((int)(results[1]));
+            return ((Account[])(results[0]));
+        }
+        
+        /// <remarks/>
+        public void AccountProvider_GetByCreditCardIdAsync(System.Nullable<System.Guid> creditCardId, int start, int pageLength) {
+            this.AccountProvider_GetByCreditCardIdAsync(creditCardId, start, pageLength, null);
+        }
+        
+        /// <remarks/>
+        public void AccountProvider_GetByCreditCardIdAsync(System.Nullable<System.Guid> creditCardId, int start, int pageLength, object userState) {
+            if ((this.AccountProvider_GetByCreditCardIdOperationCompleted == null)) {
+                this.AccountProvider_GetByCreditCardIdOperationCompleted = new System.Threading.SendOrPostCallback(this.OnAccountProvider_GetByCreditCardIdOperationCompleted);
+            }
+            this.InvokeAsync("AccountProvider_GetByCreditCardId", new object[] {
+                        creditCardId,
+                        start,
+                        pageLength}, this.AccountProvider_GetByCreditCardIdOperationCompleted, userState);
+        }
+        
+        private void OnAccountProvider_GetByCreditCardIdOperationCompleted(object arg) {
+            if ((this.AccountProvider_GetByCreditCardIdCompleted != null)) {
+                System.Web.Services.Protocols.InvokeCompletedEventArgs invokeArgs = ((System.Web.Services.Protocols.InvokeCompletedEventArgs)(arg));
+                this.AccountProvider_GetByCreditCardIdCompleted(this, new AccountProvider_GetByCreditCardIdCompletedEventArgs(invokeArgs.Results, invokeArgs.Error, invokeArgs.Cancelled, invokeArgs.UserState));
+            }
+        }
+        
+        /// <remarks/>
         [System.Web.Services.Protocols.SoapDocumentMethodAttribute("http://localhost/PetshopServices/AccountProvider_GetById", RequestNamespace="http://localhost/PetshopServices", ResponseNamespace="http://localhost/PetshopServices", Use=System.Web.Services.Description.SoapBindingUse.Literal, ParameterStyle=System.Web.Services.Protocols.SoapParameterStyle.Wrapped)]
-        public Account AccountProvider_GetById(string id, int start, int pageLength, out int count) {
+        public Account AccountProvider_GetById(System.Guid id, int start, int pageLength, out int count) {
             object[] results = this.Invoke("AccountProvider_GetById", new object[] {
                         id,
                         start,
@@ -554,12 +899,12 @@ namespace netTiers.Petshop.Data.WebServiceClient.WsProxy {
         }
         
         /// <remarks/>
-        public void AccountProvider_GetByIdAsync(string id, int start, int pageLength) {
+        public void AccountProvider_GetByIdAsync(System.Guid id, int start, int pageLength) {
             this.AccountProvider_GetByIdAsync(id, start, pageLength, null);
         }
         
         /// <remarks/>
-        public void AccountProvider_GetByIdAsync(string id, int start, int pageLength, object userState) {
+        public void AccountProvider_GetByIdAsync(System.Guid id, int start, int pageLength, object userState) {
             if ((this.AccountProvider_GetByIdOperationCompleted == null)) {
                 this.AccountProvider_GetByIdOperationCompleted = new System.Threading.SendOrPostCallback(this.OnAccountProvider_GetByIdOperationCompleted);
             }
@@ -732,7 +1077,7 @@ namespace netTiers.Petshop.Data.WebServiceClient.WsProxy {
         
         /// <remarks/>
         [System.Web.Services.Protocols.SoapDocumentMethodAttribute("http://localhost/PetshopServices/CategoryProvider_Delete", RequestNamespace="http://localhost/PetshopServices", ResponseNamespace="http://localhost/PetshopServices", Use=System.Web.Services.Description.SoapBindingUse.Literal, ParameterStyle=System.Web.Services.Protocols.SoapParameterStyle.Wrapped)]
-        public bool CategoryProvider_Delete(string id, [System.Xml.Serialization.XmlElementAttribute(DataType="base64Binary")] byte[] timestamp) {
+        public bool CategoryProvider_Delete(System.Guid id, [System.Xml.Serialization.XmlElementAttribute(DataType="base64Binary")] byte[] timestamp) {
             object[] results = this.Invoke("CategoryProvider_Delete", new object[] {
                         id,
                         timestamp});
@@ -740,12 +1085,12 @@ namespace netTiers.Petshop.Data.WebServiceClient.WsProxy {
         }
         
         /// <remarks/>
-        public void CategoryProvider_DeleteAsync(string id, byte[] timestamp) {
+        public void CategoryProvider_DeleteAsync(System.Guid id, byte[] timestamp) {
             this.CategoryProvider_DeleteAsync(id, timestamp, null);
         }
         
         /// <remarks/>
-        public void CategoryProvider_DeleteAsync(string id, byte[] timestamp, object userState) {
+        public void CategoryProvider_DeleteAsync(System.Guid id, byte[] timestamp, object userState) {
             if ((this.CategoryProvider_DeleteOperationCompleted == null)) {
                 this.CategoryProvider_DeleteOperationCompleted = new System.Threading.SendOrPostCallback(this.OnCategoryProvider_DeleteOperationCompleted);
             }
@@ -865,7 +1210,7 @@ namespace netTiers.Petshop.Data.WebServiceClient.WsProxy {
         
         /// <remarks/>
         [System.Web.Services.Protocols.SoapDocumentMethodAttribute("http://localhost/PetshopServices/CategoryProvider_GetById", RequestNamespace="http://localhost/PetshopServices", ResponseNamespace="http://localhost/PetshopServices", Use=System.Web.Services.Description.SoapBindingUse.Literal, ParameterStyle=System.Web.Services.Protocols.SoapParameterStyle.Wrapped)]
-        public Category CategoryProvider_GetById(string id, int start, int pageLength, out int count) {
+        public Category CategoryProvider_GetById(System.Guid id, int start, int pageLength, out int count) {
             object[] results = this.Invoke("CategoryProvider_GetById", new object[] {
                         id,
                         start,
@@ -875,12 +1220,12 @@ namespace netTiers.Petshop.Data.WebServiceClient.WsProxy {
         }
         
         /// <remarks/>
-        public void CategoryProvider_GetByIdAsync(string id, int start, int pageLength) {
+        public void CategoryProvider_GetByIdAsync(System.Guid id, int start, int pageLength) {
             this.CategoryProvider_GetByIdAsync(id, start, pageLength, null);
         }
         
         /// <remarks/>
-        public void CategoryProvider_GetByIdAsync(string id, int start, int pageLength, object userState) {
+        public void CategoryProvider_GetByIdAsync(System.Guid id, int start, int pageLength, object userState) {
             if ((this.CategoryProvider_GetByIdOperationCompleted == null)) {
                 this.CategoryProvider_GetByIdOperationCompleted = new System.Threading.SendOrPostCallback(this.OnCategoryProvider_GetByIdOperationCompleted);
             }
@@ -984,8 +1329,261 @@ namespace netTiers.Petshop.Data.WebServiceClient.WsProxy {
         }
         
         /// <remarks/>
+        [System.Web.Services.Protocols.SoapDocumentMethodAttribute("http://localhost/PetshopServices/CourierProvider_Delete", RequestNamespace="http://localhost/PetshopServices", ResponseNamespace="http://localhost/PetshopServices", Use=System.Web.Services.Description.SoapBindingUse.Literal, ParameterStyle=System.Web.Services.Protocols.SoapParameterStyle.Wrapped)]
+        public bool CourierProvider_Delete(System.Guid courierId, [System.Xml.Serialization.XmlElementAttribute(DataType="base64Binary")] byte[] timestamp) {
+            object[] results = this.Invoke("CourierProvider_Delete", new object[] {
+                        courierId,
+                        timestamp});
+            return ((bool)(results[0]));
+        }
+        
+        /// <remarks/>
+        public void CourierProvider_DeleteAsync(System.Guid courierId, byte[] timestamp) {
+            this.CourierProvider_DeleteAsync(courierId, timestamp, null);
+        }
+        
+        /// <remarks/>
+        public void CourierProvider_DeleteAsync(System.Guid courierId, byte[] timestamp, object userState) {
+            if ((this.CourierProvider_DeleteOperationCompleted == null)) {
+                this.CourierProvider_DeleteOperationCompleted = new System.Threading.SendOrPostCallback(this.OnCourierProvider_DeleteOperationCompleted);
+            }
+            this.InvokeAsync("CourierProvider_Delete", new object[] {
+                        courierId,
+                        timestamp}, this.CourierProvider_DeleteOperationCompleted, userState);
+        }
+        
+        private void OnCourierProvider_DeleteOperationCompleted(object arg) {
+            if ((this.CourierProvider_DeleteCompleted != null)) {
+                System.Web.Services.Protocols.InvokeCompletedEventArgs invokeArgs = ((System.Web.Services.Protocols.InvokeCompletedEventArgs)(arg));
+                this.CourierProvider_DeleteCompleted(this, new CourierProvider_DeleteCompletedEventArgs(invokeArgs.Results, invokeArgs.Error, invokeArgs.Cancelled, invokeArgs.UserState));
+            }
+        }
+        
+        /// <remarks/>
+        [System.Web.Services.Protocols.SoapDocumentMethodAttribute("http://localhost/PetshopServices/CourierProvider_Find", RequestNamespace="http://localhost/PetshopServices", ResponseNamespace="http://localhost/PetshopServices", Use=System.Web.Services.Description.SoapBindingUse.Literal, ParameterStyle=System.Web.Services.Protocols.SoapParameterStyle.Wrapped)]
+        public Courier[] CourierProvider_Find(string whereClause, int start, int pageLength, out int count) {
+            object[] results = this.Invoke("CourierProvider_Find", new object[] {
+                        whereClause,
+                        start,
+                        pageLength});
+            count = ((int)(results[1]));
+            return ((Courier[])(results[0]));
+        }
+        
+        /// <remarks/>
+        public void CourierProvider_FindAsync(string whereClause, int start, int pageLength) {
+            this.CourierProvider_FindAsync(whereClause, start, pageLength, null);
+        }
+        
+        /// <remarks/>
+        public void CourierProvider_FindAsync(string whereClause, int start, int pageLength, object userState) {
+            if ((this.CourierProvider_FindOperationCompleted == null)) {
+                this.CourierProvider_FindOperationCompleted = new System.Threading.SendOrPostCallback(this.OnCourierProvider_FindOperationCompleted);
+            }
+            this.InvokeAsync("CourierProvider_Find", new object[] {
+                        whereClause,
+                        start,
+                        pageLength}, this.CourierProvider_FindOperationCompleted, userState);
+        }
+        
+        private void OnCourierProvider_FindOperationCompleted(object arg) {
+            if ((this.CourierProvider_FindCompleted != null)) {
+                System.Web.Services.Protocols.InvokeCompletedEventArgs invokeArgs = ((System.Web.Services.Protocols.InvokeCompletedEventArgs)(arg));
+                this.CourierProvider_FindCompleted(this, new CourierProvider_FindCompletedEventArgs(invokeArgs.Results, invokeArgs.Error, invokeArgs.Cancelled, invokeArgs.UserState));
+            }
+        }
+        
+        /// <remarks/>
+        [System.Web.Services.Protocols.SoapDocumentMethodAttribute("http://localhost/PetshopServices/CourierProvider_GetAll", RequestNamespace="http://localhost/PetshopServices", ResponseNamespace="http://localhost/PetshopServices", Use=System.Web.Services.Description.SoapBindingUse.Literal, ParameterStyle=System.Web.Services.Protocols.SoapParameterStyle.Wrapped)]
+        public Courier[] CourierProvider_GetAll(int start, int pageLength, out int count) {
+            object[] results = this.Invoke("CourierProvider_GetAll", new object[] {
+                        start,
+                        pageLength});
+            count = ((int)(results[1]));
+            return ((Courier[])(results[0]));
+        }
+        
+        /// <remarks/>
+        public void CourierProvider_GetAllAsync(int start, int pageLength) {
+            this.CourierProvider_GetAllAsync(start, pageLength, null);
+        }
+        
+        /// <remarks/>
+        public void CourierProvider_GetAllAsync(int start, int pageLength, object userState) {
+            if ((this.CourierProvider_GetAllOperationCompleted == null)) {
+                this.CourierProvider_GetAllOperationCompleted = new System.Threading.SendOrPostCallback(this.OnCourierProvider_GetAllOperationCompleted);
+            }
+            this.InvokeAsync("CourierProvider_GetAll", new object[] {
+                        start,
+                        pageLength}, this.CourierProvider_GetAllOperationCompleted, userState);
+        }
+        
+        private void OnCourierProvider_GetAllOperationCompleted(object arg) {
+            if ((this.CourierProvider_GetAllCompleted != null)) {
+                System.Web.Services.Protocols.InvokeCompletedEventArgs invokeArgs = ((System.Web.Services.Protocols.InvokeCompletedEventArgs)(arg));
+                this.CourierProvider_GetAllCompleted(this, new CourierProvider_GetAllCompletedEventArgs(invokeArgs.Results, invokeArgs.Error, invokeArgs.Cancelled, invokeArgs.UserState));
+            }
+        }
+        
+        /// <remarks/>
+        [System.Web.Services.Protocols.SoapDocumentMethodAttribute("http://localhost/PetshopServices/CourierProvider_GetPaged", RequestNamespace="http://localhost/PetshopServices", ResponseNamespace="http://localhost/PetshopServices", Use=System.Web.Services.Description.SoapBindingUse.Literal, ParameterStyle=System.Web.Services.Protocols.SoapParameterStyle.Wrapped)]
+        public Courier[] CourierProvider_GetPaged(string whereClause, string orderBy, int start, int pageLength, out int count) {
+            object[] results = this.Invoke("CourierProvider_GetPaged", new object[] {
+                        whereClause,
+                        orderBy,
+                        start,
+                        pageLength});
+            count = ((int)(results[1]));
+            return ((Courier[])(results[0]));
+        }
+        
+        /// <remarks/>
+        public void CourierProvider_GetPagedAsync(string whereClause, string orderBy, int start, int pageLength) {
+            this.CourierProvider_GetPagedAsync(whereClause, orderBy, start, pageLength, null);
+        }
+        
+        /// <remarks/>
+        public void CourierProvider_GetPagedAsync(string whereClause, string orderBy, int start, int pageLength, object userState) {
+            if ((this.CourierProvider_GetPagedOperationCompleted == null)) {
+                this.CourierProvider_GetPagedOperationCompleted = new System.Threading.SendOrPostCallback(this.OnCourierProvider_GetPagedOperationCompleted);
+            }
+            this.InvokeAsync("CourierProvider_GetPaged", new object[] {
+                        whereClause,
+                        orderBy,
+                        start,
+                        pageLength}, this.CourierProvider_GetPagedOperationCompleted, userState);
+        }
+        
+        private void OnCourierProvider_GetPagedOperationCompleted(object arg) {
+            if ((this.CourierProvider_GetPagedCompleted != null)) {
+                System.Web.Services.Protocols.InvokeCompletedEventArgs invokeArgs = ((System.Web.Services.Protocols.InvokeCompletedEventArgs)(arg));
+                this.CourierProvider_GetPagedCompleted(this, new CourierProvider_GetPagedCompletedEventArgs(invokeArgs.Results, invokeArgs.Error, invokeArgs.Cancelled, invokeArgs.UserState));
+            }
+        }
+        
+        /// <remarks/>
+        [System.Web.Services.Protocols.SoapDocumentMethodAttribute("http://localhost/PetshopServices/CourierProvider_GetByCourierId", RequestNamespace="http://localhost/PetshopServices", ResponseNamespace="http://localhost/PetshopServices", Use=System.Web.Services.Description.SoapBindingUse.Literal, ParameterStyle=System.Web.Services.Protocols.SoapParameterStyle.Wrapped)]
+        public Courier CourierProvider_GetByCourierId(System.Guid courierId, int start, int pageLength, out int count) {
+            object[] results = this.Invoke("CourierProvider_GetByCourierId", new object[] {
+                        courierId,
+                        start,
+                        pageLength});
+            count = ((int)(results[1]));
+            return ((Courier)(results[0]));
+        }
+        
+        /// <remarks/>
+        public void CourierProvider_GetByCourierIdAsync(System.Guid courierId, int start, int pageLength) {
+            this.CourierProvider_GetByCourierIdAsync(courierId, start, pageLength, null);
+        }
+        
+        /// <remarks/>
+        public void CourierProvider_GetByCourierIdAsync(System.Guid courierId, int start, int pageLength, object userState) {
+            if ((this.CourierProvider_GetByCourierIdOperationCompleted == null)) {
+                this.CourierProvider_GetByCourierIdOperationCompleted = new System.Threading.SendOrPostCallback(this.OnCourierProvider_GetByCourierIdOperationCompleted);
+            }
+            this.InvokeAsync("CourierProvider_GetByCourierId", new object[] {
+                        courierId,
+                        start,
+                        pageLength}, this.CourierProvider_GetByCourierIdOperationCompleted, userState);
+        }
+        
+        private void OnCourierProvider_GetByCourierIdOperationCompleted(object arg) {
+            if ((this.CourierProvider_GetByCourierIdCompleted != null)) {
+                System.Web.Services.Protocols.InvokeCompletedEventArgs invokeArgs = ((System.Web.Services.Protocols.InvokeCompletedEventArgs)(arg));
+                this.CourierProvider_GetByCourierIdCompleted(this, new CourierProvider_GetByCourierIdCompletedEventArgs(invokeArgs.Results, invokeArgs.Error, invokeArgs.Cancelled, invokeArgs.UserState));
+            }
+        }
+        
+        /// <remarks/>
+        [System.Web.Services.Protocols.SoapDocumentMethodAttribute("http://localhost/PetshopServices/CourierProvider_Insert", RequestNamespace="http://localhost/PetshopServices", ResponseNamespace="http://localhost/PetshopServices", Use=System.Web.Services.Description.SoapBindingUse.Literal, ParameterStyle=System.Web.Services.Protocols.SoapParameterStyle.Wrapped)]
+        public Courier CourierProvider_Insert(Courier entity) {
+            object[] results = this.Invoke("CourierProvider_Insert", new object[] {
+                        entity});
+            return ((Courier)(results[0]));
+        }
+        
+        /// <remarks/>
+        public void CourierProvider_InsertAsync(Courier entity) {
+            this.CourierProvider_InsertAsync(entity, null);
+        }
+        
+        /// <remarks/>
+        public void CourierProvider_InsertAsync(Courier entity, object userState) {
+            if ((this.CourierProvider_InsertOperationCompleted == null)) {
+                this.CourierProvider_InsertOperationCompleted = new System.Threading.SendOrPostCallback(this.OnCourierProvider_InsertOperationCompleted);
+            }
+            this.InvokeAsync("CourierProvider_Insert", new object[] {
+                        entity}, this.CourierProvider_InsertOperationCompleted, userState);
+        }
+        
+        private void OnCourierProvider_InsertOperationCompleted(object arg) {
+            if ((this.CourierProvider_InsertCompleted != null)) {
+                System.Web.Services.Protocols.InvokeCompletedEventArgs invokeArgs = ((System.Web.Services.Protocols.InvokeCompletedEventArgs)(arg));
+                this.CourierProvider_InsertCompleted(this, new CourierProvider_InsertCompletedEventArgs(invokeArgs.Results, invokeArgs.Error, invokeArgs.Cancelled, invokeArgs.UserState));
+            }
+        }
+        
+        /// <remarks/>
+        [System.Web.Services.Protocols.SoapDocumentMethodAttribute("http://localhost/PetshopServices/CourierProvider_BulkInsert", RequestNamespace="http://localhost/PetshopServices", ResponseNamespace="http://localhost/PetshopServices", Use=System.Web.Services.Description.SoapBindingUse.Literal, ParameterStyle=System.Web.Services.Protocols.SoapParameterStyle.Wrapped)]
+        public void CourierProvider_BulkInsert(Courier[] entityList) {
+            this.Invoke("CourierProvider_BulkInsert", new object[] {
+                        entityList});
+        }
+        
+        /// <remarks/>
+        public void CourierProvider_BulkInsertAsync(Courier[] entityList) {
+            this.CourierProvider_BulkInsertAsync(entityList, null);
+        }
+        
+        /// <remarks/>
+        public void CourierProvider_BulkInsertAsync(Courier[] entityList, object userState) {
+            if ((this.CourierProvider_BulkInsertOperationCompleted == null)) {
+                this.CourierProvider_BulkInsertOperationCompleted = new System.Threading.SendOrPostCallback(this.OnCourierProvider_BulkInsertOperationCompleted);
+            }
+            this.InvokeAsync("CourierProvider_BulkInsert", new object[] {
+                        entityList}, this.CourierProvider_BulkInsertOperationCompleted, userState);
+        }
+        
+        private void OnCourierProvider_BulkInsertOperationCompleted(object arg) {
+            if ((this.CourierProvider_BulkInsertCompleted != null)) {
+                System.Web.Services.Protocols.InvokeCompletedEventArgs invokeArgs = ((System.Web.Services.Protocols.InvokeCompletedEventArgs)(arg));
+                this.CourierProvider_BulkInsertCompleted(this, new System.ComponentModel.AsyncCompletedEventArgs(invokeArgs.Error, invokeArgs.Cancelled, invokeArgs.UserState));
+            }
+        }
+        
+        /// <remarks/>
+        [System.Web.Services.Protocols.SoapDocumentMethodAttribute("http://localhost/PetshopServices/CourierProvider_Update", RequestNamespace="http://localhost/PetshopServices", ResponseNamespace="http://localhost/PetshopServices", Use=System.Web.Services.Description.SoapBindingUse.Literal, ParameterStyle=System.Web.Services.Protocols.SoapParameterStyle.Wrapped)]
+        public Courier CourierProvider_Update(Courier entity) {
+            object[] results = this.Invoke("CourierProvider_Update", new object[] {
+                        entity});
+            return ((Courier)(results[0]));
+        }
+        
+        /// <remarks/>
+        public void CourierProvider_UpdateAsync(Courier entity) {
+            this.CourierProvider_UpdateAsync(entity, null);
+        }
+        
+        /// <remarks/>
+        public void CourierProvider_UpdateAsync(Courier entity, object userState) {
+            if ((this.CourierProvider_UpdateOperationCompleted == null)) {
+                this.CourierProvider_UpdateOperationCompleted = new System.Threading.SendOrPostCallback(this.OnCourierProvider_UpdateOperationCompleted);
+            }
+            this.InvokeAsync("CourierProvider_Update", new object[] {
+                        entity}, this.CourierProvider_UpdateOperationCompleted, userState);
+        }
+        
+        private void OnCourierProvider_UpdateOperationCompleted(object arg) {
+            if ((this.CourierProvider_UpdateCompleted != null)) {
+                System.Web.Services.Protocols.InvokeCompletedEventArgs invokeArgs = ((System.Web.Services.Protocols.InvokeCompletedEventArgs)(arg));
+                this.CourierProvider_UpdateCompleted(this, new CourierProvider_UpdateCompletedEventArgs(invokeArgs.Results, invokeArgs.Error, invokeArgs.Cancelled, invokeArgs.UserState));
+            }
+        }
+        
+        /// <remarks/>
         [System.Web.Services.Protocols.SoapDocumentMethodAttribute("http://localhost/PetshopServices/CreditCardProvider_Delete", RequestNamespace="http://localhost/PetshopServices", ResponseNamespace="http://localhost/PetshopServices", Use=System.Web.Services.Description.SoapBindingUse.Literal, ParameterStyle=System.Web.Services.Protocols.SoapParameterStyle.Wrapped)]
-        public bool CreditCardProvider_Delete(string id, [System.Xml.Serialization.XmlElementAttribute(DataType="base64Binary")] byte[] timestamp) {
+        public bool CreditCardProvider_Delete(System.Guid id, [System.Xml.Serialization.XmlElementAttribute(DataType="base64Binary")] byte[] timestamp) {
             object[] results = this.Invoke("CreditCardProvider_Delete", new object[] {
                         id,
                         timestamp});
@@ -993,12 +1591,12 @@ namespace netTiers.Petshop.Data.WebServiceClient.WsProxy {
         }
         
         /// <remarks/>
-        public void CreditCardProvider_DeleteAsync(string id, byte[] timestamp) {
+        public void CreditCardProvider_DeleteAsync(System.Guid id, byte[] timestamp) {
             this.CreditCardProvider_DeleteAsync(id, timestamp, null);
         }
         
         /// <remarks/>
-        public void CreditCardProvider_DeleteAsync(string id, byte[] timestamp, object userState) {
+        public void CreditCardProvider_DeleteAsync(System.Guid id, byte[] timestamp, object userState) {
             if ((this.CreditCardProvider_DeleteOperationCompleted == null)) {
                 this.CreditCardProvider_DeleteOperationCompleted = new System.Threading.SendOrPostCallback(this.OnCreditCardProvider_DeleteOperationCompleted);
             }
@@ -1118,7 +1716,7 @@ namespace netTiers.Petshop.Data.WebServiceClient.WsProxy {
         
         /// <remarks/>
         [System.Web.Services.Protocols.SoapDocumentMethodAttribute("http://localhost/PetshopServices/CreditCardProvider_GetById", RequestNamespace="http://localhost/PetshopServices", ResponseNamespace="http://localhost/PetshopServices", Use=System.Web.Services.Description.SoapBindingUse.Literal, ParameterStyle=System.Web.Services.Protocols.SoapParameterStyle.Wrapped)]
-        public CreditCard CreditCardProvider_GetById(string id, int start, int pageLength, out int count) {
+        public CreditCard CreditCardProvider_GetById(System.Guid id, int start, int pageLength, out int count) {
             object[] results = this.Invoke("CreditCardProvider_GetById", new object[] {
                         id,
                         start,
@@ -1128,12 +1726,12 @@ namespace netTiers.Petshop.Data.WebServiceClient.WsProxy {
         }
         
         /// <remarks/>
-        public void CreditCardProvider_GetByIdAsync(string id, int start, int pageLength) {
+        public void CreditCardProvider_GetByIdAsync(System.Guid id, int start, int pageLength) {
             this.CreditCardProvider_GetByIdAsync(id, start, pageLength, null);
         }
         
         /// <remarks/>
-        public void CreditCardProvider_GetByIdAsync(string id, int start, int pageLength, object userState) {
+        public void CreditCardProvider_GetByIdAsync(System.Guid id, int start, int pageLength, object userState) {
             if ((this.CreditCardProvider_GetByIdOperationCompleted == null)) {
                 this.CreditCardProvider_GetByIdOperationCompleted = new System.Threading.SendOrPostCallback(this.OnCreditCardProvider_GetByIdOperationCompleted);
             }
@@ -1237,8 +1835,400 @@ namespace netTiers.Petshop.Data.WebServiceClient.WsProxy {
         }
         
         /// <remarks/>
+        [System.Web.Services.Protocols.SoapDocumentMethodAttribute("http://localhost/PetshopServices/InventoryProvider_Delete", RequestNamespace="http://localhost/PetshopServices", ResponseNamespace="http://localhost/PetshopServices", Use=System.Web.Services.Description.SoapBindingUse.Literal, ParameterStyle=System.Web.Services.Protocols.SoapParameterStyle.Wrapped)]
+        public bool InventoryProvider_Delete(System.Guid itemId, System.Guid suppId, [System.Xml.Serialization.XmlElementAttribute(DataType="base64Binary")] byte[] timestamp) {
+            object[] results = this.Invoke("InventoryProvider_Delete", new object[] {
+                        itemId,
+                        suppId,
+                        timestamp});
+            return ((bool)(results[0]));
+        }
+        
+        /// <remarks/>
+        public void InventoryProvider_DeleteAsync(System.Guid itemId, System.Guid suppId, byte[] timestamp) {
+            this.InventoryProvider_DeleteAsync(itemId, suppId, timestamp, null);
+        }
+        
+        /// <remarks/>
+        public void InventoryProvider_DeleteAsync(System.Guid itemId, System.Guid suppId, byte[] timestamp, object userState) {
+            if ((this.InventoryProvider_DeleteOperationCompleted == null)) {
+                this.InventoryProvider_DeleteOperationCompleted = new System.Threading.SendOrPostCallback(this.OnInventoryProvider_DeleteOperationCompleted);
+            }
+            this.InvokeAsync("InventoryProvider_Delete", new object[] {
+                        itemId,
+                        suppId,
+                        timestamp}, this.InventoryProvider_DeleteOperationCompleted, userState);
+        }
+        
+        private void OnInventoryProvider_DeleteOperationCompleted(object arg) {
+            if ((this.InventoryProvider_DeleteCompleted != null)) {
+                System.Web.Services.Protocols.InvokeCompletedEventArgs invokeArgs = ((System.Web.Services.Protocols.InvokeCompletedEventArgs)(arg));
+                this.InventoryProvider_DeleteCompleted(this, new InventoryProvider_DeleteCompletedEventArgs(invokeArgs.Results, invokeArgs.Error, invokeArgs.Cancelled, invokeArgs.UserState));
+            }
+        }
+        
+        /// <remarks/>
+        [System.Web.Services.Protocols.SoapDocumentMethodAttribute("http://localhost/PetshopServices/InventoryProvider_Find", RequestNamespace="http://localhost/PetshopServices", ResponseNamespace="http://localhost/PetshopServices", Use=System.Web.Services.Description.SoapBindingUse.Literal, ParameterStyle=System.Web.Services.Protocols.SoapParameterStyle.Wrapped)]
+        public Inventory[] InventoryProvider_Find(string whereClause, int start, int pageLength, out int count) {
+            object[] results = this.Invoke("InventoryProvider_Find", new object[] {
+                        whereClause,
+                        start,
+                        pageLength});
+            count = ((int)(results[1]));
+            return ((Inventory[])(results[0]));
+        }
+        
+        /// <remarks/>
+        public void InventoryProvider_FindAsync(string whereClause, int start, int pageLength) {
+            this.InventoryProvider_FindAsync(whereClause, start, pageLength, null);
+        }
+        
+        /// <remarks/>
+        public void InventoryProvider_FindAsync(string whereClause, int start, int pageLength, object userState) {
+            if ((this.InventoryProvider_FindOperationCompleted == null)) {
+                this.InventoryProvider_FindOperationCompleted = new System.Threading.SendOrPostCallback(this.OnInventoryProvider_FindOperationCompleted);
+            }
+            this.InvokeAsync("InventoryProvider_Find", new object[] {
+                        whereClause,
+                        start,
+                        pageLength}, this.InventoryProvider_FindOperationCompleted, userState);
+        }
+        
+        private void OnInventoryProvider_FindOperationCompleted(object arg) {
+            if ((this.InventoryProvider_FindCompleted != null)) {
+                System.Web.Services.Protocols.InvokeCompletedEventArgs invokeArgs = ((System.Web.Services.Protocols.InvokeCompletedEventArgs)(arg));
+                this.InventoryProvider_FindCompleted(this, new InventoryProvider_FindCompletedEventArgs(invokeArgs.Results, invokeArgs.Error, invokeArgs.Cancelled, invokeArgs.UserState));
+            }
+        }
+        
+        /// <remarks/>
+        [System.Web.Services.Protocols.SoapDocumentMethodAttribute("http://localhost/PetshopServices/InventoryProvider_GetAll", RequestNamespace="http://localhost/PetshopServices", ResponseNamespace="http://localhost/PetshopServices", Use=System.Web.Services.Description.SoapBindingUse.Literal, ParameterStyle=System.Web.Services.Protocols.SoapParameterStyle.Wrapped)]
+        public Inventory[] InventoryProvider_GetAll(int start, int pageLength, out int count) {
+            object[] results = this.Invoke("InventoryProvider_GetAll", new object[] {
+                        start,
+                        pageLength});
+            count = ((int)(results[1]));
+            return ((Inventory[])(results[0]));
+        }
+        
+        /// <remarks/>
+        public void InventoryProvider_GetAllAsync(int start, int pageLength) {
+            this.InventoryProvider_GetAllAsync(start, pageLength, null);
+        }
+        
+        /// <remarks/>
+        public void InventoryProvider_GetAllAsync(int start, int pageLength, object userState) {
+            if ((this.InventoryProvider_GetAllOperationCompleted == null)) {
+                this.InventoryProvider_GetAllOperationCompleted = new System.Threading.SendOrPostCallback(this.OnInventoryProvider_GetAllOperationCompleted);
+            }
+            this.InvokeAsync("InventoryProvider_GetAll", new object[] {
+                        start,
+                        pageLength}, this.InventoryProvider_GetAllOperationCompleted, userState);
+        }
+        
+        private void OnInventoryProvider_GetAllOperationCompleted(object arg) {
+            if ((this.InventoryProvider_GetAllCompleted != null)) {
+                System.Web.Services.Protocols.InvokeCompletedEventArgs invokeArgs = ((System.Web.Services.Protocols.InvokeCompletedEventArgs)(arg));
+                this.InventoryProvider_GetAllCompleted(this, new InventoryProvider_GetAllCompletedEventArgs(invokeArgs.Results, invokeArgs.Error, invokeArgs.Cancelled, invokeArgs.UserState));
+            }
+        }
+        
+        /// <remarks/>
+        [System.Web.Services.Protocols.SoapDocumentMethodAttribute("http://localhost/PetshopServices/InventoryProvider_GetPaged", RequestNamespace="http://localhost/PetshopServices", ResponseNamespace="http://localhost/PetshopServices", Use=System.Web.Services.Description.SoapBindingUse.Literal, ParameterStyle=System.Web.Services.Protocols.SoapParameterStyle.Wrapped)]
+        public Inventory[] InventoryProvider_GetPaged(string whereClause, string orderBy, int start, int pageLength, out int count) {
+            object[] results = this.Invoke("InventoryProvider_GetPaged", new object[] {
+                        whereClause,
+                        orderBy,
+                        start,
+                        pageLength});
+            count = ((int)(results[1]));
+            return ((Inventory[])(results[0]));
+        }
+        
+        /// <remarks/>
+        public void InventoryProvider_GetPagedAsync(string whereClause, string orderBy, int start, int pageLength) {
+            this.InventoryProvider_GetPagedAsync(whereClause, orderBy, start, pageLength, null);
+        }
+        
+        /// <remarks/>
+        public void InventoryProvider_GetPagedAsync(string whereClause, string orderBy, int start, int pageLength, object userState) {
+            if ((this.InventoryProvider_GetPagedOperationCompleted == null)) {
+                this.InventoryProvider_GetPagedOperationCompleted = new System.Threading.SendOrPostCallback(this.OnInventoryProvider_GetPagedOperationCompleted);
+            }
+            this.InvokeAsync("InventoryProvider_GetPaged", new object[] {
+                        whereClause,
+                        orderBy,
+                        start,
+                        pageLength}, this.InventoryProvider_GetPagedOperationCompleted, userState);
+        }
+        
+        private void OnInventoryProvider_GetPagedOperationCompleted(object arg) {
+            if ((this.InventoryProvider_GetPagedCompleted != null)) {
+                System.Web.Services.Protocols.InvokeCompletedEventArgs invokeArgs = ((System.Web.Services.Protocols.InvokeCompletedEventArgs)(arg));
+                this.InventoryProvider_GetPagedCompleted(this, new InventoryProvider_GetPagedCompletedEventArgs(invokeArgs.Results, invokeArgs.Error, invokeArgs.Cancelled, invokeArgs.UserState));
+            }
+        }
+        
+        /// <remarks/>
+        [System.Web.Services.Protocols.SoapDocumentMethodAttribute("http://localhost/PetshopServices/InventoryProvider_GetByItemId", RequestNamespace="http://localhost/PetshopServices", ResponseNamespace="http://localhost/PetshopServices", Use=System.Web.Services.Description.SoapBindingUse.Literal, ParameterStyle=System.Web.Services.Protocols.SoapParameterStyle.Wrapped)]
+        public Inventory[] InventoryProvider_GetByItemId(System.Guid itemId, int start, int pageLength, out int count) {
+            object[] results = this.Invoke("InventoryProvider_GetByItemId", new object[] {
+                        itemId,
+                        start,
+                        pageLength});
+            count = ((int)(results[1]));
+            return ((Inventory[])(results[0]));
+        }
+        
+        /// <remarks/>
+        public void InventoryProvider_GetByItemIdAsync(System.Guid itemId, int start, int pageLength) {
+            this.InventoryProvider_GetByItemIdAsync(itemId, start, pageLength, null);
+        }
+        
+        /// <remarks/>
+        public void InventoryProvider_GetByItemIdAsync(System.Guid itemId, int start, int pageLength, object userState) {
+            if ((this.InventoryProvider_GetByItemIdOperationCompleted == null)) {
+                this.InventoryProvider_GetByItemIdOperationCompleted = new System.Threading.SendOrPostCallback(this.OnInventoryProvider_GetByItemIdOperationCompleted);
+            }
+            this.InvokeAsync("InventoryProvider_GetByItemId", new object[] {
+                        itemId,
+                        start,
+                        pageLength}, this.InventoryProvider_GetByItemIdOperationCompleted, userState);
+        }
+        
+        private void OnInventoryProvider_GetByItemIdOperationCompleted(object arg) {
+            if ((this.InventoryProvider_GetByItemIdCompleted != null)) {
+                System.Web.Services.Protocols.InvokeCompletedEventArgs invokeArgs = ((System.Web.Services.Protocols.InvokeCompletedEventArgs)(arg));
+                this.InventoryProvider_GetByItemIdCompleted(this, new InventoryProvider_GetByItemIdCompletedEventArgs(invokeArgs.Results, invokeArgs.Error, invokeArgs.Cancelled, invokeArgs.UserState));
+            }
+        }
+        
+        /// <remarks/>
+        [System.Web.Services.Protocols.SoapDocumentMethodAttribute("http://localhost/PetshopServices/InventoryProvider_GetBySuppId", RequestNamespace="http://localhost/PetshopServices", ResponseNamespace="http://localhost/PetshopServices", Use=System.Web.Services.Description.SoapBindingUse.Literal, ParameterStyle=System.Web.Services.Protocols.SoapParameterStyle.Wrapped)]
+        public Inventory[] InventoryProvider_GetBySuppId(System.Guid suppId, int start, int pageLength, out int count) {
+            object[] results = this.Invoke("InventoryProvider_GetBySuppId", new object[] {
+                        suppId,
+                        start,
+                        pageLength});
+            count = ((int)(results[1]));
+            return ((Inventory[])(results[0]));
+        }
+        
+        /// <remarks/>
+        public void InventoryProvider_GetBySuppIdAsync(System.Guid suppId, int start, int pageLength) {
+            this.InventoryProvider_GetBySuppIdAsync(suppId, start, pageLength, null);
+        }
+        
+        /// <remarks/>
+        public void InventoryProvider_GetBySuppIdAsync(System.Guid suppId, int start, int pageLength, object userState) {
+            if ((this.InventoryProvider_GetBySuppIdOperationCompleted == null)) {
+                this.InventoryProvider_GetBySuppIdOperationCompleted = new System.Threading.SendOrPostCallback(this.OnInventoryProvider_GetBySuppIdOperationCompleted);
+            }
+            this.InvokeAsync("InventoryProvider_GetBySuppId", new object[] {
+                        suppId,
+                        start,
+                        pageLength}, this.InventoryProvider_GetBySuppIdOperationCompleted, userState);
+        }
+        
+        private void OnInventoryProvider_GetBySuppIdOperationCompleted(object arg) {
+            if ((this.InventoryProvider_GetBySuppIdCompleted != null)) {
+                System.Web.Services.Protocols.InvokeCompletedEventArgs invokeArgs = ((System.Web.Services.Protocols.InvokeCompletedEventArgs)(arg));
+                this.InventoryProvider_GetBySuppIdCompleted(this, new InventoryProvider_GetBySuppIdCompletedEventArgs(invokeArgs.Results, invokeArgs.Error, invokeArgs.Cancelled, invokeArgs.UserState));
+            }
+        }
+        
+        /// <remarks/>
+        [System.Web.Services.Protocols.SoapDocumentMethodAttribute("http://localhost/PetshopServices/InventoryProvider_GetByItemIdSuppId", RequestNamespace="http://localhost/PetshopServices", ResponseNamespace="http://localhost/PetshopServices", Use=System.Web.Services.Description.SoapBindingUse.Literal, ParameterStyle=System.Web.Services.Protocols.SoapParameterStyle.Wrapped)]
+        public Inventory InventoryProvider_GetByItemIdSuppId(System.Guid itemId, System.Guid suppId, int start, int pageLength, out int count) {
+            object[] results = this.Invoke("InventoryProvider_GetByItemIdSuppId", new object[] {
+                        itemId,
+                        suppId,
+                        start,
+                        pageLength});
+            count = ((int)(results[1]));
+            return ((Inventory)(results[0]));
+        }
+        
+        /// <remarks/>
+        public void InventoryProvider_GetByItemIdSuppIdAsync(System.Guid itemId, System.Guid suppId, int start, int pageLength) {
+            this.InventoryProvider_GetByItemIdSuppIdAsync(itemId, suppId, start, pageLength, null);
+        }
+        
+        /// <remarks/>
+        public void InventoryProvider_GetByItemIdSuppIdAsync(System.Guid itemId, System.Guid suppId, int start, int pageLength, object userState) {
+            if ((this.InventoryProvider_GetByItemIdSuppIdOperationCompleted == null)) {
+                this.InventoryProvider_GetByItemIdSuppIdOperationCompleted = new System.Threading.SendOrPostCallback(this.OnInventoryProvider_GetByItemIdSuppIdOperationCompleted);
+            }
+            this.InvokeAsync("InventoryProvider_GetByItemIdSuppId", new object[] {
+                        itemId,
+                        suppId,
+                        start,
+                        pageLength}, this.InventoryProvider_GetByItemIdSuppIdOperationCompleted, userState);
+        }
+        
+        private void OnInventoryProvider_GetByItemIdSuppIdOperationCompleted(object arg) {
+            if ((this.InventoryProvider_GetByItemIdSuppIdCompleted != null)) {
+                System.Web.Services.Protocols.InvokeCompletedEventArgs invokeArgs = ((System.Web.Services.Protocols.InvokeCompletedEventArgs)(arg));
+                this.InventoryProvider_GetByItemIdSuppIdCompleted(this, new InventoryProvider_GetByItemIdSuppIdCompletedEventArgs(invokeArgs.Results, invokeArgs.Error, invokeArgs.Cancelled, invokeArgs.UserState));
+            }
+        }
+        
+        /// <remarks/>
+        [System.Web.Services.Protocols.SoapDocumentMethodAttribute("http://localhost/PetshopServices/InventoryProvider_Insert", RequestNamespace="http://localhost/PetshopServices", ResponseNamespace="http://localhost/PetshopServices", Use=System.Web.Services.Description.SoapBindingUse.Literal, ParameterStyle=System.Web.Services.Protocols.SoapParameterStyle.Wrapped)]
+        public Inventory InventoryProvider_Insert(Inventory entity) {
+            object[] results = this.Invoke("InventoryProvider_Insert", new object[] {
+                        entity});
+            return ((Inventory)(results[0]));
+        }
+        
+        /// <remarks/>
+        public void InventoryProvider_InsertAsync(Inventory entity) {
+            this.InventoryProvider_InsertAsync(entity, null);
+        }
+        
+        /// <remarks/>
+        public void InventoryProvider_InsertAsync(Inventory entity, object userState) {
+            if ((this.InventoryProvider_InsertOperationCompleted == null)) {
+                this.InventoryProvider_InsertOperationCompleted = new System.Threading.SendOrPostCallback(this.OnInventoryProvider_InsertOperationCompleted);
+            }
+            this.InvokeAsync("InventoryProvider_Insert", new object[] {
+                        entity}, this.InventoryProvider_InsertOperationCompleted, userState);
+        }
+        
+        private void OnInventoryProvider_InsertOperationCompleted(object arg) {
+            if ((this.InventoryProvider_InsertCompleted != null)) {
+                System.Web.Services.Protocols.InvokeCompletedEventArgs invokeArgs = ((System.Web.Services.Protocols.InvokeCompletedEventArgs)(arg));
+                this.InventoryProvider_InsertCompleted(this, new InventoryProvider_InsertCompletedEventArgs(invokeArgs.Results, invokeArgs.Error, invokeArgs.Cancelled, invokeArgs.UserState));
+            }
+        }
+        
+        /// <remarks/>
+        [System.Web.Services.Protocols.SoapDocumentMethodAttribute("http://localhost/PetshopServices/InventoryProvider_BulkInsert", RequestNamespace="http://localhost/PetshopServices", ResponseNamespace="http://localhost/PetshopServices", Use=System.Web.Services.Description.SoapBindingUse.Literal, ParameterStyle=System.Web.Services.Protocols.SoapParameterStyle.Wrapped)]
+        public void InventoryProvider_BulkInsert(Inventory[] entityList) {
+            this.Invoke("InventoryProvider_BulkInsert", new object[] {
+                        entityList});
+        }
+        
+        /// <remarks/>
+        public void InventoryProvider_BulkInsertAsync(Inventory[] entityList) {
+            this.InventoryProvider_BulkInsertAsync(entityList, null);
+        }
+        
+        /// <remarks/>
+        public void InventoryProvider_BulkInsertAsync(Inventory[] entityList, object userState) {
+            if ((this.InventoryProvider_BulkInsertOperationCompleted == null)) {
+                this.InventoryProvider_BulkInsertOperationCompleted = new System.Threading.SendOrPostCallback(this.OnInventoryProvider_BulkInsertOperationCompleted);
+            }
+            this.InvokeAsync("InventoryProvider_BulkInsert", new object[] {
+                        entityList}, this.InventoryProvider_BulkInsertOperationCompleted, userState);
+        }
+        
+        private void OnInventoryProvider_BulkInsertOperationCompleted(object arg) {
+            if ((this.InventoryProvider_BulkInsertCompleted != null)) {
+                System.Web.Services.Protocols.InvokeCompletedEventArgs invokeArgs = ((System.Web.Services.Protocols.InvokeCompletedEventArgs)(arg));
+                this.InventoryProvider_BulkInsertCompleted(this, new System.ComponentModel.AsyncCompletedEventArgs(invokeArgs.Error, invokeArgs.Cancelled, invokeArgs.UserState));
+            }
+        }
+        
+        /// <remarks/>
+        [System.Web.Services.Protocols.SoapDocumentMethodAttribute("http://localhost/PetshopServices/InventoryProvider_Update", RequestNamespace="http://localhost/PetshopServices", ResponseNamespace="http://localhost/PetshopServices", Use=System.Web.Services.Description.SoapBindingUse.Literal, ParameterStyle=System.Web.Services.Protocols.SoapParameterStyle.Wrapped)]
+        public Inventory InventoryProvider_Update(Inventory entity) {
+            object[] results = this.Invoke("InventoryProvider_Update", new object[] {
+                        entity});
+            return ((Inventory)(results[0]));
+        }
+        
+        /// <remarks/>
+        public void InventoryProvider_UpdateAsync(Inventory entity) {
+            this.InventoryProvider_UpdateAsync(entity, null);
+        }
+        
+        /// <remarks/>
+        public void InventoryProvider_UpdateAsync(Inventory entity, object userState) {
+            if ((this.InventoryProvider_UpdateOperationCompleted == null)) {
+                this.InventoryProvider_UpdateOperationCompleted = new System.Threading.SendOrPostCallback(this.OnInventoryProvider_UpdateOperationCompleted);
+            }
+            this.InvokeAsync("InventoryProvider_Update", new object[] {
+                        entity}, this.InventoryProvider_UpdateOperationCompleted, userState);
+        }
+        
+        private void OnInventoryProvider_UpdateOperationCompleted(object arg) {
+            if ((this.InventoryProvider_UpdateCompleted != null)) {
+                System.Web.Services.Protocols.InvokeCompletedEventArgs invokeArgs = ((System.Web.Services.Protocols.InvokeCompletedEventArgs)(arg));
+                this.InventoryProvider_UpdateCompleted(this, new InventoryProvider_UpdateCompletedEventArgs(invokeArgs.Results, invokeArgs.Error, invokeArgs.Cancelled, invokeArgs.UserState));
+            }
+        }
+        
+        /// <remarks/>
+        [System.Web.Services.Protocols.SoapDocumentMethodAttribute("http://localhost/PetshopServices/InventoryProvider_GetMaxSupplier", RequestNamespace="http://localhost/PetshopServices", ResponseNamespace="http://localhost/PetshopServices", Use=System.Web.Services.Description.SoapBindingUse.Literal, ParameterStyle=System.Web.Services.Protocols.SoapParameterStyle.Wrapped)]
+        public Inventory[] InventoryProvider_GetMaxSupplier(int start, int pageLength, [System.Xml.Serialization.XmlElementAttribute(IsNullable=true)] System.Nullable<System.Guid> itemId) {
+            object[] results = this.Invoke("InventoryProvider_GetMaxSupplier", new object[] {
+                        start,
+                        pageLength,
+                        itemId});
+            return ((Inventory[])(results[0]));
+        }
+        
+        /// <remarks/>
+        public void InventoryProvider_GetMaxSupplierAsync(int start, int pageLength, System.Nullable<System.Guid> itemId) {
+            this.InventoryProvider_GetMaxSupplierAsync(start, pageLength, itemId, null);
+        }
+        
+        /// <remarks/>
+        public void InventoryProvider_GetMaxSupplierAsync(int start, int pageLength, System.Nullable<System.Guid> itemId, object userState) {
+            if ((this.InventoryProvider_GetMaxSupplierOperationCompleted == null)) {
+                this.InventoryProvider_GetMaxSupplierOperationCompleted = new System.Threading.SendOrPostCallback(this.OnInventoryProvider_GetMaxSupplierOperationCompleted);
+            }
+            this.InvokeAsync("InventoryProvider_GetMaxSupplier", new object[] {
+                        start,
+                        pageLength,
+                        itemId}, this.InventoryProvider_GetMaxSupplierOperationCompleted, userState);
+        }
+        
+        private void OnInventoryProvider_GetMaxSupplierOperationCompleted(object arg) {
+            if ((this.InventoryProvider_GetMaxSupplierCompleted != null)) {
+                System.Web.Services.Protocols.InvokeCompletedEventArgs invokeArgs = ((System.Web.Services.Protocols.InvokeCompletedEventArgs)(arg));
+                this.InventoryProvider_GetMaxSupplierCompleted(this, new InventoryProvider_GetMaxSupplierCompletedEventArgs(invokeArgs.Results, invokeArgs.Error, invokeArgs.Cancelled, invokeArgs.UserState));
+            }
+        }
+        
+        /// <remarks/>
+        [System.Web.Services.Protocols.SoapDocumentMethodAttribute("http://localhost/PetshopServices/ItemProvider_GetBySuppIdFromInventory", RequestNamespace="http://localhost/PetshopServices", ResponseNamespace="http://localhost/PetshopServices", Use=System.Web.Services.Description.SoapBindingUse.Literal, ParameterStyle=System.Web.Services.Protocols.SoapParameterStyle.Wrapped)]
+        public Item[] ItemProvider_GetBySuppIdFromInventory(System.Guid suppId, int start, int pageLength, out int count) {
+            object[] results = this.Invoke("ItemProvider_GetBySuppIdFromInventory", new object[] {
+                        suppId,
+                        start,
+                        pageLength});
+            count = ((int)(results[1]));
+            return ((Item[])(results[0]));
+        }
+        
+        /// <remarks/>
+        public void ItemProvider_GetBySuppIdFromInventoryAsync(System.Guid suppId, int start, int pageLength) {
+            this.ItemProvider_GetBySuppIdFromInventoryAsync(suppId, start, pageLength, null);
+        }
+        
+        /// <remarks/>
+        public void ItemProvider_GetBySuppIdFromInventoryAsync(System.Guid suppId, int start, int pageLength, object userState) {
+            if ((this.ItemProvider_GetBySuppIdFromInventoryOperationCompleted == null)) {
+                this.ItemProvider_GetBySuppIdFromInventoryOperationCompleted = new System.Threading.SendOrPostCallback(this.OnItemProvider_GetBySuppIdFromInventoryOperationCompleted);
+            }
+            this.InvokeAsync("ItemProvider_GetBySuppIdFromInventory", new object[] {
+                        suppId,
+                        start,
+                        pageLength}, this.ItemProvider_GetBySuppIdFromInventoryOperationCompleted, userState);
+        }
+        
+        private void OnItemProvider_GetBySuppIdFromInventoryOperationCompleted(object arg) {
+            if ((this.ItemProvider_GetBySuppIdFromInventoryCompleted != null)) {
+                System.Web.Services.Protocols.InvokeCompletedEventArgs invokeArgs = ((System.Web.Services.Protocols.InvokeCompletedEventArgs)(arg));
+                this.ItemProvider_GetBySuppIdFromInventoryCompleted(this, new ItemProvider_GetBySuppIdFromInventoryCompletedEventArgs(invokeArgs.Results, invokeArgs.Error, invokeArgs.Cancelled, invokeArgs.UserState));
+            }
+        }
+        
+        /// <remarks/>
         [System.Web.Services.Protocols.SoapDocumentMethodAttribute("http://localhost/PetshopServices/ItemProvider_Delete", RequestNamespace="http://localhost/PetshopServices", ResponseNamespace="http://localhost/PetshopServices", Use=System.Web.Services.Description.SoapBindingUse.Literal, ParameterStyle=System.Web.Services.Protocols.SoapParameterStyle.Wrapped)]
-        public bool ItemProvider_Delete(string id, [System.Xml.Serialization.XmlElementAttribute(DataType="base64Binary")] byte[] timestamp) {
+        public bool ItemProvider_Delete(System.Guid id, [System.Xml.Serialization.XmlElementAttribute(DataType="base64Binary")] byte[] timestamp) {
             object[] results = this.Invoke("ItemProvider_Delete", new object[] {
                         id,
                         timestamp});
@@ -1246,12 +2236,12 @@ namespace netTiers.Petshop.Data.WebServiceClient.WsProxy {
         }
         
         /// <remarks/>
-        public void ItemProvider_DeleteAsync(string id, byte[] timestamp) {
+        public void ItemProvider_DeleteAsync(System.Guid id, byte[] timestamp) {
             this.ItemProvider_DeleteAsync(id, timestamp, null);
         }
         
         /// <remarks/>
-        public void ItemProvider_DeleteAsync(string id, byte[] timestamp, object userState) {
+        public void ItemProvider_DeleteAsync(System.Guid id, byte[] timestamp, object userState) {
             if ((this.ItemProvider_DeleteOperationCompleted == null)) {
                 this.ItemProvider_DeleteOperationCompleted = new System.Threading.SendOrPostCallback(this.OnItemProvider_DeleteOperationCompleted);
             }
@@ -1371,7 +2361,7 @@ namespace netTiers.Petshop.Data.WebServiceClient.WsProxy {
         
         /// <remarks/>
         [System.Web.Services.Protocols.SoapDocumentMethodAttribute("http://localhost/PetshopServices/ItemProvider_GetByProductId", RequestNamespace="http://localhost/PetshopServices", ResponseNamespace="http://localhost/PetshopServices", Use=System.Web.Services.Description.SoapBindingUse.Literal, ParameterStyle=System.Web.Services.Protocols.SoapParameterStyle.Wrapped)]
-        public Item[] ItemProvider_GetByProductId(string productId, int start, int pageLength, out int count) {
+        public Item[] ItemProvider_GetByProductId(System.Guid productId, int start, int pageLength, out int count) {
             object[] results = this.Invoke("ItemProvider_GetByProductId", new object[] {
                         productId,
                         start,
@@ -1381,12 +2371,12 @@ namespace netTiers.Petshop.Data.WebServiceClient.WsProxy {
         }
         
         /// <remarks/>
-        public void ItemProvider_GetByProductIdAsync(string productId, int start, int pageLength) {
+        public void ItemProvider_GetByProductIdAsync(System.Guid productId, int start, int pageLength) {
             this.ItemProvider_GetByProductIdAsync(productId, start, pageLength, null);
         }
         
         /// <remarks/>
-        public void ItemProvider_GetByProductIdAsync(string productId, int start, int pageLength, object userState) {
+        public void ItemProvider_GetByProductIdAsync(System.Guid productId, int start, int pageLength, object userState) {
             if ((this.ItemProvider_GetByProductIdOperationCompleted == null)) {
                 this.ItemProvider_GetByProductIdOperationCompleted = new System.Threading.SendOrPostCallback(this.OnItemProvider_GetByProductIdOperationCompleted);
             }
@@ -1405,7 +2395,7 @@ namespace netTiers.Petshop.Data.WebServiceClient.WsProxy {
         
         /// <remarks/>
         [System.Web.Services.Protocols.SoapDocumentMethodAttribute("http://localhost/PetshopServices/ItemProvider_GetById", RequestNamespace="http://localhost/PetshopServices", ResponseNamespace="http://localhost/PetshopServices", Use=System.Web.Services.Description.SoapBindingUse.Literal, ParameterStyle=System.Web.Services.Protocols.SoapParameterStyle.Wrapped)]
-        public Item ItemProvider_GetById(string id, int start, int pageLength, out int count) {
+        public Item ItemProvider_GetById(System.Guid id, int start, int pageLength, out int count) {
             object[] results = this.Invoke("ItemProvider_GetById", new object[] {
                         id,
                         start,
@@ -1415,12 +2405,12 @@ namespace netTiers.Petshop.Data.WebServiceClient.WsProxy {
         }
         
         /// <remarks/>
-        public void ItemProvider_GetByIdAsync(string id, int start, int pageLength) {
+        public void ItemProvider_GetByIdAsync(System.Guid id, int start, int pageLength) {
             this.ItemProvider_GetByIdAsync(id, start, pageLength, null);
         }
         
         /// <remarks/>
-        public void ItemProvider_GetByIdAsync(string id, int start, int pageLength, object userState) {
+        public void ItemProvider_GetByIdAsync(System.Guid id, int start, int pageLength, object userState) {
             if ((this.ItemProvider_GetByIdOperationCompleted == null)) {
                 this.ItemProvider_GetByIdOperationCompleted = new System.Threading.SendOrPostCallback(this.OnItemProvider_GetByIdOperationCompleted);
             }
@@ -1524,8 +2514,1298 @@ namespace netTiers.Petshop.Data.WebServiceClient.WsProxy {
         }
         
         /// <remarks/>
+        [System.Web.Services.Protocols.SoapDocumentMethodAttribute("http://localhost/PetshopServices/LineItemProvider_Delete", RequestNamespace="http://localhost/PetshopServices", ResponseNamespace="http://localhost/PetshopServices", Use=System.Web.Services.Description.SoapBindingUse.Literal, ParameterStyle=System.Web.Services.Protocols.SoapParameterStyle.Wrapped)]
+        public bool LineItemProvider_Delete(int orderId, int lineNum, [System.Xml.Serialization.XmlElementAttribute(DataType="base64Binary")] byte[] timestamp) {
+            object[] results = this.Invoke("LineItemProvider_Delete", new object[] {
+                        orderId,
+                        lineNum,
+                        timestamp});
+            return ((bool)(results[0]));
+        }
+        
+        /// <remarks/>
+        public void LineItemProvider_DeleteAsync(int orderId, int lineNum, byte[] timestamp) {
+            this.LineItemProvider_DeleteAsync(orderId, lineNum, timestamp, null);
+        }
+        
+        /// <remarks/>
+        public void LineItemProvider_DeleteAsync(int orderId, int lineNum, byte[] timestamp, object userState) {
+            if ((this.LineItemProvider_DeleteOperationCompleted == null)) {
+                this.LineItemProvider_DeleteOperationCompleted = new System.Threading.SendOrPostCallback(this.OnLineItemProvider_DeleteOperationCompleted);
+            }
+            this.InvokeAsync("LineItemProvider_Delete", new object[] {
+                        orderId,
+                        lineNum,
+                        timestamp}, this.LineItemProvider_DeleteOperationCompleted, userState);
+        }
+        
+        private void OnLineItemProvider_DeleteOperationCompleted(object arg) {
+            if ((this.LineItemProvider_DeleteCompleted != null)) {
+                System.Web.Services.Protocols.InvokeCompletedEventArgs invokeArgs = ((System.Web.Services.Protocols.InvokeCompletedEventArgs)(arg));
+                this.LineItemProvider_DeleteCompleted(this, new LineItemProvider_DeleteCompletedEventArgs(invokeArgs.Results, invokeArgs.Error, invokeArgs.Cancelled, invokeArgs.UserState));
+            }
+        }
+        
+        /// <remarks/>
+        [System.Web.Services.Protocols.SoapDocumentMethodAttribute("http://localhost/PetshopServices/LineItemProvider_Find", RequestNamespace="http://localhost/PetshopServices", ResponseNamespace="http://localhost/PetshopServices", Use=System.Web.Services.Description.SoapBindingUse.Literal, ParameterStyle=System.Web.Services.Protocols.SoapParameterStyle.Wrapped)]
+        public LineItem[] LineItemProvider_Find(string whereClause, int start, int pageLength, out int count) {
+            object[] results = this.Invoke("LineItemProvider_Find", new object[] {
+                        whereClause,
+                        start,
+                        pageLength});
+            count = ((int)(results[1]));
+            return ((LineItem[])(results[0]));
+        }
+        
+        /// <remarks/>
+        public void LineItemProvider_FindAsync(string whereClause, int start, int pageLength) {
+            this.LineItemProvider_FindAsync(whereClause, start, pageLength, null);
+        }
+        
+        /// <remarks/>
+        public void LineItemProvider_FindAsync(string whereClause, int start, int pageLength, object userState) {
+            if ((this.LineItemProvider_FindOperationCompleted == null)) {
+                this.LineItemProvider_FindOperationCompleted = new System.Threading.SendOrPostCallback(this.OnLineItemProvider_FindOperationCompleted);
+            }
+            this.InvokeAsync("LineItemProvider_Find", new object[] {
+                        whereClause,
+                        start,
+                        pageLength}, this.LineItemProvider_FindOperationCompleted, userState);
+        }
+        
+        private void OnLineItemProvider_FindOperationCompleted(object arg) {
+            if ((this.LineItemProvider_FindCompleted != null)) {
+                System.Web.Services.Protocols.InvokeCompletedEventArgs invokeArgs = ((System.Web.Services.Protocols.InvokeCompletedEventArgs)(arg));
+                this.LineItemProvider_FindCompleted(this, new LineItemProvider_FindCompletedEventArgs(invokeArgs.Results, invokeArgs.Error, invokeArgs.Cancelled, invokeArgs.UserState));
+            }
+        }
+        
+        /// <remarks/>
+        [System.Web.Services.Protocols.SoapDocumentMethodAttribute("http://localhost/PetshopServices/LineItemProvider_GetAll", RequestNamespace="http://localhost/PetshopServices", ResponseNamespace="http://localhost/PetshopServices", Use=System.Web.Services.Description.SoapBindingUse.Literal, ParameterStyle=System.Web.Services.Protocols.SoapParameterStyle.Wrapped)]
+        public LineItem[] LineItemProvider_GetAll(int start, int pageLength, out int count) {
+            object[] results = this.Invoke("LineItemProvider_GetAll", new object[] {
+                        start,
+                        pageLength});
+            count = ((int)(results[1]));
+            return ((LineItem[])(results[0]));
+        }
+        
+        /// <remarks/>
+        public void LineItemProvider_GetAllAsync(int start, int pageLength) {
+            this.LineItemProvider_GetAllAsync(start, pageLength, null);
+        }
+        
+        /// <remarks/>
+        public void LineItemProvider_GetAllAsync(int start, int pageLength, object userState) {
+            if ((this.LineItemProvider_GetAllOperationCompleted == null)) {
+                this.LineItemProvider_GetAllOperationCompleted = new System.Threading.SendOrPostCallback(this.OnLineItemProvider_GetAllOperationCompleted);
+            }
+            this.InvokeAsync("LineItemProvider_GetAll", new object[] {
+                        start,
+                        pageLength}, this.LineItemProvider_GetAllOperationCompleted, userState);
+        }
+        
+        private void OnLineItemProvider_GetAllOperationCompleted(object arg) {
+            if ((this.LineItemProvider_GetAllCompleted != null)) {
+                System.Web.Services.Protocols.InvokeCompletedEventArgs invokeArgs = ((System.Web.Services.Protocols.InvokeCompletedEventArgs)(arg));
+                this.LineItemProvider_GetAllCompleted(this, new LineItemProvider_GetAllCompletedEventArgs(invokeArgs.Results, invokeArgs.Error, invokeArgs.Cancelled, invokeArgs.UserState));
+            }
+        }
+        
+        /// <remarks/>
+        [System.Web.Services.Protocols.SoapDocumentMethodAttribute("http://localhost/PetshopServices/LineItemProvider_GetPaged", RequestNamespace="http://localhost/PetshopServices", ResponseNamespace="http://localhost/PetshopServices", Use=System.Web.Services.Description.SoapBindingUse.Literal, ParameterStyle=System.Web.Services.Protocols.SoapParameterStyle.Wrapped)]
+        public LineItem[] LineItemProvider_GetPaged(string whereClause, string orderBy, int start, int pageLength, out int count) {
+            object[] results = this.Invoke("LineItemProvider_GetPaged", new object[] {
+                        whereClause,
+                        orderBy,
+                        start,
+                        pageLength});
+            count = ((int)(results[1]));
+            return ((LineItem[])(results[0]));
+        }
+        
+        /// <remarks/>
+        public void LineItemProvider_GetPagedAsync(string whereClause, string orderBy, int start, int pageLength) {
+            this.LineItemProvider_GetPagedAsync(whereClause, orderBy, start, pageLength, null);
+        }
+        
+        /// <remarks/>
+        public void LineItemProvider_GetPagedAsync(string whereClause, string orderBy, int start, int pageLength, object userState) {
+            if ((this.LineItemProvider_GetPagedOperationCompleted == null)) {
+                this.LineItemProvider_GetPagedOperationCompleted = new System.Threading.SendOrPostCallback(this.OnLineItemProvider_GetPagedOperationCompleted);
+            }
+            this.InvokeAsync("LineItemProvider_GetPaged", new object[] {
+                        whereClause,
+                        orderBy,
+                        start,
+                        pageLength}, this.LineItemProvider_GetPagedOperationCompleted, userState);
+        }
+        
+        private void OnLineItemProvider_GetPagedOperationCompleted(object arg) {
+            if ((this.LineItemProvider_GetPagedCompleted != null)) {
+                System.Web.Services.Protocols.InvokeCompletedEventArgs invokeArgs = ((System.Web.Services.Protocols.InvokeCompletedEventArgs)(arg));
+                this.LineItemProvider_GetPagedCompleted(this, new LineItemProvider_GetPagedCompletedEventArgs(invokeArgs.Results, invokeArgs.Error, invokeArgs.Cancelled, invokeArgs.UserState));
+            }
+        }
+        
+        /// <remarks/>
+        [System.Web.Services.Protocols.SoapDocumentMethodAttribute("http://localhost/PetshopServices/LineItemProvider_GetByOrderId", RequestNamespace="http://localhost/PetshopServices", ResponseNamespace="http://localhost/PetshopServices", Use=System.Web.Services.Description.SoapBindingUse.Literal, ParameterStyle=System.Web.Services.Protocols.SoapParameterStyle.Wrapped)]
+        public LineItem[] LineItemProvider_GetByOrderId(int orderId, int start, int pageLength, out int count) {
+            object[] results = this.Invoke("LineItemProvider_GetByOrderId", new object[] {
+                        orderId,
+                        start,
+                        pageLength});
+            count = ((int)(results[1]));
+            return ((LineItem[])(results[0]));
+        }
+        
+        /// <remarks/>
+        public void LineItemProvider_GetByOrderIdAsync(int orderId, int start, int pageLength) {
+            this.LineItemProvider_GetByOrderIdAsync(orderId, start, pageLength, null);
+        }
+        
+        /// <remarks/>
+        public void LineItemProvider_GetByOrderIdAsync(int orderId, int start, int pageLength, object userState) {
+            if ((this.LineItemProvider_GetByOrderIdOperationCompleted == null)) {
+                this.LineItemProvider_GetByOrderIdOperationCompleted = new System.Threading.SendOrPostCallback(this.OnLineItemProvider_GetByOrderIdOperationCompleted);
+            }
+            this.InvokeAsync("LineItemProvider_GetByOrderId", new object[] {
+                        orderId,
+                        start,
+                        pageLength}, this.LineItemProvider_GetByOrderIdOperationCompleted, userState);
+        }
+        
+        private void OnLineItemProvider_GetByOrderIdOperationCompleted(object arg) {
+            if ((this.LineItemProvider_GetByOrderIdCompleted != null)) {
+                System.Web.Services.Protocols.InvokeCompletedEventArgs invokeArgs = ((System.Web.Services.Protocols.InvokeCompletedEventArgs)(arg));
+                this.LineItemProvider_GetByOrderIdCompleted(this, new LineItemProvider_GetByOrderIdCompletedEventArgs(invokeArgs.Results, invokeArgs.Error, invokeArgs.Cancelled, invokeArgs.UserState));
+            }
+        }
+        
+        /// <remarks/>
+        [System.Web.Services.Protocols.SoapDocumentMethodAttribute("http://localhost/PetshopServices/LineItemProvider_GetByItemId", RequestNamespace="http://localhost/PetshopServices", ResponseNamespace="http://localhost/PetshopServices", Use=System.Web.Services.Description.SoapBindingUse.Literal, ParameterStyle=System.Web.Services.Protocols.SoapParameterStyle.Wrapped)]
+        public LineItem[] LineItemProvider_GetByItemId(System.Guid itemId, int start, int pageLength, out int count) {
+            object[] results = this.Invoke("LineItemProvider_GetByItemId", new object[] {
+                        itemId,
+                        start,
+                        pageLength});
+            count = ((int)(results[1]));
+            return ((LineItem[])(results[0]));
+        }
+        
+        /// <remarks/>
+        public void LineItemProvider_GetByItemIdAsync(System.Guid itemId, int start, int pageLength) {
+            this.LineItemProvider_GetByItemIdAsync(itemId, start, pageLength, null);
+        }
+        
+        /// <remarks/>
+        public void LineItemProvider_GetByItemIdAsync(System.Guid itemId, int start, int pageLength, object userState) {
+            if ((this.LineItemProvider_GetByItemIdOperationCompleted == null)) {
+                this.LineItemProvider_GetByItemIdOperationCompleted = new System.Threading.SendOrPostCallback(this.OnLineItemProvider_GetByItemIdOperationCompleted);
+            }
+            this.InvokeAsync("LineItemProvider_GetByItemId", new object[] {
+                        itemId,
+                        start,
+                        pageLength}, this.LineItemProvider_GetByItemIdOperationCompleted, userState);
+        }
+        
+        private void OnLineItemProvider_GetByItemIdOperationCompleted(object arg) {
+            if ((this.LineItemProvider_GetByItemIdCompleted != null)) {
+                System.Web.Services.Protocols.InvokeCompletedEventArgs invokeArgs = ((System.Web.Services.Protocols.InvokeCompletedEventArgs)(arg));
+                this.LineItemProvider_GetByItemIdCompleted(this, new LineItemProvider_GetByItemIdCompletedEventArgs(invokeArgs.Results, invokeArgs.Error, invokeArgs.Cancelled, invokeArgs.UserState));
+            }
+        }
+        
+        /// <remarks/>
+        [System.Web.Services.Protocols.SoapDocumentMethodAttribute("http://localhost/PetshopServices/LineItemProvider_GetByLineNumOrderId", RequestNamespace="http://localhost/PetshopServices", ResponseNamespace="http://localhost/PetshopServices", Use=System.Web.Services.Description.SoapBindingUse.Literal, ParameterStyle=System.Web.Services.Protocols.SoapParameterStyle.Wrapped)]
+        public LineItem LineItemProvider_GetByLineNumOrderId(int orderId, int lineNum, int start, int pageLength, out int count) {
+            object[] results = this.Invoke("LineItemProvider_GetByLineNumOrderId", new object[] {
+                        orderId,
+                        lineNum,
+                        start,
+                        pageLength});
+            count = ((int)(results[1]));
+            return ((LineItem)(results[0]));
+        }
+        
+        /// <remarks/>
+        public void LineItemProvider_GetByLineNumOrderIdAsync(int orderId, int lineNum, int start, int pageLength) {
+            this.LineItemProvider_GetByLineNumOrderIdAsync(orderId, lineNum, start, pageLength, null);
+        }
+        
+        /// <remarks/>
+        public void LineItemProvider_GetByLineNumOrderIdAsync(int orderId, int lineNum, int start, int pageLength, object userState) {
+            if ((this.LineItemProvider_GetByLineNumOrderIdOperationCompleted == null)) {
+                this.LineItemProvider_GetByLineNumOrderIdOperationCompleted = new System.Threading.SendOrPostCallback(this.OnLineItemProvider_GetByLineNumOrderIdOperationCompleted);
+            }
+            this.InvokeAsync("LineItemProvider_GetByLineNumOrderId", new object[] {
+                        orderId,
+                        lineNum,
+                        start,
+                        pageLength}, this.LineItemProvider_GetByLineNumOrderIdOperationCompleted, userState);
+        }
+        
+        private void OnLineItemProvider_GetByLineNumOrderIdOperationCompleted(object arg) {
+            if ((this.LineItemProvider_GetByLineNumOrderIdCompleted != null)) {
+                System.Web.Services.Protocols.InvokeCompletedEventArgs invokeArgs = ((System.Web.Services.Protocols.InvokeCompletedEventArgs)(arg));
+                this.LineItemProvider_GetByLineNumOrderIdCompleted(this, new LineItemProvider_GetByLineNumOrderIdCompletedEventArgs(invokeArgs.Results, invokeArgs.Error, invokeArgs.Cancelled, invokeArgs.UserState));
+            }
+        }
+        
+        /// <remarks/>
+        [System.Web.Services.Protocols.SoapDocumentMethodAttribute("http://localhost/PetshopServices/LineItemProvider_Insert", RequestNamespace="http://localhost/PetshopServices", ResponseNamespace="http://localhost/PetshopServices", Use=System.Web.Services.Description.SoapBindingUse.Literal, ParameterStyle=System.Web.Services.Protocols.SoapParameterStyle.Wrapped)]
+        public LineItem LineItemProvider_Insert(LineItem entity) {
+            object[] results = this.Invoke("LineItemProvider_Insert", new object[] {
+                        entity});
+            return ((LineItem)(results[0]));
+        }
+        
+        /// <remarks/>
+        public void LineItemProvider_InsertAsync(LineItem entity) {
+            this.LineItemProvider_InsertAsync(entity, null);
+        }
+        
+        /// <remarks/>
+        public void LineItemProvider_InsertAsync(LineItem entity, object userState) {
+            if ((this.LineItemProvider_InsertOperationCompleted == null)) {
+                this.LineItemProvider_InsertOperationCompleted = new System.Threading.SendOrPostCallback(this.OnLineItemProvider_InsertOperationCompleted);
+            }
+            this.InvokeAsync("LineItemProvider_Insert", new object[] {
+                        entity}, this.LineItemProvider_InsertOperationCompleted, userState);
+        }
+        
+        private void OnLineItemProvider_InsertOperationCompleted(object arg) {
+            if ((this.LineItemProvider_InsertCompleted != null)) {
+                System.Web.Services.Protocols.InvokeCompletedEventArgs invokeArgs = ((System.Web.Services.Protocols.InvokeCompletedEventArgs)(arg));
+                this.LineItemProvider_InsertCompleted(this, new LineItemProvider_InsertCompletedEventArgs(invokeArgs.Results, invokeArgs.Error, invokeArgs.Cancelled, invokeArgs.UserState));
+            }
+        }
+        
+        /// <remarks/>
+        [System.Web.Services.Protocols.SoapDocumentMethodAttribute("http://localhost/PetshopServices/LineItemProvider_BulkInsert", RequestNamespace="http://localhost/PetshopServices", ResponseNamespace="http://localhost/PetshopServices", Use=System.Web.Services.Description.SoapBindingUse.Literal, ParameterStyle=System.Web.Services.Protocols.SoapParameterStyle.Wrapped)]
+        public void LineItemProvider_BulkInsert(LineItem[] entityList) {
+            this.Invoke("LineItemProvider_BulkInsert", new object[] {
+                        entityList});
+        }
+        
+        /// <remarks/>
+        public void LineItemProvider_BulkInsertAsync(LineItem[] entityList) {
+            this.LineItemProvider_BulkInsertAsync(entityList, null);
+        }
+        
+        /// <remarks/>
+        public void LineItemProvider_BulkInsertAsync(LineItem[] entityList, object userState) {
+            if ((this.LineItemProvider_BulkInsertOperationCompleted == null)) {
+                this.LineItemProvider_BulkInsertOperationCompleted = new System.Threading.SendOrPostCallback(this.OnLineItemProvider_BulkInsertOperationCompleted);
+            }
+            this.InvokeAsync("LineItemProvider_BulkInsert", new object[] {
+                        entityList}, this.LineItemProvider_BulkInsertOperationCompleted, userState);
+        }
+        
+        private void OnLineItemProvider_BulkInsertOperationCompleted(object arg) {
+            if ((this.LineItemProvider_BulkInsertCompleted != null)) {
+                System.Web.Services.Protocols.InvokeCompletedEventArgs invokeArgs = ((System.Web.Services.Protocols.InvokeCompletedEventArgs)(arg));
+                this.LineItemProvider_BulkInsertCompleted(this, new System.ComponentModel.AsyncCompletedEventArgs(invokeArgs.Error, invokeArgs.Cancelled, invokeArgs.UserState));
+            }
+        }
+        
+        /// <remarks/>
+        [System.Web.Services.Protocols.SoapDocumentMethodAttribute("http://localhost/PetshopServices/LineItemProvider_Update", RequestNamespace="http://localhost/PetshopServices", ResponseNamespace="http://localhost/PetshopServices", Use=System.Web.Services.Description.SoapBindingUse.Literal, ParameterStyle=System.Web.Services.Protocols.SoapParameterStyle.Wrapped)]
+        public LineItem LineItemProvider_Update(LineItem entity) {
+            object[] results = this.Invoke("LineItemProvider_Update", new object[] {
+                        entity});
+            return ((LineItem)(results[0]));
+        }
+        
+        /// <remarks/>
+        public void LineItemProvider_UpdateAsync(LineItem entity) {
+            this.LineItemProvider_UpdateAsync(entity, null);
+        }
+        
+        /// <remarks/>
+        public void LineItemProvider_UpdateAsync(LineItem entity, object userState) {
+            if ((this.LineItemProvider_UpdateOperationCompleted == null)) {
+                this.LineItemProvider_UpdateOperationCompleted = new System.Threading.SendOrPostCallback(this.OnLineItemProvider_UpdateOperationCompleted);
+            }
+            this.InvokeAsync("LineItemProvider_Update", new object[] {
+                        entity}, this.LineItemProvider_UpdateOperationCompleted, userState);
+        }
+        
+        private void OnLineItemProvider_UpdateOperationCompleted(object arg) {
+            if ((this.LineItemProvider_UpdateCompleted != null)) {
+                System.Web.Services.Protocols.InvokeCompletedEventArgs invokeArgs = ((System.Web.Services.Protocols.InvokeCompletedEventArgs)(arg));
+                this.LineItemProvider_UpdateCompleted(this, new LineItemProvider_UpdateCompletedEventArgs(invokeArgs.Results, invokeArgs.Error, invokeArgs.Cancelled, invokeArgs.UserState));
+            }
+        }
+        
+        /// <remarks/>
+        [System.Web.Services.Protocols.SoapDocumentMethodAttribute("http://localhost/PetshopServices/OrdersProvider_Delete", RequestNamespace="http://localhost/PetshopServices", ResponseNamespace="http://localhost/PetshopServices", Use=System.Web.Services.Description.SoapBindingUse.Literal, ParameterStyle=System.Web.Services.Protocols.SoapParameterStyle.Wrapped)]
+        public bool OrdersProvider_Delete(int orderId, [System.Xml.Serialization.XmlElementAttribute(DataType="base64Binary")] byte[] timestamp) {
+            object[] results = this.Invoke("OrdersProvider_Delete", new object[] {
+                        orderId,
+                        timestamp});
+            return ((bool)(results[0]));
+        }
+        
+        /// <remarks/>
+        public void OrdersProvider_DeleteAsync(int orderId, byte[] timestamp) {
+            this.OrdersProvider_DeleteAsync(orderId, timestamp, null);
+        }
+        
+        /// <remarks/>
+        public void OrdersProvider_DeleteAsync(int orderId, byte[] timestamp, object userState) {
+            if ((this.OrdersProvider_DeleteOperationCompleted == null)) {
+                this.OrdersProvider_DeleteOperationCompleted = new System.Threading.SendOrPostCallback(this.OnOrdersProvider_DeleteOperationCompleted);
+            }
+            this.InvokeAsync("OrdersProvider_Delete", new object[] {
+                        orderId,
+                        timestamp}, this.OrdersProvider_DeleteOperationCompleted, userState);
+        }
+        
+        private void OnOrdersProvider_DeleteOperationCompleted(object arg) {
+            if ((this.OrdersProvider_DeleteCompleted != null)) {
+                System.Web.Services.Protocols.InvokeCompletedEventArgs invokeArgs = ((System.Web.Services.Protocols.InvokeCompletedEventArgs)(arg));
+                this.OrdersProvider_DeleteCompleted(this, new OrdersProvider_DeleteCompletedEventArgs(invokeArgs.Results, invokeArgs.Error, invokeArgs.Cancelled, invokeArgs.UserState));
+            }
+        }
+        
+        /// <remarks/>
+        [System.Web.Services.Protocols.SoapDocumentMethodAttribute("http://localhost/PetshopServices/OrdersProvider_Find", RequestNamespace="http://localhost/PetshopServices", ResponseNamespace="http://localhost/PetshopServices", Use=System.Web.Services.Description.SoapBindingUse.Literal, ParameterStyle=System.Web.Services.Protocols.SoapParameterStyle.Wrapped)]
+        public Orders[] OrdersProvider_Find(string whereClause, int start, int pageLength, out int count) {
+            object[] results = this.Invoke("OrdersProvider_Find", new object[] {
+                        whereClause,
+                        start,
+                        pageLength});
+            count = ((int)(results[1]));
+            return ((Orders[])(results[0]));
+        }
+        
+        /// <remarks/>
+        public void OrdersProvider_FindAsync(string whereClause, int start, int pageLength) {
+            this.OrdersProvider_FindAsync(whereClause, start, pageLength, null);
+        }
+        
+        /// <remarks/>
+        public void OrdersProvider_FindAsync(string whereClause, int start, int pageLength, object userState) {
+            if ((this.OrdersProvider_FindOperationCompleted == null)) {
+                this.OrdersProvider_FindOperationCompleted = new System.Threading.SendOrPostCallback(this.OnOrdersProvider_FindOperationCompleted);
+            }
+            this.InvokeAsync("OrdersProvider_Find", new object[] {
+                        whereClause,
+                        start,
+                        pageLength}, this.OrdersProvider_FindOperationCompleted, userState);
+        }
+        
+        private void OnOrdersProvider_FindOperationCompleted(object arg) {
+            if ((this.OrdersProvider_FindCompleted != null)) {
+                System.Web.Services.Protocols.InvokeCompletedEventArgs invokeArgs = ((System.Web.Services.Protocols.InvokeCompletedEventArgs)(arg));
+                this.OrdersProvider_FindCompleted(this, new OrdersProvider_FindCompletedEventArgs(invokeArgs.Results, invokeArgs.Error, invokeArgs.Cancelled, invokeArgs.UserState));
+            }
+        }
+        
+        /// <remarks/>
+        [System.Web.Services.Protocols.SoapDocumentMethodAttribute("http://localhost/PetshopServices/OrdersProvider_GetAll", RequestNamespace="http://localhost/PetshopServices", ResponseNamespace="http://localhost/PetshopServices", Use=System.Web.Services.Description.SoapBindingUse.Literal, ParameterStyle=System.Web.Services.Protocols.SoapParameterStyle.Wrapped)]
+        public Orders[] OrdersProvider_GetAll(int start, int pageLength, out int count) {
+            object[] results = this.Invoke("OrdersProvider_GetAll", new object[] {
+                        start,
+                        pageLength});
+            count = ((int)(results[1]));
+            return ((Orders[])(results[0]));
+        }
+        
+        /// <remarks/>
+        public void OrdersProvider_GetAllAsync(int start, int pageLength) {
+            this.OrdersProvider_GetAllAsync(start, pageLength, null);
+        }
+        
+        /// <remarks/>
+        public void OrdersProvider_GetAllAsync(int start, int pageLength, object userState) {
+            if ((this.OrdersProvider_GetAllOperationCompleted == null)) {
+                this.OrdersProvider_GetAllOperationCompleted = new System.Threading.SendOrPostCallback(this.OnOrdersProvider_GetAllOperationCompleted);
+            }
+            this.InvokeAsync("OrdersProvider_GetAll", new object[] {
+                        start,
+                        pageLength}, this.OrdersProvider_GetAllOperationCompleted, userState);
+        }
+        
+        private void OnOrdersProvider_GetAllOperationCompleted(object arg) {
+            if ((this.OrdersProvider_GetAllCompleted != null)) {
+                System.Web.Services.Protocols.InvokeCompletedEventArgs invokeArgs = ((System.Web.Services.Protocols.InvokeCompletedEventArgs)(arg));
+                this.OrdersProvider_GetAllCompleted(this, new OrdersProvider_GetAllCompletedEventArgs(invokeArgs.Results, invokeArgs.Error, invokeArgs.Cancelled, invokeArgs.UserState));
+            }
+        }
+        
+        /// <remarks/>
+        [System.Web.Services.Protocols.SoapDocumentMethodAttribute("http://localhost/PetshopServices/OrdersProvider_GetPaged", RequestNamespace="http://localhost/PetshopServices", ResponseNamespace="http://localhost/PetshopServices", Use=System.Web.Services.Description.SoapBindingUse.Literal, ParameterStyle=System.Web.Services.Protocols.SoapParameterStyle.Wrapped)]
+        public Orders[] OrdersProvider_GetPaged(string whereClause, string orderBy, int start, int pageLength, out int count) {
+            object[] results = this.Invoke("OrdersProvider_GetPaged", new object[] {
+                        whereClause,
+                        orderBy,
+                        start,
+                        pageLength});
+            count = ((int)(results[1]));
+            return ((Orders[])(results[0]));
+        }
+        
+        /// <remarks/>
+        public void OrdersProvider_GetPagedAsync(string whereClause, string orderBy, int start, int pageLength) {
+            this.OrdersProvider_GetPagedAsync(whereClause, orderBy, start, pageLength, null);
+        }
+        
+        /// <remarks/>
+        public void OrdersProvider_GetPagedAsync(string whereClause, string orderBy, int start, int pageLength, object userState) {
+            if ((this.OrdersProvider_GetPagedOperationCompleted == null)) {
+                this.OrdersProvider_GetPagedOperationCompleted = new System.Threading.SendOrPostCallback(this.OnOrdersProvider_GetPagedOperationCompleted);
+            }
+            this.InvokeAsync("OrdersProvider_GetPaged", new object[] {
+                        whereClause,
+                        orderBy,
+                        start,
+                        pageLength}, this.OrdersProvider_GetPagedOperationCompleted, userState);
+        }
+        
+        private void OnOrdersProvider_GetPagedOperationCompleted(object arg) {
+            if ((this.OrdersProvider_GetPagedCompleted != null)) {
+                System.Web.Services.Protocols.InvokeCompletedEventArgs invokeArgs = ((System.Web.Services.Protocols.InvokeCompletedEventArgs)(arg));
+                this.OrdersProvider_GetPagedCompleted(this, new OrdersProvider_GetPagedCompletedEventArgs(invokeArgs.Results, invokeArgs.Error, invokeArgs.Cancelled, invokeArgs.UserState));
+            }
+        }
+        
+        /// <remarks/>
+        [System.Web.Services.Protocols.SoapDocumentMethodAttribute("http://localhost/PetshopServices/OrdersProvider_GetByAccountId", RequestNamespace="http://localhost/PetshopServices", ResponseNamespace="http://localhost/PetshopServices", Use=System.Web.Services.Description.SoapBindingUse.Literal, ParameterStyle=System.Web.Services.Protocols.SoapParameterStyle.Wrapped)]
+        public Orders[] OrdersProvider_GetByAccountId(System.Guid accountId, int start, int pageLength, out int count) {
+            object[] results = this.Invoke("OrdersProvider_GetByAccountId", new object[] {
+                        accountId,
+                        start,
+                        pageLength});
+            count = ((int)(results[1]));
+            return ((Orders[])(results[0]));
+        }
+        
+        /// <remarks/>
+        public void OrdersProvider_GetByAccountIdAsync(System.Guid accountId, int start, int pageLength) {
+            this.OrdersProvider_GetByAccountIdAsync(accountId, start, pageLength, null);
+        }
+        
+        /// <remarks/>
+        public void OrdersProvider_GetByAccountIdAsync(System.Guid accountId, int start, int pageLength, object userState) {
+            if ((this.OrdersProvider_GetByAccountIdOperationCompleted == null)) {
+                this.OrdersProvider_GetByAccountIdOperationCompleted = new System.Threading.SendOrPostCallback(this.OnOrdersProvider_GetByAccountIdOperationCompleted);
+            }
+            this.InvokeAsync("OrdersProvider_GetByAccountId", new object[] {
+                        accountId,
+                        start,
+                        pageLength}, this.OrdersProvider_GetByAccountIdOperationCompleted, userState);
+        }
+        
+        private void OnOrdersProvider_GetByAccountIdOperationCompleted(object arg) {
+            if ((this.OrdersProvider_GetByAccountIdCompleted != null)) {
+                System.Web.Services.Protocols.InvokeCompletedEventArgs invokeArgs = ((System.Web.Services.Protocols.InvokeCompletedEventArgs)(arg));
+                this.OrdersProvider_GetByAccountIdCompleted(this, new OrdersProvider_GetByAccountIdCompletedEventArgs(invokeArgs.Results, invokeArgs.Error, invokeArgs.Cancelled, invokeArgs.UserState));
+            }
+        }
+        
+        /// <remarks/>
+        [System.Web.Services.Protocols.SoapDocumentMethodAttribute("http://localhost/PetshopServices/OrdersProvider_GetByCourierId", RequestNamespace="http://localhost/PetshopServices", ResponseNamespace="http://localhost/PetshopServices", Use=System.Web.Services.Description.SoapBindingUse.Literal, ParameterStyle=System.Web.Services.Protocols.SoapParameterStyle.Wrapped)]
+        public Orders[] OrdersProvider_GetByCourierId(System.Guid courierId, int start, int pageLength, out int count) {
+            object[] results = this.Invoke("OrdersProvider_GetByCourierId", new object[] {
+                        courierId,
+                        start,
+                        pageLength});
+            count = ((int)(results[1]));
+            return ((Orders[])(results[0]));
+        }
+        
+        /// <remarks/>
+        public void OrdersProvider_GetByCourierIdAsync(System.Guid courierId, int start, int pageLength) {
+            this.OrdersProvider_GetByCourierIdAsync(courierId, start, pageLength, null);
+        }
+        
+        /// <remarks/>
+        public void OrdersProvider_GetByCourierIdAsync(System.Guid courierId, int start, int pageLength, object userState) {
+            if ((this.OrdersProvider_GetByCourierIdOperationCompleted == null)) {
+                this.OrdersProvider_GetByCourierIdOperationCompleted = new System.Threading.SendOrPostCallback(this.OnOrdersProvider_GetByCourierIdOperationCompleted);
+            }
+            this.InvokeAsync("OrdersProvider_GetByCourierId", new object[] {
+                        courierId,
+                        start,
+                        pageLength}, this.OrdersProvider_GetByCourierIdOperationCompleted, userState);
+        }
+        
+        private void OnOrdersProvider_GetByCourierIdOperationCompleted(object arg) {
+            if ((this.OrdersProvider_GetByCourierIdCompleted != null)) {
+                System.Web.Services.Protocols.InvokeCompletedEventArgs invokeArgs = ((System.Web.Services.Protocols.InvokeCompletedEventArgs)(arg));
+                this.OrdersProvider_GetByCourierIdCompleted(this, new OrdersProvider_GetByCourierIdCompletedEventArgs(invokeArgs.Results, invokeArgs.Error, invokeArgs.Cancelled, invokeArgs.UserState));
+            }
+        }
+        
+        /// <remarks/>
+        [System.Web.Services.Protocols.SoapDocumentMethodAttribute("http://localhost/PetshopServices/OrdersProvider_GetByCreditCardId", RequestNamespace="http://localhost/PetshopServices", ResponseNamespace="http://localhost/PetshopServices", Use=System.Web.Services.Description.SoapBindingUse.Literal, ParameterStyle=System.Web.Services.Protocols.SoapParameterStyle.Wrapped)]
+        public Orders[] OrdersProvider_GetByCreditCardId(System.Guid creditCardId, int start, int pageLength, out int count) {
+            object[] results = this.Invoke("OrdersProvider_GetByCreditCardId", new object[] {
+                        creditCardId,
+                        start,
+                        pageLength});
+            count = ((int)(results[1]));
+            return ((Orders[])(results[0]));
+        }
+        
+        /// <remarks/>
+        public void OrdersProvider_GetByCreditCardIdAsync(System.Guid creditCardId, int start, int pageLength) {
+            this.OrdersProvider_GetByCreditCardIdAsync(creditCardId, start, pageLength, null);
+        }
+        
+        /// <remarks/>
+        public void OrdersProvider_GetByCreditCardIdAsync(System.Guid creditCardId, int start, int pageLength, object userState) {
+            if ((this.OrdersProvider_GetByCreditCardIdOperationCompleted == null)) {
+                this.OrdersProvider_GetByCreditCardIdOperationCompleted = new System.Threading.SendOrPostCallback(this.OnOrdersProvider_GetByCreditCardIdOperationCompleted);
+            }
+            this.InvokeAsync("OrdersProvider_GetByCreditCardId", new object[] {
+                        creditCardId,
+                        start,
+                        pageLength}, this.OrdersProvider_GetByCreditCardIdOperationCompleted, userState);
+        }
+        
+        private void OnOrdersProvider_GetByCreditCardIdOperationCompleted(object arg) {
+            if ((this.OrdersProvider_GetByCreditCardIdCompleted != null)) {
+                System.Web.Services.Protocols.InvokeCompletedEventArgs invokeArgs = ((System.Web.Services.Protocols.InvokeCompletedEventArgs)(arg));
+                this.OrdersProvider_GetByCreditCardIdCompleted(this, new OrdersProvider_GetByCreditCardIdCompletedEventArgs(invokeArgs.Results, invokeArgs.Error, invokeArgs.Cancelled, invokeArgs.UserState));
+            }
+        }
+        
+        /// <remarks/>
+        [System.Web.Services.Protocols.SoapDocumentMethodAttribute("http://localhost/PetshopServices/OrdersProvider_GetByOrderId", RequestNamespace="http://localhost/PetshopServices", ResponseNamespace="http://localhost/PetshopServices", Use=System.Web.Services.Description.SoapBindingUse.Literal, ParameterStyle=System.Web.Services.Protocols.SoapParameterStyle.Wrapped)]
+        public Orders OrdersProvider_GetByOrderId(int orderId, int start, int pageLength, out int count) {
+            object[] results = this.Invoke("OrdersProvider_GetByOrderId", new object[] {
+                        orderId,
+                        start,
+                        pageLength});
+            count = ((int)(results[1]));
+            return ((Orders)(results[0]));
+        }
+        
+        /// <remarks/>
+        public void OrdersProvider_GetByOrderIdAsync(int orderId, int start, int pageLength) {
+            this.OrdersProvider_GetByOrderIdAsync(orderId, start, pageLength, null);
+        }
+        
+        /// <remarks/>
+        public void OrdersProvider_GetByOrderIdAsync(int orderId, int start, int pageLength, object userState) {
+            if ((this.OrdersProvider_GetByOrderIdOperationCompleted == null)) {
+                this.OrdersProvider_GetByOrderIdOperationCompleted = new System.Threading.SendOrPostCallback(this.OnOrdersProvider_GetByOrderIdOperationCompleted);
+            }
+            this.InvokeAsync("OrdersProvider_GetByOrderId", new object[] {
+                        orderId,
+                        start,
+                        pageLength}, this.OrdersProvider_GetByOrderIdOperationCompleted, userState);
+        }
+        
+        private void OnOrdersProvider_GetByOrderIdOperationCompleted(object arg) {
+            if ((this.OrdersProvider_GetByOrderIdCompleted != null)) {
+                System.Web.Services.Protocols.InvokeCompletedEventArgs invokeArgs = ((System.Web.Services.Protocols.InvokeCompletedEventArgs)(arg));
+                this.OrdersProvider_GetByOrderIdCompleted(this, new OrdersProvider_GetByOrderIdCompletedEventArgs(invokeArgs.Results, invokeArgs.Error, invokeArgs.Cancelled, invokeArgs.UserState));
+            }
+        }
+        
+        /// <remarks/>
+        [System.Web.Services.Protocols.SoapDocumentMethodAttribute("http://localhost/PetshopServices/OrdersProvider_Insert", RequestNamespace="http://localhost/PetshopServices", ResponseNamespace="http://localhost/PetshopServices", Use=System.Web.Services.Description.SoapBindingUse.Literal, ParameterStyle=System.Web.Services.Protocols.SoapParameterStyle.Wrapped)]
+        public Orders OrdersProvider_Insert(Orders entity) {
+            object[] results = this.Invoke("OrdersProvider_Insert", new object[] {
+                        entity});
+            return ((Orders)(results[0]));
+        }
+        
+        /// <remarks/>
+        public void OrdersProvider_InsertAsync(Orders entity) {
+            this.OrdersProvider_InsertAsync(entity, null);
+        }
+        
+        /// <remarks/>
+        public void OrdersProvider_InsertAsync(Orders entity, object userState) {
+            if ((this.OrdersProvider_InsertOperationCompleted == null)) {
+                this.OrdersProvider_InsertOperationCompleted = new System.Threading.SendOrPostCallback(this.OnOrdersProvider_InsertOperationCompleted);
+            }
+            this.InvokeAsync("OrdersProvider_Insert", new object[] {
+                        entity}, this.OrdersProvider_InsertOperationCompleted, userState);
+        }
+        
+        private void OnOrdersProvider_InsertOperationCompleted(object arg) {
+            if ((this.OrdersProvider_InsertCompleted != null)) {
+                System.Web.Services.Protocols.InvokeCompletedEventArgs invokeArgs = ((System.Web.Services.Protocols.InvokeCompletedEventArgs)(arg));
+                this.OrdersProvider_InsertCompleted(this, new OrdersProvider_InsertCompletedEventArgs(invokeArgs.Results, invokeArgs.Error, invokeArgs.Cancelled, invokeArgs.UserState));
+            }
+        }
+        
+        /// <remarks/>
+        [System.Web.Services.Protocols.SoapDocumentMethodAttribute("http://localhost/PetshopServices/OrdersProvider_BulkInsert", RequestNamespace="http://localhost/PetshopServices", ResponseNamespace="http://localhost/PetshopServices", Use=System.Web.Services.Description.SoapBindingUse.Literal, ParameterStyle=System.Web.Services.Protocols.SoapParameterStyle.Wrapped)]
+        public void OrdersProvider_BulkInsert(Orders[] entityList) {
+            this.Invoke("OrdersProvider_BulkInsert", new object[] {
+                        entityList});
+        }
+        
+        /// <remarks/>
+        public void OrdersProvider_BulkInsertAsync(Orders[] entityList) {
+            this.OrdersProvider_BulkInsertAsync(entityList, null);
+        }
+        
+        /// <remarks/>
+        public void OrdersProvider_BulkInsertAsync(Orders[] entityList, object userState) {
+            if ((this.OrdersProvider_BulkInsertOperationCompleted == null)) {
+                this.OrdersProvider_BulkInsertOperationCompleted = new System.Threading.SendOrPostCallback(this.OnOrdersProvider_BulkInsertOperationCompleted);
+            }
+            this.InvokeAsync("OrdersProvider_BulkInsert", new object[] {
+                        entityList}, this.OrdersProvider_BulkInsertOperationCompleted, userState);
+        }
+        
+        private void OnOrdersProvider_BulkInsertOperationCompleted(object arg) {
+            if ((this.OrdersProvider_BulkInsertCompleted != null)) {
+                System.Web.Services.Protocols.InvokeCompletedEventArgs invokeArgs = ((System.Web.Services.Protocols.InvokeCompletedEventArgs)(arg));
+                this.OrdersProvider_BulkInsertCompleted(this, new System.ComponentModel.AsyncCompletedEventArgs(invokeArgs.Error, invokeArgs.Cancelled, invokeArgs.UserState));
+            }
+        }
+        
+        /// <remarks/>
+        [System.Web.Services.Protocols.SoapDocumentMethodAttribute("http://localhost/PetshopServices/OrdersProvider_Update", RequestNamespace="http://localhost/PetshopServices", ResponseNamespace="http://localhost/PetshopServices", Use=System.Web.Services.Description.SoapBindingUse.Literal, ParameterStyle=System.Web.Services.Protocols.SoapParameterStyle.Wrapped)]
+        public Orders OrdersProvider_Update(Orders entity) {
+            object[] results = this.Invoke("OrdersProvider_Update", new object[] {
+                        entity});
+            return ((Orders)(results[0]));
+        }
+        
+        /// <remarks/>
+        public void OrdersProvider_UpdateAsync(Orders entity) {
+            this.OrdersProvider_UpdateAsync(entity, null);
+        }
+        
+        /// <remarks/>
+        public void OrdersProvider_UpdateAsync(Orders entity, object userState) {
+            if ((this.OrdersProvider_UpdateOperationCompleted == null)) {
+                this.OrdersProvider_UpdateOperationCompleted = new System.Threading.SendOrPostCallback(this.OnOrdersProvider_UpdateOperationCompleted);
+            }
+            this.InvokeAsync("OrdersProvider_Update", new object[] {
+                        entity}, this.OrdersProvider_UpdateOperationCompleted, userState);
+        }
+        
+        private void OnOrdersProvider_UpdateOperationCompleted(object arg) {
+            if ((this.OrdersProvider_UpdateCompleted != null)) {
+                System.Web.Services.Protocols.InvokeCompletedEventArgs invokeArgs = ((System.Web.Services.Protocols.InvokeCompletedEventArgs)(arg));
+                this.OrdersProvider_UpdateCompleted(this, new OrdersProvider_UpdateCompletedEventArgs(invokeArgs.Results, invokeArgs.Error, invokeArgs.Cancelled, invokeArgs.UserState));
+            }
+        }
+        
+        /// <remarks/>
+        [System.Web.Services.Protocols.SoapDocumentMethodAttribute("http://localhost/PetshopServices/OrderStatusProvider_Delete", RequestNamespace="http://localhost/PetshopServices", ResponseNamespace="http://localhost/PetshopServices", Use=System.Web.Services.Description.SoapBindingUse.Literal, ParameterStyle=System.Web.Services.Protocols.SoapParameterStyle.Wrapped)]
+        public bool OrderStatusProvider_Delete(int orderId, int lineNum, [System.Xml.Serialization.XmlElementAttribute(DataType="base64Binary")] byte[] timestamp) {
+            object[] results = this.Invoke("OrderStatusProvider_Delete", new object[] {
+                        orderId,
+                        lineNum,
+                        timestamp});
+            return ((bool)(results[0]));
+        }
+        
+        /// <remarks/>
+        public void OrderStatusProvider_DeleteAsync(int orderId, int lineNum, byte[] timestamp) {
+            this.OrderStatusProvider_DeleteAsync(orderId, lineNum, timestamp, null);
+        }
+        
+        /// <remarks/>
+        public void OrderStatusProvider_DeleteAsync(int orderId, int lineNum, byte[] timestamp, object userState) {
+            if ((this.OrderStatusProvider_DeleteOperationCompleted == null)) {
+                this.OrderStatusProvider_DeleteOperationCompleted = new System.Threading.SendOrPostCallback(this.OnOrderStatusProvider_DeleteOperationCompleted);
+            }
+            this.InvokeAsync("OrderStatusProvider_Delete", new object[] {
+                        orderId,
+                        lineNum,
+                        timestamp}, this.OrderStatusProvider_DeleteOperationCompleted, userState);
+        }
+        
+        private void OnOrderStatusProvider_DeleteOperationCompleted(object arg) {
+            if ((this.OrderStatusProvider_DeleteCompleted != null)) {
+                System.Web.Services.Protocols.InvokeCompletedEventArgs invokeArgs = ((System.Web.Services.Protocols.InvokeCompletedEventArgs)(arg));
+                this.OrderStatusProvider_DeleteCompleted(this, new OrderStatusProvider_DeleteCompletedEventArgs(invokeArgs.Results, invokeArgs.Error, invokeArgs.Cancelled, invokeArgs.UserState));
+            }
+        }
+        
+        /// <remarks/>
+        [System.Web.Services.Protocols.SoapDocumentMethodAttribute("http://localhost/PetshopServices/OrderStatusProvider_Find", RequestNamespace="http://localhost/PetshopServices", ResponseNamespace="http://localhost/PetshopServices", Use=System.Web.Services.Description.SoapBindingUse.Literal, ParameterStyle=System.Web.Services.Protocols.SoapParameterStyle.Wrapped)]
+        public OrderStatus[] OrderStatusProvider_Find(string whereClause, int start, int pageLength, out int count) {
+            object[] results = this.Invoke("OrderStatusProvider_Find", new object[] {
+                        whereClause,
+                        start,
+                        pageLength});
+            count = ((int)(results[1]));
+            return ((OrderStatus[])(results[0]));
+        }
+        
+        /// <remarks/>
+        public void OrderStatusProvider_FindAsync(string whereClause, int start, int pageLength) {
+            this.OrderStatusProvider_FindAsync(whereClause, start, pageLength, null);
+        }
+        
+        /// <remarks/>
+        public void OrderStatusProvider_FindAsync(string whereClause, int start, int pageLength, object userState) {
+            if ((this.OrderStatusProvider_FindOperationCompleted == null)) {
+                this.OrderStatusProvider_FindOperationCompleted = new System.Threading.SendOrPostCallback(this.OnOrderStatusProvider_FindOperationCompleted);
+            }
+            this.InvokeAsync("OrderStatusProvider_Find", new object[] {
+                        whereClause,
+                        start,
+                        pageLength}, this.OrderStatusProvider_FindOperationCompleted, userState);
+        }
+        
+        private void OnOrderStatusProvider_FindOperationCompleted(object arg) {
+            if ((this.OrderStatusProvider_FindCompleted != null)) {
+                System.Web.Services.Protocols.InvokeCompletedEventArgs invokeArgs = ((System.Web.Services.Protocols.InvokeCompletedEventArgs)(arg));
+                this.OrderStatusProvider_FindCompleted(this, new OrderStatusProvider_FindCompletedEventArgs(invokeArgs.Results, invokeArgs.Error, invokeArgs.Cancelled, invokeArgs.UserState));
+            }
+        }
+        
+        /// <remarks/>
+        [System.Web.Services.Protocols.SoapDocumentMethodAttribute("http://localhost/PetshopServices/OrderStatusProvider_GetAll", RequestNamespace="http://localhost/PetshopServices", ResponseNamespace="http://localhost/PetshopServices", Use=System.Web.Services.Description.SoapBindingUse.Literal, ParameterStyle=System.Web.Services.Protocols.SoapParameterStyle.Wrapped)]
+        public OrderStatus[] OrderStatusProvider_GetAll(int start, int pageLength, out int count) {
+            object[] results = this.Invoke("OrderStatusProvider_GetAll", new object[] {
+                        start,
+                        pageLength});
+            count = ((int)(results[1]));
+            return ((OrderStatus[])(results[0]));
+        }
+        
+        /// <remarks/>
+        public void OrderStatusProvider_GetAllAsync(int start, int pageLength) {
+            this.OrderStatusProvider_GetAllAsync(start, pageLength, null);
+        }
+        
+        /// <remarks/>
+        public void OrderStatusProvider_GetAllAsync(int start, int pageLength, object userState) {
+            if ((this.OrderStatusProvider_GetAllOperationCompleted == null)) {
+                this.OrderStatusProvider_GetAllOperationCompleted = new System.Threading.SendOrPostCallback(this.OnOrderStatusProvider_GetAllOperationCompleted);
+            }
+            this.InvokeAsync("OrderStatusProvider_GetAll", new object[] {
+                        start,
+                        pageLength}, this.OrderStatusProvider_GetAllOperationCompleted, userState);
+        }
+        
+        private void OnOrderStatusProvider_GetAllOperationCompleted(object arg) {
+            if ((this.OrderStatusProvider_GetAllCompleted != null)) {
+                System.Web.Services.Protocols.InvokeCompletedEventArgs invokeArgs = ((System.Web.Services.Protocols.InvokeCompletedEventArgs)(arg));
+                this.OrderStatusProvider_GetAllCompleted(this, new OrderStatusProvider_GetAllCompletedEventArgs(invokeArgs.Results, invokeArgs.Error, invokeArgs.Cancelled, invokeArgs.UserState));
+            }
+        }
+        
+        /// <remarks/>
+        [System.Web.Services.Protocols.SoapDocumentMethodAttribute("http://localhost/PetshopServices/OrderStatusProvider_GetPaged", RequestNamespace="http://localhost/PetshopServices", ResponseNamespace="http://localhost/PetshopServices", Use=System.Web.Services.Description.SoapBindingUse.Literal, ParameterStyle=System.Web.Services.Protocols.SoapParameterStyle.Wrapped)]
+        public OrderStatus[] OrderStatusProvider_GetPaged(string whereClause, string orderBy, int start, int pageLength, out int count) {
+            object[] results = this.Invoke("OrderStatusProvider_GetPaged", new object[] {
+                        whereClause,
+                        orderBy,
+                        start,
+                        pageLength});
+            count = ((int)(results[1]));
+            return ((OrderStatus[])(results[0]));
+        }
+        
+        /// <remarks/>
+        public void OrderStatusProvider_GetPagedAsync(string whereClause, string orderBy, int start, int pageLength) {
+            this.OrderStatusProvider_GetPagedAsync(whereClause, orderBy, start, pageLength, null);
+        }
+        
+        /// <remarks/>
+        public void OrderStatusProvider_GetPagedAsync(string whereClause, string orderBy, int start, int pageLength, object userState) {
+            if ((this.OrderStatusProvider_GetPagedOperationCompleted == null)) {
+                this.OrderStatusProvider_GetPagedOperationCompleted = new System.Threading.SendOrPostCallback(this.OnOrderStatusProvider_GetPagedOperationCompleted);
+            }
+            this.InvokeAsync("OrderStatusProvider_GetPaged", new object[] {
+                        whereClause,
+                        orderBy,
+                        start,
+                        pageLength}, this.OrderStatusProvider_GetPagedOperationCompleted, userState);
+        }
+        
+        private void OnOrderStatusProvider_GetPagedOperationCompleted(object arg) {
+            if ((this.OrderStatusProvider_GetPagedCompleted != null)) {
+                System.Web.Services.Protocols.InvokeCompletedEventArgs invokeArgs = ((System.Web.Services.Protocols.InvokeCompletedEventArgs)(arg));
+                this.OrderStatusProvider_GetPagedCompleted(this, new OrderStatusProvider_GetPagedCompletedEventArgs(invokeArgs.Results, invokeArgs.Error, invokeArgs.Cancelled, invokeArgs.UserState));
+            }
+        }
+        
+        /// <remarks/>
+        [System.Web.Services.Protocols.SoapDocumentMethodAttribute("http://localhost/PetshopServices/OrderStatusProvider_GetByOrderId", RequestNamespace="http://localhost/PetshopServices", ResponseNamespace="http://localhost/PetshopServices", Use=System.Web.Services.Description.SoapBindingUse.Literal, ParameterStyle=System.Web.Services.Protocols.SoapParameterStyle.Wrapped)]
+        public OrderStatus[] OrderStatusProvider_GetByOrderId(int orderId, int start, int pageLength, out int count) {
+            object[] results = this.Invoke("OrderStatusProvider_GetByOrderId", new object[] {
+                        orderId,
+                        start,
+                        pageLength});
+            count = ((int)(results[1]));
+            return ((OrderStatus[])(results[0]));
+        }
+        
+        /// <remarks/>
+        public void OrderStatusProvider_GetByOrderIdAsync(int orderId, int start, int pageLength) {
+            this.OrderStatusProvider_GetByOrderIdAsync(orderId, start, pageLength, null);
+        }
+        
+        /// <remarks/>
+        public void OrderStatusProvider_GetByOrderIdAsync(int orderId, int start, int pageLength, object userState) {
+            if ((this.OrderStatusProvider_GetByOrderIdOperationCompleted == null)) {
+                this.OrderStatusProvider_GetByOrderIdOperationCompleted = new System.Threading.SendOrPostCallback(this.OnOrderStatusProvider_GetByOrderIdOperationCompleted);
+            }
+            this.InvokeAsync("OrderStatusProvider_GetByOrderId", new object[] {
+                        orderId,
+                        start,
+                        pageLength}, this.OrderStatusProvider_GetByOrderIdOperationCompleted, userState);
+        }
+        
+        private void OnOrderStatusProvider_GetByOrderIdOperationCompleted(object arg) {
+            if ((this.OrderStatusProvider_GetByOrderIdCompleted != null)) {
+                System.Web.Services.Protocols.InvokeCompletedEventArgs invokeArgs = ((System.Web.Services.Protocols.InvokeCompletedEventArgs)(arg));
+                this.OrderStatusProvider_GetByOrderIdCompleted(this, new OrderStatusProvider_GetByOrderIdCompletedEventArgs(invokeArgs.Results, invokeArgs.Error, invokeArgs.Cancelled, invokeArgs.UserState));
+            }
+        }
+        
+        /// <remarks/>
+        [System.Web.Services.Protocols.SoapDocumentMethodAttribute("http://localhost/PetshopServices/OrderStatusProvider_GetByOrderStatusId", RequestNamespace="http://localhost/PetshopServices", ResponseNamespace="http://localhost/PetshopServices", Use=System.Web.Services.Description.SoapBindingUse.Literal, ParameterStyle=System.Web.Services.Protocols.SoapParameterStyle.Wrapped)]
+        public OrderStatus[] OrderStatusProvider_GetByOrderStatusId(int orderStatusId, int start, int pageLength, out int count) {
+            object[] results = this.Invoke("OrderStatusProvider_GetByOrderStatusId", new object[] {
+                        orderStatusId,
+                        start,
+                        pageLength});
+            count = ((int)(results[1]));
+            return ((OrderStatus[])(results[0]));
+        }
+        
+        /// <remarks/>
+        public void OrderStatusProvider_GetByOrderStatusIdAsync(int orderStatusId, int start, int pageLength) {
+            this.OrderStatusProvider_GetByOrderStatusIdAsync(orderStatusId, start, pageLength, null);
+        }
+        
+        /// <remarks/>
+        public void OrderStatusProvider_GetByOrderStatusIdAsync(int orderStatusId, int start, int pageLength, object userState) {
+            if ((this.OrderStatusProvider_GetByOrderStatusIdOperationCompleted == null)) {
+                this.OrderStatusProvider_GetByOrderStatusIdOperationCompleted = new System.Threading.SendOrPostCallback(this.OnOrderStatusProvider_GetByOrderStatusIdOperationCompleted);
+            }
+            this.InvokeAsync("OrderStatusProvider_GetByOrderStatusId", new object[] {
+                        orderStatusId,
+                        start,
+                        pageLength}, this.OrderStatusProvider_GetByOrderStatusIdOperationCompleted, userState);
+        }
+        
+        private void OnOrderStatusProvider_GetByOrderStatusIdOperationCompleted(object arg) {
+            if ((this.OrderStatusProvider_GetByOrderStatusIdCompleted != null)) {
+                System.Web.Services.Protocols.InvokeCompletedEventArgs invokeArgs = ((System.Web.Services.Protocols.InvokeCompletedEventArgs)(arg));
+                this.OrderStatusProvider_GetByOrderStatusIdCompleted(this, new OrderStatusProvider_GetByOrderStatusIdCompletedEventArgs(invokeArgs.Results, invokeArgs.Error, invokeArgs.Cancelled, invokeArgs.UserState));
+            }
+        }
+        
+        /// <remarks/>
+        [System.Web.Services.Protocols.SoapDocumentMethodAttribute("http://localhost/PetshopServices/OrderStatusProvider_GetByLineNumOrderId", RequestNamespace="http://localhost/PetshopServices", ResponseNamespace="http://localhost/PetshopServices", Use=System.Web.Services.Description.SoapBindingUse.Literal, ParameterStyle=System.Web.Services.Protocols.SoapParameterStyle.Wrapped)]
+        public OrderStatus OrderStatusProvider_GetByLineNumOrderId(int orderId, int lineNum, int start, int pageLength, out int count) {
+            object[] results = this.Invoke("OrderStatusProvider_GetByLineNumOrderId", new object[] {
+                        orderId,
+                        lineNum,
+                        start,
+                        pageLength});
+            count = ((int)(results[1]));
+            return ((OrderStatus)(results[0]));
+        }
+        
+        /// <remarks/>
+        public void OrderStatusProvider_GetByLineNumOrderIdAsync(int orderId, int lineNum, int start, int pageLength) {
+            this.OrderStatusProvider_GetByLineNumOrderIdAsync(orderId, lineNum, start, pageLength, null);
+        }
+        
+        /// <remarks/>
+        public void OrderStatusProvider_GetByLineNumOrderIdAsync(int orderId, int lineNum, int start, int pageLength, object userState) {
+            if ((this.OrderStatusProvider_GetByLineNumOrderIdOperationCompleted == null)) {
+                this.OrderStatusProvider_GetByLineNumOrderIdOperationCompleted = new System.Threading.SendOrPostCallback(this.OnOrderStatusProvider_GetByLineNumOrderIdOperationCompleted);
+            }
+            this.InvokeAsync("OrderStatusProvider_GetByLineNumOrderId", new object[] {
+                        orderId,
+                        lineNum,
+                        start,
+                        pageLength}, this.OrderStatusProvider_GetByLineNumOrderIdOperationCompleted, userState);
+        }
+        
+        private void OnOrderStatusProvider_GetByLineNumOrderIdOperationCompleted(object arg) {
+            if ((this.OrderStatusProvider_GetByLineNumOrderIdCompleted != null)) {
+                System.Web.Services.Protocols.InvokeCompletedEventArgs invokeArgs = ((System.Web.Services.Protocols.InvokeCompletedEventArgs)(arg));
+                this.OrderStatusProvider_GetByLineNumOrderIdCompleted(this, new OrderStatusProvider_GetByLineNumOrderIdCompletedEventArgs(invokeArgs.Results, invokeArgs.Error, invokeArgs.Cancelled, invokeArgs.UserState));
+            }
+        }
+        
+        /// <remarks/>
+        [System.Web.Services.Protocols.SoapDocumentMethodAttribute("http://localhost/PetshopServices/OrderStatusProvider_Insert", RequestNamespace="http://localhost/PetshopServices", ResponseNamespace="http://localhost/PetshopServices", Use=System.Web.Services.Description.SoapBindingUse.Literal, ParameterStyle=System.Web.Services.Protocols.SoapParameterStyle.Wrapped)]
+        public OrderStatus OrderStatusProvider_Insert(OrderStatus entity) {
+            object[] results = this.Invoke("OrderStatusProvider_Insert", new object[] {
+                        entity});
+            return ((OrderStatus)(results[0]));
+        }
+        
+        /// <remarks/>
+        public void OrderStatusProvider_InsertAsync(OrderStatus entity) {
+            this.OrderStatusProvider_InsertAsync(entity, null);
+        }
+        
+        /// <remarks/>
+        public void OrderStatusProvider_InsertAsync(OrderStatus entity, object userState) {
+            if ((this.OrderStatusProvider_InsertOperationCompleted == null)) {
+                this.OrderStatusProvider_InsertOperationCompleted = new System.Threading.SendOrPostCallback(this.OnOrderStatusProvider_InsertOperationCompleted);
+            }
+            this.InvokeAsync("OrderStatusProvider_Insert", new object[] {
+                        entity}, this.OrderStatusProvider_InsertOperationCompleted, userState);
+        }
+        
+        private void OnOrderStatusProvider_InsertOperationCompleted(object arg) {
+            if ((this.OrderStatusProvider_InsertCompleted != null)) {
+                System.Web.Services.Protocols.InvokeCompletedEventArgs invokeArgs = ((System.Web.Services.Protocols.InvokeCompletedEventArgs)(arg));
+                this.OrderStatusProvider_InsertCompleted(this, new OrderStatusProvider_InsertCompletedEventArgs(invokeArgs.Results, invokeArgs.Error, invokeArgs.Cancelled, invokeArgs.UserState));
+            }
+        }
+        
+        /// <remarks/>
+        [System.Web.Services.Protocols.SoapDocumentMethodAttribute("http://localhost/PetshopServices/OrderStatusProvider_BulkInsert", RequestNamespace="http://localhost/PetshopServices", ResponseNamespace="http://localhost/PetshopServices", Use=System.Web.Services.Description.SoapBindingUse.Literal, ParameterStyle=System.Web.Services.Protocols.SoapParameterStyle.Wrapped)]
+        public void OrderStatusProvider_BulkInsert(OrderStatus[] entityList) {
+            this.Invoke("OrderStatusProvider_BulkInsert", new object[] {
+                        entityList});
+        }
+        
+        /// <remarks/>
+        public void OrderStatusProvider_BulkInsertAsync(OrderStatus[] entityList) {
+            this.OrderStatusProvider_BulkInsertAsync(entityList, null);
+        }
+        
+        /// <remarks/>
+        public void OrderStatusProvider_BulkInsertAsync(OrderStatus[] entityList, object userState) {
+            if ((this.OrderStatusProvider_BulkInsertOperationCompleted == null)) {
+                this.OrderStatusProvider_BulkInsertOperationCompleted = new System.Threading.SendOrPostCallback(this.OnOrderStatusProvider_BulkInsertOperationCompleted);
+            }
+            this.InvokeAsync("OrderStatusProvider_BulkInsert", new object[] {
+                        entityList}, this.OrderStatusProvider_BulkInsertOperationCompleted, userState);
+        }
+        
+        private void OnOrderStatusProvider_BulkInsertOperationCompleted(object arg) {
+            if ((this.OrderStatusProvider_BulkInsertCompleted != null)) {
+                System.Web.Services.Protocols.InvokeCompletedEventArgs invokeArgs = ((System.Web.Services.Protocols.InvokeCompletedEventArgs)(arg));
+                this.OrderStatusProvider_BulkInsertCompleted(this, new System.ComponentModel.AsyncCompletedEventArgs(invokeArgs.Error, invokeArgs.Cancelled, invokeArgs.UserState));
+            }
+        }
+        
+        /// <remarks/>
+        [System.Web.Services.Protocols.SoapDocumentMethodAttribute("http://localhost/PetshopServices/OrderStatusProvider_Update", RequestNamespace="http://localhost/PetshopServices", ResponseNamespace="http://localhost/PetshopServices", Use=System.Web.Services.Description.SoapBindingUse.Literal, ParameterStyle=System.Web.Services.Protocols.SoapParameterStyle.Wrapped)]
+        public OrderStatus OrderStatusProvider_Update(OrderStatus entity) {
+            object[] results = this.Invoke("OrderStatusProvider_Update", new object[] {
+                        entity});
+            return ((OrderStatus)(results[0]));
+        }
+        
+        /// <remarks/>
+        public void OrderStatusProvider_UpdateAsync(OrderStatus entity) {
+            this.OrderStatusProvider_UpdateAsync(entity, null);
+        }
+        
+        /// <remarks/>
+        public void OrderStatusProvider_UpdateAsync(OrderStatus entity, object userState) {
+            if ((this.OrderStatusProvider_UpdateOperationCompleted == null)) {
+                this.OrderStatusProvider_UpdateOperationCompleted = new System.Threading.SendOrPostCallback(this.OnOrderStatusProvider_UpdateOperationCompleted);
+            }
+            this.InvokeAsync("OrderStatusProvider_Update", new object[] {
+                        entity}, this.OrderStatusProvider_UpdateOperationCompleted, userState);
+        }
+        
+        private void OnOrderStatusProvider_UpdateOperationCompleted(object arg) {
+            if ((this.OrderStatusProvider_UpdateCompleted != null)) {
+                System.Web.Services.Protocols.InvokeCompletedEventArgs invokeArgs = ((System.Web.Services.Protocols.InvokeCompletedEventArgs)(arg));
+                this.OrderStatusProvider_UpdateCompleted(this, new OrderStatusProvider_UpdateCompletedEventArgs(invokeArgs.Results, invokeArgs.Error, invokeArgs.Cancelled, invokeArgs.UserState));
+            }
+        }
+        
+        /// <remarks/>
+        [System.Web.Services.Protocols.SoapDocumentMethodAttribute("http://localhost/PetshopServices/OrderStatusTypeProvider_Delete", RequestNamespace="http://localhost/PetshopServices", ResponseNamespace="http://localhost/PetshopServices", Use=System.Web.Services.Description.SoapBindingUse.Literal, ParameterStyle=System.Web.Services.Protocols.SoapParameterStyle.Wrapped)]
+        public bool OrderStatusTypeProvider_Delete(int orderStatusId) {
+            object[] results = this.Invoke("OrderStatusTypeProvider_Delete", new object[] {
+                        orderStatusId});
+            return ((bool)(results[0]));
+        }
+        
+        /// <remarks/>
+        public void OrderStatusTypeProvider_DeleteAsync(int orderStatusId) {
+            this.OrderStatusTypeProvider_DeleteAsync(orderStatusId, null);
+        }
+        
+        /// <remarks/>
+        public void OrderStatusTypeProvider_DeleteAsync(int orderStatusId, object userState) {
+            if ((this.OrderStatusTypeProvider_DeleteOperationCompleted == null)) {
+                this.OrderStatusTypeProvider_DeleteOperationCompleted = new System.Threading.SendOrPostCallback(this.OnOrderStatusTypeProvider_DeleteOperationCompleted);
+            }
+            this.InvokeAsync("OrderStatusTypeProvider_Delete", new object[] {
+                        orderStatusId}, this.OrderStatusTypeProvider_DeleteOperationCompleted, userState);
+        }
+        
+        private void OnOrderStatusTypeProvider_DeleteOperationCompleted(object arg) {
+            if ((this.OrderStatusTypeProvider_DeleteCompleted != null)) {
+                System.Web.Services.Protocols.InvokeCompletedEventArgs invokeArgs = ((System.Web.Services.Protocols.InvokeCompletedEventArgs)(arg));
+                this.OrderStatusTypeProvider_DeleteCompleted(this, new OrderStatusTypeProvider_DeleteCompletedEventArgs(invokeArgs.Results, invokeArgs.Error, invokeArgs.Cancelled, invokeArgs.UserState));
+            }
+        }
+        
+        /// <remarks/>
+        [System.Web.Services.Protocols.SoapDocumentMethodAttribute("http://localhost/PetshopServices/OrderStatusTypeProvider_Find", RequestNamespace="http://localhost/PetshopServices", ResponseNamespace="http://localhost/PetshopServices", Use=System.Web.Services.Description.SoapBindingUse.Literal, ParameterStyle=System.Web.Services.Protocols.SoapParameterStyle.Wrapped)]
+        public OrderStatusType[] OrderStatusTypeProvider_Find(string whereClause, int start, int pageLength, out int count) {
+            object[] results = this.Invoke("OrderStatusTypeProvider_Find", new object[] {
+                        whereClause,
+                        start,
+                        pageLength});
+            count = ((int)(results[1]));
+            return ((OrderStatusType[])(results[0]));
+        }
+        
+        /// <remarks/>
+        public void OrderStatusTypeProvider_FindAsync(string whereClause, int start, int pageLength) {
+            this.OrderStatusTypeProvider_FindAsync(whereClause, start, pageLength, null);
+        }
+        
+        /// <remarks/>
+        public void OrderStatusTypeProvider_FindAsync(string whereClause, int start, int pageLength, object userState) {
+            if ((this.OrderStatusTypeProvider_FindOperationCompleted == null)) {
+                this.OrderStatusTypeProvider_FindOperationCompleted = new System.Threading.SendOrPostCallback(this.OnOrderStatusTypeProvider_FindOperationCompleted);
+            }
+            this.InvokeAsync("OrderStatusTypeProvider_Find", new object[] {
+                        whereClause,
+                        start,
+                        pageLength}, this.OrderStatusTypeProvider_FindOperationCompleted, userState);
+        }
+        
+        private void OnOrderStatusTypeProvider_FindOperationCompleted(object arg) {
+            if ((this.OrderStatusTypeProvider_FindCompleted != null)) {
+                System.Web.Services.Protocols.InvokeCompletedEventArgs invokeArgs = ((System.Web.Services.Protocols.InvokeCompletedEventArgs)(arg));
+                this.OrderStatusTypeProvider_FindCompleted(this, new OrderStatusTypeProvider_FindCompletedEventArgs(invokeArgs.Results, invokeArgs.Error, invokeArgs.Cancelled, invokeArgs.UserState));
+            }
+        }
+        
+        /// <remarks/>
+        [System.Web.Services.Protocols.SoapDocumentMethodAttribute("http://localhost/PetshopServices/OrderStatusTypeProvider_GetAll", RequestNamespace="http://localhost/PetshopServices", ResponseNamespace="http://localhost/PetshopServices", Use=System.Web.Services.Description.SoapBindingUse.Literal, ParameterStyle=System.Web.Services.Protocols.SoapParameterStyle.Wrapped)]
+        public OrderStatusType[] OrderStatusTypeProvider_GetAll(int start, int pageLength, out int count) {
+            object[] results = this.Invoke("OrderStatusTypeProvider_GetAll", new object[] {
+                        start,
+                        pageLength});
+            count = ((int)(results[1]));
+            return ((OrderStatusType[])(results[0]));
+        }
+        
+        /// <remarks/>
+        public void OrderStatusTypeProvider_GetAllAsync(int start, int pageLength) {
+            this.OrderStatusTypeProvider_GetAllAsync(start, pageLength, null);
+        }
+        
+        /// <remarks/>
+        public void OrderStatusTypeProvider_GetAllAsync(int start, int pageLength, object userState) {
+            if ((this.OrderStatusTypeProvider_GetAllOperationCompleted == null)) {
+                this.OrderStatusTypeProvider_GetAllOperationCompleted = new System.Threading.SendOrPostCallback(this.OnOrderStatusTypeProvider_GetAllOperationCompleted);
+            }
+            this.InvokeAsync("OrderStatusTypeProvider_GetAll", new object[] {
+                        start,
+                        pageLength}, this.OrderStatusTypeProvider_GetAllOperationCompleted, userState);
+        }
+        
+        private void OnOrderStatusTypeProvider_GetAllOperationCompleted(object arg) {
+            if ((this.OrderStatusTypeProvider_GetAllCompleted != null)) {
+                System.Web.Services.Protocols.InvokeCompletedEventArgs invokeArgs = ((System.Web.Services.Protocols.InvokeCompletedEventArgs)(arg));
+                this.OrderStatusTypeProvider_GetAllCompleted(this, new OrderStatusTypeProvider_GetAllCompletedEventArgs(invokeArgs.Results, invokeArgs.Error, invokeArgs.Cancelled, invokeArgs.UserState));
+            }
+        }
+        
+        /// <remarks/>
+        [System.Web.Services.Protocols.SoapDocumentMethodAttribute("http://localhost/PetshopServices/OrderStatusTypeProvider_GetPaged", RequestNamespace="http://localhost/PetshopServices", ResponseNamespace="http://localhost/PetshopServices", Use=System.Web.Services.Description.SoapBindingUse.Literal, ParameterStyle=System.Web.Services.Protocols.SoapParameterStyle.Wrapped)]
+        public OrderStatusType[] OrderStatusTypeProvider_GetPaged(string whereClause, string orderBy, int start, int pageLength, out int count) {
+            object[] results = this.Invoke("OrderStatusTypeProvider_GetPaged", new object[] {
+                        whereClause,
+                        orderBy,
+                        start,
+                        pageLength});
+            count = ((int)(results[1]));
+            return ((OrderStatusType[])(results[0]));
+        }
+        
+        /// <remarks/>
+        public void OrderStatusTypeProvider_GetPagedAsync(string whereClause, string orderBy, int start, int pageLength) {
+            this.OrderStatusTypeProvider_GetPagedAsync(whereClause, orderBy, start, pageLength, null);
+        }
+        
+        /// <remarks/>
+        public void OrderStatusTypeProvider_GetPagedAsync(string whereClause, string orderBy, int start, int pageLength, object userState) {
+            if ((this.OrderStatusTypeProvider_GetPagedOperationCompleted == null)) {
+                this.OrderStatusTypeProvider_GetPagedOperationCompleted = new System.Threading.SendOrPostCallback(this.OnOrderStatusTypeProvider_GetPagedOperationCompleted);
+            }
+            this.InvokeAsync("OrderStatusTypeProvider_GetPaged", new object[] {
+                        whereClause,
+                        orderBy,
+                        start,
+                        pageLength}, this.OrderStatusTypeProvider_GetPagedOperationCompleted, userState);
+        }
+        
+        private void OnOrderStatusTypeProvider_GetPagedOperationCompleted(object arg) {
+            if ((this.OrderStatusTypeProvider_GetPagedCompleted != null)) {
+                System.Web.Services.Protocols.InvokeCompletedEventArgs invokeArgs = ((System.Web.Services.Protocols.InvokeCompletedEventArgs)(arg));
+                this.OrderStatusTypeProvider_GetPagedCompleted(this, new OrderStatusTypeProvider_GetPagedCompletedEventArgs(invokeArgs.Results, invokeArgs.Error, invokeArgs.Cancelled, invokeArgs.UserState));
+            }
+        }
+        
+        /// <remarks/>
+        [System.Web.Services.Protocols.SoapDocumentMethodAttribute("http://localhost/PetshopServices/OrderStatusTypeProvider_GetByOrderStatusId", RequestNamespace="http://localhost/PetshopServices", ResponseNamespace="http://localhost/PetshopServices", Use=System.Web.Services.Description.SoapBindingUse.Literal, ParameterStyle=System.Web.Services.Protocols.SoapParameterStyle.Wrapped)]
+        public OrderStatusType OrderStatusTypeProvider_GetByOrderStatusId(int orderStatusId, int start, int pageLength, out int count) {
+            object[] results = this.Invoke("OrderStatusTypeProvider_GetByOrderStatusId", new object[] {
+                        orderStatusId,
+                        start,
+                        pageLength});
+            count = ((int)(results[1]));
+            return ((OrderStatusType)(results[0]));
+        }
+        
+        /// <remarks/>
+        public void OrderStatusTypeProvider_GetByOrderStatusIdAsync(int orderStatusId, int start, int pageLength) {
+            this.OrderStatusTypeProvider_GetByOrderStatusIdAsync(orderStatusId, start, pageLength, null);
+        }
+        
+        /// <remarks/>
+        public void OrderStatusTypeProvider_GetByOrderStatusIdAsync(int orderStatusId, int start, int pageLength, object userState) {
+            if ((this.OrderStatusTypeProvider_GetByOrderStatusIdOperationCompleted == null)) {
+                this.OrderStatusTypeProvider_GetByOrderStatusIdOperationCompleted = new System.Threading.SendOrPostCallback(this.OnOrderStatusTypeProvider_GetByOrderStatusIdOperationCompleted);
+            }
+            this.InvokeAsync("OrderStatusTypeProvider_GetByOrderStatusId", new object[] {
+                        orderStatusId,
+                        start,
+                        pageLength}, this.OrderStatusTypeProvider_GetByOrderStatusIdOperationCompleted, userState);
+        }
+        
+        private void OnOrderStatusTypeProvider_GetByOrderStatusIdOperationCompleted(object arg) {
+            if ((this.OrderStatusTypeProvider_GetByOrderStatusIdCompleted != null)) {
+                System.Web.Services.Protocols.InvokeCompletedEventArgs invokeArgs = ((System.Web.Services.Protocols.InvokeCompletedEventArgs)(arg));
+                this.OrderStatusTypeProvider_GetByOrderStatusIdCompleted(this, new OrderStatusTypeProvider_GetByOrderStatusIdCompletedEventArgs(invokeArgs.Results, invokeArgs.Error, invokeArgs.Cancelled, invokeArgs.UserState));
+            }
+        }
+        
+        /// <remarks/>
+        [System.Web.Services.Protocols.SoapDocumentMethodAttribute("http://localhost/PetshopServices/OrderStatusTypeProvider_GetByOrderStatus", RequestNamespace="http://localhost/PetshopServices", ResponseNamespace="http://localhost/PetshopServices", Use=System.Web.Services.Description.SoapBindingUse.Literal, ParameterStyle=System.Web.Services.Protocols.SoapParameterStyle.Wrapped)]
+        public OrderStatusType OrderStatusTypeProvider_GetByOrderStatus(string orderStatus, int start, int pageLength, out int count) {
+            object[] results = this.Invoke("OrderStatusTypeProvider_GetByOrderStatus", new object[] {
+                        orderStatus,
+                        start,
+                        pageLength});
+            count = ((int)(results[1]));
+            return ((OrderStatusType)(results[0]));
+        }
+        
+        /// <remarks/>
+        public void OrderStatusTypeProvider_GetByOrderStatusAsync(string orderStatus, int start, int pageLength) {
+            this.OrderStatusTypeProvider_GetByOrderStatusAsync(orderStatus, start, pageLength, null);
+        }
+        
+        /// <remarks/>
+        public void OrderStatusTypeProvider_GetByOrderStatusAsync(string orderStatus, int start, int pageLength, object userState) {
+            if ((this.OrderStatusTypeProvider_GetByOrderStatusOperationCompleted == null)) {
+                this.OrderStatusTypeProvider_GetByOrderStatusOperationCompleted = new System.Threading.SendOrPostCallback(this.OnOrderStatusTypeProvider_GetByOrderStatusOperationCompleted);
+            }
+            this.InvokeAsync("OrderStatusTypeProvider_GetByOrderStatus", new object[] {
+                        orderStatus,
+                        start,
+                        pageLength}, this.OrderStatusTypeProvider_GetByOrderStatusOperationCompleted, userState);
+        }
+        
+        private void OnOrderStatusTypeProvider_GetByOrderStatusOperationCompleted(object arg) {
+            if ((this.OrderStatusTypeProvider_GetByOrderStatusCompleted != null)) {
+                System.Web.Services.Protocols.InvokeCompletedEventArgs invokeArgs = ((System.Web.Services.Protocols.InvokeCompletedEventArgs)(arg));
+                this.OrderStatusTypeProvider_GetByOrderStatusCompleted(this, new OrderStatusTypeProvider_GetByOrderStatusCompletedEventArgs(invokeArgs.Results, invokeArgs.Error, invokeArgs.Cancelled, invokeArgs.UserState));
+            }
+        }
+        
+        /// <remarks/>
+        [System.Web.Services.Protocols.SoapDocumentMethodAttribute("http://localhost/PetshopServices/OrderStatusTypeProvider_Insert", RequestNamespace="http://localhost/PetshopServices", ResponseNamespace="http://localhost/PetshopServices", Use=System.Web.Services.Description.SoapBindingUse.Literal, ParameterStyle=System.Web.Services.Protocols.SoapParameterStyle.Wrapped)]
+        public OrderStatusType OrderStatusTypeProvider_Insert(OrderStatusType entity) {
+            object[] results = this.Invoke("OrderStatusTypeProvider_Insert", new object[] {
+                        entity});
+            return ((OrderStatusType)(results[0]));
+        }
+        
+        /// <remarks/>
+        public void OrderStatusTypeProvider_InsertAsync(OrderStatusType entity) {
+            this.OrderStatusTypeProvider_InsertAsync(entity, null);
+        }
+        
+        /// <remarks/>
+        public void OrderStatusTypeProvider_InsertAsync(OrderStatusType entity, object userState) {
+            if ((this.OrderStatusTypeProvider_InsertOperationCompleted == null)) {
+                this.OrderStatusTypeProvider_InsertOperationCompleted = new System.Threading.SendOrPostCallback(this.OnOrderStatusTypeProvider_InsertOperationCompleted);
+            }
+            this.InvokeAsync("OrderStatusTypeProvider_Insert", new object[] {
+                        entity}, this.OrderStatusTypeProvider_InsertOperationCompleted, userState);
+        }
+        
+        private void OnOrderStatusTypeProvider_InsertOperationCompleted(object arg) {
+            if ((this.OrderStatusTypeProvider_InsertCompleted != null)) {
+                System.Web.Services.Protocols.InvokeCompletedEventArgs invokeArgs = ((System.Web.Services.Protocols.InvokeCompletedEventArgs)(arg));
+                this.OrderStatusTypeProvider_InsertCompleted(this, new OrderStatusTypeProvider_InsertCompletedEventArgs(invokeArgs.Results, invokeArgs.Error, invokeArgs.Cancelled, invokeArgs.UserState));
+            }
+        }
+        
+        /// <remarks/>
+        [System.Web.Services.Protocols.SoapDocumentMethodAttribute("http://localhost/PetshopServices/OrderStatusTypeProvider_BulkInsert", RequestNamespace="http://localhost/PetshopServices", ResponseNamespace="http://localhost/PetshopServices", Use=System.Web.Services.Description.SoapBindingUse.Literal, ParameterStyle=System.Web.Services.Protocols.SoapParameterStyle.Wrapped)]
+        public void OrderStatusTypeProvider_BulkInsert(OrderStatusType[] entityList) {
+            this.Invoke("OrderStatusTypeProvider_BulkInsert", new object[] {
+                        entityList});
+        }
+        
+        /// <remarks/>
+        public void OrderStatusTypeProvider_BulkInsertAsync(OrderStatusType[] entityList) {
+            this.OrderStatusTypeProvider_BulkInsertAsync(entityList, null);
+        }
+        
+        /// <remarks/>
+        public void OrderStatusTypeProvider_BulkInsertAsync(OrderStatusType[] entityList, object userState) {
+            if ((this.OrderStatusTypeProvider_BulkInsertOperationCompleted == null)) {
+                this.OrderStatusTypeProvider_BulkInsertOperationCompleted = new System.Threading.SendOrPostCallback(this.OnOrderStatusTypeProvider_BulkInsertOperationCompleted);
+            }
+            this.InvokeAsync("OrderStatusTypeProvider_BulkInsert", new object[] {
+                        entityList}, this.OrderStatusTypeProvider_BulkInsertOperationCompleted, userState);
+        }
+        
+        private void OnOrderStatusTypeProvider_BulkInsertOperationCompleted(object arg) {
+            if ((this.OrderStatusTypeProvider_BulkInsertCompleted != null)) {
+                System.Web.Services.Protocols.InvokeCompletedEventArgs invokeArgs = ((System.Web.Services.Protocols.InvokeCompletedEventArgs)(arg));
+                this.OrderStatusTypeProvider_BulkInsertCompleted(this, new System.ComponentModel.AsyncCompletedEventArgs(invokeArgs.Error, invokeArgs.Cancelled, invokeArgs.UserState));
+            }
+        }
+        
+        /// <remarks/>
+        [System.Web.Services.Protocols.SoapDocumentMethodAttribute("http://localhost/PetshopServices/OrderStatusTypeProvider_Update", RequestNamespace="http://localhost/PetshopServices", ResponseNamespace="http://localhost/PetshopServices", Use=System.Web.Services.Description.SoapBindingUse.Literal, ParameterStyle=System.Web.Services.Protocols.SoapParameterStyle.Wrapped)]
+        public OrderStatusType OrderStatusTypeProvider_Update(OrderStatusType entity) {
+            object[] results = this.Invoke("OrderStatusTypeProvider_Update", new object[] {
+                        entity});
+            return ((OrderStatusType)(results[0]));
+        }
+        
+        /// <remarks/>
+        public void OrderStatusTypeProvider_UpdateAsync(OrderStatusType entity) {
+            this.OrderStatusTypeProvider_UpdateAsync(entity, null);
+        }
+        
+        /// <remarks/>
+        public void OrderStatusTypeProvider_UpdateAsync(OrderStatusType entity, object userState) {
+            if ((this.OrderStatusTypeProvider_UpdateOperationCompleted == null)) {
+                this.OrderStatusTypeProvider_UpdateOperationCompleted = new System.Threading.SendOrPostCallback(this.OnOrderStatusTypeProvider_UpdateOperationCompleted);
+            }
+            this.InvokeAsync("OrderStatusTypeProvider_Update", new object[] {
+                        entity}, this.OrderStatusTypeProvider_UpdateOperationCompleted, userState);
+        }
+        
+        private void OnOrderStatusTypeProvider_UpdateOperationCompleted(object arg) {
+            if ((this.OrderStatusTypeProvider_UpdateCompleted != null)) {
+                System.Web.Services.Protocols.InvokeCompletedEventArgs invokeArgs = ((System.Web.Services.Protocols.InvokeCompletedEventArgs)(arg));
+                this.OrderStatusTypeProvider_UpdateCompleted(this, new OrderStatusTypeProvider_UpdateCompletedEventArgs(invokeArgs.Results, invokeArgs.Error, invokeArgs.Cancelled, invokeArgs.UserState));
+            }
+        }
+        
+        /// <remarks/>
         [System.Web.Services.Protocols.SoapDocumentMethodAttribute("http://localhost/PetshopServices/ProductProvider_Delete", RequestNamespace="http://localhost/PetshopServices", ResponseNamespace="http://localhost/PetshopServices", Use=System.Web.Services.Description.SoapBindingUse.Literal, ParameterStyle=System.Web.Services.Protocols.SoapParameterStyle.Wrapped)]
-        public bool ProductProvider_Delete(string id, [System.Xml.Serialization.XmlElementAttribute(DataType="base64Binary")] byte[] timestamp) {
+        public bool ProductProvider_Delete(System.Guid id, [System.Xml.Serialization.XmlElementAttribute(DataType="base64Binary")] byte[] timestamp) {
             object[] results = this.Invoke("ProductProvider_Delete", new object[] {
                         id,
                         timestamp});
@@ -1533,12 +3813,12 @@ namespace netTiers.Petshop.Data.WebServiceClient.WsProxy {
         }
         
         /// <remarks/>
-        public void ProductProvider_DeleteAsync(string id, byte[] timestamp) {
+        public void ProductProvider_DeleteAsync(System.Guid id, byte[] timestamp) {
             this.ProductProvider_DeleteAsync(id, timestamp, null);
         }
         
         /// <remarks/>
-        public void ProductProvider_DeleteAsync(string id, byte[] timestamp, object userState) {
+        public void ProductProvider_DeleteAsync(System.Guid id, byte[] timestamp, object userState) {
             if ((this.ProductProvider_DeleteOperationCompleted == null)) {
                 this.ProductProvider_DeleteOperationCompleted = new System.Threading.SendOrPostCallback(this.OnProductProvider_DeleteOperationCompleted);
             }
@@ -1658,7 +3938,7 @@ namespace netTiers.Petshop.Data.WebServiceClient.WsProxy {
         
         /// <remarks/>
         [System.Web.Services.Protocols.SoapDocumentMethodAttribute("http://localhost/PetshopServices/ProductProvider_GetByCategoryId", RequestNamespace="http://localhost/PetshopServices", ResponseNamespace="http://localhost/PetshopServices", Use=System.Web.Services.Description.SoapBindingUse.Literal, ParameterStyle=System.Web.Services.Protocols.SoapParameterStyle.Wrapped)]
-        public Product[] ProductProvider_GetByCategoryId(string categoryId, int start, int pageLength, out int count) {
+        public Product[] ProductProvider_GetByCategoryId(System.Guid categoryId, int start, int pageLength, out int count) {
             object[] results = this.Invoke("ProductProvider_GetByCategoryId", new object[] {
                         categoryId,
                         start,
@@ -1668,12 +3948,12 @@ namespace netTiers.Petshop.Data.WebServiceClient.WsProxy {
         }
         
         /// <remarks/>
-        public void ProductProvider_GetByCategoryIdAsync(string categoryId, int start, int pageLength) {
+        public void ProductProvider_GetByCategoryIdAsync(System.Guid categoryId, int start, int pageLength) {
             this.ProductProvider_GetByCategoryIdAsync(categoryId, start, pageLength, null);
         }
         
         /// <remarks/>
-        public void ProductProvider_GetByCategoryIdAsync(string categoryId, int start, int pageLength, object userState) {
+        public void ProductProvider_GetByCategoryIdAsync(System.Guid categoryId, int start, int pageLength, object userState) {
             if ((this.ProductProvider_GetByCategoryIdOperationCompleted == null)) {
                 this.ProductProvider_GetByCategoryIdOperationCompleted = new System.Threading.SendOrPostCallback(this.OnProductProvider_GetByCategoryIdOperationCompleted);
             }
@@ -1692,7 +3972,7 @@ namespace netTiers.Petshop.Data.WebServiceClient.WsProxy {
         
         /// <remarks/>
         [System.Web.Services.Protocols.SoapDocumentMethodAttribute("http://localhost/PetshopServices/ProductProvider_GetById", RequestNamespace="http://localhost/PetshopServices", ResponseNamespace="http://localhost/PetshopServices", Use=System.Web.Services.Description.SoapBindingUse.Literal, ParameterStyle=System.Web.Services.Protocols.SoapParameterStyle.Wrapped)]
-        public Product ProductProvider_GetById(string id, int start, int pageLength, out int count) {
+        public Product ProductProvider_GetById(System.Guid id, int start, int pageLength, out int count) {
             object[] results = this.Invoke("ProductProvider_GetById", new object[] {
                         id,
                         start,
@@ -1702,12 +3982,12 @@ namespace netTiers.Petshop.Data.WebServiceClient.WsProxy {
         }
         
         /// <remarks/>
-        public void ProductProvider_GetByIdAsync(string id, int start, int pageLength) {
+        public void ProductProvider_GetByIdAsync(System.Guid id, int start, int pageLength) {
             this.ProductProvider_GetByIdAsync(id, start, pageLength, null);
         }
         
         /// <remarks/>
-        public void ProductProvider_GetByIdAsync(string id, int start, int pageLength, object userState) {
+        public void ProductProvider_GetByIdAsync(System.Guid id, int start, int pageLength, object userState) {
             if ((this.ProductProvider_GetByIdOperationCompleted == null)) {
                 this.ProductProvider_GetByIdOperationCompleted = new System.Threading.SendOrPostCallback(this.OnProductProvider_GetByIdOperationCompleted);
             }
@@ -1807,6 +4087,293 @@ namespace netTiers.Petshop.Data.WebServiceClient.WsProxy {
             if ((this.ProductProvider_UpdateCompleted != null)) {
                 System.Web.Services.Protocols.InvokeCompletedEventArgs invokeArgs = ((System.Web.Services.Protocols.InvokeCompletedEventArgs)(arg));
                 this.ProductProvider_UpdateCompleted(this, new ProductProvider_UpdateCompletedEventArgs(invokeArgs.Results, invokeArgs.Error, invokeArgs.Cancelled, invokeArgs.UserState));
+            }
+        }
+        
+        /// <remarks/>
+        [System.Web.Services.Protocols.SoapDocumentMethodAttribute("http://localhost/PetshopServices/SupplierProvider_GetByItemIdFromInventory", RequestNamespace="http://localhost/PetshopServices", ResponseNamespace="http://localhost/PetshopServices", Use=System.Web.Services.Description.SoapBindingUse.Literal, ParameterStyle=System.Web.Services.Protocols.SoapParameterStyle.Wrapped)]
+        public Supplier[] SupplierProvider_GetByItemIdFromInventory(System.Guid itemId, int start, int pageLength, out int count) {
+            object[] results = this.Invoke("SupplierProvider_GetByItemIdFromInventory", new object[] {
+                        itemId,
+                        start,
+                        pageLength});
+            count = ((int)(results[1]));
+            return ((Supplier[])(results[0]));
+        }
+        
+        /// <remarks/>
+        public void SupplierProvider_GetByItemIdFromInventoryAsync(System.Guid itemId, int start, int pageLength) {
+            this.SupplierProvider_GetByItemIdFromInventoryAsync(itemId, start, pageLength, null);
+        }
+        
+        /// <remarks/>
+        public void SupplierProvider_GetByItemIdFromInventoryAsync(System.Guid itemId, int start, int pageLength, object userState) {
+            if ((this.SupplierProvider_GetByItemIdFromInventoryOperationCompleted == null)) {
+                this.SupplierProvider_GetByItemIdFromInventoryOperationCompleted = new System.Threading.SendOrPostCallback(this.OnSupplierProvider_GetByItemIdFromInventoryOperationCompleted);
+            }
+            this.InvokeAsync("SupplierProvider_GetByItemIdFromInventory", new object[] {
+                        itemId,
+                        start,
+                        pageLength}, this.SupplierProvider_GetByItemIdFromInventoryOperationCompleted, userState);
+        }
+        
+        private void OnSupplierProvider_GetByItemIdFromInventoryOperationCompleted(object arg) {
+            if ((this.SupplierProvider_GetByItemIdFromInventoryCompleted != null)) {
+                System.Web.Services.Protocols.InvokeCompletedEventArgs invokeArgs = ((System.Web.Services.Protocols.InvokeCompletedEventArgs)(arg));
+                this.SupplierProvider_GetByItemIdFromInventoryCompleted(this, new SupplierProvider_GetByItemIdFromInventoryCompletedEventArgs(invokeArgs.Results, invokeArgs.Error, invokeArgs.Cancelled, invokeArgs.UserState));
+            }
+        }
+        
+        /// <remarks/>
+        [System.Web.Services.Protocols.SoapDocumentMethodAttribute("http://localhost/PetshopServices/SupplierProvider_Delete", RequestNamespace="http://localhost/PetshopServices", ResponseNamespace="http://localhost/PetshopServices", Use=System.Web.Services.Description.SoapBindingUse.Literal, ParameterStyle=System.Web.Services.Protocols.SoapParameterStyle.Wrapped)]
+        public bool SupplierProvider_Delete(System.Guid suppId, [System.Xml.Serialization.XmlElementAttribute(DataType="base64Binary")] byte[] timestamp) {
+            object[] results = this.Invoke("SupplierProvider_Delete", new object[] {
+                        suppId,
+                        timestamp});
+            return ((bool)(results[0]));
+        }
+        
+        /// <remarks/>
+        public void SupplierProvider_DeleteAsync(System.Guid suppId, byte[] timestamp) {
+            this.SupplierProvider_DeleteAsync(suppId, timestamp, null);
+        }
+        
+        /// <remarks/>
+        public void SupplierProvider_DeleteAsync(System.Guid suppId, byte[] timestamp, object userState) {
+            if ((this.SupplierProvider_DeleteOperationCompleted == null)) {
+                this.SupplierProvider_DeleteOperationCompleted = new System.Threading.SendOrPostCallback(this.OnSupplierProvider_DeleteOperationCompleted);
+            }
+            this.InvokeAsync("SupplierProvider_Delete", new object[] {
+                        suppId,
+                        timestamp}, this.SupplierProvider_DeleteOperationCompleted, userState);
+        }
+        
+        private void OnSupplierProvider_DeleteOperationCompleted(object arg) {
+            if ((this.SupplierProvider_DeleteCompleted != null)) {
+                System.Web.Services.Protocols.InvokeCompletedEventArgs invokeArgs = ((System.Web.Services.Protocols.InvokeCompletedEventArgs)(arg));
+                this.SupplierProvider_DeleteCompleted(this, new SupplierProvider_DeleteCompletedEventArgs(invokeArgs.Results, invokeArgs.Error, invokeArgs.Cancelled, invokeArgs.UserState));
+            }
+        }
+        
+        /// <remarks/>
+        [System.Web.Services.Protocols.SoapDocumentMethodAttribute("http://localhost/PetshopServices/SupplierProvider_Find", RequestNamespace="http://localhost/PetshopServices", ResponseNamespace="http://localhost/PetshopServices", Use=System.Web.Services.Description.SoapBindingUse.Literal, ParameterStyle=System.Web.Services.Protocols.SoapParameterStyle.Wrapped)]
+        public Supplier[] SupplierProvider_Find(string whereClause, int start, int pageLength, out int count) {
+            object[] results = this.Invoke("SupplierProvider_Find", new object[] {
+                        whereClause,
+                        start,
+                        pageLength});
+            count = ((int)(results[1]));
+            return ((Supplier[])(results[0]));
+        }
+        
+        /// <remarks/>
+        public void SupplierProvider_FindAsync(string whereClause, int start, int pageLength) {
+            this.SupplierProvider_FindAsync(whereClause, start, pageLength, null);
+        }
+        
+        /// <remarks/>
+        public void SupplierProvider_FindAsync(string whereClause, int start, int pageLength, object userState) {
+            if ((this.SupplierProvider_FindOperationCompleted == null)) {
+                this.SupplierProvider_FindOperationCompleted = new System.Threading.SendOrPostCallback(this.OnSupplierProvider_FindOperationCompleted);
+            }
+            this.InvokeAsync("SupplierProvider_Find", new object[] {
+                        whereClause,
+                        start,
+                        pageLength}, this.SupplierProvider_FindOperationCompleted, userState);
+        }
+        
+        private void OnSupplierProvider_FindOperationCompleted(object arg) {
+            if ((this.SupplierProvider_FindCompleted != null)) {
+                System.Web.Services.Protocols.InvokeCompletedEventArgs invokeArgs = ((System.Web.Services.Protocols.InvokeCompletedEventArgs)(arg));
+                this.SupplierProvider_FindCompleted(this, new SupplierProvider_FindCompletedEventArgs(invokeArgs.Results, invokeArgs.Error, invokeArgs.Cancelled, invokeArgs.UserState));
+            }
+        }
+        
+        /// <remarks/>
+        [System.Web.Services.Protocols.SoapDocumentMethodAttribute("http://localhost/PetshopServices/SupplierProvider_GetAll", RequestNamespace="http://localhost/PetshopServices", ResponseNamespace="http://localhost/PetshopServices", Use=System.Web.Services.Description.SoapBindingUse.Literal, ParameterStyle=System.Web.Services.Protocols.SoapParameterStyle.Wrapped)]
+        public Supplier[] SupplierProvider_GetAll(int start, int pageLength, out int count) {
+            object[] results = this.Invoke("SupplierProvider_GetAll", new object[] {
+                        start,
+                        pageLength});
+            count = ((int)(results[1]));
+            return ((Supplier[])(results[0]));
+        }
+        
+        /// <remarks/>
+        public void SupplierProvider_GetAllAsync(int start, int pageLength) {
+            this.SupplierProvider_GetAllAsync(start, pageLength, null);
+        }
+        
+        /// <remarks/>
+        public void SupplierProvider_GetAllAsync(int start, int pageLength, object userState) {
+            if ((this.SupplierProvider_GetAllOperationCompleted == null)) {
+                this.SupplierProvider_GetAllOperationCompleted = new System.Threading.SendOrPostCallback(this.OnSupplierProvider_GetAllOperationCompleted);
+            }
+            this.InvokeAsync("SupplierProvider_GetAll", new object[] {
+                        start,
+                        pageLength}, this.SupplierProvider_GetAllOperationCompleted, userState);
+        }
+        
+        private void OnSupplierProvider_GetAllOperationCompleted(object arg) {
+            if ((this.SupplierProvider_GetAllCompleted != null)) {
+                System.Web.Services.Protocols.InvokeCompletedEventArgs invokeArgs = ((System.Web.Services.Protocols.InvokeCompletedEventArgs)(arg));
+                this.SupplierProvider_GetAllCompleted(this, new SupplierProvider_GetAllCompletedEventArgs(invokeArgs.Results, invokeArgs.Error, invokeArgs.Cancelled, invokeArgs.UserState));
+            }
+        }
+        
+        /// <remarks/>
+        [System.Web.Services.Protocols.SoapDocumentMethodAttribute("http://localhost/PetshopServices/SupplierProvider_GetPaged", RequestNamespace="http://localhost/PetshopServices", ResponseNamespace="http://localhost/PetshopServices", Use=System.Web.Services.Description.SoapBindingUse.Literal, ParameterStyle=System.Web.Services.Protocols.SoapParameterStyle.Wrapped)]
+        public Supplier[] SupplierProvider_GetPaged(string whereClause, string orderBy, int start, int pageLength, out int count) {
+            object[] results = this.Invoke("SupplierProvider_GetPaged", new object[] {
+                        whereClause,
+                        orderBy,
+                        start,
+                        pageLength});
+            count = ((int)(results[1]));
+            return ((Supplier[])(results[0]));
+        }
+        
+        /// <remarks/>
+        public void SupplierProvider_GetPagedAsync(string whereClause, string orderBy, int start, int pageLength) {
+            this.SupplierProvider_GetPagedAsync(whereClause, orderBy, start, pageLength, null);
+        }
+        
+        /// <remarks/>
+        public void SupplierProvider_GetPagedAsync(string whereClause, string orderBy, int start, int pageLength, object userState) {
+            if ((this.SupplierProvider_GetPagedOperationCompleted == null)) {
+                this.SupplierProvider_GetPagedOperationCompleted = new System.Threading.SendOrPostCallback(this.OnSupplierProvider_GetPagedOperationCompleted);
+            }
+            this.InvokeAsync("SupplierProvider_GetPaged", new object[] {
+                        whereClause,
+                        orderBy,
+                        start,
+                        pageLength}, this.SupplierProvider_GetPagedOperationCompleted, userState);
+        }
+        
+        private void OnSupplierProvider_GetPagedOperationCompleted(object arg) {
+            if ((this.SupplierProvider_GetPagedCompleted != null)) {
+                System.Web.Services.Protocols.InvokeCompletedEventArgs invokeArgs = ((System.Web.Services.Protocols.InvokeCompletedEventArgs)(arg));
+                this.SupplierProvider_GetPagedCompleted(this, new SupplierProvider_GetPagedCompletedEventArgs(invokeArgs.Results, invokeArgs.Error, invokeArgs.Cancelled, invokeArgs.UserState));
+            }
+        }
+        
+        /// <remarks/>
+        [System.Web.Services.Protocols.SoapDocumentMethodAttribute("http://localhost/PetshopServices/SupplierProvider_GetBySuppId", RequestNamespace="http://localhost/PetshopServices", ResponseNamespace="http://localhost/PetshopServices", Use=System.Web.Services.Description.SoapBindingUse.Literal, ParameterStyle=System.Web.Services.Protocols.SoapParameterStyle.Wrapped)]
+        public Supplier SupplierProvider_GetBySuppId(System.Guid suppId, int start, int pageLength, out int count) {
+            object[] results = this.Invoke("SupplierProvider_GetBySuppId", new object[] {
+                        suppId,
+                        start,
+                        pageLength});
+            count = ((int)(results[1]));
+            return ((Supplier)(results[0]));
+        }
+        
+        /// <remarks/>
+        public void SupplierProvider_GetBySuppIdAsync(System.Guid suppId, int start, int pageLength) {
+            this.SupplierProvider_GetBySuppIdAsync(suppId, start, pageLength, null);
+        }
+        
+        /// <remarks/>
+        public void SupplierProvider_GetBySuppIdAsync(System.Guid suppId, int start, int pageLength, object userState) {
+            if ((this.SupplierProvider_GetBySuppIdOperationCompleted == null)) {
+                this.SupplierProvider_GetBySuppIdOperationCompleted = new System.Threading.SendOrPostCallback(this.OnSupplierProvider_GetBySuppIdOperationCompleted);
+            }
+            this.InvokeAsync("SupplierProvider_GetBySuppId", new object[] {
+                        suppId,
+                        start,
+                        pageLength}, this.SupplierProvider_GetBySuppIdOperationCompleted, userState);
+        }
+        
+        private void OnSupplierProvider_GetBySuppIdOperationCompleted(object arg) {
+            if ((this.SupplierProvider_GetBySuppIdCompleted != null)) {
+                System.Web.Services.Protocols.InvokeCompletedEventArgs invokeArgs = ((System.Web.Services.Protocols.InvokeCompletedEventArgs)(arg));
+                this.SupplierProvider_GetBySuppIdCompleted(this, new SupplierProvider_GetBySuppIdCompletedEventArgs(invokeArgs.Results, invokeArgs.Error, invokeArgs.Cancelled, invokeArgs.UserState));
+            }
+        }
+        
+        /// <remarks/>
+        [System.Web.Services.Protocols.SoapDocumentMethodAttribute("http://localhost/PetshopServices/SupplierProvider_Insert", RequestNamespace="http://localhost/PetshopServices", ResponseNamespace="http://localhost/PetshopServices", Use=System.Web.Services.Description.SoapBindingUse.Literal, ParameterStyle=System.Web.Services.Protocols.SoapParameterStyle.Wrapped)]
+        public Supplier SupplierProvider_Insert(Supplier entity) {
+            object[] results = this.Invoke("SupplierProvider_Insert", new object[] {
+                        entity});
+            return ((Supplier)(results[0]));
+        }
+        
+        /// <remarks/>
+        public void SupplierProvider_InsertAsync(Supplier entity) {
+            this.SupplierProvider_InsertAsync(entity, null);
+        }
+        
+        /// <remarks/>
+        public void SupplierProvider_InsertAsync(Supplier entity, object userState) {
+            if ((this.SupplierProvider_InsertOperationCompleted == null)) {
+                this.SupplierProvider_InsertOperationCompleted = new System.Threading.SendOrPostCallback(this.OnSupplierProvider_InsertOperationCompleted);
+            }
+            this.InvokeAsync("SupplierProvider_Insert", new object[] {
+                        entity}, this.SupplierProvider_InsertOperationCompleted, userState);
+        }
+        
+        private void OnSupplierProvider_InsertOperationCompleted(object arg) {
+            if ((this.SupplierProvider_InsertCompleted != null)) {
+                System.Web.Services.Protocols.InvokeCompletedEventArgs invokeArgs = ((System.Web.Services.Protocols.InvokeCompletedEventArgs)(arg));
+                this.SupplierProvider_InsertCompleted(this, new SupplierProvider_InsertCompletedEventArgs(invokeArgs.Results, invokeArgs.Error, invokeArgs.Cancelled, invokeArgs.UserState));
+            }
+        }
+        
+        /// <remarks/>
+        [System.Web.Services.Protocols.SoapDocumentMethodAttribute("http://localhost/PetshopServices/SupplierProvider_BulkInsert", RequestNamespace="http://localhost/PetshopServices", ResponseNamespace="http://localhost/PetshopServices", Use=System.Web.Services.Description.SoapBindingUse.Literal, ParameterStyle=System.Web.Services.Protocols.SoapParameterStyle.Wrapped)]
+        public void SupplierProvider_BulkInsert(Supplier[] entityList) {
+            this.Invoke("SupplierProvider_BulkInsert", new object[] {
+                        entityList});
+        }
+        
+        /// <remarks/>
+        public void SupplierProvider_BulkInsertAsync(Supplier[] entityList) {
+            this.SupplierProvider_BulkInsertAsync(entityList, null);
+        }
+        
+        /// <remarks/>
+        public void SupplierProvider_BulkInsertAsync(Supplier[] entityList, object userState) {
+            if ((this.SupplierProvider_BulkInsertOperationCompleted == null)) {
+                this.SupplierProvider_BulkInsertOperationCompleted = new System.Threading.SendOrPostCallback(this.OnSupplierProvider_BulkInsertOperationCompleted);
+            }
+            this.InvokeAsync("SupplierProvider_BulkInsert", new object[] {
+                        entityList}, this.SupplierProvider_BulkInsertOperationCompleted, userState);
+        }
+        
+        private void OnSupplierProvider_BulkInsertOperationCompleted(object arg) {
+            if ((this.SupplierProvider_BulkInsertCompleted != null)) {
+                System.Web.Services.Protocols.InvokeCompletedEventArgs invokeArgs = ((System.Web.Services.Protocols.InvokeCompletedEventArgs)(arg));
+                this.SupplierProvider_BulkInsertCompleted(this, new System.ComponentModel.AsyncCompletedEventArgs(invokeArgs.Error, invokeArgs.Cancelled, invokeArgs.UserState));
+            }
+        }
+        
+        /// <remarks/>
+        [System.Web.Services.Protocols.SoapDocumentMethodAttribute("http://localhost/PetshopServices/SupplierProvider_Update", RequestNamespace="http://localhost/PetshopServices", ResponseNamespace="http://localhost/PetshopServices", Use=System.Web.Services.Description.SoapBindingUse.Literal, ParameterStyle=System.Web.Services.Protocols.SoapParameterStyle.Wrapped)]
+        public Supplier SupplierProvider_Update(Supplier entity) {
+            object[] results = this.Invoke("SupplierProvider_Update", new object[] {
+                        entity});
+            return ((Supplier)(results[0]));
+        }
+        
+        /// <remarks/>
+        public void SupplierProvider_UpdateAsync(Supplier entity) {
+            this.SupplierProvider_UpdateAsync(entity, null);
+        }
+        
+        /// <remarks/>
+        public void SupplierProvider_UpdateAsync(Supplier entity, object userState) {
+            if ((this.SupplierProvider_UpdateOperationCompleted == null)) {
+                this.SupplierProvider_UpdateOperationCompleted = new System.Threading.SendOrPostCallback(this.OnSupplierProvider_UpdateOperationCompleted);
+            }
+            this.InvokeAsync("SupplierProvider_Update", new object[] {
+                        entity}, this.SupplierProvider_UpdateOperationCompleted, userState);
+        }
+        
+        private void OnSupplierProvider_UpdateOperationCompleted(object arg) {
+            if ((this.SupplierProvider_UpdateCompleted != null)) {
+                System.Web.Services.Protocols.InvokeCompletedEventArgs invokeArgs = ((System.Web.Services.Protocols.InvokeCompletedEventArgs)(arg));
+                this.SupplierProvider_UpdateCompleted(this, new SupplierProvider_UpdateCompletedEventArgs(invokeArgs.Results, invokeArgs.Error, invokeArgs.Cancelled, invokeArgs.UserState));
             }
         }
         
@@ -2108,7 +4675,9 @@ namespace netTiers.Petshop.Data.WebServiceClient.WsProxy {
     [System.Xml.Serialization.XmlTypeAttribute(Namespace="http://localhost/PetshopServices")]
     public abstract partial class AccountBase : EntityBase {
         
-        private string originalIdField;
+        private System.Guid idField;
+        
+        private System.Guid originalIdField;
         
         private string firstNameField;
         
@@ -2138,16 +4707,30 @@ namespace netTiers.Petshop.Data.WebServiceClient.WsProxy {
         
         private string favoriteLanguageField;
         
-        private string creditCardIdField;
+        private System.Nullable<System.Guid> creditCardIdField;
         
-        private string favoriteCategoryIdField;
+        private System.Nullable<System.Guid> favoriteCategoryIdField;
         
-        private CreditCard creditCardIdSourceField;
+        private byte[] timestampField;
         
         private Category favoriteCategoryIdSourceField;
         
+        private CreditCard creditCardIdSourceField;
+        
+        private Orders[] ordersCollectionField;
+        
         /// <remarks/>
-        public string OriginalId {
+        public System.Guid Id {
+            get {
+                return this.idField;
+            }
+            set {
+                this.idField = value;
+            }
+        }
+        
+        /// <remarks/>
+        public System.Guid OriginalId {
             get {
                 return this.originalIdField;
             }
@@ -2299,7 +4882,8 @@ namespace netTiers.Petshop.Data.WebServiceClient.WsProxy {
         }
         
         /// <remarks/>
-        public string CreditCardId {
+        [System.Xml.Serialization.XmlElementAttribute(IsNullable=true)]
+        public System.Nullable<System.Guid> CreditCardId {
             get {
                 return this.creditCardIdField;
             }
@@ -2309,178 +4893,13 @@ namespace netTiers.Petshop.Data.WebServiceClient.WsProxy {
         }
         
         /// <remarks/>
-        public string FavoriteCategoryId {
+        [System.Xml.Serialization.XmlElementAttribute(IsNullable=true)]
+        public System.Nullable<System.Guid> FavoriteCategoryId {
             get {
                 return this.favoriteCategoryIdField;
             }
             set {
                 this.favoriteCategoryIdField = value;
-            }
-        }
-        
-        /// <remarks/>
-        public CreditCard CreditCardIdSource {
-            get {
-                return this.creditCardIdSourceField;
-            }
-            set {
-                this.creditCardIdSourceField = value;
-            }
-        }
-        
-        /// <remarks/>
-        public Category FavoriteCategoryIdSource {
-            get {
-                return this.favoriteCategoryIdSourceField;
-            }
-            set {
-                this.favoriteCategoryIdSourceField = value;
-            }
-        }
-    }
-    
-    /// <remarks/>
-    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Xml", "2.0.50727.42")]
-    [System.SerializableAttribute()]
-    [System.Diagnostics.DebuggerStepThroughAttribute()]
-    [System.ComponentModel.DesignerCategoryAttribute("code")]
-    [System.Xml.Serialization.XmlTypeAttribute(Namespace="http://localhost/PetshopServices")]
-    public partial class CreditCard : CreditCardBase {
-    }
-    
-    /// <remarks/>
-    [System.Xml.Serialization.XmlIncludeAttribute(typeof(CreditCard))]
-    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Xml", "2.0.50727.42")]
-    [System.SerializableAttribute()]
-    [System.Diagnostics.DebuggerStepThroughAttribute()]
-    [System.ComponentModel.DesignerCategoryAttribute("code")]
-    [System.Xml.Serialization.XmlTypeAttribute(Namespace="http://localhost/PetshopServices")]
-    public abstract partial class CreditCardBase : EntityBase {
-        
-        private string originalIdField;
-        
-        private string numberField;
-        
-        private string cardTypeField;
-        
-        private string expiryMonthField;
-        
-        private string expiryYearField;
-        
-        private Account[] accountCollectionField;
-        
-        /// <remarks/>
-        public string OriginalId {
-            get {
-                return this.originalIdField;
-            }
-            set {
-                this.originalIdField = value;
-            }
-        }
-        
-        /// <remarks/>
-        public string Number {
-            get {
-                return this.numberField;
-            }
-            set {
-                this.numberField = value;
-            }
-        }
-        
-        /// <remarks/>
-        public string CardType {
-            get {
-                return this.cardTypeField;
-            }
-            set {
-                this.cardTypeField = value;
-            }
-        }
-        
-        /// <remarks/>
-        public string ExpiryMonth {
-            get {
-                return this.expiryMonthField;
-            }
-            set {
-                this.expiryMonthField = value;
-            }
-        }
-        
-        /// <remarks/>
-        public string ExpiryYear {
-            get {
-                return this.expiryYearField;
-            }
-            set {
-                this.expiryYearField = value;
-            }
-        }
-        
-        /// <remarks/>
-        public Account[] AccountCollection {
-            get {
-                return this.accountCollectionField;
-            }
-            set {
-                this.accountCollectionField = value;
-            }
-        }
-    }
-    
-    /// <remarks/>
-    [System.Xml.Serialization.XmlIncludeAttribute(typeof(ItemBase))]
-    [System.Xml.Serialization.XmlIncludeAttribute(typeof(Item))]
-    [System.Xml.Serialization.XmlIncludeAttribute(typeof(ProductBase))]
-    [System.Xml.Serialization.XmlIncludeAttribute(typeof(Product))]
-    [System.Xml.Serialization.XmlIncludeAttribute(typeof(CategoryBase))]
-    [System.Xml.Serialization.XmlIncludeAttribute(typeof(Category))]
-    [System.Xml.Serialization.XmlIncludeAttribute(typeof(CreditCardBase))]
-    [System.Xml.Serialization.XmlIncludeAttribute(typeof(CreditCard))]
-    [System.Xml.Serialization.XmlIncludeAttribute(typeof(AccountBase))]
-    [System.Xml.Serialization.XmlIncludeAttribute(typeof(Account))]
-    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Xml", "2.0.50727.42")]
-    [System.SerializableAttribute()]
-    [System.Diagnostics.DebuggerStepThroughAttribute()]
-    [System.ComponentModel.DesignerCategoryAttribute("code")]
-    [System.Xml.Serialization.XmlTypeAttribute(Namespace="http://localhost/PetshopServices")]
-    public abstract partial class EntityBase : EntityBaseCore {
-    }
-    
-    /// <remarks/>
-    [System.Xml.Serialization.XmlIncludeAttribute(typeof(EntityBase))]
-    [System.Xml.Serialization.XmlIncludeAttribute(typeof(ItemBase))]
-    [System.Xml.Serialization.XmlIncludeAttribute(typeof(Item))]
-    [System.Xml.Serialization.XmlIncludeAttribute(typeof(ProductBase))]
-    [System.Xml.Serialization.XmlIncludeAttribute(typeof(Product))]
-    [System.Xml.Serialization.XmlIncludeAttribute(typeof(CategoryBase))]
-    [System.Xml.Serialization.XmlIncludeAttribute(typeof(Category))]
-    [System.Xml.Serialization.XmlIncludeAttribute(typeof(CreditCardBase))]
-    [System.Xml.Serialization.XmlIncludeAttribute(typeof(CreditCard))]
-    [System.Xml.Serialization.XmlIncludeAttribute(typeof(AccountBase))]
-    [System.Xml.Serialization.XmlIncludeAttribute(typeof(Account))]
-    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Xml", "2.0.50727.42")]
-    [System.SerializableAttribute()]
-    [System.Diagnostics.DebuggerStepThroughAttribute()]
-    [System.ComponentModel.DesignerCategoryAttribute("code")]
-    [System.Xml.Serialization.XmlTypeAttribute(Namespace="http://localhost/PetshopServices")]
-    public abstract partial class EntityBaseCore {
-        
-        private string idField;
-        
-        private byte[] timestampField;
-        
-        private object tagField;
-        
-        /// <remarks/>
-        public string Id {
-            get {
-                return this.idField;
-            }
-            set {
-                this.idField = value;
             }
         }
         
@@ -2496,130 +4915,216 @@ namespace netTiers.Petshop.Data.WebServiceClient.WsProxy {
         }
         
         /// <remarks/>
-        public object Tag {
+        public Category FavoriteCategoryIdSource {
             get {
-                return this.tagField;
+                return this.favoriteCategoryIdSourceField;
             }
             set {
-                this.tagField = value;
+                this.favoriteCategoryIdSourceField = value;
+            }
+        }
+        
+        /// <remarks/>
+        public CreditCard CreditCardIdSource {
+            get {
+                return this.creditCardIdSourceField;
+            }
+            set {
+                this.creditCardIdSourceField = value;
+            }
+        }
+        
+        /// <remarks/>
+        public Orders[] OrdersCollection {
+            get {
+                return this.ordersCollectionField;
+            }
+            set {
+                this.ordersCollectionField = value;
             }
         }
     }
     
     /// <remarks/>
-    [System.Xml.Serialization.XmlIncludeAttribute(typeof(ExtendedItem))]
     [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Xml", "2.0.50727.42")]
     [System.SerializableAttribute()]
     [System.Diagnostics.DebuggerStepThroughAttribute()]
     [System.ComponentModel.DesignerCategoryAttribute("code")]
     [System.Xml.Serialization.XmlTypeAttribute(Namespace="http://localhost/PetshopServices")]
-    public abstract partial class ExtendedItemBase {
+    public partial class Category : CategoryBase {
+    }
+    
+    /// <remarks/>
+    [System.Xml.Serialization.XmlIncludeAttribute(typeof(Category))]
+    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Xml", "2.0.50727.42")]
+    [System.SerializableAttribute()]
+    [System.Diagnostics.DebuggerStepThroughAttribute()]
+    [System.ComponentModel.DesignerCategoryAttribute("code")]
+    [System.Xml.Serialization.XmlTypeAttribute(Namespace="http://localhost/PetshopServices")]
+    public abstract partial class CategoryBase : EntityBase {
         
-        private string itemIdField;
+        private System.Guid idField;
         
-        private string itemNameField;
+        private System.Guid originalIdField;
         
-        private string itemDescriptionField;
+        private string nameField;
         
-        private System.Nullable<double> itemPriceField;
+        private string advicePhotoField;
         
-        private string itemPhotoField;
+        private byte[] timestampField;
         
-        private string productIdField;
+        private Account[] accountCollectionField;
         
-        private string productNameField;
-        
-        private string productDescriptionField;
-        
-        private string categoryIdField;
-        
-        private string categoryNameField;
-        
-        private object tagField;
+        private Product[] productCollectionField;
         
         /// <remarks/>
-        public string ItemId {
+        public System.Guid Id {
             get {
-                return this.itemIdField;
+                return this.idField;
             }
             set {
-                this.itemIdField = value;
+                this.idField = value;
             }
         }
         
         /// <remarks/>
-        public string ItemName {
+        public System.Guid OriginalId {
             get {
-                return this.itemNameField;
+                return this.originalIdField;
             }
             set {
-                this.itemNameField = value;
+                this.originalIdField = value;
             }
         }
         
         /// <remarks/>
-        public string ItemDescription {
+        public string Name {
             get {
-                return this.itemDescriptionField;
+                return this.nameField;
             }
             set {
-                this.itemDescriptionField = value;
+                this.nameField = value;
             }
         }
         
         /// <remarks/>
-        [System.Xml.Serialization.XmlElementAttribute(IsNullable=true)]
-        public System.Nullable<double> ItemPrice {
+        public string AdvicePhoto {
             get {
-                return this.itemPriceField;
+                return this.advicePhotoField;
             }
             set {
-                this.itemPriceField = value;
+                this.advicePhotoField = value;
             }
         }
         
         /// <remarks/>
-        public string ItemPhoto {
+        [System.Xml.Serialization.XmlElementAttribute(DataType="base64Binary")]
+        public byte[] Timestamp {
             get {
-                return this.itemPhotoField;
+                return this.timestampField;
             }
             set {
-                this.itemPhotoField = value;
+                this.timestampField = value;
             }
         }
         
         /// <remarks/>
-        public string ProductId {
+        public Account[] AccountCollection {
             get {
-                return this.productIdField;
+                return this.accountCollectionField;
             }
             set {
-                this.productIdField = value;
+                this.accountCollectionField = value;
             }
         }
         
         /// <remarks/>
-        public string ProductName {
+        public Product[] ProductCollection {
             get {
-                return this.productNameField;
+                return this.productCollectionField;
             }
             set {
-                this.productNameField = value;
+                this.productCollectionField = value;
+            }
+        }
+    }
+    
+    /// <remarks/>
+    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Xml", "2.0.50727.42")]
+    [System.SerializableAttribute()]
+    [System.Diagnostics.DebuggerStepThroughAttribute()]
+    [System.ComponentModel.DesignerCategoryAttribute("code")]
+    [System.Xml.Serialization.XmlTypeAttribute(Namespace="http://localhost/PetshopServices")]
+    public partial class Product : ProductBase {
+    }
+    
+    /// <remarks/>
+    [System.Xml.Serialization.XmlIncludeAttribute(typeof(Product))]
+    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Xml", "2.0.50727.42")]
+    [System.SerializableAttribute()]
+    [System.Diagnostics.DebuggerStepThroughAttribute()]
+    [System.ComponentModel.DesignerCategoryAttribute("code")]
+    [System.Xml.Serialization.XmlTypeAttribute(Namespace="http://localhost/PetshopServices")]
+    public abstract partial class ProductBase : EntityBase {
+        
+        private System.Guid idField;
+        
+        private System.Guid originalIdField;
+        
+        private string nameField;
+        
+        private string descriptionField;
+        
+        private System.Guid categoryIdField;
+        
+        private byte[] timestampField;
+        
+        private Category categoryIdSourceField;
+        
+        private Item[] itemCollectionField;
+        
+        /// <remarks/>
+        public System.Guid Id {
+            get {
+                return this.idField;
+            }
+            set {
+                this.idField = value;
             }
         }
         
         /// <remarks/>
-        public string ProductDescription {
+        public System.Guid OriginalId {
             get {
-                return this.productDescriptionField;
+                return this.originalIdField;
             }
             set {
-                this.productDescriptionField = value;
+                this.originalIdField = value;
             }
         }
         
         /// <remarks/>
-        public string CategoryId {
+        public string Name {
+            get {
+                return this.nameField;
+            }
+            set {
+                this.nameField = value;
+            }
+        }
+        
+        /// <remarks/>
+        public string Description {
+            get {
+                return this.descriptionField;
+            }
+            set {
+                this.descriptionField = value;
+            }
+        }
+        
+        /// <remarks/>
+        public System.Guid CategoryId {
             get {
                 return this.categoryIdField;
             }
@@ -2629,22 +5134,33 @@ namespace netTiers.Petshop.Data.WebServiceClient.WsProxy {
         }
         
         /// <remarks/>
-        public string CategoryName {
+        [System.Xml.Serialization.XmlElementAttribute(DataType="base64Binary")]
+        public byte[] Timestamp {
             get {
-                return this.categoryNameField;
+                return this.timestampField;
             }
             set {
-                this.categoryNameField = value;
+                this.timestampField = value;
             }
         }
         
         /// <remarks/>
-        public object Tag {
+        public Category CategoryIdSource {
             get {
-                return this.tagField;
+                return this.categoryIdSourceField;
             }
             set {
-                this.tagField = value;
+                this.categoryIdSourceField = value;
+            }
+        }
+        
+        /// <remarks/>
+        public Item[] ItemCollection {
+            get {
+                return this.itemCollectionField;
+            }
+            set {
+                this.itemCollectionField = value;
             }
         }
     }
@@ -2655,7 +5171,7 @@ namespace netTiers.Petshop.Data.WebServiceClient.WsProxy {
     [System.Diagnostics.DebuggerStepThroughAttribute()]
     [System.ComponentModel.DesignerCategoryAttribute("code")]
     [System.Xml.Serialization.XmlTypeAttribute(Namespace="http://localhost/PetshopServices")]
-    public partial class ExtendedItem : ExtendedItemBase {
+    public partial class Item : ItemBase {
     }
     
     /// <remarks/>
@@ -2667,7 +5183,9 @@ namespace netTiers.Petshop.Data.WebServiceClient.WsProxy {
     [System.Xml.Serialization.XmlTypeAttribute(Namespace="http://localhost/PetshopServices")]
     public abstract partial class ItemBase : EntityBase {
         
-        private string originalIdField;
+        private System.Guid idField;
+        
+        private System.Guid originalIdField;
         
         private string nameField;
         
@@ -2679,12 +5197,30 @@ namespace netTiers.Petshop.Data.WebServiceClient.WsProxy {
         
         private string photoField;
         
-        private string productIdField;
+        private System.Guid productIdField;
+        
+        private byte[] timestampField;
         
         private Product productIdSourceField;
         
+        private LineItem[] lineItemCollectionField;
+        
+        private Inventory[] inventoryCollectionField;
+        
+        private Supplier[] supplierCollection_From_InventoryField;
+        
         /// <remarks/>
-        public string OriginalId {
+        public System.Guid Id {
+            get {
+                return this.idField;
+            }
+            set {
+                this.idField = value;
+            }
+        }
+        
+        /// <remarks/>
+        public System.Guid OriginalId {
             get {
                 return this.originalIdField;
             }
@@ -2745,12 +5281,23 @@ namespace netTiers.Petshop.Data.WebServiceClient.WsProxy {
         }
         
         /// <remarks/>
-        public string ProductId {
+        public System.Guid ProductId {
             get {
                 return this.productIdField;
             }
             set {
                 this.productIdField = value;
+            }
+        }
+        
+        /// <remarks/>
+        [System.Xml.Serialization.XmlElementAttribute(DataType="base64Binary")]
+        public byte[] Timestamp {
+            get {
+                return this.timestampField;
+            }
+            set {
+                this.timestampField = value;
             }
         }
         
@@ -2763,6 +5310,36 @@ namespace netTiers.Petshop.Data.WebServiceClient.WsProxy {
                 this.productIdSourceField = value;
             }
         }
+        
+        /// <remarks/>
+        public LineItem[] LineItemCollection {
+            get {
+                return this.lineItemCollectionField;
+            }
+            set {
+                this.lineItemCollectionField = value;
+            }
+        }
+        
+        /// <remarks/>
+        public Inventory[] InventoryCollection {
+            get {
+                return this.inventoryCollectionField;
+            }
+            set {
+                this.inventoryCollectionField = value;
+            }
+        }
+        
+        /// <remarks/>
+        public Supplier[] SupplierCollection_From_Inventory {
+            get {
+                return this.supplierCollection_From_InventoryField;
+            }
+            set {
+                this.supplierCollection_From_InventoryField = value;
+            }
+        }
     }
     
     /// <remarks/>
@@ -2771,62 +5348,818 @@ namespace netTiers.Petshop.Data.WebServiceClient.WsProxy {
     [System.Diagnostics.DebuggerStepThroughAttribute()]
     [System.ComponentModel.DesignerCategoryAttribute("code")]
     [System.Xml.Serialization.XmlTypeAttribute(Namespace="http://localhost/PetshopServices")]
-    public partial class Product : ProductBase {
+    public partial class LineItem : LineItemBase {
     }
     
     /// <remarks/>
+    [System.Xml.Serialization.XmlIncludeAttribute(typeof(LineItem))]
+    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Xml", "2.0.50727.42")]
+    [System.SerializableAttribute()]
+    [System.Diagnostics.DebuggerStepThroughAttribute()]
+    [System.ComponentModel.DesignerCategoryAttribute("code")]
+    [System.Xml.Serialization.XmlTypeAttribute(Namespace="http://localhost/PetshopServices")]
+    public abstract partial class LineItemBase : EntityBase {
+        
+        private int orderIdField;
+        
+        private int originalOrderIdField;
+        
+        private int lineNumField;
+        
+        private int originalLineNumField;
+        
+        private System.Guid itemIdField;
+        
+        private int quantityField;
+        
+        private decimal unitPriceField;
+        
+        private byte[] timestampField;
+        
+        private Orders orderIdSourceField;
+        
+        private Item itemIdSourceField;
+        
+        /// <remarks/>
+        public int OrderId {
+            get {
+                return this.orderIdField;
+            }
+            set {
+                this.orderIdField = value;
+            }
+        }
+        
+        /// <remarks/>
+        public int OriginalOrderId {
+            get {
+                return this.originalOrderIdField;
+            }
+            set {
+                this.originalOrderIdField = value;
+            }
+        }
+        
+        /// <remarks/>
+        public int LineNum {
+            get {
+                return this.lineNumField;
+            }
+            set {
+                this.lineNumField = value;
+            }
+        }
+        
+        /// <remarks/>
+        public int OriginalLineNum {
+            get {
+                return this.originalLineNumField;
+            }
+            set {
+                this.originalLineNumField = value;
+            }
+        }
+        
+        /// <remarks/>
+        public System.Guid ItemId {
+            get {
+                return this.itemIdField;
+            }
+            set {
+                this.itemIdField = value;
+            }
+        }
+        
+        /// <remarks/>
+        public int Quantity {
+            get {
+                return this.quantityField;
+            }
+            set {
+                this.quantityField = value;
+            }
+        }
+        
+        /// <remarks/>
+        public decimal UnitPrice {
+            get {
+                return this.unitPriceField;
+            }
+            set {
+                this.unitPriceField = value;
+            }
+        }
+        
+        /// <remarks/>
+        [System.Xml.Serialization.XmlElementAttribute(DataType="base64Binary")]
+        public byte[] Timestamp {
+            get {
+                return this.timestampField;
+            }
+            set {
+                this.timestampField = value;
+            }
+        }
+        
+        /// <remarks/>
+        public Orders OrderIdSource {
+            get {
+                return this.orderIdSourceField;
+            }
+            set {
+                this.orderIdSourceField = value;
+            }
+        }
+        
+        /// <remarks/>
+        public Item ItemIdSource {
+            get {
+                return this.itemIdSourceField;
+            }
+            set {
+                this.itemIdSourceField = value;
+            }
+        }
+    }
+    
+    /// <remarks/>
+    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Xml", "2.0.50727.42")]
+    [System.SerializableAttribute()]
+    [System.Diagnostics.DebuggerStepThroughAttribute()]
+    [System.ComponentModel.DesignerCategoryAttribute("code")]
+    [System.Xml.Serialization.XmlTypeAttribute(Namespace="http://localhost/PetshopServices")]
+    public partial class Orders : OrdersBase {
+    }
+    
+    /// <remarks/>
+    [System.Xml.Serialization.XmlIncludeAttribute(typeof(Orders))]
+    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Xml", "2.0.50727.42")]
+    [System.SerializableAttribute()]
+    [System.Diagnostics.DebuggerStepThroughAttribute()]
+    [System.ComponentModel.DesignerCategoryAttribute("code")]
+    [System.Xml.Serialization.XmlTypeAttribute(Namespace="http://localhost/PetshopServices")]
+    public abstract partial class OrdersBase : EntityBase {
+        
+        private int orderIdField;
+        
+        private System.Guid accountIdField;
+        
+        private System.DateTime orderDateField;
+        
+        private string shipAddr1Field;
+        
+        private string shipAddr2Field;
+        
+        private string shipCityField;
+        
+        private string shipStateField;
+        
+        private string shipZipField;
+        
+        private string shipCountryField;
+        
+        private string billAddr1Field;
+        
+        private string billAddr2Field;
+        
+        private string billCityField;
+        
+        private string billStateField;
+        
+        private string billZipField;
+        
+        private string billCountryField;
+        
+        private System.Guid courierIdField;
+        
+        private System.Nullable<decimal> totalPriceField;
+        
+        private string billToFirstNameField;
+        
+        private string billToLastNameField;
+        
+        private string shipToFirstNameField;
+        
+        private string shipToLastNameField;
+        
+        private System.Guid creditCardIdField;
+        
+        private string localeField;
+        
+        private byte[] timestampField;
+        
+        private Account accountIdSourceField;
+        
+        private Courier courierIdSourceField;
+        
+        private CreditCard creditCardIdSourceField;
+        
+        private OrderStatus[] orderStatusCollectionField;
+        
+        private LineItem[] lineItemCollectionField;
+        
+        /// <remarks/>
+        public int OrderId {
+            get {
+                return this.orderIdField;
+            }
+            set {
+                this.orderIdField = value;
+            }
+        }
+        
+        /// <remarks/>
+        public System.Guid AccountId {
+            get {
+                return this.accountIdField;
+            }
+            set {
+                this.accountIdField = value;
+            }
+        }
+        
+        /// <remarks/>
+        public System.DateTime OrderDate {
+            get {
+                return this.orderDateField;
+            }
+            set {
+                this.orderDateField = value;
+            }
+        }
+        
+        /// <remarks/>
+        public string ShipAddr1 {
+            get {
+                return this.shipAddr1Field;
+            }
+            set {
+                this.shipAddr1Field = value;
+            }
+        }
+        
+        /// <remarks/>
+        public string ShipAddr2 {
+            get {
+                return this.shipAddr2Field;
+            }
+            set {
+                this.shipAddr2Field = value;
+            }
+        }
+        
+        /// <remarks/>
+        public string ShipCity {
+            get {
+                return this.shipCityField;
+            }
+            set {
+                this.shipCityField = value;
+            }
+        }
+        
+        /// <remarks/>
+        public string ShipState {
+            get {
+                return this.shipStateField;
+            }
+            set {
+                this.shipStateField = value;
+            }
+        }
+        
+        /// <remarks/>
+        public string ShipZip {
+            get {
+                return this.shipZipField;
+            }
+            set {
+                this.shipZipField = value;
+            }
+        }
+        
+        /// <remarks/>
+        public string ShipCountry {
+            get {
+                return this.shipCountryField;
+            }
+            set {
+                this.shipCountryField = value;
+            }
+        }
+        
+        /// <remarks/>
+        public string BillAddr1 {
+            get {
+                return this.billAddr1Field;
+            }
+            set {
+                this.billAddr1Field = value;
+            }
+        }
+        
+        /// <remarks/>
+        public string BillAddr2 {
+            get {
+                return this.billAddr2Field;
+            }
+            set {
+                this.billAddr2Field = value;
+            }
+        }
+        
+        /// <remarks/>
+        public string BillCity {
+            get {
+                return this.billCityField;
+            }
+            set {
+                this.billCityField = value;
+            }
+        }
+        
+        /// <remarks/>
+        public string BillState {
+            get {
+                return this.billStateField;
+            }
+            set {
+                this.billStateField = value;
+            }
+        }
+        
+        /// <remarks/>
+        public string BillZip {
+            get {
+                return this.billZipField;
+            }
+            set {
+                this.billZipField = value;
+            }
+        }
+        
+        /// <remarks/>
+        public string BillCountry {
+            get {
+                return this.billCountryField;
+            }
+            set {
+                this.billCountryField = value;
+            }
+        }
+        
+        /// <remarks/>
+        public System.Guid CourierId {
+            get {
+                return this.courierIdField;
+            }
+            set {
+                this.courierIdField = value;
+            }
+        }
+        
+        /// <remarks/>
+        [System.Xml.Serialization.XmlElementAttribute(IsNullable=true)]
+        public System.Nullable<decimal> TotalPrice {
+            get {
+                return this.totalPriceField;
+            }
+            set {
+                this.totalPriceField = value;
+            }
+        }
+        
+        /// <remarks/>
+        public string BillToFirstName {
+            get {
+                return this.billToFirstNameField;
+            }
+            set {
+                this.billToFirstNameField = value;
+            }
+        }
+        
+        /// <remarks/>
+        public string BillToLastName {
+            get {
+                return this.billToLastNameField;
+            }
+            set {
+                this.billToLastNameField = value;
+            }
+        }
+        
+        /// <remarks/>
+        public string ShipToFirstName {
+            get {
+                return this.shipToFirstNameField;
+            }
+            set {
+                this.shipToFirstNameField = value;
+            }
+        }
+        
+        /// <remarks/>
+        public string ShipToLastName {
+            get {
+                return this.shipToLastNameField;
+            }
+            set {
+                this.shipToLastNameField = value;
+            }
+        }
+        
+        /// <remarks/>
+        public System.Guid CreditCardId {
+            get {
+                return this.creditCardIdField;
+            }
+            set {
+                this.creditCardIdField = value;
+            }
+        }
+        
+        /// <remarks/>
+        public string Locale {
+            get {
+                return this.localeField;
+            }
+            set {
+                this.localeField = value;
+            }
+        }
+        
+        /// <remarks/>
+        [System.Xml.Serialization.XmlElementAttribute(DataType="base64Binary")]
+        public byte[] Timestamp {
+            get {
+                return this.timestampField;
+            }
+            set {
+                this.timestampField = value;
+            }
+        }
+        
+        /// <remarks/>
+        public Account AccountIdSource {
+            get {
+                return this.accountIdSourceField;
+            }
+            set {
+                this.accountIdSourceField = value;
+            }
+        }
+        
+        /// <remarks/>
+        public Courier CourierIdSource {
+            get {
+                return this.courierIdSourceField;
+            }
+            set {
+                this.courierIdSourceField = value;
+            }
+        }
+        
+        /// <remarks/>
+        public CreditCard CreditCardIdSource {
+            get {
+                return this.creditCardIdSourceField;
+            }
+            set {
+                this.creditCardIdSourceField = value;
+            }
+        }
+        
+        /// <remarks/>
+        public OrderStatus[] OrderStatusCollection {
+            get {
+                return this.orderStatusCollectionField;
+            }
+            set {
+                this.orderStatusCollectionField = value;
+            }
+        }
+        
+        /// <remarks/>
+        public LineItem[] LineItemCollection {
+            get {
+                return this.lineItemCollectionField;
+            }
+            set {
+                this.lineItemCollectionField = value;
+            }
+        }
+    }
+    
+    /// <remarks/>
+    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Xml", "2.0.50727.42")]
+    [System.SerializableAttribute()]
+    [System.Diagnostics.DebuggerStepThroughAttribute()]
+    [System.ComponentModel.DesignerCategoryAttribute("code")]
+    [System.Xml.Serialization.XmlTypeAttribute(Namespace="http://localhost/PetshopServices")]
+    public partial class Courier : CourierBase {
+    }
+    
+    /// <remarks/>
+    [System.Xml.Serialization.XmlIncludeAttribute(typeof(Courier))]
+    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Xml", "2.0.50727.42")]
+    [System.SerializableAttribute()]
+    [System.Diagnostics.DebuggerStepThroughAttribute()]
+    [System.ComponentModel.DesignerCategoryAttribute("code")]
+    [System.Xml.Serialization.XmlTypeAttribute(Namespace="http://localhost/PetshopServices")]
+    public abstract partial class CourierBase : EntityBase {
+        
+        private System.Guid courierIdField;
+        
+        private System.Guid originalCourierIdField;
+        
+        private string courierNameField;
+        
+        private string courierDescriptionField;
+        
+        private int minItemsField;
+        
+        private int maxItemsField;
+        
+        private byte[] timestampField;
+        
+        private Orders[] ordersCollectionField;
+        
+        /// <remarks/>
+        public System.Guid CourierId {
+            get {
+                return this.courierIdField;
+            }
+            set {
+                this.courierIdField = value;
+            }
+        }
+        
+        /// <remarks/>
+        public System.Guid OriginalCourierId {
+            get {
+                return this.originalCourierIdField;
+            }
+            set {
+                this.originalCourierIdField = value;
+            }
+        }
+        
+        /// <remarks/>
+        public string CourierName {
+            get {
+                return this.courierNameField;
+            }
+            set {
+                this.courierNameField = value;
+            }
+        }
+        
+        /// <remarks/>
+        public string CourierDescription {
+            get {
+                return this.courierDescriptionField;
+            }
+            set {
+                this.courierDescriptionField = value;
+            }
+        }
+        
+        /// <remarks/>
+        public int MinItems {
+            get {
+                return this.minItemsField;
+            }
+            set {
+                this.minItemsField = value;
+            }
+        }
+        
+        /// <remarks/>
+        public int MaxItems {
+            get {
+                return this.maxItemsField;
+            }
+            set {
+                this.maxItemsField = value;
+            }
+        }
+        
+        /// <remarks/>
+        [System.Xml.Serialization.XmlElementAttribute(DataType="base64Binary")]
+        public byte[] Timestamp {
+            get {
+                return this.timestampField;
+            }
+            set {
+                this.timestampField = value;
+            }
+        }
+        
+        /// <remarks/>
+        public Orders[] OrdersCollection {
+            get {
+                return this.ordersCollectionField;
+            }
+            set {
+                this.ordersCollectionField = value;
+            }
+        }
+    }
+    
+    /// <remarks/>
+    [System.Xml.Serialization.XmlIncludeAttribute(typeof(SupplierBase))]
+    [System.Xml.Serialization.XmlIncludeAttribute(typeof(Supplier))]
+    [System.Xml.Serialization.XmlIncludeAttribute(typeof(InventoryBase))]
+    [System.Xml.Serialization.XmlIncludeAttribute(typeof(Inventory))]
+    [System.Xml.Serialization.XmlIncludeAttribute(typeof(OrderStatusTypeBase))]
+    [System.Xml.Serialization.XmlIncludeAttribute(typeof(OrderStatusType))]
+    [System.Xml.Serialization.XmlIncludeAttribute(typeof(OrderStatusBase))]
+    [System.Xml.Serialization.XmlIncludeAttribute(typeof(OrderStatus))]
+    [System.Xml.Serialization.XmlIncludeAttribute(typeof(CreditCardBase))]
+    [System.Xml.Serialization.XmlIncludeAttribute(typeof(CreditCard))]
+    [System.Xml.Serialization.XmlIncludeAttribute(typeof(CourierBase))]
+    [System.Xml.Serialization.XmlIncludeAttribute(typeof(Courier))]
+    [System.Xml.Serialization.XmlIncludeAttribute(typeof(OrdersBase))]
+    [System.Xml.Serialization.XmlIncludeAttribute(typeof(Orders))]
+    [System.Xml.Serialization.XmlIncludeAttribute(typeof(LineItemBase))]
+    [System.Xml.Serialization.XmlIncludeAttribute(typeof(LineItem))]
+    [System.Xml.Serialization.XmlIncludeAttribute(typeof(ItemBase))]
+    [System.Xml.Serialization.XmlIncludeAttribute(typeof(Item))]
+    [System.Xml.Serialization.XmlIncludeAttribute(typeof(ProductBase))]
     [System.Xml.Serialization.XmlIncludeAttribute(typeof(Product))]
+    [System.Xml.Serialization.XmlIncludeAttribute(typeof(CategoryBase))]
+    [System.Xml.Serialization.XmlIncludeAttribute(typeof(Category))]
+    [System.Xml.Serialization.XmlIncludeAttribute(typeof(AccountBase))]
+    [System.Xml.Serialization.XmlIncludeAttribute(typeof(Account))]
     [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Xml", "2.0.50727.42")]
     [System.SerializableAttribute()]
     [System.Diagnostics.DebuggerStepThroughAttribute()]
     [System.ComponentModel.DesignerCategoryAttribute("code")]
     [System.Xml.Serialization.XmlTypeAttribute(Namespace="http://localhost/PetshopServices")]
-    public abstract partial class ProductBase : EntityBase {
+    public abstract partial class EntityBase : EntityBaseCore {
+    }
+    
+    /// <remarks/>
+    [System.Xml.Serialization.XmlIncludeAttribute(typeof(EntityBase))]
+    [System.Xml.Serialization.XmlIncludeAttribute(typeof(SupplierBase))]
+    [System.Xml.Serialization.XmlIncludeAttribute(typeof(Supplier))]
+    [System.Xml.Serialization.XmlIncludeAttribute(typeof(InventoryBase))]
+    [System.Xml.Serialization.XmlIncludeAttribute(typeof(Inventory))]
+    [System.Xml.Serialization.XmlIncludeAttribute(typeof(OrderStatusTypeBase))]
+    [System.Xml.Serialization.XmlIncludeAttribute(typeof(OrderStatusType))]
+    [System.Xml.Serialization.XmlIncludeAttribute(typeof(OrderStatusBase))]
+    [System.Xml.Serialization.XmlIncludeAttribute(typeof(OrderStatus))]
+    [System.Xml.Serialization.XmlIncludeAttribute(typeof(CreditCardBase))]
+    [System.Xml.Serialization.XmlIncludeAttribute(typeof(CreditCard))]
+    [System.Xml.Serialization.XmlIncludeAttribute(typeof(CourierBase))]
+    [System.Xml.Serialization.XmlIncludeAttribute(typeof(Courier))]
+    [System.Xml.Serialization.XmlIncludeAttribute(typeof(OrdersBase))]
+    [System.Xml.Serialization.XmlIncludeAttribute(typeof(Orders))]
+    [System.Xml.Serialization.XmlIncludeAttribute(typeof(LineItemBase))]
+    [System.Xml.Serialization.XmlIncludeAttribute(typeof(LineItem))]
+    [System.Xml.Serialization.XmlIncludeAttribute(typeof(ItemBase))]
+    [System.Xml.Serialization.XmlIncludeAttribute(typeof(Item))]
+    [System.Xml.Serialization.XmlIncludeAttribute(typeof(ProductBase))]
+    [System.Xml.Serialization.XmlIncludeAttribute(typeof(Product))]
+    [System.Xml.Serialization.XmlIncludeAttribute(typeof(CategoryBase))]
+    [System.Xml.Serialization.XmlIncludeAttribute(typeof(Category))]
+    [System.Xml.Serialization.XmlIncludeAttribute(typeof(AccountBase))]
+    [System.Xml.Serialization.XmlIncludeAttribute(typeof(Account))]
+    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Xml", "2.0.50727.42")]
+    [System.SerializableAttribute()]
+    [System.Diagnostics.DebuggerStepThroughAttribute()]
+    [System.ComponentModel.DesignerCategoryAttribute("code")]
+    [System.Xml.Serialization.XmlTypeAttribute(Namespace="http://localhost/PetshopServices")]
+    public abstract partial class EntityBaseCore {
         
-        private string originalIdField;
-        
-        private string nameField;
-        
-        private string descriptionField;
-        
-        private string categoryIdField;
-        
-        private Category categoryIdSourceField;
-        
-        private Item[] itemCollectionField;
+        private object tagField;
         
         /// <remarks/>
-        public string OriginalId {
+        public object Tag {
             get {
-                return this.originalIdField;
+                return this.tagField;
             }
             set {
-                this.originalIdField = value;
+                this.tagField = value;
+            }
+        }
+    }
+    
+    /// <remarks/>
+    [System.Xml.Serialization.XmlIncludeAttribute(typeof(ExtendedItem))]
+    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Xml", "2.0.50727.42")]
+    [System.SerializableAttribute()]
+    [System.Diagnostics.DebuggerStepThroughAttribute()]
+    [System.ComponentModel.DesignerCategoryAttribute("code")]
+    [System.Xml.Serialization.XmlTypeAttribute(Namespace="http://localhost/PetshopServices")]
+    public abstract partial class ExtendedItemBase {
+        
+        private System.Guid itemIdField;
+        
+        private string itemNameField;
+        
+        private string itemDescriptionField;
+        
+        private System.Nullable<double> itemPriceField;
+        
+        private string itemPhotoField;
+        
+        private System.Guid productIdField;
+        
+        private string productNameField;
+        
+        private string productDescriptionField;
+        
+        private System.Guid categoryIdField;
+        
+        private string categoryNameField;
+        
+        private object tagField;
+        
+        /// <remarks/>
+        public System.Guid ItemId {
+            get {
+                return this.itemIdField;
+            }
+            set {
+                this.itemIdField = value;
             }
         }
         
         /// <remarks/>
-        public string Name {
+        public string ItemName {
             get {
-                return this.nameField;
+                return this.itemNameField;
             }
             set {
-                this.nameField = value;
+                this.itemNameField = value;
             }
         }
         
         /// <remarks/>
-        public string Description {
+        public string ItemDescription {
             get {
-                return this.descriptionField;
+                return this.itemDescriptionField;
             }
             set {
-                this.descriptionField = value;
+                this.itemDescriptionField = value;
             }
         }
         
         /// <remarks/>
-        public string CategoryId {
+        [System.Xml.Serialization.XmlElementAttribute(IsNullable=true)]
+        public System.Nullable<double> ItemPrice {
+            get {
+                return this.itemPriceField;
+            }
+            set {
+                this.itemPriceField = value;
+            }
+        }
+        
+        /// <remarks/>
+        public string ItemPhoto {
+            get {
+                return this.itemPhotoField;
+            }
+            set {
+                this.itemPhotoField = value;
+            }
+        }
+        
+        /// <remarks/>
+        public System.Guid ProductId {
+            get {
+                return this.productIdField;
+            }
+            set {
+                this.productIdField = value;
+            }
+        }
+        
+        /// <remarks/>
+        public string ProductName {
+            get {
+                return this.productNameField;
+            }
+            set {
+                this.productNameField = value;
+            }
+        }
+        
+        /// <remarks/>
+        public string ProductDescription {
+            get {
+                return this.productDescriptionField;
+            }
+            set {
+                this.productDescriptionField = value;
+            }
+        }
+        
+        /// <remarks/>
+        public System.Guid CategoryId {
             get {
                 return this.categoryIdField;
             }
@@ -2836,22 +6169,22 @@ namespace netTiers.Petshop.Data.WebServiceClient.WsProxy {
         }
         
         /// <remarks/>
-        public Category CategoryIdSource {
+        public string CategoryName {
             get {
-                return this.categoryIdSourceField;
+                return this.categoryNameField;
             }
             set {
-                this.categoryIdSourceField = value;
+                this.categoryNameField = value;
             }
         }
         
         /// <remarks/>
-        public Item[] ItemCollection {
+        public object Tag {
             get {
-                return this.itemCollectionField;
+                return this.tagField;
             }
             set {
-                this.itemCollectionField = value;
+                this.tagField = value;
             }
         }
     }
@@ -2862,35 +6195,61 @@ namespace netTiers.Petshop.Data.WebServiceClient.WsProxy {
     [System.Diagnostics.DebuggerStepThroughAttribute()]
     [System.ComponentModel.DesignerCategoryAttribute("code")]
     [System.Xml.Serialization.XmlTypeAttribute(Namespace="http://localhost/PetshopServices")]
-    public partial class Category : CategoryBase {
+    public partial class ExtendedItem : ExtendedItemBase {
     }
     
     /// <remarks/>
-    [System.Xml.Serialization.XmlIncludeAttribute(typeof(Category))]
+    [System.Xml.Serialization.XmlIncludeAttribute(typeof(Supplier))]
     [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Xml", "2.0.50727.42")]
     [System.SerializableAttribute()]
     [System.Diagnostics.DebuggerStepThroughAttribute()]
     [System.ComponentModel.DesignerCategoryAttribute("code")]
     [System.Xml.Serialization.XmlTypeAttribute(Namespace="http://localhost/PetshopServices")]
-    public abstract partial class CategoryBase : EntityBase {
+    public abstract partial class SupplierBase : EntityBase {
         
-        private string originalIdField;
+        private System.Guid suppIdField;
+        
+        private System.Guid originalSuppIdField;
         
         private string nameField;
         
-        private string advicePhotoField;
+        private string statusField;
         
-        private Product[] productCollectionField;
+        private string addr1Field;
         
-        private Account[] accountCollectionField;
+        private string addr2Field;
+        
+        private string cityField;
+        
+        private string stateField;
+        
+        private string zipField;
+        
+        private string phoneField;
+        
+        private byte[] timestampField;
+        
+        private Inventory[] inventoryCollectionField;
+        
+        private Item[] itemCollection_From_InventoryField;
         
         /// <remarks/>
-        public string OriginalId {
+        public System.Guid SuppId {
             get {
-                return this.originalIdField;
+                return this.suppIdField;
             }
             set {
-                this.originalIdField = value;
+                this.suppIdField = value;
+            }
+        }
+        
+        /// <remarks/>
+        public System.Guid OriginalSuppId {
+            get {
+                return this.originalSuppIdField;
+            }
+            set {
+                this.originalSuppIdField = value;
             }
         }
         
@@ -2905,22 +6264,532 @@ namespace netTiers.Petshop.Data.WebServiceClient.WsProxy {
         }
         
         /// <remarks/>
-        public string AdvicePhoto {
+        public string Status {
             get {
-                return this.advicePhotoField;
+                return this.statusField;
             }
             set {
-                this.advicePhotoField = value;
+                this.statusField = value;
             }
         }
         
         /// <remarks/>
-        public Product[] ProductCollection {
+        public string Addr1 {
             get {
-                return this.productCollectionField;
+                return this.addr1Field;
             }
             set {
-                this.productCollectionField = value;
+                this.addr1Field = value;
+            }
+        }
+        
+        /// <remarks/>
+        public string Addr2 {
+            get {
+                return this.addr2Field;
+            }
+            set {
+                this.addr2Field = value;
+            }
+        }
+        
+        /// <remarks/>
+        public string City {
+            get {
+                return this.cityField;
+            }
+            set {
+                this.cityField = value;
+            }
+        }
+        
+        /// <remarks/>
+        public string State {
+            get {
+                return this.stateField;
+            }
+            set {
+                this.stateField = value;
+            }
+        }
+        
+        /// <remarks/>
+        public string Zip {
+            get {
+                return this.zipField;
+            }
+            set {
+                this.zipField = value;
+            }
+        }
+        
+        /// <remarks/>
+        public string Phone {
+            get {
+                return this.phoneField;
+            }
+            set {
+                this.phoneField = value;
+            }
+        }
+        
+        /// <remarks/>
+        [System.Xml.Serialization.XmlElementAttribute(DataType="base64Binary")]
+        public byte[] Timestamp {
+            get {
+                return this.timestampField;
+            }
+            set {
+                this.timestampField = value;
+            }
+        }
+        
+        /// <remarks/>
+        public Inventory[] InventoryCollection {
+            get {
+                return this.inventoryCollectionField;
+            }
+            set {
+                this.inventoryCollectionField = value;
+            }
+        }
+        
+        /// <remarks/>
+        public Item[] ItemCollection_From_Inventory {
+            get {
+                return this.itemCollection_From_InventoryField;
+            }
+            set {
+                this.itemCollection_From_InventoryField = value;
+            }
+        }
+    }
+    
+    /// <remarks/>
+    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Xml", "2.0.50727.42")]
+    [System.SerializableAttribute()]
+    [System.Diagnostics.DebuggerStepThroughAttribute()]
+    [System.ComponentModel.DesignerCategoryAttribute("code")]
+    [System.Xml.Serialization.XmlTypeAttribute(Namespace="http://localhost/PetshopServices")]
+    public partial class Inventory : InventoryBase {
+    }
+    
+    /// <remarks/>
+    [System.Xml.Serialization.XmlIncludeAttribute(typeof(Inventory))]
+    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Xml", "2.0.50727.42")]
+    [System.SerializableAttribute()]
+    [System.Diagnostics.DebuggerStepThroughAttribute()]
+    [System.ComponentModel.DesignerCategoryAttribute("code")]
+    [System.Xml.Serialization.XmlTypeAttribute(Namespace="http://localhost/PetshopServices")]
+    public abstract partial class InventoryBase : EntityBase {
+        
+        private System.Guid itemIdField;
+        
+        private System.Guid originalItemIdField;
+        
+        private System.Guid suppIdField;
+        
+        private System.Guid originalSuppIdField;
+        
+        private int qtyField;
+        
+        private byte[] timestampField;
+        
+        private Item itemIdSourceField;
+        
+        private Supplier suppIdSourceField;
+        
+        /// <remarks/>
+        public System.Guid ItemId {
+            get {
+                return this.itemIdField;
+            }
+            set {
+                this.itemIdField = value;
+            }
+        }
+        
+        /// <remarks/>
+        public System.Guid OriginalItemId {
+            get {
+                return this.originalItemIdField;
+            }
+            set {
+                this.originalItemIdField = value;
+            }
+        }
+        
+        /// <remarks/>
+        public System.Guid SuppId {
+            get {
+                return this.suppIdField;
+            }
+            set {
+                this.suppIdField = value;
+            }
+        }
+        
+        /// <remarks/>
+        public System.Guid OriginalSuppId {
+            get {
+                return this.originalSuppIdField;
+            }
+            set {
+                this.originalSuppIdField = value;
+            }
+        }
+        
+        /// <remarks/>
+        public int Qty {
+            get {
+                return this.qtyField;
+            }
+            set {
+                this.qtyField = value;
+            }
+        }
+        
+        /// <remarks/>
+        [System.Xml.Serialization.XmlElementAttribute(DataType="base64Binary")]
+        public byte[] Timestamp {
+            get {
+                return this.timestampField;
+            }
+            set {
+                this.timestampField = value;
+            }
+        }
+        
+        /// <remarks/>
+        public Item ItemIdSource {
+            get {
+                return this.itemIdSourceField;
+            }
+            set {
+                this.itemIdSourceField = value;
+            }
+        }
+        
+        /// <remarks/>
+        public Supplier SuppIdSource {
+            get {
+                return this.suppIdSourceField;
+            }
+            set {
+                this.suppIdSourceField = value;
+            }
+        }
+    }
+    
+    /// <remarks/>
+    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Xml", "2.0.50727.42")]
+    [System.SerializableAttribute()]
+    [System.Diagnostics.DebuggerStepThroughAttribute()]
+    [System.ComponentModel.DesignerCategoryAttribute("code")]
+    [System.Xml.Serialization.XmlTypeAttribute(Namespace="http://localhost/PetshopServices")]
+    public partial class Supplier : SupplierBase {
+    }
+    
+    /// <remarks/>
+    [System.Xml.Serialization.XmlIncludeAttribute(typeof(OrderStatusType))]
+    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Xml", "2.0.50727.42")]
+    [System.SerializableAttribute()]
+    [System.Diagnostics.DebuggerStepThroughAttribute()]
+    [System.ComponentModel.DesignerCategoryAttribute("code")]
+    [System.Xml.Serialization.XmlTypeAttribute(Namespace="http://localhost/PetshopServices")]
+    public abstract partial class OrderStatusTypeBase : EntityBase {
+        
+        private int orderStatusIdField;
+        
+        private string orderStatusField;
+        
+        private string orderStatusDescriptionField;
+        
+        private OrderStatus[] orderStatusCollectionField;
+        
+        /// <remarks/>
+        public int OrderStatusId {
+            get {
+                return this.orderStatusIdField;
+            }
+            set {
+                this.orderStatusIdField = value;
+            }
+        }
+        
+        /// <remarks/>
+        public string OrderStatus {
+            get {
+                return this.orderStatusField;
+            }
+            set {
+                this.orderStatusField = value;
+            }
+        }
+        
+        /// <remarks/>
+        public string OrderStatusDescription {
+            get {
+                return this.orderStatusDescriptionField;
+            }
+            set {
+                this.orderStatusDescriptionField = value;
+            }
+        }
+        
+        /// <remarks/>
+        public OrderStatus[] OrderStatusCollection {
+            get {
+                return this.orderStatusCollectionField;
+            }
+            set {
+                this.orderStatusCollectionField = value;
+            }
+        }
+    }
+    
+    /// <remarks/>
+    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Xml", "2.0.50727.42")]
+    [System.SerializableAttribute()]
+    [System.Diagnostics.DebuggerStepThroughAttribute()]
+    [System.ComponentModel.DesignerCategoryAttribute("code")]
+    [System.Xml.Serialization.XmlTypeAttribute(Namespace="http://localhost/PetshopServices")]
+    public partial class OrderStatus : OrderStatusBase {
+    }
+    
+    /// <remarks/>
+    [System.Xml.Serialization.XmlIncludeAttribute(typeof(OrderStatus))]
+    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Xml", "2.0.50727.42")]
+    [System.SerializableAttribute()]
+    [System.Diagnostics.DebuggerStepThroughAttribute()]
+    [System.ComponentModel.DesignerCategoryAttribute("code")]
+    [System.Xml.Serialization.XmlTypeAttribute(Namespace="http://localhost/PetshopServices")]
+    public abstract partial class OrderStatusBase : EntityBase {
+        
+        private int orderIdField;
+        
+        private int originalOrderIdField;
+        
+        private int lineNumField;
+        
+        private int originalLineNumField;
+        
+        private System.DateTime orderDateField;
+        
+        private int orderStatusIdField;
+        
+        private byte[] timestampField;
+        
+        private Orders orderIdSourceField;
+        
+        private OrderStatusType orderStatusIdSourceField;
+        
+        /// <remarks/>
+        public int OrderId {
+            get {
+                return this.orderIdField;
+            }
+            set {
+                this.orderIdField = value;
+            }
+        }
+        
+        /// <remarks/>
+        public int OriginalOrderId {
+            get {
+                return this.originalOrderIdField;
+            }
+            set {
+                this.originalOrderIdField = value;
+            }
+        }
+        
+        /// <remarks/>
+        public int LineNum {
+            get {
+                return this.lineNumField;
+            }
+            set {
+                this.lineNumField = value;
+            }
+        }
+        
+        /// <remarks/>
+        public int OriginalLineNum {
+            get {
+                return this.originalLineNumField;
+            }
+            set {
+                this.originalLineNumField = value;
+            }
+        }
+        
+        /// <remarks/>
+        public System.DateTime OrderDate {
+            get {
+                return this.orderDateField;
+            }
+            set {
+                this.orderDateField = value;
+            }
+        }
+        
+        /// <remarks/>
+        public int OrderStatusId {
+            get {
+                return this.orderStatusIdField;
+            }
+            set {
+                this.orderStatusIdField = value;
+            }
+        }
+        
+        /// <remarks/>
+        [System.Xml.Serialization.XmlElementAttribute(DataType="base64Binary")]
+        public byte[] Timestamp {
+            get {
+                return this.timestampField;
+            }
+            set {
+                this.timestampField = value;
+            }
+        }
+        
+        /// <remarks/>
+        public Orders OrderIdSource {
+            get {
+                return this.orderIdSourceField;
+            }
+            set {
+                this.orderIdSourceField = value;
+            }
+        }
+        
+        /// <remarks/>
+        public OrderStatusType OrderStatusIdSource {
+            get {
+                return this.orderStatusIdSourceField;
+            }
+            set {
+                this.orderStatusIdSourceField = value;
+            }
+        }
+    }
+    
+    /// <remarks/>
+    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Xml", "2.0.50727.42")]
+    [System.SerializableAttribute()]
+    [System.Diagnostics.DebuggerStepThroughAttribute()]
+    [System.ComponentModel.DesignerCategoryAttribute("code")]
+    [System.Xml.Serialization.XmlTypeAttribute(Namespace="http://localhost/PetshopServices")]
+    public partial class OrderStatusType : OrderStatusTypeBase {
+    }
+    
+    /// <remarks/>
+    [System.Xml.Serialization.XmlIncludeAttribute(typeof(CreditCard))]
+    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Xml", "2.0.50727.42")]
+    [System.SerializableAttribute()]
+    [System.Diagnostics.DebuggerStepThroughAttribute()]
+    [System.ComponentModel.DesignerCategoryAttribute("code")]
+    [System.Xml.Serialization.XmlTypeAttribute(Namespace="http://localhost/PetshopServices")]
+    public abstract partial class CreditCardBase : EntityBase {
+        
+        private System.Guid idField;
+        
+        private System.Guid originalIdField;
+        
+        private string numberField;
+        
+        private string cardTypeField;
+        
+        private string expiryMonthField;
+        
+        private string expiryYearField;
+        
+        private byte[] timestampField;
+        
+        private Orders[] ordersCollectionField;
+        
+        private Account[] accountCollectionField;
+        
+        /// <remarks/>
+        public System.Guid Id {
+            get {
+                return this.idField;
+            }
+            set {
+                this.idField = value;
+            }
+        }
+        
+        /// <remarks/>
+        public System.Guid OriginalId {
+            get {
+                return this.originalIdField;
+            }
+            set {
+                this.originalIdField = value;
+            }
+        }
+        
+        /// <remarks/>
+        public string Number {
+            get {
+                return this.numberField;
+            }
+            set {
+                this.numberField = value;
+            }
+        }
+        
+        /// <remarks/>
+        public string CardType {
+            get {
+                return this.cardTypeField;
+            }
+            set {
+                this.cardTypeField = value;
+            }
+        }
+        
+        /// <remarks/>
+        public string ExpiryMonth {
+            get {
+                return this.expiryMonthField;
+            }
+            set {
+                this.expiryMonthField = value;
+            }
+        }
+        
+        /// <remarks/>
+        public string ExpiryYear {
+            get {
+                return this.expiryYearField;
+            }
+            set {
+                this.expiryYearField = value;
+            }
+        }
+        
+        /// <remarks/>
+        [System.Xml.Serialization.XmlElementAttribute(DataType="base64Binary")]
+        public byte[] Timestamp {
+            get {
+                return this.timestampField;
+            }
+            set {
+                this.timestampField = value;
+            }
+        }
+        
+        /// <remarks/>
+        public Orders[] OrdersCollection {
+            get {
+                return this.ordersCollectionField;
+            }
+            set {
+                this.ordersCollectionField = value;
             }
         }
         
@@ -2941,7 +6810,7 @@ namespace netTiers.Petshop.Data.WebServiceClient.WsProxy {
     [System.Diagnostics.DebuggerStepThroughAttribute()]
     [System.ComponentModel.DesignerCategoryAttribute("code")]
     [System.Xml.Serialization.XmlTypeAttribute(Namespace="http://localhost/PetshopServices")]
-    public partial class Item : ItemBase {
+    public partial class CreditCard : CreditCardBase {
     }
     
     /// <remarks/>
@@ -3090,17 +6959,17 @@ namespace netTiers.Petshop.Data.WebServiceClient.WsProxy {
     
     /// <remarks/>
     [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Web.Services", "2.0.50727.42")]
-    public delegate void AccountProvider_GetByCreditCardIdCompletedEventHandler(object sender, AccountProvider_GetByCreditCardIdCompletedEventArgs e);
+    public delegate void AccountProvider_GetByFavoriteCategoryIdCompletedEventHandler(object sender, AccountProvider_GetByFavoriteCategoryIdCompletedEventArgs e);
     
     /// <remarks/>
     [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Web.Services", "2.0.50727.42")]
     [System.Diagnostics.DebuggerStepThroughAttribute()]
     [System.ComponentModel.DesignerCategoryAttribute("code")]
-    public partial class AccountProvider_GetByCreditCardIdCompletedEventArgs : System.ComponentModel.AsyncCompletedEventArgs {
+    public partial class AccountProvider_GetByFavoriteCategoryIdCompletedEventArgs : System.ComponentModel.AsyncCompletedEventArgs {
         
         private object[] results;
         
-        internal AccountProvider_GetByCreditCardIdCompletedEventArgs(object[] results, System.Exception exception, bool cancelled, object userState) : 
+        internal AccountProvider_GetByFavoriteCategoryIdCompletedEventArgs(object[] results, System.Exception exception, bool cancelled, object userState) : 
                 base(exception, cancelled, userState) {
             this.results = results;
         }
@@ -3124,17 +6993,17 @@ namespace netTiers.Petshop.Data.WebServiceClient.WsProxy {
     
     /// <remarks/>
     [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Web.Services", "2.0.50727.42")]
-    public delegate void AccountProvider_GetByFavoriteCategoryIdCompletedEventHandler(object sender, AccountProvider_GetByFavoriteCategoryIdCompletedEventArgs e);
+    public delegate void AccountProvider_GetByCreditCardIdCompletedEventHandler(object sender, AccountProvider_GetByCreditCardIdCompletedEventArgs e);
     
     /// <remarks/>
     [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Web.Services", "2.0.50727.42")]
     [System.Diagnostics.DebuggerStepThroughAttribute()]
     [System.ComponentModel.DesignerCategoryAttribute("code")]
-    public partial class AccountProvider_GetByFavoriteCategoryIdCompletedEventArgs : System.ComponentModel.AsyncCompletedEventArgs {
+    public partial class AccountProvider_GetByCreditCardIdCompletedEventArgs : System.ComponentModel.AsyncCompletedEventArgs {
         
         private object[] results;
         
-        internal AccountProvider_GetByFavoriteCategoryIdCompletedEventArgs(object[] results, System.Exception exception, bool cancelled, object userState) : 
+        internal AccountProvider_GetByCreditCardIdCompletedEventArgs(object[] results, System.Exception exception, bool cancelled, object userState) : 
                 base(exception, cancelled, userState) {
             this.results = results;
         }
@@ -3534,6 +7403,224 @@ namespace netTiers.Petshop.Data.WebServiceClient.WsProxy {
     
     /// <remarks/>
     [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Web.Services", "2.0.50727.42")]
+    public delegate void CourierProvider_DeleteCompletedEventHandler(object sender, CourierProvider_DeleteCompletedEventArgs e);
+    
+    /// <remarks/>
+    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Web.Services", "2.0.50727.42")]
+    [System.Diagnostics.DebuggerStepThroughAttribute()]
+    [System.ComponentModel.DesignerCategoryAttribute("code")]
+    public partial class CourierProvider_DeleteCompletedEventArgs : System.ComponentModel.AsyncCompletedEventArgs {
+        
+        private object[] results;
+        
+        internal CourierProvider_DeleteCompletedEventArgs(object[] results, System.Exception exception, bool cancelled, object userState) : 
+                base(exception, cancelled, userState) {
+            this.results = results;
+        }
+        
+        /// <remarks/>
+        public bool Result {
+            get {
+                this.RaiseExceptionIfNecessary();
+                return ((bool)(this.results[0]));
+            }
+        }
+    }
+    
+    /// <remarks/>
+    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Web.Services", "2.0.50727.42")]
+    public delegate void CourierProvider_FindCompletedEventHandler(object sender, CourierProvider_FindCompletedEventArgs e);
+    
+    /// <remarks/>
+    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Web.Services", "2.0.50727.42")]
+    [System.Diagnostics.DebuggerStepThroughAttribute()]
+    [System.ComponentModel.DesignerCategoryAttribute("code")]
+    public partial class CourierProvider_FindCompletedEventArgs : System.ComponentModel.AsyncCompletedEventArgs {
+        
+        private object[] results;
+        
+        internal CourierProvider_FindCompletedEventArgs(object[] results, System.Exception exception, bool cancelled, object userState) : 
+                base(exception, cancelled, userState) {
+            this.results = results;
+        }
+        
+        /// <remarks/>
+        public Courier[] Result {
+            get {
+                this.RaiseExceptionIfNecessary();
+                return ((Courier[])(this.results[0]));
+            }
+        }
+        
+        /// <remarks/>
+        public int count {
+            get {
+                this.RaiseExceptionIfNecessary();
+                return ((int)(this.results[1]));
+            }
+        }
+    }
+    
+    /// <remarks/>
+    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Web.Services", "2.0.50727.42")]
+    public delegate void CourierProvider_GetAllCompletedEventHandler(object sender, CourierProvider_GetAllCompletedEventArgs e);
+    
+    /// <remarks/>
+    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Web.Services", "2.0.50727.42")]
+    [System.Diagnostics.DebuggerStepThroughAttribute()]
+    [System.ComponentModel.DesignerCategoryAttribute("code")]
+    public partial class CourierProvider_GetAllCompletedEventArgs : System.ComponentModel.AsyncCompletedEventArgs {
+        
+        private object[] results;
+        
+        internal CourierProvider_GetAllCompletedEventArgs(object[] results, System.Exception exception, bool cancelled, object userState) : 
+                base(exception, cancelled, userState) {
+            this.results = results;
+        }
+        
+        /// <remarks/>
+        public Courier[] Result {
+            get {
+                this.RaiseExceptionIfNecessary();
+                return ((Courier[])(this.results[0]));
+            }
+        }
+        
+        /// <remarks/>
+        public int count {
+            get {
+                this.RaiseExceptionIfNecessary();
+                return ((int)(this.results[1]));
+            }
+        }
+    }
+    
+    /// <remarks/>
+    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Web.Services", "2.0.50727.42")]
+    public delegate void CourierProvider_GetPagedCompletedEventHandler(object sender, CourierProvider_GetPagedCompletedEventArgs e);
+    
+    /// <remarks/>
+    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Web.Services", "2.0.50727.42")]
+    [System.Diagnostics.DebuggerStepThroughAttribute()]
+    [System.ComponentModel.DesignerCategoryAttribute("code")]
+    public partial class CourierProvider_GetPagedCompletedEventArgs : System.ComponentModel.AsyncCompletedEventArgs {
+        
+        private object[] results;
+        
+        internal CourierProvider_GetPagedCompletedEventArgs(object[] results, System.Exception exception, bool cancelled, object userState) : 
+                base(exception, cancelled, userState) {
+            this.results = results;
+        }
+        
+        /// <remarks/>
+        public Courier[] Result {
+            get {
+                this.RaiseExceptionIfNecessary();
+                return ((Courier[])(this.results[0]));
+            }
+        }
+        
+        /// <remarks/>
+        public int count {
+            get {
+                this.RaiseExceptionIfNecessary();
+                return ((int)(this.results[1]));
+            }
+        }
+    }
+    
+    /// <remarks/>
+    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Web.Services", "2.0.50727.42")]
+    public delegate void CourierProvider_GetByCourierIdCompletedEventHandler(object sender, CourierProvider_GetByCourierIdCompletedEventArgs e);
+    
+    /// <remarks/>
+    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Web.Services", "2.0.50727.42")]
+    [System.Diagnostics.DebuggerStepThroughAttribute()]
+    [System.ComponentModel.DesignerCategoryAttribute("code")]
+    public partial class CourierProvider_GetByCourierIdCompletedEventArgs : System.ComponentModel.AsyncCompletedEventArgs {
+        
+        private object[] results;
+        
+        internal CourierProvider_GetByCourierIdCompletedEventArgs(object[] results, System.Exception exception, bool cancelled, object userState) : 
+                base(exception, cancelled, userState) {
+            this.results = results;
+        }
+        
+        /// <remarks/>
+        public Courier Result {
+            get {
+                this.RaiseExceptionIfNecessary();
+                return ((Courier)(this.results[0]));
+            }
+        }
+        
+        /// <remarks/>
+        public int count {
+            get {
+                this.RaiseExceptionIfNecessary();
+                return ((int)(this.results[1]));
+            }
+        }
+    }
+    
+    /// <remarks/>
+    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Web.Services", "2.0.50727.42")]
+    public delegate void CourierProvider_InsertCompletedEventHandler(object sender, CourierProvider_InsertCompletedEventArgs e);
+    
+    /// <remarks/>
+    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Web.Services", "2.0.50727.42")]
+    [System.Diagnostics.DebuggerStepThroughAttribute()]
+    [System.ComponentModel.DesignerCategoryAttribute("code")]
+    public partial class CourierProvider_InsertCompletedEventArgs : System.ComponentModel.AsyncCompletedEventArgs {
+        
+        private object[] results;
+        
+        internal CourierProvider_InsertCompletedEventArgs(object[] results, System.Exception exception, bool cancelled, object userState) : 
+                base(exception, cancelled, userState) {
+            this.results = results;
+        }
+        
+        /// <remarks/>
+        public Courier Result {
+            get {
+                this.RaiseExceptionIfNecessary();
+                return ((Courier)(this.results[0]));
+            }
+        }
+    }
+    
+    /// <remarks/>
+    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Web.Services", "2.0.50727.42")]
+    public delegate void CourierProvider_BulkInsertCompletedEventHandler(object sender, System.ComponentModel.AsyncCompletedEventArgs e);
+    
+    /// <remarks/>
+    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Web.Services", "2.0.50727.42")]
+    public delegate void CourierProvider_UpdateCompletedEventHandler(object sender, CourierProvider_UpdateCompletedEventArgs e);
+    
+    /// <remarks/>
+    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Web.Services", "2.0.50727.42")]
+    [System.Diagnostics.DebuggerStepThroughAttribute()]
+    [System.ComponentModel.DesignerCategoryAttribute("code")]
+    public partial class CourierProvider_UpdateCompletedEventArgs : System.ComponentModel.AsyncCompletedEventArgs {
+        
+        private object[] results;
+        
+        internal CourierProvider_UpdateCompletedEventArgs(object[] results, System.Exception exception, bool cancelled, object userState) : 
+                base(exception, cancelled, userState) {
+            this.results = results;
+        }
+        
+        /// <remarks/>
+        public Courier Result {
+            get {
+                this.RaiseExceptionIfNecessary();
+                return ((Courier)(this.results[0]));
+            }
+        }
+    }
+    
+    /// <remarks/>
+    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Web.Services", "2.0.50727.42")]
     public delegate void CreditCardProvider_DeleteCompletedEventHandler(object sender, CreditCardProvider_DeleteCompletedEventArgs e);
     
     /// <remarks/>
@@ -3746,6 +7833,352 @@ namespace netTiers.Petshop.Data.WebServiceClient.WsProxy {
             get {
                 this.RaiseExceptionIfNecessary();
                 return ((CreditCard)(this.results[0]));
+            }
+        }
+    }
+    
+    /// <remarks/>
+    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Web.Services", "2.0.50727.42")]
+    public delegate void InventoryProvider_DeleteCompletedEventHandler(object sender, InventoryProvider_DeleteCompletedEventArgs e);
+    
+    /// <remarks/>
+    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Web.Services", "2.0.50727.42")]
+    [System.Diagnostics.DebuggerStepThroughAttribute()]
+    [System.ComponentModel.DesignerCategoryAttribute("code")]
+    public partial class InventoryProvider_DeleteCompletedEventArgs : System.ComponentModel.AsyncCompletedEventArgs {
+        
+        private object[] results;
+        
+        internal InventoryProvider_DeleteCompletedEventArgs(object[] results, System.Exception exception, bool cancelled, object userState) : 
+                base(exception, cancelled, userState) {
+            this.results = results;
+        }
+        
+        /// <remarks/>
+        public bool Result {
+            get {
+                this.RaiseExceptionIfNecessary();
+                return ((bool)(this.results[0]));
+            }
+        }
+    }
+    
+    /// <remarks/>
+    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Web.Services", "2.0.50727.42")]
+    public delegate void InventoryProvider_FindCompletedEventHandler(object sender, InventoryProvider_FindCompletedEventArgs e);
+    
+    /// <remarks/>
+    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Web.Services", "2.0.50727.42")]
+    [System.Diagnostics.DebuggerStepThroughAttribute()]
+    [System.ComponentModel.DesignerCategoryAttribute("code")]
+    public partial class InventoryProvider_FindCompletedEventArgs : System.ComponentModel.AsyncCompletedEventArgs {
+        
+        private object[] results;
+        
+        internal InventoryProvider_FindCompletedEventArgs(object[] results, System.Exception exception, bool cancelled, object userState) : 
+                base(exception, cancelled, userState) {
+            this.results = results;
+        }
+        
+        /// <remarks/>
+        public Inventory[] Result {
+            get {
+                this.RaiseExceptionIfNecessary();
+                return ((Inventory[])(this.results[0]));
+            }
+        }
+        
+        /// <remarks/>
+        public int count {
+            get {
+                this.RaiseExceptionIfNecessary();
+                return ((int)(this.results[1]));
+            }
+        }
+    }
+    
+    /// <remarks/>
+    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Web.Services", "2.0.50727.42")]
+    public delegate void InventoryProvider_GetAllCompletedEventHandler(object sender, InventoryProvider_GetAllCompletedEventArgs e);
+    
+    /// <remarks/>
+    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Web.Services", "2.0.50727.42")]
+    [System.Diagnostics.DebuggerStepThroughAttribute()]
+    [System.ComponentModel.DesignerCategoryAttribute("code")]
+    public partial class InventoryProvider_GetAllCompletedEventArgs : System.ComponentModel.AsyncCompletedEventArgs {
+        
+        private object[] results;
+        
+        internal InventoryProvider_GetAllCompletedEventArgs(object[] results, System.Exception exception, bool cancelled, object userState) : 
+                base(exception, cancelled, userState) {
+            this.results = results;
+        }
+        
+        /// <remarks/>
+        public Inventory[] Result {
+            get {
+                this.RaiseExceptionIfNecessary();
+                return ((Inventory[])(this.results[0]));
+            }
+        }
+        
+        /// <remarks/>
+        public int count {
+            get {
+                this.RaiseExceptionIfNecessary();
+                return ((int)(this.results[1]));
+            }
+        }
+    }
+    
+    /// <remarks/>
+    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Web.Services", "2.0.50727.42")]
+    public delegate void InventoryProvider_GetPagedCompletedEventHandler(object sender, InventoryProvider_GetPagedCompletedEventArgs e);
+    
+    /// <remarks/>
+    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Web.Services", "2.0.50727.42")]
+    [System.Diagnostics.DebuggerStepThroughAttribute()]
+    [System.ComponentModel.DesignerCategoryAttribute("code")]
+    public partial class InventoryProvider_GetPagedCompletedEventArgs : System.ComponentModel.AsyncCompletedEventArgs {
+        
+        private object[] results;
+        
+        internal InventoryProvider_GetPagedCompletedEventArgs(object[] results, System.Exception exception, bool cancelled, object userState) : 
+                base(exception, cancelled, userState) {
+            this.results = results;
+        }
+        
+        /// <remarks/>
+        public Inventory[] Result {
+            get {
+                this.RaiseExceptionIfNecessary();
+                return ((Inventory[])(this.results[0]));
+            }
+        }
+        
+        /// <remarks/>
+        public int count {
+            get {
+                this.RaiseExceptionIfNecessary();
+                return ((int)(this.results[1]));
+            }
+        }
+    }
+    
+    /// <remarks/>
+    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Web.Services", "2.0.50727.42")]
+    public delegate void InventoryProvider_GetByItemIdCompletedEventHandler(object sender, InventoryProvider_GetByItemIdCompletedEventArgs e);
+    
+    /// <remarks/>
+    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Web.Services", "2.0.50727.42")]
+    [System.Diagnostics.DebuggerStepThroughAttribute()]
+    [System.ComponentModel.DesignerCategoryAttribute("code")]
+    public partial class InventoryProvider_GetByItemIdCompletedEventArgs : System.ComponentModel.AsyncCompletedEventArgs {
+        
+        private object[] results;
+        
+        internal InventoryProvider_GetByItemIdCompletedEventArgs(object[] results, System.Exception exception, bool cancelled, object userState) : 
+                base(exception, cancelled, userState) {
+            this.results = results;
+        }
+        
+        /// <remarks/>
+        public Inventory[] Result {
+            get {
+                this.RaiseExceptionIfNecessary();
+                return ((Inventory[])(this.results[0]));
+            }
+        }
+        
+        /// <remarks/>
+        public int count {
+            get {
+                this.RaiseExceptionIfNecessary();
+                return ((int)(this.results[1]));
+            }
+        }
+    }
+    
+    /// <remarks/>
+    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Web.Services", "2.0.50727.42")]
+    public delegate void InventoryProvider_GetBySuppIdCompletedEventHandler(object sender, InventoryProvider_GetBySuppIdCompletedEventArgs e);
+    
+    /// <remarks/>
+    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Web.Services", "2.0.50727.42")]
+    [System.Diagnostics.DebuggerStepThroughAttribute()]
+    [System.ComponentModel.DesignerCategoryAttribute("code")]
+    public partial class InventoryProvider_GetBySuppIdCompletedEventArgs : System.ComponentModel.AsyncCompletedEventArgs {
+        
+        private object[] results;
+        
+        internal InventoryProvider_GetBySuppIdCompletedEventArgs(object[] results, System.Exception exception, bool cancelled, object userState) : 
+                base(exception, cancelled, userState) {
+            this.results = results;
+        }
+        
+        /// <remarks/>
+        public Inventory[] Result {
+            get {
+                this.RaiseExceptionIfNecessary();
+                return ((Inventory[])(this.results[0]));
+            }
+        }
+        
+        /// <remarks/>
+        public int count {
+            get {
+                this.RaiseExceptionIfNecessary();
+                return ((int)(this.results[1]));
+            }
+        }
+    }
+    
+    /// <remarks/>
+    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Web.Services", "2.0.50727.42")]
+    public delegate void InventoryProvider_GetByItemIdSuppIdCompletedEventHandler(object sender, InventoryProvider_GetByItemIdSuppIdCompletedEventArgs e);
+    
+    /// <remarks/>
+    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Web.Services", "2.0.50727.42")]
+    [System.Diagnostics.DebuggerStepThroughAttribute()]
+    [System.ComponentModel.DesignerCategoryAttribute("code")]
+    public partial class InventoryProvider_GetByItemIdSuppIdCompletedEventArgs : System.ComponentModel.AsyncCompletedEventArgs {
+        
+        private object[] results;
+        
+        internal InventoryProvider_GetByItemIdSuppIdCompletedEventArgs(object[] results, System.Exception exception, bool cancelled, object userState) : 
+                base(exception, cancelled, userState) {
+            this.results = results;
+        }
+        
+        /// <remarks/>
+        public Inventory Result {
+            get {
+                this.RaiseExceptionIfNecessary();
+                return ((Inventory)(this.results[0]));
+            }
+        }
+        
+        /// <remarks/>
+        public int count {
+            get {
+                this.RaiseExceptionIfNecessary();
+                return ((int)(this.results[1]));
+            }
+        }
+    }
+    
+    /// <remarks/>
+    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Web.Services", "2.0.50727.42")]
+    public delegate void InventoryProvider_InsertCompletedEventHandler(object sender, InventoryProvider_InsertCompletedEventArgs e);
+    
+    /// <remarks/>
+    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Web.Services", "2.0.50727.42")]
+    [System.Diagnostics.DebuggerStepThroughAttribute()]
+    [System.ComponentModel.DesignerCategoryAttribute("code")]
+    public partial class InventoryProvider_InsertCompletedEventArgs : System.ComponentModel.AsyncCompletedEventArgs {
+        
+        private object[] results;
+        
+        internal InventoryProvider_InsertCompletedEventArgs(object[] results, System.Exception exception, bool cancelled, object userState) : 
+                base(exception, cancelled, userState) {
+            this.results = results;
+        }
+        
+        /// <remarks/>
+        public Inventory Result {
+            get {
+                this.RaiseExceptionIfNecessary();
+                return ((Inventory)(this.results[0]));
+            }
+        }
+    }
+    
+    /// <remarks/>
+    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Web.Services", "2.0.50727.42")]
+    public delegate void InventoryProvider_BulkInsertCompletedEventHandler(object sender, System.ComponentModel.AsyncCompletedEventArgs e);
+    
+    /// <remarks/>
+    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Web.Services", "2.0.50727.42")]
+    public delegate void InventoryProvider_UpdateCompletedEventHandler(object sender, InventoryProvider_UpdateCompletedEventArgs e);
+    
+    /// <remarks/>
+    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Web.Services", "2.0.50727.42")]
+    [System.Diagnostics.DebuggerStepThroughAttribute()]
+    [System.ComponentModel.DesignerCategoryAttribute("code")]
+    public partial class InventoryProvider_UpdateCompletedEventArgs : System.ComponentModel.AsyncCompletedEventArgs {
+        
+        private object[] results;
+        
+        internal InventoryProvider_UpdateCompletedEventArgs(object[] results, System.Exception exception, bool cancelled, object userState) : 
+                base(exception, cancelled, userState) {
+            this.results = results;
+        }
+        
+        /// <remarks/>
+        public Inventory Result {
+            get {
+                this.RaiseExceptionIfNecessary();
+                return ((Inventory)(this.results[0]));
+            }
+        }
+    }
+    
+    /// <remarks/>
+    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Web.Services", "2.0.50727.42")]
+    public delegate void InventoryProvider_GetMaxSupplierCompletedEventHandler(object sender, InventoryProvider_GetMaxSupplierCompletedEventArgs e);
+    
+    /// <remarks/>
+    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Web.Services", "2.0.50727.42")]
+    [System.Diagnostics.DebuggerStepThroughAttribute()]
+    [System.ComponentModel.DesignerCategoryAttribute("code")]
+    public partial class InventoryProvider_GetMaxSupplierCompletedEventArgs : System.ComponentModel.AsyncCompletedEventArgs {
+        
+        private object[] results;
+        
+        internal InventoryProvider_GetMaxSupplierCompletedEventArgs(object[] results, System.Exception exception, bool cancelled, object userState) : 
+                base(exception, cancelled, userState) {
+            this.results = results;
+        }
+        
+        /// <remarks/>
+        public Inventory[] Result {
+            get {
+                this.RaiseExceptionIfNecessary();
+                return ((Inventory[])(this.results[0]));
+            }
+        }
+    }
+    
+    /// <remarks/>
+    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Web.Services", "2.0.50727.42")]
+    public delegate void ItemProvider_GetBySuppIdFromInventoryCompletedEventHandler(object sender, ItemProvider_GetBySuppIdFromInventoryCompletedEventArgs e);
+    
+    /// <remarks/>
+    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Web.Services", "2.0.50727.42")]
+    [System.Diagnostics.DebuggerStepThroughAttribute()]
+    [System.ComponentModel.DesignerCategoryAttribute("code")]
+    public partial class ItemProvider_GetBySuppIdFromInventoryCompletedEventArgs : System.ComponentModel.AsyncCompletedEventArgs {
+        
+        private object[] results;
+        
+        internal ItemProvider_GetBySuppIdFromInventoryCompletedEventArgs(object[] results, System.Exception exception, bool cancelled, object userState) : 
+                base(exception, cancelled, userState) {
+            this.results = results;
+        }
+        
+        /// <remarks/>
+        public Item[] Result {
+            get {
+                this.RaiseExceptionIfNecessary();
+                return ((Item[])(this.results[0]));
+            }
+        }
+        
+        /// <remarks/>
+        public int count {
+            get {
+                this.RaiseExceptionIfNecessary();
+                return ((int)(this.results[1]));
             }
         }
     }
@@ -4004,6 +8437,1150 @@ namespace netTiers.Petshop.Data.WebServiceClient.WsProxy {
     
     /// <remarks/>
     [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Web.Services", "2.0.50727.42")]
+    public delegate void LineItemProvider_DeleteCompletedEventHandler(object sender, LineItemProvider_DeleteCompletedEventArgs e);
+    
+    /// <remarks/>
+    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Web.Services", "2.0.50727.42")]
+    [System.Diagnostics.DebuggerStepThroughAttribute()]
+    [System.ComponentModel.DesignerCategoryAttribute("code")]
+    public partial class LineItemProvider_DeleteCompletedEventArgs : System.ComponentModel.AsyncCompletedEventArgs {
+        
+        private object[] results;
+        
+        internal LineItemProvider_DeleteCompletedEventArgs(object[] results, System.Exception exception, bool cancelled, object userState) : 
+                base(exception, cancelled, userState) {
+            this.results = results;
+        }
+        
+        /// <remarks/>
+        public bool Result {
+            get {
+                this.RaiseExceptionIfNecessary();
+                return ((bool)(this.results[0]));
+            }
+        }
+    }
+    
+    /// <remarks/>
+    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Web.Services", "2.0.50727.42")]
+    public delegate void LineItemProvider_FindCompletedEventHandler(object sender, LineItemProvider_FindCompletedEventArgs e);
+    
+    /// <remarks/>
+    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Web.Services", "2.0.50727.42")]
+    [System.Diagnostics.DebuggerStepThroughAttribute()]
+    [System.ComponentModel.DesignerCategoryAttribute("code")]
+    public partial class LineItemProvider_FindCompletedEventArgs : System.ComponentModel.AsyncCompletedEventArgs {
+        
+        private object[] results;
+        
+        internal LineItemProvider_FindCompletedEventArgs(object[] results, System.Exception exception, bool cancelled, object userState) : 
+                base(exception, cancelled, userState) {
+            this.results = results;
+        }
+        
+        /// <remarks/>
+        public LineItem[] Result {
+            get {
+                this.RaiseExceptionIfNecessary();
+                return ((LineItem[])(this.results[0]));
+            }
+        }
+        
+        /// <remarks/>
+        public int count {
+            get {
+                this.RaiseExceptionIfNecessary();
+                return ((int)(this.results[1]));
+            }
+        }
+    }
+    
+    /// <remarks/>
+    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Web.Services", "2.0.50727.42")]
+    public delegate void LineItemProvider_GetAllCompletedEventHandler(object sender, LineItemProvider_GetAllCompletedEventArgs e);
+    
+    /// <remarks/>
+    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Web.Services", "2.0.50727.42")]
+    [System.Diagnostics.DebuggerStepThroughAttribute()]
+    [System.ComponentModel.DesignerCategoryAttribute("code")]
+    public partial class LineItemProvider_GetAllCompletedEventArgs : System.ComponentModel.AsyncCompletedEventArgs {
+        
+        private object[] results;
+        
+        internal LineItemProvider_GetAllCompletedEventArgs(object[] results, System.Exception exception, bool cancelled, object userState) : 
+                base(exception, cancelled, userState) {
+            this.results = results;
+        }
+        
+        /// <remarks/>
+        public LineItem[] Result {
+            get {
+                this.RaiseExceptionIfNecessary();
+                return ((LineItem[])(this.results[0]));
+            }
+        }
+        
+        /// <remarks/>
+        public int count {
+            get {
+                this.RaiseExceptionIfNecessary();
+                return ((int)(this.results[1]));
+            }
+        }
+    }
+    
+    /// <remarks/>
+    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Web.Services", "2.0.50727.42")]
+    public delegate void LineItemProvider_GetPagedCompletedEventHandler(object sender, LineItemProvider_GetPagedCompletedEventArgs e);
+    
+    /// <remarks/>
+    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Web.Services", "2.0.50727.42")]
+    [System.Diagnostics.DebuggerStepThroughAttribute()]
+    [System.ComponentModel.DesignerCategoryAttribute("code")]
+    public partial class LineItemProvider_GetPagedCompletedEventArgs : System.ComponentModel.AsyncCompletedEventArgs {
+        
+        private object[] results;
+        
+        internal LineItemProvider_GetPagedCompletedEventArgs(object[] results, System.Exception exception, bool cancelled, object userState) : 
+                base(exception, cancelled, userState) {
+            this.results = results;
+        }
+        
+        /// <remarks/>
+        public LineItem[] Result {
+            get {
+                this.RaiseExceptionIfNecessary();
+                return ((LineItem[])(this.results[0]));
+            }
+        }
+        
+        /// <remarks/>
+        public int count {
+            get {
+                this.RaiseExceptionIfNecessary();
+                return ((int)(this.results[1]));
+            }
+        }
+    }
+    
+    /// <remarks/>
+    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Web.Services", "2.0.50727.42")]
+    public delegate void LineItemProvider_GetByOrderIdCompletedEventHandler(object sender, LineItemProvider_GetByOrderIdCompletedEventArgs e);
+    
+    /// <remarks/>
+    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Web.Services", "2.0.50727.42")]
+    [System.Diagnostics.DebuggerStepThroughAttribute()]
+    [System.ComponentModel.DesignerCategoryAttribute("code")]
+    public partial class LineItemProvider_GetByOrderIdCompletedEventArgs : System.ComponentModel.AsyncCompletedEventArgs {
+        
+        private object[] results;
+        
+        internal LineItemProvider_GetByOrderIdCompletedEventArgs(object[] results, System.Exception exception, bool cancelled, object userState) : 
+                base(exception, cancelled, userState) {
+            this.results = results;
+        }
+        
+        /// <remarks/>
+        public LineItem[] Result {
+            get {
+                this.RaiseExceptionIfNecessary();
+                return ((LineItem[])(this.results[0]));
+            }
+        }
+        
+        /// <remarks/>
+        public int count {
+            get {
+                this.RaiseExceptionIfNecessary();
+                return ((int)(this.results[1]));
+            }
+        }
+    }
+    
+    /// <remarks/>
+    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Web.Services", "2.0.50727.42")]
+    public delegate void LineItemProvider_GetByItemIdCompletedEventHandler(object sender, LineItemProvider_GetByItemIdCompletedEventArgs e);
+    
+    /// <remarks/>
+    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Web.Services", "2.0.50727.42")]
+    [System.Diagnostics.DebuggerStepThroughAttribute()]
+    [System.ComponentModel.DesignerCategoryAttribute("code")]
+    public partial class LineItemProvider_GetByItemIdCompletedEventArgs : System.ComponentModel.AsyncCompletedEventArgs {
+        
+        private object[] results;
+        
+        internal LineItemProvider_GetByItemIdCompletedEventArgs(object[] results, System.Exception exception, bool cancelled, object userState) : 
+                base(exception, cancelled, userState) {
+            this.results = results;
+        }
+        
+        /// <remarks/>
+        public LineItem[] Result {
+            get {
+                this.RaiseExceptionIfNecessary();
+                return ((LineItem[])(this.results[0]));
+            }
+        }
+        
+        /// <remarks/>
+        public int count {
+            get {
+                this.RaiseExceptionIfNecessary();
+                return ((int)(this.results[1]));
+            }
+        }
+    }
+    
+    /// <remarks/>
+    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Web.Services", "2.0.50727.42")]
+    public delegate void LineItemProvider_GetByLineNumOrderIdCompletedEventHandler(object sender, LineItemProvider_GetByLineNumOrderIdCompletedEventArgs e);
+    
+    /// <remarks/>
+    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Web.Services", "2.0.50727.42")]
+    [System.Diagnostics.DebuggerStepThroughAttribute()]
+    [System.ComponentModel.DesignerCategoryAttribute("code")]
+    public partial class LineItemProvider_GetByLineNumOrderIdCompletedEventArgs : System.ComponentModel.AsyncCompletedEventArgs {
+        
+        private object[] results;
+        
+        internal LineItemProvider_GetByLineNumOrderIdCompletedEventArgs(object[] results, System.Exception exception, bool cancelled, object userState) : 
+                base(exception, cancelled, userState) {
+            this.results = results;
+        }
+        
+        /// <remarks/>
+        public LineItem Result {
+            get {
+                this.RaiseExceptionIfNecessary();
+                return ((LineItem)(this.results[0]));
+            }
+        }
+        
+        /// <remarks/>
+        public int count {
+            get {
+                this.RaiseExceptionIfNecessary();
+                return ((int)(this.results[1]));
+            }
+        }
+    }
+    
+    /// <remarks/>
+    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Web.Services", "2.0.50727.42")]
+    public delegate void LineItemProvider_InsertCompletedEventHandler(object sender, LineItemProvider_InsertCompletedEventArgs e);
+    
+    /// <remarks/>
+    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Web.Services", "2.0.50727.42")]
+    [System.Diagnostics.DebuggerStepThroughAttribute()]
+    [System.ComponentModel.DesignerCategoryAttribute("code")]
+    public partial class LineItemProvider_InsertCompletedEventArgs : System.ComponentModel.AsyncCompletedEventArgs {
+        
+        private object[] results;
+        
+        internal LineItemProvider_InsertCompletedEventArgs(object[] results, System.Exception exception, bool cancelled, object userState) : 
+                base(exception, cancelled, userState) {
+            this.results = results;
+        }
+        
+        /// <remarks/>
+        public LineItem Result {
+            get {
+                this.RaiseExceptionIfNecessary();
+                return ((LineItem)(this.results[0]));
+            }
+        }
+    }
+    
+    /// <remarks/>
+    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Web.Services", "2.0.50727.42")]
+    public delegate void LineItemProvider_BulkInsertCompletedEventHandler(object sender, System.ComponentModel.AsyncCompletedEventArgs e);
+    
+    /// <remarks/>
+    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Web.Services", "2.0.50727.42")]
+    public delegate void LineItemProvider_UpdateCompletedEventHandler(object sender, LineItemProvider_UpdateCompletedEventArgs e);
+    
+    /// <remarks/>
+    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Web.Services", "2.0.50727.42")]
+    [System.Diagnostics.DebuggerStepThroughAttribute()]
+    [System.ComponentModel.DesignerCategoryAttribute("code")]
+    public partial class LineItemProvider_UpdateCompletedEventArgs : System.ComponentModel.AsyncCompletedEventArgs {
+        
+        private object[] results;
+        
+        internal LineItemProvider_UpdateCompletedEventArgs(object[] results, System.Exception exception, bool cancelled, object userState) : 
+                base(exception, cancelled, userState) {
+            this.results = results;
+        }
+        
+        /// <remarks/>
+        public LineItem Result {
+            get {
+                this.RaiseExceptionIfNecessary();
+                return ((LineItem)(this.results[0]));
+            }
+        }
+    }
+    
+    /// <remarks/>
+    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Web.Services", "2.0.50727.42")]
+    public delegate void OrdersProvider_DeleteCompletedEventHandler(object sender, OrdersProvider_DeleteCompletedEventArgs e);
+    
+    /// <remarks/>
+    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Web.Services", "2.0.50727.42")]
+    [System.Diagnostics.DebuggerStepThroughAttribute()]
+    [System.ComponentModel.DesignerCategoryAttribute("code")]
+    public partial class OrdersProvider_DeleteCompletedEventArgs : System.ComponentModel.AsyncCompletedEventArgs {
+        
+        private object[] results;
+        
+        internal OrdersProvider_DeleteCompletedEventArgs(object[] results, System.Exception exception, bool cancelled, object userState) : 
+                base(exception, cancelled, userState) {
+            this.results = results;
+        }
+        
+        /// <remarks/>
+        public bool Result {
+            get {
+                this.RaiseExceptionIfNecessary();
+                return ((bool)(this.results[0]));
+            }
+        }
+    }
+    
+    /// <remarks/>
+    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Web.Services", "2.0.50727.42")]
+    public delegate void OrdersProvider_FindCompletedEventHandler(object sender, OrdersProvider_FindCompletedEventArgs e);
+    
+    /// <remarks/>
+    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Web.Services", "2.0.50727.42")]
+    [System.Diagnostics.DebuggerStepThroughAttribute()]
+    [System.ComponentModel.DesignerCategoryAttribute("code")]
+    public partial class OrdersProvider_FindCompletedEventArgs : System.ComponentModel.AsyncCompletedEventArgs {
+        
+        private object[] results;
+        
+        internal OrdersProvider_FindCompletedEventArgs(object[] results, System.Exception exception, bool cancelled, object userState) : 
+                base(exception, cancelled, userState) {
+            this.results = results;
+        }
+        
+        /// <remarks/>
+        public Orders[] Result {
+            get {
+                this.RaiseExceptionIfNecessary();
+                return ((Orders[])(this.results[0]));
+            }
+        }
+        
+        /// <remarks/>
+        public int count {
+            get {
+                this.RaiseExceptionIfNecessary();
+                return ((int)(this.results[1]));
+            }
+        }
+    }
+    
+    /// <remarks/>
+    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Web.Services", "2.0.50727.42")]
+    public delegate void OrdersProvider_GetAllCompletedEventHandler(object sender, OrdersProvider_GetAllCompletedEventArgs e);
+    
+    /// <remarks/>
+    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Web.Services", "2.0.50727.42")]
+    [System.Diagnostics.DebuggerStepThroughAttribute()]
+    [System.ComponentModel.DesignerCategoryAttribute("code")]
+    public partial class OrdersProvider_GetAllCompletedEventArgs : System.ComponentModel.AsyncCompletedEventArgs {
+        
+        private object[] results;
+        
+        internal OrdersProvider_GetAllCompletedEventArgs(object[] results, System.Exception exception, bool cancelled, object userState) : 
+                base(exception, cancelled, userState) {
+            this.results = results;
+        }
+        
+        /// <remarks/>
+        public Orders[] Result {
+            get {
+                this.RaiseExceptionIfNecessary();
+                return ((Orders[])(this.results[0]));
+            }
+        }
+        
+        /// <remarks/>
+        public int count {
+            get {
+                this.RaiseExceptionIfNecessary();
+                return ((int)(this.results[1]));
+            }
+        }
+    }
+    
+    /// <remarks/>
+    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Web.Services", "2.0.50727.42")]
+    public delegate void OrdersProvider_GetPagedCompletedEventHandler(object sender, OrdersProvider_GetPagedCompletedEventArgs e);
+    
+    /// <remarks/>
+    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Web.Services", "2.0.50727.42")]
+    [System.Diagnostics.DebuggerStepThroughAttribute()]
+    [System.ComponentModel.DesignerCategoryAttribute("code")]
+    public partial class OrdersProvider_GetPagedCompletedEventArgs : System.ComponentModel.AsyncCompletedEventArgs {
+        
+        private object[] results;
+        
+        internal OrdersProvider_GetPagedCompletedEventArgs(object[] results, System.Exception exception, bool cancelled, object userState) : 
+                base(exception, cancelled, userState) {
+            this.results = results;
+        }
+        
+        /// <remarks/>
+        public Orders[] Result {
+            get {
+                this.RaiseExceptionIfNecessary();
+                return ((Orders[])(this.results[0]));
+            }
+        }
+        
+        /// <remarks/>
+        public int count {
+            get {
+                this.RaiseExceptionIfNecessary();
+                return ((int)(this.results[1]));
+            }
+        }
+    }
+    
+    /// <remarks/>
+    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Web.Services", "2.0.50727.42")]
+    public delegate void OrdersProvider_GetByAccountIdCompletedEventHandler(object sender, OrdersProvider_GetByAccountIdCompletedEventArgs e);
+    
+    /// <remarks/>
+    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Web.Services", "2.0.50727.42")]
+    [System.Diagnostics.DebuggerStepThroughAttribute()]
+    [System.ComponentModel.DesignerCategoryAttribute("code")]
+    public partial class OrdersProvider_GetByAccountIdCompletedEventArgs : System.ComponentModel.AsyncCompletedEventArgs {
+        
+        private object[] results;
+        
+        internal OrdersProvider_GetByAccountIdCompletedEventArgs(object[] results, System.Exception exception, bool cancelled, object userState) : 
+                base(exception, cancelled, userState) {
+            this.results = results;
+        }
+        
+        /// <remarks/>
+        public Orders[] Result {
+            get {
+                this.RaiseExceptionIfNecessary();
+                return ((Orders[])(this.results[0]));
+            }
+        }
+        
+        /// <remarks/>
+        public int count {
+            get {
+                this.RaiseExceptionIfNecessary();
+                return ((int)(this.results[1]));
+            }
+        }
+    }
+    
+    /// <remarks/>
+    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Web.Services", "2.0.50727.42")]
+    public delegate void OrdersProvider_GetByCourierIdCompletedEventHandler(object sender, OrdersProvider_GetByCourierIdCompletedEventArgs e);
+    
+    /// <remarks/>
+    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Web.Services", "2.0.50727.42")]
+    [System.Diagnostics.DebuggerStepThroughAttribute()]
+    [System.ComponentModel.DesignerCategoryAttribute("code")]
+    public partial class OrdersProvider_GetByCourierIdCompletedEventArgs : System.ComponentModel.AsyncCompletedEventArgs {
+        
+        private object[] results;
+        
+        internal OrdersProvider_GetByCourierIdCompletedEventArgs(object[] results, System.Exception exception, bool cancelled, object userState) : 
+                base(exception, cancelled, userState) {
+            this.results = results;
+        }
+        
+        /// <remarks/>
+        public Orders[] Result {
+            get {
+                this.RaiseExceptionIfNecessary();
+                return ((Orders[])(this.results[0]));
+            }
+        }
+        
+        /// <remarks/>
+        public int count {
+            get {
+                this.RaiseExceptionIfNecessary();
+                return ((int)(this.results[1]));
+            }
+        }
+    }
+    
+    /// <remarks/>
+    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Web.Services", "2.0.50727.42")]
+    public delegate void OrdersProvider_GetByCreditCardIdCompletedEventHandler(object sender, OrdersProvider_GetByCreditCardIdCompletedEventArgs e);
+    
+    /// <remarks/>
+    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Web.Services", "2.0.50727.42")]
+    [System.Diagnostics.DebuggerStepThroughAttribute()]
+    [System.ComponentModel.DesignerCategoryAttribute("code")]
+    public partial class OrdersProvider_GetByCreditCardIdCompletedEventArgs : System.ComponentModel.AsyncCompletedEventArgs {
+        
+        private object[] results;
+        
+        internal OrdersProvider_GetByCreditCardIdCompletedEventArgs(object[] results, System.Exception exception, bool cancelled, object userState) : 
+                base(exception, cancelled, userState) {
+            this.results = results;
+        }
+        
+        /// <remarks/>
+        public Orders[] Result {
+            get {
+                this.RaiseExceptionIfNecessary();
+                return ((Orders[])(this.results[0]));
+            }
+        }
+        
+        /// <remarks/>
+        public int count {
+            get {
+                this.RaiseExceptionIfNecessary();
+                return ((int)(this.results[1]));
+            }
+        }
+    }
+    
+    /// <remarks/>
+    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Web.Services", "2.0.50727.42")]
+    public delegate void OrdersProvider_GetByOrderIdCompletedEventHandler(object sender, OrdersProvider_GetByOrderIdCompletedEventArgs e);
+    
+    /// <remarks/>
+    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Web.Services", "2.0.50727.42")]
+    [System.Diagnostics.DebuggerStepThroughAttribute()]
+    [System.ComponentModel.DesignerCategoryAttribute("code")]
+    public partial class OrdersProvider_GetByOrderIdCompletedEventArgs : System.ComponentModel.AsyncCompletedEventArgs {
+        
+        private object[] results;
+        
+        internal OrdersProvider_GetByOrderIdCompletedEventArgs(object[] results, System.Exception exception, bool cancelled, object userState) : 
+                base(exception, cancelled, userState) {
+            this.results = results;
+        }
+        
+        /// <remarks/>
+        public Orders Result {
+            get {
+                this.RaiseExceptionIfNecessary();
+                return ((Orders)(this.results[0]));
+            }
+        }
+        
+        /// <remarks/>
+        public int count {
+            get {
+                this.RaiseExceptionIfNecessary();
+                return ((int)(this.results[1]));
+            }
+        }
+    }
+    
+    /// <remarks/>
+    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Web.Services", "2.0.50727.42")]
+    public delegate void OrdersProvider_InsertCompletedEventHandler(object sender, OrdersProvider_InsertCompletedEventArgs e);
+    
+    /// <remarks/>
+    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Web.Services", "2.0.50727.42")]
+    [System.Diagnostics.DebuggerStepThroughAttribute()]
+    [System.ComponentModel.DesignerCategoryAttribute("code")]
+    public partial class OrdersProvider_InsertCompletedEventArgs : System.ComponentModel.AsyncCompletedEventArgs {
+        
+        private object[] results;
+        
+        internal OrdersProvider_InsertCompletedEventArgs(object[] results, System.Exception exception, bool cancelled, object userState) : 
+                base(exception, cancelled, userState) {
+            this.results = results;
+        }
+        
+        /// <remarks/>
+        public Orders Result {
+            get {
+                this.RaiseExceptionIfNecessary();
+                return ((Orders)(this.results[0]));
+            }
+        }
+    }
+    
+    /// <remarks/>
+    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Web.Services", "2.0.50727.42")]
+    public delegate void OrdersProvider_BulkInsertCompletedEventHandler(object sender, System.ComponentModel.AsyncCompletedEventArgs e);
+    
+    /// <remarks/>
+    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Web.Services", "2.0.50727.42")]
+    public delegate void OrdersProvider_UpdateCompletedEventHandler(object sender, OrdersProvider_UpdateCompletedEventArgs e);
+    
+    /// <remarks/>
+    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Web.Services", "2.0.50727.42")]
+    [System.Diagnostics.DebuggerStepThroughAttribute()]
+    [System.ComponentModel.DesignerCategoryAttribute("code")]
+    public partial class OrdersProvider_UpdateCompletedEventArgs : System.ComponentModel.AsyncCompletedEventArgs {
+        
+        private object[] results;
+        
+        internal OrdersProvider_UpdateCompletedEventArgs(object[] results, System.Exception exception, bool cancelled, object userState) : 
+                base(exception, cancelled, userState) {
+            this.results = results;
+        }
+        
+        /// <remarks/>
+        public Orders Result {
+            get {
+                this.RaiseExceptionIfNecessary();
+                return ((Orders)(this.results[0]));
+            }
+        }
+    }
+    
+    /// <remarks/>
+    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Web.Services", "2.0.50727.42")]
+    public delegate void OrderStatusProvider_DeleteCompletedEventHandler(object sender, OrderStatusProvider_DeleteCompletedEventArgs e);
+    
+    /// <remarks/>
+    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Web.Services", "2.0.50727.42")]
+    [System.Diagnostics.DebuggerStepThroughAttribute()]
+    [System.ComponentModel.DesignerCategoryAttribute("code")]
+    public partial class OrderStatusProvider_DeleteCompletedEventArgs : System.ComponentModel.AsyncCompletedEventArgs {
+        
+        private object[] results;
+        
+        internal OrderStatusProvider_DeleteCompletedEventArgs(object[] results, System.Exception exception, bool cancelled, object userState) : 
+                base(exception, cancelled, userState) {
+            this.results = results;
+        }
+        
+        /// <remarks/>
+        public bool Result {
+            get {
+                this.RaiseExceptionIfNecessary();
+                return ((bool)(this.results[0]));
+            }
+        }
+    }
+    
+    /// <remarks/>
+    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Web.Services", "2.0.50727.42")]
+    public delegate void OrderStatusProvider_FindCompletedEventHandler(object sender, OrderStatusProvider_FindCompletedEventArgs e);
+    
+    /// <remarks/>
+    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Web.Services", "2.0.50727.42")]
+    [System.Diagnostics.DebuggerStepThroughAttribute()]
+    [System.ComponentModel.DesignerCategoryAttribute("code")]
+    public partial class OrderStatusProvider_FindCompletedEventArgs : System.ComponentModel.AsyncCompletedEventArgs {
+        
+        private object[] results;
+        
+        internal OrderStatusProvider_FindCompletedEventArgs(object[] results, System.Exception exception, bool cancelled, object userState) : 
+                base(exception, cancelled, userState) {
+            this.results = results;
+        }
+        
+        /// <remarks/>
+        public OrderStatus[] Result {
+            get {
+                this.RaiseExceptionIfNecessary();
+                return ((OrderStatus[])(this.results[0]));
+            }
+        }
+        
+        /// <remarks/>
+        public int count {
+            get {
+                this.RaiseExceptionIfNecessary();
+                return ((int)(this.results[1]));
+            }
+        }
+    }
+    
+    /// <remarks/>
+    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Web.Services", "2.0.50727.42")]
+    public delegate void OrderStatusProvider_GetAllCompletedEventHandler(object sender, OrderStatusProvider_GetAllCompletedEventArgs e);
+    
+    /// <remarks/>
+    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Web.Services", "2.0.50727.42")]
+    [System.Diagnostics.DebuggerStepThroughAttribute()]
+    [System.ComponentModel.DesignerCategoryAttribute("code")]
+    public partial class OrderStatusProvider_GetAllCompletedEventArgs : System.ComponentModel.AsyncCompletedEventArgs {
+        
+        private object[] results;
+        
+        internal OrderStatusProvider_GetAllCompletedEventArgs(object[] results, System.Exception exception, bool cancelled, object userState) : 
+                base(exception, cancelled, userState) {
+            this.results = results;
+        }
+        
+        /// <remarks/>
+        public OrderStatus[] Result {
+            get {
+                this.RaiseExceptionIfNecessary();
+                return ((OrderStatus[])(this.results[0]));
+            }
+        }
+        
+        /// <remarks/>
+        public int count {
+            get {
+                this.RaiseExceptionIfNecessary();
+                return ((int)(this.results[1]));
+            }
+        }
+    }
+    
+    /// <remarks/>
+    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Web.Services", "2.0.50727.42")]
+    public delegate void OrderStatusProvider_GetPagedCompletedEventHandler(object sender, OrderStatusProvider_GetPagedCompletedEventArgs e);
+    
+    /// <remarks/>
+    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Web.Services", "2.0.50727.42")]
+    [System.Diagnostics.DebuggerStepThroughAttribute()]
+    [System.ComponentModel.DesignerCategoryAttribute("code")]
+    public partial class OrderStatusProvider_GetPagedCompletedEventArgs : System.ComponentModel.AsyncCompletedEventArgs {
+        
+        private object[] results;
+        
+        internal OrderStatusProvider_GetPagedCompletedEventArgs(object[] results, System.Exception exception, bool cancelled, object userState) : 
+                base(exception, cancelled, userState) {
+            this.results = results;
+        }
+        
+        /// <remarks/>
+        public OrderStatus[] Result {
+            get {
+                this.RaiseExceptionIfNecessary();
+                return ((OrderStatus[])(this.results[0]));
+            }
+        }
+        
+        /// <remarks/>
+        public int count {
+            get {
+                this.RaiseExceptionIfNecessary();
+                return ((int)(this.results[1]));
+            }
+        }
+    }
+    
+    /// <remarks/>
+    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Web.Services", "2.0.50727.42")]
+    public delegate void OrderStatusProvider_GetByOrderIdCompletedEventHandler(object sender, OrderStatusProvider_GetByOrderIdCompletedEventArgs e);
+    
+    /// <remarks/>
+    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Web.Services", "2.0.50727.42")]
+    [System.Diagnostics.DebuggerStepThroughAttribute()]
+    [System.ComponentModel.DesignerCategoryAttribute("code")]
+    public partial class OrderStatusProvider_GetByOrderIdCompletedEventArgs : System.ComponentModel.AsyncCompletedEventArgs {
+        
+        private object[] results;
+        
+        internal OrderStatusProvider_GetByOrderIdCompletedEventArgs(object[] results, System.Exception exception, bool cancelled, object userState) : 
+                base(exception, cancelled, userState) {
+            this.results = results;
+        }
+        
+        /// <remarks/>
+        public OrderStatus[] Result {
+            get {
+                this.RaiseExceptionIfNecessary();
+                return ((OrderStatus[])(this.results[0]));
+            }
+        }
+        
+        /// <remarks/>
+        public int count {
+            get {
+                this.RaiseExceptionIfNecessary();
+                return ((int)(this.results[1]));
+            }
+        }
+    }
+    
+    /// <remarks/>
+    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Web.Services", "2.0.50727.42")]
+    public delegate void OrderStatusProvider_GetByOrderStatusIdCompletedEventHandler(object sender, OrderStatusProvider_GetByOrderStatusIdCompletedEventArgs e);
+    
+    /// <remarks/>
+    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Web.Services", "2.0.50727.42")]
+    [System.Diagnostics.DebuggerStepThroughAttribute()]
+    [System.ComponentModel.DesignerCategoryAttribute("code")]
+    public partial class OrderStatusProvider_GetByOrderStatusIdCompletedEventArgs : System.ComponentModel.AsyncCompletedEventArgs {
+        
+        private object[] results;
+        
+        internal OrderStatusProvider_GetByOrderStatusIdCompletedEventArgs(object[] results, System.Exception exception, bool cancelled, object userState) : 
+                base(exception, cancelled, userState) {
+            this.results = results;
+        }
+        
+        /// <remarks/>
+        public OrderStatus[] Result {
+            get {
+                this.RaiseExceptionIfNecessary();
+                return ((OrderStatus[])(this.results[0]));
+            }
+        }
+        
+        /// <remarks/>
+        public int count {
+            get {
+                this.RaiseExceptionIfNecessary();
+                return ((int)(this.results[1]));
+            }
+        }
+    }
+    
+    /// <remarks/>
+    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Web.Services", "2.0.50727.42")]
+    public delegate void OrderStatusProvider_GetByLineNumOrderIdCompletedEventHandler(object sender, OrderStatusProvider_GetByLineNumOrderIdCompletedEventArgs e);
+    
+    /// <remarks/>
+    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Web.Services", "2.0.50727.42")]
+    [System.Diagnostics.DebuggerStepThroughAttribute()]
+    [System.ComponentModel.DesignerCategoryAttribute("code")]
+    public partial class OrderStatusProvider_GetByLineNumOrderIdCompletedEventArgs : System.ComponentModel.AsyncCompletedEventArgs {
+        
+        private object[] results;
+        
+        internal OrderStatusProvider_GetByLineNumOrderIdCompletedEventArgs(object[] results, System.Exception exception, bool cancelled, object userState) : 
+                base(exception, cancelled, userState) {
+            this.results = results;
+        }
+        
+        /// <remarks/>
+        public OrderStatus Result {
+            get {
+                this.RaiseExceptionIfNecessary();
+                return ((OrderStatus)(this.results[0]));
+            }
+        }
+        
+        /// <remarks/>
+        public int count {
+            get {
+                this.RaiseExceptionIfNecessary();
+                return ((int)(this.results[1]));
+            }
+        }
+    }
+    
+    /// <remarks/>
+    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Web.Services", "2.0.50727.42")]
+    public delegate void OrderStatusProvider_InsertCompletedEventHandler(object sender, OrderStatusProvider_InsertCompletedEventArgs e);
+    
+    /// <remarks/>
+    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Web.Services", "2.0.50727.42")]
+    [System.Diagnostics.DebuggerStepThroughAttribute()]
+    [System.ComponentModel.DesignerCategoryAttribute("code")]
+    public partial class OrderStatusProvider_InsertCompletedEventArgs : System.ComponentModel.AsyncCompletedEventArgs {
+        
+        private object[] results;
+        
+        internal OrderStatusProvider_InsertCompletedEventArgs(object[] results, System.Exception exception, bool cancelled, object userState) : 
+                base(exception, cancelled, userState) {
+            this.results = results;
+        }
+        
+        /// <remarks/>
+        public OrderStatus Result {
+            get {
+                this.RaiseExceptionIfNecessary();
+                return ((OrderStatus)(this.results[0]));
+            }
+        }
+    }
+    
+    /// <remarks/>
+    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Web.Services", "2.0.50727.42")]
+    public delegate void OrderStatusProvider_BulkInsertCompletedEventHandler(object sender, System.ComponentModel.AsyncCompletedEventArgs e);
+    
+    /// <remarks/>
+    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Web.Services", "2.0.50727.42")]
+    public delegate void OrderStatusProvider_UpdateCompletedEventHandler(object sender, OrderStatusProvider_UpdateCompletedEventArgs e);
+    
+    /// <remarks/>
+    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Web.Services", "2.0.50727.42")]
+    [System.Diagnostics.DebuggerStepThroughAttribute()]
+    [System.ComponentModel.DesignerCategoryAttribute("code")]
+    public partial class OrderStatusProvider_UpdateCompletedEventArgs : System.ComponentModel.AsyncCompletedEventArgs {
+        
+        private object[] results;
+        
+        internal OrderStatusProvider_UpdateCompletedEventArgs(object[] results, System.Exception exception, bool cancelled, object userState) : 
+                base(exception, cancelled, userState) {
+            this.results = results;
+        }
+        
+        /// <remarks/>
+        public OrderStatus Result {
+            get {
+                this.RaiseExceptionIfNecessary();
+                return ((OrderStatus)(this.results[0]));
+            }
+        }
+    }
+    
+    /// <remarks/>
+    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Web.Services", "2.0.50727.42")]
+    public delegate void OrderStatusTypeProvider_DeleteCompletedEventHandler(object sender, OrderStatusTypeProvider_DeleteCompletedEventArgs e);
+    
+    /// <remarks/>
+    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Web.Services", "2.0.50727.42")]
+    [System.Diagnostics.DebuggerStepThroughAttribute()]
+    [System.ComponentModel.DesignerCategoryAttribute("code")]
+    public partial class OrderStatusTypeProvider_DeleteCompletedEventArgs : System.ComponentModel.AsyncCompletedEventArgs {
+        
+        private object[] results;
+        
+        internal OrderStatusTypeProvider_DeleteCompletedEventArgs(object[] results, System.Exception exception, bool cancelled, object userState) : 
+                base(exception, cancelled, userState) {
+            this.results = results;
+        }
+        
+        /// <remarks/>
+        public bool Result {
+            get {
+                this.RaiseExceptionIfNecessary();
+                return ((bool)(this.results[0]));
+            }
+        }
+    }
+    
+    /// <remarks/>
+    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Web.Services", "2.0.50727.42")]
+    public delegate void OrderStatusTypeProvider_FindCompletedEventHandler(object sender, OrderStatusTypeProvider_FindCompletedEventArgs e);
+    
+    /// <remarks/>
+    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Web.Services", "2.0.50727.42")]
+    [System.Diagnostics.DebuggerStepThroughAttribute()]
+    [System.ComponentModel.DesignerCategoryAttribute("code")]
+    public partial class OrderStatusTypeProvider_FindCompletedEventArgs : System.ComponentModel.AsyncCompletedEventArgs {
+        
+        private object[] results;
+        
+        internal OrderStatusTypeProvider_FindCompletedEventArgs(object[] results, System.Exception exception, bool cancelled, object userState) : 
+                base(exception, cancelled, userState) {
+            this.results = results;
+        }
+        
+        /// <remarks/>
+        public OrderStatusType[] Result {
+            get {
+                this.RaiseExceptionIfNecessary();
+                return ((OrderStatusType[])(this.results[0]));
+            }
+        }
+        
+        /// <remarks/>
+        public int count {
+            get {
+                this.RaiseExceptionIfNecessary();
+                return ((int)(this.results[1]));
+            }
+        }
+    }
+    
+    /// <remarks/>
+    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Web.Services", "2.0.50727.42")]
+    public delegate void OrderStatusTypeProvider_GetAllCompletedEventHandler(object sender, OrderStatusTypeProvider_GetAllCompletedEventArgs e);
+    
+    /// <remarks/>
+    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Web.Services", "2.0.50727.42")]
+    [System.Diagnostics.DebuggerStepThroughAttribute()]
+    [System.ComponentModel.DesignerCategoryAttribute("code")]
+    public partial class OrderStatusTypeProvider_GetAllCompletedEventArgs : System.ComponentModel.AsyncCompletedEventArgs {
+        
+        private object[] results;
+        
+        internal OrderStatusTypeProvider_GetAllCompletedEventArgs(object[] results, System.Exception exception, bool cancelled, object userState) : 
+                base(exception, cancelled, userState) {
+            this.results = results;
+        }
+        
+        /// <remarks/>
+        public OrderStatusType[] Result {
+            get {
+                this.RaiseExceptionIfNecessary();
+                return ((OrderStatusType[])(this.results[0]));
+            }
+        }
+        
+        /// <remarks/>
+        public int count {
+            get {
+                this.RaiseExceptionIfNecessary();
+                return ((int)(this.results[1]));
+            }
+        }
+    }
+    
+    /// <remarks/>
+    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Web.Services", "2.0.50727.42")]
+    public delegate void OrderStatusTypeProvider_GetPagedCompletedEventHandler(object sender, OrderStatusTypeProvider_GetPagedCompletedEventArgs e);
+    
+    /// <remarks/>
+    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Web.Services", "2.0.50727.42")]
+    [System.Diagnostics.DebuggerStepThroughAttribute()]
+    [System.ComponentModel.DesignerCategoryAttribute("code")]
+    public partial class OrderStatusTypeProvider_GetPagedCompletedEventArgs : System.ComponentModel.AsyncCompletedEventArgs {
+        
+        private object[] results;
+        
+        internal OrderStatusTypeProvider_GetPagedCompletedEventArgs(object[] results, System.Exception exception, bool cancelled, object userState) : 
+                base(exception, cancelled, userState) {
+            this.results = results;
+        }
+        
+        /// <remarks/>
+        public OrderStatusType[] Result {
+            get {
+                this.RaiseExceptionIfNecessary();
+                return ((OrderStatusType[])(this.results[0]));
+            }
+        }
+        
+        /// <remarks/>
+        public int count {
+            get {
+                this.RaiseExceptionIfNecessary();
+                return ((int)(this.results[1]));
+            }
+        }
+    }
+    
+    /// <remarks/>
+    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Web.Services", "2.0.50727.42")]
+    public delegate void OrderStatusTypeProvider_GetByOrderStatusIdCompletedEventHandler(object sender, OrderStatusTypeProvider_GetByOrderStatusIdCompletedEventArgs e);
+    
+    /// <remarks/>
+    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Web.Services", "2.0.50727.42")]
+    [System.Diagnostics.DebuggerStepThroughAttribute()]
+    [System.ComponentModel.DesignerCategoryAttribute("code")]
+    public partial class OrderStatusTypeProvider_GetByOrderStatusIdCompletedEventArgs : System.ComponentModel.AsyncCompletedEventArgs {
+        
+        private object[] results;
+        
+        internal OrderStatusTypeProvider_GetByOrderStatusIdCompletedEventArgs(object[] results, System.Exception exception, bool cancelled, object userState) : 
+                base(exception, cancelled, userState) {
+            this.results = results;
+        }
+        
+        /// <remarks/>
+        public OrderStatusType Result {
+            get {
+                this.RaiseExceptionIfNecessary();
+                return ((OrderStatusType)(this.results[0]));
+            }
+        }
+        
+        /// <remarks/>
+        public int count {
+            get {
+                this.RaiseExceptionIfNecessary();
+                return ((int)(this.results[1]));
+            }
+        }
+    }
+    
+    /// <remarks/>
+    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Web.Services", "2.0.50727.42")]
+    public delegate void OrderStatusTypeProvider_GetByOrderStatusCompletedEventHandler(object sender, OrderStatusTypeProvider_GetByOrderStatusCompletedEventArgs e);
+    
+    /// <remarks/>
+    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Web.Services", "2.0.50727.42")]
+    [System.Diagnostics.DebuggerStepThroughAttribute()]
+    [System.ComponentModel.DesignerCategoryAttribute("code")]
+    public partial class OrderStatusTypeProvider_GetByOrderStatusCompletedEventArgs : System.ComponentModel.AsyncCompletedEventArgs {
+        
+        private object[] results;
+        
+        internal OrderStatusTypeProvider_GetByOrderStatusCompletedEventArgs(object[] results, System.Exception exception, bool cancelled, object userState) : 
+                base(exception, cancelled, userState) {
+            this.results = results;
+        }
+        
+        /// <remarks/>
+        public OrderStatusType Result {
+            get {
+                this.RaiseExceptionIfNecessary();
+                return ((OrderStatusType)(this.results[0]));
+            }
+        }
+        
+        /// <remarks/>
+        public int count {
+            get {
+                this.RaiseExceptionIfNecessary();
+                return ((int)(this.results[1]));
+            }
+        }
+    }
+    
+    /// <remarks/>
+    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Web.Services", "2.0.50727.42")]
+    public delegate void OrderStatusTypeProvider_InsertCompletedEventHandler(object sender, OrderStatusTypeProvider_InsertCompletedEventArgs e);
+    
+    /// <remarks/>
+    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Web.Services", "2.0.50727.42")]
+    [System.Diagnostics.DebuggerStepThroughAttribute()]
+    [System.ComponentModel.DesignerCategoryAttribute("code")]
+    public partial class OrderStatusTypeProvider_InsertCompletedEventArgs : System.ComponentModel.AsyncCompletedEventArgs {
+        
+        private object[] results;
+        
+        internal OrderStatusTypeProvider_InsertCompletedEventArgs(object[] results, System.Exception exception, bool cancelled, object userState) : 
+                base(exception, cancelled, userState) {
+            this.results = results;
+        }
+        
+        /// <remarks/>
+        public OrderStatusType Result {
+            get {
+                this.RaiseExceptionIfNecessary();
+                return ((OrderStatusType)(this.results[0]));
+            }
+        }
+    }
+    
+    /// <remarks/>
+    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Web.Services", "2.0.50727.42")]
+    public delegate void OrderStatusTypeProvider_BulkInsertCompletedEventHandler(object sender, System.ComponentModel.AsyncCompletedEventArgs e);
+    
+    /// <remarks/>
+    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Web.Services", "2.0.50727.42")]
+    public delegate void OrderStatusTypeProvider_UpdateCompletedEventHandler(object sender, OrderStatusTypeProvider_UpdateCompletedEventArgs e);
+    
+    /// <remarks/>
+    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Web.Services", "2.0.50727.42")]
+    [System.Diagnostics.DebuggerStepThroughAttribute()]
+    [System.ComponentModel.DesignerCategoryAttribute("code")]
+    public partial class OrderStatusTypeProvider_UpdateCompletedEventArgs : System.ComponentModel.AsyncCompletedEventArgs {
+        
+        private object[] results;
+        
+        internal OrderStatusTypeProvider_UpdateCompletedEventArgs(object[] results, System.Exception exception, bool cancelled, object userState) : 
+                base(exception, cancelled, userState) {
+            this.results = results;
+        }
+        
+        /// <remarks/>
+        public OrderStatusType Result {
+            get {
+                this.RaiseExceptionIfNecessary();
+                return ((OrderStatusType)(this.results[0]));
+            }
+        }
+    }
+    
+    /// <remarks/>
+    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Web.Services", "2.0.50727.42")]
     public delegate void ProductProvider_DeleteCompletedEventHandler(object sender, ProductProvider_DeleteCompletedEventArgs e);
     
     /// <remarks/>
@@ -4250,6 +9827,258 @@ namespace netTiers.Petshop.Data.WebServiceClient.WsProxy {
             get {
                 this.RaiseExceptionIfNecessary();
                 return ((Product)(this.results[0]));
+            }
+        }
+    }
+    
+    /// <remarks/>
+    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Web.Services", "2.0.50727.42")]
+    public delegate void SupplierProvider_GetByItemIdFromInventoryCompletedEventHandler(object sender, SupplierProvider_GetByItemIdFromInventoryCompletedEventArgs e);
+    
+    /// <remarks/>
+    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Web.Services", "2.0.50727.42")]
+    [System.Diagnostics.DebuggerStepThroughAttribute()]
+    [System.ComponentModel.DesignerCategoryAttribute("code")]
+    public partial class SupplierProvider_GetByItemIdFromInventoryCompletedEventArgs : System.ComponentModel.AsyncCompletedEventArgs {
+        
+        private object[] results;
+        
+        internal SupplierProvider_GetByItemIdFromInventoryCompletedEventArgs(object[] results, System.Exception exception, bool cancelled, object userState) : 
+                base(exception, cancelled, userState) {
+            this.results = results;
+        }
+        
+        /// <remarks/>
+        public Supplier[] Result {
+            get {
+                this.RaiseExceptionIfNecessary();
+                return ((Supplier[])(this.results[0]));
+            }
+        }
+        
+        /// <remarks/>
+        public int count {
+            get {
+                this.RaiseExceptionIfNecessary();
+                return ((int)(this.results[1]));
+            }
+        }
+    }
+    
+    /// <remarks/>
+    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Web.Services", "2.0.50727.42")]
+    public delegate void SupplierProvider_DeleteCompletedEventHandler(object sender, SupplierProvider_DeleteCompletedEventArgs e);
+    
+    /// <remarks/>
+    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Web.Services", "2.0.50727.42")]
+    [System.Diagnostics.DebuggerStepThroughAttribute()]
+    [System.ComponentModel.DesignerCategoryAttribute("code")]
+    public partial class SupplierProvider_DeleteCompletedEventArgs : System.ComponentModel.AsyncCompletedEventArgs {
+        
+        private object[] results;
+        
+        internal SupplierProvider_DeleteCompletedEventArgs(object[] results, System.Exception exception, bool cancelled, object userState) : 
+                base(exception, cancelled, userState) {
+            this.results = results;
+        }
+        
+        /// <remarks/>
+        public bool Result {
+            get {
+                this.RaiseExceptionIfNecessary();
+                return ((bool)(this.results[0]));
+            }
+        }
+    }
+    
+    /// <remarks/>
+    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Web.Services", "2.0.50727.42")]
+    public delegate void SupplierProvider_FindCompletedEventHandler(object sender, SupplierProvider_FindCompletedEventArgs e);
+    
+    /// <remarks/>
+    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Web.Services", "2.0.50727.42")]
+    [System.Diagnostics.DebuggerStepThroughAttribute()]
+    [System.ComponentModel.DesignerCategoryAttribute("code")]
+    public partial class SupplierProvider_FindCompletedEventArgs : System.ComponentModel.AsyncCompletedEventArgs {
+        
+        private object[] results;
+        
+        internal SupplierProvider_FindCompletedEventArgs(object[] results, System.Exception exception, bool cancelled, object userState) : 
+                base(exception, cancelled, userState) {
+            this.results = results;
+        }
+        
+        /// <remarks/>
+        public Supplier[] Result {
+            get {
+                this.RaiseExceptionIfNecessary();
+                return ((Supplier[])(this.results[0]));
+            }
+        }
+        
+        /// <remarks/>
+        public int count {
+            get {
+                this.RaiseExceptionIfNecessary();
+                return ((int)(this.results[1]));
+            }
+        }
+    }
+    
+    /// <remarks/>
+    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Web.Services", "2.0.50727.42")]
+    public delegate void SupplierProvider_GetAllCompletedEventHandler(object sender, SupplierProvider_GetAllCompletedEventArgs e);
+    
+    /// <remarks/>
+    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Web.Services", "2.0.50727.42")]
+    [System.Diagnostics.DebuggerStepThroughAttribute()]
+    [System.ComponentModel.DesignerCategoryAttribute("code")]
+    public partial class SupplierProvider_GetAllCompletedEventArgs : System.ComponentModel.AsyncCompletedEventArgs {
+        
+        private object[] results;
+        
+        internal SupplierProvider_GetAllCompletedEventArgs(object[] results, System.Exception exception, bool cancelled, object userState) : 
+                base(exception, cancelled, userState) {
+            this.results = results;
+        }
+        
+        /// <remarks/>
+        public Supplier[] Result {
+            get {
+                this.RaiseExceptionIfNecessary();
+                return ((Supplier[])(this.results[0]));
+            }
+        }
+        
+        /// <remarks/>
+        public int count {
+            get {
+                this.RaiseExceptionIfNecessary();
+                return ((int)(this.results[1]));
+            }
+        }
+    }
+    
+    /// <remarks/>
+    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Web.Services", "2.0.50727.42")]
+    public delegate void SupplierProvider_GetPagedCompletedEventHandler(object sender, SupplierProvider_GetPagedCompletedEventArgs e);
+    
+    /// <remarks/>
+    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Web.Services", "2.0.50727.42")]
+    [System.Diagnostics.DebuggerStepThroughAttribute()]
+    [System.ComponentModel.DesignerCategoryAttribute("code")]
+    public partial class SupplierProvider_GetPagedCompletedEventArgs : System.ComponentModel.AsyncCompletedEventArgs {
+        
+        private object[] results;
+        
+        internal SupplierProvider_GetPagedCompletedEventArgs(object[] results, System.Exception exception, bool cancelled, object userState) : 
+                base(exception, cancelled, userState) {
+            this.results = results;
+        }
+        
+        /// <remarks/>
+        public Supplier[] Result {
+            get {
+                this.RaiseExceptionIfNecessary();
+                return ((Supplier[])(this.results[0]));
+            }
+        }
+        
+        /// <remarks/>
+        public int count {
+            get {
+                this.RaiseExceptionIfNecessary();
+                return ((int)(this.results[1]));
+            }
+        }
+    }
+    
+    /// <remarks/>
+    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Web.Services", "2.0.50727.42")]
+    public delegate void SupplierProvider_GetBySuppIdCompletedEventHandler(object sender, SupplierProvider_GetBySuppIdCompletedEventArgs e);
+    
+    /// <remarks/>
+    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Web.Services", "2.0.50727.42")]
+    [System.Diagnostics.DebuggerStepThroughAttribute()]
+    [System.ComponentModel.DesignerCategoryAttribute("code")]
+    public partial class SupplierProvider_GetBySuppIdCompletedEventArgs : System.ComponentModel.AsyncCompletedEventArgs {
+        
+        private object[] results;
+        
+        internal SupplierProvider_GetBySuppIdCompletedEventArgs(object[] results, System.Exception exception, bool cancelled, object userState) : 
+                base(exception, cancelled, userState) {
+            this.results = results;
+        }
+        
+        /// <remarks/>
+        public Supplier Result {
+            get {
+                this.RaiseExceptionIfNecessary();
+                return ((Supplier)(this.results[0]));
+            }
+        }
+        
+        /// <remarks/>
+        public int count {
+            get {
+                this.RaiseExceptionIfNecessary();
+                return ((int)(this.results[1]));
+            }
+        }
+    }
+    
+    /// <remarks/>
+    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Web.Services", "2.0.50727.42")]
+    public delegate void SupplierProvider_InsertCompletedEventHandler(object sender, SupplierProvider_InsertCompletedEventArgs e);
+    
+    /// <remarks/>
+    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Web.Services", "2.0.50727.42")]
+    [System.Diagnostics.DebuggerStepThroughAttribute()]
+    [System.ComponentModel.DesignerCategoryAttribute("code")]
+    public partial class SupplierProvider_InsertCompletedEventArgs : System.ComponentModel.AsyncCompletedEventArgs {
+        
+        private object[] results;
+        
+        internal SupplierProvider_InsertCompletedEventArgs(object[] results, System.Exception exception, bool cancelled, object userState) : 
+                base(exception, cancelled, userState) {
+            this.results = results;
+        }
+        
+        /// <remarks/>
+        public Supplier Result {
+            get {
+                this.RaiseExceptionIfNecessary();
+                return ((Supplier)(this.results[0]));
+            }
+        }
+    }
+    
+    /// <remarks/>
+    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Web.Services", "2.0.50727.42")]
+    public delegate void SupplierProvider_BulkInsertCompletedEventHandler(object sender, System.ComponentModel.AsyncCompletedEventArgs e);
+    
+    /// <remarks/>
+    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Web.Services", "2.0.50727.42")]
+    public delegate void SupplierProvider_UpdateCompletedEventHandler(object sender, SupplierProvider_UpdateCompletedEventArgs e);
+    
+    /// <remarks/>
+    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Web.Services", "2.0.50727.42")]
+    [System.Diagnostics.DebuggerStepThroughAttribute()]
+    [System.ComponentModel.DesignerCategoryAttribute("code")]
+    public partial class SupplierProvider_UpdateCompletedEventArgs : System.ComponentModel.AsyncCompletedEventArgs {
+        
+        private object[] results;
+        
+        internal SupplierProvider_UpdateCompletedEventArgs(object[] results, System.Exception exception, bool cancelled, object userState) : 
+                base(exception, cancelled, userState) {
+            this.results = results;
+        }
+        
+        /// <remarks/>
+        public Supplier Result {
+            get {
+                this.RaiseExceptionIfNecessary();
+                return ((Supplier)(this.results[0]));
             }
         }
     }

@@ -155,6 +155,32 @@ namespace netTiers.Petshop.Data.WebServiceClient
 		}
 		
 			
+		private WsCourierProvider innerCourierProvider;
+
+		///<summary>
+		/// This class is the Data Access Logic Component for the <see cref="Courier"/> business entity.
+		/// It exposes CRUD methods as well as selecting on index, foreign keys and custom stored procedures.
+		///</summary>
+		/// <value></value>
+		public override CourierProviderBase CourierProvider
+		{
+			get
+			{
+				if (innerCourierProvider == null) 
+				{
+					lock (syncRoot)
+					{
+						if (innerCourierProvider == null)
+						{
+							this.innerCourierProvider = new WsCourierProvider(this._url);
+						}
+					}
+				}
+				return innerCourierProvider;
+			}
+		}
+		
+			
 		private WsCreditCardProvider innerCreditCardProvider;
 
 		///<summary>
@@ -177,6 +203,32 @@ namespace netTiers.Petshop.Data.WebServiceClient
 					}
 				}
 				return innerCreditCardProvider;
+			}
+		}
+		
+			
+		private WsInventoryProvider innerInventoryProvider;
+
+		///<summary>
+		/// This class is the Data Access Logic Component for the <see cref="Inventory"/> business entity.
+		/// It exposes CRUD methods as well as selecting on index, foreign keys and custom stored procedures.
+		///</summary>
+		/// <value></value>
+		public override InventoryProviderBase InventoryProvider
+		{
+			get
+			{
+				if (innerInventoryProvider == null) 
+				{
+					lock (syncRoot)
+					{
+						if (innerInventoryProvider == null)
+						{
+							this.innerInventoryProvider = new WsInventoryProvider(this._url);
+						}
+					}
+				}
+				return innerInventoryProvider;
 			}
 		}
 		
@@ -207,6 +259,110 @@ namespace netTiers.Petshop.Data.WebServiceClient
 		}
 		
 			
+		private WsLineItemProvider innerLineItemProvider;
+
+		///<summary>
+		/// This class is the Data Access Logic Component for the <see cref="LineItem"/> business entity.
+		/// It exposes CRUD methods as well as selecting on index, foreign keys and custom stored procedures.
+		///</summary>
+		/// <value></value>
+		public override LineItemProviderBase LineItemProvider
+		{
+			get
+			{
+				if (innerLineItemProvider == null) 
+				{
+					lock (syncRoot)
+					{
+						if (innerLineItemProvider == null)
+						{
+							this.innerLineItemProvider = new WsLineItemProvider(this._url);
+						}
+					}
+				}
+				return innerLineItemProvider;
+			}
+		}
+		
+			
+		private WsOrdersProvider innerOrdersProvider;
+
+		///<summary>
+		/// This class is the Data Access Logic Component for the <see cref="Orders"/> business entity.
+		/// It exposes CRUD methods as well as selecting on index, foreign keys and custom stored procedures.
+		///</summary>
+		/// <value></value>
+		public override OrdersProviderBase OrdersProvider
+		{
+			get
+			{
+				if (innerOrdersProvider == null) 
+				{
+					lock (syncRoot)
+					{
+						if (innerOrdersProvider == null)
+						{
+							this.innerOrdersProvider = new WsOrdersProvider(this._url);
+						}
+					}
+				}
+				return innerOrdersProvider;
+			}
+		}
+		
+			
+		private WsOrderStatusProvider innerOrderStatusProvider;
+
+		///<summary>
+		/// This class is the Data Access Logic Component for the <see cref="OrderStatus"/> business entity.
+		/// It exposes CRUD methods as well as selecting on index, foreign keys and custom stored procedures.
+		///</summary>
+		/// <value></value>
+		public override OrderStatusProviderBase OrderStatusProvider
+		{
+			get
+			{
+				if (innerOrderStatusProvider == null) 
+				{
+					lock (syncRoot)
+					{
+						if (innerOrderStatusProvider == null)
+						{
+							this.innerOrderStatusProvider = new WsOrderStatusProvider(this._url);
+						}
+					}
+				}
+				return innerOrderStatusProvider;
+			}
+		}
+		
+			
+		private WsOrderStatusTypeProvider innerOrderStatusTypeProvider;
+
+		///<summary>
+		/// This class is the Data Access Logic Component for the <see cref="OrderStatusType"/> business entity.
+		/// It exposes CRUD methods as well as selecting on index, foreign keys and custom stored procedures.
+		///</summary>
+		/// <value></value>
+		public override OrderStatusTypeProviderBase OrderStatusTypeProvider
+		{
+			get
+			{
+				if (innerOrderStatusTypeProvider == null) 
+				{
+					lock (syncRoot)
+					{
+						if (innerOrderStatusTypeProvider == null)
+						{
+							this.innerOrderStatusTypeProvider = new WsOrderStatusTypeProvider(this._url);
+						}
+					}
+				}
+				return innerOrderStatusTypeProvider;
+			}
+		}
+		
+			
 		private WsProductProvider innerProductProvider;
 
 		///<summary>
@@ -229,6 +385,32 @@ namespace netTiers.Petshop.Data.WebServiceClient
 					}
 				}
 				return innerProductProvider;
+			}
+		}
+		
+			
+		private WsSupplierProvider innerSupplierProvider;
+
+		///<summary>
+		/// This class is the Data Access Logic Component for the <see cref="Supplier"/> business entity.
+		/// It exposes CRUD methods as well as selecting on index, foreign keys and custom stored procedures.
+		///</summary>
+		/// <value></value>
+		public override SupplierProviderBase SupplierProvider
+		{
+			get
+			{
+				if (innerSupplierProvider == null) 
+				{
+					lock (syncRoot)
+					{
+						if (innerSupplierProvider == null)
+						{
+							this.innerSupplierProvider = new WsSupplierProvider(this._url);
+						}
+					}
+				}
+				return innerSupplierProvider;
 			}
 		}
 		
@@ -271,7 +453,7 @@ namespace netTiers.Petshop.Data.WebServiceClient
 		/// <returns></returns>
 		public override int ExecuteNonQuery(string storedProcedureName, params object[] parameterValues)
 		{
-			WsProxy.petshopServices proxy = new WsProxy.petshopServices();
+			WsProxy.petshopDBServices proxy = new WsProxy.petshopDBServices();
 			proxy.Url = this._url;
 			return proxy.ExecuteNonQuery(storedProcedureName, parameterValues);
 		}
@@ -316,7 +498,7 @@ namespace netTiers.Petshop.Data.WebServiceClient
 		/// <returns></returns>
 		public override int ExecuteNonQuery(CommandType commandType, string commandText)
 		{
-			WsProxy.petshopServices proxy = new WsProxy.petshopServices();
+			WsProxy.petshopDBServices proxy = new WsProxy.petshopDBServices();
 			proxy.Url = this._url;
 			return proxy.ExecuteNonQuery((WsProxy.CommandType)Enum.Parse(typeof(WsProxy.CommandType), commandType.ToString(), false), commandText);
 		}
@@ -411,7 +593,7 @@ namespace netTiers.Petshop.Data.WebServiceClient
 		/// <returns></returns>
 		public override DataSet ExecuteDataSet(string storedProcedureName, params object[] parameterValues)
 		{
-			WsProxy.petshopServices proxy = new WsProxy.petshopServices();
+			WsProxy.petshopDBServices proxy = new WsProxy.petshopDBServices();
 			proxy.Url = this._url;
 			return proxy.ExecuteDataSet(storedProcedureName, parameterValues);
 		}
@@ -458,7 +640,7 @@ namespace netTiers.Petshop.Data.WebServiceClient
 		/// <returns></returns>
 		public override DataSet ExecuteDataSet(CommandType commandType, string commandText)
 		{
-			WsProxy.petshopServices proxy = new WsProxy.petshopServices();
+			WsProxy.petshopDBServices proxy = new WsProxy.petshopDBServices();
 			proxy.Url = this._url;
 			return proxy.ExecuteDataSet((WsProxy.CommandType)Enum.Parse(typeof(WsProxy.CommandType), commandType.ToString(), false), commandText);
 		}
@@ -485,7 +667,7 @@ namespace netTiers.Petshop.Data.WebServiceClient
 		/// <returns></returns>
 		public override object ExecuteScalar(string storedProcedureName, params object[] parameterValues)
 		{
-			WsProxy.petshopServices proxy = new WsProxy.petshopServices();
+			WsProxy.petshopDBServices proxy = new WsProxy.petshopDBServices();
 			proxy.Url = this._url;
 			return proxy.ExecuteScalar(storedProcedureName, parameterValues);
 		}
@@ -531,7 +713,7 @@ namespace netTiers.Petshop.Data.WebServiceClient
 		/// <returns></returns>
 		public override object ExecuteScalar(CommandType commandType, string commandText)
 		{
-			WsProxy.petshopServices proxy = new WsProxy.petshopServices();
+			WsProxy.petshopDBServices proxy = new WsProxy.petshopDBServices();
 			proxy.Url = this._url;
 			return proxy.ExecuteScalar((WsProxy.CommandType)Enum.Parse(typeof(WsProxy.CommandType), commandType.ToString(), false), commandText);	
 		}

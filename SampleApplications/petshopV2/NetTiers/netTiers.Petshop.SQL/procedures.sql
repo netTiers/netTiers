@@ -1,5 +1,5 @@
 
-Use [petshop]
+Use [petshopDB]
 Go
 SET QUOTED_IDENTIFIER ON 
 GO
@@ -15,9 +15,9 @@ GO
 
 /*
 ----------------------------------------------------------------------------------------------------
--- Date Created: Monday, July 03, 2006
+-- Date Created: Monday, July 24, 2006
 
--- Created By:  ()
+-- Created By: NetTiers (www.nettiers.com)
 -- Purpose: Gets all records from the Account table
 ----------------------------------------------------------------------------------------------------
 */
@@ -69,9 +69,9 @@ GO
 
 /*
 ----------------------------------------------------------------------------------------------------
--- Date Created: Monday, July 03, 2006
+-- Date Created: Monday, July 24, 2006
 
--- Created By:  ()
+-- Created By: NetTiers (www.nettiers.com)
 -- Purpose: Gets records from the Account table passing page index and page count parameters
 ----------------------------------------------------------------------------------------------------
 */
@@ -192,9 +192,9 @@ GO
 
 /*
 ----------------------------------------------------------------------------------------------------
--- Date Created: Monday, July 03, 2006
+-- Date Created: Monday, July 24, 2006
 
--- Created By:  ()
+-- Created By: NetTiers (www.nettiers.com)
 -- Purpose: Inserts a record into the Account table
 ----------------------------------------------------------------------------------------------------
 */
@@ -203,7 +203,7 @@ GO
 CREATE PROCEDURE dbo.Account_Insert
 (
 
-	@Id char (36)  ,
+	@Id uniqueidentifier   ,
 
 	@FirstName varchar (255)  ,
 
@@ -233,9 +233,9 @@ CREATE PROCEDURE dbo.Account_Insert
 
 	@FavoriteLanguage varchar (255)  ,
 
-	@CreditCardId char (36)  ,
+	@CreditCardId uniqueidentifier   ,
 
-	@FavoriteCategoryId char (36)  ,
+	@FavoriteCategoryId uniqueidentifier   ,
 
 	@Timestamp timestamp    OUTPUT
 )
@@ -310,9 +310,9 @@ GO
 
 /*
 ----------------------------------------------------------------------------------------------------
--- Date Created: Monday, July 03, 2006
+-- Date Created: Monday, July 24, 2006
 
--- Created By:  ()
+-- Created By: NetTiers (www.nettiers.com)
 -- Purpose: Updates a record in the Account table
 ----------------------------------------------------------------------------------------------------
 */
@@ -321,9 +321,9 @@ GO
 CREATE PROCEDURE dbo.Account_Update
 (
 
-	@Id char (36)  ,
+	@Id uniqueidentifier   ,
 
-	@OriginalId char (36)  ,
+	@OriginalId uniqueidentifier   ,
 
 	@FirstName varchar (255)  ,
 
@@ -353,9 +353,9 @@ CREATE PROCEDURE dbo.Account_Update
 
 	@FavoriteLanguage varchar (255)  ,
 
-	@CreditCardId char (36)  ,
+	@CreditCardId uniqueidentifier   ,
 
-	@FavoriteCategoryId char (36)  ,
+	@FavoriteCategoryId uniqueidentifier   ,
 
 	@Timestamp timestamp   ,
 
@@ -415,9 +415,9 @@ GO
 
 /*
 ----------------------------------------------------------------------------------------------------
--- Date Created: Monday, July 03, 2006
+-- Date Created: Monday, July 24, 2006
 
--- Created By:  ()
+-- Created By: NetTiers (www.nettiers.com)
 -- Purpose: Deletes a record in the Account table
 ----------------------------------------------------------------------------------------------------
 */
@@ -426,7 +426,7 @@ GO
 CREATE PROCEDURE dbo.Account_Delete
 (
 
-	@Id char (36)  ,
+	@Id uniqueidentifier   ,
 
 	@Timestamp timestamp   
 )
@@ -447,65 +447,6 @@ GO
 
 	
 
--- Drop the dbo.Account_GetByCreditCardId procedure
-IF EXISTS (SELECT * FROM dbo.sysobjects WHERE id = object_id(N'dbo.Account_GetByCreditCardId') AND OBJECTPROPERTY(id, N'IsProcedure') = 1)
-DROP PROCEDURE dbo.Account_GetByCreditCardId
-GO
-
-/*
-----------------------------------------------------------------------------------------------------
--- Date Created: Monday, July 03, 2006
-
--- Created By:  ()
--- Purpose: Select records from the Account table through a foreign key
-----------------------------------------------------------------------------------------------------
-*/
-
-
-CREATE PROCEDURE dbo.Account_GetByCreditCardId
-(
-
-	@CreditCardId char (36)  
-)
-AS
-
-
-				
-				SELECT
-					[Id],
-					[FirstName],
-					[LastName],
-					[StreetAddress],
-					[PostalCode],
-					[City],
-					[StateOrProvince],
-					[Country],
-					[TelephoneNumber],
-					[Email],
-					[Login],
-					[Password],
-					[IWantMyList],
-					[IWantPetTips],
-					[FavoriteLanguage],
-					[CreditCardId],
-					[FavoriteCategoryId],
-					[Timestamp]
-				FROM
-					dbo.[Account]
-				WHERE
-					[CreditCardId] = @CreditCardId
-				
-				Select @@ROWCOUNT
-			
-
-GO
-SET QUOTED_IDENTIFIER ON 
-GO
-SET ANSI_NULLS OFF 
-GO
-
-	
-
 -- Drop the dbo.Account_GetByFavoriteCategoryId procedure
 IF EXISTS (SELECT * FROM dbo.sysobjects WHERE id = object_id(N'dbo.Account_GetByFavoriteCategoryId') AND OBJECTPROPERTY(id, N'IsProcedure') = 1)
 DROP PROCEDURE dbo.Account_GetByFavoriteCategoryId
@@ -513,9 +454,9 @@ GO
 
 /*
 ----------------------------------------------------------------------------------------------------
--- Date Created: Monday, July 03, 2006
+-- Date Created: Monday, July 24, 2006
 
--- Created By:  ()
+-- Created By: NetTiers (www.nettiers.com)
 -- Purpose: Select records from the Account table through a foreign key
 ----------------------------------------------------------------------------------------------------
 */
@@ -524,7 +465,7 @@ GO
 CREATE PROCEDURE dbo.Account_GetByFavoriteCategoryId
 (
 
-	@FavoriteCategoryId char (36)  
+	@FavoriteCategoryId uniqueidentifier   
 )
 AS
 
@@ -565,6 +506,65 @@ GO
 
 	
 
+-- Drop the dbo.Account_GetByCreditCardId procedure
+IF EXISTS (SELECT * FROM dbo.sysobjects WHERE id = object_id(N'dbo.Account_GetByCreditCardId') AND OBJECTPROPERTY(id, N'IsProcedure') = 1)
+DROP PROCEDURE dbo.Account_GetByCreditCardId
+GO
+
+/*
+----------------------------------------------------------------------------------------------------
+-- Date Created: Monday, July 24, 2006
+
+-- Created By: NetTiers (www.nettiers.com)
+-- Purpose: Select records from the Account table through a foreign key
+----------------------------------------------------------------------------------------------------
+*/
+
+
+CREATE PROCEDURE dbo.Account_GetByCreditCardId
+(
+
+	@CreditCardId uniqueidentifier   
+)
+AS
+
+
+				
+				SELECT
+					[Id],
+					[FirstName],
+					[LastName],
+					[StreetAddress],
+					[PostalCode],
+					[City],
+					[StateOrProvince],
+					[Country],
+					[TelephoneNumber],
+					[Email],
+					[Login],
+					[Password],
+					[IWantMyList],
+					[IWantPetTips],
+					[FavoriteLanguage],
+					[CreditCardId],
+					[FavoriteCategoryId],
+					[Timestamp]
+				FROM
+					dbo.[Account]
+				WHERE
+					[CreditCardId] = @CreditCardId
+				
+				Select @@ROWCOUNT
+			
+
+GO
+SET QUOTED_IDENTIFIER ON 
+GO
+SET ANSI_NULLS OFF 
+GO
+
+	
+
 -- Drop the dbo.Account_GetById procedure
 IF EXISTS (SELECT * FROM dbo.sysobjects WHERE id = object_id(N'dbo.Account_GetById') AND OBJECTPROPERTY(id, N'IsProcedure') = 1)
 DROP PROCEDURE dbo.Account_GetById
@@ -572,9 +572,9 @@ GO
 
 /*
 ----------------------------------------------------------------------------------------------------
--- Date Created: Monday, July 03, 2006
+-- Date Created: Monday, July 24, 2006
 
--- Created By:  ()
+-- Created By: NetTiers (www.nettiers.com)
 -- Purpose: Select records from the Account table through an index
 ----------------------------------------------------------------------------------------------------
 */
@@ -583,7 +583,7 @@ GO
 CREATE PROCEDURE dbo.Account_GetById
 (
 
-	@Id char (36)  
+	@Id uniqueidentifier   
 )
 AS
 
@@ -630,9 +630,9 @@ GO
 
 /*
 ----------------------------------------------------------------------------------------------------
--- Date Created: Monday, July 03, 2006
+-- Date Created: Monday, July 24, 2006
 
--- Created By:  ()
+-- Created By: NetTiers (www.nettiers.com)
 -- Purpose: Select records from the Account table through an index
 ----------------------------------------------------------------------------------------------------
 */
@@ -688,9 +688,9 @@ GO
 
 /*
 ----------------------------------------------------------------------------------------------------
--- Date Created: Monday, July 03, 2006
+-- Date Created: Monday, July 24, 2006
 
--- Created By:  ()
+-- Created By: NetTiers (www.nettiers.com)
 -- Purpose: Select records from the Account table through an index
 ----------------------------------------------------------------------------------------------------
 */
@@ -746,9 +746,9 @@ GO
 
 /*
 ----------------------------------------------------------------------------------------------------
--- Date Created: Monday, July 03, 2006
+-- Date Created: Monday, July 24, 2006
 
--- Created By:  ()
+-- Created By: NetTiers (www.nettiers.com)
 -- Purpose: Finds records in the Account table passing nullable parameters
 ----------------------------------------------------------------------------------------------------
 */
@@ -759,7 +759,7 @@ CREATE PROCEDURE dbo.Account_Find
 
 	@SearchUsingOR bit   = null ,
 
-	@Id char (36)  = null ,
+	@Id uniqueidentifier   = null ,
 
 	@FirstName varchar (255)  = null ,
 
@@ -789,9 +789,9 @@ CREATE PROCEDURE dbo.Account_Find
 
 	@FavoriteLanguage varchar (255)  = null ,
 
-	@CreditCardId char (36)  = null ,
+	@CreditCardId uniqueidentifier   = null ,
 
-	@FavoriteCategoryId char (36)  = null ,
+	@FavoriteCategoryId uniqueidentifier   = null ,
 
 	@Timestamp timestamp   = null 
 )
@@ -902,9 +902,9 @@ GO
 
 /*
 ----------------------------------------------------------------------------------------------------
--- Date Created: Monday, July 03, 2006
+-- Date Created: Monday, July 24, 2006
 
--- Created By:  ()
+-- Created By: NetTiers (www.nettiers.com)
 -- Purpose: Gets all records from the Category table
 ----------------------------------------------------------------------------------------------------
 */
@@ -942,9 +942,9 @@ GO
 
 /*
 ----------------------------------------------------------------------------------------------------
--- Date Created: Monday, July 03, 2006
+-- Date Created: Monday, July 24, 2006
 
--- Created By:  ()
+-- Created By: NetTiers (www.nettiers.com)
 -- Purpose: Gets records from the Category table passing page index and page count parameters
 ----------------------------------------------------------------------------------------------------
 */
@@ -1037,9 +1037,9 @@ GO
 
 /*
 ----------------------------------------------------------------------------------------------------
--- Date Created: Monday, July 03, 2006
+-- Date Created: Monday, July 24, 2006
 
--- Created By:  ()
+-- Created By: NetTiers (www.nettiers.com)
 -- Purpose: Inserts a record into the Category table
 ----------------------------------------------------------------------------------------------------
 */
@@ -1048,7 +1048,7 @@ GO
 CREATE PROCEDURE dbo.Category_Insert
 (
 
-	@Id char (36)  ,
+	@Id uniqueidentifier   ,
 
 	@Name varchar (255)  ,
 
@@ -1099,9 +1099,9 @@ GO
 
 /*
 ----------------------------------------------------------------------------------------------------
--- Date Created: Monday, July 03, 2006
+-- Date Created: Monday, July 24, 2006
 
--- Created By:  ()
+-- Created By: NetTiers (www.nettiers.com)
 -- Purpose: Updates a record in the Category table
 ----------------------------------------------------------------------------------------------------
 */
@@ -1110,9 +1110,9 @@ GO
 CREATE PROCEDURE dbo.Category_Update
 (
 
-	@Id char (36)  ,
+	@Id uniqueidentifier   ,
 
-	@OriginalId char (36)  ,
+	@OriginalId uniqueidentifier   ,
 
 	@Name varchar (255)  ,
 
@@ -1162,9 +1162,9 @@ GO
 
 /*
 ----------------------------------------------------------------------------------------------------
--- Date Created: Monday, July 03, 2006
+-- Date Created: Monday, July 24, 2006
 
--- Created By:  ()
+-- Created By: NetTiers (www.nettiers.com)
 -- Purpose: Deletes a record in the Category table
 ----------------------------------------------------------------------------------------------------
 */
@@ -1173,7 +1173,7 @@ GO
 CREATE PROCEDURE dbo.Category_Delete
 (
 
-	@Id char (36)  ,
+	@Id uniqueidentifier   ,
 
 	@Timestamp timestamp   
 )
@@ -1201,9 +1201,9 @@ GO
 
 /*
 ----------------------------------------------------------------------------------------------------
--- Date Created: Monday, July 03, 2006
+-- Date Created: Monday, July 24, 2006
 
--- Created By:  ()
+-- Created By: NetTiers (www.nettiers.com)
 -- Purpose: Select records from the Category table through an index
 ----------------------------------------------------------------------------------------------------
 */
@@ -1212,7 +1212,7 @@ GO
 CREATE PROCEDURE dbo.Category_GetById
 (
 
-	@Id char (36)  
+	@Id uniqueidentifier   
 )
 AS
 
@@ -1245,9 +1245,9 @@ GO
 
 /*
 ----------------------------------------------------------------------------------------------------
--- Date Created: Monday, July 03, 2006
+-- Date Created: Monday, July 24, 2006
 
--- Created By:  ()
+-- Created By: NetTiers (www.nettiers.com)
 -- Purpose: Finds records in the Category table passing nullable parameters
 ----------------------------------------------------------------------------------------------------
 */
@@ -1258,7 +1258,7 @@ CREATE PROCEDURE dbo.Category_Find
 
 	@SearchUsingOR bit   = null ,
 
-	@Id char (36)  = null ,
+	@Id uniqueidentifier   = null ,
 
 	@Name varchar (255)  = null ,
 
@@ -1310,6 +1310,455 @@ GO
 
 	
 
+-- Drop the dbo.Courier_Get_List procedure
+IF EXISTS (SELECT * FROM dbo.sysobjects WHERE id = object_id(N'dbo.Courier_Get_List') AND OBJECTPROPERTY(id, N'IsProcedure') = 1)
+DROP PROCEDURE dbo.Courier_Get_List
+GO
+
+/*
+----------------------------------------------------------------------------------------------------
+-- Date Created: Monday, July 24, 2006
+
+-- Created By: NetTiers (www.nettiers.com)
+-- Purpose: Gets all records from the Courier table
+----------------------------------------------------------------------------------------------------
+*/
+
+
+CREATE PROCEDURE dbo.Courier_Get_List
+
+AS
+
+
+				
+				SELECT
+					[CourierId],
+					[CourierName],
+					[CourierDescription],
+					[MinItems],
+					[MaxItems],
+					[Timestamp]
+				FROM
+					dbo.[Courier]
+					
+				Select @@ROWCOUNT
+			
+
+GO
+SET QUOTED_IDENTIFIER ON 
+GO
+SET ANSI_NULLS OFF 
+GO
+
+	
+
+-- Drop the dbo.Courier_GetPaged procedure
+IF EXISTS (SELECT * FROM dbo.sysobjects WHERE id = object_id(N'dbo.Courier_GetPaged') AND OBJECTPROPERTY(id, N'IsProcedure') = 1)
+DROP PROCEDURE dbo.Courier_GetPaged
+GO
+
+/*
+----------------------------------------------------------------------------------------------------
+-- Date Created: Monday, July 24, 2006
+
+-- Created By: NetTiers (www.nettiers.com)
+-- Purpose: Gets records from the Courier table passing page index and page count parameters
+----------------------------------------------------------------------------------------------------
+*/
+
+
+CREATE PROCEDURE dbo.Courier_GetPaged
+(
+
+	@WhereClause varchar (2000)  ,
+
+	@OrderBy varchar (2000)  ,
+
+	@PageIndex int   ,
+
+	@PageSize int   
+)
+AS
+
+
+				
+				BEGIN
+				DECLARE @PageLowerBound int
+				DECLARE @PageUpperBound int
+				
+				-- Set the page bounds
+				SET @PageLowerBound = @PageSize * @PageIndex
+				SET @PageUpperBound = @PageLowerBound + @PageSize
+
+				IF (@OrderBy is null or LEN(@OrderBy) < 1)
+				BEGIN
+					-- default order by to first column
+					SET @OrderBy = '[CourierId]'
+				END
+
+				-- SQL Server 2005 Paging
+				declare @SQL as nvarchar(4000)
+				SET @SQL = 'WITH PageIndex AS ('
+				SET @SQL = @SQL + ' SELECT'
+				IF @PageSize > 0
+				BEGIN
+					SET @SQL = @SQL + ' TOP ' + convert(nvarchar, @PageUpperBound)
+				END
+				SET @SQL = @SQL + ' ROW_NUMBER() OVER (ORDER BY ' + @OrderBy + ') as RowIndex'
+				SET @SQL = @SQL + ', [CourierId]'
+				SET @SQL = @SQL + ', [CourierName]'
+				SET @SQL = @SQL + ', [CourierDescription]'
+				SET @SQL = @SQL + ', [MinItems]'
+				SET @SQL = @SQL + ', [MaxItems]'
+				SET @SQL = @SQL + ', [Timestamp]'
+				SET @SQL = @SQL + ' FROM dbo.[Courier]'
+				IF LEN(@WhereClause) > 0
+				BEGIN
+					SET @SQL = @SQL + ' WHERE ' + @WhereClause
+				END
+				SET @SQL = @SQL + ' ) SELECT'
+				SET @SQL = @SQL + ' [CourierId],'
+				SET @SQL = @SQL + ' [CourierName],'
+				SET @SQL = @SQL + ' [CourierDescription],'
+				SET @SQL = @SQL + ' [MinItems],'
+				SET @SQL = @SQL + ' [MaxItems],'
+				SET @SQL = @SQL + ' [Timestamp]'
+				SET @SQL = @SQL + ' FROM PageIndex'
+				SET @SQL = @SQL + ' WHERE RowIndex > ' + convert(nvarchar, @PageLowerBound)
+				IF @PageSize > 0
+				BEGIN
+					SET @SQL = @SQL + ' AND RowIndex <= ' + convert(nvarchar, @PageUpperBound)
+				END
+				exec sp_executesql @SQL
+				
+				-- get row count
+				SET @SQL = 'SELECT COUNT(*) as TotalRowCount'
+				SET @SQL = @SQL + ' FROM dbo.[Courier]'
+				IF LEN(@WhereClause) > 0
+				BEGIN
+					SET @SQL = @SQL + ' WHERE ' + @WhereClause
+				END
+				exec sp_executesql @SQL
+			
+				END
+			
+
+GO
+SET QUOTED_IDENTIFIER ON 
+GO
+SET ANSI_NULLS OFF 
+GO
+
+	
+
+-- Drop the dbo.Courier_Insert procedure
+IF EXISTS (SELECT * FROM dbo.sysobjects WHERE id = object_id(N'dbo.Courier_Insert') AND OBJECTPROPERTY(id, N'IsProcedure') = 1)
+DROP PROCEDURE dbo.Courier_Insert
+GO
+
+/*
+----------------------------------------------------------------------------------------------------
+-- Date Created: Monday, July 24, 2006
+
+-- Created By: NetTiers (www.nettiers.com)
+-- Purpose: Inserts a record into the Courier table
+----------------------------------------------------------------------------------------------------
+*/
+
+
+CREATE PROCEDURE dbo.Courier_Insert
+(
+
+	@CourierId uniqueidentifier   ,
+
+	@CourierName varchar (30)  ,
+
+	@CourierDescription varchar (60)  ,
+
+	@MinItems int   ,
+
+	@MaxItems int   ,
+
+	@Timestamp timestamp    OUTPUT
+)
+AS
+
+
+					
+				INSERT INTO dbo.[Courier]
+					(
+					[CourierId]
+					,[CourierName]
+					,[CourierDescription]
+					,[MinItems]
+					,[MaxItems]
+					)
+				VALUES
+					(
+					@CourierId
+					,@CourierName
+					,@CourierDescription
+					,@MinItems
+					,@MaxItems
+					)
+				
+									
+				-- Select computed columns into output parameters
+				SELECT
+ @Timestamp = [Timestamp]
+				FROM
+					dbo.[Courier]
+				WHERE
+[CourierId] = @CourierId 
+							
+			
+
+GO
+SET QUOTED_IDENTIFIER ON 
+GO
+SET ANSI_NULLS OFF 
+GO
+
+	
+
+-- Drop the dbo.Courier_Update procedure
+IF EXISTS (SELECT * FROM dbo.sysobjects WHERE id = object_id(N'dbo.Courier_Update') AND OBJECTPROPERTY(id, N'IsProcedure') = 1)
+DROP PROCEDURE dbo.Courier_Update
+GO
+
+/*
+----------------------------------------------------------------------------------------------------
+-- Date Created: Monday, July 24, 2006
+
+-- Created By: NetTiers (www.nettiers.com)
+-- Purpose: Updates a record in the Courier table
+----------------------------------------------------------------------------------------------------
+*/
+
+
+CREATE PROCEDURE dbo.Courier_Update
+(
+
+	@CourierId uniqueidentifier   ,
+
+	@OriginalCourierId uniqueidentifier   ,
+
+	@CourierName varchar (30)  ,
+
+	@CourierDescription varchar (60)  ,
+
+	@MinItems int   ,
+
+	@MaxItems int   ,
+
+	@Timestamp timestamp   ,
+
+	@ReturnedTimestamp timestamp    OUTPUT
+)
+AS
+
+
+				
+				
+				-- Modify the updatable columns
+				UPDATE
+					dbo.[Courier]
+				SET
+					[CourierId] = @CourierId
+					,[CourierName] = @CourierName
+					,[CourierDescription] = @CourierDescription
+					,[MinItems] = @MinItems
+					,[MaxItems] = @MaxItems
+				WHERE
+[CourierId] = @OriginalCourierId 
+AND [Timestamp] = @Timestamp				
+				
+				-- Select computed columns into output parameters
+				SELECT
+ @ReturnedTimestamp = [Timestamp]
+				FROM
+					dbo.[Courier]
+				WHERE
+[CourierId] = @CourierId 
+			
+
+GO
+SET QUOTED_IDENTIFIER ON 
+GO
+SET ANSI_NULLS OFF 
+GO
+
+	
+
+-- Drop the dbo.Courier_Delete procedure
+IF EXISTS (SELECT * FROM dbo.sysobjects WHERE id = object_id(N'dbo.Courier_Delete') AND OBJECTPROPERTY(id, N'IsProcedure') = 1)
+DROP PROCEDURE dbo.Courier_Delete
+GO
+
+/*
+----------------------------------------------------------------------------------------------------
+-- Date Created: Monday, July 24, 2006
+
+-- Created By: NetTiers (www.nettiers.com)
+-- Purpose: Deletes a record in the Courier table
+----------------------------------------------------------------------------------------------------
+*/
+
+
+CREATE PROCEDURE dbo.Courier_Delete
+(
+
+	@CourierId uniqueidentifier   ,
+
+	@Timestamp timestamp   
+)
+AS
+
+
+				DELETE FROM dbo.[Courier] WITH (ROWLOCK) 
+				WHERE
+					[CourierId] = @CourierId
+	AND [Timestamp] = @Timestamp					
+			
+
+GO
+SET QUOTED_IDENTIFIER ON 
+GO
+SET ANSI_NULLS OFF 
+GO
+
+	
+
+-- Drop the dbo.Courier_GetByCourierId procedure
+IF EXISTS (SELECT * FROM dbo.sysobjects WHERE id = object_id(N'dbo.Courier_GetByCourierId') AND OBJECTPROPERTY(id, N'IsProcedure') = 1)
+DROP PROCEDURE dbo.Courier_GetByCourierId
+GO
+
+/*
+----------------------------------------------------------------------------------------------------
+-- Date Created: Monday, July 24, 2006
+
+-- Created By: NetTiers (www.nettiers.com)
+-- Purpose: Select records from the Courier table through an index
+----------------------------------------------------------------------------------------------------
+*/
+
+
+CREATE PROCEDURE dbo.Courier_GetByCourierId
+(
+
+	@CourierId uniqueidentifier   
+)
+AS
+
+
+				SELECT
+					[CourierId],
+					[CourierName],
+					[CourierDescription],
+					[MinItems],
+					[MaxItems],
+					[Timestamp]
+				FROM
+					dbo.[Courier]
+				WHERE
+					[CourierId] = @CourierId
+			Select @@ROWCOUNT
+					
+			
+
+GO
+SET QUOTED_IDENTIFIER ON 
+GO
+SET ANSI_NULLS OFF 
+GO
+
+	
+
+-- Drop the dbo.Courier_Find procedure
+IF EXISTS (SELECT * FROM dbo.sysobjects WHERE id = object_id(N'dbo.Courier_Find') AND OBJECTPROPERTY(id, N'IsProcedure') = 1)
+DROP PROCEDURE dbo.Courier_Find
+GO
+
+/*
+----------------------------------------------------------------------------------------------------
+-- Date Created: Monday, July 24, 2006
+
+-- Created By: NetTiers (www.nettiers.com)
+-- Purpose: Finds records in the Courier table passing nullable parameters
+----------------------------------------------------------------------------------------------------
+*/
+
+
+CREATE PROCEDURE dbo.Courier_Find
+(
+
+	@SearchUsingOR bit   = null ,
+
+	@CourierId uniqueidentifier   = null ,
+
+	@CourierName varchar (30)  = null ,
+
+	@CourierDescription varchar (60)  = null ,
+
+	@MinItems int   = null ,
+
+	@MaxItems int   = null ,
+
+	@Timestamp timestamp   = null 
+)
+AS
+
+
+				
+  IF ISNULL(@SearchUsingOR, 0) <> 1
+  BEGIN
+    SELECT
+	  [CourierId]
+	, [CourierName]
+	, [CourierDescription]
+	, [MinItems]
+	, [MaxItems]
+	, [Timestamp]
+    FROM
+	dbo.[Courier]
+    WHERE 
+	 ([CourierId] = @CourierId OR @CourierId is null)
+	AND ([CourierName] = @CourierName OR @CourierName is null)
+	AND ([CourierDescription] = @CourierDescription OR @CourierDescription is null)
+	AND ([MinItems] = @MinItems OR @MinItems is null)
+	AND ([MaxItems] = @MaxItems OR @MaxItems is null)
+						
+  END
+  ELSE
+  BEGIN
+    SELECT
+	  [CourierId]
+	, [CourierName]
+	, [CourierDescription]
+	, [MinItems]
+	, [MaxItems]
+	, [Timestamp]
+    FROM
+	dbo.[Courier]
+    WHERE 
+	 ([CourierId] = @CourierId AND @CourierId is not null)
+	OR ([CourierName] = @CourierName AND @CourierName is not null)
+	OR ([CourierDescription] = @CourierDescription AND @CourierDescription is not null)
+	OR ([MinItems] = @MinItems AND @MinItems is not null)
+	OR ([MaxItems] = @MaxItems AND @MaxItems is not null)
+	Select @@ROWCOUNT			
+  END
+				
+
+GO
+SET QUOTED_IDENTIFIER ON 
+GO
+SET ANSI_NULLS OFF 
+GO
+
+	
+
 -- Drop the dbo.CreditCard_Get_List procedure
 IF EXISTS (SELECT * FROM dbo.sysobjects WHERE id = object_id(N'dbo.CreditCard_Get_List') AND OBJECTPROPERTY(id, N'IsProcedure') = 1)
 DROP PROCEDURE dbo.CreditCard_Get_List
@@ -1317,9 +1766,9 @@ GO
 
 /*
 ----------------------------------------------------------------------------------------------------
--- Date Created: Monday, July 03, 2006
+-- Date Created: Monday, July 24, 2006
 
--- Created By:  ()
+-- Created By: NetTiers (www.nettiers.com)
 -- Purpose: Gets all records from the CreditCard table
 ----------------------------------------------------------------------------------------------------
 */
@@ -1359,9 +1808,9 @@ GO
 
 /*
 ----------------------------------------------------------------------------------------------------
--- Date Created: Monday, July 03, 2006
+-- Date Created: Monday, July 24, 2006
 
--- Created By:  ()
+-- Created By: NetTiers (www.nettiers.com)
 -- Purpose: Gets records from the CreditCard table passing page index and page count parameters
 ----------------------------------------------------------------------------------------------------
 */
@@ -1458,9 +1907,9 @@ GO
 
 /*
 ----------------------------------------------------------------------------------------------------
--- Date Created: Monday, July 03, 2006
+-- Date Created: Monday, July 24, 2006
 
--- Created By:  ()
+-- Created By: NetTiers (www.nettiers.com)
 -- Purpose: Inserts a record into the CreditCard table
 ----------------------------------------------------------------------------------------------------
 */
@@ -1469,7 +1918,7 @@ GO
 CREATE PROCEDURE dbo.CreditCard_Insert
 (
 
-	@Id char (36)  ,
+	@Id uniqueidentifier   ,
 
 	@Number varchar (255)  ,
 
@@ -1528,9 +1977,9 @@ GO
 
 /*
 ----------------------------------------------------------------------------------------------------
--- Date Created: Monday, July 03, 2006
+-- Date Created: Monday, July 24, 2006
 
--- Created By:  ()
+-- Created By: NetTiers (www.nettiers.com)
 -- Purpose: Updates a record in the CreditCard table
 ----------------------------------------------------------------------------------------------------
 */
@@ -1539,9 +1988,9 @@ GO
 CREATE PROCEDURE dbo.CreditCard_Update
 (
 
-	@Id char (36)  ,
+	@Id uniqueidentifier   ,
 
-	@OriginalId char (36)  ,
+	@OriginalId uniqueidentifier   ,
 
 	@Number varchar (255)  ,
 
@@ -1597,9 +2046,9 @@ GO
 
 /*
 ----------------------------------------------------------------------------------------------------
--- Date Created: Monday, July 03, 2006
+-- Date Created: Monday, July 24, 2006
 
--- Created By:  ()
+-- Created By: NetTiers (www.nettiers.com)
 -- Purpose: Deletes a record in the CreditCard table
 ----------------------------------------------------------------------------------------------------
 */
@@ -1608,7 +2057,7 @@ GO
 CREATE PROCEDURE dbo.CreditCard_Delete
 (
 
-	@Id char (36)  ,
+	@Id uniqueidentifier   ,
 
 	@Timestamp timestamp   
 )
@@ -1636,9 +2085,9 @@ GO
 
 /*
 ----------------------------------------------------------------------------------------------------
--- Date Created: Monday, July 03, 2006
+-- Date Created: Monday, July 24, 2006
 
--- Created By:  ()
+-- Created By: NetTiers (www.nettiers.com)
 -- Purpose: Select records from the CreditCard table through an index
 ----------------------------------------------------------------------------------------------------
 */
@@ -1647,7 +2096,7 @@ GO
 CREATE PROCEDURE dbo.CreditCard_GetById
 (
 
-	@Id char (36)  
+	@Id uniqueidentifier   
 )
 AS
 
@@ -1682,9 +2131,9 @@ GO
 
 /*
 ----------------------------------------------------------------------------------------------------
--- Date Created: Monday, July 03, 2006
+-- Date Created: Monday, July 24, 2006
 
--- Created By:  ()
+-- Created By: NetTiers (www.nettiers.com)
 -- Purpose: Finds records in the CreditCard table passing nullable parameters
 ----------------------------------------------------------------------------------------------------
 */
@@ -1695,7 +2144,7 @@ CREATE PROCEDURE dbo.CreditCard_Find
 
 	@SearchUsingOR bit   = null ,
 
-	@Id char (36)  = null ,
+	@Id uniqueidentifier   = null ,
 
 	@Number varchar (255)  = null ,
 
@@ -1759,6 +2208,522 @@ GO
 
 	
 
+-- Drop the dbo.Inventory_Get_List procedure
+IF EXISTS (SELECT * FROM dbo.sysobjects WHERE id = object_id(N'dbo.Inventory_Get_List') AND OBJECTPROPERTY(id, N'IsProcedure') = 1)
+DROP PROCEDURE dbo.Inventory_Get_List
+GO
+
+/*
+----------------------------------------------------------------------------------------------------
+-- Date Created: Monday, July 24, 2006
+
+-- Created By: NetTiers (www.nettiers.com)
+-- Purpose: Gets all records from the Inventory table
+----------------------------------------------------------------------------------------------------
+*/
+
+
+CREATE PROCEDURE dbo.Inventory_Get_List
+
+AS
+
+
+				
+				SELECT
+					[ItemId],
+					[SuppId],
+					[Qty],
+					[Timestamp]
+				FROM
+					dbo.[Inventory]
+					
+				Select @@ROWCOUNT
+			
+
+GO
+SET QUOTED_IDENTIFIER ON 
+GO
+SET ANSI_NULLS OFF 
+GO
+
+	
+
+-- Drop the dbo.Inventory_GetPaged procedure
+IF EXISTS (SELECT * FROM dbo.sysobjects WHERE id = object_id(N'dbo.Inventory_GetPaged') AND OBJECTPROPERTY(id, N'IsProcedure') = 1)
+DROP PROCEDURE dbo.Inventory_GetPaged
+GO
+
+/*
+----------------------------------------------------------------------------------------------------
+-- Date Created: Monday, July 24, 2006
+
+-- Created By: NetTiers (www.nettiers.com)
+-- Purpose: Gets records from the Inventory table passing page index and page count parameters
+----------------------------------------------------------------------------------------------------
+*/
+
+
+CREATE PROCEDURE dbo.Inventory_GetPaged
+(
+
+	@WhereClause varchar (2000)  ,
+
+	@OrderBy varchar (2000)  ,
+
+	@PageIndex int   ,
+
+	@PageSize int   
+)
+AS
+
+
+				
+				BEGIN
+				DECLARE @PageLowerBound int
+				DECLARE @PageUpperBound int
+				
+				-- Set the page bounds
+				SET @PageLowerBound = @PageSize * @PageIndex
+				SET @PageUpperBound = @PageLowerBound + @PageSize
+
+				IF (@OrderBy is null or LEN(@OrderBy) < 1)
+				BEGIN
+					-- default order by to first column
+					SET @OrderBy = '[ItemId]'
+				END
+
+				-- SQL Server 2005 Paging
+				declare @SQL as nvarchar(4000)
+				SET @SQL = 'WITH PageIndex AS ('
+				SET @SQL = @SQL + ' SELECT'
+				IF @PageSize > 0
+				BEGIN
+					SET @SQL = @SQL + ' TOP ' + convert(nvarchar, @PageUpperBound)
+				END
+				SET @SQL = @SQL + ' ROW_NUMBER() OVER (ORDER BY ' + @OrderBy + ') as RowIndex'
+				SET @SQL = @SQL + ', [ItemId]'
+				SET @SQL = @SQL + ', [SuppId]'
+				SET @SQL = @SQL + ', [Qty]'
+				SET @SQL = @SQL + ', [Timestamp]'
+				SET @SQL = @SQL + ' FROM dbo.[Inventory]'
+				IF LEN(@WhereClause) > 0
+				BEGIN
+					SET @SQL = @SQL + ' WHERE ' + @WhereClause
+				END
+				SET @SQL = @SQL + ' ) SELECT'
+				SET @SQL = @SQL + ' [ItemId],'
+				SET @SQL = @SQL + ' [SuppId],'
+				SET @SQL = @SQL + ' [Qty],'
+				SET @SQL = @SQL + ' [Timestamp]'
+				SET @SQL = @SQL + ' FROM PageIndex'
+				SET @SQL = @SQL + ' WHERE RowIndex > ' + convert(nvarchar, @PageLowerBound)
+				IF @PageSize > 0
+				BEGIN
+					SET @SQL = @SQL + ' AND RowIndex <= ' + convert(nvarchar, @PageUpperBound)
+				END
+				exec sp_executesql @SQL
+				
+				-- get row count
+				SET @SQL = 'SELECT COUNT(*) as TotalRowCount'
+				SET @SQL = @SQL + ' FROM dbo.[Inventory]'
+				IF LEN(@WhereClause) > 0
+				BEGIN
+					SET @SQL = @SQL + ' WHERE ' + @WhereClause
+				END
+				exec sp_executesql @SQL
+			
+				END
+			
+
+GO
+SET QUOTED_IDENTIFIER ON 
+GO
+SET ANSI_NULLS OFF 
+GO
+
+	
+
+-- Drop the dbo.Inventory_Insert procedure
+IF EXISTS (SELECT * FROM dbo.sysobjects WHERE id = object_id(N'dbo.Inventory_Insert') AND OBJECTPROPERTY(id, N'IsProcedure') = 1)
+DROP PROCEDURE dbo.Inventory_Insert
+GO
+
+/*
+----------------------------------------------------------------------------------------------------
+-- Date Created: Monday, July 24, 2006
+
+-- Created By: NetTiers (www.nettiers.com)
+-- Purpose: Inserts a record into the Inventory table
+----------------------------------------------------------------------------------------------------
+*/
+
+
+CREATE PROCEDURE dbo.Inventory_Insert
+(
+
+	@ItemId uniqueidentifier   ,
+
+	@SuppId uniqueidentifier   ,
+
+	@Qty int   ,
+
+	@Timestamp timestamp    OUTPUT
+)
+AS
+
+
+					
+				INSERT INTO dbo.[Inventory]
+					(
+					[ItemId]
+					,[SuppId]
+					,[Qty]
+					)
+				VALUES
+					(
+					@ItemId
+					,@SuppId
+					,@Qty
+					)
+				
+									
+				-- Select computed columns into output parameters
+				SELECT
+ @Timestamp = [Timestamp]
+				FROM
+					dbo.[Inventory]
+				WHERE
+[ItemId] = @ItemId 
+AND [SuppId] = @SuppId 
+							
+			
+
+GO
+SET QUOTED_IDENTIFIER ON 
+GO
+SET ANSI_NULLS OFF 
+GO
+
+	
+
+-- Drop the dbo.Inventory_Update procedure
+IF EXISTS (SELECT * FROM dbo.sysobjects WHERE id = object_id(N'dbo.Inventory_Update') AND OBJECTPROPERTY(id, N'IsProcedure') = 1)
+DROP PROCEDURE dbo.Inventory_Update
+GO
+
+/*
+----------------------------------------------------------------------------------------------------
+-- Date Created: Monday, July 24, 2006
+
+-- Created By: NetTiers (www.nettiers.com)
+-- Purpose: Updates a record in the Inventory table
+----------------------------------------------------------------------------------------------------
+*/
+
+
+CREATE PROCEDURE dbo.Inventory_Update
+(
+
+	@ItemId uniqueidentifier   ,
+
+	@OriginalItemId uniqueidentifier   ,
+
+	@SuppId uniqueidentifier   ,
+
+	@OriginalSuppId uniqueidentifier   ,
+
+	@Qty int   ,
+
+	@Timestamp timestamp   ,
+
+	@ReturnedTimestamp timestamp    OUTPUT
+)
+AS
+
+
+				
+				
+				-- Modify the updatable columns
+				UPDATE
+					dbo.[Inventory]
+				SET
+					[ItemId] = @ItemId
+					,[SuppId] = @SuppId
+					,[Qty] = @Qty
+				WHERE
+[ItemId] = @OriginalItemId 
+AND [SuppId] = @OriginalSuppId 
+AND [Timestamp] = @Timestamp				
+				
+				-- Select computed columns into output parameters
+				SELECT
+ @ReturnedTimestamp = [Timestamp]
+				FROM
+					dbo.[Inventory]
+				WHERE
+[ItemId] = @ItemId 
+AND [SuppId] = @SuppId 
+			
+
+GO
+SET QUOTED_IDENTIFIER ON 
+GO
+SET ANSI_NULLS OFF 
+GO
+
+	
+
+-- Drop the dbo.Inventory_Delete procedure
+IF EXISTS (SELECT * FROM dbo.sysobjects WHERE id = object_id(N'dbo.Inventory_Delete') AND OBJECTPROPERTY(id, N'IsProcedure') = 1)
+DROP PROCEDURE dbo.Inventory_Delete
+GO
+
+/*
+----------------------------------------------------------------------------------------------------
+-- Date Created: Monday, July 24, 2006
+
+-- Created By: NetTiers (www.nettiers.com)
+-- Purpose: Deletes a record in the Inventory table
+----------------------------------------------------------------------------------------------------
+*/
+
+
+CREATE PROCEDURE dbo.Inventory_Delete
+(
+
+	@ItemId uniqueidentifier   ,
+
+	@SuppId uniqueidentifier   ,
+
+	@Timestamp timestamp   
+)
+AS
+
+
+				DELETE FROM dbo.[Inventory] WITH (ROWLOCK) 
+				WHERE
+					[ItemId] = @ItemId
+					AND [SuppId] = @SuppId
+	AND [Timestamp] = @Timestamp					
+			
+
+GO
+SET QUOTED_IDENTIFIER ON 
+GO
+SET ANSI_NULLS OFF 
+GO
+
+	
+
+-- Drop the dbo.Inventory_GetByItemId procedure
+IF EXISTS (SELECT * FROM dbo.sysobjects WHERE id = object_id(N'dbo.Inventory_GetByItemId') AND OBJECTPROPERTY(id, N'IsProcedure') = 1)
+DROP PROCEDURE dbo.Inventory_GetByItemId
+GO
+
+/*
+----------------------------------------------------------------------------------------------------
+-- Date Created: Monday, July 24, 2006
+
+-- Created By: NetTiers (www.nettiers.com)
+-- Purpose: Select records from the Inventory table through a foreign key
+----------------------------------------------------------------------------------------------------
+*/
+
+
+CREATE PROCEDURE dbo.Inventory_GetByItemId
+(
+
+	@ItemId uniqueidentifier   
+)
+AS
+
+
+				
+				SELECT
+					[ItemId],
+					[SuppId],
+					[Qty],
+					[Timestamp]
+				FROM
+					dbo.[Inventory]
+				WHERE
+					[ItemId] = @ItemId
+				
+				Select @@ROWCOUNT
+			
+
+GO
+SET QUOTED_IDENTIFIER ON 
+GO
+SET ANSI_NULLS OFF 
+GO
+
+	
+
+-- Drop the dbo.Inventory_GetBySuppId procedure
+IF EXISTS (SELECT * FROM dbo.sysobjects WHERE id = object_id(N'dbo.Inventory_GetBySuppId') AND OBJECTPROPERTY(id, N'IsProcedure') = 1)
+DROP PROCEDURE dbo.Inventory_GetBySuppId
+GO
+
+/*
+----------------------------------------------------------------------------------------------------
+-- Date Created: Monday, July 24, 2006
+
+-- Created By: NetTiers (www.nettiers.com)
+-- Purpose: Select records from the Inventory table through a foreign key
+----------------------------------------------------------------------------------------------------
+*/
+
+
+CREATE PROCEDURE dbo.Inventory_GetBySuppId
+(
+
+	@SuppId uniqueidentifier   
+)
+AS
+
+
+				
+				SELECT
+					[ItemId],
+					[SuppId],
+					[Qty],
+					[Timestamp]
+				FROM
+					dbo.[Inventory]
+				WHERE
+					[SuppId] = @SuppId
+				
+				Select @@ROWCOUNT
+			
+
+GO
+SET QUOTED_IDENTIFIER ON 
+GO
+SET ANSI_NULLS OFF 
+GO
+
+	
+
+-- Drop the dbo.Inventory_GetByItemIdSuppId procedure
+IF EXISTS (SELECT * FROM dbo.sysobjects WHERE id = object_id(N'dbo.Inventory_GetByItemIdSuppId') AND OBJECTPROPERTY(id, N'IsProcedure') = 1)
+DROP PROCEDURE dbo.Inventory_GetByItemIdSuppId
+GO
+
+/*
+----------------------------------------------------------------------------------------------------
+-- Date Created: Monday, July 24, 2006
+
+-- Created By: NetTiers (www.nettiers.com)
+-- Purpose: Select records from the Inventory table through an index
+----------------------------------------------------------------------------------------------------
+*/
+
+
+CREATE PROCEDURE dbo.Inventory_GetByItemIdSuppId
+(
+
+	@ItemId uniqueidentifier   ,
+
+	@SuppId uniqueidentifier   
+)
+AS
+
+
+				SELECT
+					[ItemId],
+					[SuppId],
+					[Qty],
+					[Timestamp]
+				FROM
+					dbo.[Inventory]
+				WHERE
+					[ItemId] = @ItemId
+					AND [SuppId] = @SuppId
+			Select @@ROWCOUNT
+					
+			
+
+GO
+SET QUOTED_IDENTIFIER ON 
+GO
+SET ANSI_NULLS OFF 
+GO
+
+	
+
+-- Drop the dbo.Inventory_Find procedure
+IF EXISTS (SELECT * FROM dbo.sysobjects WHERE id = object_id(N'dbo.Inventory_Find') AND OBJECTPROPERTY(id, N'IsProcedure') = 1)
+DROP PROCEDURE dbo.Inventory_Find
+GO
+
+/*
+----------------------------------------------------------------------------------------------------
+-- Date Created: Monday, July 24, 2006
+
+-- Created By: NetTiers (www.nettiers.com)
+-- Purpose: Finds records in the Inventory table passing nullable parameters
+----------------------------------------------------------------------------------------------------
+*/
+
+
+CREATE PROCEDURE dbo.Inventory_Find
+(
+
+	@SearchUsingOR bit   = null ,
+
+	@ItemId uniqueidentifier   = null ,
+
+	@SuppId uniqueidentifier   = null ,
+
+	@Qty int   = null ,
+
+	@Timestamp timestamp   = null 
+)
+AS
+
+
+				
+  IF ISNULL(@SearchUsingOR, 0) <> 1
+  BEGIN
+    SELECT
+	  [ItemId]
+	, [SuppId]
+	, [Qty]
+	, [Timestamp]
+    FROM
+	dbo.[Inventory]
+    WHERE 
+	 ([ItemId] = @ItemId OR @ItemId is null)
+	AND ([SuppId] = @SuppId OR @SuppId is null)
+	AND ([Qty] = @Qty OR @Qty is null)
+						
+  END
+  ELSE
+  BEGIN
+    SELECT
+	  [ItemId]
+	, [SuppId]
+	, [Qty]
+	, [Timestamp]
+    FROM
+	dbo.[Inventory]
+    WHERE 
+	 ([ItemId] = @ItemId AND @ItemId is not null)
+	OR ([SuppId] = @SuppId AND @SuppId is not null)
+	OR ([Qty] = @Qty AND @Qty is not null)
+	Select @@ROWCOUNT			
+  END
+				
+
+GO
+SET QUOTED_IDENTIFIER ON 
+GO
+SET ANSI_NULLS OFF 
+GO
+
+	
+
 -- Drop the dbo.Item_Get_List procedure
 IF EXISTS (SELECT * FROM dbo.sysobjects WHERE id = object_id(N'dbo.Item_Get_List') AND OBJECTPROPERTY(id, N'IsProcedure') = 1)
 DROP PROCEDURE dbo.Item_Get_List
@@ -1766,9 +2731,9 @@ GO
 
 /*
 ----------------------------------------------------------------------------------------------------
--- Date Created: Monday, July 03, 2006
+-- Date Created: Monday, July 24, 2006
 
--- Created By:  ()
+-- Created By: NetTiers (www.nettiers.com)
 -- Purpose: Gets all records from the Item table
 ----------------------------------------------------------------------------------------------------
 */
@@ -1810,9 +2775,9 @@ GO
 
 /*
 ----------------------------------------------------------------------------------------------------
--- Date Created: Monday, July 03, 2006
+-- Date Created: Monday, July 24, 2006
 
--- Created By:  ()
+-- Created By: NetTiers (www.nettiers.com)
 -- Purpose: Gets records from the Item table passing page index and page count parameters
 ----------------------------------------------------------------------------------------------------
 */
@@ -1913,9 +2878,9 @@ GO
 
 /*
 ----------------------------------------------------------------------------------------------------
--- Date Created: Monday, July 03, 2006
+-- Date Created: Monday, July 24, 2006
 
--- Created By:  ()
+-- Created By: NetTiers (www.nettiers.com)
 -- Purpose: Inserts a record into the Item table
 ----------------------------------------------------------------------------------------------------
 */
@@ -1924,7 +2889,7 @@ GO
 CREATE PROCEDURE dbo.Item_Insert
 (
 
-	@Id char (36)  ,
+	@Id uniqueidentifier   ,
 
 	@Name varchar (255)  ,
 
@@ -1936,7 +2901,7 @@ CREATE PROCEDURE dbo.Item_Insert
 
 	@Photo varchar (255)  ,
 
-	@ProductId char (36)  ,
+	@ProductId uniqueidentifier   ,
 
 	@Timestamp timestamp    OUTPUT
 )
@@ -1991,9 +2956,9 @@ GO
 
 /*
 ----------------------------------------------------------------------------------------------------
--- Date Created: Monday, July 03, 2006
+-- Date Created: Monday, July 24, 2006
 
--- Created By:  ()
+-- Created By: NetTiers (www.nettiers.com)
 -- Purpose: Updates a record in the Item table
 ----------------------------------------------------------------------------------------------------
 */
@@ -2002,9 +2967,9 @@ GO
 CREATE PROCEDURE dbo.Item_Update
 (
 
-	@Id char (36)  ,
+	@Id uniqueidentifier   ,
 
-	@OriginalId char (36)  ,
+	@OriginalId uniqueidentifier   ,
 
 	@Name varchar (255)  ,
 
@@ -2016,7 +2981,7 @@ CREATE PROCEDURE dbo.Item_Update
 
 	@Photo varchar (255)  ,
 
-	@ProductId char (36)  ,
+	@ProductId uniqueidentifier   ,
 
 	@Timestamp timestamp   ,
 
@@ -2066,9 +3031,9 @@ GO
 
 /*
 ----------------------------------------------------------------------------------------------------
--- Date Created: Monday, July 03, 2006
+-- Date Created: Monday, July 24, 2006
 
--- Created By:  ()
+-- Created By: NetTiers (www.nettiers.com)
 -- Purpose: Deletes a record in the Item table
 ----------------------------------------------------------------------------------------------------
 */
@@ -2077,7 +3042,7 @@ GO
 CREATE PROCEDURE dbo.Item_Delete
 (
 
-	@Id char (36)  ,
+	@Id uniqueidentifier   ,
 
 	@Timestamp timestamp   
 )
@@ -2105,9 +3070,9 @@ GO
 
 /*
 ----------------------------------------------------------------------------------------------------
--- Date Created: Monday, July 03, 2006
+-- Date Created: Monday, July 24, 2006
 
--- Created By:  ()
+-- Created By: NetTiers (www.nettiers.com)
 -- Purpose: Select records from the Item table through a foreign key
 ----------------------------------------------------------------------------------------------------
 */
@@ -2116,7 +3081,7 @@ GO
 CREATE PROCEDURE dbo.Item_GetByProductId
 (
 
-	@ProductId char (36)  
+	@ProductId uniqueidentifier   
 )
 AS
 
@@ -2154,9 +3119,9 @@ GO
 
 /*
 ----------------------------------------------------------------------------------------------------
--- Date Created: Monday, July 03, 2006
+-- Date Created: Monday, July 24, 2006
 
--- Created By:  ()
+-- Created By: NetTiers (www.nettiers.com)
 -- Purpose: Select records from the Item table through an index
 ----------------------------------------------------------------------------------------------------
 */
@@ -2165,7 +3130,7 @@ GO
 CREATE PROCEDURE dbo.Item_GetById
 (
 
-	@Id char (36)  
+	@Id uniqueidentifier   
 )
 AS
 
@@ -2195,6 +3160,54 @@ GO
 
 	
 
+-- Drop the dbo.Item_GetBySuppIdFromInventory procedure
+IF EXISTS (SELECT * FROM dbo.sysobjects WHERE id = object_id(N'dbo.Item_GetBySuppIdFromInventory') AND OBJECTPROPERTY(id, N'IsProcedure') = 1)
+DROP PROCEDURE dbo.Item_GetBySuppIdFromInventory
+GO
+
+/*
+----------------------------------------------------------------------------------------------------
+-- Date Created: Monday, July 24, 2006
+
+-- Created By: NetTiers (www.nettiers.com)
+-- Purpose: Gets records through a junction table
+----------------------------------------------------------------------------------------------------
+*/
+
+
+CREATE PROCEDURE dbo.Item_GetBySuppIdFromInventory
+(
+
+	@SuppId uniqueidentifier   
+)
+AS
+
+
+SELECT dbo.[Item].[Id]
+       ,dbo.[Item].[Name]
+       ,dbo.[Item].[Description]
+       ,dbo.[Item].[Price]
+       ,dbo.[Item].[Currency]
+       ,dbo.[Item].[Photo]
+       ,dbo.[Item].[ProductId]
+       ,dbo.[Item].[Timestamp]
+  FROM dbo.[Item]
+ WHERE EXISTS (SELECT 1
+                 FROM dbo.[Inventory] 
+                WHERE dbo.[Inventory].[SuppId] = @SuppId
+                  AND dbo.[Inventory].[ItemId] = dbo.[Item].[Id]
+                  )
+				Select @@ROWCOUNT			
+				
+
+GO
+SET QUOTED_IDENTIFIER ON 
+GO
+SET ANSI_NULLS OFF 
+GO
+
+	
+
 -- Drop the dbo.Item_Find procedure
 IF EXISTS (SELECT * FROM dbo.sysobjects WHERE id = object_id(N'dbo.Item_Find') AND OBJECTPROPERTY(id, N'IsProcedure') = 1)
 DROP PROCEDURE dbo.Item_Find
@@ -2202,9 +3215,9 @@ GO
 
 /*
 ----------------------------------------------------------------------------------------------------
--- Date Created: Monday, July 03, 2006
+-- Date Created: Monday, July 24, 2006
 
--- Created By:  ()
+-- Created By: NetTiers (www.nettiers.com)
 -- Purpose: Finds records in the Item table passing nullable parameters
 ----------------------------------------------------------------------------------------------------
 */
@@ -2215,7 +3228,7 @@ CREATE PROCEDURE dbo.Item_Find
 
 	@SearchUsingOR bit   = null ,
 
-	@Id char (36)  = null ,
+	@Id uniqueidentifier   = null ,
 
 	@Name varchar (255)  = null ,
 
@@ -2227,7 +3240,7 @@ CREATE PROCEDURE dbo.Item_Find
 
 	@Photo varchar (255)  = null ,
 
-	@ProductId char (36)  = null ,
+	@ProductId uniqueidentifier   = null ,
 
 	@Timestamp timestamp   = null 
 )
@@ -2291,6 +3304,2466 @@ GO
 
 	
 
+-- Drop the dbo.LineItem_Get_List procedure
+IF EXISTS (SELECT * FROM dbo.sysobjects WHERE id = object_id(N'dbo.LineItem_Get_List') AND OBJECTPROPERTY(id, N'IsProcedure') = 1)
+DROP PROCEDURE dbo.LineItem_Get_List
+GO
+
+/*
+----------------------------------------------------------------------------------------------------
+-- Date Created: Monday, July 24, 2006
+
+-- Created By: NetTiers (www.nettiers.com)
+-- Purpose: Gets all records from the LineItem table
+----------------------------------------------------------------------------------------------------
+*/
+
+
+CREATE PROCEDURE dbo.LineItem_Get_List
+
+AS
+
+
+				
+				SELECT
+					[OrderId],
+					[LineNum],
+					[ItemId],
+					[Quantity],
+					[UnitPrice],
+					[Timestamp]
+				FROM
+					dbo.[LineItem]
+					
+				Select @@ROWCOUNT
+			
+
+GO
+SET QUOTED_IDENTIFIER ON 
+GO
+SET ANSI_NULLS OFF 
+GO
+
+	
+
+-- Drop the dbo.LineItem_GetPaged procedure
+IF EXISTS (SELECT * FROM dbo.sysobjects WHERE id = object_id(N'dbo.LineItem_GetPaged') AND OBJECTPROPERTY(id, N'IsProcedure') = 1)
+DROP PROCEDURE dbo.LineItem_GetPaged
+GO
+
+/*
+----------------------------------------------------------------------------------------------------
+-- Date Created: Monday, July 24, 2006
+
+-- Created By: NetTiers (www.nettiers.com)
+-- Purpose: Gets records from the LineItem table passing page index and page count parameters
+----------------------------------------------------------------------------------------------------
+*/
+
+
+CREATE PROCEDURE dbo.LineItem_GetPaged
+(
+
+	@WhereClause varchar (2000)  ,
+
+	@OrderBy varchar (2000)  ,
+
+	@PageIndex int   ,
+
+	@PageSize int   
+)
+AS
+
+
+				
+				BEGIN
+				DECLARE @PageLowerBound int
+				DECLARE @PageUpperBound int
+				
+				-- Set the page bounds
+				SET @PageLowerBound = @PageSize * @PageIndex
+				SET @PageUpperBound = @PageLowerBound + @PageSize
+
+				IF (@OrderBy is null or LEN(@OrderBy) < 1)
+				BEGIN
+					-- default order by to first column
+					SET @OrderBy = '[OrderId]'
+				END
+
+				-- SQL Server 2005 Paging
+				declare @SQL as nvarchar(4000)
+				SET @SQL = 'WITH PageIndex AS ('
+				SET @SQL = @SQL + ' SELECT'
+				IF @PageSize > 0
+				BEGIN
+					SET @SQL = @SQL + ' TOP ' + convert(nvarchar, @PageUpperBound)
+				END
+				SET @SQL = @SQL + ' ROW_NUMBER() OVER (ORDER BY ' + @OrderBy + ') as RowIndex'
+				SET @SQL = @SQL + ', [OrderId]'
+				SET @SQL = @SQL + ', [LineNum]'
+				SET @SQL = @SQL + ', [ItemId]'
+				SET @SQL = @SQL + ', [Quantity]'
+				SET @SQL = @SQL + ', [UnitPrice]'
+				SET @SQL = @SQL + ', [Timestamp]'
+				SET @SQL = @SQL + ' FROM dbo.[LineItem]'
+				IF LEN(@WhereClause) > 0
+				BEGIN
+					SET @SQL = @SQL + ' WHERE ' + @WhereClause
+				END
+				SET @SQL = @SQL + ' ) SELECT'
+				SET @SQL = @SQL + ' [OrderId],'
+				SET @SQL = @SQL + ' [LineNum],'
+				SET @SQL = @SQL + ' [ItemId],'
+				SET @SQL = @SQL + ' [Quantity],'
+				SET @SQL = @SQL + ' [UnitPrice],'
+				SET @SQL = @SQL + ' [Timestamp]'
+				SET @SQL = @SQL + ' FROM PageIndex'
+				SET @SQL = @SQL + ' WHERE RowIndex > ' + convert(nvarchar, @PageLowerBound)
+				IF @PageSize > 0
+				BEGIN
+					SET @SQL = @SQL + ' AND RowIndex <= ' + convert(nvarchar, @PageUpperBound)
+				END
+				exec sp_executesql @SQL
+				
+				-- get row count
+				SET @SQL = 'SELECT COUNT(*) as TotalRowCount'
+				SET @SQL = @SQL + ' FROM dbo.[LineItem]'
+				IF LEN(@WhereClause) > 0
+				BEGIN
+					SET @SQL = @SQL + ' WHERE ' + @WhereClause
+				END
+				exec sp_executesql @SQL
+			
+				END
+			
+
+GO
+SET QUOTED_IDENTIFIER ON 
+GO
+SET ANSI_NULLS OFF 
+GO
+
+	
+
+-- Drop the dbo.LineItem_Insert procedure
+IF EXISTS (SELECT * FROM dbo.sysobjects WHERE id = object_id(N'dbo.LineItem_Insert') AND OBJECTPROPERTY(id, N'IsProcedure') = 1)
+DROP PROCEDURE dbo.LineItem_Insert
+GO
+
+/*
+----------------------------------------------------------------------------------------------------
+-- Date Created: Monday, July 24, 2006
+
+-- Created By: NetTiers (www.nettiers.com)
+-- Purpose: Inserts a record into the LineItem table
+----------------------------------------------------------------------------------------------------
+*/
+
+
+CREATE PROCEDURE dbo.LineItem_Insert
+(
+
+	@OrderId int   ,
+
+	@LineNum int   ,
+
+	@ItemId uniqueidentifier   ,
+
+	@Quantity int   ,
+
+	@UnitPrice money   ,
+
+	@Timestamp timestamp    OUTPUT
+)
+AS
+
+
+					
+				INSERT INTO dbo.[LineItem]
+					(
+					[OrderId]
+					,[LineNum]
+					,[ItemId]
+					,[Quantity]
+					,[UnitPrice]
+					)
+				VALUES
+					(
+					@OrderId
+					,@LineNum
+					,@ItemId
+					,@Quantity
+					,@UnitPrice
+					)
+				
+									
+				-- Select computed columns into output parameters
+				SELECT
+ @Timestamp = [Timestamp]
+				FROM
+					dbo.[LineItem]
+				WHERE
+[OrderId] = @OrderId 
+AND [LineNum] = @LineNum 
+							
+			
+
+GO
+SET QUOTED_IDENTIFIER ON 
+GO
+SET ANSI_NULLS OFF 
+GO
+
+	
+
+-- Drop the dbo.LineItem_Update procedure
+IF EXISTS (SELECT * FROM dbo.sysobjects WHERE id = object_id(N'dbo.LineItem_Update') AND OBJECTPROPERTY(id, N'IsProcedure') = 1)
+DROP PROCEDURE dbo.LineItem_Update
+GO
+
+/*
+----------------------------------------------------------------------------------------------------
+-- Date Created: Monday, July 24, 2006
+
+-- Created By: NetTiers (www.nettiers.com)
+-- Purpose: Updates a record in the LineItem table
+----------------------------------------------------------------------------------------------------
+*/
+
+
+CREATE PROCEDURE dbo.LineItem_Update
+(
+
+	@OrderId int   ,
+
+	@OriginalOrderId int   ,
+
+	@LineNum int   ,
+
+	@OriginalLineNum int   ,
+
+	@ItemId uniqueidentifier   ,
+
+	@Quantity int   ,
+
+	@UnitPrice money   ,
+
+	@Timestamp timestamp   ,
+
+	@ReturnedTimestamp timestamp    OUTPUT
+)
+AS
+
+
+				
+				
+				-- Modify the updatable columns
+				UPDATE
+					dbo.[LineItem]
+				SET
+					[OrderId] = @OrderId
+					,[LineNum] = @LineNum
+					,[ItemId] = @ItemId
+					,[Quantity] = @Quantity
+					,[UnitPrice] = @UnitPrice
+				WHERE
+[OrderId] = @OriginalOrderId 
+AND [LineNum] = @OriginalLineNum 
+AND [Timestamp] = @Timestamp				
+				
+				-- Select computed columns into output parameters
+				SELECT
+ @ReturnedTimestamp = [Timestamp]
+				FROM
+					dbo.[LineItem]
+				WHERE
+[OrderId] = @OrderId 
+AND [LineNum] = @LineNum 
+			
+
+GO
+SET QUOTED_IDENTIFIER ON 
+GO
+SET ANSI_NULLS OFF 
+GO
+
+	
+
+-- Drop the dbo.LineItem_Delete procedure
+IF EXISTS (SELECT * FROM dbo.sysobjects WHERE id = object_id(N'dbo.LineItem_Delete') AND OBJECTPROPERTY(id, N'IsProcedure') = 1)
+DROP PROCEDURE dbo.LineItem_Delete
+GO
+
+/*
+----------------------------------------------------------------------------------------------------
+-- Date Created: Monday, July 24, 2006
+
+-- Created By: NetTiers (www.nettiers.com)
+-- Purpose: Deletes a record in the LineItem table
+----------------------------------------------------------------------------------------------------
+*/
+
+
+CREATE PROCEDURE dbo.LineItem_Delete
+(
+
+	@OrderId int   ,
+
+	@LineNum int   ,
+
+	@Timestamp timestamp   
+)
+AS
+
+
+				DELETE FROM dbo.[LineItem] WITH (ROWLOCK) 
+				WHERE
+					[OrderId] = @OrderId
+					AND [LineNum] = @LineNum
+	AND [Timestamp] = @Timestamp					
+			
+
+GO
+SET QUOTED_IDENTIFIER ON 
+GO
+SET ANSI_NULLS OFF 
+GO
+
+	
+
+-- Drop the dbo.LineItem_GetByOrderId procedure
+IF EXISTS (SELECT * FROM dbo.sysobjects WHERE id = object_id(N'dbo.LineItem_GetByOrderId') AND OBJECTPROPERTY(id, N'IsProcedure') = 1)
+DROP PROCEDURE dbo.LineItem_GetByOrderId
+GO
+
+/*
+----------------------------------------------------------------------------------------------------
+-- Date Created: Monday, July 24, 2006
+
+-- Created By: NetTiers (www.nettiers.com)
+-- Purpose: Select records from the LineItem table through a foreign key
+----------------------------------------------------------------------------------------------------
+*/
+
+
+CREATE PROCEDURE dbo.LineItem_GetByOrderId
+(
+
+	@OrderId int   
+)
+AS
+
+
+				
+				SELECT
+					[OrderId],
+					[LineNum],
+					[ItemId],
+					[Quantity],
+					[UnitPrice],
+					[Timestamp]
+				FROM
+					dbo.[LineItem]
+				WHERE
+					[OrderId] = @OrderId
+				
+				Select @@ROWCOUNT
+			
+
+GO
+SET QUOTED_IDENTIFIER ON 
+GO
+SET ANSI_NULLS OFF 
+GO
+
+	
+
+-- Drop the dbo.LineItem_GetByItemId procedure
+IF EXISTS (SELECT * FROM dbo.sysobjects WHERE id = object_id(N'dbo.LineItem_GetByItemId') AND OBJECTPROPERTY(id, N'IsProcedure') = 1)
+DROP PROCEDURE dbo.LineItem_GetByItemId
+GO
+
+/*
+----------------------------------------------------------------------------------------------------
+-- Date Created: Monday, July 24, 2006
+
+-- Created By: NetTiers (www.nettiers.com)
+-- Purpose: Select records from the LineItem table through a foreign key
+----------------------------------------------------------------------------------------------------
+*/
+
+
+CREATE PROCEDURE dbo.LineItem_GetByItemId
+(
+
+	@ItemId uniqueidentifier   
+)
+AS
+
+
+				
+				SELECT
+					[OrderId],
+					[LineNum],
+					[ItemId],
+					[Quantity],
+					[UnitPrice],
+					[Timestamp]
+				FROM
+					dbo.[LineItem]
+				WHERE
+					[ItemId] = @ItemId
+				
+				Select @@ROWCOUNT
+			
+
+GO
+SET QUOTED_IDENTIFIER ON 
+GO
+SET ANSI_NULLS OFF 
+GO
+
+	
+
+-- Drop the dbo.LineItem_GetByLineNumOrderId procedure
+IF EXISTS (SELECT * FROM dbo.sysobjects WHERE id = object_id(N'dbo.LineItem_GetByLineNumOrderId') AND OBJECTPROPERTY(id, N'IsProcedure') = 1)
+DROP PROCEDURE dbo.LineItem_GetByLineNumOrderId
+GO
+
+/*
+----------------------------------------------------------------------------------------------------
+-- Date Created: Monday, July 24, 2006
+
+-- Created By: NetTiers (www.nettiers.com)
+-- Purpose: Select records from the LineItem table through an index
+----------------------------------------------------------------------------------------------------
+*/
+
+
+CREATE PROCEDURE dbo.LineItem_GetByLineNumOrderId
+(
+
+	@OrderId int   ,
+
+	@LineNum int   
+)
+AS
+
+
+				SELECT
+					[OrderId],
+					[LineNum],
+					[ItemId],
+					[Quantity],
+					[UnitPrice],
+					[Timestamp]
+				FROM
+					dbo.[LineItem]
+				WHERE
+					[OrderId] = @OrderId
+					AND [LineNum] = @LineNum
+			Select @@ROWCOUNT
+					
+			
+
+GO
+SET QUOTED_IDENTIFIER ON 
+GO
+SET ANSI_NULLS OFF 
+GO
+
+	
+
+-- Drop the dbo.LineItem_Find procedure
+IF EXISTS (SELECT * FROM dbo.sysobjects WHERE id = object_id(N'dbo.LineItem_Find') AND OBJECTPROPERTY(id, N'IsProcedure') = 1)
+DROP PROCEDURE dbo.LineItem_Find
+GO
+
+/*
+----------------------------------------------------------------------------------------------------
+-- Date Created: Monday, July 24, 2006
+
+-- Created By: NetTiers (www.nettiers.com)
+-- Purpose: Finds records in the LineItem table passing nullable parameters
+----------------------------------------------------------------------------------------------------
+*/
+
+
+CREATE PROCEDURE dbo.LineItem_Find
+(
+
+	@SearchUsingOR bit   = null ,
+
+	@OrderId int   = null ,
+
+	@LineNum int   = null ,
+
+	@ItemId uniqueidentifier   = null ,
+
+	@Quantity int   = null ,
+
+	@UnitPrice money   = null ,
+
+	@Timestamp timestamp   = null 
+)
+AS
+
+
+				
+  IF ISNULL(@SearchUsingOR, 0) <> 1
+  BEGIN
+    SELECT
+	  [OrderId]
+	, [LineNum]
+	, [ItemId]
+	, [Quantity]
+	, [UnitPrice]
+	, [Timestamp]
+    FROM
+	dbo.[LineItem]
+    WHERE 
+	 ([OrderId] = @OrderId OR @OrderId is null)
+	AND ([LineNum] = @LineNum OR @LineNum is null)
+	AND ([ItemId] = @ItemId OR @ItemId is null)
+	AND ([Quantity] = @Quantity OR @Quantity is null)
+	AND ([UnitPrice] = @UnitPrice OR @UnitPrice is null)
+						
+  END
+  ELSE
+  BEGIN
+    SELECT
+	  [OrderId]
+	, [LineNum]
+	, [ItemId]
+	, [Quantity]
+	, [UnitPrice]
+	, [Timestamp]
+    FROM
+	dbo.[LineItem]
+    WHERE 
+	 ([OrderId] = @OrderId AND @OrderId is not null)
+	OR ([LineNum] = @LineNum AND @LineNum is not null)
+	OR ([ItemId] = @ItemId AND @ItemId is not null)
+	OR ([Quantity] = @Quantity AND @Quantity is not null)
+	OR ([UnitPrice] = @UnitPrice AND @UnitPrice is not null)
+	Select @@ROWCOUNT			
+  END
+				
+
+GO
+SET QUOTED_IDENTIFIER ON 
+GO
+SET ANSI_NULLS OFF 
+GO
+
+	
+
+-- Drop the dbo.Orders_Get_List procedure
+IF EXISTS (SELECT * FROM dbo.sysobjects WHERE id = object_id(N'dbo.Orders_Get_List') AND OBJECTPROPERTY(id, N'IsProcedure') = 1)
+DROP PROCEDURE dbo.Orders_Get_List
+GO
+
+/*
+----------------------------------------------------------------------------------------------------
+-- Date Created: Monday, July 24, 2006
+
+-- Created By: NetTiers (www.nettiers.com)
+-- Purpose: Gets all records from the Orders table
+----------------------------------------------------------------------------------------------------
+*/
+
+
+CREATE PROCEDURE dbo.Orders_Get_List
+
+AS
+
+
+				
+				SELECT
+					[OrderId],
+					[AccountId],
+					[OrderDate],
+					[ShipAddr1],
+					[ShipAddr2],
+					[ShipCity],
+					[ShipState],
+					[ShipZip],
+					[ShipCountry],
+					[BillAddr1],
+					[BillAddr2],
+					[BillCity],
+					[BillState],
+					[BillZip],
+					[BillCountry],
+					[CourierId],
+					[TotalPrice],
+					[BillToFirstName],
+					[BillToLastName],
+					[ShipToFirstName],
+					[ShipToLastName],
+					[CreditCardId],
+					[Locale],
+					[Timestamp]
+				FROM
+					dbo.[Orders]
+					
+				Select @@ROWCOUNT
+			
+
+GO
+SET QUOTED_IDENTIFIER ON 
+GO
+SET ANSI_NULLS OFF 
+GO
+
+	
+
+-- Drop the dbo.Orders_GetPaged procedure
+IF EXISTS (SELECT * FROM dbo.sysobjects WHERE id = object_id(N'dbo.Orders_GetPaged') AND OBJECTPROPERTY(id, N'IsProcedure') = 1)
+DROP PROCEDURE dbo.Orders_GetPaged
+GO
+
+/*
+----------------------------------------------------------------------------------------------------
+-- Date Created: Monday, July 24, 2006
+
+-- Created By: NetTiers (www.nettiers.com)
+-- Purpose: Gets records from the Orders table passing page index and page count parameters
+----------------------------------------------------------------------------------------------------
+*/
+
+
+CREATE PROCEDURE dbo.Orders_GetPaged
+(
+
+	@WhereClause varchar (2000)  ,
+
+	@OrderBy varchar (2000)  ,
+
+	@PageIndex int   ,
+
+	@PageSize int   
+)
+AS
+
+
+				
+				BEGIN
+				DECLARE @PageLowerBound int
+				DECLARE @PageUpperBound int
+				
+				-- Set the page bounds
+				SET @PageLowerBound = @PageSize * @PageIndex
+				SET @PageUpperBound = @PageLowerBound + @PageSize
+
+				IF (@OrderBy is null or LEN(@OrderBy) < 1)
+				BEGIN
+					-- default order by to first column
+					SET @OrderBy = '[OrderId]'
+				END
+
+				-- SQL Server 2005 Paging
+				declare @SQL as nvarchar(4000)
+				SET @SQL = 'WITH PageIndex AS ('
+				SET @SQL = @SQL + ' SELECT'
+				IF @PageSize > 0
+				BEGIN
+					SET @SQL = @SQL + ' TOP ' + convert(nvarchar, @PageUpperBound)
+				END
+				SET @SQL = @SQL + ' ROW_NUMBER() OVER (ORDER BY ' + @OrderBy + ') as RowIndex'
+				SET @SQL = @SQL + ', [OrderId]'
+				SET @SQL = @SQL + ', [AccountId]'
+				SET @SQL = @SQL + ', [OrderDate]'
+				SET @SQL = @SQL + ', [ShipAddr1]'
+				SET @SQL = @SQL + ', [ShipAddr2]'
+				SET @SQL = @SQL + ', [ShipCity]'
+				SET @SQL = @SQL + ', [ShipState]'
+				SET @SQL = @SQL + ', [ShipZip]'
+				SET @SQL = @SQL + ', [ShipCountry]'
+				SET @SQL = @SQL + ', [BillAddr1]'
+				SET @SQL = @SQL + ', [BillAddr2]'
+				SET @SQL = @SQL + ', [BillCity]'
+				SET @SQL = @SQL + ', [BillState]'
+				SET @SQL = @SQL + ', [BillZip]'
+				SET @SQL = @SQL + ', [BillCountry]'
+				SET @SQL = @SQL + ', [CourierId]'
+				SET @SQL = @SQL + ', [TotalPrice]'
+				SET @SQL = @SQL + ', [BillToFirstName]'
+				SET @SQL = @SQL + ', [BillToLastName]'
+				SET @SQL = @SQL + ', [ShipToFirstName]'
+				SET @SQL = @SQL + ', [ShipToLastName]'
+				SET @SQL = @SQL + ', [CreditCardId]'
+				SET @SQL = @SQL + ', [Locale]'
+				SET @SQL = @SQL + ', [Timestamp]'
+				SET @SQL = @SQL + ' FROM dbo.[Orders]'
+				IF LEN(@WhereClause) > 0
+				BEGIN
+					SET @SQL = @SQL + ' WHERE ' + @WhereClause
+				END
+				SET @SQL = @SQL + ' ) SELECT'
+				SET @SQL = @SQL + ' [OrderId],'
+				SET @SQL = @SQL + ' [AccountId],'
+				SET @SQL = @SQL + ' [OrderDate],'
+				SET @SQL = @SQL + ' [ShipAddr1],'
+				SET @SQL = @SQL + ' [ShipAddr2],'
+				SET @SQL = @SQL + ' [ShipCity],'
+				SET @SQL = @SQL + ' [ShipState],'
+				SET @SQL = @SQL + ' [ShipZip],'
+				SET @SQL = @SQL + ' [ShipCountry],'
+				SET @SQL = @SQL + ' [BillAddr1],'
+				SET @SQL = @SQL + ' [BillAddr2],'
+				SET @SQL = @SQL + ' [BillCity],'
+				SET @SQL = @SQL + ' [BillState],'
+				SET @SQL = @SQL + ' [BillZip],'
+				SET @SQL = @SQL + ' [BillCountry],'
+				SET @SQL = @SQL + ' [CourierId],'
+				SET @SQL = @SQL + ' [TotalPrice],'
+				SET @SQL = @SQL + ' [BillToFirstName],'
+				SET @SQL = @SQL + ' [BillToLastName],'
+				SET @SQL = @SQL + ' [ShipToFirstName],'
+				SET @SQL = @SQL + ' [ShipToLastName],'
+				SET @SQL = @SQL + ' [CreditCardId],'
+				SET @SQL = @SQL + ' [Locale],'
+				SET @SQL = @SQL + ' [Timestamp]'
+				SET @SQL = @SQL + ' FROM PageIndex'
+				SET @SQL = @SQL + ' WHERE RowIndex > ' + convert(nvarchar, @PageLowerBound)
+				IF @PageSize > 0
+				BEGIN
+					SET @SQL = @SQL + ' AND RowIndex <= ' + convert(nvarchar, @PageUpperBound)
+				END
+				exec sp_executesql @SQL
+				
+				-- get row count
+				SET @SQL = 'SELECT COUNT(*) as TotalRowCount'
+				SET @SQL = @SQL + ' FROM dbo.[Orders]'
+				IF LEN(@WhereClause) > 0
+				BEGIN
+					SET @SQL = @SQL + ' WHERE ' + @WhereClause
+				END
+				exec sp_executesql @SQL
+			
+				END
+			
+
+GO
+SET QUOTED_IDENTIFIER ON 
+GO
+SET ANSI_NULLS OFF 
+GO
+
+	
+
+-- Drop the dbo.Orders_Insert procedure
+IF EXISTS (SELECT * FROM dbo.sysobjects WHERE id = object_id(N'dbo.Orders_Insert') AND OBJECTPROPERTY(id, N'IsProcedure') = 1)
+DROP PROCEDURE dbo.Orders_Insert
+GO
+
+/*
+----------------------------------------------------------------------------------------------------
+-- Date Created: Monday, July 24, 2006
+
+-- Created By: NetTiers (www.nettiers.com)
+-- Purpose: Inserts a record into the Orders table
+----------------------------------------------------------------------------------------------------
+*/
+
+
+CREATE PROCEDURE dbo.Orders_Insert
+(
+
+	@OrderId int    OUTPUT,
+
+	@AccountId uniqueidentifier   ,
+
+	@OrderDate datetime   ,
+
+	@ShipAddr1 varchar (80)  ,
+
+	@ShipAddr2 varchar (80)  ,
+
+	@ShipCity varchar (80)  ,
+
+	@ShipState varchar (80)  ,
+
+	@ShipZip varchar (20)  ,
+
+	@ShipCountry varchar (20)  ,
+
+	@BillAddr1 varchar (80)  ,
+
+	@BillAddr2 varchar (80)  ,
+
+	@BillCity varchar (80)  ,
+
+	@BillState varchar (80)  ,
+
+	@BillZip varchar (20)  ,
+
+	@BillCountry varchar (20)  ,
+
+	@CourierId uniqueidentifier   ,
+
+	@TotalPrice decimal (10, 2)  ,
+
+	@BillToFirstName varchar (80)  ,
+
+	@BillToLastName varchar (80)  ,
+
+	@ShipToFirstName varchar (80)  ,
+
+	@ShipToLastName varchar (80)  ,
+
+	@CreditCardId uniqueidentifier   ,
+
+	@Locale varchar (20)  ,
+
+	@Timestamp timestamp    OUTPUT
+)
+AS
+
+
+					
+				INSERT INTO dbo.[Orders]
+					(
+					[AccountId]
+					,[OrderDate]
+					,[ShipAddr1]
+					,[ShipAddr2]
+					,[ShipCity]
+					,[ShipState]
+					,[ShipZip]
+					,[ShipCountry]
+					,[BillAddr1]
+					,[BillAddr2]
+					,[BillCity]
+					,[BillState]
+					,[BillZip]
+					,[BillCountry]
+					,[CourierId]
+					,[TotalPrice]
+					,[BillToFirstName]
+					,[BillToLastName]
+					,[ShipToFirstName]
+					,[ShipToLastName]
+					,[CreditCardId]
+					,[Locale]
+					)
+				VALUES
+					(
+					@AccountId
+					,@OrderDate
+					,@ShipAddr1
+					,@ShipAddr2
+					,@ShipCity
+					,@ShipState
+					,@ShipZip
+					,@ShipCountry
+					,@BillAddr1
+					,@BillAddr2
+					,@BillCity
+					,@BillState
+					,@BillZip
+					,@BillCountry
+					,@CourierId
+					,@TotalPrice
+					,@BillToFirstName
+					,@BillToLastName
+					,@ShipToFirstName
+					,@ShipToLastName
+					,@CreditCardId
+					,@Locale
+					)
+				
+				-- Get the identity value
+				SET @OrderId = SCOPE_IDENTITY()
+									
+				-- Select computed columns into output parameters
+				SELECT
+ @Timestamp = [Timestamp]
+				FROM
+					dbo.[Orders]
+				WHERE
+[OrderId] = @OrderId 
+							
+			
+
+GO
+SET QUOTED_IDENTIFIER ON 
+GO
+SET ANSI_NULLS OFF 
+GO
+
+	
+
+-- Drop the dbo.Orders_Update procedure
+IF EXISTS (SELECT * FROM dbo.sysobjects WHERE id = object_id(N'dbo.Orders_Update') AND OBJECTPROPERTY(id, N'IsProcedure') = 1)
+DROP PROCEDURE dbo.Orders_Update
+GO
+
+/*
+----------------------------------------------------------------------------------------------------
+-- Date Created: Monday, July 24, 2006
+
+-- Created By: NetTiers (www.nettiers.com)
+-- Purpose: Updates a record in the Orders table
+----------------------------------------------------------------------------------------------------
+*/
+
+
+CREATE PROCEDURE dbo.Orders_Update
+(
+
+	@OrderId int   ,
+
+	@AccountId uniqueidentifier   ,
+
+	@OrderDate datetime   ,
+
+	@ShipAddr1 varchar (80)  ,
+
+	@ShipAddr2 varchar (80)  ,
+
+	@ShipCity varchar (80)  ,
+
+	@ShipState varchar (80)  ,
+
+	@ShipZip varchar (20)  ,
+
+	@ShipCountry varchar (20)  ,
+
+	@BillAddr1 varchar (80)  ,
+
+	@BillAddr2 varchar (80)  ,
+
+	@BillCity varchar (80)  ,
+
+	@BillState varchar (80)  ,
+
+	@BillZip varchar (20)  ,
+
+	@BillCountry varchar (20)  ,
+
+	@CourierId uniqueidentifier   ,
+
+	@TotalPrice decimal (10, 2)  ,
+
+	@BillToFirstName varchar (80)  ,
+
+	@BillToLastName varchar (80)  ,
+
+	@ShipToFirstName varchar (80)  ,
+
+	@ShipToLastName varchar (80)  ,
+
+	@CreditCardId uniqueidentifier   ,
+
+	@Locale varchar (20)  ,
+
+	@Timestamp timestamp   ,
+
+	@ReturnedTimestamp timestamp    OUTPUT
+)
+AS
+
+
+				
+				
+				-- Modify the updatable columns
+				UPDATE
+					dbo.[Orders]
+				SET
+					[AccountId] = @AccountId
+					,[OrderDate] = @OrderDate
+					,[ShipAddr1] = @ShipAddr1
+					,[ShipAddr2] = @ShipAddr2
+					,[ShipCity] = @ShipCity
+					,[ShipState] = @ShipState
+					,[ShipZip] = @ShipZip
+					,[ShipCountry] = @ShipCountry
+					,[BillAddr1] = @BillAddr1
+					,[BillAddr2] = @BillAddr2
+					,[BillCity] = @BillCity
+					,[BillState] = @BillState
+					,[BillZip] = @BillZip
+					,[BillCountry] = @BillCountry
+					,[CourierId] = @CourierId
+					,[TotalPrice] = @TotalPrice
+					,[BillToFirstName] = @BillToFirstName
+					,[BillToLastName] = @BillToLastName
+					,[ShipToFirstName] = @ShipToFirstName
+					,[ShipToLastName] = @ShipToLastName
+					,[CreditCardId] = @CreditCardId
+					,[Locale] = @Locale
+				WHERE
+[OrderId] = @OrderId 
+AND [Timestamp] = @Timestamp				
+				
+				-- Select computed columns into output parameters
+				SELECT
+ @ReturnedTimestamp = [Timestamp]
+				FROM
+					dbo.[Orders]
+				WHERE
+[OrderId] = @OrderId 
+			
+
+GO
+SET QUOTED_IDENTIFIER ON 
+GO
+SET ANSI_NULLS OFF 
+GO
+
+	
+
+-- Drop the dbo.Orders_Delete procedure
+IF EXISTS (SELECT * FROM dbo.sysobjects WHERE id = object_id(N'dbo.Orders_Delete') AND OBJECTPROPERTY(id, N'IsProcedure') = 1)
+DROP PROCEDURE dbo.Orders_Delete
+GO
+
+/*
+----------------------------------------------------------------------------------------------------
+-- Date Created: Monday, July 24, 2006
+
+-- Created By: NetTiers (www.nettiers.com)
+-- Purpose: Deletes a record in the Orders table
+----------------------------------------------------------------------------------------------------
+*/
+
+
+CREATE PROCEDURE dbo.Orders_Delete
+(
+
+	@OrderId int   ,
+
+	@Timestamp timestamp   
+)
+AS
+
+
+				DELETE FROM dbo.[Orders] WITH (ROWLOCK) 
+				WHERE
+					[OrderId] = @OrderId
+	AND [Timestamp] = @Timestamp					
+			
+
+GO
+SET QUOTED_IDENTIFIER ON 
+GO
+SET ANSI_NULLS OFF 
+GO
+
+	
+
+-- Drop the dbo.Orders_GetByAccountId procedure
+IF EXISTS (SELECT * FROM dbo.sysobjects WHERE id = object_id(N'dbo.Orders_GetByAccountId') AND OBJECTPROPERTY(id, N'IsProcedure') = 1)
+DROP PROCEDURE dbo.Orders_GetByAccountId
+GO
+
+/*
+----------------------------------------------------------------------------------------------------
+-- Date Created: Monday, July 24, 2006
+
+-- Created By: NetTiers (www.nettiers.com)
+-- Purpose: Select records from the Orders table through a foreign key
+----------------------------------------------------------------------------------------------------
+*/
+
+
+CREATE PROCEDURE dbo.Orders_GetByAccountId
+(
+
+	@AccountId uniqueidentifier   
+)
+AS
+
+
+				
+				SELECT
+					[OrderId],
+					[AccountId],
+					[OrderDate],
+					[ShipAddr1],
+					[ShipAddr2],
+					[ShipCity],
+					[ShipState],
+					[ShipZip],
+					[ShipCountry],
+					[BillAddr1],
+					[BillAddr2],
+					[BillCity],
+					[BillState],
+					[BillZip],
+					[BillCountry],
+					[CourierId],
+					[TotalPrice],
+					[BillToFirstName],
+					[BillToLastName],
+					[ShipToFirstName],
+					[ShipToLastName],
+					[CreditCardId],
+					[Locale],
+					[Timestamp]
+				FROM
+					dbo.[Orders]
+				WHERE
+					[AccountId] = @AccountId
+				
+				Select @@ROWCOUNT
+			
+
+GO
+SET QUOTED_IDENTIFIER ON 
+GO
+SET ANSI_NULLS OFF 
+GO
+
+	
+
+-- Drop the dbo.Orders_GetByCourierId procedure
+IF EXISTS (SELECT * FROM dbo.sysobjects WHERE id = object_id(N'dbo.Orders_GetByCourierId') AND OBJECTPROPERTY(id, N'IsProcedure') = 1)
+DROP PROCEDURE dbo.Orders_GetByCourierId
+GO
+
+/*
+----------------------------------------------------------------------------------------------------
+-- Date Created: Monday, July 24, 2006
+
+-- Created By: NetTiers (www.nettiers.com)
+-- Purpose: Select records from the Orders table through a foreign key
+----------------------------------------------------------------------------------------------------
+*/
+
+
+CREATE PROCEDURE dbo.Orders_GetByCourierId
+(
+
+	@CourierId uniqueidentifier   
+)
+AS
+
+
+				
+				SELECT
+					[OrderId],
+					[AccountId],
+					[OrderDate],
+					[ShipAddr1],
+					[ShipAddr2],
+					[ShipCity],
+					[ShipState],
+					[ShipZip],
+					[ShipCountry],
+					[BillAddr1],
+					[BillAddr2],
+					[BillCity],
+					[BillState],
+					[BillZip],
+					[BillCountry],
+					[CourierId],
+					[TotalPrice],
+					[BillToFirstName],
+					[BillToLastName],
+					[ShipToFirstName],
+					[ShipToLastName],
+					[CreditCardId],
+					[Locale],
+					[Timestamp]
+				FROM
+					dbo.[Orders]
+				WHERE
+					[CourierId] = @CourierId
+				
+				Select @@ROWCOUNT
+			
+
+GO
+SET QUOTED_IDENTIFIER ON 
+GO
+SET ANSI_NULLS OFF 
+GO
+
+	
+
+-- Drop the dbo.Orders_GetByCreditCardId procedure
+IF EXISTS (SELECT * FROM dbo.sysobjects WHERE id = object_id(N'dbo.Orders_GetByCreditCardId') AND OBJECTPROPERTY(id, N'IsProcedure') = 1)
+DROP PROCEDURE dbo.Orders_GetByCreditCardId
+GO
+
+/*
+----------------------------------------------------------------------------------------------------
+-- Date Created: Monday, July 24, 2006
+
+-- Created By: NetTiers (www.nettiers.com)
+-- Purpose: Select records from the Orders table through a foreign key
+----------------------------------------------------------------------------------------------------
+*/
+
+
+CREATE PROCEDURE dbo.Orders_GetByCreditCardId
+(
+
+	@CreditCardId uniqueidentifier   
+)
+AS
+
+
+				
+				SELECT
+					[OrderId],
+					[AccountId],
+					[OrderDate],
+					[ShipAddr1],
+					[ShipAddr2],
+					[ShipCity],
+					[ShipState],
+					[ShipZip],
+					[ShipCountry],
+					[BillAddr1],
+					[BillAddr2],
+					[BillCity],
+					[BillState],
+					[BillZip],
+					[BillCountry],
+					[CourierId],
+					[TotalPrice],
+					[BillToFirstName],
+					[BillToLastName],
+					[ShipToFirstName],
+					[ShipToLastName],
+					[CreditCardId],
+					[Locale],
+					[Timestamp]
+				FROM
+					dbo.[Orders]
+				WHERE
+					[CreditCardId] = @CreditCardId
+				
+				Select @@ROWCOUNT
+			
+
+GO
+SET QUOTED_IDENTIFIER ON 
+GO
+SET ANSI_NULLS OFF 
+GO
+
+	
+
+-- Drop the dbo.Orders_GetByOrderId procedure
+IF EXISTS (SELECT * FROM dbo.sysobjects WHERE id = object_id(N'dbo.Orders_GetByOrderId') AND OBJECTPROPERTY(id, N'IsProcedure') = 1)
+DROP PROCEDURE dbo.Orders_GetByOrderId
+GO
+
+/*
+----------------------------------------------------------------------------------------------------
+-- Date Created: Monday, July 24, 2006
+
+-- Created By: NetTiers (www.nettiers.com)
+-- Purpose: Select records from the Orders table through an index
+----------------------------------------------------------------------------------------------------
+*/
+
+
+CREATE PROCEDURE dbo.Orders_GetByOrderId
+(
+
+	@OrderId int   
+)
+AS
+
+
+				SELECT
+					[OrderId],
+					[AccountId],
+					[OrderDate],
+					[ShipAddr1],
+					[ShipAddr2],
+					[ShipCity],
+					[ShipState],
+					[ShipZip],
+					[ShipCountry],
+					[BillAddr1],
+					[BillAddr2],
+					[BillCity],
+					[BillState],
+					[BillZip],
+					[BillCountry],
+					[CourierId],
+					[TotalPrice],
+					[BillToFirstName],
+					[BillToLastName],
+					[ShipToFirstName],
+					[ShipToLastName],
+					[CreditCardId],
+					[Locale],
+					[Timestamp]
+				FROM
+					dbo.[Orders]
+				WHERE
+					[OrderId] = @OrderId
+			Select @@ROWCOUNT
+					
+			
+
+GO
+SET QUOTED_IDENTIFIER ON 
+GO
+SET ANSI_NULLS OFF 
+GO
+
+	
+
+-- Drop the dbo.Orders_Find procedure
+IF EXISTS (SELECT * FROM dbo.sysobjects WHERE id = object_id(N'dbo.Orders_Find') AND OBJECTPROPERTY(id, N'IsProcedure') = 1)
+DROP PROCEDURE dbo.Orders_Find
+GO
+
+/*
+----------------------------------------------------------------------------------------------------
+-- Date Created: Monday, July 24, 2006
+
+-- Created By: NetTiers (www.nettiers.com)
+-- Purpose: Finds records in the Orders table passing nullable parameters
+----------------------------------------------------------------------------------------------------
+*/
+
+
+CREATE PROCEDURE dbo.Orders_Find
+(
+
+	@SearchUsingOR bit   = null ,
+
+	@OrderId int   = null ,
+
+	@AccountId uniqueidentifier   = null ,
+
+	@OrderDate datetime   = null ,
+
+	@ShipAddr1 varchar (80)  = null ,
+
+	@ShipAddr2 varchar (80)  = null ,
+
+	@ShipCity varchar (80)  = null ,
+
+	@ShipState varchar (80)  = null ,
+
+	@ShipZip varchar (20)  = null ,
+
+	@ShipCountry varchar (20)  = null ,
+
+	@BillAddr1 varchar (80)  = null ,
+
+	@BillAddr2 varchar (80)  = null ,
+
+	@BillCity varchar (80)  = null ,
+
+	@BillState varchar (80)  = null ,
+
+	@BillZip varchar (20)  = null ,
+
+	@BillCountry varchar (20)  = null ,
+
+	@CourierId uniqueidentifier   = null ,
+
+	@TotalPrice decimal (10, 2)  = null ,
+
+	@BillToFirstName varchar (80)  = null ,
+
+	@BillToLastName varchar (80)  = null ,
+
+	@ShipToFirstName varchar (80)  = null ,
+
+	@ShipToLastName varchar (80)  = null ,
+
+	@CreditCardId uniqueidentifier   = null ,
+
+	@Locale varchar (20)  = null ,
+
+	@Timestamp timestamp   = null 
+)
+AS
+
+
+				
+  IF ISNULL(@SearchUsingOR, 0) <> 1
+  BEGIN
+    SELECT
+	  [OrderId]
+	, [AccountId]
+	, [OrderDate]
+	, [ShipAddr1]
+	, [ShipAddr2]
+	, [ShipCity]
+	, [ShipState]
+	, [ShipZip]
+	, [ShipCountry]
+	, [BillAddr1]
+	, [BillAddr2]
+	, [BillCity]
+	, [BillState]
+	, [BillZip]
+	, [BillCountry]
+	, [CourierId]
+	, [TotalPrice]
+	, [BillToFirstName]
+	, [BillToLastName]
+	, [ShipToFirstName]
+	, [ShipToLastName]
+	, [CreditCardId]
+	, [Locale]
+	, [Timestamp]
+    FROM
+	dbo.[Orders]
+    WHERE 
+	 ([OrderId] = @OrderId OR @OrderId is null)
+	AND ([AccountId] = @AccountId OR @AccountId is null)
+	AND ([OrderDate] = @OrderDate OR @OrderDate is null)
+	AND ([ShipAddr1] = @ShipAddr1 OR @ShipAddr1 is null)
+	AND ([ShipAddr2] = @ShipAddr2 OR @ShipAddr2 is null)
+	AND ([ShipCity] = @ShipCity OR @ShipCity is null)
+	AND ([ShipState] = @ShipState OR @ShipState is null)
+	AND ([ShipZip] = @ShipZip OR @ShipZip is null)
+	AND ([ShipCountry] = @ShipCountry OR @ShipCountry is null)
+	AND ([BillAddr1] = @BillAddr1 OR @BillAddr1 is null)
+	AND ([BillAddr2] = @BillAddr2 OR @BillAddr2 is null)
+	AND ([BillCity] = @BillCity OR @BillCity is null)
+	AND ([BillState] = @BillState OR @BillState is null)
+	AND ([BillZip] = @BillZip OR @BillZip is null)
+	AND ([BillCountry] = @BillCountry OR @BillCountry is null)
+	AND ([CourierId] = @CourierId OR @CourierId is null)
+	AND ([TotalPrice] = @TotalPrice OR @TotalPrice is null)
+	AND ([BillToFirstName] = @BillToFirstName OR @BillToFirstName is null)
+	AND ([BillToLastName] = @BillToLastName OR @BillToLastName is null)
+	AND ([ShipToFirstName] = @ShipToFirstName OR @ShipToFirstName is null)
+	AND ([ShipToLastName] = @ShipToLastName OR @ShipToLastName is null)
+	AND ([CreditCardId] = @CreditCardId OR @CreditCardId is null)
+	AND ([Locale] = @Locale OR @Locale is null)
+						
+  END
+  ELSE
+  BEGIN
+    SELECT
+	  [OrderId]
+	, [AccountId]
+	, [OrderDate]
+	, [ShipAddr1]
+	, [ShipAddr2]
+	, [ShipCity]
+	, [ShipState]
+	, [ShipZip]
+	, [ShipCountry]
+	, [BillAddr1]
+	, [BillAddr2]
+	, [BillCity]
+	, [BillState]
+	, [BillZip]
+	, [BillCountry]
+	, [CourierId]
+	, [TotalPrice]
+	, [BillToFirstName]
+	, [BillToLastName]
+	, [ShipToFirstName]
+	, [ShipToLastName]
+	, [CreditCardId]
+	, [Locale]
+	, [Timestamp]
+    FROM
+	dbo.[Orders]
+    WHERE 
+	 ([OrderId] = @OrderId AND @OrderId is not null)
+	OR ([AccountId] = @AccountId AND @AccountId is not null)
+	OR ([OrderDate] = @OrderDate AND @OrderDate is not null)
+	OR ([ShipAddr1] = @ShipAddr1 AND @ShipAddr1 is not null)
+	OR ([ShipAddr2] = @ShipAddr2 AND @ShipAddr2 is not null)
+	OR ([ShipCity] = @ShipCity AND @ShipCity is not null)
+	OR ([ShipState] = @ShipState AND @ShipState is not null)
+	OR ([ShipZip] = @ShipZip AND @ShipZip is not null)
+	OR ([ShipCountry] = @ShipCountry AND @ShipCountry is not null)
+	OR ([BillAddr1] = @BillAddr1 AND @BillAddr1 is not null)
+	OR ([BillAddr2] = @BillAddr2 AND @BillAddr2 is not null)
+	OR ([BillCity] = @BillCity AND @BillCity is not null)
+	OR ([BillState] = @BillState AND @BillState is not null)
+	OR ([BillZip] = @BillZip AND @BillZip is not null)
+	OR ([BillCountry] = @BillCountry AND @BillCountry is not null)
+	OR ([CourierId] = @CourierId AND @CourierId is not null)
+	OR ([TotalPrice] = @TotalPrice AND @TotalPrice is not null)
+	OR ([BillToFirstName] = @BillToFirstName AND @BillToFirstName is not null)
+	OR ([BillToLastName] = @BillToLastName AND @BillToLastName is not null)
+	OR ([ShipToFirstName] = @ShipToFirstName AND @ShipToFirstName is not null)
+	OR ([ShipToLastName] = @ShipToLastName AND @ShipToLastName is not null)
+	OR ([CreditCardId] = @CreditCardId AND @CreditCardId is not null)
+	OR ([Locale] = @Locale AND @Locale is not null)
+	Select @@ROWCOUNT			
+  END
+				
+
+GO
+SET QUOTED_IDENTIFIER ON 
+GO
+SET ANSI_NULLS OFF 
+GO
+
+	
+
+-- Drop the dbo.OrderStatus_Get_List procedure
+IF EXISTS (SELECT * FROM dbo.sysobjects WHERE id = object_id(N'dbo.OrderStatus_Get_List') AND OBJECTPROPERTY(id, N'IsProcedure') = 1)
+DROP PROCEDURE dbo.OrderStatus_Get_List
+GO
+
+/*
+----------------------------------------------------------------------------------------------------
+-- Date Created: Monday, July 24, 2006
+
+-- Created By: NetTiers (www.nettiers.com)
+-- Purpose: Gets all records from the OrderStatus table
+----------------------------------------------------------------------------------------------------
+*/
+
+
+CREATE PROCEDURE dbo.OrderStatus_Get_List
+
+AS
+
+
+				
+				SELECT
+					[OrderId],
+					[LineNum],
+					[OrderDate],
+					[OrderStatusId],
+					[Timestamp]
+				FROM
+					dbo.[OrderStatus]
+					
+				Select @@ROWCOUNT
+			
+
+GO
+SET QUOTED_IDENTIFIER ON 
+GO
+SET ANSI_NULLS OFF 
+GO
+
+	
+
+-- Drop the dbo.OrderStatus_GetPaged procedure
+IF EXISTS (SELECT * FROM dbo.sysobjects WHERE id = object_id(N'dbo.OrderStatus_GetPaged') AND OBJECTPROPERTY(id, N'IsProcedure') = 1)
+DROP PROCEDURE dbo.OrderStatus_GetPaged
+GO
+
+/*
+----------------------------------------------------------------------------------------------------
+-- Date Created: Monday, July 24, 2006
+
+-- Created By: NetTiers (www.nettiers.com)
+-- Purpose: Gets records from the OrderStatus table passing page index and page count parameters
+----------------------------------------------------------------------------------------------------
+*/
+
+
+CREATE PROCEDURE dbo.OrderStatus_GetPaged
+(
+
+	@WhereClause varchar (2000)  ,
+
+	@OrderBy varchar (2000)  ,
+
+	@PageIndex int   ,
+
+	@PageSize int   
+)
+AS
+
+
+				
+				BEGIN
+				DECLARE @PageLowerBound int
+				DECLARE @PageUpperBound int
+				
+				-- Set the page bounds
+				SET @PageLowerBound = @PageSize * @PageIndex
+				SET @PageUpperBound = @PageLowerBound + @PageSize
+
+				IF (@OrderBy is null or LEN(@OrderBy) < 1)
+				BEGIN
+					-- default order by to first column
+					SET @OrderBy = '[OrderId]'
+				END
+
+				-- SQL Server 2005 Paging
+				declare @SQL as nvarchar(4000)
+				SET @SQL = 'WITH PageIndex AS ('
+				SET @SQL = @SQL + ' SELECT'
+				IF @PageSize > 0
+				BEGIN
+					SET @SQL = @SQL + ' TOP ' + convert(nvarchar, @PageUpperBound)
+				END
+				SET @SQL = @SQL + ' ROW_NUMBER() OVER (ORDER BY ' + @OrderBy + ') as RowIndex'
+				SET @SQL = @SQL + ', [OrderId]'
+				SET @SQL = @SQL + ', [LineNum]'
+				SET @SQL = @SQL + ', [OrderDate]'
+				SET @SQL = @SQL + ', [OrderStatusId]'
+				SET @SQL = @SQL + ', [Timestamp]'
+				SET @SQL = @SQL + ' FROM dbo.[OrderStatus]'
+				IF LEN(@WhereClause) > 0
+				BEGIN
+					SET @SQL = @SQL + ' WHERE ' + @WhereClause
+				END
+				SET @SQL = @SQL + ' ) SELECT'
+				SET @SQL = @SQL + ' [OrderId],'
+				SET @SQL = @SQL + ' [LineNum],'
+				SET @SQL = @SQL + ' [OrderDate],'
+				SET @SQL = @SQL + ' [OrderStatusId],'
+				SET @SQL = @SQL + ' [Timestamp]'
+				SET @SQL = @SQL + ' FROM PageIndex'
+				SET @SQL = @SQL + ' WHERE RowIndex > ' + convert(nvarchar, @PageLowerBound)
+				IF @PageSize > 0
+				BEGIN
+					SET @SQL = @SQL + ' AND RowIndex <= ' + convert(nvarchar, @PageUpperBound)
+				END
+				exec sp_executesql @SQL
+				
+				-- get row count
+				SET @SQL = 'SELECT COUNT(*) as TotalRowCount'
+				SET @SQL = @SQL + ' FROM dbo.[OrderStatus]'
+				IF LEN(@WhereClause) > 0
+				BEGIN
+					SET @SQL = @SQL + ' WHERE ' + @WhereClause
+				END
+				exec sp_executesql @SQL
+			
+				END
+			
+
+GO
+SET QUOTED_IDENTIFIER ON 
+GO
+SET ANSI_NULLS OFF 
+GO
+
+	
+
+-- Drop the dbo.OrderStatus_Insert procedure
+IF EXISTS (SELECT * FROM dbo.sysobjects WHERE id = object_id(N'dbo.OrderStatus_Insert') AND OBJECTPROPERTY(id, N'IsProcedure') = 1)
+DROP PROCEDURE dbo.OrderStatus_Insert
+GO
+
+/*
+----------------------------------------------------------------------------------------------------
+-- Date Created: Monday, July 24, 2006
+
+-- Created By: NetTiers (www.nettiers.com)
+-- Purpose: Inserts a record into the OrderStatus table
+----------------------------------------------------------------------------------------------------
+*/
+
+
+CREATE PROCEDURE dbo.OrderStatus_Insert
+(
+
+	@OrderId int   ,
+
+	@LineNum int   ,
+
+	@OrderDate datetime   ,
+
+	@OrderStatusId int   ,
+
+	@Timestamp timestamp    OUTPUT
+)
+AS
+
+
+					
+				INSERT INTO dbo.[OrderStatus]
+					(
+					[OrderId]
+					,[LineNum]
+					,[OrderDate]
+					,[OrderStatusId]
+					)
+				VALUES
+					(
+					@OrderId
+					,@LineNum
+					,@OrderDate
+					,@OrderStatusId
+					)
+				
+									
+				-- Select computed columns into output parameters
+				SELECT
+ @Timestamp = [Timestamp]
+				FROM
+					dbo.[OrderStatus]
+				WHERE
+[OrderId] = @OrderId 
+AND [LineNum] = @LineNum 
+							
+			
+
+GO
+SET QUOTED_IDENTIFIER ON 
+GO
+SET ANSI_NULLS OFF 
+GO
+
+	
+
+-- Drop the dbo.OrderStatus_Update procedure
+IF EXISTS (SELECT * FROM dbo.sysobjects WHERE id = object_id(N'dbo.OrderStatus_Update') AND OBJECTPROPERTY(id, N'IsProcedure') = 1)
+DROP PROCEDURE dbo.OrderStatus_Update
+GO
+
+/*
+----------------------------------------------------------------------------------------------------
+-- Date Created: Monday, July 24, 2006
+
+-- Created By: NetTiers (www.nettiers.com)
+-- Purpose: Updates a record in the OrderStatus table
+----------------------------------------------------------------------------------------------------
+*/
+
+
+CREATE PROCEDURE dbo.OrderStatus_Update
+(
+
+	@OrderId int   ,
+
+	@OriginalOrderId int   ,
+
+	@LineNum int   ,
+
+	@OriginalLineNum int   ,
+
+	@OrderDate datetime   ,
+
+	@OrderStatusId int   ,
+
+	@Timestamp timestamp   ,
+
+	@ReturnedTimestamp timestamp    OUTPUT
+)
+AS
+
+
+				
+				
+				-- Modify the updatable columns
+				UPDATE
+					dbo.[OrderStatus]
+				SET
+					[OrderId] = @OrderId
+					,[LineNum] = @LineNum
+					,[OrderDate] = @OrderDate
+					,[OrderStatusId] = @OrderStatusId
+				WHERE
+[OrderId] = @OriginalOrderId 
+AND [LineNum] = @OriginalLineNum 
+AND [Timestamp] = @Timestamp				
+				
+				-- Select computed columns into output parameters
+				SELECT
+ @ReturnedTimestamp = [Timestamp]
+				FROM
+					dbo.[OrderStatus]
+				WHERE
+[OrderId] = @OrderId 
+AND [LineNum] = @LineNum 
+			
+
+GO
+SET QUOTED_IDENTIFIER ON 
+GO
+SET ANSI_NULLS OFF 
+GO
+
+	
+
+-- Drop the dbo.OrderStatus_Delete procedure
+IF EXISTS (SELECT * FROM dbo.sysobjects WHERE id = object_id(N'dbo.OrderStatus_Delete') AND OBJECTPROPERTY(id, N'IsProcedure') = 1)
+DROP PROCEDURE dbo.OrderStatus_Delete
+GO
+
+/*
+----------------------------------------------------------------------------------------------------
+-- Date Created: Monday, July 24, 2006
+
+-- Created By: NetTiers (www.nettiers.com)
+-- Purpose: Deletes a record in the OrderStatus table
+----------------------------------------------------------------------------------------------------
+*/
+
+
+CREATE PROCEDURE dbo.OrderStatus_Delete
+(
+
+	@OrderId int   ,
+
+	@LineNum int   ,
+
+	@Timestamp timestamp   
+)
+AS
+
+
+				DELETE FROM dbo.[OrderStatus] WITH (ROWLOCK) 
+				WHERE
+					[OrderId] = @OrderId
+					AND [LineNum] = @LineNum
+	AND [Timestamp] = @Timestamp					
+			
+
+GO
+SET QUOTED_IDENTIFIER ON 
+GO
+SET ANSI_NULLS OFF 
+GO
+
+	
+
+-- Drop the dbo.OrderStatus_GetByOrderId procedure
+IF EXISTS (SELECT * FROM dbo.sysobjects WHERE id = object_id(N'dbo.OrderStatus_GetByOrderId') AND OBJECTPROPERTY(id, N'IsProcedure') = 1)
+DROP PROCEDURE dbo.OrderStatus_GetByOrderId
+GO
+
+/*
+----------------------------------------------------------------------------------------------------
+-- Date Created: Monday, July 24, 2006
+
+-- Created By: NetTiers (www.nettiers.com)
+-- Purpose: Select records from the OrderStatus table through a foreign key
+----------------------------------------------------------------------------------------------------
+*/
+
+
+CREATE PROCEDURE dbo.OrderStatus_GetByOrderId
+(
+
+	@OrderId int   
+)
+AS
+
+
+				
+				SELECT
+					[OrderId],
+					[LineNum],
+					[OrderDate],
+					[OrderStatusId],
+					[Timestamp]
+				FROM
+					dbo.[OrderStatus]
+				WHERE
+					[OrderId] = @OrderId
+				
+				Select @@ROWCOUNT
+			
+
+GO
+SET QUOTED_IDENTIFIER ON 
+GO
+SET ANSI_NULLS OFF 
+GO
+
+	
+
+-- Drop the dbo.OrderStatus_GetByOrderStatusId procedure
+IF EXISTS (SELECT * FROM dbo.sysobjects WHERE id = object_id(N'dbo.OrderStatus_GetByOrderStatusId') AND OBJECTPROPERTY(id, N'IsProcedure') = 1)
+DROP PROCEDURE dbo.OrderStatus_GetByOrderStatusId
+GO
+
+/*
+----------------------------------------------------------------------------------------------------
+-- Date Created: Monday, July 24, 2006
+
+-- Created By: NetTiers (www.nettiers.com)
+-- Purpose: Select records from the OrderStatus table through a foreign key
+----------------------------------------------------------------------------------------------------
+*/
+
+
+CREATE PROCEDURE dbo.OrderStatus_GetByOrderStatusId
+(
+
+	@OrderStatusId int   
+)
+AS
+
+
+				
+				SELECT
+					[OrderId],
+					[LineNum],
+					[OrderDate],
+					[OrderStatusId],
+					[Timestamp]
+				FROM
+					dbo.[OrderStatus]
+				WHERE
+					[OrderStatusId] = @OrderStatusId
+				
+				Select @@ROWCOUNT
+			
+
+GO
+SET QUOTED_IDENTIFIER ON 
+GO
+SET ANSI_NULLS OFF 
+GO
+
+	
+
+-- Drop the dbo.OrderStatus_GetByLineNumOrderId procedure
+IF EXISTS (SELECT * FROM dbo.sysobjects WHERE id = object_id(N'dbo.OrderStatus_GetByLineNumOrderId') AND OBJECTPROPERTY(id, N'IsProcedure') = 1)
+DROP PROCEDURE dbo.OrderStatus_GetByLineNumOrderId
+GO
+
+/*
+----------------------------------------------------------------------------------------------------
+-- Date Created: Monday, July 24, 2006
+
+-- Created By: NetTiers (www.nettiers.com)
+-- Purpose: Select records from the OrderStatus table through an index
+----------------------------------------------------------------------------------------------------
+*/
+
+
+CREATE PROCEDURE dbo.OrderStatus_GetByLineNumOrderId
+(
+
+	@OrderId int   ,
+
+	@LineNum int   
+)
+AS
+
+
+				SELECT
+					[OrderId],
+					[LineNum],
+					[OrderDate],
+					[OrderStatusId],
+					[Timestamp]
+				FROM
+					dbo.[OrderStatus]
+				WHERE
+					[OrderId] = @OrderId
+					AND [LineNum] = @LineNum
+			Select @@ROWCOUNT
+					
+			
+
+GO
+SET QUOTED_IDENTIFIER ON 
+GO
+SET ANSI_NULLS OFF 
+GO
+
+	
+
+-- Drop the dbo.OrderStatus_Find procedure
+IF EXISTS (SELECT * FROM dbo.sysobjects WHERE id = object_id(N'dbo.OrderStatus_Find') AND OBJECTPROPERTY(id, N'IsProcedure') = 1)
+DROP PROCEDURE dbo.OrderStatus_Find
+GO
+
+/*
+----------------------------------------------------------------------------------------------------
+-- Date Created: Monday, July 24, 2006
+
+-- Created By: NetTiers (www.nettiers.com)
+-- Purpose: Finds records in the OrderStatus table passing nullable parameters
+----------------------------------------------------------------------------------------------------
+*/
+
+
+CREATE PROCEDURE dbo.OrderStatus_Find
+(
+
+	@SearchUsingOR bit   = null ,
+
+	@OrderId int   = null ,
+
+	@LineNum int   = null ,
+
+	@OrderDate datetime   = null ,
+
+	@OrderStatusId int   = null ,
+
+	@Timestamp timestamp   = null 
+)
+AS
+
+
+				
+  IF ISNULL(@SearchUsingOR, 0) <> 1
+  BEGIN
+    SELECT
+	  [OrderId]
+	, [LineNum]
+	, [OrderDate]
+	, [OrderStatusId]
+	, [Timestamp]
+    FROM
+	dbo.[OrderStatus]
+    WHERE 
+	 ([OrderId] = @OrderId OR @OrderId is null)
+	AND ([LineNum] = @LineNum OR @LineNum is null)
+	AND ([OrderDate] = @OrderDate OR @OrderDate is null)
+	AND ([OrderStatusId] = @OrderStatusId OR @OrderStatusId is null)
+						
+  END
+  ELSE
+  BEGIN
+    SELECT
+	  [OrderId]
+	, [LineNum]
+	, [OrderDate]
+	, [OrderStatusId]
+	, [Timestamp]
+    FROM
+	dbo.[OrderStatus]
+    WHERE 
+	 ([OrderId] = @OrderId AND @OrderId is not null)
+	OR ([LineNum] = @LineNum AND @LineNum is not null)
+	OR ([OrderDate] = @OrderDate AND @OrderDate is not null)
+	OR ([OrderStatusId] = @OrderStatusId AND @OrderStatusId is not null)
+	Select @@ROWCOUNT			
+  END
+				
+
+GO
+SET QUOTED_IDENTIFIER ON 
+GO
+SET ANSI_NULLS OFF 
+GO
+
+	
+
+-- Drop the dbo.OrderStatusType_Get_List procedure
+IF EXISTS (SELECT * FROM dbo.sysobjects WHERE id = object_id(N'dbo.OrderStatusType_Get_List') AND OBJECTPROPERTY(id, N'IsProcedure') = 1)
+DROP PROCEDURE dbo.OrderStatusType_Get_List
+GO
+
+/*
+----------------------------------------------------------------------------------------------------
+-- Date Created: Monday, July 24, 2006
+
+-- Created By: NetTiers (www.nettiers.com)
+-- Purpose: Gets all records from the OrderStatusType table
+----------------------------------------------------------------------------------------------------
+*/
+
+
+CREATE PROCEDURE dbo.OrderStatusType_Get_List
+
+AS
+
+
+				
+				SELECT
+					[OrderStatusId],
+					[OrderStatus],
+					[OrderStatusDescription]
+				FROM
+					dbo.[OrderStatusType]
+					
+				Select @@ROWCOUNT
+			
+
+GO
+SET QUOTED_IDENTIFIER ON 
+GO
+SET ANSI_NULLS OFF 
+GO
+
+	
+
+-- Drop the dbo.OrderStatusType_GetPaged procedure
+IF EXISTS (SELECT * FROM dbo.sysobjects WHERE id = object_id(N'dbo.OrderStatusType_GetPaged') AND OBJECTPROPERTY(id, N'IsProcedure') = 1)
+DROP PROCEDURE dbo.OrderStatusType_GetPaged
+GO
+
+/*
+----------------------------------------------------------------------------------------------------
+-- Date Created: Monday, July 24, 2006
+
+-- Created By: NetTiers (www.nettiers.com)
+-- Purpose: Gets records from the OrderStatusType table passing page index and page count parameters
+----------------------------------------------------------------------------------------------------
+*/
+
+
+CREATE PROCEDURE dbo.OrderStatusType_GetPaged
+(
+
+	@WhereClause varchar (2000)  ,
+
+	@OrderBy varchar (2000)  ,
+
+	@PageIndex int   ,
+
+	@PageSize int   
+)
+AS
+
+
+				
+				BEGIN
+				DECLARE @PageLowerBound int
+				DECLARE @PageUpperBound int
+				
+				-- Set the page bounds
+				SET @PageLowerBound = @PageSize * @PageIndex
+				SET @PageUpperBound = @PageLowerBound + @PageSize
+
+				IF (@OrderBy is null or LEN(@OrderBy) < 1)
+				BEGIN
+					-- default order by to first column
+					SET @OrderBy = '[OrderStatusId]'
+				END
+
+				-- SQL Server 2005 Paging
+				declare @SQL as nvarchar(4000)
+				SET @SQL = 'WITH PageIndex AS ('
+				SET @SQL = @SQL + ' SELECT'
+				IF @PageSize > 0
+				BEGIN
+					SET @SQL = @SQL + ' TOP ' + convert(nvarchar, @PageUpperBound)
+				END
+				SET @SQL = @SQL + ' ROW_NUMBER() OVER (ORDER BY ' + @OrderBy + ') as RowIndex'
+				SET @SQL = @SQL + ', [OrderStatusId]'
+				SET @SQL = @SQL + ', [OrderStatus]'
+				SET @SQL = @SQL + ', [OrderStatusDescription]'
+				SET @SQL = @SQL + ' FROM dbo.[OrderStatusType]'
+				IF LEN(@WhereClause) > 0
+				BEGIN
+					SET @SQL = @SQL + ' WHERE ' + @WhereClause
+				END
+				SET @SQL = @SQL + ' ) SELECT'
+				SET @SQL = @SQL + ' [OrderStatusId],'
+				SET @SQL = @SQL + ' [OrderStatus],'
+				SET @SQL = @SQL + ' [OrderStatusDescription]'
+				SET @SQL = @SQL + ' FROM PageIndex'
+				SET @SQL = @SQL + ' WHERE RowIndex > ' + convert(nvarchar, @PageLowerBound)
+				IF @PageSize > 0
+				BEGIN
+					SET @SQL = @SQL + ' AND RowIndex <= ' + convert(nvarchar, @PageUpperBound)
+				END
+				exec sp_executesql @SQL
+				
+				-- get row count
+				SET @SQL = 'SELECT COUNT(*) as TotalRowCount'
+				SET @SQL = @SQL + ' FROM dbo.[OrderStatusType]'
+				IF LEN(@WhereClause) > 0
+				BEGIN
+					SET @SQL = @SQL + ' WHERE ' + @WhereClause
+				END
+				exec sp_executesql @SQL
+			
+				END
+			
+
+GO
+SET QUOTED_IDENTIFIER ON 
+GO
+SET ANSI_NULLS OFF 
+GO
+
+	
+
+-- Drop the dbo.OrderStatusType_Insert procedure
+IF EXISTS (SELECT * FROM dbo.sysobjects WHERE id = object_id(N'dbo.OrderStatusType_Insert') AND OBJECTPROPERTY(id, N'IsProcedure') = 1)
+DROP PROCEDURE dbo.OrderStatusType_Insert
+GO
+
+/*
+----------------------------------------------------------------------------------------------------
+-- Date Created: Monday, July 24, 2006
+
+-- Created By: NetTiers (www.nettiers.com)
+-- Purpose: Inserts a record into the OrderStatusType table
+----------------------------------------------------------------------------------------------------
+*/
+
+
+CREATE PROCEDURE dbo.OrderStatusType_Insert
+(
+
+	@OrderStatusId int    OUTPUT,
+
+	@OrderStatus varchar (24)  ,
+
+	@OrderStatusDescription varchar (300)  
+)
+AS
+
+
+					
+				INSERT INTO dbo.[OrderStatusType]
+					(
+					[OrderStatus]
+					,[OrderStatusDescription]
+					)
+				VALUES
+					(
+					@OrderStatus
+					,@OrderStatusDescription
+					)
+				
+				-- Get the identity value
+				SET @OrderStatusId = SCOPE_IDENTITY()
+									
+							
+			
+
+GO
+SET QUOTED_IDENTIFIER ON 
+GO
+SET ANSI_NULLS OFF 
+GO
+
+	
+
+-- Drop the dbo.OrderStatusType_Update procedure
+IF EXISTS (SELECT * FROM dbo.sysobjects WHERE id = object_id(N'dbo.OrderStatusType_Update') AND OBJECTPROPERTY(id, N'IsProcedure') = 1)
+DROP PROCEDURE dbo.OrderStatusType_Update
+GO
+
+/*
+----------------------------------------------------------------------------------------------------
+-- Date Created: Monday, July 24, 2006
+
+-- Created By: NetTiers (www.nettiers.com)
+-- Purpose: Updates a record in the OrderStatusType table
+----------------------------------------------------------------------------------------------------
+*/
+
+
+CREATE PROCEDURE dbo.OrderStatusType_Update
+(
+
+	@OrderStatusId int   ,
+
+	@OrderStatus varchar (24)  ,
+
+	@OrderStatusDescription varchar (300)  
+)
+AS
+
+
+				
+				
+				-- Modify the updatable columns
+				UPDATE
+					dbo.[OrderStatusType]
+				SET
+					[OrderStatus] = @OrderStatus
+					,[OrderStatusDescription] = @OrderStatusDescription
+				WHERE
+[OrderStatusId] = @OrderStatusId 
+				
+			
+
+GO
+SET QUOTED_IDENTIFIER ON 
+GO
+SET ANSI_NULLS OFF 
+GO
+
+	
+
+-- Drop the dbo.OrderStatusType_Delete procedure
+IF EXISTS (SELECT * FROM dbo.sysobjects WHERE id = object_id(N'dbo.OrderStatusType_Delete') AND OBJECTPROPERTY(id, N'IsProcedure') = 1)
+DROP PROCEDURE dbo.OrderStatusType_Delete
+GO
+
+/*
+----------------------------------------------------------------------------------------------------
+-- Date Created: Monday, July 24, 2006
+
+-- Created By: NetTiers (www.nettiers.com)
+-- Purpose: Deletes a record in the OrderStatusType table
+----------------------------------------------------------------------------------------------------
+*/
+
+
+CREATE PROCEDURE dbo.OrderStatusType_Delete
+(
+
+	@OrderStatusId int   
+)
+AS
+
+
+				DELETE FROM dbo.[OrderStatusType] WITH (ROWLOCK) 
+				WHERE
+					[OrderStatusId] = @OrderStatusId
+					
+			
+
+GO
+SET QUOTED_IDENTIFIER ON 
+GO
+SET ANSI_NULLS OFF 
+GO
+
+	
+
+-- Drop the dbo.OrderStatusType_GetByOrderStatusId procedure
+IF EXISTS (SELECT * FROM dbo.sysobjects WHERE id = object_id(N'dbo.OrderStatusType_GetByOrderStatusId') AND OBJECTPROPERTY(id, N'IsProcedure') = 1)
+DROP PROCEDURE dbo.OrderStatusType_GetByOrderStatusId
+GO
+
+/*
+----------------------------------------------------------------------------------------------------
+-- Date Created: Monday, July 24, 2006
+
+-- Created By: NetTiers (www.nettiers.com)
+-- Purpose: Select records from the OrderStatusType table through an index
+----------------------------------------------------------------------------------------------------
+*/
+
+
+CREATE PROCEDURE dbo.OrderStatusType_GetByOrderStatusId
+(
+
+	@OrderStatusId int   
+)
+AS
+
+
+				SELECT
+					[OrderStatusId],
+					[OrderStatus],
+					[OrderStatusDescription]
+				FROM
+					dbo.[OrderStatusType]
+				WHERE
+					[OrderStatusId] = @OrderStatusId
+			Select @@ROWCOUNT
+					
+			
+
+GO
+SET QUOTED_IDENTIFIER ON 
+GO
+SET ANSI_NULLS OFF 
+GO
+
+	
+
+-- Drop the dbo.OrderStatusType_GetByOrderStatus procedure
+IF EXISTS (SELECT * FROM dbo.sysobjects WHERE id = object_id(N'dbo.OrderStatusType_GetByOrderStatus') AND OBJECTPROPERTY(id, N'IsProcedure') = 1)
+DROP PROCEDURE dbo.OrderStatusType_GetByOrderStatus
+GO
+
+/*
+----------------------------------------------------------------------------------------------------
+-- Date Created: Monday, July 24, 2006
+
+-- Created By: NetTiers (www.nettiers.com)
+-- Purpose: Select records from the OrderStatusType table through an index
+----------------------------------------------------------------------------------------------------
+*/
+
+
+CREATE PROCEDURE dbo.OrderStatusType_GetByOrderStatus
+(
+
+	@OrderStatus varchar (24)  
+)
+AS
+
+
+				SELECT
+					[OrderStatusId],
+					[OrderStatus],
+					[OrderStatusDescription]
+				FROM
+					dbo.[OrderStatusType]
+				WHERE
+					[OrderStatus] = @OrderStatus
+			Select @@ROWCOUNT
+					
+			
+
+GO
+SET QUOTED_IDENTIFIER ON 
+GO
+SET ANSI_NULLS OFF 
+GO
+
+	
+
+-- Drop the dbo.OrderStatusType_Find procedure
+IF EXISTS (SELECT * FROM dbo.sysobjects WHERE id = object_id(N'dbo.OrderStatusType_Find') AND OBJECTPROPERTY(id, N'IsProcedure') = 1)
+DROP PROCEDURE dbo.OrderStatusType_Find
+GO
+
+/*
+----------------------------------------------------------------------------------------------------
+-- Date Created: Monday, July 24, 2006
+
+-- Created By: NetTiers (www.nettiers.com)
+-- Purpose: Finds records in the OrderStatusType table passing nullable parameters
+----------------------------------------------------------------------------------------------------
+*/
+
+
+CREATE PROCEDURE dbo.OrderStatusType_Find
+(
+
+	@SearchUsingOR bit   = null ,
+
+	@OrderStatusId int   = null ,
+
+	@OrderStatus varchar (24)  = null ,
+
+	@OrderStatusDescription varchar (300)  = null 
+)
+AS
+
+
+				
+  IF ISNULL(@SearchUsingOR, 0) <> 1
+  BEGIN
+    SELECT
+	  [OrderStatusId]
+	, [OrderStatus]
+	, [OrderStatusDescription]
+    FROM
+	dbo.[OrderStatusType]
+    WHERE 
+	 ([OrderStatusId] = @OrderStatusId OR @OrderStatusId is null)
+	AND ([OrderStatus] = @OrderStatus OR @OrderStatus is null)
+	AND ([OrderStatusDescription] = @OrderStatusDescription OR @OrderStatusDescription is null)
+						
+  END
+  ELSE
+  BEGIN
+    SELECT
+	  [OrderStatusId]
+	, [OrderStatus]
+	, [OrderStatusDescription]
+    FROM
+	dbo.[OrderStatusType]
+    WHERE 
+	 ([OrderStatusId] = @OrderStatusId AND @OrderStatusId is not null)
+	OR ([OrderStatus] = @OrderStatus AND @OrderStatus is not null)
+	OR ([OrderStatusDescription] = @OrderStatusDescription AND @OrderStatusDescription is not null)
+	Select @@ROWCOUNT			
+  END
+				
+
+GO
+SET QUOTED_IDENTIFIER ON 
+GO
+SET ANSI_NULLS OFF 
+GO
+
+	
+
 -- Drop the dbo.Product_Get_List procedure
 IF EXISTS (SELECT * FROM dbo.sysobjects WHERE id = object_id(N'dbo.Product_Get_List') AND OBJECTPROPERTY(id, N'IsProcedure') = 1)
 DROP PROCEDURE dbo.Product_Get_List
@@ -2298,9 +5771,9 @@ GO
 
 /*
 ----------------------------------------------------------------------------------------------------
--- Date Created: Monday, July 03, 2006
+-- Date Created: Monday, July 24, 2006
 
--- Created By:  ()
+-- Created By: NetTiers (www.nettiers.com)
 -- Purpose: Gets all records from the Product table
 ----------------------------------------------------------------------------------------------------
 */
@@ -2339,9 +5812,9 @@ GO
 
 /*
 ----------------------------------------------------------------------------------------------------
--- Date Created: Monday, July 03, 2006
+-- Date Created: Monday, July 24, 2006
 
--- Created By:  ()
+-- Created By: NetTiers (www.nettiers.com)
 -- Purpose: Gets records from the Product table passing page index and page count parameters
 ----------------------------------------------------------------------------------------------------
 */
@@ -2436,9 +5909,9 @@ GO
 
 /*
 ----------------------------------------------------------------------------------------------------
--- Date Created: Monday, July 03, 2006
+-- Date Created: Monday, July 24, 2006
 
--- Created By:  ()
+-- Created By: NetTiers (www.nettiers.com)
 -- Purpose: Inserts a record into the Product table
 ----------------------------------------------------------------------------------------------------
 */
@@ -2447,13 +5920,13 @@ GO
 CREATE PROCEDURE dbo.Product_Insert
 (
 
-	@Id char (36)  ,
+	@Id uniqueidentifier   ,
 
 	@Name varchar (255)  ,
 
 	@Description varchar (255)  ,
 
-	@CategoryId char (36)  ,
+	@CategoryId uniqueidentifier   ,
 
 	@Timestamp timestamp    OUTPUT
 )
@@ -2502,9 +5975,9 @@ GO
 
 /*
 ----------------------------------------------------------------------------------------------------
--- Date Created: Monday, July 03, 2006
+-- Date Created: Monday, July 24, 2006
 
--- Created By:  ()
+-- Created By: NetTiers (www.nettiers.com)
 -- Purpose: Updates a record in the Product table
 ----------------------------------------------------------------------------------------------------
 */
@@ -2513,15 +5986,15 @@ GO
 CREATE PROCEDURE dbo.Product_Update
 (
 
-	@Id char (36)  ,
+	@Id uniqueidentifier   ,
 
-	@OriginalId char (36)  ,
+	@OriginalId uniqueidentifier   ,
 
 	@Name varchar (255)  ,
 
 	@Description varchar (255)  ,
 
-	@CategoryId char (36)  ,
+	@CategoryId uniqueidentifier   ,
 
 	@Timestamp timestamp   ,
 
@@ -2568,9 +6041,9 @@ GO
 
 /*
 ----------------------------------------------------------------------------------------------------
--- Date Created: Monday, July 03, 2006
+-- Date Created: Monday, July 24, 2006
 
--- Created By:  ()
+-- Created By: NetTiers (www.nettiers.com)
 -- Purpose: Deletes a record in the Product table
 ----------------------------------------------------------------------------------------------------
 */
@@ -2579,7 +6052,7 @@ GO
 CREATE PROCEDURE dbo.Product_Delete
 (
 
-	@Id char (36)  ,
+	@Id uniqueidentifier   ,
 
 	@Timestamp timestamp   
 )
@@ -2607,9 +6080,9 @@ GO
 
 /*
 ----------------------------------------------------------------------------------------------------
--- Date Created: Monday, July 03, 2006
+-- Date Created: Monday, July 24, 2006
 
--- Created By:  ()
+-- Created By: NetTiers (www.nettiers.com)
 -- Purpose: Select records from the Product table through a foreign key
 ----------------------------------------------------------------------------------------------------
 */
@@ -2618,7 +6091,7 @@ GO
 CREATE PROCEDURE dbo.Product_GetByCategoryId
 (
 
-	@CategoryId char (36)  
+	@CategoryId uniqueidentifier   
 )
 AS
 
@@ -2653,9 +6126,9 @@ GO
 
 /*
 ----------------------------------------------------------------------------------------------------
--- Date Created: Monday, July 03, 2006
+-- Date Created: Monday, July 24, 2006
 
--- Created By:  ()
+-- Created By: NetTiers (www.nettiers.com)
 -- Purpose: Select records from the Product table through an index
 ----------------------------------------------------------------------------------------------------
 */
@@ -2664,7 +6137,7 @@ GO
 CREATE PROCEDURE dbo.Product_GetById
 (
 
-	@Id char (36)  
+	@Id uniqueidentifier   
 )
 AS
 
@@ -2698,9 +6171,9 @@ GO
 
 /*
 ----------------------------------------------------------------------------------------------------
--- Date Created: Monday, July 03, 2006
+-- Date Created: Monday, July 24, 2006
 
--- Created By:  ()
+-- Created By: NetTiers (www.nettiers.com)
 -- Purpose: Finds records in the Product table passing nullable parameters
 ----------------------------------------------------------------------------------------------------
 */
@@ -2711,13 +6184,13 @@ CREATE PROCEDURE dbo.Product_Find
 
 	@SearchUsingOR bit   = null ,
 
-	@Id char (36)  = null ,
+	@Id uniqueidentifier   = null ,
 
 	@Name varchar (255)  = null ,
 
 	@Description varchar (255)  = null ,
 
-	@CategoryId char (36)  = null ,
+	@CategoryId uniqueidentifier   = null ,
 
 	@Timestamp timestamp   = null 
 )
@@ -2769,6 +6242,573 @@ GO
 
 	
 
+-- Drop the dbo.Supplier_Get_List procedure
+IF EXISTS (SELECT * FROM dbo.sysobjects WHERE id = object_id(N'dbo.Supplier_Get_List') AND OBJECTPROPERTY(id, N'IsProcedure') = 1)
+DROP PROCEDURE dbo.Supplier_Get_List
+GO
+
+/*
+----------------------------------------------------------------------------------------------------
+-- Date Created: Monday, July 24, 2006
+
+-- Created By: NetTiers (www.nettiers.com)
+-- Purpose: Gets all records from the Supplier table
+----------------------------------------------------------------------------------------------------
+*/
+
+
+CREATE PROCEDURE dbo.Supplier_Get_List
+
+AS
+
+
+				
+				SELECT
+					[SuppId],
+					[Name],
+					[Status],
+					[Addr1],
+					[Addr2],
+					[City],
+					[State],
+					[Zip],
+					[Phone],
+					[Timestamp]
+				FROM
+					dbo.[Supplier]
+					
+				Select @@ROWCOUNT
+			
+
+GO
+SET QUOTED_IDENTIFIER ON 
+GO
+SET ANSI_NULLS OFF 
+GO
+
+	
+
+-- Drop the dbo.Supplier_GetPaged procedure
+IF EXISTS (SELECT * FROM dbo.sysobjects WHERE id = object_id(N'dbo.Supplier_GetPaged') AND OBJECTPROPERTY(id, N'IsProcedure') = 1)
+DROP PROCEDURE dbo.Supplier_GetPaged
+GO
+
+/*
+----------------------------------------------------------------------------------------------------
+-- Date Created: Monday, July 24, 2006
+
+-- Created By: NetTiers (www.nettiers.com)
+-- Purpose: Gets records from the Supplier table passing page index and page count parameters
+----------------------------------------------------------------------------------------------------
+*/
+
+
+CREATE PROCEDURE dbo.Supplier_GetPaged
+(
+
+	@WhereClause varchar (2000)  ,
+
+	@OrderBy varchar (2000)  ,
+
+	@PageIndex int   ,
+
+	@PageSize int   
+)
+AS
+
+
+				
+				BEGIN
+				DECLARE @PageLowerBound int
+				DECLARE @PageUpperBound int
+				
+				-- Set the page bounds
+				SET @PageLowerBound = @PageSize * @PageIndex
+				SET @PageUpperBound = @PageLowerBound + @PageSize
+
+				IF (@OrderBy is null or LEN(@OrderBy) < 1)
+				BEGIN
+					-- default order by to first column
+					SET @OrderBy = '[SuppId]'
+				END
+
+				-- SQL Server 2005 Paging
+				declare @SQL as nvarchar(4000)
+				SET @SQL = 'WITH PageIndex AS ('
+				SET @SQL = @SQL + ' SELECT'
+				IF @PageSize > 0
+				BEGIN
+					SET @SQL = @SQL + ' TOP ' + convert(nvarchar, @PageUpperBound)
+				END
+				SET @SQL = @SQL + ' ROW_NUMBER() OVER (ORDER BY ' + @OrderBy + ') as RowIndex'
+				SET @SQL = @SQL + ', [SuppId]'
+				SET @SQL = @SQL + ', [Name]'
+				SET @SQL = @SQL + ', [Status]'
+				SET @SQL = @SQL + ', [Addr1]'
+				SET @SQL = @SQL + ', [Addr2]'
+				SET @SQL = @SQL + ', [City]'
+				SET @SQL = @SQL + ', [State]'
+				SET @SQL = @SQL + ', [Zip]'
+				SET @SQL = @SQL + ', [Phone]'
+				SET @SQL = @SQL + ', [Timestamp]'
+				SET @SQL = @SQL + ' FROM dbo.[Supplier]'
+				IF LEN(@WhereClause) > 0
+				BEGIN
+					SET @SQL = @SQL + ' WHERE ' + @WhereClause
+				END
+				SET @SQL = @SQL + ' ) SELECT'
+				SET @SQL = @SQL + ' [SuppId],'
+				SET @SQL = @SQL + ' [Name],'
+				SET @SQL = @SQL + ' [Status],'
+				SET @SQL = @SQL + ' [Addr1],'
+				SET @SQL = @SQL + ' [Addr2],'
+				SET @SQL = @SQL + ' [City],'
+				SET @SQL = @SQL + ' [State],'
+				SET @SQL = @SQL + ' [Zip],'
+				SET @SQL = @SQL + ' [Phone],'
+				SET @SQL = @SQL + ' [Timestamp]'
+				SET @SQL = @SQL + ' FROM PageIndex'
+				SET @SQL = @SQL + ' WHERE RowIndex > ' + convert(nvarchar, @PageLowerBound)
+				IF @PageSize > 0
+				BEGIN
+					SET @SQL = @SQL + ' AND RowIndex <= ' + convert(nvarchar, @PageUpperBound)
+				END
+				exec sp_executesql @SQL
+				
+				-- get row count
+				SET @SQL = 'SELECT COUNT(*) as TotalRowCount'
+				SET @SQL = @SQL + ' FROM dbo.[Supplier]'
+				IF LEN(@WhereClause) > 0
+				BEGIN
+					SET @SQL = @SQL + ' WHERE ' + @WhereClause
+				END
+				exec sp_executesql @SQL
+			
+				END
+			
+
+GO
+SET QUOTED_IDENTIFIER ON 
+GO
+SET ANSI_NULLS OFF 
+GO
+
+	
+
+-- Drop the dbo.Supplier_Insert procedure
+IF EXISTS (SELECT * FROM dbo.sysobjects WHERE id = object_id(N'dbo.Supplier_Insert') AND OBJECTPROPERTY(id, N'IsProcedure') = 1)
+DROP PROCEDURE dbo.Supplier_Insert
+GO
+
+/*
+----------------------------------------------------------------------------------------------------
+-- Date Created: Monday, July 24, 2006
+
+-- Created By: NetTiers (www.nettiers.com)
+-- Purpose: Inserts a record into the Supplier table
+----------------------------------------------------------------------------------------------------
+*/
+
+
+CREATE PROCEDURE dbo.Supplier_Insert
+(
+
+	@SuppId uniqueidentifier   ,
+
+	@Name varchar (80)  ,
+
+	@Status varchar (2)  ,
+
+	@Addr1 varchar (80)  ,
+
+	@Addr2 varchar (80)  ,
+
+	@City varchar (80)  ,
+
+	@State varchar (80)  ,
+
+	@Zip varchar (5)  ,
+
+	@Phone varchar (40)  ,
+
+	@Timestamp timestamp    OUTPUT
+)
+AS
+
+
+					
+				INSERT INTO dbo.[Supplier]
+					(
+					[SuppId]
+					,[Name]
+					,[Status]
+					,[Addr1]
+					,[Addr2]
+					,[City]
+					,[State]
+					,[Zip]
+					,[Phone]
+					)
+				VALUES
+					(
+					@SuppId
+					,@Name
+					,@Status
+					,@Addr1
+					,@Addr2
+					,@City
+					,@State
+					,@Zip
+					,@Phone
+					)
+				
+									
+				-- Select computed columns into output parameters
+				SELECT
+ @Timestamp = [Timestamp]
+				FROM
+					dbo.[Supplier]
+				WHERE
+[SuppId] = @SuppId 
+							
+			
+
+GO
+SET QUOTED_IDENTIFIER ON 
+GO
+SET ANSI_NULLS OFF 
+GO
+
+	
+
+-- Drop the dbo.Supplier_Update procedure
+IF EXISTS (SELECT * FROM dbo.sysobjects WHERE id = object_id(N'dbo.Supplier_Update') AND OBJECTPROPERTY(id, N'IsProcedure') = 1)
+DROP PROCEDURE dbo.Supplier_Update
+GO
+
+/*
+----------------------------------------------------------------------------------------------------
+-- Date Created: Monday, July 24, 2006
+
+-- Created By: NetTiers (www.nettiers.com)
+-- Purpose: Updates a record in the Supplier table
+----------------------------------------------------------------------------------------------------
+*/
+
+
+CREATE PROCEDURE dbo.Supplier_Update
+(
+
+	@SuppId uniqueidentifier   ,
+
+	@OriginalSuppId uniqueidentifier   ,
+
+	@Name varchar (80)  ,
+
+	@Status varchar (2)  ,
+
+	@Addr1 varchar (80)  ,
+
+	@Addr2 varchar (80)  ,
+
+	@City varchar (80)  ,
+
+	@State varchar (80)  ,
+
+	@Zip varchar (5)  ,
+
+	@Phone varchar (40)  ,
+
+	@Timestamp timestamp   ,
+
+	@ReturnedTimestamp timestamp    OUTPUT
+)
+AS
+
+
+				
+				
+				-- Modify the updatable columns
+				UPDATE
+					dbo.[Supplier]
+				SET
+					[SuppId] = @SuppId
+					,[Name] = @Name
+					,[Status] = @Status
+					,[Addr1] = @Addr1
+					,[Addr2] = @Addr2
+					,[City] = @City
+					,[State] = @State
+					,[Zip] = @Zip
+					,[Phone] = @Phone
+				WHERE
+[SuppId] = @OriginalSuppId 
+AND [Timestamp] = @Timestamp				
+				
+				-- Select computed columns into output parameters
+				SELECT
+ @ReturnedTimestamp = [Timestamp]
+				FROM
+					dbo.[Supplier]
+				WHERE
+[SuppId] = @SuppId 
+			
+
+GO
+SET QUOTED_IDENTIFIER ON 
+GO
+SET ANSI_NULLS OFF 
+GO
+
+	
+
+-- Drop the dbo.Supplier_Delete procedure
+IF EXISTS (SELECT * FROM dbo.sysobjects WHERE id = object_id(N'dbo.Supplier_Delete') AND OBJECTPROPERTY(id, N'IsProcedure') = 1)
+DROP PROCEDURE dbo.Supplier_Delete
+GO
+
+/*
+----------------------------------------------------------------------------------------------------
+-- Date Created: Monday, July 24, 2006
+
+-- Created By: NetTiers (www.nettiers.com)
+-- Purpose: Deletes a record in the Supplier table
+----------------------------------------------------------------------------------------------------
+*/
+
+
+CREATE PROCEDURE dbo.Supplier_Delete
+(
+
+	@SuppId uniqueidentifier   ,
+
+	@Timestamp timestamp   
+)
+AS
+
+
+				DELETE FROM dbo.[Supplier] WITH (ROWLOCK) 
+				WHERE
+					[SuppId] = @SuppId
+	AND [Timestamp] = @Timestamp					
+			
+
+GO
+SET QUOTED_IDENTIFIER ON 
+GO
+SET ANSI_NULLS OFF 
+GO
+
+	
+
+-- Drop the dbo.Supplier_GetBySuppId procedure
+IF EXISTS (SELECT * FROM dbo.sysobjects WHERE id = object_id(N'dbo.Supplier_GetBySuppId') AND OBJECTPROPERTY(id, N'IsProcedure') = 1)
+DROP PROCEDURE dbo.Supplier_GetBySuppId
+GO
+
+/*
+----------------------------------------------------------------------------------------------------
+-- Date Created: Monday, July 24, 2006
+
+-- Created By: NetTiers (www.nettiers.com)
+-- Purpose: Select records from the Supplier table through an index
+----------------------------------------------------------------------------------------------------
+*/
+
+
+CREATE PROCEDURE dbo.Supplier_GetBySuppId
+(
+
+	@SuppId uniqueidentifier   
+)
+AS
+
+
+				SELECT
+					[SuppId],
+					[Name],
+					[Status],
+					[Addr1],
+					[Addr2],
+					[City],
+					[State],
+					[Zip],
+					[Phone],
+					[Timestamp]
+				FROM
+					dbo.[Supplier]
+				WHERE
+					[SuppId] = @SuppId
+			Select @@ROWCOUNT
+					
+			
+
+GO
+SET QUOTED_IDENTIFIER ON 
+GO
+SET ANSI_NULLS OFF 
+GO
+
+	
+
+-- Drop the dbo.Supplier_GetByItemIdFromInventory procedure
+IF EXISTS (SELECT * FROM dbo.sysobjects WHERE id = object_id(N'dbo.Supplier_GetByItemIdFromInventory') AND OBJECTPROPERTY(id, N'IsProcedure') = 1)
+DROP PROCEDURE dbo.Supplier_GetByItemIdFromInventory
+GO
+
+/*
+----------------------------------------------------------------------------------------------------
+-- Date Created: Monday, July 24, 2006
+
+-- Created By: NetTiers (www.nettiers.com)
+-- Purpose: Gets records through a junction table
+----------------------------------------------------------------------------------------------------
+*/
+
+
+CREATE PROCEDURE dbo.Supplier_GetByItemIdFromInventory
+(
+
+	@ItemId uniqueidentifier   
+)
+AS
+
+
+SELECT dbo.[Supplier].[SuppId]
+       ,dbo.[Supplier].[Name]
+       ,dbo.[Supplier].[Status]
+       ,dbo.[Supplier].[Addr1]
+       ,dbo.[Supplier].[Addr2]
+       ,dbo.[Supplier].[City]
+       ,dbo.[Supplier].[State]
+       ,dbo.[Supplier].[Zip]
+       ,dbo.[Supplier].[Phone]
+       ,dbo.[Supplier].[Timestamp]
+  FROM dbo.[Supplier]
+ WHERE EXISTS (SELECT 1
+                 FROM dbo.[Inventory] 
+                WHERE dbo.[Inventory].[ItemId] = @ItemId
+                  AND dbo.[Inventory].[SuppId] = dbo.[Supplier].[SuppId]
+                  )
+				Select @@ROWCOUNT			
+				
+
+GO
+SET QUOTED_IDENTIFIER ON 
+GO
+SET ANSI_NULLS OFF 
+GO
+
+	
+
+-- Drop the dbo.Supplier_Find procedure
+IF EXISTS (SELECT * FROM dbo.sysobjects WHERE id = object_id(N'dbo.Supplier_Find') AND OBJECTPROPERTY(id, N'IsProcedure') = 1)
+DROP PROCEDURE dbo.Supplier_Find
+GO
+
+/*
+----------------------------------------------------------------------------------------------------
+-- Date Created: Monday, July 24, 2006
+
+-- Created By: NetTiers (www.nettiers.com)
+-- Purpose: Finds records in the Supplier table passing nullable parameters
+----------------------------------------------------------------------------------------------------
+*/
+
+
+CREATE PROCEDURE dbo.Supplier_Find
+(
+
+	@SearchUsingOR bit   = null ,
+
+	@SuppId uniqueidentifier   = null ,
+
+	@Name varchar (80)  = null ,
+
+	@Status varchar (2)  = null ,
+
+	@Addr1 varchar (80)  = null ,
+
+	@Addr2 varchar (80)  = null ,
+
+	@City varchar (80)  = null ,
+
+	@State varchar (80)  = null ,
+
+	@Zip varchar (5)  = null ,
+
+	@Phone varchar (40)  = null ,
+
+	@Timestamp timestamp   = null 
+)
+AS
+
+
+				
+  IF ISNULL(@SearchUsingOR, 0) <> 1
+  BEGIN
+    SELECT
+	  [SuppId]
+	, [Name]
+	, [Status]
+	, [Addr1]
+	, [Addr2]
+	, [City]
+	, [State]
+	, [Zip]
+	, [Phone]
+	, [Timestamp]
+    FROM
+	dbo.[Supplier]
+    WHERE 
+	 ([SuppId] = @SuppId OR @SuppId is null)
+	AND ([Name] = @Name OR @Name is null)
+	AND ([Status] = @Status OR @Status is null)
+	AND ([Addr1] = @Addr1 OR @Addr1 is null)
+	AND ([Addr2] = @Addr2 OR @Addr2 is null)
+	AND ([City] = @City OR @City is null)
+	AND ([State] = @State OR @State is null)
+	AND ([Zip] = @Zip OR @Zip is null)
+	AND ([Phone] = @Phone OR @Phone is null)
+						
+  END
+  ELSE
+  BEGIN
+    SELECT
+	  [SuppId]
+	, [Name]
+	, [Status]
+	, [Addr1]
+	, [Addr2]
+	, [City]
+	, [State]
+	, [Zip]
+	, [Phone]
+	, [Timestamp]
+    FROM
+	dbo.[Supplier]
+    WHERE 
+	 ([SuppId] = @SuppId AND @SuppId is not null)
+	OR ([Name] = @Name AND @Name is not null)
+	OR ([Status] = @Status AND @Status is not null)
+	OR ([Addr1] = @Addr1 AND @Addr1 is not null)
+	OR ([Addr2] = @Addr2 AND @Addr2 is not null)
+	OR ([City] = @City AND @City is not null)
+	OR ([State] = @State AND @State is not null)
+	OR ([Zip] = @Zip AND @Zip is not null)
+	OR ([Phone] = @Phone AND @Phone is not null)
+	Select @@ROWCOUNT			
+  END
+				
+
+GO
+SET QUOTED_IDENTIFIER ON 
+GO
+SET ANSI_NULLS OFF 
+GO
+
+	
+
 -- Drop the dbo.ExtendedItem_Get_List procedure
 IF EXISTS (SELECT * FROM dbo.sysobjects WHERE id = object_id(N'dbo.ExtendedItem_Get_List') AND OBJECTPROPERTY(id, N'IsProcedure') = 1)
 DROP PROCEDURE dbo.ExtendedItem_Get_List
@@ -2776,9 +6816,9 @@ GO
 
 /*
 ----------------------------------------------------------------------------------------------------
--- Date Created: Monday, July 03, 2006
+-- Date Created: Monday, July 24, 2006
 
--- Created By:  ()
+-- Created By: NetTiers (www.nettiers.com)
 -- Purpose: Gets all records from the ExtendedItem view
 ----------------------------------------------------------------------------------------------------
 */
@@ -2822,9 +6862,9 @@ GO
 
 /*
 ----------------------------------------------------------------------------------------------------
--- Date Created: Monday, July 03, 2006
+-- Date Created: Monday, July 24, 2006
 
--- Created By:  ()
+-- Created By: NetTiers (www.nettiers.com)
 -- Purpose: Gets records from the ExtendedItem view passing page index and page count parameters
 ----------------------------------------------------------------------------------------------------
 */

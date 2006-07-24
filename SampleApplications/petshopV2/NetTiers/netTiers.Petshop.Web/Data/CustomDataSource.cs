@@ -731,6 +731,21 @@ namespace netTiers.Petshop.Web.Data
 		}
 
 		/// <summary>
+		/// Sets the primary key values of the specified Entity object.
+		/// </summary>
+		/// <param name="entity">The Entity object to update.</param>
+		protected override void SetEntityKeyValues(Object entity)
+		{
+			base.SetEntityKeyValues(entity);
+			String[] names = GetEntityKeyNames();
+
+			foreach ( String name in names )
+			{
+				EntityUtil.SetEntityKeyValue(entity, name);
+			}
+		}
+
+		/// <summary>
 		/// Stores the specified entity in the temporary cache.
 		/// </summary>
 		/// <param name="entity">The Entity object to cache.</param>
@@ -799,11 +814,14 @@ namespace netTiers.Petshop.Web.Data
 		{
 			if ( !IsDeepLoaded )
 			{
-				IsDeepLoaded = true;
 				Object entity = GetCurrentEntity();
-				Object[] args = GetArgs(entity);
-
-				EntityUtil.InvokeMethod(Provider, "DeepLoad", args);
+				
+				if ( entity != null )
+				{
+					Object[] args = GetArgs(entity, EnableRecursiveDeepLoad);
+					EntityUtil.InvokeMethod(Provider, "DeepLoad", args);
+					IsDeepLoaded = true;
+				}
 			}
 		}
 

@@ -1,16 +1,11 @@
-#region Imports...
+#region Using Directives
 using System;
-using System.Data;
-using System.Configuration;
-using System.Collections.Generic;
-using System.Web;
-using System.Web.Security;
-using System.Web.UI;
-using System.Web.UI.WebControls;
-using System.Web.UI.WebControls.WebParts;
-using System.Web.UI.HtmlControls;
 using System.ComponentModel;
 using System.Collections;
+using System.Collections.Generic;
+using System.Web;
+using System.Web.UI;
+using System.Web.UI.WebControls;
 #endregion
 
 namespace netTiers.Petshop.Web.UI
@@ -194,8 +189,8 @@ namespace netTiers.Petshop.Web.UI
 		/// <param name="e">An System.EventArgs that contains the event data.</param>
 		protected override void OnInit(EventArgs e)
 		{
-			InitTemplates();
 			base.OnInit(e);
+			InitTemplates();
 		}
 
 		/// <summary>
@@ -258,6 +253,109 @@ namespace netTiers.Petshop.Web.UI
 			}
 		}
 
+		#region Remove Path Methods
+
+		/// <summary>
+		/// Removes the first named <see cref="TemplatePath"/> object from the
+		/// collection of ItemTemplatePaths.
+		/// </summary>
+		/// <param name="name"></param>
+		public void RemoveItemTemplatePath(String name)
+		{
+			RemoveTemplatePath(TemplateType.ItemTemplate, name);
+		}
+
+		/// <summary>
+		/// Removes the first named <see cref="TemplatePath"/> object from the
+		/// collection of EditItemTemplatePaths.
+		/// </summary>
+		/// <param name="name"></param>
+		public void RemoveEditItemTemplatePath(String name)
+		{
+			RemoveTemplatePath(TemplateType.EditItemTemplate, name);
+		}
+
+		/// <summary>
+		/// Removes the first named <see cref="TemplatePath"/> object from the
+		/// collection of EmptyDataTemplatePaths.
+		/// </summary>
+		/// <param name="name"></param>
+		public void RemoveEmptyDataTemplatePath(String name)
+		{
+			RemoveTemplatePath(TemplateType.EmptyDataTemplate, name);
+		}
+
+		/// <summary>
+		/// Removes the first named <see cref="TemplatePath"/> object from the
+		/// collection of FooterTemplatePaths.
+		/// </summary>
+		/// <param name="name"></param>
+		public void RemoveFooterTemplatePath(String name)
+		{
+			RemoveTemplatePath(TemplateType.FooterTemplate, name);
+		}
+
+		/// <summary>
+		/// Removes the first named <see cref="TemplatePath"/> object from the
+		/// collection of HeaderTemplatePaths.
+		/// </summary>
+		/// <param name="name"></param>
+		public void RemoveHeaderTemplatePath(String name)
+		{
+			RemoveTemplatePath(TemplateType.HeaderTemplate, name);
+		}
+
+		/// <summary>
+		/// Removes the first named <see cref="TemplatePath"/> object from the
+		/// collection of InsertItemTemplatePaths.
+		/// </summary>
+		/// <param name="name"></param>
+		public void RemoveInsertItemTemplatePath(String name)
+		{
+			RemoveTemplatePath(TemplateType.InsertItemTemplate, name);
+		}
+
+		/// <summary>
+		/// Removes the first named <see cref="TemplatePath"/> object from the
+		/// collection of PagerTemplatePaths.
+		/// </summary>
+		/// <param name="name"></param>
+		public void RemovePagerTemplatePath(String name)
+		{
+			RemoveTemplatePath(TemplateType.PagerTemplate, name);
+		}
+
+		/// <summary>
+		/// Removes the first named <see cref="TemplatePath"/> object from the
+		/// collection paths for the specified <see cref="TemplateType"/>.
+		/// </summary>
+		/// <param name="type"></param>
+		/// <param name="name"></param>
+		protected void RemoveTemplatePath(TemplateType type, String name)
+		{
+			if ( !String.IsNullOrEmpty(name) && _paths != null && _paths.ContainsKey(type) )
+			{
+				IList typePaths = _paths[type];
+				TemplatePath path = null;
+
+				foreach ( TemplatePath tp in typePaths )
+				{
+					if ( name.Equals(tp.Name) )
+					{
+						path = tp;
+						break;
+					}
+				}
+
+				if ( path != null )
+				{
+					typePaths.Remove(path);
+				}
+			}
+		}
+
+		#endregion Remove Path Methods
+
 		#endregion
 	}
 
@@ -268,6 +366,7 @@ namespace netTiers.Petshop.Web.UI
 	/// </summary>
 	public sealed class TemplatePath
 	{
+		private String _name;
 		private String _path;
 
 		/// <summary>
@@ -275,6 +374,15 @@ namespace netTiers.Petshop.Web.UI
 		/// </summary>
 		public TemplatePath()
 		{
+		}
+
+		/// <summary>
+		/// Gets or sets the Name of this TemplatePath object.
+		/// </summary>
+		public String Name
+		{
+			get { return _name; }
+			set { _name = value; }
 		}
 
 		/// <summary>

@@ -380,6 +380,16 @@ namespace netTiers.Petshop.Web.Data
 			set { EntityView.EnableTransaction = value; }
 		}
 
+		/// <summary>
+		/// Gets or sets a value indicating whether the data source control should
+		/// perform a recursive deep load when the DeepLoad method is called.
+		/// </summary>
+		public bool EnableRecursiveDeepLoad
+		{
+			get { return EntityView.EnableRecursiveDeepLoad; }
+			set { EntityView.EnableRecursiveDeepLoad = value; }
+		}
+
 		#endregion
 
 		#region EntityDataSourceView Events
@@ -804,6 +814,7 @@ namespace netTiers.Petshop.Web.Data
 		private sealed class EntityDataSourceView : DataSourceView
 		{
 			#region Declarations
+			
 			private EntityDataSource _owner;
 			private IEnumerable _entityList;
 			private IEnumerable _prevEntityList;
@@ -811,6 +822,7 @@ namespace netTiers.Petshop.Web.Data
 			private Type _entityType;
 			private Type _entityKeyType;
 			private Object _provider;
+			private bool _enableRecursiveDeepLoad;
 			private bool _enableTransaction = true;
 			private bool _enablePaging;
 			private bool _enableSorting;
@@ -835,6 +847,7 @@ namespace netTiers.Petshop.Web.Data
 			private String _updateDateTimeNames;
 			private String _filter;
 			private String _sort;
+			
 			#endregion
 
 			#region Constructors
@@ -1083,6 +1096,16 @@ namespace netTiers.Petshop.Web.Data
 				set { _enableTransaction = value; }
 			}
 
+			/// <summary>
+			/// Gets or sets a value indicating whether the data source control should
+			/// perform a recursive deep load when the DeepLoad method is called.
+			/// </summary>
+			internal bool EnableRecursiveDeepLoad
+			{
+				get { return _enableRecursiveDeepLoad; }
+				set { _enableRecursiveDeepLoad = value; }
+			}
+
 			#endregion
 
 			#region Select Methods
@@ -1132,7 +1155,7 @@ namespace netTiers.Petshop.Web.Data
 						UpdateEntityId(entityList);
 						OnSelected(new EntityDataSourceMethodEventArgs(entityList, EntityIndex, param, arguments.TotalRowCount));
 
-						if ( arguments.TotalRowCount > 0 )
+						if ( arguments.TotalRowCount > 0 && list.Count > 0 )
 						{
 							// raise linked event
 							OnAfterSelected(new LinkedDataSourceEventArgs(list[EntityIndex], EntityIndex));
@@ -1807,11 +1830,14 @@ namespace netTiers.Petshop.Web.Data
 			{
 				if ( !IsDeepLoaded )
 				{
-					_isDeepLoaded = true;
 					Object entity = GetCurrentEntity();
-					Object[] args = { entity };
-
-					EntityUtil.InvokeMethod(Provider, "DeepLoad", args);
+					
+					if ( entity != null )
+					{
+						Object[] args = { entity, EnableRecursiveDeepLoad };
+						EntityUtil.InvokeMethod(Provider, "DeepLoad", args);
+						_isDeepLoaded = true;
+					}
 				}
 			}
 			#endregion
@@ -1931,7 +1957,7 @@ namespace netTiers.Petshop.Web.Data
 			{
 				if ( _owner.AfterSelected != null )
 				{
-					_owner.AfterSelected(this, e);
+					_owner.AfterSelected(_owner, e);
 				}
 			}
 
@@ -1943,7 +1969,7 @@ namespace netTiers.Petshop.Web.Data
 			{
 				if ( _owner.AfterInserting != null )
 				{
-					_owner.AfterInserting(this, e);
+					_owner.AfterInserting(_owner, e);
 				}
 			}
 
@@ -1955,7 +1981,7 @@ namespace netTiers.Petshop.Web.Data
 			{
 				if ( _owner.AfterInserted != null )
 				{
-					_owner.AfterInserted(this, e);
+					_owner.AfterInserted(_owner, e);
 				}
 			}
 
@@ -1967,7 +1993,7 @@ namespace netTiers.Petshop.Web.Data
 			{
 				if ( _owner.AfterUpdating != null )
 				{
-					_owner.AfterUpdating(this, e);
+					_owner.AfterUpdating(_owner, e);
 				}
 			}
 
@@ -1979,7 +2005,7 @@ namespace netTiers.Petshop.Web.Data
 			{
 				if ( _owner.AfterUpdated != null )
 				{
-					_owner.AfterUpdated(this, e);
+					_owner.AfterUpdated(_owner, e);
 				}
 			}
 

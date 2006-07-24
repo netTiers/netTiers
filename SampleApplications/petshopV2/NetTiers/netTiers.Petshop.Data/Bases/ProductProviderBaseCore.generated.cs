@@ -43,7 +43,7 @@ namespace netTiers.Petshop.Data.Bases
 		/// <param name="timestamp">The timestamp field used for concurrency check.</param>
 		/// <remarks>Deletes based on primary key(s).</remarks>
 		/// <returns>Returns true if operation suceeded.</returns>
-		public bool Delete(System.String id, byte[] timestamp)
+		public bool Delete(System.Guid id, byte[] timestamp)
 		{
 			return Delete(null, id, timestamp);
 		}
@@ -56,7 +56,7 @@ namespace netTiers.Petshop.Data.Bases
 		/// <param name="timestamp">The timestamp field used for concurrency check.</param>
 		/// <remarks>Deletes based on primary key(s).</remarks>
 		/// <returns>Returns true if operation suceeded.</returns>
-		public abstract bool Delete(TransactionManager transactionManager, System.String id, byte[] timestamp);		
+		public abstract bool Delete(TransactionManager transactionManager, System.Guid id, byte[] timestamp);		
 		
 		#endregion
 		
@@ -68,7 +68,7 @@ namespace netTiers.Petshop.Data.Bases
 		/// </summary>
 		/// <param name="categoryId"></param>
 		/// <returns>Returns a typed collection of netTiers.Petshop.Entities.Product objects.</returns>
-		public netTiers.Petshop.Entities.TList<Product> GetByCategoryId(System.String categoryId)
+		public netTiers.Petshop.Entities.TList<Product> GetByCategoryId(System.Guid categoryId)
 		{
 			int count = -1;
 			return GetByCategoryId(categoryId, 0,int.MaxValue, out count);
@@ -82,7 +82,7 @@ namespace netTiers.Petshop.Data.Bases
 		/// <param name="categoryId"></param>
 		/// <returns>Returns a typed collection of netTiers.Petshop.Entities.Product objects.</returns>
 		/// <remarks></remarks>
-		public netTiers.Petshop.Entities.TList<Product> GetByCategoryId(TransactionManager transactionManager, System.String categoryId)
+		public netTiers.Petshop.Entities.TList<Product> GetByCategoryId(TransactionManager transactionManager, System.Guid categoryId)
 		{
 			int count = -1;
 			return GetByCategoryId(transactionManager, categoryId, 0, int.MaxValue, out count);
@@ -98,7 +98,7 @@ namespace netTiers.Petshop.Data.Bases
 		///  <param name="pageLength">Number of rows to return.</param>
 		/// <remarks></remarks>
 		/// <returns>Returns a typed collection of netTiers.Petshop.Entities.Product objects.</returns>
-		public netTiers.Petshop.Entities.TList<Product> GetByCategoryId(TransactionManager transactionManager, System.String categoryId, int start, int pageLength)
+		public netTiers.Petshop.Entities.TList<Product> GetByCategoryId(TransactionManager transactionManager, System.Guid categoryId, int start, int pageLength)
 		{
 			int count = -1;
 			return GetByCategoryId(transactionManager, categoryId, start, pageLength, out count);
@@ -113,7 +113,7 @@ namespace netTiers.Petshop.Data.Bases
 		/// <param name="categoryId"></param>
 		/// <remarks></remarks>
 		/// <returns>Returns a typed collection of netTiers.Petshop.Entities.Product objects.</returns>
-		public netTiers.Petshop.Entities.TList<Product> GetByCategoryId(System.String categoryId, int start, int pageLength)
+		public netTiers.Petshop.Entities.TList<Product> GetByCategoryId(System.Guid categoryId, int start, int pageLength)
 		{
 			int count =  -1;
 			return GetByCategoryId(null, categoryId, start, pageLength,out count);	
@@ -129,7 +129,7 @@ namespace netTiers.Petshop.Data.Bases
 		/// <param name="count">out parameter to get total records for query</param>
 		/// <remarks></remarks>
 		/// <returns>Returns a typed collection of netTiers.Petshop.Entities.Product objects.</returns>
-		public netTiers.Petshop.Entities.TList<Product> GetByCategoryId(System.String categoryId, int start, int pageLength,out int count)
+		public netTiers.Petshop.Entities.TList<Product> GetByCategoryId(System.Guid categoryId, int start, int pageLength,out int count)
 		{
 			return GetByCategoryId(null, categoryId, start, pageLength, out count);	
 		}
@@ -144,7 +144,7 @@ namespace netTiers.Petshop.Data.Bases
 		/// <param name="pageLength">Number of rows to return.</param>
 		/// <param name="count">The total number of records.</param>
 		/// <returns>Returns a typed collection of netTiers.Petshop.Entities.Product objects.</returns>
-		public abstract netTiers.Petshop.Entities.TList<Product> GetByCategoryId(TransactionManager transactionManager, System.String categoryId, int start, int pageLength, out int count);
+		public abstract netTiers.Petshop.Entities.TList<Product> GetByCategoryId(TransactionManager transactionManager, System.Guid categoryId, int start, int pageLength, out int count);
 		
 		#endregion
 
@@ -168,7 +168,7 @@ namespace netTiers.Petshop.Data.Bases
 		/// </summary>
 		/// <param name="id"></param>
 		/// <returns>Returns an instance of the <see cref="netTiers.Petshop.Entities.Product"/> class.</returns>
-		public netTiers.Petshop.Entities.Product GetById(System.String id)
+		public netTiers.Petshop.Entities.Product GetById(System.Guid id)
 		{
 			int count = -1;
 			return GetById(null,id, 0, int.MaxValue, out count);
@@ -182,7 +182,7 @@ namespace netTiers.Petshop.Data.Bases
 		/// <param name="pageLength">Number of rows to return.</param>
 		/// <remarks></remarks>
 		/// <returns>Returns an instance of the <see cref="netTiers.Petshop.Entities.Product"/> class.</returns>
-		public netTiers.Petshop.Entities.Product GetById(System.String id, int start, int pageLength)
+		public netTiers.Petshop.Entities.Product GetById(System.Guid id, int start, int pageLength)
 		{
 			int count = -1;
 			return GetById(null, id, start, pageLength, out count);
@@ -195,7 +195,7 @@ namespace netTiers.Petshop.Data.Bases
 		/// <param name="id"></param>
 		/// <remarks></remarks>
 		/// <returns>Returns an instance of the <see cref="netTiers.Petshop.Entities.Product"/> class.</returns>
-		public netTiers.Petshop.Entities.Product GetById(TransactionManager transactionManager, System.String id)
+		public netTiers.Petshop.Entities.Product GetById(TransactionManager transactionManager, System.Guid id)
 		{
 			int count = -1;
 			return GetById(transactionManager, id, 0, int.MaxValue, out count);
@@ -210,7 +210,7 @@ namespace netTiers.Petshop.Data.Bases
 		/// <param name="pageLength">Number of rows to return.</param>
 		/// <remarks></remarks>
 		/// <returns>Returns an instance of the <see cref="netTiers.Petshop.Entities.Product"/> class.</returns>
-		public netTiers.Petshop.Entities.Product GetById(TransactionManager transactionManager, System.String id, int start, int pageLength)
+		public netTiers.Petshop.Entities.Product GetById(TransactionManager transactionManager, System.Guid id, int start, int pageLength)
 		{
 			int count = -1;
 			return GetById(transactionManager, id, start, pageLength, out count);
@@ -225,7 +225,7 @@ namespace netTiers.Petshop.Data.Bases
 		/// <param name="count">out parameter to get total records for query</param>
 		/// <remarks></remarks>
 		/// <returns>Returns an instance of the <see cref="netTiers.Petshop.Entities.Product"/> class.</returns>
-		public netTiers.Petshop.Entities.Product GetById(System.String id, int start, int pageLength, out int count)
+		public netTiers.Petshop.Entities.Product GetById(System.Guid id, int start, int pageLength, out int count)
 		{
 			return GetById(null, id, start, pageLength, out count);
 		}
@@ -240,7 +240,7 @@ namespace netTiers.Petshop.Data.Bases
 		/// <param name="pageLength">Number of rows to return.</param>
 		/// <param name="count">The total number of records.</param>
 		/// <returns>Returns an instance of the <see cref="netTiers.Petshop.Entities.Product"/> class.</returns>
-		public abstract netTiers.Petshop.Entities.Product GetById(TransactionManager transactionManager, System.String id, int start, int pageLength, out int count);
+		public abstract netTiers.Petshop.Entities.Product GetById(TransactionManager transactionManager, System.Guid id, int start, int pageLength, out int count);
 						
 		#endregion "Get By Index Functions"
 	
@@ -279,7 +279,7 @@ namespace netTiers.Petshop.Data.Bases
 				if (DataRepository.Provider.UseEntityFactory)
 				{
 					key = @"Product" 
-							+ (reader.IsDBNull(reader.GetOrdinal("Id"))?string.Empty:(System.String)reader["Id"]).ToString();
+							+ (reader.IsDBNull(reader.GetOrdinal("Id"))?Guid.Empty:(System.Guid)reader["Id"]).ToString();
 
 					c = EntityManager.LocateOrCreate<Product>(
 						key.ToString(), // EntityTrackingKey 
@@ -295,11 +295,11 @@ namespace netTiers.Petshop.Data.Bases
 				if (!DataRepository.Provider.EnableEntityTracking || c.EntityState == EntityState.Added)
                 {
 					c.SuppressEntityEvents = true;
-					c.Id = (System.String)reader["Id"];
-					c.OriginalId = c.Id; //(reader.IsDBNull(reader.GetOrdinal("Id")))?string.Empty:(System.String)reader["Id"];
+					c.Id = (System.Guid)reader["Id"];
+					c.OriginalId = c.Id; //(reader.IsDBNull(reader.GetOrdinal("Id")))?Guid.Empty:(System.Guid)reader["Id"];
 					c.Name = (System.String)reader["Name"];
 					c.Description = (reader.IsDBNull(reader.GetOrdinal("Description")))?null:(System.String)reader["Description"];
-					c.CategoryId = (System.String)reader["CategoryId"];
+					c.CategoryId = (System.Guid)reader["CategoryId"];
 					c.Timestamp = (System.Byte[])reader["Timestamp"];
 					c.EntityTrackingKey = key;
 					c.AcceptChanges();
@@ -319,11 +319,11 @@ namespace netTiers.Petshop.Data.Bases
 		{
 			if (!reader.Read()) return;
 			
-			entity.Id = (System.String)reader["Id"];
-			entity.OriginalId = (System.String)reader["Id"];
+			entity.Id = (System.Guid)reader["Id"];
+			entity.OriginalId = (System.Guid)reader["Id"];
 			entity.Name = (System.String)reader["Name"];
 			entity.Description = (reader.IsDBNull(reader.GetOrdinal("Description")))?null:(System.String)reader["Description"];
-			entity.CategoryId = (System.String)reader["CategoryId"];
+			entity.CategoryId = (System.Guid)reader["CategoryId"];
 			entity.Timestamp = (System.Byte[])reader["Timestamp"];
 			entity.AcceptChanges();
 		}
@@ -337,18 +337,17 @@ namespace netTiers.Petshop.Data.Bases
 		{
 			DataRow dataRow = dataSet.Tables[0].Rows[0];
 			
-			entity.Id = (System.String)dataRow["Id"];
-			entity.OriginalId = (System.String)dataRow["Id"];
+			entity.Id = (System.Guid)dataRow["Id"];
+			entity.OriginalId = (System.Guid)dataRow["Id"];
 			entity.Name = (System.String)dataRow["Name"];
 			entity.Description = (Convert.IsDBNull(dataRow["Description"]))?null:(System.String)dataRow["Description"];
-			entity.CategoryId = (System.String)dataRow["CategoryId"];
+			entity.CategoryId = (System.Guid)dataRow["CategoryId"];
 			entity.Timestamp = (System.Byte[])dataRow["Timestamp"];
 			entity.AcceptChanges();
 		}
 		#endregion 
 		
 		#region DeepLoad
-		
 		/// <summary>
 		/// Deep Loads the <see cref="IEntity"/> object with criteria based of the child 
 		/// property collections only N Levels Deep based on the <see cref="DeepLoadType"/>.
@@ -361,73 +360,49 @@ namespace netTiers.Petshop.Data.Bases
 		/// <param name="deep">Boolean. A flag that indicates whether to recursively save all Property Collection that are descendants of this instance. If True, saves the complete object graph below this object. If False, saves this object only. </param>
 		/// <param name="deepLoadType">DeepLoadType Enumeration to Include/Exclude object property collections from Load.</param>
 		/// <param name="childTypes">netTiers.Petshop.Entities.Product Property Collection Type Array To Include or Exclude from Load</param>
-		/// <param name="innerList">A Hashtable of child types for easy access.</param>
+		/// <param name="innerList">A collection of child types for easy access.</param>
 	    /// <exception cref="ArgumentNullException">entity or childTypes is null.</exception>
 	    /// <exception cref="ArgumentException">deepLoadType has invalid value.</exception>
-		protected override void DeepLoad(TransactionManager transactionManager, netTiers.Petshop.Entities.Product entity, bool deep, DeepLoadType deepLoadType, System.Type[] childTypes, Hashtable innerList)
+		internal override void DeepLoad(TransactionManager transactionManager, netTiers.Petshop.Entities.Product entity, bool deep, DeepLoadType deepLoadType, System.Type[] childTypes, ChildEntityTypesList innerList)
 		{
-			
-			#region Composite Source Children
-			//Fill Source Composite Properties, however, don't call deep load on them.  
-			//So they only get filled a single level deep.
-			
-			#region CategoryIdSource
-			if ((deepLoadType == DeepLoadType.IncludeChildren && innerList["Category"] != null)
-				|| (deepLoadType == DeepLoadType.ExcludeChildren && innerList["Category"] == null))
+			if(entity == null)
+				return;
+
+			#region CategoryIdSource	
+			if (CanDeepLoad(entity, "Category", "CategoryIdSource", deepLoadType, innerList) 
+				&& entity.CategoryIdSource == null)
 			{
-				if (entity.CategoryIdSource == null)
+				object[] pkItems = new object[1];
+				pkItems[0] = entity.CategoryId;
+				Category tmpEntity = EntityManager.LocateEntity<Category>(EntityLocator.ConstructKeyFromPkItems(typeof(Category), pkItems), DataRepository.Provider.EnableEntityTracking);
+				if (tmpEntity != null)
+					entity.CategoryIdSource = tmpEntity;
+				else
+					entity.CategoryIdSource = DataRepository.CategoryProvider.GetById(entity.CategoryId);
+			
+				if (deep && entity.CategoryIdSource != null)
 				{
-					object[] pkItems = new object[1];
-					pkItems[0] = entity.CategoryId;
-					Category tmpEntity = EntityManager.LocateEntity<Category>(EntityLocator.ConstructKeyFromPkItems(typeof(Category), pkItems), DataRepository.Provider.EnableEntityTracking);
-					if (tmpEntity != null)
-						entity.CategoryIdSource = tmpEntity;
-					else
-						entity.CategoryIdSource = DataRepository.CategoryProvider.GetById(entity.CategoryId);
+					DataRepository.CategoryProvider.DeepLoad(transactionManager, entity.CategoryIdSource, deep, deepLoadType, childTypes, innerList);
 				}
-				if (deepLoadType == DeepLoadType.IncludeChildren)
-					innerList.Remove("Category");
-				else 
-					innerList.Add("Category", typeof(Category));
 			}
 			#endregion CategoryIdSource
-			#endregion
-			
-			ArrayList alreadySetCollections = new ArrayList();
 			
 			// Load Entity through Provider
 			// Deep load child collections  - Call GetById methods when available
 			
 			#region ItemCollection
 			//Relationship Type One : Many
-			if ((deepLoadType == DeepLoadType.IncludeChildren && innerList["List<Item>"] != null)
-				|| (deepLoadType == DeepLoadType.ExcludeChildren && innerList["List<Item>"] == null))
+			if (CanDeepLoad(entity, "List<Item>", "ItemCollection", deepLoadType, innerList)) 
 			{
 				#if NETTIERS_DEBUG
 				Debug.WriteLine("- property 'ItemCollection' loaded.");
 				#endif 
 
-				if (alreadySetCollections.IndexOf("ItemCollection") > -1)
-				{
-					DataRepository.ItemProvider.GetByProductId(transactionManager, entity.Id).CopyTo(entity.ItemCollection);
-				} 
-				else 
-				{
-					entity.ItemCollection = DataRepository.ItemProvider.GetByProductId(transactionManager, entity.Id);			 
-					alreadySetCollections.Add("ItemCollection");
-				}
+				entity.ItemCollection = DataRepository.ItemProvider.GetByProductId(transactionManager, entity.Id);
 
-				//Filled, don't need to fill anymore, prevents circular references
-				if (deepLoadType == DeepLoadType.IncludeChildren)
-					innerList.Remove("List<Item>");
-				else 
-					innerList.Add("List<Item>", typeof(TList<Item>));
-				
-				Type[] updatedChildTypes = (Type[]) new ArrayList(innerList.Values).ToArray(typeof(Type));
-				
-				if (deep)
+				if (deep && entity.ItemCollection.Count > 0)
 				{
-					DataRepository.ItemProvider.DeepLoad(transactionManager, entity.ItemCollection, deep, deepLoadType, updatedChildTypes);
+					DataRepository.ItemProvider.DeepLoad(transactionManager, entity.ItemCollection, deep, deepLoadType, childTypes, innerList);
 				}
 			}		
 			#endregion 
@@ -446,8 +421,11 @@ namespace netTiers.Petshop.Data.Bases
 		/// <param name="deepSaveType">DeepSaveType Enumeration to Include/Exclude object property collections from Save.</param>
 		/// <param name="childTypes">netTiers.Petshop.Entities.Product Property Collection Type Array To Include or Exclude from Save</param>
 		/// <param name="innerList">A Hashtable of child types for easy access.</param>
-		protected override void DeepSave(TransactionManager transactionManager, netTiers.Petshop.Entities.Product entity, DeepSaveType deepSaveType, System.Type[] childTypes, Hashtable innerList)
+		internal override void DeepSave(TransactionManager transactionManager, netTiers.Petshop.Entities.Product entity, DeepSaveType deepSaveType, System.Type[] childTypes, Hashtable innerList)
 		{	
+			if (entity == null)
+				return;
+				
 			// Save Root Entity through Provider
 			this.Save(transactionManager, entity);
 			
@@ -460,10 +438,7 @@ namespace netTiers.Petshop.Data.Bases
 				|| (deepSaveType == DeepSaveType.ExcludeChildren && innerList[" Category"] == null))
 			{
 				if (entity.CategoryIdSource != null )
-				{
-					//if (!entity.CategoryIdSource.IsValid)
-						//throw new netTiers.Petshop.Entities.EntityNotValidException(entity, "DeepSave");
-					
+				{			
 					DataRepository.CategoryProvider.Save(transactionManager, entity.CategoryIdSource);
 				}
 			}
@@ -474,19 +449,44 @@ namespace netTiers.Petshop.Data.Bases
 			#region List<Item>
 			if ((deepSaveType == DeepSaveType.IncludeChildren && innerList["List<Item>"] != null)
 				|| (deepSaveType == DeepSaveType.ExcludeChildren && innerList["List<Item>"] == null))
-		{
+			{
 			// update each child parent id with the real parent id (mostly used on insert)
 			foreach(Item child in entity.ItemCollection)
 			{
 					child.ProductId = entity.Id;			}
 			
-			DataRepository.ItemProvider.DeepSave(transactionManager, entity.ItemCollection, deepSaveType, childTypes);
-		} 
+			if (entity.ItemCollection.Count > 0)
+				DataRepository.ItemProvider.DeepSave(transactionManager, entity.ItemCollection, deepSaveType, childTypes);
+			} 
 			#endregion 
 		}
 		#endregion
 	} // end class
-
+	
+	#region ProductChildEntityTypes
+	
+	///<summary>
+	/// Enumeration used to expose the different child entity types 
+	/// for child properties in <c>netTiers.Petshop.Entities.Product</c>
+	///</summary>
+	public enum ProductChildEntityTypes
+	{
+		
+		///<summary>
+		/// Composite Property for <c>Category</c> at CategoryIdSource
+		///</summary>
+		[ChildEntityType(typeof(Category))]
+		Category,
+	
+		///<summary>
+		/// Collection of <c>Product</c> as OneToMany for ItemCollection
+		///</summary>
+		[ChildEntityType(typeof(TList<Item>))]
+		ItemCollection,
+	}
+	
+	#endregion ProductChildEntityTypes
+	
 	#region ProductFilterBuilder
 	
 	/// <summary>

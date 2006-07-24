@@ -68,15 +68,15 @@ namespace netTiers.Petshop.Data.Bases
 					DataRow row = (DataRow)dataRows.Current;
 				
 					ExtendedItem c = new ExtendedItem();
-					c.ItemId = (Convert.IsDBNull(row["ItemId"]))?string.Empty:(System.String)row["ItemId"];
+					c.ItemId = (Convert.IsDBNull(row["ItemId"]))?Guid.Empty:(System.Guid)row["ItemId"];
 					c.ItemName = (Convert.IsDBNull(row["ItemName"]))?string.Empty:(System.String)row["ItemName"];
 					c.ItemDescription = (Convert.IsDBNull(row["ItemDescription"]))?string.Empty:(System.String)row["ItemDescription"];
 					c.ItemPrice = (Convert.IsDBNull(row["ItemPrice"]))?0.0f:(System.Double?)row["ItemPrice"];
 					c.ItemPhoto = (Convert.IsDBNull(row["ItemPhoto"]))?string.Empty:(System.String)row["ItemPhoto"];
-					c.ProductId = (Convert.IsDBNull(row["ProductId"]))?string.Empty:(System.String)row["ProductId"];
+					c.ProductId = (Convert.IsDBNull(row["ProductId"]))?Guid.Empty:(System.Guid)row["ProductId"];
 					c.ProductName = (Convert.IsDBNull(row["ProductName"]))?string.Empty:(System.String)row["ProductName"];
 					c.ProductDescription = (Convert.IsDBNull(row["ProductDescription"]))?string.Empty:(System.String)row["ProductDescription"];
-					c.CategoryId = (Convert.IsDBNull(row["CategoryId"]))?string.Empty:(System.String)row["CategoryId"];
+					c.CategoryId = (Convert.IsDBNull(row["CategoryId"]))?Guid.Empty:(System.Guid)row["CategoryId"];
 					c.CategoryName = (Convert.IsDBNull(row["CategoryName"]))?string.Empty:(System.String)row["CategoryName"];
 					c.AcceptChanges();
 					rows.Add(c);
@@ -104,8 +104,8 @@ namespace netTiers.Petshop.Data.Bases
 				if(recordnum >= start)
 				{
 					ExtendedItem entity = new ExtendedItem();
-					entity.ItemId = (System.String)reader["ItemId"];
-					//entity.ItemId = (Convert.IsDBNull(reader["ItemId"]))?string.Empty:(System.String)reader["ItemId"];
+					entity.ItemId = (System.Guid)reader["ItemId"];
+					//entity.ItemId = (Convert.IsDBNull(reader["ItemId"]))?Guid.Empty:(System.Guid)reader["ItemId"];
 					entity.ItemName = (System.String)reader["ItemName"];
 					//entity.ItemName = (Convert.IsDBNull(reader["ItemName"]))?string.Empty:(System.String)reader["ItemName"];
 					entity.ItemDescription = (reader.IsDBNull(reader.GetOrdinal("ItemDescription")))?null:(System.String)reader["ItemDescription"];
@@ -114,14 +114,14 @@ namespace netTiers.Petshop.Data.Bases
 					//entity.ItemPrice = (Convert.IsDBNull(reader["ItemPrice"]))?0.0f:(System.Double?)reader["ItemPrice"];
 					entity.ItemPhoto = (reader.IsDBNull(reader.GetOrdinal("ItemPhoto")))?null:(System.String)reader["ItemPhoto"];
 					//entity.ItemPhoto = (Convert.IsDBNull(reader["ItemPhoto"]))?string.Empty:(System.String)reader["ItemPhoto"];
-					entity.ProductId = (System.String)reader["ProductId"];
-					//entity.ProductId = (Convert.IsDBNull(reader["ProductId"]))?string.Empty:(System.String)reader["ProductId"];
+					entity.ProductId = (System.Guid)reader["ProductId"];
+					//entity.ProductId = (Convert.IsDBNull(reader["ProductId"]))?Guid.Empty:(System.Guid)reader["ProductId"];
 					entity.ProductName = (System.String)reader["ProductName"];
 					//entity.ProductName = (Convert.IsDBNull(reader["ProductName"]))?string.Empty:(System.String)reader["ProductName"];
 					entity.ProductDescription = (reader.IsDBNull(reader.GetOrdinal("ProductDescription")))?null:(System.String)reader["ProductDescription"];
 					//entity.ProductDescription = (Convert.IsDBNull(reader["ProductDescription"]))?string.Empty:(System.String)reader["ProductDescription"];
-					entity.CategoryId = (System.String)reader["CategoryId"];
-					//entity.CategoryId = (Convert.IsDBNull(reader["CategoryId"]))?string.Empty:(System.String)reader["CategoryId"];
+					entity.CategoryId = (System.Guid)reader["CategoryId"];
+					//entity.CategoryId = (Convert.IsDBNull(reader["CategoryId"]))?Guid.Empty:(System.Guid)reader["CategoryId"];
 					entity.CategoryName = (System.String)reader["CategoryName"];
 					//entity.CategoryName = (Convert.IsDBNull(reader["CategoryName"]))?string.Empty:(System.String)reader["CategoryName"];
 					entity.AcceptChanges();
@@ -142,8 +142,8 @@ namespace netTiers.Petshop.Data.Bases
 		protected void RefreshEntity(IDataReader reader, ExtendedItem entity)
 		{
 			reader.Read();
-			entity.ItemId = (System.String)reader["ItemId"];
-			//entity.ItemId = (Convert.IsDBNull(reader["ItemId"]))?string.Empty:(System.String)reader["ItemId"];
+			entity.ItemId = (System.Guid)reader["ItemId"];
+			//entity.ItemId = (Convert.IsDBNull(reader["ItemId"]))?Guid.Empty:(System.Guid)reader["ItemId"];
 			entity.ItemName = (System.String)reader["ItemName"];
 			//entity.ItemName = (Convert.IsDBNull(reader["ItemName"]))?string.Empty:(System.String)reader["ItemName"];
 			entity.ItemDescription = (reader.IsDBNull(reader.GetOrdinal("ItemDescription")))?null:(System.String)reader["ItemDescription"];
@@ -152,14 +152,14 @@ namespace netTiers.Petshop.Data.Bases
 			//entity.ItemPrice = (Convert.IsDBNull(reader["ItemPrice"]))?0.0f:(System.Double?)reader["ItemPrice"];
 			entity.ItemPhoto = (reader.IsDBNull(reader.GetOrdinal("ItemPhoto")))?null:(System.String)reader["ItemPhoto"];
 			//entity.ItemPhoto = (Convert.IsDBNull(reader["ItemPhoto"]))?string.Empty:(System.String)reader["ItemPhoto"];
-			entity.ProductId = (System.String)reader["ProductId"];
-			//entity.ProductId = (Convert.IsDBNull(reader["ProductId"]))?string.Empty:(System.String)reader["ProductId"];
+			entity.ProductId = (System.Guid)reader["ProductId"];
+			//entity.ProductId = (Convert.IsDBNull(reader["ProductId"]))?Guid.Empty:(System.Guid)reader["ProductId"];
 			entity.ProductName = (System.String)reader["ProductName"];
 			//entity.ProductName = (Convert.IsDBNull(reader["ProductName"]))?string.Empty:(System.String)reader["ProductName"];
 			entity.ProductDescription = (reader.IsDBNull(reader.GetOrdinal("ProductDescription")))?null:(System.String)reader["ProductDescription"];
 			//entity.ProductDescription = (Convert.IsDBNull(reader["ProductDescription"]))?string.Empty:(System.String)reader["ProductDescription"];
-			entity.CategoryId = (System.String)reader["CategoryId"];
-			//entity.CategoryId = (Convert.IsDBNull(reader["CategoryId"]))?string.Empty:(System.String)reader["CategoryId"];
+			entity.CategoryId = (System.Guid)reader["CategoryId"];
+			//entity.CategoryId = (Convert.IsDBNull(reader["CategoryId"]))?Guid.Empty:(System.Guid)reader["CategoryId"];
 			entity.CategoryName = (System.String)reader["CategoryName"];
 			//entity.CategoryName = (Convert.IsDBNull(reader["CategoryName"]))?string.Empty:(System.String)reader["CategoryName"];
 			reader.Close();
@@ -177,15 +177,15 @@ namespace netTiers.Petshop.Data.Bases
 		{
 			DataRow dataRow = dataSet.Tables[0].Rows[0];
 			
-			entity.ItemId = (Convert.IsDBNull(dataRow["ItemId"]))?string.Empty:(System.String)dataRow["ItemId"];
+			entity.ItemId = (Convert.IsDBNull(dataRow["ItemId"]))?Guid.Empty:(System.Guid)dataRow["ItemId"];
 			entity.ItemName = (Convert.IsDBNull(dataRow["ItemName"]))?string.Empty:(System.String)dataRow["ItemName"];
 			entity.ItemDescription = (Convert.IsDBNull(dataRow["ItemDescription"]))?string.Empty:(System.String)dataRow["ItemDescription"];
 			entity.ItemPrice = (Convert.IsDBNull(dataRow["ItemPrice"]))?0.0f:(System.Double?)dataRow["ItemPrice"];
 			entity.ItemPhoto = (Convert.IsDBNull(dataRow["ItemPhoto"]))?string.Empty:(System.String)dataRow["ItemPhoto"];
-			entity.ProductId = (Convert.IsDBNull(dataRow["ProductId"]))?string.Empty:(System.String)dataRow["ProductId"];
+			entity.ProductId = (Convert.IsDBNull(dataRow["ProductId"]))?Guid.Empty:(System.Guid)dataRow["ProductId"];
 			entity.ProductName = (Convert.IsDBNull(dataRow["ProductName"]))?string.Empty:(System.String)dataRow["ProductName"];
 			entity.ProductDescription = (Convert.IsDBNull(dataRow["ProductDescription"]))?string.Empty:(System.String)dataRow["ProductDescription"];
-			entity.CategoryId = (Convert.IsDBNull(dataRow["CategoryId"]))?string.Empty:(System.String)dataRow["CategoryId"];
+			entity.CategoryId = (Convert.IsDBNull(dataRow["CategoryId"]))?Guid.Empty:(System.Guid)dataRow["CategoryId"];
 			entity.CategoryName = (Convert.IsDBNull(dataRow["CategoryName"]))?string.Empty:(System.String)dataRow["CategoryName"];
 			entity.AcceptChanges();
 		}

@@ -144,18 +144,18 @@ namespace netTiers.Petshop.Web.Data
 			Account item;
 			count = 0;
 			
-			System.String id;
+			System.Guid id;
 			System.String login;
 			System.String lastName;
-			System.String creditCardId;
-			System.String favoriteCategoryId;
+			System.Guid? favoriteCategoryId;
+			System.Guid? creditCardId;
 
 			switch ( SelectMethod )
 			{
 				case AccountSelectMethod.Get:
-					AccountKey key = new AccountKey();
-					key.Load(values);
-					item = AccountProvider.Get(key);
+					AccountKey entityKey  = new AccountKey();
+					entityKey.Load(values);
+					item = AccountProvider.Get(entityKey);
 					results = new TList<Account>();
 					if ( item != null ) results.Add(item);
 					count = results.Count;
@@ -171,7 +171,7 @@ namespace netTiers.Petshop.Web.Data
                     break;
 				// PK
 				case AccountSelectMethod.GetById:
-					id = ( values["Id"] != null ) ? (System.String) EntityUtil.ChangeType(values["Id"], typeof(System.String)) : string.Empty;
+					id = ( values["Id"] != null ) ? (System.Guid) EntityUtil.ChangeType(values["Id"], typeof(System.Guid)) : Guid.Empty;
 					item = AccountProvider.GetById(id);
 					results = new TList<Account>();
 					if ( item != null ) results.Add(item);
@@ -190,13 +190,13 @@ namespace netTiers.Petshop.Web.Data
 					results = AccountProvider.GetByLastName(lastName, this.StartIndex, this.PageSize, out count);
 					break;
 				// FK
-				case AccountSelectMethod.GetByCreditCardId:
-					creditCardId = (System.String) EntityUtil.ChangeType(values["CreditCardId"], typeof(System.String));
-					results = AccountProvider.GetByCreditCardId(creditCardId, this.StartIndex, this.PageSize, out count);
-					break;
 				case AccountSelectMethod.GetByFavoriteCategoryId:
-					favoriteCategoryId = (System.String) EntityUtil.ChangeType(values["FavoriteCategoryId"], typeof(System.String));
+					favoriteCategoryId = (System.Guid?) EntityUtil.ChangeType(values["FavoriteCategoryId"], typeof(System.Guid?));
 					results = AccountProvider.GetByFavoriteCategoryId(favoriteCategoryId, this.StartIndex, this.PageSize, out count);
+					break;
+				case AccountSelectMethod.GetByCreditCardId:
+					creditCardId = (System.Guid?) EntityUtil.ChangeType(values["CreditCardId"], typeof(System.Guid?));
+					results = AccountProvider.GetByCreditCardId(creditCardId, this.StartIndex, this.PageSize, out count);
 					break;
 				// M:M
 				default:
@@ -217,6 +217,19 @@ namespace netTiers.Petshop.Web.Data
 				EntityId = GetEntityKey(values);
 			}
 		}
+
+		/// <summary>
+		/// Sets the primary key values of the specified Entity object.
+		/// </summary>
+		/// <param name="entity">The Entity object to update.</param>
+		protected override void SetEntityKeyValues(Account entity)
+		{
+			base.SetEntityKeyValues(entity);
+			
+			// make sure primary key column(s) have been set
+			if ( entity.Id == Guid.Empty )
+				entity.Id = Guid.NewGuid();
+		}
 		
 		/// <summary>
 		/// Performs a DeepLoad operation for the current entity if it has
@@ -226,8 +239,16 @@ namespace netTiers.Petshop.Web.Data
 		{
 			if ( !IsDeepLoaded )
 			{
-				IsDeepLoaded = true;
-				AccountProvider.DeepLoad(GetCurrentEntity());
+				Account entity = GetCurrentEntity();
+				
+				if ( entity != null )
+				{
+					// init transaction manager
+					GetTransactionManager();
+					// execute deep load method
+					AccountProvider.DeepLoad(GetCurrentEntity(), EnableRecursiveDeepLoad);
+					IsDeepLoaded = true;
+				}
 			}
 		}
 
@@ -353,13 +374,13 @@ namespace netTiers.Petshop.Web.Data
 		/// </summary>
 		GetByLastName,
 		/// <summary>
-		/// Represents the GetByCreditCardId method.
-		/// </summary>
-		GetByCreditCardId,
-		/// <summary>
 		/// Represents the GetByFavoriteCategoryId method.
 		/// </summary>
-		GetByFavoriteCategoryId
+		GetByFavoriteCategoryId,
+		/// <summary>
+		/// Represents the GetByCreditCardId method.
+		/// </summary>
+		GetByCreditCardId
 	}
 	
 	#endregion AccountSelectMethod

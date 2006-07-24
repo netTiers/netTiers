@@ -89,16 +89,6 @@ namespace netTiers.Petshop.Entities
 		/// <value>A string array that holds the columns names.</value>
 		string[] TableColumns {get;}
 		
-		/// <summary>
-		/// 
-		/// </summary>
-		System.String Id{ get; }
-
-		/// <summary>
-		/// 
-		/// </summary>
-		System.Byte[] Timestamp{ get; }
-
 		
 		/// <summary>
 		///     Gets or sets the object that contains supplemental data about this object.

@@ -2,6 +2,7 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Collections.Specialized;
 using System.Diagnostics;
 using System.Text;
 using netTiers.Petshop.Entities;
@@ -587,6 +588,8 @@ namespace netTiers.Petshop.Data.Bases
 		#endregion
 
 		#region DeepLoad Methods
+		
+		#region DeepLoad Entity
 
 		/// <summary>
 		/// Deep Load the Entity object with all of the child property collections only 1 level deep.
@@ -678,16 +681,16 @@ namespace netTiers.Petshop.Data.Bases
 				return;
 			}
 
-			//Create a HashTable list of types for easy access
-			Hashtable innerList = new Hashtable(childTypes.Length);
+			// create a collection of types for easy access
+			ChildEntityTypesList innerList = new ChildEntityTypesList();
 			for(int i=0; i < childTypes.Length; i++)
 			{
 				if (childTypes[i] == null) continue;
 				
 				if (!childTypes[i].IsGenericType)
-					innerList.Add(childTypes[i].Name, childTypes[i]);
+					innerList.Add(childTypes[i].Name);
 				else 
-					innerList.Add(string.Format("List<{0}>" , childTypes[i].GetGenericArguments()[0].Name), childTypes[i]);
+					innerList.Add(string.Format("List<{0}>" , childTypes[i].GetGenericArguments()[0].Name));
 			}
 			
 			#if NETTIERS_DEBUG
@@ -718,8 +721,57 @@ namespace netTiers.Petshop.Data.Bases
 		/// <param name="deep">A flag that indicates whether to recursively load all Property Collections that are descendants of this instance. If True, loads the complete object graph below this object. If False, loads this object only.</param>
 		/// <param name="deepLoadType">DeepLoadType Enumeration to Include/Exclude object property collections from Load.</param>
 		/// <param name="childTypes">Entity Property Collection Type Array To Include or Exclude from Load.</param>
-		/// <param name="innerList">A Hashtable of child types for easy access.</param>
-		protected abstract void DeepLoad(TransactionManager mgr, Entity entity, bool deep, DeepLoadType deepLoadType, Type[] childTypes, Hashtable innerList);
+		/// <param name="innerList">A collection of child types for easy access.</param>
+		internal abstract void DeepLoad(TransactionManager mgr, Entity entity, bool deep, DeepLoadType deepLoadType, System.Type[] childTypes, ChildEntityTypesList innerList);
+
+		#endregion DeepLoad Entity
+
+		#region DeepLoad Entity Collection
+
+		/// <summary>
+		/// Deep Load the entire Entity object with criteria based on the child types array and the DeepLoadType.
+		/// </summary>
+		/// <remarks>
+		/// This method should be implemented by sub-classes to provide specific deep load functionality.
+		/// </remarks>
+		/// <param name="mgr">A <see cref="TransactionManager"/> object.</param>
+		/// <param name="entities">The Entity List object to load.</param>
+		/// <param name="deep">A flag that indicates whether to recursively load all Property Collections that are descendants of this instance. If True, loads the complete object graph below this object. If False, loads this object only.</param>
+		/// <param name="deepLoadType">DeepLoadType Enumeration to Include/Exclude object property collections from Load.</param>
+		/// <param name="childTypes">Entity Property Collection Type Array To Include or Exclude from Load.</param>
+		/// <param name="innerList">A collection of child types for easy access.</param>
+		internal void DeepLoad(TransactionManager mgr, TList<Entity> entities, bool deep, DeepLoadType deepLoadType, System.Type[] childTypes, ChildEntityTypesList innerList)
+		{
+			#region Argument Validation
+			//Argument checks
+			if ( entities == null )
+			{
+				throw new ArgumentNullException("entities", "A valid non-null, TList<Entity> object is not present.");
+			}
+			if ( !Enum.IsDefined(typeof(DeepLoadType), deepLoadType) )
+			{
+				throw new ArgumentException("A valid DeepLoadType option is not present.", deepLoadType.ToString());
+			}
+			if ( childTypes == null )
+			{
+				throw new ArgumentNullException("childTypes", "A valid Type[] array is not present.");
+			}
+			#endregion
+
+			//In case an event can trigger the disabling of the deepload
+			if ( deepLoadType == DeepLoadType.Ignore )
+			{
+				return;
+			}
+
+			foreach ( Entity entity in entities )
+			{
+				DeepLoad(mgr, entity, deep, deepLoadType, childTypes, innerList);
+			}
+
+			return;
+		}
+
 
 		/// <summary>
 		/// Deep Load the Entity objects with all of the child property collections only 1 level deep.
@@ -819,10 +871,14 @@ namespace netTiers.Petshop.Data.Bases
 			return;
 		}
 
-		#endregion
+		#endregion DeepLoad Entity Collection
+
+		#endregion DeepLoad Methods
 
 		#region DeepSave Methods
 
+		#region DeepSave Entity
+		
 		/// <summary>
 		/// Deep Save the Entity object with all of the child property collections only 1 level deep.
 		/// </summary>
@@ -913,8 +969,12 @@ namespace netTiers.Petshop.Data.Bases
 		/// <param name="deepSaveType">DeepSaveType Enumeration to Include/Exclude object property collections from Save.</param>
 		/// <param name="childTypes">Entity Property Collection Type Array To Include or Exclude from Save.</param>
 		/// <param name="innerList">A Hashtable of child types for easy access.</param>
-		protected abstract void DeepSave(TransactionManager mgr, Entity entity, DeepSaveType deepSaveType, Type[] childTypes, Hashtable innerList);
+		internal abstract void DeepSave(TransactionManager mgr, Entity entity, DeepSaveType deepSaveType, Type[] childTypes, Hashtable innerList);
 
+		#endregion DeepSave Entity
+		
+		#region DeepSave Entity Collection
+		
 		/// <summary>
 		/// Deep Save the Entity objects with all of the child property collections only 1 level deep.
 		/// </summary>
@@ -1000,7 +1060,177 @@ namespace netTiers.Petshop.Data.Bases
 			entities.DeletedItems.Clear();
 			return deepSaveResult;
 		}
+		
+		#endregion DeepSave Entity Collection
 
-		#endregion
+		#endregion DeepSave Methods
+		
+		#region Helper Methods
+		
+		///<summary>
+		/// Enforces the rules set in order to load this property for a given type.
+		///</summary>
+		protected bool CanDeepLoad(Object entity, String key, String property, DeepLoadType deepLoadType, ChildEntityTypesList innerList) 
+        {
+			if ( innerList != null )
+			{
+				if ( deepLoadType == DeepLoadType.ExcludeChildren )
+				{
+					if ( !innerList.Contains(key) && !innerList.HasEntityProperty(entity, property) )
+					{
+						innerList.AddEntityProperty(entity, property);
+						return true;
+					}
+				}
+				else if ( deepLoadType == DeepLoadType.IncludeChildren )
+				{
+					if ( innerList.Contains(key) && !innerList.HasEntityProperty(entity, property) )
+					{
+						innerList.AddEntityProperty(entity, property);
+						return true;
+					}
+				}
+			}
+
+			return false;
+        }
+		
+		///<summary>
+		/// Enforces the rules set in order to save this property for a given type.
+		///</summary>
+		protected bool CanDeepSave(Object entity, String key, String property, DeepSaveType deepSaveType, ChildEntityTypesList innerList) 
+        {
+			if ( innerList != null )
+			{
+				if ( deepSaveType == DeepSaveType.ExcludeChildren )
+				{
+					if ( !innerList.Contains(key) && !innerList.HasEntityProperty(entity, property) )
+					{
+						innerList.AddEntityProperty(entity, property);
+						return true;
+					}
+				}
+				else if ( deepSaveType == DeepSaveType.IncludeChildren )
+				{
+					if ( innerList.Contains(key) && !innerList.HasEntityProperty(entity, property) )
+					{
+						innerList.AddEntityProperty(entity, property);
+						return true;
+					}
+				}
+			}
+
+			return false;
+        }
+
+		#endregion Helper Methods
 	}
+	
+	#region ChildEntityTypesList
+	
+	/// <summary>
+	/// Represents a collection of child entity types.
+	/// </summary>
+	[Serializable]
+	[CLSCompliant(true)]
+	public class ChildEntityTypesList : StringCollection
+	{
+		/// <summary>
+		/// Initializes a new instance of the ChildEntityTypeList class.
+		/// </summary>
+		public ChildEntityTypesList()
+		{
+		}
+
+		private Dictionary<int, StringCollection> properties;
+		
+		/// <summary>
+		/// Gets a collection of child entity property names.
+		/// </summary>
+		public Dictionary<int, StringCollection> Properties
+		{
+			get
+			{
+				if ( properties == null )
+				{
+					properties = new Dictionary<int, StringCollection>();
+				}
+				
+				return properties;
+			}
+		}
+
+		/// <summary>
+		/// Gets a collection of property names for the specified entity.
+		/// </summary>
+		/// <param name="entity"></param>
+		/// <returns></returns>
+		public StringCollection GetEntityProperties(Object entity)
+		{
+			if ( entity == null ) return null;
+			int hashCode = entity.ToString().GetHashCode();
+
+			if ( !Properties.ContainsKey(hashCode) )
+			{
+				Properties[hashCode] = new StringCollection();
+			}
+
+			return Properties[hashCode];
+		}
+
+		/// <summary>
+		/// Gets a value indicating whether the specified entity property
+		/// has been added to the collection of properties.
+		/// </summary>
+		/// <param name="entity"></param>
+		/// <param name="property"></param>
+		/// <returns></returns>
+		public bool HasEntityProperty(Object entity, String property)
+		{
+			if ( entity == null ) return false;
+			return GetEntityProperties(entity).Contains(property);
+		}
+
+		/// <summary>
+		/// Adds the specified entity property to the collection of properties.
+		/// </summary>
+		/// <param name="entity"></param>
+		/// <param name="property"></param>
+		public void AddEntityProperty(Object entity, String property)
+		{
+			if ( entity == null ) return;
+			GetEntityProperties(entity).Add(property);
+		}
+	}
+	
+	#endregion ChildEntityTypesList
+
+	#region ChildEntityTypeAttribute
+	
+	///<summary>
+	/// Attribute used to decorate enumerations with underlying system type.
+	///</summary>
+	public class ChildEntityTypeAttribute : System.Attribute
+	{
+		///<summary>
+		/// Marks the underlying type of a child entity property.
+		/// </summary>
+		/// <param name="entityType">Type of the property to load.</param>
+		public ChildEntityTypeAttribute(Type entityType)
+		{
+			this.entityType = entityType;
+		}
+		
+		private readonly Type entityType;
+		
+		/// <summary>
+		/// The underlying type for the ChildEntityTypes enumerations.
+		/// </summary>
+		public Type EntityType
+		{
+			get	{ return entityType; }
+		}
+	}
+	
+	#endregion ChildEntityTypeAttribute
 }

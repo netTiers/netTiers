@@ -156,6 +156,149 @@ namespace netTiers.Petshop.Entities
          return result;
       }
 
+		#region Find All By
+
+        ///<summary>
+        /// Finds a collection of <see cref="IEntity" /> objects in the current list matching the search criteria.
+        ///</summary>
+        /// <param name="findAllByType"><see cref="FindAllByType" /> Type to easily search by</param>
+        /// <param name="column">Property of the object to search, given as a value of the 'Entity'Columns enum.</param>
+        /// <param name="value">Value to find.</param>
+        public virtual VList<T> FindAllBy(FindAllByType findAllByType, System.Enum column, object value)
+        {
+            return FindAllBy(findAllByType, column.ToString(), value, true);
+        }
+
+        ///<summary>
+        /// Finds a collection of <see cref="IEntity" /> objects in the current list matching the search criteria.
+        ///</summary>
+        /// <param name="findAllByType"><see cref="FindAllByType" /> Type to easily search by</param>
+        /// <param name="column">Property of the object to search, given as a value of the 'Entity'Columns enum.</param>
+        /// <param name="value">Value to find.</param>
+        /// <param name="ignoreCase">A Boolean indicating a case-sensitive or insensitive comparison (true indicates a case-insensitive comparison).  String properties only.</param>
+        public virtual VList<T> FindAllBy(FindAllByType findAllByType, System.Enum column, object value, bool ignoreCase)
+        {
+            return FindAllBy(findAllByType, column.ToString(), value, ignoreCase);
+        }
+
+        ///<summary>
+        /// Finds a collection of <see cref="IEntity" /> objects in the current list matching the search criteria.
+        ///</summary>
+        /// <param name="findAllByType"><see cref="FindAllByType" /> Type to easily search by</param>
+        /// <param name="propertyName">Property of the object to search.</param>
+        /// <param name="value">Value to find.</param>
+        public virtual VList<T> FindAllBy(FindAllByType findAllByType, string propertyName, object value)
+        {
+            return FindAllBy(findAllByType, propertyName, value, true);
+        }
+
+        ///<summary>
+        /// Finds a collection of <see cref="IEntity" /> objects in the current list matching the search criteria.
+        ///</summary>
+        /// <param name="findAllByType"><see cref="FindAllByType" /> Type to easily search by</param>
+        /// <param name="propertyName">Property of the object to search.</param>
+        /// <param name="value">Value to find.</param>
+        /// <param name="ignoreCase">A Boolean indicating a case-sensitive or insensitive comparison (true indicates a case-insensitive comparison).  String properties only.</param>
+        public virtual VList<T> FindAllBy(FindAllByType findAllByType, string propertyName, object value, bool ignoreCase)
+        {
+            PropertyDescriptorCollection props = base.PropertyCollection;
+            PropertyDescriptor searchBy = props.Find(propertyName, true);
+
+            VList<T> result = new VList<T>();
+
+            int index = 0;
+
+            while (index > -1)
+            {
+                index = this.FindAllBy(findAllByType, searchBy, value, index, ignoreCase);
+
+                if (index > -1)
+                {
+                    result.Add(this[index]);
+
+                    //Increment the index to start at the next item
+                    index++;
+                }
+            }
+
+            return result;
+        }
+		
+        /// <summary>
+        /// Searches for the index of the item that has the specified property descriptor with the specified value.
+        /// </summary>
+        /// <param name="findAllByType"><see cref="FindAllByType" /> Type to easily search by</param>
+        /// <param name="prop">The <see cref="PropertyDescriptor"> to search for.</see></param>
+        /// <param name="key">The value of <i>property</i> to match.</param>
+        /// <param name="start">The index in the list at which to start the search.</param>
+        /// <param name="ignoreCase">Indicator of whether to perform a case-sensitive or case insensitive search (string properties only).</param>
+        /// <returns>The zero-based index of the item that matches the property descriptor and contains the specified value. </returns>
+        protected virtual int FindAllBy(FindAllByType findAllByType, PropertyDescriptor prop, object key, int start, bool ignoreCase)
+        {
+            // Simple iteration:
+            for (int i = start; i < Count; i++)
+            {
+
+                T item = this[i];
+                object temp = prop.GetValue(item);
+                if ((key == null) && (temp == null))
+                {
+                    return i;
+                }
+                else if (temp is string)
+                {
+                    switch(findAllByType)
+                    {
+                        case FindAllByType.StartsWith:
+                            {
+                               if (temp.ToString().StartsWith(key.ToString(), ignoreCase == true ? StringComparison.CurrentCultureIgnoreCase : StringComparison.CurrentCulture))
+                                	return i;
+                                break;
+                            }
+                        case FindAllByType.EndsWith:
+                            {
+                                if (temp.ToString().EndsWith(key.ToString(), ignoreCase == true ? StringComparison.CurrentCultureIgnoreCase : StringComparison.CurrentCulture))
+                                	return i;
+                                break;
+                            }
+                        case FindAllByType.Contains:
+                            {
+                                if (temp.ToString().Contains(key.ToString()))
+                                	return i;
+                                break; 
+                            }
+                    }
+                }
+                else if (temp != null && temp.Equals(key))
+                {
+                    return i;
+                }
+            }
+            return -1; // Not found
+        }
+	    
+	    ///<summary>
+	    /// Used to by FindAllBy method to all for easy searching.
+	    /// </summary>
+	    [Serializable]
+	    public enum FindAllByType
+	    {
+	        /// <summary>
+	        /// Starts with Value in List
+	        /// </summary>
+	        StartsWith,
+	        
+	        /// <summary>
+	        /// Ends with Value in List
+	        /// </summary>
+	        EndsWith,
+	        
+	        /// <summary>
+	        /// Contains Value in List
+	        /// </summary>
+	        Contains
+	    }
+        #endregion Find All By
       #endregion Find
 
    }

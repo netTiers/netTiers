@@ -13,7 +13,7 @@ using System.Security.Permissions;
 [assembly: AssemblyTitle("netTiers.Petshop")]
 [assembly: AssemblyDescription("")]
 [assembly: AssemblyConfiguration("")]
-[assembly: AssemblyCompany("")]
+[assembly: AssemblyCompany("NetTiers")]
 [assembly: AssemblyProduct("")]
 [assembly: AssemblyCopyright("")]
 [assembly: AssemblyTrademark("")]
@@ -36,7 +36,7 @@ using System.Security.Permissions;
 // You can specify all the values or you can default the Revision and Build Numbers 
 // by using the '*' as shown below:
 
-[assembly: AssemblyVersion("1.0.11.0")]
+[assembly: AssemblyVersion("1.0.13.0")]
 
 //
 // In order to sign your assembly you must specify a key to use. Refer to the 

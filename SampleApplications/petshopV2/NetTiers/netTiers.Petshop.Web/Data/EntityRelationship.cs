@@ -1,14 +1,8 @@
-#region Imports...
+#region Using Directives
 using System;
-using System.Data;
 using System.Collections;
-using System.Configuration;
-using System.Web;
-using System.Web.Security;
 using System.Web.UI;
 using System.Web.UI.WebControls;
-using System.Web.UI.WebControls.WebParts;
-using System.Web.UI.HtmlControls;
 using netTiers.Petshop.Entities;
 #endregion
 
@@ -115,6 +109,7 @@ namespace netTiers.Petshop.Web.Data
 		{
 			if ( e.Index == PrimaryMember.EntityIndex )
 			{
+				PrimaryMember.CurrentEntity = e.Entity;
 				PrimaryMember.DeepLoad();
 				UpdateControl(e.Entity);
 			}
@@ -122,27 +117,38 @@ namespace netTiers.Petshop.Web.Data
 
 		private void OnAfterInserting(object sender, LinkedDataSourceEventArgs e)
 		{
-			if ( PrimaryMember.EnableDeepSave )
+			if ( e.Index == PrimaryMember.EntityIndex )
 			{
-				UpdateRelationships(e.Entity);
+				PrimaryMember.CurrentEntity = e.Entity;
+
+				if ( PrimaryMember.EnableDeepSave )
+				{
+					UpdateRelationships(e.Entity);
+				}
 			}
 		}
 
 		private void OnAfterInserted(object sender, LinkedDataSourceEventArgs e)
 		{
-			if ( !PrimaryMember.EnableDeepSave )
+			if ( e.Index == PrimaryMember.EntityIndex )
 			{
-				UpdateRelationships(e.Entity);
+				PrimaryMember.CurrentEntity = e.Entity;
+
+				if ( !PrimaryMember.EnableDeepSave )
+				{
+					UpdateRelationships(e.Entity);
+				}
+
+				InsertLinks();
+				InsertReferences();
 			}
-			
-			InsertLinks();
-			InsertReferences();
 		}
 
 		private void OnAfterUpdating(object sender, LinkedDataSourceEventArgs e)
 		{
 			if ( e.Index == PrimaryMember.EntityIndex )
 			{
+				PrimaryMember.CurrentEntity = e.Entity;
 				PrimaryMember.DeepLoad();
 				
 				if ( PrimaryMember.EnableDeepSave )
@@ -156,6 +162,8 @@ namespace netTiers.Petshop.Web.Data
 		{
 			if ( e.Index == PrimaryMember.EntityIndex )
 			{
+				PrimaryMember.CurrentEntity = e.Entity;
+
 				if ( !PrimaryMember.EnableDeepSave )
 				{
 					UpdateRelationships(e.Entity);
@@ -358,6 +366,7 @@ namespace netTiers.Petshop.Web.Data
 		/// <param name="member">The relationship member.</param>
 		private void Insert(EntityRelationshipMember member)
 		{
+			
 			if ( member != null && member.HasDataSource )
 			{
 				Object entityKeyValue = PrimaryMember.GetEntityId();

@@ -7,10 +7,23 @@ using System.Web.UI.WebControls;
 namespace netTiers.Petshop.Web.Data
 {
 	/// <summary>
+	/// Provides access to the collection of data provided by this control.
+	/// </summary>
+	public interface IListDataSource
+	{
+		/// <summary>
+		/// Gets a reference to the current list of entities.
+		/// </summary>
+		/// <returns>The current list of entities if present, otherwise
+		/// the data will be retreived by the Provider and cached for future use.</returns>
+		IEnumerable GetEntityList();
+	}
+
+	/// <summary>
 	/// Provides the functionality needed by the various relationship manager web controls.
 	/// </summary>
 	[CLSCompliant(true)]
-	public interface ILinkedDataSource
+	public interface ILinkedDataSource : IListDataSource
 	{
 		#region Properties
 
@@ -40,13 +53,6 @@ namespace netTiers.Petshop.Web.Data
 		/// <param name="entity">The Entity object to delete.</param>
 		/// <returns>The number of rows successfully deleted.</returns>
 		int Delete(Object entity);
-
-		/// <summary>
-		/// Gets a reference to the current list of entities.
-		/// </summary>
-		/// <returns>The current list of entities if present, otherwise
-		/// the data will be retreived by the Provider and cached for future use.</returns>
-		IEnumerable GetEntityList();
 
 		/// <summary>
 		/// Gets a specific entry from the cached list of entities

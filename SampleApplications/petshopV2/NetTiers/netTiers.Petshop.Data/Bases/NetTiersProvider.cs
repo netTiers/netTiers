@@ -197,9 +197,19 @@ namespace netTiers.Petshop.Data.Bases
 		public virtual CategoryProviderBase CategoryProvider{get {throw new NotImplementedException();}}
 		
 		///<summary>
+		/// Current CourierProviderBase instance.
+		///</summary>
+		public virtual CourierProviderBase CourierProvider{get {throw new NotImplementedException();}}
+		
+		///<summary>
 		/// Current CreditCardProviderBase instance.
 		///</summary>
 		public virtual CreditCardProviderBase CreditCardProvider{get {throw new NotImplementedException();}}
+		
+		///<summary>
+		/// Current InventoryProviderBase instance.
+		///</summary>
+		public virtual InventoryProviderBase InventoryProvider{get {throw new NotImplementedException();}}
 		
 		///<summary>
 		/// Current ItemProviderBase instance.
@@ -207,9 +217,34 @@ namespace netTiers.Petshop.Data.Bases
 		public virtual ItemProviderBase ItemProvider{get {throw new NotImplementedException();}}
 		
 		///<summary>
+		/// Current LineItemProviderBase instance.
+		///</summary>
+		public virtual LineItemProviderBase LineItemProvider{get {throw new NotImplementedException();}}
+		
+		///<summary>
+		/// Current OrdersProviderBase instance.
+		///</summary>
+		public virtual OrdersProviderBase OrdersProvider{get {throw new NotImplementedException();}}
+		
+		///<summary>
+		/// Current OrderStatusProviderBase instance.
+		///</summary>
+		public virtual OrderStatusProviderBase OrderStatusProvider{get {throw new NotImplementedException();}}
+		
+		///<summary>
+		/// Current OrderStatusTypeProviderBase instance.
+		///</summary>
+		public virtual OrderStatusTypeProviderBase OrderStatusTypeProvider{get {throw new NotImplementedException();}}
+		
+		///<summary>
 		/// Current ProductProviderBase instance.
 		///</summary>
 		public virtual ProductProviderBase ProductProvider{get {throw new NotImplementedException();}}
+		
+		///<summary>
+		/// Current SupplierProviderBase instance.
+		///</summary>
+		public virtual SupplierProviderBase SupplierProvider{get {throw new NotImplementedException();}}
 		
 		
 		///<summary>

@@ -144,15 +144,15 @@ namespace netTiers.Petshop.Web.Data
 			Product item;
 			count = 0;
 			
-			System.String id;
-			System.String categoryId;
+			System.Guid id;
+			System.Guid categoryId;
 
 			switch ( SelectMethod )
 			{
 				case ProductSelectMethod.Get:
-					ProductKey key = new ProductKey();
-					key.Load(values);
-					item = ProductProvider.Get(key);
+					ProductKey entityKey  = new ProductKey();
+					entityKey.Load(values);
+					item = ProductProvider.Get(entityKey);
 					results = new TList<Product>();
 					if ( item != null ) results.Add(item);
 					count = results.Count;
@@ -168,7 +168,7 @@ namespace netTiers.Petshop.Web.Data
                     break;
 				// PK
 				case ProductSelectMethod.GetById:
-					id = ( values["Id"] != null ) ? (System.String) EntityUtil.ChangeType(values["Id"], typeof(System.String)) : string.Empty;
+					id = ( values["Id"] != null ) ? (System.Guid) EntityUtil.ChangeType(values["Id"], typeof(System.Guid)) : Guid.Empty;
 					item = ProductProvider.GetById(id);
 					results = new TList<Product>();
 					if ( item != null ) results.Add(item);
@@ -177,7 +177,7 @@ namespace netTiers.Petshop.Web.Data
 				// IX
 				// FK
 				case ProductSelectMethod.GetByCategoryId:
-					categoryId = ( values["CategoryId"] != null ) ? (System.String) EntityUtil.ChangeType(values["CategoryId"], typeof(System.String)) : string.Empty;
+					categoryId = ( values["CategoryId"] != null ) ? (System.Guid) EntityUtil.ChangeType(values["CategoryId"], typeof(System.Guid)) : Guid.Empty;
 					results = ProductProvider.GetByCategoryId(categoryId, this.StartIndex, this.PageSize, out count);
 					break;
 				// M:M
@@ -199,6 +199,19 @@ namespace netTiers.Petshop.Web.Data
 				EntityId = GetEntityKey(values);
 			}
 		}
+
+		/// <summary>
+		/// Sets the primary key values of the specified Entity object.
+		/// </summary>
+		/// <param name="entity">The Entity object to update.</param>
+		protected override void SetEntityKeyValues(Product entity)
+		{
+			base.SetEntityKeyValues(entity);
+			
+			// make sure primary key column(s) have been set
+			if ( entity.Id == Guid.Empty )
+				entity.Id = Guid.NewGuid();
+		}
 		
 		/// <summary>
 		/// Performs a DeepLoad operation for the current entity if it has
@@ -208,8 +221,16 @@ namespace netTiers.Petshop.Web.Data
 		{
 			if ( !IsDeepLoaded )
 			{
-				IsDeepLoaded = true;
-				ProductProvider.DeepLoad(GetCurrentEntity());
+				Product entity = GetCurrentEntity();
+				
+				if ( entity != null )
+				{
+					// init transaction manager
+					GetTransactionManager();
+					// execute deep load method
+					ProductProvider.DeepLoad(GetCurrentEntity(), EnableRecursiveDeepLoad);
+					IsDeepLoaded = true;
+				}
 			}
 		}
 

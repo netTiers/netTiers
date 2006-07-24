@@ -1,4 +1,4 @@
-#region Imports...
+#region Using Directives
 using System;
 using System.Data;
 using System.Collections;
@@ -40,6 +40,7 @@ namespace netTiers.Petshop.Web.Data
 		private GridView _gridControl;
 		private Control _viewControl;
 		private Type _entityType;
+		private Object _currentEntity;
 		private bool _enableDeepLoad;
 		private bool _enableDeepSave;
 		#endregion
@@ -56,6 +57,15 @@ namespace netTiers.Petshop.Web.Data
 		#endregion
 
 		#region Properties
+
+		/// <summary>
+		/// Gets or sets the CurrentEntity property.
+		/// </summary>
+		public Object CurrentEntity
+		{
+			get { return _currentEntity; }
+			set { _currentEntity = value; }
+		}
 
 		/// <summary>
 		/// Gets or set the name of the class of the entity that is returned by the Provider.
@@ -99,7 +109,7 @@ namespace netTiers.Petshop.Web.Data
 		/// </summary>
 		public int EntityIndex
 		{
-			get { return (int) (ViewState["EntityIndex"] ?? 0); }
+			get { return Math.Max((int) (ViewState["EntityIndex"] ?? 0), 0); }
 			set { ViewState["EntityIndex"] = value; }
 		}
 
@@ -304,24 +314,17 @@ namespace netTiers.Petshop.Web.Data
 		/// <returns></returns>
 		public Object GetEntityId()
 		{
-			Object entity = GetEntity();
-			return EntityUtil.GetPropertyValue(entity, EntityKeyName);
+			return GetEntityId(CurrentEntity);
 		}
 
 		/// <summary>
-		/// Gets a reference to the current business object.
+		/// Gets the unique identifier value for the specified business object.
 		/// </summary>
+		/// <param name="entity"></param>
 		/// <returns></returns>
-		public Object GetEntity()
+		public Object GetEntityId(Object entity)
 		{
-			Object entity = null;
-
-			if ( HasDataSource )
-			{
-				entity = GetLinkedDataSource().GetCurrentEntity();
-			}
-
-			return entity;
+			return EntityUtil.GetPropertyValue(entity, EntityKeyName);
 		}
 
 		/// <summary>

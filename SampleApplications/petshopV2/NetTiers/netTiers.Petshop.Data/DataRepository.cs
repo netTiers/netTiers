@@ -405,6 +405,25 @@ namespace netTiers.Petshop.Data
 		
 		
 		
+		#region CourierProvider
+		
+		///<summary>
+		/// Gets the current instance of the Data Access Logic Component for the <see cref="Courier"/> business entity.
+		/// It exposes CRUD methods as well as selecting on index, foreign keys and custom stored procedures.
+		///</summary>
+		public /*new*/ static CourierProviderBase CourierProvider
+		{
+			get 
+			{
+				LoadProviders();
+				return _provider.CourierProvider;
+			}
+		}
+		
+		#endregion
+		
+		
+		
 		#region CreditCardProvider
 		
 		///<summary>
@@ -417,6 +436,25 @@ namespace netTiers.Petshop.Data
 			{
 				LoadProviders();
 				return _provider.CreditCardProvider;
+			}
+		}
+		
+		#endregion
+		
+		
+		
+		#region InventoryProvider
+		
+		///<summary>
+		/// Gets the current instance of the Data Access Logic Component for the <see cref="Inventory"/> business entity.
+		/// It exposes CRUD methods as well as selecting on index, foreign keys and custom stored procedures.
+		///</summary>
+		public /*new*/ static InventoryProviderBase InventoryProvider
+		{
+			get 
+			{
+				LoadProviders();
+				return _provider.InventoryProvider;
 			}
 		}
 		
@@ -443,6 +481,82 @@ namespace netTiers.Petshop.Data
 		
 		
 		
+		#region LineItemProvider
+		
+		///<summary>
+		/// Gets the current instance of the Data Access Logic Component for the <see cref="LineItem"/> business entity.
+		/// It exposes CRUD methods as well as selecting on index, foreign keys and custom stored procedures.
+		///</summary>
+		public /*new*/ static LineItemProviderBase LineItemProvider
+		{
+			get 
+			{
+				LoadProviders();
+				return _provider.LineItemProvider;
+			}
+		}
+		
+		#endregion
+		
+		
+		
+		#region OrdersProvider
+		
+		///<summary>
+		/// Gets the current instance of the Data Access Logic Component for the <see cref="Orders"/> business entity.
+		/// It exposes CRUD methods as well as selecting on index, foreign keys and custom stored procedures.
+		///</summary>
+		public /*new*/ static OrdersProviderBase OrdersProvider
+		{
+			get 
+			{
+				LoadProviders();
+				return _provider.OrdersProvider;
+			}
+		}
+		
+		#endregion
+		
+		
+		
+		#region OrderStatusProvider
+		
+		///<summary>
+		/// Gets the current instance of the Data Access Logic Component for the <see cref="OrderStatus"/> business entity.
+		/// It exposes CRUD methods as well as selecting on index, foreign keys and custom stored procedures.
+		///</summary>
+		public /*new*/ static OrderStatusProviderBase OrderStatusProvider
+		{
+			get 
+			{
+				LoadProviders();
+				return _provider.OrderStatusProvider;
+			}
+		}
+		
+		#endregion
+		
+		
+		
+		#region OrderStatusTypeProvider
+		
+		///<summary>
+		/// Gets the current instance of the Data Access Logic Component for the <see cref="OrderStatusType"/> business entity.
+		/// It exposes CRUD methods as well as selecting on index, foreign keys and custom stored procedures.
+		///</summary>
+		public /*new*/ static OrderStatusTypeProviderBase OrderStatusTypeProvider
+		{
+			get 
+			{
+				LoadProviders();
+				return _provider.OrderStatusTypeProvider;
+			}
+		}
+		
+		#endregion
+		
+		
+		
 		#region ProductProvider
 		
 		///<summary>
@@ -455,6 +569,25 @@ namespace netTiers.Petshop.Data
 			{
 				LoadProviders();
 				return _provider.ProductProvider;
+			}
+		}
+		
+		#endregion
+		
+		
+		
+		#region SupplierProvider
+		
+		///<summary>
+		/// Gets the current instance of the Data Access Logic Component for the <see cref="Supplier"/> business entity.
+		/// It exposes CRUD methods as well as selecting on index, foreign keys and custom stored procedures.
+		///</summary>
+		public /*new*/ static SupplierProviderBase SupplierProvider
+		{
+			get 
+			{
+				LoadProviders();
+				return _provider.SupplierProvider;
 			}
 		}
 		

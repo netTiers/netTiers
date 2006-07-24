@@ -144,14 +144,14 @@ namespace netTiers.Petshop.Web.Data
 			CreditCard item;
 			count = 0;
 			
-			System.String id;
+			System.Guid id;
 
 			switch ( SelectMethod )
 			{
 				case CreditCardSelectMethod.Get:
-					CreditCardKey key = new CreditCardKey();
-					key.Load(values);
-					item = CreditCardProvider.Get(key);
+					CreditCardKey entityKey  = new CreditCardKey();
+					entityKey.Load(values);
+					item = CreditCardProvider.Get(entityKey);
 					results = new TList<CreditCard>();
 					if ( item != null ) results.Add(item);
 					count = results.Count;
@@ -167,7 +167,7 @@ namespace netTiers.Petshop.Web.Data
                     break;
 				// PK
 				case CreditCardSelectMethod.GetById:
-					id = ( values["Id"] != null ) ? (System.String) EntityUtil.ChangeType(values["Id"], typeof(System.String)) : string.Empty;
+					id = ( values["Id"] != null ) ? (System.Guid) EntityUtil.ChangeType(values["Id"], typeof(System.Guid)) : Guid.Empty;
 					item = CreditCardProvider.GetById(id);
 					results = new TList<CreditCard>();
 					if ( item != null ) results.Add(item);
@@ -194,6 +194,19 @@ namespace netTiers.Petshop.Web.Data
 				EntityId = GetEntityKey(values);
 			}
 		}
+
+		/// <summary>
+		/// Sets the primary key values of the specified Entity object.
+		/// </summary>
+		/// <param name="entity">The Entity object to update.</param>
+		protected override void SetEntityKeyValues(CreditCard entity)
+		{
+			base.SetEntityKeyValues(entity);
+			
+			// make sure primary key column(s) have been set
+			if ( entity.Id == Guid.Empty )
+				entity.Id = Guid.NewGuid();
+		}
 		
 		/// <summary>
 		/// Performs a DeepLoad operation for the current entity if it has
@@ -203,8 +216,16 @@ namespace netTiers.Petshop.Web.Data
 		{
 			if ( !IsDeepLoaded )
 			{
-				IsDeepLoaded = true;
-				CreditCardProvider.DeepLoad(GetCurrentEntity());
+				CreditCard entity = GetCurrentEntity();
+				
+				if ( entity != null )
+				{
+					// init transaction manager
+					GetTransactionManager();
+					// execute deep load method
+					CreditCardProvider.DeepLoad(GetCurrentEntity(), EnableRecursiveDeepLoad);
+					IsDeepLoaded = true;
+				}
 			}
 		}
 

@@ -1,4 +1,4 @@
-#region Imports...
+#region Using Directives
 using System;
 using System.Data;
 using System.Collections.Generic;
@@ -1167,8 +1167,9 @@ namespace netTiers.Petshop.Web.UI
 			if ( control is CheckBox )
 			{
 				CheckBox chkBox = control as CheckBox;
-				String strValue = ( value != null ) ? value.ToString() : String.Empty;
-				chkBox.Checked = strValue.Equals(chkBox.Text);
+				//String strValue = ( value != null ) ? value.ToString() : String.Empty;
+				//chkBox.Checked = strValue.Equals(chkBox.Text);
+				chkBox.Checked = Convert.ToBoolean(value);
 			}
 			else
 			{

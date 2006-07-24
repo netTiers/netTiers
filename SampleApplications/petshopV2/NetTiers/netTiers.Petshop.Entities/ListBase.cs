@@ -444,15 +444,12 @@ namespace netTiers.Petshop.Entities
          // Clear the filterd items
          this.excludedItems.Clear();
 
-
-         IList iList = (IList)this;
-
          for (int i = this.Items.Count - 1; i >= 0; i--)
          {
             if (!match(this.Items[i]))
             {
                this.excludedItems.Add(this.Items[i]);
-               iList.RemoveAt(i); // we do this on IList so we're not firing events					
+               base.RemoveAt(i);
             }
          }
 
@@ -586,7 +583,19 @@ namespace netTiers.Petshop.Entities
          }
       }
       #endregion ICloneable
-
+	  
+	  #region PropertyCollection
+	  /// <summary>
+      /// Gets or sets the property descriptor collection for T.  
+      /// </summary>
+      /// <value>The property collection.</value>
+       protected virtual PropertyDescriptorCollection PropertyCollection
+       {
+           get { return _propertyCollection; }
+           set { _propertyCollection = value; }
+       }
+	   #endregion 
+	
 	  #region ToString
       /// <summary>
       /// Returns a <see cref="T:System.String"></see> that represents the current <see cref="T:System.Object"></see>.
