@@ -2764,7 +2764,7 @@ namespace MoM.Templates
 				{
 					continue;
 				}
-				else if (command.CommandResults[0].Columns[i].NativeType != table.Columns[i].NativeType )
+				else if (!SqlTypesAreEquivalent(command.CommandResults[0].Columns[i].NativeType, table.Columns[i].NativeType))
 				{
 					return false;
 				}
@@ -2799,14 +2799,32 @@ namespace MoM.Templates
 				{
 					continue;
 				}
-				else if (command.CommandResults[0].Columns[i].NativeType != view.Columns[i].NativeType )
-				{
+				else if (!SqlTypesAreEquivalent(command.CommandResults[0].Columns[i].NativeType, view.Columns[i].NativeType))
+ 				{
 					return false;
 				}
 			}
 			return true;
 		}
 		
+		/// <summary>
+		/// Compares two sql types and determines if they are syntax equivalent.
+		/// </summary>
+		/// <param name="type1">The first sql type to compare.</param>
+		/// <param name="type2">The second sql type to compare.</param>
+		public bool SqlTypesAreEquivalent(string type1, string type2)
+		{
+			type1 = type1.ToLower();
+			type2 = type2.ToLower();
+			
+			if ((type1 == "numeric" && type2 == "decimal") || (type2 == "numeric" && type1 == "decimal"))
+			{
+				return true;
+			}
+			return (type1 == type2);
+		}
+		
+
 		public bool isIntXX(DataObjectBase column)
 		{
 			bool result = false;

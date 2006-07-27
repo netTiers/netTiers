@@ -918,11 +918,20 @@ namespace <%=DALNameSpace%>.SqlClient
 			for (int i = 0; i < cols.Count; i++)		
 			{
 				if (IsComputed(cols[i]) || IsIdentityColumn(cols[i]) )
-				{%>
-			entity.<%=GetPropertyName(cols[i].Name)%> = (<%=cols[i].SystemType.ToString()%>)database.GetParameterValue(commandWrapper, "@<%=GetPropertyName(cols[i].Name)%>");
+				{
+					string castTo = String.Empty;
+					
+					if (cols[i].NativeType == "xml") 
+						castTo = typeof(System.String).ToString();
+					else
+						castTo = cols[i].SystemType.ToString();	%>
+
+			entity.<%=GetPropertyName(cols[i].Name)%> = (<%=castTo%>) database.GetParameterValue(commandWrapper, "@<%=GetPropertyName(cols[i].Name)%>");						
 				<%}
 			}
+			%>
 			
+			<% 			
 			// synchronise utility properties for updatable primary key
 			for (int i = 0; i < SourceTable.PrimaryKey.MemberColumns.Count; i++)		
 			{
@@ -1038,13 +1047,19 @@ namespace <%=DALNameSpace%>.SqlClient
 			entity.<%=GetPropertyName(RowVersion.Name)%> = (<%=RowVersion.SystemType.ToString()%>)database.GetParameterValue(commandWrapper, "@Returned<%=GetPropertyName(RowVersion.Name)%>");
 		<%}
 			
-					
 		// Update identity or computed columns
 		for (int i = 0; i < cols.Count; i++)		
 		{
 			if (IsComputed(cols[i]) && cols[i] != RowVersion)
-			{%>
-			entity.<%=GetPropertyName(cols[i].Name)%> = (<%=cols[i].SystemType.ToString()%>)database.GetParameterValue(commandWrapper, "@<%=GetPropertyName(cols[i].Name)%>");
+			{
+					string castTo = String.Empty;
+				
+					if (cols[i].NativeType == "xml") 
+						castTo = typeof(System.String).ToString();
+					else
+						castTo = cols[i].SystemType.ToString();				
+				%>
+			entity.<%=GetPropertyName(cols[i].Name)%> = (<%=castTo%>)database.GetParameterValue(commandWrapper, "@<%=GetPropertyName(cols[i].Name)%>");
 			<%}
 		
 			// if in the PK, update the original
