@@ -89,7 +89,7 @@ namespace MoM.Templates
 		/// </summary>
 		protected void DebugWriteLine(string msg)
 		{
-			if (Verbose && !string.IsNullOrEmpty(msg))
+			if (Verbose && msg != null && msg.Length > 0)
 				System.Diagnostics.Debug.WriteLine(msg);
 		}
 		#endregion
@@ -3162,7 +3162,7 @@ namespace MoM.Templates
 				bool found = true;
 				foreach (IndexSchema idx in key.PrimaryKeyTable.Indexes)
 				{
-					foreach(MemberColumnSchema col in key.ForeignKeyMemberColumns)
+					foreach(ColumnSchema col in key.ForeignKeyMemberColumns)
 					{
 						if (!idx.MemberColumns.Contains(col.Name))
 							found = false;

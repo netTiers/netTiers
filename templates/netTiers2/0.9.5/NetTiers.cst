@@ -2203,6 +2203,11 @@ public void Go()
 	this.GetTemplate(projectTemplate).SetProperty("WebLibNameSpace", WebLibNameSpace);
 	this.GetTemplate(projectTemplate).SetProperty("UTNameSpace", UTNameSpace);
 	this.GetTemplate(projectTemplate).SetProperty("WSNameSpace", WSNameSpace);
+	
+	this.GetTemplate(projectTemplate).SetProperty("NetTiersTemplatePath", string.Empty);
+	this.GetTemplate(projectTemplate).SetProperty("PropertySetFilePath", string.Empty);
+	this.GetTemplate(projectTemplate).SetProperty("SupportsCodesmithBuildTask", false);
+	
 	// END: common project properties
 	
 	// Entities project
@@ -2241,6 +2246,10 @@ public void Go()
 		this.GetTemplate(projectTemplate).SetProperty("IncludeWCFDataAttributes", IncludeWCFDataAttributes);
 		this.GetTemplate(projectTemplate).SetProperty("IncludeDesignTimeSupport", false);
 				
+		this.GetTemplate(projectTemplate).SetProperty("NetTiersTemplatePath", GetNetTiersTemplatePath());
+		this.GetTemplate(projectTemplate).SetProperty("PropertySetFilePath", GetPropertySetFilePath());
+		this.GetTemplate(projectTemplate).SetProperty("SupportsCodesmithBuildTask", DoesSupportCodesmithBuildTask());
+		
 		//this.GetTemplate(projectTemplate).RenderToFile(rootPathBLL + "\\" + BLLNameSpace + ".csproj", true);
 		this.RenderToFile(projectTemplate, rootPathBLL + "\\" + BLLNameSpace + ".csproj", true);
 	}
@@ -3235,6 +3244,89 @@ public void Go()
 	}
 		
 	Response.WriteLine("Generation complete. Execution time: " + (DateTime.Now - startTime).ToString());
+}
+
+///<summary>
+///
+///</summary>
+private enum CodesmithVersion : int
+{
+	Unknown = 0,
+	Codesmith26 = 1,
+	Codesmith30 = 2,
+	Codesmith31 = 3,
+	Codesmith32 = 4
+}
+
+///<summary>
+///
+///</summary>
+private bool DoesSupportCodesmithBuildTask()
+{
+	bool isPro = false;
+	try
+	{	
+		Type lic = Type.GetType("CodeSmith.Engine.CodeSmithLicense", false, true);
+		if (lic != null)
+		{
+			System.Reflection.PropertyInfo prop = lic.GetProperty("IsProfessional", System.Reflection.BindingFlags.Static);
+			if (prop != null)
+				isPro = Convert.ToBoolean(prop.GetValue(null, null));
+		}
+	}
+	catch{}
+	
+	return (isPro && (int)GetCodesmithVersion() >= (int)CodesmithVersion.Codesmith32);
+}		
+
+///<summary>
+///
+///</summary>
+private string GetPropertySetFilePath()
+{
+	string path = this.OutputDirectory + (this.OutputDirectory.EndsWith("\\") ? "" : "\\") + "References\\" + this.NameSpace + "PropertySet.xml";
+	if (!File.Exists(path))
+	{
+		this.SavePropertiesToXmlFile(path);	
+	}
+	return path;
+}
+
+///<summary>
+///
+///</summary>
+private string GetNetTiersTemplatePath()
+{
+	return this.CodeTemplateInfo.FullPath;
+}
+
+
+///<summary>
+///
+///</summary>
+private CodesmithVersion GetCodesmithVersion()
+{
+	try
+	{
+		string version = typeof(CodeTemplate).Assembly.GetName().Version.ToString();
+		if(version != null)
+		{
+			if (version.IndexOf("3.2") >= 0)
+				return CodesmithVersion.Codesmith32;
+			else if (version.IndexOf("3.1") >=0)
+				return CodesmithVersion.Codesmith31;
+			else if (version.IndexOf("3.0") >=0)
+				return CodesmithVersion.Codesmith30;
+			else if (version.IndexOf("2.6") >= 0)
+				return CodesmithVersion.Codesmith26;
+		}
+	}
+	catch
+	{
+		//could not discover version info.	
+	}
+	
+	return CodesmithVersion.Unknown;
 }
 
 private void SetCommonProperties(String template)

@@ -42,7 +42,12 @@
 
 <%@ Property Name="SignAssembly" Type="System.Boolean" Category="Option" Description="" Default="false" %>
 
+<%@ Property Name="NetTiersTemplatePath" Type="System.String" Category="Option" Description="" Default="" %>
+<%@ Property Name="PropertySetFilePath" Type="System.String" Category="Option" Description="" Default="" %>
+<%@ Property Name="SupportsCodesmithBuildTask" Type="System.Boolean" Category="Option" Description="" Default="false" %>
+
 <%@ Property Name="CustomCodeFolderName" Type="System.String" Category="General" Description="the name of a folder that can contains custom class to dynamically add to the entity project." Default="App_Code" %>
+
 
 <%@ Property Name="WebServiceUrl" Type="System.String" Category="WebService" Description="The webservice base URL. The asmx filename will be added programmatically." Default="http://localhost/Services/" %>
 <%@ Property Name="rootPathWS" Type="System.String" Category="WebService" Description="The folder where the webservice code is generated." Default="" %>
@@ -172,6 +177,30 @@
     <RemoveIntegerChecks>false</RemoveIntegerChecks>
     <TreatWarningsAsErrors>false</TreatWarningsAsErrors>
     <WarningLevel>4</WarningLevel>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'GenerateDebug|AnyCPU' ">
+    <OutputPath>bin\Debug\</OutputPath>
+    <AllowUnsafeBlocks>false</AllowUnsafeBlocks>
+    <BaseAddress>285212672</BaseAddress>
+    <CheckForOverflowUnderflow>false</CheckForOverflowUnderflow>
+    <ConfigurationOverrideFile>
+    </ConfigurationOverrideFile>
+    <DefineConstants>DEBUG;TRACE</DefineConstants>
+    <DocumentationFile><%=fileName%>.xml</DocumentationFile>
+    <DebugSymbols>true</DebugSymbols>
+    <FileAlignment>4096</FileAlignment>
+    <NoStdLib>false</NoStdLib>
+    <NoWarn>
+    </NoWarn>
+    <Optimize>false</Optimize>
+    <RegisterForComInterop>false</RegisterForComInterop>
+    <RemoveIntegerChecks>false</RemoveIntegerChecks>
+    <TreatWarningsAsErrors>false</TreatWarningsAsErrors>
+    <WarningLevel>4</WarningLevel>
+<% if (IncludeUnitTest == MoM.Templates.UnitTestStyle.VSTS) 
+   { %>
+	<ProjectTypeGuids>{3AC096D0-A1C2-E12C-1390-A8335801FDAB};{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}</ProjectTypeGuids>
+<% } %>
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="System"/>
@@ -955,6 +984,16 @@
 	<% } %>
 	
   <Import Project="$(MSBuildBinPath)\Microsoft.CSHARP.Targets" />
+	<%	if (IncludeBll && SupportsCodesmithBuildTask
+				&& PropertySetFilePath.Length > 0 
+				&& NetTiersTemplatePath.Length > 0) 
+		{	 
+	%>
+	<Import Project="$(MSBuildExtensionsPath)\CodeSmith\CodeSmith.Targets"/>
+    <Target Name="BeforeBuild" Condition=" '$(Configuration)|$(Platform)' == 'GenerateDebug|AnyCPU' ">
+    	 <CodeSmith PropertySetFile="<%= PropertySetFilePath %>" TemplateFile="<%= NetTiersTemplatePath %>" />
+  	</Target>
+	<% 	} %>
   <PropertyGroup>
     <PreBuildEvent>
     </PreBuildEvent>
