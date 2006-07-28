@@ -708,8 +708,8 @@ namespace <%= DALNameSpace %>.Bases
 			}
 			#endregion
 
-			//In case an event can trigger the disabling of the deep load
-			if ( deepLoadType == DeepLoadType.Ignore )
+			//In case an event can trigger the disabling of the deep load || do not deep load new entities.
+			if (deepLoadType == DeepLoadType.Ignore || entity.EntityState == EntityState.Added)
 			{
 				return;
 			}
@@ -721,9 +721,10 @@ namespace <%= DALNameSpace %>.Bases
 				if (childTypes[i] == null) continue;
 				
 				if (!childTypes[i].IsGenericType)
-					innerList.Add(childTypes[i].Name);
+					innerList.Add(childTypes[i].Name + entity.EntityTrackingKey);
 				else 
-					innerList.Add(string.Format("List<{0}>" , childTypes[i].GetGenericArguments()[0].Name));
+					innerList.Add(string.Format("List<{0}>{1}" , childTypes[i].GetGenericArguments()[0].Name, entity.EntityTrackingKey));
+
 			}
 			
 			#if NETTIERS_DEBUG
@@ -1106,10 +1107,11 @@ namespace <%= DALNameSpace %>.Bases
 		///<summary>
 		/// Enforces the rules set in order to load this property for a given type.
 		///</summary>
-		protected bool CanDeepLoad(Object entity, String key, String property, DeepLoadType deepLoadType, ChildEntityTypesList innerList) 
+		protected bool CanDeepLoad(IEntity entity, String key, String property, DeepLoadType deepLoadType, ChildEntityTypesList innerList) 
         {
 			if ( innerList != null )
 			{
+			    key += entity.EntityTrackingKey;
 				if ( deepLoadType == DeepLoadType.ExcludeChildren )
 				{
 					if ( !innerList.Contains(key) && !innerList.HasEntityProperty(entity, property) )
@@ -1134,10 +1136,11 @@ namespace <%= DALNameSpace %>.Bases
 		///<summary>
 		/// Enforces the rules set in order to save this property for a given type.
 		///</summary>
-		protected bool CanDeepSave(Object entity, String key, String property, DeepSaveType deepSaveType, ChildEntityTypesList innerList) 
+		protected bool CanDeepSave(IEntity entity, String key, String property, DeepSaveType deepSaveType, ChildEntityTypesList innerList) 
         {
 			if ( innerList != null )
 			{
+			    key += entity.EntityTrackingKey;   
 				if ( deepSaveType == DeepSaveType.ExcludeChildren )
 				{
 					if ( !innerList.Contains(key) && !innerList.HasEntityProperty(entity, property) )
@@ -1178,18 +1181,18 @@ namespace <%= DALNameSpace %>.Bases
 		{
 		}
 
-		private Dictionary<int, StringCollection> properties;
+		private Dictionary<string, StringCollection> properties;
 		
 		/// <summary>
 		/// Gets a collection of child entity property names.
 		/// </summary>
-		public Dictionary<int, StringCollection> Properties
+		public Dictionary<string, StringCollection> Properties
 		{
 			get
 			{
 				if ( properties == null )
 				{
-					properties = new Dictionary<int, StringCollection>();
+					properties = new Dictionary<string, StringCollection>();
 				}
 				
 				return properties;
@@ -1201,17 +1204,17 @@ namespace <%= DALNameSpace %>.Bases
 		/// </summary>
 		/// <param name="entity"></param>
 		/// <returns></returns>
-		public StringCollection GetEntityProperties(Object entity)
+		public StringCollection GetEntityProperties(IEntity entity)
 		{
 			if ( entity == null ) return null;
-			int hashCode = entity.ToString().GetHashCode();
+			string key = entity.EntityTrackingKey;
 
-			if ( !Properties.ContainsKey(hashCode) )
+			if ( !Properties.ContainsKey(key) )
 			{
-				Properties[hashCode] = new StringCollection();
+				Properties[key] = new StringCollection();
 			}
 
-			return Properties[hashCode];
+			return Properties[key];
 		}
 
 		/// <summary>
@@ -1221,7 +1224,7 @@ namespace <%= DALNameSpace %>.Bases
 		/// <param name="entity"></param>
 		/// <param name="property"></param>
 		/// <returns></returns>
-		public bool HasEntityProperty(Object entity, String property)
+		public bool HasEntityProperty(IEntity entity, String property)
 		{
 			if ( entity == null ) return false;
 			return GetEntityProperties(entity).Contains(property);
@@ -1232,7 +1235,7 @@ namespace <%= DALNameSpace %>.Bases
 		/// </summary>
 		/// <param name="entity"></param>
 		/// <param name="property"></param>
-		public void AddEntityProperty(Object entity, String property)
+		public void AddEntityProperty(IEntity entity, String property)
 		{
 			if ( entity == null ) return;
 			GetEntityProperties(entity).Add(property);
@@ -1246,6 +1249,8 @@ namespace <%= DALNameSpace %>.Bases
 	///<summary>
 	/// Attribute used to decorate enumerations with underlying system type.
 	///</summary>
+	[Serializable]
+	[CLSCompliant(true)]
 	public class ChildEntityTypeAttribute : System.Attribute
 	{
 		///<summary>
