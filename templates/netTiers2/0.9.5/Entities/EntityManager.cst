@@ -219,17 +219,22 @@ namespace <%=NameSpace%>
         /// <returns>true if successful.</returns>
         public static IEntityFactory TryAddEntityFactory(Type entityFactoryTypeToCreate)
         {
+        public static IEntityFactory TryAddEntityFactory(Type entityFactoryTypeToCreate)
+        {
             lock (syncObject)
             {
                 if (entityFactoryTypeToCreate == null)
                     throw new ArgumentException("entityFactoryTypeToCreate");
 
-                IEntityFactory createdFactory = Activator.CreateInstance(entityFactoryTypeToCreate) as IEntityFactory;
+                if (!EntityFactories.ContainsKey(entityFactoryTypeToCreate.FullName))
+                {
+                    IEntityFactory createdFactory = Activator.CreateInstance(entityFactoryTypeToCreate) as IEntityFactory;
 
-                if (createdFactory == null)
-                    throw new ArgumentException("This factory can not be found.  Please ensure that you are using a valid Entity Factory.", "entityFactoryType");
+                    if (createdFactory == null)
+                        throw new ArgumentException("This factory can not be found.  Please ensure that you are using a valid Entity Factory.", "entityFactoryType");
 
-                EntityFactories.Add(entityFactoryTypeToCreate.FullName, (IEntityFactory)createdFactory);
+                    EntityFactories.Add(entityFactoryTypeToCreate.FullName, (IEntityFactory)createdFactory);
+                }
             }
             return EntityFactories[entityFactoryTypeToCreate.FullName];
         }
