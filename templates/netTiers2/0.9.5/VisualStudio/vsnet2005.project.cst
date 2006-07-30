@@ -13,6 +13,7 @@
 <%@ Property Name="UTGuid" Type="System.String" Category="Context" Description="Unit tests Project Guid" %>
 <%@ Property Name="WSGuid" Type="System.String" Category="Context" Description="WebService Project Guid" %>
 <%@ Property Name="WebLibGuid" Type="System.String" Category="Context" Description="Web Library Project Guid" %>
+<%@ Property Name="WebsiteGuid" Type="System.String" Category="Context" Description="Website Project Guid" %>
 <%@ Property Name="ComponentsGuid" Type="System.String" Category="Context" Description="Components Guid" %>
 
 <%@ Property Name="OutputDirectory" Type="System.String" Category="General" Description="The root output folder."%>
@@ -25,6 +26,7 @@
 <%@ Property Name="UTNameSpace" Type="System.String" Category="Data" Description="UT Namespace." %>
 <%@ Property Name="WSNameSpace" Type="System.String" Category="Data" Description="WebService Namespace." %>
 <%@ Property Name="WebLibNameSpace" Type="System.String" Category="Data" Description="Web Library Namespace." %>
+<%@ Property Name="WebsiteNameSpace" Type="System.String" Category="Data" Description="Website Namespace." %>
 <%@ Property Name="ComponentLayerNameSpace" Type="System.String" Category="Data" Description="Component Layer Namespace." %>
 <%@ Property Name="ComponentPattern" Default="None" Type="MoM.Templates.ComponentPatternType" Category="Data" Description="Component Layer Pattern Type." %>
 
@@ -33,6 +35,7 @@
 <%@ Property Name="IncludeDALBase" Type="System.Boolean" Category="Option" Description="" %>
 <%@ Property Name="IncludeSqlClient" Type="System.Boolean" Category="Option" Description="" %>
 <%@ Property Name="IncludeWebLibrary" Type="System.Boolean" Category="Option" Description="" %>
+<%@ Property Name="IncludeWebsite" Type="System.Boolean" Category="Option" Description="" %>
 <%@ Property Name="IncludeWebservice" Type="System.Boolean" Category="Option" Description="" %>
 <%@ Property Name="IncludeComponents" Type="System.Boolean"  Category="Option" Description="Determines whether or not a component library is being used." %>
 <%@ Property Name="IncludeWebserviceClient" Type="System.Boolean" Category="Option" Description="" %>
@@ -89,6 +92,10 @@
 	{
 		fileName = WebLibNameSpace;
 	}
+	else if (IncludeWebsite)
+	{
+		fileName = WebsiteNameSpace;
+	}
 	else if (IncludeComponents)
 	{
 		fileName = ComponentLayerNameSpace;
@@ -108,16 +115,19 @@
 %>
 <Project DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <PropertyGroup>
-    <ProjectType><%if (IncludeWebservice) Response.Write("Web"); else Response.Write("Local"); %></ProjectType>
-    <ProductVersion>8.0.50727</ProductVersion>
-    <SchemaVersion>2.0</SchemaVersion>
-    <ProjectGuid>{<% if (IncludeBll) Response.Write(BLLGuid); else if (IncludeComponents) Response.Write(ComponentsGuid); else if (IncludeDALBase) Response.Write(DALGuid); else if (IncludeSqlClient) Response.Write(DALSqlGuid); else if (IncludeUnitTest != MoM.Templates.UnitTestStyle.None) Response.Write(UTGuid); else if (IncludeWebservice) Response.Write(WSGuid);else if (IncludeWebserviceClient) Response.Write(DALWSGuid); else if (IncludeWebLibrary) Response.Write(WebLibGuid);  %>}</ProjectGuid>
     <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
     <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
-    <ApplicationIcon>
-    </ApplicationIcon>
-    <AssemblyKeyContainerName>
-    </AssemblyKeyContainerName>
+    <ProductVersion>8.0.50727</ProductVersion>
+    <SchemaVersion>2.0</SchemaVersion>
+    <ProjectGuid>{<% if (IncludeBll) Response.Write(BLLGuid); else if (IncludeComponents) Response.Write(ComponentsGuid); else if (IncludeDALBase) Response.Write(DALGuid); else if (IncludeSqlClient) Response.Write(DALSqlGuid); else if (IncludeUnitTest != MoM.Templates.UnitTestStyle.None) Response.Write(UTGuid); else if (IncludeWebservice) Response.Write(WSGuid);else if (IncludeWebserviceClient) Response.Write(DALWSGuid); else if (IncludeWebLibrary) Response.Write(WebLibGuid); else if (IncludeWebsite) Response.Write(WebsiteGuid);  %>}</ProjectGuid>
+	<% if ( IncludeWebsite ) { %>
+    <ProjectTypeGuids>{349c5851-65df-11da-9384-00065b846f21};{fae04ec0-301f-11d3-bf4b-00c04f79efbc}</ProjectTypeGuids>
+	<% } else { %>
+    <ProjectType><%if (IncludeWebservice) Response.Write("Web"); else Response.Write("Local"); %></ProjectType>
+	<% } %>
+    <OutputType>Library</OutputType>
+    <ApplicationIcon></ApplicationIcon>
+    <AssemblyKeyContainerName></AssemblyKeyContainerName>
     <AssemblyName><%=fileName%></AssemblyName>
     <AssemblyOriginatorKeyFile>..\<%=NameSpace%>.snk</AssemblyOriginatorKeyFile>
 	<SignAssembly><%=SignAssembly.ToString().ToLower()%></SignAssembly>
@@ -125,13 +135,10 @@
     <DefaultHTMLPageLayout>Grid</DefaultHTMLPageLayout>
     <DefaultTargetSchema>IE50</DefaultTargetSchema>
     <DelaySign>false</DelaySign>
-    <OutputType>Library</OutputType>
     <RootNamespace><%=fileName%></RootNamespace>
     <RunPostBuildEvent>OnBuildSuccess</RunPostBuildEvent>
-    <StartupObject>
-    </StartupObject>
-    <FileUpgradeFlags>
-    </FileUpgradeFlags>
+    <StartupObject></StartupObject>
+    <FileUpgradeFlags></FileUpgradeFlags>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
     <OutputPath>bin\Debug\</OutputPath>
@@ -294,7 +301,7 @@
     </ProjectReference>
     <% } %>
 	
-	<% if (IncludeWebservice || IncludeComponents) { %>
+	<% if (IncludeWebservice || IncludeComponents || IncludeWebsite) { %>
     <ProjectReference Include="..\<%=DALNameSpace%>\<%=DALNameSpace%>.csproj">
         <Name><%=DALNameSpace%></Name>
         <Project>{<%=DALGuid%>}</Project>
@@ -307,10 +314,18 @@
     </ProjectReference>
 	<% } %>
 	
-	<% if (IncludeWebLibrary && ComponentPattern != MoM.Templates.ComponentPatternType.None) { %>
+	<% if ( (IncludeWebLibrary || IncludeWebsite) && ComponentPattern != MoM.Templates.ComponentPatternType.None ) { %>
     <ProjectReference Include="..\<%=ComponentLayerNameSpace%>\<%=ComponentLayerNameSpace%>.csproj">
         <Name><%=ComponentLayerNameSpace%></Name>
         <Project>{<%=ComponentsGuid%>}</Project>
+        <Package>{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}"</Package>
+    </ProjectReference>
+	<% } %>
+	
+	<% if ( IncludeWebsite ) { %>
+    <ProjectReference Include="..\<%= WebLibNameSpace %>\<%= WebLibNameSpace %>.csproj">
+        <Name><%= WebLibNameSpace %></Name>
+        <Project>{<%= WebLibGuid %>}</Project>
         <Package>{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}"</Package>
     </ProjectReference>
 	<% } %>
@@ -939,6 +954,23 @@
         <% } %>
 		 <AppDesigner Include="Properties\" />
 	</ItemGroup>
+	
+	<% if ( IncludeWebsite ) { %>
+		<ItemGroup>
+			<Content Include="Default.aspx" />
+			<Content Include="Web.config" />
+		</ItemGroup>
+		<ItemGroup>
+			<Compile Include="Default.aspx.cs">
+				<SubType>ASPXCodeBehind</SubType>
+				<DependentUpon>Default.aspx</DependentUpon>
+			</Compile>
+			<Compile Include="Default.aspx.designer.cs">
+				<DependentUpon>Default.aspx</DependentUpon>
+			</Compile>
+		</ItemGroup>
+	<% } %>
+	
 	<% if (IncludeWebserviceClient) { %>
 		<ItemGroup>
 			<Compile Include="<%=WSClientSubFolder%>WsNetTiersProvider.cs">
@@ -984,6 +1016,9 @@
 	<% } %>
 	
   <Import Project="$(MSBuildBinPath)\Microsoft.CSHARP.Targets" />
+  <% if ( IncludeWebsite ) { %>
+  <Import Project="$(MSBuildExtensionsPath)\Microsoft\VisualStudio\v8.0\WebApplications\Microsoft.WebApplication.targets" />
+  <% } %>
 	<%	if (IncludeBll && SupportsCodesmithBuildTask
 				&& PropertySetFilePath.Length > 0 
 				&& NetTiersTemplatePath.Length > 0) 
@@ -1002,4 +1037,21 @@
 	<PostBuildEvent>
 	</PostBuildEvent>
   </PropertyGroup>
+
+  <% if ( IncludeWebsite ) { %>
+  <ProjectExtensions>
+    <VisualStudio>
+      <FlavorProperties GUID="{349c5851-65df-11da-9384-00065b846f21}">
+        <WebProjectProperties>
+          <UseIIS>False</UseIIS>
+          <AutoAssignPort>True</AutoAssignPort>
+          <DevelopmentServerPort>0</DevelopmentServerPort>
+          <DevelopmentServerVPath>/</DevelopmentServerVPath>
+          <IISUrl></IISUrl>
+          <NTLMAuthentication>False</NTLMAuthentication>
+        </WebProjectProperties>
+      </FlavorProperties>
+    </VisualStudio>
+  </ProjectExtensions>
+  <% } %>
 </Project>

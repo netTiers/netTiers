@@ -10,6 +10,7 @@
 <%@ Property Name="DALSqlNameSpace" Type="System.String" Category="Data" Description="DAL sql Namespace." %>
 <%@ Property Name="DALWSNameSpace" Type="System.String" Category="Data" Description="DAL ws Namespace." %>
 <%@ Property Name="WebLibNameSpace" Type="System.String" Category="Data" Description="Web Library Namespace." %>
+<%@ Property Name="WebsiteNameSpace" Type="System.String" Category="Data" Description="Website Namespace." %>
 <%@ Property Name="UTNameSpace" Type="System.String" Category="Data" Description="UT Namespace." %>
 <%@ Property Name="BLLGuid" Type="System.String" Category="Context" Description="BLL Project Guid" %>
 <%@ Property Name="DALGuid" Type="System.String" Category="Context" Description="DAL Project Guid" %>
@@ -20,14 +21,17 @@
 <%@ Property Name="WSGuid" Type="System.String" Category="Context" Description="WS Project Guid" %>
 <%@ Property Name="UTGuid" Type="System.String" Category="Context" Description="Unit tests Project Guid" %>
 <%@ Property Name="WebLibGuid" Type="System.String" Category="Context" Description="Web Library Project Guid" %>
+<%@ Property Name="WebsiteGuid" Type="System.String" Category="Context" Description="Website Project Guid" %>
 <%@ Property Name="IncludeUnitTest" Type="MoM.Templates.UnitTestStyle" Default="NUnit" Category="General" Description="Indicates type of Unit tests to be generated." %>
 <%@ Property Name="IncludeSqlClient" Type="System.Boolean" Category="Option" Description="" %>
 <%@ Property Name="IncludeWebLibrary" Type="System.Boolean" Category="Option" Description="" %>
+<%@ Property Name="IncludeWebsite" Type="System.Boolean" Category="Option" Description="" %>
 <%@ Property Name="IncludeComponents" Type="System.Boolean" Default="False" Category="Option" Description="Determines whether or not a component library is being used." %>
 <%@ Property Name="IncludeWebservice" Type="System.Boolean" Category="Option" Description="" %>
 <%@ Property Name="IncludeWebserviceClient" Type="System.Boolean" Category="Option" Description="" %>
 <%@ Property Name="WebServiceUrl" Type="System.String" Category="WebService" Description="The webservice base URL. The asmx filename will be added programmatically." Default="http://localhost/Services/" %>
 <%@ Property Name="rootPathWS" Type="System.String" Category="WebService" Description="The folder where the webservice code is generated." Default="" %>
+<%@ Property Name="UseWebAppProject" Type="System.Boolean" Default="false" Category="06b. Website - Advanced" Description="Indicates if a Web Application Project file should be generated." %>
 
 <%@ Property Name="SignAssembly" Type="System.Boolean" Category="Option" Description="" Default="false" %>
 
@@ -46,16 +50,45 @@ EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "<%=DALSqlNameSpace%>", "<%=DALSqlNameSpace%>\<%=DALSqlNameSpace%>.csproj", "{<%=DALSqlGuid%>}"
 EndProject
 <% } %>
+<% if (IncludeComponents) { %>
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "<%=ComponentLayerNameSpace%>", "<%=ComponentLayerNameSpace%>\<%=ComponentLayerNameSpace%>.csproj", "{<%=ComponentsGuid%>}"
+EndProject
+<% } %>
 <% if (IncludeWebLibrary) { %>
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "<%=WebLibNameSpace%>", "<%=WebLibNameSpace%>\<%=WebLibNameSpace%>.csproj", "{<%=WebLibGuid%>}"
 EndProject
 <% } %>
-<% if (IncludeWebserviceClient) { %>
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "<%=DALWSNameSpace%>", "<%=DALWSNameSpace%>\<%=DALWSNameSpace%>.csproj", "{<%=DALWSGuid%>}"
+<% if (IncludeWebsite) { %>
+<%
+	string websiteProjectGuid = UseWebAppProject ? "FAE04EC0-301F-11D3-BF4B-00C04F79EFBC" : "E24C65DC-7377-472B-9ABA-BC803B73C61A";
+	string websiteProjectName = UseWebAppProject ? WebsiteNameSpace : "C:\\...\\" + WebsiteNameSpace + "\\";
+	string websiteProjectFile = UseWebAppProject ? WebsiteNameSpace + "\\" + WebsiteNameSpace + ".csproj" : WebsiteNameSpace;
+%>
+Project("{<%= websiteProjectGuid %>}") = "<%= websiteProjectName %>", "<%= websiteProjectFile %>", "{<%= WebsiteGuid %>}"
+	<% if ( !UseWebAppProject ) { %>
+	ProjectSection(WebsiteProperties) = preProject
+		ProjectReferences = "{<%= BLLGuid %>}|<%= BLLNameSpace %>.dll;{<%= DALGuid %>}|<%= DALNameSpace %>.dll;{<%= DALSqlGuid %>}|<%= DALSqlNameSpace %>.dll;<% if ( IncludeComponents ) { %>{<%= ComponentsGuid %>}|<%= ComponentLayerNameSpace %>.dll;<% } %>{<%= WebLibGuid %>}|<%= WebLibNameSpace %>.dll;"
+		Debug.AspNetCompiler.VirtualPath = "/<%= WebsiteNameSpace %>"
+		Debug.AspNetCompiler.PhysicalPath = "<%= WebsiteNameSpace %>\"
+		Debug.AspNetCompiler.TargetPath = "PrecompiledWeb\<%= WebsiteNameSpace %>\"
+		Debug.AspNetCompiler.Updateable = "true"
+		Debug.AspNetCompiler.ForceOverwrite = "true"
+		Debug.AspNetCompiler.FixedNames = "false"
+		Debug.AspNetCompiler.Debug = "True"
+		Release.AspNetCompiler.VirtualPath = "/<%= WebsiteNameSpace %>"
+		Release.AspNetCompiler.PhysicalPath = "<%= WebsiteNameSpace %>\"
+		Release.AspNetCompiler.TargetPath = "PrecompiledWeb\<%= WebsiteNameSpace %>\"
+		Release.AspNetCompiler.Updateable = "true"
+		Release.AspNetCompiler.ForceOverwrite = "true"
+		Release.AspNetCompiler.FixedNames = "false"
+		Release.AspNetCompiler.Debug = "False"
+		VWDPort = "2005"
+	EndProjectSection
+	<% } %>
 EndProject
 <% } %>
-<% if (IncludeComponents) { %>
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "<%=ComponentLayerNameSpace%>", "<%=ComponentLayerNameSpace%>\<%=ComponentLayerNameSpace%>.csproj", "{<%=ComponentsGuid%>}"
+<% if (IncludeWebserviceClient) { %>
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "<%=DALWSNameSpace%>", "<%=DALWSNameSpace%>\<%=DALWSNameSpace%>.csproj", "{<%=DALWSGuid%>}"
 EndProject
 <% } %>
 <% if (IncludeWebservice) { %>
@@ -135,6 +168,18 @@ Global
 		{<%=WebLibGuid%>}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{<%=WebLibGuid%>}.Release|Any CPU.Build.0 = Release|Any CPU
 		<%}%>
+		<% if (IncludeWebsite) { %>
+		{<%= WebsiteGuid %>}.Debug|.NET.ActiveCfg = Debug|.NET
+		{<%= WebsiteGuid %>}.Debug|.NET.Build.0 = Debug|.NET
+		{<%= WebsiteGuid %>}.Debug|Any CPU.ActiveCfg = Debug|.NET
+		{<%= WebsiteGuid %>}.Debug|Mixed Platforms.ActiveCfg = Debug|.NET
+		{<%= WebsiteGuid %>}.Debug|Mixed Platforms.Build.0 = Debug|.NET
+		{<%= WebsiteGuid %>}.Release|.NET.ActiveCfg = Debug|.NET
+		{<%= WebsiteGuid %>}.Release|.NET.Build.0 = Debug|.NET
+		{<%= WebsiteGuid %>}.Release|Any CPU.ActiveCfg = Debug|.NET
+		{<%= WebsiteGuid %>}.Release|Mixed Platforms.ActiveCfg = Debug|.NET
+		{<%= WebsiteGuid %>}.Release|Mixed Platforms.Build.0 = Debug|.NET
+		<% } %>
 		<% if (IncludeWebserviceClient) { %>
 		{<%=DALWSGuid%>}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{<%=DALWSGuid%>}.Debug|Any CPU.Build.0 = Debug|Any CPU
@@ -169,6 +214,9 @@ Global
 		<% if (IncludeWebLibrary) { %>
 		{<%=WebLibGuid%>} = {F3A10C8D-3227-449F-A2CB-014DE2D7F415}
 		<%}%>
+		<% if (IncludeWebsite) { %>
+		{<%= WebsiteGuid %>} = {F3A10C8D-3227-449F-A2CB-014DE2D7F415}
+		<% } %>
 		<% if (IncludeWebserviceClient) { %>
 		{<%=DALWSGuid%>} = {F3A10C8D-3227-449F-A2CB-014DE2D7F415}
 		<%}%>

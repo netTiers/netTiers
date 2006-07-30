@@ -63,6 +63,13 @@
 <%-- Property Name="WebServiceVirtualDirectoryName" Type="System.String" Category="WebService" Description="" Default="NetTiersWS" --%>
 <%@ Property Name="WebServiceUrl" Type="System.String" Category="06. Web - Advanced" Description="The base url for the webservice, eg: http://localhost/NetTiersWS" Default="" Optional="true"%>
 
+<%-- 6.5 ASP.Net Website --%>
+<%@ Property Name="GenerateWebsite" Type="System.Boolean" Default="false" Category="06b. Website - Advanced" Description="Indicates if a complete website should be generated." %>
+<%@ Property Name="UseWebAppProject" Type="System.Boolean" Default="false" Category="06b. Website - Advanced" Description="Indicates if a Web Application Project file should be generated.  Note: you must have the Visual Studio extension installed in order to open the project." %>
+<%@ Property Name="OverwriteWebConfig" Type="System.Boolean" Default="false" Category="06b. Website - Advanced" Description="Indicates if the Web.config should be overwritten." %>
+<%@ Property Name="IncludeAtlasLibrary" Type="System.Boolean" Default="false" Category="06b. Website - Advanced" Description="Indicates whether to include a reference to the Atlas component library." %>
+<%@ Property Name="IncludeAtlasToolkit" Type="System.Boolean" Default="false" Category="06b. Website - Advanced" Description="Indicates whether to include a reference to the Atlas Control Toolkit. This property is only taken into account when IncludeAtlasLibrary is true." %>
+
 <%-- 7.0 Retry of SQL statements --%>
 <%@ Property Name="RetryEnabled" Optional="False" Type="System.Boolean" Category="07. CRUD - Advanced" Default="false" Description="Enabling Retry will add code retry the queries that failed with data exceptions. Useful to if your database becomes temporarily unavailable." %>
 <%@ Property Name="RetryMaxAttempts" Optional="True" Type="System.Int32" Category="07. CRUD - Advanced" Description="The number of attempts that will be made." Default="5" %>
@@ -632,6 +639,12 @@
 														"ASP.Net\\2.0\\AdminEntityUC_CodeBehind.cst",
 														"ASP.Net\\2.0\\Menu_xml.cst",
 														
+														"ASP.Net\\Common\\Default.aspx.cs.cst",
+														"ASP.Net\\Common\\Default.aspx.cst",
+														"ASP.Net\\Common\\WebConfig.cst",
+														"ASP.Net\\Common\\WebConfigAtlas.cst",
+														"ASP.Net\\WebAppProject\\Default.aspx.designer.cs.cst",
+														
 														"WebLibrary\\Data\\BaseDataSource.cst",
 														"WebLibrary\\Data\\BaseDataSourceDesigner.cst",
 														"WebLibrary\\Data\\CustomDataSource.cst",
@@ -874,6 +887,7 @@ public void Go()
 	string UTNameSpace = NameSpace + "." + (UnitTestsNameSpace.Length>0 ? GetCleanName2(UnitTestsNameSpace) : "UnitTests");
 	string WSNameSpace = DALNameSpace + ".WebService";
 	string WebLibNameSpace = NameSpace + ".Web";
+	string WebsiteNameSpace = NameSpace + ".Website";
 	string SQLNamespace = NameSpace + "." +  (SQLFolderName.Length > 0 ?  SQLFolderName : "SQL");
 	
 	// Build output pathes
@@ -884,6 +898,7 @@ public void Go()
 	string rootPathDALSql = OutputDirectory + "\\" + DALSqlNameSpace;
 	string rootPathDALWS = OutputDirectory + "\\" + DALWSNameSpace;
 	string rootPathWebLib = OutputDirectory + "\\" + WebLibNameSpace;
+	string rootPathWebsite = OutputDirectory + "\\" + WebsiteNameSpace;
 	string rootPathUT = OutputDirectory + "\\" + UTNameSpace;
 	string rootPathSQL = OutputDirectory + "\\" + SQLNamespace;
 	
@@ -1188,6 +1203,21 @@ public void Go()
 		if ( HasCustomCode )
 		{
 			SafeCreateDirectory(rootPathWebLib + "\\" + CustomCodeFolderName);
+		}
+	}
+	
+	if (GenerateWebsite)
+	{
+		SafeCreateDirectory(rootPathWebsite);
+		SafeCreateDirectory(rootPathWebsite + "\\Bin");
+
+		if (IncludeAtlasLibrary)
+		{
+			SafeCopyFile(this.CodeTemplateInfo.DirectoryName + "\\References\\Microsoft.Web.Atlas.dll", rootPathWebsite + "\\Bin\\Microsoft.Web.Atlas.dll");
+		}
+		if (IncludeAtlasToolkit)
+		{
+			SafeCopyFile(this.CodeTemplateInfo.DirectoryName + "\\References\\AtlasControlToolkit.dll", rootPathWebsite + "\\Bin\\AtlasControlToolkit.dll");
 		}
 	}
 		
@@ -2105,6 +2135,50 @@ public void Go()
 		this.RenderToFile("MultiFormView.cst", rootPathWebLib + "\\UI\\MultiFormView.cs", true);
 	}
 	
+	if ( GenerateWebsite )
+	{
+		string webConfigTemplate = IncludeAtlasLibrary ? "WebConfigAtlas.cst" : "WebConfig.cst";
+
+		// Web.config
+		if ( OverwriteWebConfig || !File.Exists(rootPathWebsite + "\\Web.config") )
+		{
+			AddFileNode(commonNode, "Web.config");
+			this.GetTemplate(webConfigTemplate).SetProperty("NameSpace", NameSpace);
+			this.GetTemplate(webConfigTemplate).SetProperty("BLLNameSpace", BLLNameSpace);
+			this.GetTemplate(webConfigTemplate).SetProperty("DALNameSpace", DALNameSpace);
+			this.GetTemplate(webConfigTemplate).SetProperty("WebNameSpace", WebLibNameSpace);
+			this.GetTemplate(webConfigTemplate).SetProperty("ConnectionString", SourceDatabase.ConnectionString);
+			
+			if ( IncludeAtlasLibrary )
+			{
+				this.GetTemplate(webConfigTemplate).SetProperty("IncludeAtlasToolkit", IncludeAtlasToolkit);
+			}
+			
+			this.RenderToFile(webConfigTemplate, rootPathWebsite + "\\Web.config", true);
+		}
+
+		// Default.aspx(.cs)
+		if ( !File.Exists(rootPathWebsite + "\\Default.aspx") )
+		{
+			AddFileNode(commonNode, "Default.aspx");
+			this.GetTemplate("Default.aspx.cst").SetProperty("WebsiteNameSpace", WebsiteNameSpace);
+			this.GetTemplate("Default.aspx.cst").SetProperty("IncludeAtlasLibrary", IncludeAtlasLibrary);
+			this.GetTemplate("Default.aspx.cst").SetProperty("UseWebAppProject", UseWebAppProject);
+			this.RenderToFile("Default.aspx.cst", rootPathWebsite + "\\Default.aspx", true);
+
+			AddFileNode(commonNode, "Default.aspx.cs");
+			this.GetTemplate("Default.aspx.cs.cst").SetProperty("WebsiteNameSpace", WebsiteNameSpace);
+			this.GetTemplate("Default.aspx.cs.cst").SetProperty("UseWebAppProject", UseWebAppProject);
+			this.RenderToFile("Default.aspx.cs.cst", rootPathWebsite + "\\Default.aspx.cs", true);
+			
+			if ( UseWebAppProject )
+			{
+				AddFileNode(commonNode, "Default.aspx.designer.cs");
+				this.GetTemplate("Default.aspx.designer.cs.cst").SetProperty("WebsiteNameSpace", WebsiteNameSpace);
+				this.RenderToFile("Default.aspx.designer.cs.cst", rootPathWebsite + "\\Default.aspx.designer.cs", true);
+			}
+		}
+	}
 	
 	// Hard coded Guid make it easier to maintain solution when regenerating projects
 	// It may be intersting to put those value in global properties
@@ -2115,6 +2189,7 @@ public void Go()
 	string wsGuid  = "5E3CA58E-216A-4F53-BD23-5A48A6C44924"; //Guid.NewGuid().ToString();
 	string utGuid  = "031D5BAE-0BFB-4D45-8125-9AB0BBC09A92"; //Guid.NewGuid().ToString();
 	string webLibGuid = "47FE3BE8-3E46-47CA-8494-473755867DD0"; //Guid.NewGuid().ToString();
+    string websiteGuid = "1DCAB031-308A-4581-AFA8-BD29F45A1357";
     string componentGuid = "794327CE-DC0A-4381-89EE-4C00AFB08D5A"; 
 
 	string projectTemplate = vsnetVersion == VSNetVersion.v2005 ? "vsnet2005.project.cst" : "vsnet2003.project.cst";
@@ -2136,6 +2211,7 @@ public void Go()
 		this.GetTemplate(solutionTemplate).SetProperty("DALSqlNameSpace", DALSqlNameSpace);
 		this.GetTemplate(solutionTemplate).SetProperty("DALWSNameSpace", DALWSNameSpace);
 		this.GetTemplate(solutionTemplate).SetProperty("WebLibNameSpace", WebLibNameSpace);
+		this.GetTemplate(solutionTemplate).SetProperty("WebsiteNameSpace", WebsiteNameSpace);
 		this.GetTemplate(solutionTemplate).SetProperty("UTNameSpace", UTNameSpace);
 		this.GetTemplate(solutionTemplate).SetProperty("WSNameSpace", WSNameSpace);
 		
@@ -2146,6 +2222,7 @@ public void Go()
 		this.GetTemplate(solutionTemplate).SetProperty("WSGuid", wsGuid);
 		this.GetTemplate(solutionTemplate).SetProperty("UTGuid", utGuid);
 		this.GetTemplate(solutionTemplate).SetProperty("WebLibGuid", webLibGuid);
+		this.GetTemplate(solutionTemplate).SetProperty("WebsiteGuid", websiteGuid);
 		
 		this.GetTemplate(solutionTemplate).SetProperty("ComponentsGuid", componentGuid);
 		this.GetTemplate(solutionTemplate).SetProperty("ComponentLayerNameSpace", ComponentsNameSpace);
@@ -2157,7 +2234,9 @@ public void Go()
 		this.GetTemplate(solutionTemplate).SetProperty("IncludeWebservice", GenerateWebservice);
 		this.GetTemplate(solutionTemplate).SetProperty("IncludeWebserviceClient", GenerateWebservice);
 		this.GetTemplate(solutionTemplate).SetProperty("IncludeWebLibrary", GenerateWebLibrary);
+		this.GetTemplate(solutionTemplate).SetProperty("IncludeWebsite", GenerateWebsite);
 		this.GetTemplate(solutionTemplate).SetProperty("IncludeUnitTest", IncludeUnitTest);
+		this.GetTemplate(solutionTemplate).SetProperty("UseWebAppProject", UseWebAppProject);
 				
 		this.GetTemplate(solutionTemplate).SetProperty("WebServiceUrl", WebServiceUrl);
 		this.GetTemplate(solutionTemplate).SetProperty("rootPathWS", rootPathWS);
@@ -2191,6 +2270,7 @@ public void Go()
 	this.GetTemplate(projectTemplate).SetProperty("UTGuid", utGuid);
 	this.GetTemplate(projectTemplate).SetProperty("WSGuid", wsGuid);
 	this.GetTemplate(projectTemplate).SetProperty("WebLibGuid", webLibGuid);
+	this.GetTemplate(projectTemplate).SetProperty("WebsiteGuid", websiteGuid);
 	this.GetTemplate(projectTemplate).SetProperty("ComponentsGuid", componentGuid);
 	this.GetTemplate(projectTemplate).SetProperty("ComponentPattern", ComponentPattern);
 
@@ -2201,6 +2281,7 @@ public void Go()
 	this.GetTemplate(projectTemplate).SetProperty("DALSqlNameSpace", DALSqlNameSpace);
 	this.GetTemplate(projectTemplate).SetProperty("DALWSNameSpace", DALWSNameSpace);
 	this.GetTemplate(projectTemplate).SetProperty("WebLibNameSpace", WebLibNameSpace);
+	this.GetTemplate(projectTemplate).SetProperty("WebsiteNameSpace", WebsiteNameSpace);
 	this.GetTemplate(projectTemplate).SetProperty("UTNameSpace", UTNameSpace);
 	this.GetTemplate(projectTemplate).SetProperty("WSNameSpace", WSNameSpace);
 	
@@ -2221,6 +2302,7 @@ public void Go()
 		this.GetTemplate(projectTemplate).SetProperty("IncludeWebservice", false);
 		this.GetTemplate(projectTemplate).SetProperty("IncludeWebserviceClient", false);
 		this.GetTemplate(projectTemplate).SetProperty("IncludeWebLibrary", false);
+		this.GetTemplate(projectTemplate).SetProperty("IncludeWebsite", false);
 		this.GetTemplate(projectTemplate).SetProperty("IncludeComponents", true);
 		this.GetTemplate(projectTemplate).SetProperty("IncludeUnitTest", MoM.Templates.UnitTestStyle.None);
 		this.GetTemplate(projectTemplate).SetProperty("IncludeWCFDataAttributes", false);
@@ -2241,6 +2323,7 @@ public void Go()
 		this.GetTemplate(projectTemplate).SetProperty("IncludeWebservice", false);
 		this.GetTemplate(projectTemplate).SetProperty("IncludeWebserviceClient", false);
 		this.GetTemplate(projectTemplate).SetProperty("IncludeWebLibrary", false);
+		this.GetTemplate(projectTemplate).SetProperty("IncludeWebsite", false);
 		this.GetTemplate(projectTemplate).SetProperty("IncludeComponents", false);
 		this.GetTemplate(projectTemplate).SetProperty("IncludeUnitTest", MoM.Templates.UnitTestStyle.None);
 		this.GetTemplate(projectTemplate).SetProperty("IncludeWCFDataAttributes", IncludeWCFDataAttributes);
@@ -2266,6 +2349,7 @@ public void Go()
 		this.GetTemplate(projectTemplate).SetProperty("IncludeWebservice", false);
 		this.GetTemplate(projectTemplate).SetProperty("IncludeWebserviceClient", false);
 		this.GetTemplate(projectTemplate).SetProperty("IncludeWebLibrary", false);
+		this.GetTemplate(projectTemplate).SetProperty("IncludeWebsite", false);
 		this.GetTemplate(projectTemplate).SetProperty("IncludeComponents", false);
 		this.GetTemplate(projectTemplate).SetProperty("IncludeUnitTest", MoM.Templates.UnitTestStyle.None);			
 		this.GetTemplate(projectTemplate).SetProperty("IncludeWCFDataAttributes", false);
@@ -2284,6 +2368,7 @@ public void Go()
 		this.GetTemplate(projectTemplate).SetProperty("IncludeWebserviceClient", false);
 		this.GetTemplate(projectTemplate).SetProperty("IncludeComponents", false);
 		this.GetTemplate(projectTemplate).SetProperty("IncludeWebLibrary", false);
+		this.GetTemplate(projectTemplate).SetProperty("IncludeWebsite", false);
 		this.GetTemplate(projectTemplate).SetProperty("IncludeUnitTest", MoM.Templates.UnitTestStyle.None);			
 		this.GetTemplate(projectTemplate).SetProperty("IncludeWCFDataAttributes", false);
 		this.GetTemplate(projectTemplate).SetProperty("IncludeDesignTimeSupport", false);
@@ -2308,6 +2393,7 @@ public void Go()
 				this.GetTemplate(projectTemplate).SetProperty("IncludeWebserviceClient", false);
 				this.GetTemplate(projectTemplate).SetProperty("IncludeComponents", false);
 				this.GetTemplate(projectTemplate).SetProperty("IncludeWebLibrary", false);
+				this.GetTemplate(projectTemplate).SetProperty("IncludeWebsite", false);
 				this.GetTemplate(projectTemplate).SetProperty("IncludeUnitTest", MoM.Templates.UnitTestStyle.None);			
 				this.GetTemplate(projectTemplate).SetProperty("IncludeWCFDataAttributes", false);
 				this.GetTemplate(projectTemplate).SetProperty("IncludeDesignTimeSupport", false);
@@ -2326,6 +2412,7 @@ public void Go()
 			this.GetTemplate(projectTemplate).SetProperty("IncludeWebserviceClient", true);
 			this.GetTemplate(projectTemplate).SetProperty("IncludeComponents", false);
 			this.GetTemplate(projectTemplate).SetProperty("IncludeWebLibrary", false);
+			this.GetTemplate(projectTemplate).SetProperty("IncludeWebsite", false);
 			this.GetTemplate(projectTemplate).SetProperty("IncludeUnitTest", MoM.Templates.UnitTestStyle.None);			
 			this.GetTemplate(projectTemplate).SetProperty("IncludeWCFDataAttributes", false);
 			this.GetTemplate(projectTemplate).SetProperty("IncludeDesignTimeSupport", false);
@@ -2347,11 +2434,32 @@ public void Go()
 		this.GetTemplate(projectTemplate).SetProperty("IncludeWebserviceClient", false);
 		this.GetTemplate(projectTemplate).SetProperty("IncludeComponents", false);
 		this.GetTemplate(projectTemplate).SetProperty("IncludeWebLibrary", true);
+		this.GetTemplate(projectTemplate).SetProperty("IncludeWebsite", false);
 		this.GetTemplate(projectTemplate).SetProperty("IncludeUnitTest", MoM.Templates.UnitTestStyle.None);
 		this.GetTemplate(projectTemplate).SetProperty("IncludeWCFDataAttributes", false);
 		this.GetTemplate(projectTemplate).SetProperty("IncludeDesignTimeSupport", false);
 
 		this.RenderToFile(projectTemplate, rootPathWebLib + "\\" + WebLibNameSpace + ".csproj", true);
+	}
+	
+	// Web Application Project file
+	if ( GenerateWebsite && UseWebAppProject )
+	{
+		AddFileNode(commonNode, WebsiteNameSpace + ".csproj");
+
+		this.GetTemplate(projectTemplate).SetProperty("IncludeBll", false);
+		this.GetTemplate(projectTemplate).SetProperty("IncludeDALBase", false);	
+		this.GetTemplate(projectTemplate).SetProperty("IncludeSqlClient", false);			
+		this.GetTemplate(projectTemplate).SetProperty("IncludeWebservice", false);
+		this.GetTemplate(projectTemplate).SetProperty("IncludeWebserviceClient", false);
+		this.GetTemplate(projectTemplate).SetProperty("IncludeComponents", false);
+		this.GetTemplate(projectTemplate).SetProperty("IncludeWebLibrary", false);
+		this.GetTemplate(projectTemplate).SetProperty("IncludeWebsite", true);
+		this.GetTemplate(projectTemplate).SetProperty("IncludeUnitTest", MoM.Templates.UnitTestStyle.None);
+		this.GetTemplate(projectTemplate).SetProperty("IncludeWCFDataAttributes", false);
+		this.GetTemplate(projectTemplate).SetProperty("IncludeDesignTimeSupport", false);
+
+		this.RenderToFile(projectTemplate, rootPathWebsite + "\\" + WebsiteNameSpace + ".csproj", true);
 	}
 	
 	// Unit tests only project file
@@ -2365,6 +2473,7 @@ public void Go()
 		this.GetTemplate(projectTemplate).SetProperty("IncludeWebservice", false);
 		this.GetTemplate(projectTemplate).SetProperty("IncludeWebserviceClient", false);
 		this.GetTemplate(projectTemplate).SetProperty("IncludeWebLibrary", false);
+		this.GetTemplate(projectTemplate).SetProperty("IncludeWebsite", false);
 		this.GetTemplate(projectTemplate).SetProperty("IncludeComponents", false);
 		this.GetTemplate(projectTemplate).SetProperty("IncludeUnitTest", IncludeUnitTest);
 		this.GetTemplate(projectTemplate).SetProperty("IncludeWCFDataAttributes", false);

@@ -38,6 +38,7 @@ namespace MoM.Templates
 	/// <summary>
 	/// Common code-behind class used to simplify SQL Server based CodeSmith templates
 	/// </summary>
+	[DefaultProperty("ChooseSourceDatabase")]
 	public class CommonSqlCode : CodeTemplate
 	{
 		
