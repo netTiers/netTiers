@@ -50,7 +50,8 @@
 <%@ Property Name="SupportsCodesmithBuildTask" Type="System.Boolean" Category="Option" Description="" Default="false" %>
 
 <%@ Property Name="CustomCodeFolderName" Type="System.String" Category="General" Description="the name of a folder that can contains custom class to dynamically add to the entity project." Default="App_Code" %>
-
+<%@ Property Name="IncludeAtlasLibrary" Type="System.Boolean" Default="false" Category="06b. Website - Advanced" Description="Indicates whether to include a reference to the Atlas component library." %>
+<%@ Property Name="IncludeAtlasToolkit" Type="System.Boolean" Default="false" Category="06b. Website - Advanced" Description="Indicates whether to include a reference to the Atlas Control Toolkit. This property is only taken into account when IncludeAtlasLibrary is true." %>
 
 <%@ Property Name="WebServiceUrl" Type="System.String" Category="WebService" Description="The webservice base URL. The asmx filename will be added programmatically." Default="http://localhost/Services/" %>
 <%@ Property Name="rootPathWS" Type="System.String" Category="WebService" Description="The folder where the webservice code is generated." Default="" %>
@@ -141,7 +142,7 @@
     <FileUpgradeFlags></FileUpgradeFlags>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
-    <OutputPath>bin\Debug\</OutputPath>
+    <OutputPath>bin\<% if (!IncludeWebsite) { %>Debug\<% } %></OutputPath>
     <AllowUnsafeBlocks>false</AllowUnsafeBlocks>
     <BaseAddress>285212672</BaseAddress>
     <CheckForOverflowUnderflow>false</CheckForOverflowUnderflow>
@@ -165,7 +166,7 @@
 <% } %>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
-    <OutputPath>bin\Release\</OutputPath>
+    <OutputPath>bin\<% if (!IncludeWebsite) { %>Release\<% } %></OutputPath>
     <AllowUnsafeBlocks>false</AllowUnsafeBlocks>
     <BaseAddress>285212672</BaseAddress>
     <CheckForOverflowUnderflow>false</CheckForOverflowUnderflow>
@@ -186,7 +187,7 @@
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'GenerateDebug|AnyCPU' ">
-    <OutputPath>bin\Debug\</OutputPath>
+    <OutputPath>bin\<% if (!IncludeWebsite) { %>Debug\<% } %></OutputPath>
     <AllowUnsafeBlocks>false</AllowUnsafeBlocks>
     <BaseAddress>285212672</BaseAddress>
     <CheckForOverflowUnderflow>false</CheckForOverflowUnderflow>
@@ -284,6 +285,18 @@
       <HintPath>..\References\Microsoft.Practices.ObjectBuilder.dll</HintPath>
     </Reference>
      <%}%>
+	<% if ( IncludeWebsite && IncludeAtlasLibrary ) { %>
+    <Reference Include="Microsoft.Web.Atlas">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\References\Microsoft.Web.Atlas.dll</HintPath>
+    </Reference>
+	<% } %>
+	<% if ( IncludeWebsite && IncludeAtlasToolkit ) { %>
+    <Reference Include="AtlasControlToolkit">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\References\AtlasControlToolkit.dll</HintPath>
+    </Reference>
+	<% } %>
      
      <% if (!IncludeBll) {%>	   
 	<ProjectReference Include="..\<%=BLLNameSpace%>\<%=BLLNameSpace%>.csproj">

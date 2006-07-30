@@ -382,9 +382,25 @@ namespace <%= WebNameSpace %>.Data
 					<% } %>
 					// execute deep load method
 					<%= providerName %>.DeepLoad(<%= TransactionManager %>GetCurrentEntity(), EnableRecursiveDeepLoad);
+					// set loaded flag
 					IsDeepLoaded = true;
 				}
 			}
+		}
+
+		/// <summary>
+		/// Performs a DeepLoad operation on the specified entity collection.
+		/// </summary>
+		/// <param name="entityList"></param>
+		/// <param name="properties"></param>
+		internal override void DeepLoad(TList<<%= className %>> entityList, ProviderDataSourceDeepLoadList properties)
+		{
+			<% if ( IsServiceLayer ) { %>
+			// init transaction manager
+			GetTransactionManager();
+			<% } %>
+			// execute deep load method
+			<%= providerName %>.DeepLoad(<%= TransactionManager %>entityList, properties.Recursive, properties.Method, properties.GetTypes());
 		}
 
 		<% } // end if ( IncludeRelations && IncludeGetListByFK ) %>
@@ -503,6 +519,19 @@ namespace <%= WebNameSpace %>.Data
 	}
 	
 	#endregion <%= className %>Filter
+
+	#region <%= className %>Property
+	
+	/// <summary>
+	/// A strongly-typed instance of the <see cref="ChildEntityProperty&lt;<%= className %>ChildEntityTypes&gt;"/> class
+	/// that is used exclusively with a <see cref="<%= className %>"/> object.
+	/// </summary>
+	[CLSCompliant(true)]
+	public class <%= className %>Property : ChildEntityProperty<<%= className %>ChildEntityTypes>
+	{
+	}
+	
+	#endregion <%= className %>Property
 }
 
 <script runat="template">

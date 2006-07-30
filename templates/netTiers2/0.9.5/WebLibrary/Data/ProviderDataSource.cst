@@ -90,6 +90,40 @@ namespace <%= WebNameSpace %>.Data
 			set { ProviderView.Provider = value; }
 		}
 
+		/// <summary>
+		/// Gets or sets a value indicating whether to perform a DeepLoad operation
+		/// after a Select operation.
+		/// </summary>
+		public bool EnableDeepLoad
+		{
+			get
+			{
+				bool isEnabled = false;
+				Object enable = ViewState["EnableDeepLoad"];
+				if ( enable != null ) isEnabled = (bool) enable;
+				return isEnabled;
+			}
+			set { ViewState["EnableDeepLoad"] = value; }
+		}
+
+		/// <summary>
+		/// Gets the DeepLoadProperties property.
+		/// </summary>
+		[PersistenceMode(PersistenceMode.InnerProperty)]
+		public ProviderDataSourceDeepLoadList DeepLoadProperties
+		{
+			get
+			{
+				ProviderDataSourceDeepLoadList types = ViewState["DeepLoadProperties"] as ProviderDataSourceDeepLoadList;
+				if ( types == null )
+				{
+					types = new ProviderDataSourceDeepLoadList();
+					ViewState["DeepLoadProperties"] = types;
+				}
+				return types;
+			}
+		}
+
 		#endregion Properties
 
 		#region Methods
@@ -107,6 +141,28 @@ namespace <%= WebNameSpace %>.Data
 		}
 
 		#endregion Methods
+
+		#region Events
+
+		/// <summary>
+		/// Occurs after the Selected event has fired.
+		/// </summary>
+		public event ProviderDataSourceDeepLoadEventHandler DeepLoading
+		{
+			add { ProviderView.DeepLoading += value; }
+			remove { ProviderView.DeepLoaded += value; }
+		}
+
+		/// <summary>
+		/// Occurs after the DeepLoading event has fired.
+		/// </summary>
+		public event ProviderDataSourceDeepLoadEventHandler DeepLoaded
+		{
+			add { ProviderView.DeepLoaded += value; }
+			remove { ProviderView.DeepLoaded += value; }
+		}
+
+		#endregion
 	}
 
 	/// <summary>
@@ -151,7 +207,74 @@ namespace <%= WebNameSpace %>.Data
 			set { _provider = value; }
 		}
 
+		/// <summary>
+		/// Gets a strongly-typed reference to the Owner property.
+		/// </summary>
+		internal ProviderDataSource<Entity, EntityKey> ProviderOwner
+		{
+			get { return Owner as ProviderDataSource<Entity, EntityKey>; }
+		}
+
+		/// <summary>
+		/// Gets or sets a value indicating whether to perform a DeepLoad operation
+		/// after a Select operation.
+		/// </summary>
+		internal bool EnableDeepLoad
+		{
+			get { return ProviderOwner.EnableDeepLoad; }
+			set { ProviderOwner.EnableDeepLoad = value; }
+		}
+
+		/// <summary>
+		/// Gets the DeepLoadProperties property.
+		/// </summary>
+		internal ProviderDataSourceDeepLoadList DeepLoadProperties
+		{
+			get { return ProviderOwner.DeepLoadProperties; }
+		}
+
 		#endregion Properties
+
+		#region DeepLoad Methods
+
+		/// <summary>
+		/// Performs a DeepLoad operation on the specified entity collection.
+		/// </summary>
+		/// <param name="entityList"></param>
+		internal virtual void ExecuteDeepLoad(TList<Entity> entityList)
+		{
+			ProviderDataSourceDeepLoadEventArgs args1 = new ProviderDataSourceDeepLoadEventArgs(entityList, DeepLoadProperties);
+			OnDeepLoading(args1);
+
+			if ( args1.Cancel )
+			{
+				return;
+			}
+
+			try
+			{
+				DeepLoad(entityList, args1.DeepLoadProperties);
+
+				ProviderDataSourceDeepLoadEventArgs args2 = new ProviderDataSourceDeepLoadEventArgs(entityList, args1.DeepLoadProperties);
+				OnDeepLoaded(args2);
+			}
+			catch ( Exception )
+			{
+				// TODO: do we need to handle the exception?
+				throw;
+			}
+		}
+
+		/// <summary>
+		/// Performs a DeepLoad operation on the specified entity collection.
+		/// </summary>
+		/// <param name="entityList"></param>
+		/// <param name="properties"></param>
+		internal virtual void DeepLoad(TList<Entity> entityList, ProviderDataSourceDeepLoadList properties)
+		{
+		}
+
+		#endregion DeepLoad Methods
 
 		<% if ( IncludeInsert ) { %>
 		#region Insert Methods
@@ -245,5 +368,205 @@ namespace <%= WebNameSpace %>.Data
 		}
 
 		#endregion Helper Methods
+
+		#region Events
+
+		/// <summary>
+		/// Occurs after the Selected event has fired.
+		/// </summary>
+		internal event ProviderDataSourceDeepLoadEventHandler DeepLoading;
+
+		/// <summary>
+		/// Occurs after the DeepLoading event has fired.
+		/// </summary>
+		internal event ProviderDataSourceDeepLoadEventHandler DeepLoaded;
+
+		/// <summary>
+		/// Raises the Selected event.
+		/// </summary>
+		/// <param name="e">An instance of ObjectDataSourceStatusEventArgs containing the event data.</param>
+		internal override void OnSelected(ObjectDataSourceStatusEventArgs e)
+		{
+			base.OnSelected(e);
+
+			if ( EnableDeepLoad && e.ReturnValue != null )
+			{
+				ExecuteDeepLoad(e.ReturnValue as TList<Entity>);
+			}
+		}
+
+		/// <summary>
+		/// Raises the DeepLoading event.
+		/// </summary>
+		/// <param name="e">An instance of ProviderDataSourceDeepLoadEventArgs containing the event data.</param>
+		internal virtual void OnDeepLoading(ProviderDataSourceDeepLoadEventArgs e)
+		{
+			if ( DeepLoading != null )
+			{
+				DeepLoading(Owner, e);
+			}
+		}
+
+		/// <summary>
+		/// Raises the DeepLoaded event.
+		/// </summary>
+		/// <param name="e">An instance of ProviderDataSourceDeepLoadEventArgs containing the event data.</param>
+		internal virtual void OnDeepLoaded(ProviderDataSourceDeepLoadEventArgs e)
+		{
+			if ( DeepLoaded != null )
+			{
+				DeepLoaded(Owner, e);
+			}
+		}
+
+		#endregion Events
 	}
+
+	#region ProviderDataSourceDeepLoadList
+
+	/// <summary>
+	/// Groups DeepLoad information for the ProviderDataSource control.
+	/// </summary>
+	[ParseChildren(true), PersistChildren(false)]
+	public class ProviderDataSourceDeepLoadList
+	{
+		/// <summary>
+		/// The Method member variable.
+		/// </summary>
+		private DeepLoadType method = DeepLoadType.IncludeChildren;
+
+		/// <summary>
+		/// Gets or sets the Method property.
+		/// </summary>
+		public DeepLoadType Method
+		{
+			get { return method; }
+			set { method = value; }
+		}
+
+		/// <summary>
+		/// The Recursive member variable.
+		/// </summary>
+		private bool recursive = false;
+
+		/// <summary>
+		/// Gets or sets the Recursive property.
+		/// </summary>
+		public bool Recursive
+		{
+			get { return recursive; }
+			set { recursive = value; }
+		}
+
+		/// <summary>
+		/// The Types member variable.
+		/// </summary>
+		private IList types;
+
+		/// <summary>
+		/// Gets or sets the Types property.
+		/// </summary>
+		[PersistenceMode(PersistenceMode.InnerProperty)]
+		public IList Types
+		{
+			get
+			{
+				if ( types == null )
+				{
+					types = new ArrayList();
+				}
+				
+				return types;
+			}
+		}
+
+		/// <summary>
+		/// Gets an array of <see cref="System.Type"/> objects represented
+		/// by the current Types collection.
+		/// </summary>
+		/// <returns></returns>
+		public Type[] GetTypes()
+		{
+			Type[] childTypes = Type.EmptyTypes;
+
+			if ( types != null )
+			{
+				List<Type> list = new List<Type>();
+
+				foreach ( IChildEntityProperty property in types )
+				{
+					list.Add(ChildEntityTypeAttribute.GetType(property.ChildEntityType));
+				}
+
+				childTypes = list.ToArray();
+			}
+
+			return childTypes;
+		}
+	}
+
+	#endregion ProviderDataSourceDeepLoadList
+
+	#region ProviderDataSourceDeepLoadEventHandler
+
+	/// <summary>
+	/// Represents the methods that will handle the DeepLoading and DeepLoaded events.
+	/// </summary>
+	/// <param name="sender"></param>
+	/// <param name="e"></param>
+	public delegate void ProviderDataSourceDeepLoadEventHandler(object sender, ProviderDataSourceDeepLoadEventArgs e);
+
+	/// <summary>
+	/// Provides data for the DeepLoading and DeepLoaded events.
+	/// </summary>
+	public class ProviderDataSourceDeepLoadEventArgs : CancelEventArgs
+	{
+		/// <summary>
+		/// Initializes a new instance of the ProviderDataSourceDeepLoadEventArgs class.
+		/// </summary>
+		/// <param name="entityList"></param>
+		public ProviderDataSourceDeepLoadEventArgs(IList entityList)
+		{
+			this.entityList = entityList;
+		}
+
+		/// <summary>
+		/// Initializes a new instance of the ProviderDataSourceDeepLoadEventArgs class.
+		/// </summary>
+		/// <param name="entityList"></param>
+		/// <param name="properties"></param>
+		public ProviderDataSourceDeepLoadEventArgs(IList entityList, ProviderDataSourceDeepLoadList properties)
+			: this(entityList)
+		{
+			this.deepLoadProperties = properties;
+		}
+
+		/// <summary>
+		/// The EntityList member variable.
+		/// </summary>
+		private IList entityList;
+
+		/// <summary>
+		/// Gets the EntityList property.
+		/// </summary>
+		public IList EntityList
+		{
+			get { return entityList; }
+		}
+
+		/// <summary>
+		/// The DeepLoadProperties member variable.
+		/// </summary>
+		private ProviderDataSourceDeepLoadList deepLoadProperties;
+
+		/// <summary>
+		/// Gets the DeepLoadProperties property.
+		/// </summary>
+		public ProviderDataSourceDeepLoadList DeepLoadProperties
+		{
+			get { return deepLoadProperties; }
+		}
+	}
+
+	#endregion ProviderDataSourceDeepLoadEventHandler
 }

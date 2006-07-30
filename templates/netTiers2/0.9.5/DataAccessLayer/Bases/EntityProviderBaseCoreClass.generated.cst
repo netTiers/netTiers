@@ -1271,7 +1271,74 @@ namespace <%= DALNameSpace %>.Bases
 		{
 			get	{ return entityType; }
 		}
+
+		/// <summary>
+		/// Gets the underlying system type for the specified enumeration value.
+		/// </summary>
+		/// <param name="e"></param>
+		/// <returns></returns>
+		public static Type GetType(Enum e)
+		{
+			Type propertyType = null;
+			Type enumType = e.GetType();
+			System.Reflection.MemberInfo[] members = enumType.GetMember(e.ToString());
+
+			if ( members != null && members.Length == 1 )
+			{
+				object[] attrs = members[0].GetCustomAttributes(typeof(ChildEntityTypeAttribute), false);
+				if ( attrs.Length == 1 )
+				{
+					propertyType = ((ChildEntityTypeAttribute) attrs[0]).EntityType;
+				}
+			}
+
+			return propertyType;
+		}
 	}
 	
 	#endregion ChildEntityTypeAttribute
+
+	#region ChildEntityProperty<ChildEntityTypeEnum>
+
+	/// <summary>
+	/// Provides a common property used to access the child entity type enumeration value.
+	/// </summary>
+	public interface IChildEntityProperty
+	{
+		/// <summary>
+		/// Gets the value of the ChildEntityType property.
+		/// </summary>
+		Enum ChildEntityType { get; }
+	}
+	
+	/// <summary>
+	/// A generic wrapper for the generated ChildEntityTypes enumerations.
+	/// </summary>
+	/// <typeparam name="ChildEntityTypesEnum"></typeparam>
+	public class ChildEntityProperty<ChildEntityTypesEnum> : IChildEntityProperty
+	{
+		/// <summary>
+		/// The Name member variable.
+		/// </summary>
+		private ChildEntityTypesEnum name;
+
+		/// <summary>
+		/// Gets or sets the Name property.
+		/// </summary>
+		public ChildEntityTypesEnum Name
+		{
+			get { return name; }
+			set { name = value; }
+		}
+
+		/// <summary>
+		/// Gets the value of the ChildEntityType property.
+		/// </summary>
+		public Enum ChildEntityType
+		{
+			get { return Name as Enum; }
+		}
+	}
+
+	#endregion ChildEntityProperty<ChildEntityTypeEnum>
 }
