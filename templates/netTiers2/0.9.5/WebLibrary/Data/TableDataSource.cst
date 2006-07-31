@@ -189,8 +189,17 @@ namespace <%= WebNameSpace %>.Data
 		/// </summary>
 		public <%= className %>SelectMethod SelectMethod
 		{
-			get { return <%= className %>View.SelectMethod; }
-			set { <%= className %>View.SelectMethod = value; }
+			get
+			{
+				<%= className %>SelectMethod selectMethod = <% if ( IncludeGetList ) { %><%= className %>SelectMethod.GetAll<% } else { %>default(<%= className %>SelectMethod)<% } %>;
+				Object method = ViewState["SelectMethod"];
+				if ( method != null )
+				{
+					selectMethod = (<%= className %>SelectMethod) method;
+				}
+				return selectMethod;
+			}
+			set { ViewState["SelectMethod"] = value; }
 		}
 
 		#endregion Properties
@@ -229,8 +238,6 @@ namespace <%= WebNameSpace %>.Data
 	{
 		#region Declarations
 
-		private <%= className %>SelectMethod _selectMethod;
-
 		#endregion Declarations
 		
 		#region Constructors
@@ -250,13 +257,21 @@ namespace <%= WebNameSpace %>.Data
 		#region Properties
 
 		/// <summary>
+		/// Gets a strongly-typed reference to the Owner property.
+		/// </summary>
+		internal <%= className %>DataSource <%= className %>Owner
+		{
+			get { return Owner as <%= className %>DataSource; }
+		}
+
+		/// <summary>
 		/// Gets or sets the name of the method or function that
 		/// the DataSource control invokes to retrieve data.
 		/// </summary>
 		internal <%= className %>SelectMethod SelectMethod
 		{
-			get { return _selectMethod; }
-			set { _selectMethod = value; }
+			get { return <%= className %>Owner.SelectMethod; }
+			set { <%= className %>Owner.SelectMethod = value; }
 		}
 
 		/// <summary>

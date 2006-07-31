@@ -74,8 +74,17 @@ namespace <%= WebNameSpace %>.Data
 		/// </summary>
 		public ReadOnlyDataSourceSelectMethod SelectMethod
 		{
-			get { return ReadOnlyView.SelectMethod; }
-			set { ReadOnlyView.SelectMethod = value; }
+			get
+			{
+				ReadOnlyDataSourceSelectMethod selectMethod = <% if ( IncludeGetList ) { %>ReadOnlyDataSourceSelectMethod.GetAll<% } else { %>default(ReadOnlyDataSourceSelectMethod)<% } %>;
+				Object method = ViewState["SelectMethod"];
+				if ( method != null )
+				{
+					selectMethod = (ReadOnlyDataSourceSelectMethod) method;
+				}
+				return selectMethod;
+			}
+			set { ViewState["SelectMethod"] = value; }
 		}
 
 		/// <summary>
@@ -124,7 +133,6 @@ namespace <%= WebNameSpace %>.Data
 		#region Declarations
 
 		private IEntityViewProvider<Entity> _provider;
-		private ReadOnlyDataSourceSelectMethod _selectMethod;
 
 		#endregion Declarations
 
@@ -154,13 +162,21 @@ namespace <%= WebNameSpace %>.Data
 		}
 
 		/// <summary>
+		/// Gets a strongly-typed reference to the Owner property.
+		/// </summary>
+		internal ReadOnlyDataSource<Entity> ProviderOwner
+		{
+			get { return Owner as ReadOnlyDataSource<Entity>; }
+		}
+
+		/// <summary>
 		/// Gets or sets the name of the method or function that
 		/// the ReadOnlyDataSource control invokes to retrieve data.
 		/// </summary>
 		internal ReadOnlyDataSourceSelectMethod SelectMethod
 		{
-			get { return _selectMethod; }
-			set { _selectMethod = value; }
+			get { return ProviderOwner.SelectMethod; }
+			set { ProviderOwner.SelectMethod = value; }
 		}
 
 		/// <summary>
