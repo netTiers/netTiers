@@ -721,9 +721,9 @@ namespace <%= DALNameSpace %>.Bases
 				if (childTypes[i] == null) continue;
 				
 				if (!childTypes[i].IsGenericType)
-					innerList.Add(childTypes[i].Name + entity.EntityTrackingKey);
+					innerList.Add(childTypes[i].Name);
 				else 
-					innerList.Add(string.Format("List<{0}>{1}" , childTypes[i].GetGenericArguments()[0].Name, entity.EntityTrackingKey));
+					innerList.Add(string.Format("List<{0}>" , childTypes[i].GetGenericArguments()[0].Name));
 
 			}
 			
@@ -801,6 +801,8 @@ namespace <%= DALNameSpace %>.Bases
 			foreach ( Entity entity in entities )
 			{
 				DeepLoad(mgr, entity, deep, deepLoadType, childTypes, innerList);
+				// remove the loaded keys for this entity
+				innerList.Keys.Remove(entity.EntityTrackingKey);
 			}
 
 			return;
@@ -1111,20 +1113,19 @@ namespace <%= DALNameSpace %>.Bases
         {
 			if ( innerList != null )
 			{
-			    key += entity.EntityTrackingKey;
 				if ( deepLoadType == DeepLoadType.ExcludeChildren )
 				{
-					if ( !innerList.Contains(key) && !innerList.HasEntityProperty(entity, property) )
+					if ( !innerList.Contains(key) && !innerList.HasProperty(entity, key, property) )
 					{
-						innerList.AddEntityProperty(entity, property);
+						innerList.AddProperty(entity, key, property);
 						return true;
 					}
 				}
 				else if ( deepLoadType == DeepLoadType.IncludeChildren )
 				{
-					if ( innerList.Contains(key) && !innerList.HasEntityProperty(entity, property) )
+					if ( innerList.Contains(key) && !innerList.HasProperty(entity, key, property) )
 					{
-						innerList.AddEntityProperty(entity, property);
+						innerList.AddProperty(entity, key, property);
 						return true;
 					}
 				}
@@ -1140,20 +1141,19 @@ namespace <%= DALNameSpace %>.Bases
         {
 			if ( innerList != null )
 			{
-			    key += entity.EntityTrackingKey;   
 				if ( deepSaveType == DeepSaveType.ExcludeChildren )
 				{
-					if ( !innerList.Contains(key) && !innerList.HasEntityProperty(entity, property) )
+					if ( !innerList.Contains(key) && !innerList.HasProperty(entity, key, property) )
 					{
-						innerList.AddEntityProperty(entity, property);
+						innerList.AddProperty(entity, key, property);
 						return true;
 					}
 				}
 				else if ( deepSaveType == DeepSaveType.IncludeChildren )
 				{
-					if ( innerList.Contains(key) && !innerList.HasEntityProperty(entity, property) )
+					if ( innerList.Contains(key) && innerList.HasProperty(entity, key, property) )
 					{
-						innerList.AddEntityProperty(entity, property);
+						innerList.AddProperty(entity, key, property);
 						return true;
 					}
 				}
@@ -1181,6 +1181,24 @@ namespace <%= DALNameSpace %>.Bases
 		{
 		}
 
+		private Dictionary<string, StringCollection> keys;
+
+		/// <summary>
+		/// Gets a collection of key names.
+		/// </summary>
+		public Dictionary<string, StringCollection> Keys
+		{
+			get
+			{
+				if ( keys == null )
+				{
+					keys = new Dictionary<string, StringCollection>();
+				}
+
+				return keys;
+			}
+		}
+
 		private Dictionary<string, StringCollection> properties;
 		
 		/// <summary>
@@ -1200,11 +1218,29 @@ namespace <%= DALNameSpace %>.Bases
 		}
 
 		/// <summary>
+		/// Gets a collection of key names for the specified entity.
+		/// </summary>
+		/// <param name="entity"></param>
+		/// <returns></returns>
+		public StringCollection GetKeys(IEntity entity)
+		{
+			if ( entity == null ) return null;
+			string key = entity.EntityTrackingKey;
+
+			if ( !Keys.ContainsKey(key) )
+			{
+				Keys[key] = new StringCollection();
+			}
+
+			return Keys[key];
+		}
+
+		/// <summary>
 		/// Gets a collection of property names for the specified entity.
 		/// </summary>
 		/// <param name="entity"></param>
 		/// <returns></returns>
-		public StringCollection GetEntityProperties(IEntity entity)
+		public StringCollection GetProperties(IEntity entity)
 		{
 			if ( entity == null ) return null;
 			string key = entity.EntityTrackingKey;
@@ -1222,23 +1258,45 @@ namespace <%= DALNameSpace %>.Bases
 		/// has been added to the collection of properties.
 		/// </summary>
 		/// <param name="entity"></param>
+		/// <param name="key"></param>
 		/// <param name="property"></param>
 		/// <returns></returns>
-		public bool HasEntityProperty(IEntity entity, String property)
+		public bool HasProperty(IEntity entity, String key, String property)
 		{
 			if ( entity == null ) return false;
-			return GetEntityProperties(entity).Contains(property);
+			String trackingKey = entity.EntityTrackingKey;
+
+			// loop through collection of loaded keys
+			foreach ( String entityKey in Keys.Keys )
+			{
+				// don't look at the keys loaded for the current entity
+				if ( !String.Equals(trackingKey, entityKey) )
+				{
+					// if the same key has been entered for another entity,
+					// we will return true so that it is not processed
+					if ( Keys[entityKey].Contains(key) )
+					{
+						return true;
+					}
+				}
+			}
+
+			// if the same key has not been entered for another entity,
+			// check if the property has been entered for the current entity
+			return GetProperties(entity).Contains(property);
 		}
 
 		/// <summary>
 		/// Adds the specified entity property to the collection of properties.
 		/// </summary>
 		/// <param name="entity"></param>
+		/// <param name="key"></param>
 		/// <param name="property"></param>
-		public void AddEntityProperty(IEntity entity, String property)
+		public void AddProperty(IEntity entity, String key, String property)
 		{
 			if ( entity == null ) return;
-			GetEntityProperties(entity).Add(property);
+			GetProperties(entity).Add(property);
+			GetKeys(entity).Add(key);
 		}
 	}
 	
