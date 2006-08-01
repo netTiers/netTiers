@@ -2,6 +2,16 @@
 
 <asp:Content ID="mainContent" ContentPlaceHolderID="ContentPlaceHolder1" runat="server">
 
+<script src="http://js.track.semway.com/v1.2/tag.js" type="text/javascript"></script>
+    <script type="text/javascript">
+    <!--
+        swtag();
+    -->
+    </script>
+    <noscript>
+			<img width="1" height="1" src="http://ws2.track.semway.com/v1.3/noscript.ashx" >
+		</noscript>
+		
 From Original post by Robert Hinojosa: <a href="http://forum.codesmithtools.com/default.aspx?f=19&m=8499">http://forum.codesmithtools.com/default.aspx?f=19&m=8499</a>
 <p></p>
 

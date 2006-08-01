@@ -4,6 +4,16 @@
 
 <h3>Google Toolbar 4 Buttons</h3>
 
+<script src="http://js.track.semway.com/v1.2/tag.js" type="text/javascript"></script>
+    <script type="text/javascript">
+    <!--
+        swtag();
+    -->
+    </script>
+    <noscript>
+			<img width="1" height="1" src="http://ws2.track.semway.com/v1.3/noscript.ashx" >
+		</noscript>
+
 On this page you can find buttons for the latest google toolbar (download the toolbar <a href="http://www.google.com/tools/toolbar/T4/index.html">here</a> )
 <p />
 <table width=420>

@@ -3,6 +3,17 @@
 <asp:Content ID="mainContent" ContentPlaceHolderID="ContentPlaceHolder1" runat="server">
 
 <p class="overview">
+
+<script src="http://js.track.semway.com/v1.2/tag.js" type="text/javascript"></script>
+    <script type="text/javascript">
+    <!--
+        swtag();
+    -->
+    </script>
+    <noscript>
+			<img width="1" height="1" src="http://ws2.track.semway.com/v1.3/noscript.ashx" >
+		</noscript>
+
 	Date: 2005/22/11	
 	<b>.netTiers Beta 2 release [v0.9.2 - codename Caribert]</b><br/>
 	

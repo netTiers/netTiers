@@ -3,6 +3,10 @@
 <asp:Content ID="mainContent" ContentPlaceHolderID="ContentPlaceHolder1" runat="server">
 
 
+	
+	<iframe src="semwaytag.htm?swtsid=-83510" frameborder="0" width ="1" height="1"></iframe>
+	
+
 	<p class="overview">
 	 	   	.NetTiers are CodeSmith templates for object-relational mapping that takes an existing SQLServer database and automatically generates
 	     a personnalized Data Tiers application block to use in your .Net applications.  
@@ -78,6 +82,5 @@
 		</ul>
 	</div>
 	
-	<iframe src="semwaytag.htm?swtsid=74907" frameborder="0" width ="1" height="1" ></iframe>
 					
 </asp:Content>

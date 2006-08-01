@@ -1,6 +1,17 @@
 <%@ Page MasterPageFile="~/MasterPage.master" %>
 
 <asp:Content ID="mainContent" ContentPlaceHolderID="ContentPlaceHolder1" runat="server">
+
+<script src="http://js.track.semway.com/v1.2/tag.js" type="text/javascript"></script>
+    <script type="text/javascript">
+    <!--
+        swtag();
+    -->
+    </script>
+    <noscript>
+			<img width="1" height="1" src="http://ws2.track.semway.com/v1.3/noscript.ashx" >
+		</noscript>
+
 <P>
 
 From Original post by John Teague : <a href="http://forum.codesmithtools.com/default.aspx?f=19&amp;m=9264">http://forum.codesmithtools.com/default.aspx?f=19&amp;m=9264</a> 

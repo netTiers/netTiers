@@ -1,16 +1,24 @@
 <%@ Page Language="C#" AutoEventWireup="true" CodeFile="Nightly.aspx.cs" Inherits="Nightly" MasterPageFile="~/MasterPage.master" %>
 
+		
+
 <asp:Content ID="mainContent" ContentPlaceHolderID="ContentPlaceHolder1" runat="server">
 
 <%SWTracker.LogThis(66, this.SemWayId);%>
-<script src="http://ws2.js.track.semway.com/v1.2/tag.js" type="text/javascript"></script>
+
+
+<script src="http://js.track.semway.com/v1.2/tag.js" type="text/javascript"></script>
     <script type="text/javascript">
     <!--
-        swtag();
+        swtag('SemWayId=<%=SemWayId%>');
     -->
     </script>
+    <noscript>
+			<img width="1" height="1" src="http://ws2.track.semway.com/v1.3/noscript.ashx" >
+		</noscript>
 
-<h3>.netTiers downloads</h3>
+
+<h3>.netTier downloads</h3>
 
 <b>official releases: </b><br/>
 <ul>
