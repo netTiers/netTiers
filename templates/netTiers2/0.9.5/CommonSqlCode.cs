@@ -65,6 +65,34 @@ namespace MoM.Templates
 		
 		private Hashtable aliases = null;
 		
+		#region CSharpKeywords
+		
+		private string[] csharpKeywords = new string[77] 
+		{
+				"abstract","event", "new", "struct", 
+				"as", "explicit", "null", "switch",
+				"base", "extern", "object", "this",
+				"bool", "false", "operator", "throw",
+				"break", "finally", "out", "true",
+				"byte", "fixed", "override", "try",
+				"case", "float", "params", "typeof",
+				"catch", "for", "private", "uint",
+				"char", "foreach", "protected", "ulong",
+				"checked", "goto", "public", "unchecked",
+				"class", "if", "readonly", "unsafe",
+				"const", "implicit", "ref", "ushort",
+				"continue","in","return","using",
+				"decimal","int","sbyte","virtual",
+				"default","interface","sealed","volatile",
+				"delegate","internal","short","void",
+				"do","is","sizeof","while",
+				"double","lock","stackalloc",
+				"else","long","static",
+				"enum","namespace", "string"
+		}; 
+		
+		#endregion 
+		
 		/// <summary>
 		/// Return a specified number of tabs
 		/// </summary>
@@ -503,6 +531,9 @@ namespace MoM.Templates
 			// 2.remove space or bad characters
 			newName = GetCleanName(string.Format(this.entityFormat, newName));
 			
+			if (Regex.IsMatch(newName, @"^[\d]"))
+				newName="Entity" + newName;
+				
 			// 3. Set Pascal case
 			return GetPascalCaseName(newName);
 			
@@ -672,6 +703,9 @@ namespace MoM.Templates
 		   	name = Regex.Replace(name, @"[\W]", "");
 		   	name = name.TrimStart(new char[] {'_', '-', '+', '=', '*'});
 			name = GetPascalCaseName(name);
+			
+			if (Regex.IsMatch(name, @"^[\d]"))
+				name="Data" + name;
 			return name;
 		}
 		
@@ -877,7 +911,9 @@ namespace MoM.Templates
 		{
 			return GetPrivateName(column.Name);
 		}
-						
+		
+
+		
 		/// <summary>
 		/// Creates a string that retpresents a column as a class private member.
 		/// </summary>
@@ -887,10 +923,11 @@ namespace MoM.Templates
 		   	name = Regex.Replace(name, @"[\W]", "");
 			name = GetCamelCaseName(name);
 			
-			if (name == "internal" || name == "class" || name == "public" || name == "private")
-			{
-				name = "p" + name;
-			}
+			if (Array.IndexOf(csharpKeywords, name) >= 0)
+				name = "@" + name;
+				
+			if (Regex.IsMatch(name, @"^[\d]"))
+				name="data" + name;
 			
 			return name;
 		}
