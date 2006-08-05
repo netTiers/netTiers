@@ -3341,8 +3341,8 @@ namespace MoM.Templates
 			bool result = true;
 			
 			// if this key do not contain
-			//if (keyschema.PrimaryKeyMemberColumns.Count != keyschema.PrimaryKeyTable.MemberColumns.Count)
-			//	return false;
+			if (keyschema.PrimaryKeyMemberColumns.Count != keyschema.PrimaryKeyTable.PrimaryKey.MemberColumns.Count)
+				return false;
 			
 			// Each member must reference a unique key in the foreign table
 			foreach(ColumnSchema column in keyschema.ForeignKeyMemberColumns)

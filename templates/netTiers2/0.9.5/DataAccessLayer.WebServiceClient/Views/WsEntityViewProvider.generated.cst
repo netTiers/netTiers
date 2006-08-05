@@ -67,16 +67,16 @@ namespace <%=DALNameSpace%>.WebServiceClient
 	/// </summary>
 	public partial class <%=abstractRepositoryClassName%> : <%=providerBaseName%>
 	{
-		#region "Declarations"	
+		#region Declarations	
 			
 		/// <summary>
 		/// the Url of the webservice.
 		/// </summary>
 		protected string _url;
 			
-		#endregion "Declarations"
+		#endregion 
 		
-		#region "Constructors"
+		#region Constructors
 	
 		/// <summary>
 		/// Creates a new <see cref="<%=abstractRepositoryClassName%>"/> instance.
@@ -105,7 +105,7 @@ namespace <%=DALNameSpace%>.WebServiceClient
         	set {this._url = value;}
         }
 	
-		#region "Convertion utility"
+		#region Convertion utility
 		
 		/// <summary>
 		/// Convert a collection from the ws proxy to a nettiers collection.
@@ -150,10 +150,31 @@ namespace <%=DALNameSpace%>.WebServiceClient
 		#endregion
 	
 		<% if (IncludeGetList) { %>
-		#region "GetList Functions"
+		#region Get
+		/// <summary>
+		/// 	Gets All rows from the DataSource by a specific predicate filter.
+		/// </summary>
+		/// <param name="start">Row number at which to start reading.</param>
+		/// <param name="pageLength">Number of rows to return.</param>
+		/// <param name="transactionManager"><see cref="TransactionManager"/> object</param>
+		/// <remarks></remarks>
+		/// <returns>Returns a typed collection of <%=className%> objects.</returns>
+		public override <%=collectionClassName%> Get(TransactionManager transactionManager, string whereClause, string orderBy, int start, int pageLength, out int count)
+		{
+			<%=WebReferenceName%>.<%=ProxyClassName%> proxy = new <%=WebReferenceName%>.<%=ProxyClassName%>();
+			proxy.Url = this._url;
+				
+			<%=WebReferenceName%>.<%=GetClassName(SourceView.Name)%>[] items = proxy.<%=providerName%>_Get(whereClause, orderBy, start, pageLength);
+			
+			count = items.Length;
+			return Convert(items);
+		}
+		#endregion 
+		
+		#region GetList Functions
 						
 		/// <summary>
-		/// 	Gets All rows from the DataSource.
+		/// 	Gets All rows from the DataSource a specific predicate filter.
 		/// </summary>
 		/// <param name="start">Row number at which to start reading.</param>
 		/// <param name="pageLength">Number of rows to return.</param>
@@ -169,9 +190,28 @@ namespace <%=DALNameSpace%>.WebServiceClient
 			return Convert(items); 
 		}
 		
+		/// <summary>
+		/// 	Gets All rows from the DataSource.
+		/// </summary>
+		/// <param name="start">Row number at which to start reading.</param>
+		/// <param name="pageLength">Number of rows to return.</param>
+		/// <param name="transactionManager"><see cref="TransactionManager"/> object</param>
+		/// <param name="count">count of records returned</param>
+		/// <remarks></remarks>
+		/// <returns>Returns a typed collection of <%=className%> objects.</returns>
+		public override <%=collectionClassName%> GetAll(TransactionManager transactionManager, int start, int pageLength, out int count)
+		{
+			<%=WebReferenceName%>.<%=ProxyClassName%> proxy = new <%=WebReferenceName%>.<%=ProxyClassName%>();
+			proxy.Url = this._url;
+				
+			<%=WebReferenceName%>.<%=GetClassName(SourceView.Name)%>[] items = proxy.<%=providerName%>_GetAll(start, pageLength);   
+			
+			count = items.Length;
+			return Convert(items);
+		}
 		#endregion
 	
-		#region "Get filterd and sorted"
+		#region Get filterd and sorted
 			
 		/// <summary>
 		/// Gets a page of rows from the DataSource.
@@ -206,7 +246,7 @@ namespace <%=DALNameSpace%>.WebServiceClient
 
 <% if (IncludeCustoms) { %>
 
-	#region "Custom Methods"
+	#region Custom Methods
 	
 <% 
 	string prefix = string.Format(CustomProcedureStartsWith, SourceView.Name, ProcedurePrefix);
@@ -229,7 +269,7 @@ namespace <%=DALNameSpace%>.WebServiceClient
 				returnType = "DataSet";
 			}
 %>
-	#region "<%=command.Name%>"
+	#region <%=command.Name%>
 
 	/// <summary>
 	///	This method wrap the '<%=command.Name%>' stored procedure. 
