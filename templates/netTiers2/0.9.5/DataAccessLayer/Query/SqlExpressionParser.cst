@@ -7,6 +7,7 @@
 <%@ Import Namespace="System.Data" %>
 #region Using Directives
 using System;
+using System.Collections;
 using System.Text;
 #endregion
 
@@ -120,6 +121,10 @@ namespace <%= DALNameSpace %>
 			sql.Append(WrapWithSQL(PropertyName, searchText, IgnoreCase));
 		}
 
+		#endregion ExpressionParserBase Members
+
+		#region Protected Methods
+
 		/// <summary>
 		/// Converts the search text into a valid search expression.
 		/// </summary>
@@ -127,7 +132,7 @@ namespace <%= DALNameSpace %>
 		/// <param name="value"></param>
 		/// <param name="ignoreCase"></param>
 		/// <returns></returns>
-		private String WrapWithSQL(String propertyName, String value, bool ignoreCase)
+		protected virtual String WrapWithSQL(String propertyName, String value, bool ignoreCase)
 		{
 			SqlComparisonType compare = ComparisonType;
 			String sql = String.Empty;
@@ -176,26 +181,86 @@ namespace <%= DALNameSpace %>
 			switch ( compare )
 			{
 				case SqlComparisonType.Contains:
-					sql = SqlUtil.Contains(propertyName, value, ignoreCase);
+					sql = Contains(propertyName, value, ignoreCase);
 					break;
 				case SqlComparisonType.StartsWith:
-					sql = SqlUtil.StartsWith(propertyName, value, ignoreCase);
+					sql = StartsWith(propertyName, value, ignoreCase);
 					break;
 				case SqlComparisonType.EndsWith:
-					sql = SqlUtil.EndsWith(propertyName, value, ignoreCase);
+					sql = EndsWith(propertyName, value, ignoreCase);
 					break;
 				case SqlComparisonType.Like:
-					sql = SqlUtil.Like(propertyName, value, ignoreCase);
+					sql = Like(propertyName, value, ignoreCase);
 					break;
 				default:
-					sql = SqlUtil.Equals(propertyName, value, ignoreCase);
+					sql = Equals(propertyName, value, ignoreCase);
 					break;
 			}
 
 			return sql;
 		}
 
-		#endregion ExpressionParserBase Members
+		/// <summary>
+		/// Creates a <see cref="SqlComparisonType.Contains"/> expression.
+		/// </summary>
+		/// <param name="column"></param>
+		/// <param name="value"></param>
+		/// <param name="ignoreCase"></param>
+		/// <returns></returns>
+		protected virtual String Contains(String column, String value, bool ignoreCase)
+		{
+			return SqlUtil.Contains(column, value, ignoreCase);
+		}
+
+		/// <summary>
+		/// Creates a <see cref="SqlComparisonType.StartsWith"/> expression.
+		/// </summary>
+		/// <param name="column"></param>
+		/// <param name="value"></param>
+		/// <param name="ignoreCase"></param>
+		/// <returns></returns>
+		protected virtual String StartsWith(String column, String value, bool ignoreCase)
+		{
+			return SqlUtil.StartsWith(column, value, ignoreCase);
+		}
+
+		/// <summary>
+		/// Creates a <see cref="SqlComparisonType.EndsWith"/> expression.
+		/// </summary>
+		/// <param name="column"></param>
+		/// <param name="value"></param>
+		/// <param name="ignoreCase"></param>
+		/// <returns></returns>
+		protected virtual String EndsWith(String column, String value, bool ignoreCase)
+		{
+			return SqlUtil.EndsWith(column, value, ignoreCase);
+		}
+
+		/// <summary>
+		/// Creates a <see cref="SqlComparisonType.Like"/> expression.
+		/// </summary>
+		/// <param name="column"></param>
+		/// <param name="value"></param>
+		/// <param name="ignoreCase"></param>
+		/// <returns></returns>
+		protected virtual String Like(String column, String value, bool ignoreCase)
+		{
+			return SqlUtil.Like(column, value, ignoreCase);
+		}
+
+		/// <summary>
+		/// Creates a <see cref="SqlComparisonType.Equals"/> expression.
+		/// </summary>
+		/// <param name="column"></param>
+		/// <param name="value"></param>
+		/// <param name="ignoreCase"></param>
+		/// <returns></returns>
+		protected virtual String Equals(String column, String value, bool ignoreCase)
+		{
+			return SqlUtil.Equals(column, value, ignoreCase);
+		}
+
+		#endregion
 
 		#region Parse Method
 
@@ -212,5 +277,168 @@ namespace <%= DALNameSpace %>
 		}
 
 		#endregion Parse Method
+	}
+
+	/// <summary>
+	/// Parses search text into an expression that can
+	/// be used in a parameterized SQL WHERE clause.
+	/// </summary>
+	[CLSCompliant(true)]
+	public class ParameterizedSqlExpressionParser : SqlExpressionParser
+	{
+		#region Constructors
+
+		/// <summary>
+		/// Initializes a new instance of the ParameterizedSqlExpressionParser class.
+		/// </summary>
+		/// <param name="propertyName"></param>
+		public ParameterizedSqlExpressionParser(String propertyName)
+			: this(propertyName, SqlComparisonType.Contains, false)
+		{
+		}
+
+		/// <summary>
+		/// Initializes a new instance of the ParameterizedSqlExpressionParser class.
+		/// </summary>
+		/// <param name="propertyName"></param>
+		/// <param name="ignoreCase"></param>
+		public ParameterizedSqlExpressionParser(String propertyName, bool ignoreCase)
+			: this(propertyName, SqlComparisonType.Contains, ignoreCase)
+		{
+		}
+
+		/// <summary>
+		/// Initializes a new instance of the ParameterizedSqlExpressionParser class.
+		/// </summary>
+		/// <param name="propertyName"></param>
+		/// <param name="comparisonType"></param>
+		public ParameterizedSqlExpressionParser(String propertyName, SqlComparisonType comparisonType)
+			: this(propertyName, comparisonType, false)
+		{
+		}
+
+		/// <summary>
+		/// Initializes a new instance of the ParameterizedSqlExpressionParser class.
+		/// </summary>
+		/// <param name="propertyName"></param>
+		/// <param name="comparisonType"></param>
+		/// <param name="ignoreCase"></param>
+		public ParameterizedSqlExpressionParser(String propertyName, SqlComparisonType comparisonType, bool ignoreCase)
+			: base(propertyName, comparisonType, ignoreCase)
+		{
+		}
+
+		#endregion
+
+		#region SqlExpressionParser Members
+
+		/// <summary>
+		/// Creates a <see cref="SqlComparisonType.Contains"/> expression.
+		/// </summary>
+		/// <param name="column"></param>
+		/// <param name="value"></param>
+		/// <param name="ignoreCase"></param>
+		/// <returns></returns>
+		protected override string Contains(string column, string value, bool ignoreCase)
+		{
+			value = SqlUtil.Contains(value);
+			return SqlUtil.Like(column, GetParameter(value), ignoreCase, false);
+		}
+
+		/// <summary>
+		/// Creates a <see cref="SqlComparisonType.StartsWith"/> expression.
+		/// </summary>
+		/// <param name="column"></param>
+		/// <param name="value"></param>
+		/// <param name="ignoreCase"></param>
+		/// <returns></returns>
+		protected override string StartsWith(string column, string value, bool ignoreCase)
+		{
+			value = SqlUtil.StartsWith(value);
+			return SqlUtil.Like(column, GetParameter(value), ignoreCase, false);
+		}
+
+		/// <summary>
+		/// Creates a <see cref="SqlComparisonType.EndsWith"/> expression.
+		/// </summary>
+		/// <param name="column"></param>
+		/// <param name="value"></param>
+		/// <param name="ignoreCase"></param>
+		/// <returns></returns>
+		protected override string EndsWith(string column, string value, bool ignoreCase)
+		{
+			value = SqlUtil.EndsWith(value);
+			return SqlUtil.Like(column, GetParameter(value), ignoreCase, false);
+		}
+
+		/// <summary>
+		/// Creates a <see cref="SqlComparisonType.Like"/> expression.
+		/// </summary>
+		/// <param name="column"></param>
+		/// <param name="value"></param>
+		/// <param name="ignoreCase"></param>
+		/// <returns></returns>
+		protected override string Like(string column, string value, bool ignoreCase)
+		{
+			value = SqlUtil.Like(value);
+			return SqlUtil.Like(column, GetParameter(value), ignoreCase, false);
+		}
+
+		/// <summary>
+		/// Creates a <see cref="SqlComparisonType.Equals"/> expression.
+		/// </summary>
+		/// <param name="column"></param>
+		/// <param name="value"></param>
+		/// <param name="ignoreCase"></param>
+		/// <returns></returns>
+		protected override string Equals(string column, string value, bool ignoreCase)
+		{
+			value = SqlUtil.Equals(value);
+			return SqlUtil.Equals(column, GetParameter(value), ignoreCase, false);
+		}
+
+		#endregion SqlExpressionParser Members
+
+		#region Methods
+
+		/// <summary>
+		/// Gets the next parameter name for the specified value.
+		/// </summary>
+		/// <param name="value"></param>
+		/// <returns></returns>
+		public virtual String GetParameter(String value)
+		{
+			String param = String.Format("@Param{0}", Values.Count);
+			Values.Add(value);
+			return param;
+		}
+
+		#endregion Methods
+
+		#region Properties
+
+		/// <summary>
+		/// The Values member variable.
+		/// </summary>
+		private ArrayList values;
+
+		/// <summary>
+		/// Gets or sets the Values property.
+		/// </summary>
+		public virtual ArrayList Values
+		{
+			get
+			{
+				if ( values == null )
+				{
+					values = new ArrayList();
+				}
+
+				return values;
+			}
+			set { values = value; }
+		}
+
+		#endregion Properties
 	}
 }

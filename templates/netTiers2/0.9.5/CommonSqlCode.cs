@@ -2073,11 +2073,25 @@ namespace MoM.Templates
 		/// <returns>The ctor params for the <see cref="System.ComponentModel.DataObjectField" /></returns>
 		public string GetDataObjectFieldCallParams(ColumnSchema column)
 		{
-			return string.Format("{0},{1},{2}{3}",
+			return string.Format("{0}, {1}, {2}{3}",
 				/*0*/ column.IsPrimaryKeyMember.ToString().ToLower(),
 				/*1*/ IsIdentityColumn(column).ToString().ToLower(),
 				/*2*/ column.AllowDBNull.ToString().ToLower(),
 				/*3*/ (CanCheckLength(column) ? ", " + column.Size.ToString() : ""));
+		}
+		
+		/// <summary>
+		/// Gets the parameters needed for the ColumnEnumAttribute class
+		/// for the specified column.
+		/// </summary>
+		/// <param name="column"></param>
+		public string GetColumnEnumAttributeParams(ColumnSchema column)
+		{
+			return string.Format("\"{0}\", typeof({1}), System.Data.{2}, ",
+				column.Name,
+				GetCSTypeWithoutNullable(column),
+				GetDbType(column)
+			) + GetDataObjectFieldCallParams(column);
 		}
 
 		/// <summary>

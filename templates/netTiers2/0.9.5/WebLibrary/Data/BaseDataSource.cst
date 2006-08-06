@@ -1497,7 +1497,7 @@ namespace <%= WebNameSpace %>.Data
 			Entity entity = GetCurrentEntity(entityList, keys);
 			int count = 0;
 
-			ValidateEntity(entity);
+			ValidateEntity(entity, keys);
 
 			// raise linked event
 			int entityIndex = entityList.IndexOf(entity);
@@ -1609,7 +1609,7 @@ namespace <%= WebNameSpace %>.Data
 			Entity entity = GetCurrentEntity(entityList, keys);
 			int count = 0;
 
-			ValidateEntity(entity);
+			ValidateEntity(entity, keys);
 
 			// delete entity
 			try
@@ -1879,11 +1879,19 @@ namespace <%= WebNameSpace %>.Data
 		/// Validates the specified Entity object to ensure that is is not null.
 		/// </summary>
 		/// <param name="entity">The Entity object to validate.</param>
-		protected virtual void ValidateEntity(Entity entity)
+		/// <param name="keys">An IDictionary of name/value pairs representing a unique identifier.</param>
+		protected virtual void ValidateEntity(Entity entity, IDictionary keys)
 		{
 			if ( entity == null )
 			{
-				throw new NullReferenceException("entity cannot be null");
+				// make sure keys are not null, as that is a special case
+				if ( keys != null && keys.Count < 1 )
+				{
+					throw new ArgumentException("The entity object cannot be null. If using a data bound control, the DataKeyNames property must be configured (i.e. GridView.DataKeyNames or FormView.DataKeyNames).");
+				}
+				
+				// default exception
+				throw new NullReferenceException("The entity object cannot be null.");
 			}
 		}
 

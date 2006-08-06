@@ -440,6 +440,34 @@ namespace <%=NameSpace%>
 		}
 		#endregion 
 		
+		#region GetAttribute
+
+		/// <summary>
+		/// Gets the first occurrence of the specified type of <see cref="System.Attribute"/>.
+		/// </summary>
+		/// <typeparam name="T"></typeparam>
+		/// <param name="e"></param>
+		/// <returns></returns>
+		public static T GetAttribute<T>(System.Enum e) where T : System.Attribute
+		{
+			T attribute = default(T);
+			Type enumType = e.GetType();
+			System.Reflection.MemberInfo[] members = enumType.GetMember(e.ToString());
+
+			if ( members != null && members.Length == 1 )
+			{
+				object[] attrs = members[0].GetCustomAttributes(typeof(T), false);
+				if ( attrs.Length > 0 )
+				{
+					attribute = (T) attrs[0];
+				}
+			}
+
+			return attribute;
+		}
+
+		#endregion GetAttribute
+		
 		<%
 		if (false)
 		{
@@ -557,6 +585,157 @@ namespace <%=NameSpace%>
 		}
 	}
 	#endregion 
+
+	#region ColumnEnumAttribute
+
+	/// <summary>
+	/// Provides column metadata information for an entity column enumeration.
+	/// </summary>
+	public sealed class ColumnEnumAttribute : System.Attribute
+	{
+		#region Constructors
+
+		/// <summary>
+		/// Initializes a new instance of the ColumnEnumAttribute class.
+		/// </summary>
+		/// <param name="name"></param>
+		/// <param name="systemType"></param>
+		/// <param name="dbType"></param>
+		/// <param name="isPrimaryKey"></param>
+		/// <param name="isIdentity"></param>
+		/// <param name="allowDbNull"></param>
+		/// <param name="length"></param>
+		public ColumnEnumAttribute(String name, Type systemType, System.Data.DbType dbType, bool isPrimaryKey, bool isIdentity, bool allowDbNull, int length)
+		{
+			this.Name = name;
+			this.SystemType = systemType;
+			this.DbType = dbType;
+			this.IsPrimaryKey = isPrimaryKey;
+			this.IsIdentity = isIdentity;
+			this.AllowDbNull = allowDbNull;
+			this.Length = length;
+		}
+
+		/// <summary>
+		/// Initializes a new instance of the ColumnEnumAttribute class.
+		/// </summary>
+		/// <param name="name"></param>
+		/// <param name="systemType"></param>
+		/// <param name="dbType"></param>
+		/// <param name="isPrimaryKey"></param>
+		/// <param name="isIdentity"></param>
+		/// <param name="allowDbNull"></param>
+		public ColumnEnumAttribute(String name, Type systemType, System.Data.DbType dbType, bool isPrimaryKey, bool isIdentity, bool allowDbNull)
+			: this(name, systemType, dbType, isPrimaryKey, isIdentity, allowDbNull, -1)
+		{
+		}
+
+		#endregion Constructors
+
+		#region Properties
+
+		/// <summary>
+		/// The Name member variable.
+		/// </summary>
+		private String name;
+
+		/// <summary>
+		/// Gets or sets the Name property.
+		/// </summary>
+		public String Name
+		{
+			get { return name; }
+			set { name = value; }
+		}
+
+		/// <summary>
+		/// The SystemType member variable.
+		/// </summary>
+		private Type systemType;
+
+		/// <summary>
+		/// Gets or sets the SystemType property.
+		/// </summary>
+		public Type SystemType
+		{
+			get { return systemType; }
+			set { systemType = value; }
+		}
+
+		/// <summary>
+		/// The DbType member variable.
+		/// </summary>
+		private System.Data.DbType dbType;
+
+		/// <summary>
+		/// Gets or sets the DbType property.
+		/// </summary>
+		public System.Data.DbType DbType
+		{
+			get { return dbType; }
+			set { dbType = value; }
+		}
+
+		/// <summary>
+		/// The IsPrimaryKey member variable.
+		/// </summary>
+		private bool isPrimaryKey;
+
+		/// <summary>
+		/// Gets or sets the IsPrimaryKey property.
+		/// </summary>
+		public bool IsPrimaryKey
+		{
+			get { return isPrimaryKey; }
+			set { isPrimaryKey = value; }
+		}
+
+		/// <summary>
+		/// The IsIdentity member variable.
+		/// </summary>
+		private bool isIdentity;
+
+		/// <summary>
+		/// Gets or sets the IsIdentity property.
+		/// </summary>
+		public bool IsIdentity
+		{
+			get { return isIdentity; }
+			set { isIdentity = value; }
+		}
+
+		/// <summary>
+		/// The AllowDbNull member variable.
+		/// </summary>
+		private bool allowDbNull;
+
+		/// <summary>
+		/// Gets or sets the AllowDbNull property.
+		/// </summary>
+		public bool AllowDbNull
+		{
+			get { return allowDbNull; }
+			set { allowDbNull = value; }
+		}
+
+		/// <summary>
+		/// The Length member variable.
+		/// </summary>
+		private int length;
+
+		/// <summary>
+		/// Gets or sets the Length property.
+		/// </summary>
+		public int Length
+		{
+			get { return length; }
+			set { length = value; }
+		}
+
+		#endregion Properties
+	}
+
+	#endregion ColumnEnumAttribute
 		
 	#region GenericStateChangedEventArgs
 	/// <summary>
