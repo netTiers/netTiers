@@ -92,9 +92,11 @@
 	    connectionStringName="netTiersConnectionString"
 	    useStoredProcedure="false"
 	    providerInvariantName="System.Data.SqlClient" 
-		entityFactoryType="Namespace.Entities.EntityFactory"
+		entityFactoryType="<xsl:value-of select="//NetTiersReport/@FactoryType" />"
+		useEntityFactory="true"
 		enableEntityTracking="true"
 		enableMethodAuthorization="false"
+		useStoredProcedure="false"
 		/&gt;
     <!-- 
       *** WebserviceClient Provider ***

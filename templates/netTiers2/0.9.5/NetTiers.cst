@@ -926,6 +926,10 @@ public void Go()
 	attConn.Value = SourceDatabase.ConnectionString;
 	docOutput.DocumentElement.Attributes.Append(attConn);		
 	
+	XmlAttribute attFact = docOutput.CreateAttribute("FactoryType");
+	attFact.Value = (ComponentPattern == MoM.Templates.ComponentPatternType.DomainModel ? ComponentLayerNameSpace + ".ComponentEntityFactory" : BLLNameSpace + ".EntityFactory");
+	docOutput.DocumentElement.Attributes.Append(attFact);		
+	
 	XmlElement initNode = docOutput.CreateElement("initialization");
 	initNode.Attributes.Append(att);
 	docOutput.DocumentElement.AppendChild(initNode);
@@ -1212,19 +1216,20 @@ public void Go()
 		SafeCreateDirectory(rootPathWebsite);
 		SafeCreateDirectory(rootPathWebsite + "\\Bin");
 
-		if (IncludeAtlasLibrary && !UseWebAppProject)
+		if (IncludeAtlasLibrary)
 		{
 			SafeCopyFile(this.CodeTemplateInfo.DirectoryName + "\\References\\Microsoft.Web.Atlas.dll", rootPathWebsite + "\\Bin\\Microsoft.Web.Atlas.dll");
 		}
-		if (IncludeAtlasToolkit && !UseWebAppProject)
+		if (IncludeAtlasToolkit)
 		{
 			SafeCopyFile(this.CodeTemplateInfo.DirectoryName + "\\References\\AtlasControlToolkit.dll", rootPathWebsite + "\\Bin\\AtlasControlToolkit.dll");
 			SafeCopyFile(this.CodeTemplateInfo.DirectoryName + "\\References\\Microsoft.AtlasControlExtender.dll", rootPathWebsite + "\\Bin\\Microsoft.AtlasControlExtender.dll");
 		}
-		if ( !UseWebAppProject && IncludeComponentLayer == MoM.Templates.ComponentPatternType.None )
-		{
-			SafeCopyFile(this.CodeTemplateInfo.DirectoryName + "\\References\\Microsoft.Practices.EnterpriseLibrary.ExceptionHandling.dll", rootPathWebsite + "\\Bin\\Microsoft.Practices.EnterpriseLibrary.ExceptionHandling.dll");
-		}
+		
+		//if (!UseWebAppProject && IncludeComponentLayer == MoM.Templates.ComponentPatternType.None )
+		//{
+		//	SafeCopyFile(this.CodeTemplateInfo.DirectoryName + "\\References\\Microsoft.Practices.EnterpriseLibrary.ExceptionHandling.dll", rootPathWebsite + "\\Bin\\Microsoft.Practices.EnterpriseLibrary.ExceptionHandling.dll");
+		//}
 	}
 		
 	//----------------------------------------------------------------------------------------------------------------------------------------------
@@ -2146,7 +2151,7 @@ public void Go()
 		string webConfigTemplate = IncludeAtlasLibrary ? "WebConfigAtlas.cst" : "WebConfig.cst";
 
 		// Web.config
-		if ( OverwriteWebConfig || !File.Exists(rootPathWebsite + "\\Web.config") )
+		if (OverwriteWebConfig || !File.Exists(rootPathWebsite + "\\Web.config") )
 		{
 			AddFileNode(commonNode, "Web.config");
 			this.GetTemplate(webConfigTemplate).SetProperty("NameSpace", NameSpace);
@@ -2161,6 +2166,13 @@ public void Go()
 			}
 			
 			this.RenderToFile(webConfigTemplate, rootPathWebsite + "\\Web.config", true);
+			
+			//generate entlib
+			AddFileNode(commonNode, "entlib website configuration files");
+			this.GetTemplate("entlib.config.cst").SetProperty("NameSpace", NameSpace);
+			this.GetTemplate("entlib.config.cst").SetProperty("BLLNameSpace", BLLNameSpace);
+
+			this.RenderToFile("entlib.config.cst", rootPathWebsite + "\\entlib.config", true);
 		}
 
 		// Default.aspx(.cs)
