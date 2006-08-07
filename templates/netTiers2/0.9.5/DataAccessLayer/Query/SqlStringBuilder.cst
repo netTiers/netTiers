@@ -8,6 +8,7 @@
 #region Using Directives
 using System;
 using System.Collections;
+using System.Collections.Generic;
 using System.Configuration;
 using System.Text;
 using <%= BLLNameSpace %>;
@@ -926,7 +927,38 @@ namespace <%= DALNameSpace %>
 
 		#endregion Constructors
 
+		#region Append
+
+		/// <summary>
+		/// Appends the specified column and search text to the current filter.
+		/// </summary>
+		/// <param name="junction"></param>
+		/// <param name="column"></param>
+		/// <param name="searchText"></param>
+		/// <param name="ignoreCase"></param>
+		/// <returns></returns>
+		public override SqlFilterBuilder<EntityColumn> Append(String junction, EntityColumn column, String searchText, bool ignoreCase)
+		{
+			Values.SetCurrentColumn(column);
+			return base.Append(junction, column, searchText, ignoreCase);
+		}
+
+		#endregion Append
+
 		#region AppendEquals
+
+		/// <summary>
+		/// Appends the specified column and value to the current filter.
+		/// </summary>
+		/// <param name="junction"></param>
+		/// <param name="column"></param>
+		/// <param name="value"></param>
+		/// <returns></returns>
+		public override SqlFilterBuilder<EntityColumn> AppendEquals(String junction, EntityColumn column, String value)
+		{
+			Values.SetCurrentColumn(column);
+			return base.AppendEquals(junction, column, value);
+		}
 
 		/// <summary>
 		/// Appends the specified column and value to the current filter.
@@ -940,7 +972,7 @@ namespace <%= DALNameSpace %>
 			if ( !String.IsNullOrEmpty(value) )
 			{
 				value = SqlUtil.Equals(value);
-				AppendInternal(junction, column, "=", GetParameter(value));
+				AppendInternal(junction, column, "=", Values.GetParameter(value));
 			}
 
 			return this;
@@ -949,6 +981,20 @@ namespace <%= DALNameSpace %>
 		#endregion AppendEquals
 
 		#region AppendNotEquals
+
+		/// <summary>
+		/// Appends the specified column and value to the current filter.
+		/// as a NOT EQUALS expression.
+		/// </summary>
+		/// <param name="junction"></param>
+		/// <param name="column"></param>
+		/// <param name="value"></param>
+		/// <returns></returns>
+		public override SqlFilterBuilder<EntityColumn> AppendNotEquals(String junction, EntityColumn column, String value)
+		{
+			Values.SetCurrentColumn(column);
+			return base.AppendNotEquals(junction, column, value);
+		}
 
 		/// <summary>
 		/// Appends the specified column and value to the current filter
@@ -963,7 +1009,7 @@ namespace <%= DALNameSpace %>
 			if ( !String.IsNullOrEmpty(value) )
 			{
 				value = SqlUtil.Equals(value);
-				AppendInternal(junction, column, "<>", GetParameter(value));
+				AppendInternal(junction, column, "<>", Values.GetParameter(value));
 			}
 
 			return this;
@@ -972,6 +1018,20 @@ namespace <%= DALNameSpace %>
 		#endregion AppendNotEquals
 
 		#region AppendIn
+
+		/// <summary>
+		/// Appends the specified column and list of values to the current filter.
+		/// </summary>
+		/// <param name="junction"></param>
+		/// <param name="column"></param>
+		/// <param name="values"></param>
+		/// <param name="encode"></param>
+		/// <returns></returns>
+		public override SqlFilterBuilder<EntityColumn> AppendIn(String junction, EntityColumn column, String values, bool encode)
+		{
+			Values.SetCurrentColumn(column);
+			return base.AppendIn(junction, column, values, encode);
+		}
 
 		/// <summary>
 		/// Appends the specified column and list of values to the current filter.
@@ -1001,6 +1061,21 @@ namespace <%= DALNameSpace %>
 		#region AppendNotIn
 
 		/// <summary>
+		/// Appends the specified column and list of values to the current filter.
+		/// as a NOT IN expression.
+		/// </summary>
+		/// <param name="junction"></param>
+		/// <param name="column"></param>
+		/// <param name="values"></param>
+		/// <param name="encode"></param>
+		/// <returns></returns>
+		public override SqlFilterBuilder<EntityColumn> AppendNotIn(String junction, EntityColumn column, String values, bool encode)
+		{
+			Values.SetCurrentColumn(column);
+			return base.AppendNotIn(junction, column, values, encode);
+		}
+
+		/// <summary>
 		/// Appends the specified column and list of values to the current filter
 		/// as a NOT IN expression.
 		/// </summary>
@@ -1026,7 +1101,56 @@ namespace <%= DALNameSpace %>
 
 		#endregion AppendNotIn
 
+		#region AppendInQuery
+
+		/// <summary>
+		/// Appends the specified sub-query to the current filter.
+		/// </summary>
+		/// <param name="junction"></param>
+		/// <param name="column"></param>
+		/// <param name="query"></param>
+		/// <returns></returns>
+		public override SqlFilterBuilder<EntityColumn> AppendInQuery(String junction, EntityColumn column, String query)
+		{
+			Values.SetCurrentColumn(column);
+			return base.AppendInQuery(junction, column, query);
+		}
+
+		#endregion AppendInQuery
+
+		#region AppendNotInQuery
+
+		/// <summary>
+		/// Appends the specified sub-query to the current filter
+		/// as a NOT IN expression.
+		/// </summary>
+		/// <param name="junction"></param>
+		/// <param name="column"></param>
+		/// <param name="query"></param>
+		/// <returns></returns>
+		public override SqlFilterBuilder<EntityColumn> AppendNotInQuery(String junction, EntityColumn column, String query)
+		{
+			Values.SetCurrentColumn(column);
+			return base.AppendNotInQuery(junction, column, query);
+		}
+
+		#endregion AppendNotInQuery
+
 		#region AppendRange
+
+		/// <summary>
+		/// Appends the specified column and value range to the current filter.
+		/// </summary>
+		/// <param name="junction"></param>
+		/// <param name="column"></param>
+		/// <param name="from"></param>
+		/// <param name="to"></param>
+		/// <returns></returns>
+		public override SqlFilterBuilder<EntityColumn> AppendRange(String junction, EntityColumn column, String from, String to)
+		{
+			Values.SetCurrentColumn(column);
+			return base.AppendRange(junction, column, from, to);
+		}
 
 		/// <summary>
 		/// Appends the specified column and value range to the current filter.
@@ -1044,7 +1168,7 @@ namespace <%= DALNameSpace %>
 
 				if ( !String.IsNullOrEmpty(from) )
 				{
-					sb.AppendFormat("{0} >= {1}", column, GetParameter(from));
+					sb.AppendFormat("{0} >= {1}", column, Values.GetParameter(from));
 				}
 				if ( !String.IsNullOrEmpty(from) && !String.IsNullOrEmpty(to) )
 				{
@@ -1052,7 +1176,7 @@ namespace <%= DALNameSpace %>
 				}
 				if ( !String.IsNullOrEmpty(to) )
 				{
-					sb.AppendFormat("{0} <= {1}", column, GetParameter(to));
+					sb.AppendFormat("{0} <= {1}", column, Values.GetParameter(to));
 				}
 
 				AppendInternal(junction, sb.ToString());
@@ -1064,18 +1188,6 @@ namespace <%= DALNameSpace %>
 		#endregion AppendRange
 
 		#region Methods
-
-		/// <summary>
-		/// Gets the next parameter name for the specified value.
-		/// </summary>
-		/// <param name="value"></param>
-		/// <returns></returns>
-		public virtual String GetParameter(String value)
-		{
-			String param = String.Format("@Param{0}", Values.Count);
-			Values.Add(value);
-			return param;
-		}
 
 		/// <summary>
 		/// Parses the specified searchText to create a SQL filter expression.
@@ -1109,7 +1221,7 @@ namespace <%= DALNameSpace %>
 
 				if ( !String.IsNullOrEmpty(temp) )
 				{
-					csv.Add(GetParameter(temp));
+					csv.Add(Values.GetParameter(temp));
 				}
 			}
 
@@ -1123,23 +1235,173 @@ namespace <%= DALNameSpace %>
 		/// <summary>
 		/// The Values member variable.
 		/// </summary>
-		private ArrayList values;
+		private FilterParameterCollection values;
 
 		/// <summary>
 		/// Gets or sets the Values property.
 		/// </summary>
-		public virtual ArrayList Values
+		public virtual FilterParameterCollection Values
 		{
 			get
 			{
 				if ( values == null )
 				{
-					values = new ArrayList();
+					values = new FilterParameterCollection();
 				}
 
 				return values;
 			}
 			set { values = value; }
+		}
+
+		#endregion Properties
+	}
+
+	/// <summary>
+	/// A collection of <see cref="FilterParameter"/> objects.
+	/// </summary>
+	[CLSCompliant(true)]
+	public class FilterParameterCollection : List<FilterParameter>
+	{
+		#region Methods
+
+		/// <summary>
+		/// Sets the CurrentColumn property.
+		/// </summary>
+		/// <param name="column"></param>
+		public void SetCurrentColumn(Object column)
+		{
+			this.currentColumn = (Enum) column;
+		}
+
+		/// <summary>
+		/// Gets the next parameter name for the specified value.
+		/// </summary>
+		/// <param name="value"></param>
+		/// <returns></returns>
+		public String GetParameter(String value)
+		{
+			FilterParameter parameter = new FilterParameter(CurrentColumn, value, Count);
+			Add(parameter);
+			return parameter.Name;
+		}
+
+		#endregion Methods
+
+		#region Properties
+
+		/// <summary>
+		/// The CurrentColumn member variable.
+		/// </summary>
+		private Enum currentColumn;
+
+		/// <summary>
+		/// Gets the CurrentColumn property.
+		/// </summary>
+		public Enum CurrentColumn
+		{
+			get { return currentColumn; }
+		}
+
+		#endregion Properties
+	}
+
+	/// <summary>
+	/// Represents the information needed for a database command parameter.
+	/// </summary>
+	[CLSCompliant(true)]
+	public class FilterParameter
+	{
+		#region Constructors
+
+		/// <summary>
+		/// Initializes a new instance of the FilterParameter class.
+		/// </summary>
+		/// <param name="column"></param>
+		/// <param name="value"></param>
+		/// <param name="index"></param>
+		public FilterParameter(Enum column, String value, int index)
+		{
+			this.column = column;
+			this.parameterValue = value;
+			this.parameterIndex = index;
+		}
+
+		#endregion Constructors
+
+		#region Properties
+
+		/// <summary>
+		/// The Column member variable.
+		/// </summary>
+		private Enum column;
+
+		/// <summary>
+		/// Gets or sets the Column property.
+		/// </summary>
+		public Enum Column
+		{
+			get { return column; }
+			set { column = value; }
+		}
+
+		/// <summary>
+		/// The Value member variable.
+		/// </summary>
+		private String parameterValue;
+
+		/// <summary>
+		/// Gets or sets the Value property.
+		/// </summary>
+		public String Value
+		{
+			get { return parameterValue; }
+			set { parameterValue = value; }
+		}
+
+		/// <summary>
+		/// The Index member variable.
+		/// </summary>
+		private int parameterIndex;
+
+		/// <summary>
+		/// Gets the parameter index.
+		/// </summary>
+		public int Index
+		{
+			get { return parameterIndex; }
+		}
+
+		/// <summary>
+		/// Gets the parameter name.
+		/// </summary>
+		public String Name
+		{
+			get { return String.Format("@Param{0}", Index); }
+		}
+
+		/// <summary>
+		/// Gets the <see cref="System.Data.SqlDbType"/> for
+		/// the current entity column enumeration value.
+		/// </summary>
+		public System.Data.DbType DbType
+		{
+			get
+			{
+				System.Data.DbType dbType = System.Data.DbType.String;
+
+				if ( column != null )
+				{
+					ColumnEnumAttribute attribute = EntityHelper.GetAttribute<ColumnEnumAttribute>(column);
+
+					if ( attribute != null )
+					{
+						dbType = attribute.DbType;
+					}
+				}
+
+				return dbType;
+			}
 		}
 
 		#endregion Properties
