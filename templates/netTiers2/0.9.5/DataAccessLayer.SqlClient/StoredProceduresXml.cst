@@ -707,6 +707,69 @@ SELECT <% for (int i = 0; i < primaryTable.Columns.Count; i++)
   END
 				]]></body>
 		</procedure>
+
+		<% if ( SourceTable.PrimaryKey != null ) { %>
+		
+		<procedure owner="<%=SourceTable.Owner%>" name="<%= ProcedurePrefix + commandStem + FindSuffix %>_Dynamic" <%if (GrantUser != "") {%>grant="<%=GrantUser%>"<%}%> skip="true">
+			<comment><![CDATA[<%= GetProcSqlComment(string.Format("Gets records from the {0} table using a dynamically generated query.", name), tableComment) %>]]></comment>
+			<parameters/>
+			<body><![CDATA[
+				<%= GetSetTransactionIsolationLevelStatement() %>
+				BEGIN
+				
+				<% if ( IncludeDatabaseFeatures == MoM.Templates.DatabaseType.SQLServer2005 ) { %>
+				with PageIndex as (
+					select top {3} row_number() over (order by {1}) as RowIndex
+					<% for (int i = 0; i < cols.Count; i++) { %>
+					, [<%= cols[i].Name %>]
+					<% } %>
+					from <%=owner%>[<%= SourceTable.Name %>] {0}
+				)
+				select
+				<% for (int i = 0; i < cols.Count; i++) { %>
+				       [<%= cols[i].Name %>]<% if (i < cols.Count - 1) { %>,<% } %>
+				<% } %>
+				  from PageIndex
+				 where RowIndex > {2}
+				   and RowIndex <= {3};
+				
+				<% } else { // SQL 2000 %>
+				-- Create a temp table to store the select results
+				Create Table #PageIndex
+				(
+				    [IndexId] int IDENTITY (1, 1) NOT NULL,
+				    <%= GetPagedHelper(SourceTable.PrimaryKey.MemberColumns) %> 
+				)
+				
+				-- Insert into the temp table
+				INSERT INTO #PageIndex ( <% for(int i=0; i<SourceTable.PrimaryKey.MemberColumns.Count; i++) { Response.Write(GetPropertyName(SourceTable.PrimaryKey.MemberColumns[i].Name)); if (i < SourceTable.PrimaryKey.MemberColumns.Count-1) {Response.Write(", ");} } %> )
+				SELECT TOP {3} <% for(int i=0; i<SourceTable.PrimaryKey.MemberColumns.Count; i++) { Response.Write("[" + SourceTable.PrimaryKey.MemberColumns[i].Name + "]"); if (i < SourceTable.PrimaryKey.MemberColumns.Count-1) {Response.Write(", ");} } %>
+				FROM <%= owner %>[<%= SourceTable.Name %>] {0}
+				ORDER BY {1}
+				
+				-- Return paged results
+				SELECT <% for (int i = 0; i < cols.Count; i++) { %>O.[<%= cols[i].Name %>]<% if (i < cols.Count - 1) { %>, <% }} %>
+				FROM
+				    <%= owner %>[<%= SourceTable.Name %>] O,
+				    #PageIndex PageIndex
+				WHERE
+				    PageIndex.IndexID > {2}
+					<% foreach ( ColumnSchema column in SourceTable.PrimaryKey.MemberColumns ) { %>
+				    AND O.[<%= column.Name %>] = PageIndex.[<%= column.Name %>]
+					<% } %>
+				ORDER BY
+				    PageIndex.IndexID
+				
+				<% } // end if ( IncludeDatabaseFeatures ) %>
+
+				-- get total count
+				select count(*) as TotalRowCount from <%= owner %>[<%= SourceTable.Name %>] {0};
+			
+				END
+			]]></body>
+		</procedure>
+		
+		<% } // end if HasPrimaryKey %>
 		<%} //end if(IncludeFind)
 
 	} // end for each Table
@@ -837,6 +900,48 @@ SELECT <% for (int i = 0; i < primaryTable.Columns.Count; i++)
 		</procedure>
 		
 		<%} //end if(IncludeGetList)
+		
+		if ( IncludeFind ) { %>
+		
+		<procedure owner="<%=SourceView.Owner%>" name="<%= ProcedurePrefix + commandStem + FindSuffix %>_Dynamic" <%if (GrantUser != "") {%>grant="<%=GrantUser%>"<%}%> skip="true">
+			<comment><![CDATA[<%= GetProcSqlComment(string.Format("Gets records from the {0} table using a dynamically generated query.", name), tableComment) %>]]></comment>
+			<parameters/>
+			<body><![CDATA[
+				<%= GetSetTransactionIsolationLevelStatement() %>
+				BEGIN
+				
+				<% if ( IncludeDatabaseFeatures == MoM.Templates.DatabaseType.SQLServer2005 ) { %>
+				with PageIndex as (
+					select top {3} row_number() over (order by {1}) as RowIndex
+					<% for (int i = 0; i < cols.Count; i++) { %>
+					, [<%= cols[i].Name %>]
+					<% } %>
+					from <%=owner%>[<%= SourceView.Name %>] {0}
+				)
+				select
+				<% for (int i = 0; i < cols.Count; i++) { %>
+				       [<%= cols[i].Name %>]<% if (i < cols.Count - 1) { %>,<% } %>
+				<% } %>
+				  from PageIndex
+				 where RowIndex > {2}
+				   and RowIndex <= {3};
+
+				-- get total count
+				select count(*) as TotalRowCount from <%= owner %>[<%= SourceView.Name %>] {0};
+				
+				<% } else { // SQL 2000 %>
+				SELECT * FROM <%= owner %>[<%= SourceView.Name %>] {0}
+				ORDER BY {1}
+
+				-- get total count
+				select @@ROWCOUNT as TotalRowCount;
+				
+				<% } // end if ( IncludeDatabaseFeatures ) %>
+				END
+			]]></body>
+		</procedure>
+		
+		<% } // end if ( IncludeFind ) {
 		
 	} // end for each View
 %>

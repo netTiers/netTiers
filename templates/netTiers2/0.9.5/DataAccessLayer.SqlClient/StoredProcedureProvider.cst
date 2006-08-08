@@ -1,11 +1,22 @@
-<%@ CodeTemplate Language="C#" TargetLanguage="C#" Description="" %>
+<%@ CodeTemplate Language="C#" TargetLanguage="C#" Src="..\CommonSqlCode.cs" Inherits="MoM.Templates.CommonSqlCode" Description="" %>
+
+<%@ Property Name="BLLNameSpace" Type="System.String" Category="Data" Description="BLL Namespace." %>
 <%@ Property Name="DALNameSpace" Type="System.String" Category="Data" Description="DAL Namespace." %>
+<%@ Property Name="IncludeDatabaseFeatures" Type="MoM.Templates.DatabaseType" Category="02. Framework Generation - Optional" Description="Indicates which database specific features to generate." Default="None" %>
+
+<%@ Assembly Name="SchemaExplorer" %>
+<%@ Assembly Name="System.Design" %>
+<%@ Import Namespace="SchemaExplorer" %>
+#region Using Directives
 using System;
+using System.Text;
 using System.Data;
 using System.Data.Common;
 using System.Collections;
 using System.Xml.Serialization;
 using Microsoft.Practices.EnterpriseLibrary.Data;
+using <%= BLLNameSpace %>;
+#endregion
 
 namespace <%=DALNameSpace%>.SqlClient
 {
@@ -172,7 +183,35 @@ namespace <%=DALNameSpace%>.SqlClient
 				return database.GetSqlStringCommand(StoredProcedureProvider.GetProcedureBodyFromEmbeddedResource(commandName));
 			}
 		}
-	
+
+		/// <summary>
+		/// Gets the command wrapper for a dynamically generated query and
+		/// optionally includes server-side paging.
+		/// </summary>
+		/// <param name="database"></param>
+		/// <param name="commandName"></param>
+		/// <param name="columnEnum"></param>
+		/// <param name="parameters"></param>
+		/// <param name="orderBy"></param>
+		/// <param name="start"></param>
+		/// <param name="pageLength"></param>
+		/// <returns></returns>
+		public static DbCommand GetCommandWrapper(Database database, String commandName, Type columnEnum, SqlFilterParameterCollection parameters, String orderBy, int start, int pageLength)
+		{
+			String query = StoredProcedureProvider.GetProcedureBodyFromEmbeddedResource(commandName);
+			String sortExpression = Utility.ParseSortExpression(columnEnum, orderBy);
+			String whereClause = String.Empty;
+
+			if ( parameters != null && parameters.Count > 0 )
+			{
+				whereClause = String.Format("where {0}", parameters.FilterExpression);
+			}
+
+			// replace dynamic components
+			query = String.Format(query, whereClause, sortExpression, start, (start + pageLength)); 
+
+			return database.GetSqlStringCommand(query);
+		}
 		
 		#endregion
 	}

@@ -33,6 +33,7 @@
 <%@ Property Name="IncludeGetListByIX" Type="System.Boolean" Default="True" Category="Options" Description="If true getlist functions will be generated." %>
 <%@ Property Name="IncludeFind" Type="System.Boolean" Default="False" Category="Options" Description="If true find functions will be generated." %>
 <%@ Property Name="IncludeManyToMany" Type="System.Boolean" Default="True" Category="Options" Description="If true select statements will be generated for any many to many relationship." %>
+<%@ Property Name="IncludeDatabaseFeatures" Type="MoM.Templates.DatabaseType" Category="02. Framework Generation - Optional" Description="Indicates which database specific features to generate." Default="None" %>
 
 <%@ Property Name="InsertSuffix" Type="System.String" Default="_Insert" Category="Style" Description="Suffix to use for all generated INSERT functions." %>
 <%@ Property Name="UpdateSuffix" Type="System.String" Default="_Update" Category="Style" Description="Suffix to use for all generated UPDATE functions." %>
@@ -105,6 +106,7 @@
 using System;
 using System.Data;
 using System.Data.Common;
+using System.Text;
 
 using Microsoft.Practices.EnterpriseLibrary.Data;
 using Microsoft.Practices.EnterpriseLibrary.Data.Sql;
@@ -354,6 +356,8 @@ namespace <%=DALNameSpace%>.SqlClient
 	*/%>
 	<% if (IncludeFind) { %>
 		#region Find Functions
+
+		#region Parsed Find Methods
 		/// <summary>
 		/// 	Returns rows meeting the whereclause condition from the DataSource.
 		/// </summary>
@@ -453,6 +457,72 @@ namespace <%=DALNameSpace%>.SqlClient
 			}
 			return rows;
 		}
+
+		#endregion Parsed Find Methods
+		
+		#region Parameterized Find Methods
+		
+		/// <summary>
+		/// 	Returns rows from the DataSource that meet the parameter conditions.
+		/// </summary>
+		/// <param name="transactionManager"><see cref="TransactionManager"/> object</param>
+		/// <param name="parameters">A collection of <see cref="SqlFilterParameter"/> objects.</param>
+		/// <param name="orderBy">Specifies the sort criteria for the rows in the DataSource (Name ASC; BirthDay DESC, Name ASC);</param>
+		/// <param name="start">Row number at which to start reading.</param>
+		/// <param name="pageLength">Number of rows to return.</param>
+		/// <param name="count">out. The number of rows that match this query.</param>
+		/// <returns>Returns a typed collection of <%= className %> objects.</returns>
+		public override <%=collectionClassName%> Find(TransactionManager transactionManager, SqlFilterParameterCollection parameters, string orderBy, int start, int pageLength, out int count)
+		{
+			SqlDatabase database = new SqlDatabase(this._connectionString);
+			DbCommand commandWrapper = StoredProcedureProvider.GetCommandWrapper(database, "<%= owner + ProcedurePrefix + commandStem + FindSuffix %>_Dynamic", typeof(<%= entityClassName %>Column), parameters, orderBy, start, pageLength);
+			
+			if ( parameters != null )
+			{
+				SqlFilterParameter param;
+
+				for ( int i = 0; i < parameters.Count; i++ )
+				{
+					param = parameters[i];
+					database.AddInParameter(commandWrapper, param.Name, param.DbType, param.Value);
+				}
+			}
+
+			<%= collectionClassName %> rows = new <%= collectionClassName %>();
+			IDataReader reader = null;
+			
+			try
+			{
+				if ( transactionManager != null )
+				{
+					reader = Utility.ExecuteReader(transactionManager, commandWrapper);
+				}
+				else
+				{
+					reader = Utility.ExecuteReader(database, commandWrapper);
+				}
+				
+				Fill(reader, rows, 0, int.MaxValue);
+				count = rows.Count;
+				
+				if ( reader.NextResult() )
+				{
+					if ( reader.Read() )
+					{
+						count = reader.GetInt32(0);
+					}
+				}
+			}
+			finally
+			{
+				if ( reader != null )
+					reader.Close();
+			}
+			
+			return rows;
+		}
+		
+		#endregion Parameterized Find Methods
 		
 		#endregion "Find Functions"
 	<% } %>

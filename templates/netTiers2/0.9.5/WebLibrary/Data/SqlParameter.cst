@@ -77,6 +77,20 @@ namespace <%= WebNameSpace %>.Data
 			set { callbackControlID = value; }
 		}
 
+		/// <summary>
+		/// The UseParameterizedFilters member variable.
+		/// </summary>
+		private bool useParameterizedFilters = true;
+
+		/// <summary>
+		/// Gets or sets the UseParameterizedFilters property.
+		/// </summary>
+		public bool UseParameterizedFilters
+		{
+			get { return useParameterizedFilters; }
+			set { useParameterizedFilters = value; }
+		}
+
 		#endregion Properties
 
 		#region Evaluate
@@ -89,9 +103,13 @@ namespace <%= WebNameSpace %>.Data
 		/// <returns>A System.Object that represents the updated and current value of the parameter.</returns>
 		protected override object Evaluate(HttpContext context, Control control)
 		{
-			String sql = String.Empty;
+			Object returnValue = null;
 			bool isCallback = false;
 
+			if ( !UseParameterizedFilters )
+			{
+				returnValue = String.Empty;
+			}
 			if ( !String.IsNullOrEmpty(CallbackControlID) )
 			{
 				IList<Control> controls = FormUtil.GetControls(control.Page, CallbackControlID);
@@ -106,10 +124,17 @@ namespace <%= WebNameSpace %>.Data
 			}
 			if ( filters != null && filters.Count > 0 )
 			{
-				sql = (filters[0] as ISqlFilter).GetSqlString(control, filters, isCallback);
+				if ( UseParameterizedFilters )
+				{
+					returnValue = ( filters[0] as ISqlFilter ).GetSqlFilterParameters(control, filters, isCallback);
+				}
+				else
+				{
+					returnValue = ( filters[0] as ISqlFilter ).GetSqlFilterString(control, filters, isCallback);
+				}
 			}
 
-			return sql;
+			return returnValue;
 		}
 
 		#endregion Evaluate
@@ -204,13 +229,42 @@ namespace <%= WebNameSpace %>.Data
 		}
 
 		/// <summary>
+		/// Applies the filters to the specified <see cref="SqlFilterBuilder&lt;EntityColumn&gt;"/> object.
+		/// </summary>
+		/// <param name="sql">The <see cref="SqlFilterBuilder&lt;EntityColumn&gt;"/> object.</param>
+		/// <param name="control">The <see cref="System.Web.UI.Control"/> that the parameter is bound to.</param>
+		/// <param name="filters">A collection of <see cref="ISqlFilter"/> objects.</param>
+		/// <param name="isCallback">Indicates whether this is a callback request.</param>
+		protected virtual void ApplyFilters(SqlFilterBuilder<EntityColumn> sql, Control control, IList filters, bool isCallback)
+		{
+			String value;
+
+			foreach ( SqlFilter<EntityColumn> filter in filters )
+			{
+				value = filter.GetFilterValue(control, isCallback);
+
+				if ( filter.ApplyFilter != null )
+				{
+					SqlFilterEventArgs<EntityColumn> args = new SqlFilterEventArgs<EntityColumn>(sql, filter.Column, value);
+					filter.ApplyFilter(this, args);
+				}
+				else
+				{
+					sql.Append(filter.Column, value);
+				}
+			}
+		}
+
+		/// <summary>
 		/// Creates a new instance of a <see cref="SqlFilterBuilder&lt;EntityColumn&gt;"/> class
 		/// that can be used to generate a SQL filter expression for this filter.
 		/// </summary>
 		/// <returns></returns>
-		protected virtual SqlFilterBuilder<EntityColumn> GetFilterBuilder()
+		protected virtual SqlFilterBuilder<EntityColumn> GetFilterBuilder(bool useParameterizedFilters)
 		{
-			return new SqlFilterBuilder<EntityColumn>();
+			return useParameterizedFilters
+				? new ParameterizedSqlFilterBuilder<EntityColumn>()
+				: new SqlFilterBuilder<EntityColumn>();
 		}
 
 		#endregion Methods
@@ -233,27 +287,29 @@ namespace <%= WebNameSpace %>.Data
 		/// <param name="filters">A collection of <see cref="ISqlFilter"/> objects.</param>
 		/// <param name="isCallback">Indicates whether this is a callback request.</param>
 		/// <returns>A SQL filter expression.</returns>
-		public String GetSqlString(Control control, IList filters, bool isCallback)
+		public String GetSqlFilterString(Control control, IList filters, bool isCallback)
 		{
-			SqlFilterBuilder<EntityColumn> sql = GetFilterBuilder();
-			String value;
+			SqlFilterBuilder<EntityColumn> sql = GetFilterBuilder(false);
 
-			foreach ( SqlFilter<EntityColumn> filter in filters )
-			{
-				value = filter.GetFilterValue(control, isCallback);
-
-				if ( filter.ApplyFilter != null )
-				{
-					SqlFilterEventArgs<EntityColumn> args = new SqlFilterEventArgs<EntityColumn>(sql, filter.Column, value);
-					filter.ApplyFilter(this, args);
-				}
-				else
-				{
-					sql.Append(filter.Column, value);
-				}
-			}
+			ApplyFilters(sql, control, filters, isCallback);
 
 			return sql.ToString();
+		}
+
+		/// <summary>
+		/// Gets the collection of SQL filter parameters that is represented by the specified filters.
+		/// </summary>
+		/// <param name="control">The <see cref="System.Web.UI.Control"/> that the parameter is bound to.</param>
+		/// <param name="filters">A collection of <see cref="ISqlFilter"/> objects.</param>
+		/// <param name="isCallback">Indicates whether this is a callback request.</param>
+		/// <returns>A collection SQL filter parameters.</returns>
+		public SqlFilterParameterCollection GetSqlFilterParameters(Control control, IList filters, bool isCallback)
+		{
+			SqlFilterBuilder<EntityColumn> sql = GetFilterBuilder(true);
+
+			ApplyFilters(sql, control, filters, isCallback);
+
+			return (sql as ParameterizedSqlFilterBuilder<EntityColumn>).GetParameters();
 		}
 
 		#endregion ISqlFilter Members
@@ -351,7 +407,16 @@ namespace <%= WebNameSpace %>.Data
 		/// <param name="filters">A collection of <see cref="ISqlFilter"/> objects.</param>
 		/// <param name="isCallback">Indicates whether this is a callback request.</param>
 		/// <returns>A SQL filter expression.</returns>
-		String GetSqlString(Control control, IList filters, bool isCallback);
+		String GetSqlFilterString(Control control, IList filters, bool isCallback);
+
+		/// <summary>
+		/// Gets the collection of SQL filter parameters that is represented by the specified filters.
+		/// </summary>
+		/// <param name="control">The <see cref="System.Web.UI.Control"/> that the parameter is bound to.</param>
+		/// <param name="filters">A collection of <see cref="ISqlFilter"/> objects.</param>
+		/// <param name="isCallback">Indicates whether this is a callback request.</param>
+		/// <returns>A collection SQL filter parameters.</returns>
+		SqlFilterParameterCollection GetSqlFilterParameters(Control control, IList filters, bool isCallback);
 	}
 
 	#endregion ISqlFilter

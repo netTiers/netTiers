@@ -13,6 +13,7 @@
 <%@ Property Name="IncludeGetListByIX" Type="System.Boolean" Default="True" Category="CRUD Options" Description="If true getlist statements will be generated." %>
 <%@ Property Name="IncludeManyToMany" Type="System.Boolean" Default="True" Category="CRUD Options" Description="If true select statements will be generated for any many to many relationship." %>
 <%@ Property Name="IncludeRelations" Type="System.Boolean" Default="True" Category="CRUD Options" Description="If true, the child collection relationships will be generated within your entities, if set to false, these child collections will not be generated, and Deep Load/Save will not be generated." %>
+<%@ Property Name="IncludeDatabaseFeatures" Type="MoM.Templates.DatabaseType" Category="02. Framework Generation - Optional" Description="Indicates which database specific features to generate." Default="None" %>
 
 <%@ Assembly Name="SchemaExplorer" %>
 <%@ Assembly Name="System.Design" %>
@@ -262,7 +263,9 @@ namespace <%= DALNameSpace %>.Bases
 
 		<% } // end if ( IncludeGetList ) %>
 		<% if ( IncludeFind ) { %>
-		#region Find Functions
+		#region Find Methods
+		
+		#region Parsed Find Methods
 		
 		/// <summary>
 		/// Returns rows meeting the whereClause condition from the DataSource.
@@ -273,7 +276,7 @@ namespace <%= DALNameSpace %>.Bases
 		public virtual TList<Entity> Find(string whereClause)
 		{
 			int count = -1;
-			return Find(null, whereClause, 0, int.MaxValue, out count);
+			return Find((TransactionManager) null, whereClause, 0, int.MaxValue, out count);
 		}	
 		
 		/// <summary>
@@ -300,7 +303,7 @@ namespace <%= DALNameSpace %>.Bases
 		public virtual TList<Entity> Find(string whereClause, int start, int pageLength)
 		{
 			int count = -1;
-			return Find(null, whereClause, start, pageLength, out count);
+			return Find((TransactionManager) null, whereClause, start, pageLength, out count);
 		}
 		
 		/// <summary>
@@ -327,7 +330,7 @@ namespace <%= DALNameSpace %>.Bases
 		/// <returns>Returns a typed collection of Entity objects.</returns>
 		public virtual TList<Entity> Find(string whereClause, int start, int pageLength, out int count)
 		{
-			return Find(null, whereClause, start, pageLength, out count);
+			return Find((TransactionManager) null, whereClause, start, pageLength, out count);
 		}
 		
 		/// <summary>
@@ -342,7 +345,89 @@ namespace <%= DALNameSpace %>.Bases
 		/// <returns>Returns a typed collection of Entity objects.</returns>
 		public abstract TList<Entity> Find(TransactionManager transactionManager, string whereClause, int start, int pageLength, out int count);
 		
-		#endregion "Find Functions"
+		#endregion Parsed Find Methods
+		
+		#region Parameterized Find Methods
+		
+		/// <summary>
+		/// 	Returns rows from the DataSource that meet the parameter conditions.
+		/// </summary>
+		/// <param name="parameters">A collection of <see cref="SqlFilterParameter"/> objects.</param>
+		/// <returns>Returns a typed collection of Entity objects.</returns>
+		public virtual TList<Entity> Find(SqlFilterParameterCollection parameters)
+		{
+			return Find((TransactionManager) null, parameters);
+		}
+		
+		/// <summary>
+		/// 	Returns rows from the DataSource that meet the parameter conditions.
+		/// </summary>
+		/// <param name="transactionManager"><see cref="TransactionManager"/> object</param>
+		/// <param name="parameters">A collection of <see cref="SqlFilterParameter"/> objects.</param>
+		/// <returns>Returns a typed collection of Entity objects.</returns>
+		public virtual TList<Entity> Find(TransactionManager transactionManager, SqlFilterParameterCollection parameters)
+		{
+			return Find(transactionManager, parameters, null);
+		}
+		
+		/// <summary>
+		/// 	Returns rows from the DataSource that meet the parameter conditions.
+		/// </summary>
+		/// <param name="parameters">A collection of <see cref="SqlFilterParameter"/> objects.</param>
+		/// <param name="orderBy">Specifies the sort criteria for the rows in the DataSource (Name ASC; BirthDay DESC, Name ASC);</param>
+		/// <returns>Returns a typed collection of Entity objects.</returns>
+		public virtual TList<Entity> Find(SqlFilterParameterCollection parameters, string orderBy)
+		{
+			return Find((TransactionManager) null, parameters, orderBy);
+		}
+		
+		/// <summary>
+		/// 	Returns rows from the DataSource that meet the parameter conditions.
+		/// </summary>
+		/// <param name="transactionManager"><see cref="TransactionManager"/> object</param>
+		/// <param name="parameters">A collection of <see cref="SqlFilterParameter"/> objects.</param>
+		/// <param name="orderBy">Specifies the sort criteria for the rows in the DataSource (Name ASC; BirthDay DESC, Name ASC);</param>
+		/// <returns>Returns a typed collection of Entity objects.</returns>
+		public virtual TList<Entity> Find(TransactionManager transactionManager, SqlFilterParameterCollection parameters, string orderBy)
+		{
+			int count = 0;
+			return Find(transactionManager, parameters, orderBy, 0, int.MaxValue, out count);
+		}
+		
+		/// <summary>
+		/// 	Returns rows from the DataSource that meet the parameter conditions.
+		/// </summary>
+		/// <param name="parameters">A collection of <see cref="SqlFilterParameter"/> objects.</param>
+		/// <param name="orderBy">Specifies the sort criteria for the rows in the DataSource (Name ASC; BirthDay DESC, Name ASC);</param>
+		/// <param name="start">Row number at which to start reading.</param>
+		/// <param name="pageLength">Number of rows to return.</param>
+		/// <param name="count">out. The number of rows that match this query.</param>
+		/// <returns>Returns a typed collection of Entity objects.</returns>
+		public virtual TList<Entity> Find(SqlFilterParameterCollection parameters, string orderBy, int start, int pageLength, out int count)
+		{
+			return Find((TransactionManager) null, parameters, orderBy, start, pageLength, out count);
+		}
+		
+		/// <summary>
+		/// 	Returns rows from the DataSource that meet the parameter conditions.
+		/// </summary>
+		/// <param name="transactionManager"><see cref="TransactionManager"/> object</param>
+		/// <param name="parameters">A collection of <see cref="SqlFilterParameter"/> objects.</param>
+		/// <param name="orderBy">Specifies the sort criteria for the rows in the DataSource (Name ASC; BirthDay DESC, Name ASC);</param>
+		/// <param name="start">Row number at which to start reading.</param>
+		/// <param name="pageLength">Number of rows to return.</param>
+		/// <param name="count">out. The number of rows that match this query.</param>
+		/// <returns>Returns a typed collection of Entity objects.</returns>
+		public virtual TList<Entity> Find(TransactionManager transactionManager, SqlFilterParameterCollection parameters, string orderBy, int start, int pageLength, out int count)
+		{
+			// TODO: make this method abstract after it has been fully implemented!
+			count = 0;
+			return null;
+		}
+
+		#endregion Parameterized Find Methods
+
+		#endregion Find Methods
 		
 		<% } // end if ( IncludeFind ) %>
 		<% if ( IncludeInsert ) { %>

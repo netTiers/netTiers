@@ -65,7 +65,6 @@ using <%=DALNameSpace%>.Bases;
 
 namespace <%=DALNameSpace%>.SqlClient
 {
-
 /// <summary>
 ///	This class is the base repository for the CRUD operations on the <%=className%> objects.
 /// </summary>
@@ -264,13 +263,84 @@ public partial class <%=providerBaseName%> : <%=GetProviderBaseName(SourceView.N
 	
 	#endregion
 	
-<%
- 	} //end IncludeGetList
-%>
+<% } //end IncludeGetList %>
+<% if ( IncludeFind ) { %>
+	#region Find Methods
+	
+	#region Parameterized Find Methods
+	
+	/// <summary>
+	/// 	Returns rows from the DataSource that meet the parameter conditions.
+	/// </summary>
+	/// <param name="transactionManager"><see cref="TransactionManager"/> object</param>
+	/// <param name="parameters">A collection of <see cref="SqlFilterParameter"/> objects.</param>
+	/// <param name="orderBy">Specifies the sort criteria for the rows in the DataSource (Name ASC; BirthDay DESC, Name ASC);</param>
+	/// <param name="start">Row number at which to start reading.</param>
+	/// <param name="pageLength">Number of rows to return.</param>
+	/// <param name="count">out. The number of rows that match this query.</param>
+	/// <returns>Returns a typed collection of <%= className %> objects.</returns>
+	public override <%=collectionClassName%> Find(TransactionManager transactionManager, SqlFilterParameterCollection parameters, string orderBy, int start, int pageLength, out int count)
+	{
+		SqlDatabase database = new SqlDatabase(this._connectionString);
+		DbCommand commandWrapper = StoredProcedureProvider.GetCommandWrapper(database, "<%= ProcedurePrefix + GetCleanName(name) + FindSuffix %>_Dynamic", typeof(<%= className %>Column), parameters, orderBy, start, pageLength);
+		
+		if ( parameters != null )
+		{
+			SqlFilterParameter param;
+
+			for ( int i = 0; i < parameters.Count; i++ )
+			{
+				param = parameters[i];
+				database.AddInParameter(commandWrapper, param.Name, param.DbType, param.Value);
+			}
+		}
+
+		<%= collectionClassName %> rows = new <%= collectionClassName %>();
+		IDataReader reader = null;
+		
+		try
+		{
+			if ( transactionManager != null )
+			{
+				reader = Utility.ExecuteReader(transactionManager, commandWrapper);
+			}
+			else
+			{
+				reader = Utility.ExecuteReader(database, commandWrapper);
+			}
+			
+			<% if ( IncludeDatabaseFeatures == MoM.Templates.DatabaseType.SQLServer2005 ) { %>
+			Fill(reader, rows, 0, int.MaxValue);
+			<% } else { %>
+			Fill(reader, rows, start, pageLength);
+			<% } %>
+			count = rows.Count;
+			
+			if ( reader.NextResult() )
+			{
+				if ( reader.Read() )
+				{
+					count = reader.GetInt32(0);
+				}
+			}
+		}
+		finally
+		{
+			if ( reader != null )
+				reader.Close();
+		}
+		
+		return rows;
+	}
+	
+	#endregion Parameterized Find Methods
+
+	#endregion Find Methods
+
+<% } // end if ( IncludeFind ) { %>
 <%/*---------------------------------------------------------------------------------
 							CUSTOM STORED PROCEDURES
-  -------------------------------------------------------------------------------*/%>
-
+  -------------------------------------------------------------------------------*/ %>
 <% if (IncludeCustoms) { %>
 	#region "Custom Methods"
 	
@@ -400,6 +470,7 @@ public partial class <%=providerBaseName%> : <%=GetProviderBaseName(SourceView.N
 %>
 
 	#endregion
+
 <% } // endif IncludeCustoms %>
-	}//end class
+}//end class
 } // end namespace

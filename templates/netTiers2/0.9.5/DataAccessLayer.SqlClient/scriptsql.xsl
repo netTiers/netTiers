@@ -16,7 +16,7 @@ SET QUOTED_IDENTIFIER ON
 GO
 SET ANSI_NULLS OFF 
 GO
-<xsl:apply-templates select="//procedures/procedure"/>
+<xsl:apply-templates select="//procedures/procedure[not(@skip)]"/>
 </xsl:template>
 
 <xsl:template match="procedure">

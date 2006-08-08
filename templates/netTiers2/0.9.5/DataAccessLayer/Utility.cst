@@ -2,7 +2,7 @@
 <%@ Assembly Name="SchemaExplorer" %>
 <%@ Assembly Name="System.Design" %>
 <%@ Property Name="DALNameSpace" Type="System.String" Category="Data" Description="DAL Namespace." %>
-<%@ Property Name="NameSpace" Type="System.String" Category="Data" Description="DAL Namespace." %>
+<%@ Property Name="NameSpace" Type="System.String" Category="Data" Description="BLL Namespace." %>
 
 <%@ Property Name="RetryEnabled" Optional="False" Type="System.Boolean" Category="Retry" Description="Enabling Retry will add code retry the queries that failed with data exceptions. Useful to if your database becomes temporarily unavailable." %>
 <%@ Property Name="RetryMaxAttempts" Optional="True" Type="System.Int32" Category="Retry" Description="The number of attempts that will be made." %>
@@ -10,11 +10,13 @@
 <%@ Property Name="RetrySleepStyle" Optional="True" Type="MoM.Templates.SleepStyle" Category="Retry" Description="" %>
 
 using System;
+using System.Text;
 using System.Data;
 using System.Data.Common;
 using Microsoft.Practices.EnterpriseLibrary.Data;
 //PSB 2006-05-26: should we use EntLib ExceptionPolicy.HandleException?
 //using Microsoft.Practices.EnterpriseLibrary.ExceptionHandling;
+using <%= NameSpace %>;
 
 namespace <%=DALNameSpace%>
 {
@@ -251,6 +253,68 @@ namespace <%=DALNameSpace%>
 		}
 		#endregion 
 		
+		#region ParseSortExpression
+
+		/// <summary>
+		/// Parses the supplied sort expression parameter to verify that it
+		/// matches the specifed column name enumeration.
+		/// </summary>
+		/// <param name="columnEnum"></param>
+		/// <param name="sortExpression"></param>
+		/// <returns></returns>
+		public static String ParseSortExpression(Type columnEnum, String sortExpression)
+		{
+			String sort = String.Empty;
+
+			if ( !String.IsNullOrEmpty(sortExpression) )
+			{
+				String[] expressions = sortExpression.Split(',');
+				String[] pair;
+
+				StringBuilder sb = new StringBuilder();
+				String column, name;
+				Enum col;
+
+				foreach ( String orderBy in expressions )
+				{
+					pair = orderBy.Trim().Split(' ');
+
+					if ( pair.Length == 1 || pair.Length == 2 )
+					{
+						column = pair[0];
+
+						try
+						{
+							col = (Enum) Enum.Parse(columnEnum, column, true);
+							name = EntityHelper.GetEnumTextValue(col);
+
+							if ( sb.Length > 0 )
+							{
+								sb.Append(", ");
+							}
+
+							sb.AppendFormat("[{0}]", name);
+
+							if ( pair.Length > 1 && SqlUtil.DESC.Equals(pair[1], StringComparison.OrdinalIgnoreCase) )
+							{
+								sb.AppendFormat(" {0}", SqlUtil.DESC);
+							}
+						}
+						catch ( Exception ) { /* ignore */ }
+					}
+				}
+
+				sort = sb.ToString();
+			}
+			if ( String.IsNullOrEmpty(sort) )
+			{
+				sort = String.Format("[{0}]", Enum.GetValues(columnEnum).GetValue(0));
+			}
+
+			return sort;
+		}
+
+		#endregion ParseSortExpression
 
     	#region ExecuteReader
         /// <summary>

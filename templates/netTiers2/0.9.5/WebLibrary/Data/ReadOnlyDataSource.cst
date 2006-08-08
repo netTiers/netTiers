@@ -4,6 +4,7 @@
 <%@ Property Name="WebNameSpace" Optional="False" Type="System.String" Category="Style" Description="Web Namespace." %>
 
 <%@ Property Name="IncludeGetList" Type="System.Boolean" Default="True" Category="Options" Description="If true getlist functions will be generated." %>
+<%@ Property Name="IncludeFind" Type="System.Boolean" Default="True" Category="Options" Description="If true Find functions will be generated." %>
 <%@ Property Name="IncludeDatabaseFeatures" Type="MoM.Templates.DatabaseType" Category="02. Framework Generation - Optional" Description="Indicates which database specific features to generate." Default="None" %>
 
 <%@ Assembly Name="SchemaExplorer" %>
@@ -236,6 +237,11 @@ namespace <%= WebNameSpace %>.Data
 					entityList = Provider.GetAll(GetTransactionManager(), StartIndex, PageSize, out count);
 					break;
 				<% } // end if ( IncludeGetList ) %>
+				<% if ( IncludeFind ) { %>
+				case ReadOnlyDataSourceSelectMethod.Find:
+					entityList = Provider.Find(GetTransactionManager(), FilterParameters, OrderBy, StartIndex, PageSize, out count);
+					break;
+				<% } // end if ( IncludeFind ) %>
 				default:
 					break;
 			}
@@ -266,8 +272,14 @@ namespace <%= WebNameSpace %>.Data
 		/// <summary>
 		/// Represents the IEntityViewProvider&lt;Entity&gt;.GetAll method.
 		/// </summary>
-		GetAll
+		GetAll<% if ( IncludeFind ) { %>,<% } %>
 		<% } // end if ( IncludeGetList ) %>
+		<% if ( IncludeFind ) { %>
+		/// <summary>
+		/// Represents the IEntityViewProvider&lt;Entity&gt;.Find method.
+		/// </summary>
+		Find
+		<% } // end if ( IncludeFind ) %>
 	}
 
 	#endregion ReadOnlyDataSourceSelectMethod
