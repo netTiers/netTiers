@@ -56,7 +56,7 @@
 <%@ Property Name="IncludeDesignTimeSupport" Type="System.Boolean" Default="true" Category="05. WebLibrary - Advanced" Description="Indicates if Visual Studio design-time support should be provided for the Web Library controls." %>
 
 <%-- 6.0 ASP.Net Admin Controls --%>
-<%@ Property Name="GenerateWebAdmin" Type="System.Boolean" Default="false" Category="06. Web - Advanced" Description="Indicates if the web admin user controls should be generated." %>
+
 
 <%-- 6.0 webservice --%>
 <%@ Property Name="GenerateWebservice" Type="System.Boolean" Default="false" Category="06. Web - Advanced" Description="Indicates if the webservice dataaccesslayer should be generated" %>
@@ -69,6 +69,8 @@
 <%@ Property Name="OverwriteWebConfig" Type="System.Boolean" Default="false" Category="06b. Website - Advanced" Description="Indicates if the Web.config should be overwritten." %>
 <%@ Property Name="IncludeAtlasLibrary" Type="System.Boolean" Default="false" Category="06b. Website - Advanced" Description="Indicates whether to include a reference to the Atlas component library." %>
 <%@ Property Name="IncludeAtlasToolkit" Type="System.Boolean" Default="false" Category="06b. Website - Advanced" Description="Indicates whether to include a reference to the Atlas Control Toolkit. This property is only taken into account when IncludeAtlasLibrary is true." %>
+<%@ Property Name="GenerateWebsiteAdmin" Type="System.Boolean" Default="true" Category="06b. Website - Advanced" Description="Indicates if the web admin  should be generated." %>
+<%@ Property Name="WebAdminSiteName" Type="System.String" Default="Application Name" Category="06b. Website - Advanced" Description="Indicates the web admin sie name." %>
 
 <%-- 7.0 Retry of SQL statements --%>
 <%@ Property Name="RetryEnabled" Optional="False" Type="System.Boolean" Category="07. CRUD - Advanced" Default="false" Description="Enabling Retry will add code retry the queries that failed with data exceptions. Useful to if your database becomes temporarily unavailable." %>
@@ -306,30 +308,6 @@
 	private bool _OverwritePartialClassStub = false;
 
 
-	private string _webAdminOutputPath = string.Empty;
-	
-	[Editor(typeof(System.Windows.Forms.Design.FolderNameEditor), typeof(System.Drawing.Design.UITypeEditor))] 
-	[CodeTemplateProperty(CodeTemplatePropertyOption.Optional)]
-	[Category("06. Web - Advanced")]
-	[Description("The full path for placed of the WebAdmin user control files.")]
-	[DefaultValue("")]
-	public string WebAdminOutputPath 
-	{ 
-		get
-		{   
-			if (_webAdminOutputPath.Length == 0)
-			{
-				return @"c:\NetTiers\" + (SourceDatabase != null ? SourceDatabase.Name + @"\WebControls" : @"Output\WebControls");
-			}
-			return _webAdminOutputPath;
-		}
-		set
-		{
-			_webAdminOutputPath = (value != null ? value.TrimEnd('\\') : string.Empty);
-		} 
-	}
-
-	
 	[Editor(typeof(System.Windows.Forms.Design.FolderNameEditor), typeof(System.Drawing.Design.UITypeEditor))] 
 	[CodeTemplateProperty(CodeTemplatePropertyOption.Optional)]
 	[Category("06. Web - Advanced")]
@@ -673,7 +651,16 @@
 														"WebLibrary\\UI\\FormUtil.cst",
 														"WebLibrary\\UI\\FormUtilBase.cst",
 														"WebLibrary\\UI\\MultiBindableTemplate.cst",
-														"WebLibrary\\UI\\MultiFormView.cst"
+														"WebLibrary\\UI\\MultiFormView.cst",
+														"WebLibrary\\UI\\EntityGridView.cs.cst",
+
+														"ASP.Net\\Common\\Admin\\Entity.aspx.cst",
+														"ASP.Net\\Common\\Admin\\Entity.aspx.cs.cst",
+														"ASP.Net\\Common\\Admin\\EntityEdit.aspx.cst",
+														"ASP.Net\\Common\\Admin\\EntityEdit.aspx.cs.cst",
+														"ASP.Net\\Common\\Admin\\UserControls\\EntityFields.ascx.cst",
+														"ASP.Net\\Common\\Admin\\Web.Sitemap.cst",
+														"ASP.Net\\Common\\Admin\\site.master.cst"														
 														};
 	
 	// Compile and load all them in a collection
@@ -905,7 +892,6 @@ public void Go()
 	
 	string rootPathWS  = WebServiceOutputPath; //OutputDirectory + "\\" + WebServiceVirtualDirectoryName;
 	string specialPath = vsnetIntegration == VSNetIntegration.SeparatedProjects ? ((IncludeUnitTest != MoM.Templates.UnitTestStyle.None) ? rootPathUT : rootPathDAL) : OutputDirectory;
-	string rootPathWebAdmin = WebAdminOutputPath;
 	
 	bool HasCustomCode = (CustomCodeFolderName != null && CustomCodeFolderName.Trim().Length > 0 );
 	if (ProcedurePrefix == null)	ProcedurePrefix = string.Empty;
@@ -977,17 +963,6 @@ public void Go()
 	
 	XmlElement parametersNode = AddFileNode(initNode, "Validating parameters.");
 	
-	//Check to see if path has been specified
-	if ( GenerateWebAdmin )
-	{
-		//If path has not been specified, set GenerateWebAdmin to false and log a message
-		if ( rootPathWebAdmin == string.Empty )
-		{
-			AddMessageNode(parametersNode, 1, "WebAdminOutputPath has not been specified, so WebAdmin controls will not be generated.");
-			GenerateWebAdmin = false;
-		}
-	}
-	AddExecutionTime(parametersNode);
 	
 	// load all the sub templates
 	XmlElement templatesNode = AddFileNode(initNode, "Loading templates.");
@@ -1181,22 +1156,6 @@ public void Go()
 		// TODO check if the virtual directory exists, if not create it.
 	}	
 		
-	if (GenerateWebAdmin)
-	{
-		SafeCreateDirectory(rootPathWebAdmin);
-		SafeCreateDirectory(rootPathWebAdmin + "\\App_Themes");
-		SafeCreateDirectory(rootPathWebAdmin + "\\Common");
-		SafeCreateDirectory(rootPathWebAdmin + "\\Common\\Calendar");
-		SafeCreateDirectory(rootPathWebAdmin + "\\Configuration");
-		SafeCreateDirectory(rootPathWebAdmin + "\\Controls");
-		SafeCreateDirectory(rootPathWebAdmin + "\\Controls\\Admin");
-		SafeCreateDirectory(rootPathWebAdmin + "\\Images");
-				
-		// TODO copy all the ressources needed to generate a full webadmin website
-		SafeCopyFile(this.CodeTemplateInfo.DirectoryName + "\\References\\Microsoft.Practices.EnterpriseLibrary.Common.dll", OutputDirectory + "\\References\\Microsoft.Practices.EnterpriseLibrary.Common.dll");
-		
-	}
-	
 	if (GenerateWebLibrary)
 	{
 		SafeCreateDirectory(rootPathWebLib);
@@ -1230,6 +1189,32 @@ public void Go()
 		//{
 		//	SafeCopyFile(this.CodeTemplateInfo.DirectoryName + "\\References\\Microsoft.Practices.EnterpriseLibrary.ExceptionHandling.dll", rootPathWebsite + "\\Bin\\Microsoft.Practices.EnterpriseLibrary.ExceptionHandling.dll");
 		//}
+
+		if (GenerateWebsiteAdmin)
+		{
+			SafeCreateDirectory(rootPathWebsite + "\\App_Code");
+			SafeCreateDirectory(rootPathWebsite + "\\Admin");
+			SafeCreateDirectory(rootPathWebsite + "\\Admin\\UserControls");
+			SafeCreateDirectory(rootPathWebsite + "\\App_Themes");
+			SafeCreateDirectory(rootPathWebsite + "\\App_Themes\\Default");
+			SafeCreateDirectory(rootPathWebsite + "\\Common");
+			SafeCreateDirectory(rootPathWebsite + "\\Common\\Calendar");
+			SafeCreateDirectory(rootPathWebsite + "\\Images");
+			
+			SafeCopyFile(this.CodeTemplateInfo.DirectoryName + "\\ASP.NET\\Common\\Common\\CalendarControl.css", rootPathWebsite + "\\Common\\Calendar\\CalendarControl.css");
+			SafeCopyFile(this.CodeTemplateInfo.DirectoryName + "\\ASP.NET\\Common\\Common\\CalendarControl.js", rootPathWebsite + "\\Common\\Calendar\\CalendarControl.js");
+			SafeCopyFile(this.CodeTemplateInfo.DirectoryName + "\\ASP.NET\\Common\\App_Themes\\Default.css", rootPathWebsite + "\\App_Themes\\Default\\Default.css");
+			SafeCopyFile(this.CodeTemplateInfo.DirectoryName + "\\ASP.NET\\Common\\App_Themes\\Default.skin", rootPathWebsite + "\\App_Themes\\Default\\Default.skin");
+			SafeCopyFile(this.CodeTemplateInfo.DirectoryName + "\\ASP.NET\\Common\\Images\\sortdescending.gif", rootPathWebsite + "\\Images\\sortdescending.gif");
+			SafeCopyFile(this.CodeTemplateInfo.DirectoryName + "\\ASP.NET\\Common\\Images\\excel.gif", rootPathWebsite + "\\Images\\excel.gif");
+			SafeCopyFile(this.CodeTemplateInfo.DirectoryName + "\\ASP.NET\\Common\\Images\\loading.gif", rootPathWebsite + "\\Images\\loading.gif");
+			SafeCopyFile(this.CodeTemplateInfo.DirectoryName + "\\ASP.NET\\Common\\Images\\minical.gif", rootPathWebsite + "\\Images\\minical.gif");
+			SafeCopyFile(this.CodeTemplateInfo.DirectoryName + "\\ASP.NET\\Common\\Images\\sortascending.gif", rootPathWebsite + "\\Images\\sortascending.gif");
+			SafeCopyFile(this.CodeTemplateInfo.DirectoryName + "\\ASP.NET\\Common\\Images\\expand_blue.jpg", rootPathWebsite + "\\Images\\expand_blue.jpg");
+			SafeCopyFile(this.CodeTemplateInfo.DirectoryName + "\\ASP.NET\\Common\\Images\\collapse_blue.jpg", rootPathWebsite + "\\Images\\collapse_blue.jpg");
+			SafeCopyFile(this.CodeTemplateInfo.DirectoryName + "\\ASP.NET\\Common\\aspx\\Default.aspx", rootPathWebsite + "\\Admin\\Default.aspx");
+			SafeCopyFile(this.CodeTemplateInfo.DirectoryName + "\\ASP.NET\\Common\\aspx\\Default.aspx.cs", rootPathWebsite + "\\Admin\\Default.aspx.cs");
+		}
 	}
 		
 	//----------------------------------------------------------------------------------------------------------------------------------------------
@@ -1930,19 +1915,8 @@ public void Go()
 			this.RenderToFile("WebInfo.cst", rootPathWS + "\\" + NameSpace + "." + (DataAccessLayerNameSpace.Length>0 ? DataAccessLayerNameSpace : "DataAccessLayer") + ".WebService.csproj.webinfo", true);
 		}
 	}
-	//----------------------------------------------------------------------------------------------------------------------------------------------
 	
 	
-	//----------------------------------------------------------------------------------------------------------------------------------------------
-	//-- Web Admin ASCX pages
-	//----------------------------------------------------------------------------------------------------------------------------------------------
-	if ( GenerateWebAdmin )
-	{
-		XmlElement waConfigNode = AddFileNode(commonNode, "AdminMenuConfig.xml");						
-		this.GetTemplate("Menu_xml.cst").SetProperty("SourceTables", _sourceTables);		
-		this.GetTemplate("Menu_xml.cst").RenderToFile(rootPathWebAdmin + "\\Configuration\\AdminMenuConfig.xml", true);
-		AddExecutionTime(waConfigNode);
-	}
 	
 	//----------------------------------------------------------------------------------------------------------------------------------------------
 	//-- Web Library Classes
@@ -2149,6 +2123,10 @@ public void Go()
 		this.GetTemplate("MultiFormView.cst").SetProperty("DALNameSpace", DALNameSpace);
 		this.GetTemplate("MultiFormView.cst").SetProperty("WebNameSpace", WebLibNameSpace);
 		this.RenderToFile("MultiFormView.cst", rootPathWebLib + "\\UI\\MultiFormView.cs", true);
+
+		AddFileNode(commonNode, "EntityGridView.cs");
+		this.GetTemplate("EntityGridView.cs.cst").SetProperty("RootNameSpace", RootNameSpace);	
+		this.RenderToFile("EntityGridView.cs.cst", rootPathWebLib + "\\UI\\EntityGridView.cs", true);
 	}
 	
 	if ( GenerateWebsite )
@@ -2201,6 +2179,87 @@ public void Go()
 				this.RenderToFile("Default.aspx.designer.cs.cst", rootPathWebsite + "\\Default.aspx.designer.cs", true);
 			}
 		}
+		
+		// Generate WebAdmin
+		if (GenerateWebsiteAdmin)
+		{
+			for (int x=0; x < _sourceTables.Count; x++)
+			{
+				TableSchema SourceTable = _sourceTables[x];								
+				//----------------------------------------------------------------------------------------------------------------------------------------------
+				//-- Web Admin ASCX pages
+				//----------------------------------------------------------------------------------------------------------------------------------------------
+				if (true || !File.Exists(rootPathWebsite + "\\Admin\\" + GetClassName(SourceTable.Name) + ".aspx"))
+				{											
+					this.GetTemplate("Entity.aspx.cst").SetProperty("SourceTable", SourceTable);
+					this.GetTemplate("Entity.aspx.cst").SetProperty("NameSpace", RootNameSpace);
+					this.GetTemplate("Entity.aspx.cst").SetProperty("BLLNameSpace", BusinessLogicLayerNameSpace);
+					this.GetTemplate("Entity.aspx.cst").SetProperty("IncludeAtlasLibrary", IncludeAtlasLibrary);
+					this.GetTemplate("Entity.aspx.cst").SetProperty("IncludeAtlasToolkit", IncludeAtlasToolkit);
+	
+					this.GetTemplate("Entity.aspx.cst").RenderToFile(rootPathWebsite + "\\Admin\\" + GetClassName(SourceTable.Name) + ".aspx", true);							
+				}	
+	
+				//----------------------------------------------------------------------------------------------------------------------------------------------
+				//-- Web Admin ASCX pages
+				//----------------------------------------------------------------------------------------------------------------------------------------------			
+				if (true || !File.Exists(rootPathWebsite + "\\Admin\\" + GetClassName(SourceTable.Name) + ".aspx.cs"))
+				{											
+					this.GetTemplate("Entity.aspx.cs.cst").SetProperty("SourceTable", SourceTable);				
+					this.GetTemplate("Entity.aspx.cs.cst").SetProperty("NameSpace", RootNameSpace);
+					this.GetTemplate("Entity.aspx.cs.cst").SetProperty("WebProjectNameSpace", RootNameSpace);
+					this.GetTemplate("Entity.aspx.cs.cst").SetProperty("BLLNameSpace", BusinessLogicLayerNameSpace);
+					this.GetTemplate("Entity.aspx.cs.cst").SetProperty("IncludeAtlasLibrary", IncludeAtlasLibrary);
+					this.GetTemplate("Entity.aspx.cs.cst").SetProperty("IncludeAtlasToolkit", IncludeAtlasToolkit);
+					
+					this.GetTemplate("Entity.aspx.cs.cst").RenderToFile(rootPathWebsite + "\\Admin\\" + GetClassName(SourceTable.Name) + ".aspx.cs", true);
+	
+				}							
+				if (true || !File.Exists(rootPathWebsite + "\\Admin\\" + GetClassName(SourceTable.Name) + "Edit.aspx"))
+				{											
+					this.GetTemplate("EntityEdit.aspx.cst").SetProperty("SourceTable", SourceTable);				
+					this.GetTemplate("EntityEdit.aspx.cst").SetProperty("NameSpace", RootNameSpace);
+					this.GetTemplate("EntityEdit.aspx.cst").SetProperty("SourceDatabase", SourceDatabase);
+					this.GetTemplate("EntityEdit.aspx.cst").SetProperty("BLLNameSpace", BusinessLogicLayerNameSpace);
+					this.GetTemplate("EntityEdit.aspx.cst").SetProperty("IncludeAtlasLibrary", IncludeAtlasLibrary);
+					this.GetTemplate("EntityEdit.aspx.cst").SetProperty("IncludeAtlasToolkit", IncludeAtlasToolkit);
+					
+					this.GetTemplate("EntityEdit.aspx.cst").RenderToFile(rootPathWebsite + "\\Admin\\" + GetClassName(SourceTable.Name) + "Edit.aspx", true);						
+				}	
+				if (true || !File.Exists(rootPathWebsite + "\\Admin\\" + GetClassName(SourceTable.Name) + "Edit.aspx.cs"))
+				{											
+					this.GetTemplate("EntityEdit.aspx.cs.cst").SetProperty("SourceTable", SourceTable);				
+					this.GetTemplate("EntityEdit.aspx.cs.cst").SetProperty("WebProjectNameSpace", RootNameSpace);
+					this.GetTemplate("EntityEdit.aspx.cs.cst").SetProperty("NameSpace", RootNameSpace);
+					this.GetTemplate("EntityEdit.aspx.cs.cst").SetProperty("SourceDatabase", SourceDatabase);
+					this.GetTemplate("EntityEdit.aspx.cs.cst").SetProperty("BLLNameSpace", BusinessLogicLayerNameSpace);
+					this.GetTemplate("EntityEdit.aspx.cs.cst").SetProperty("IncludeAtlasLibrary", IncludeAtlasLibrary);
+					this.GetTemplate("EntityEdit.aspx.cs.cst").SetProperty("IncludeAtlasToolkit", IncludeAtlasToolkit);
+					
+					this.GetTemplate("EntityEdit.aspx.cs.cst").RenderToFile(rootPathWebsite + "\\Admin\\" + GetClassName(SourceTable.Name) + "Edit.aspx.cs", true);						
+				}		
+				if (true || !File.Exists(rootPathWebsite + "\\Admin\\UserControls\\" + GetClassName(SourceTable.Name) + "Fields.ascx"))
+				{											
+					this.GetTemplate("EntityFields.ascx.cst").SetProperty("SourceTable", SourceTable);				
+					this.GetTemplate("EntityFields.ascx.cst").SetProperty("NameSpace", RootNameSpace);
+					this.GetTemplate("EntityFields.ascx.cst").SetProperty("SourceDatabase", SourceDatabase);
+					this.GetTemplate("EntityFields.ascx.cst").SetProperty("BLLNameSpace", BusinessLogicLayerNameSpace);
+					this.GetTemplate("EntityFields.ascx.cst").SetProperty("IncludeAtlasLibrary", IncludeAtlasLibrary);
+					this.GetTemplate("EntityFields.ascx.cst").SetProperty("IncludeAtlasToolkit", IncludeAtlasToolkit);
+					
+					this.GetTemplate("EntityFields.ascx.cst").RenderToFile(rootPathWebsite + "\\Admin\\UserControls\\" + GetClassName(SourceTable.Name) + "Fields.ascx", true);						
+				}			
+			}
+	
+			this.GetTemplate("Web.Sitemap.cst").SetProperty("SourceTables", _sourceTables);				
+			this.GetTemplate("Web.Sitemap.cst").SetProperty("SourceDatabase", SourceDatabase);
+			this.RenderToFile("Web.Sitemap.cst", rootPathWebsite + "\\Web.Sitemap", true);	
+			
+			this.GetTemplate("site.master.cst").SetProperty("WebsiteNameSpace", WebsiteNameSpace);	
+			this.GetTemplate("site.master.cst").SetProperty("WebAdminSiteName", WebAdminSiteName);	
+			this.RenderToFile("site.master.cst", rootPathWebsite + "\\site.master", true);						
+		}
+		// ---------------------------------------------------------------------------------
 	}
 	
 	// Hard coded Guid make it easier to maintain solution when regenerating projects
@@ -3272,42 +3331,6 @@ public void Go()
 			}
 		}
 		
-		if ( GenerateWebAdmin )
-		{
-			//----------------------------------------------------------------------------------------------------------------------------------------------
-			//-- Web Admin ASCX pages
-			//----------------------------------------------------------------------------------------------------------------------------------------------
-			if (true || !File.Exists(rootPathWebAdmin + "\\Controls\\Admin\\" + GetClassName(SourceTable.Name) + "UC.ascx"))
-			{
-				XmlElement waNode = AddFileNode(tableNode, GetClassName(SourceTable.Name) + "UC.ascx");
-								
-				this.GetTemplate("AdminEntityUC_Designer.cst").SetProperty("SourceTable", SourceTable);
-				this.GetTemplate("AdminEntityUC_Designer.cst").SetProperty("SourceTables", _sourceTables);
-				this.GetTemplate("AdminEntityUC_Designer.cst").SetProperty("NameSpace", BLLNameSpace);
-				this.GetTemplate("AdminEntityUC_Designer.cst").SetProperty("DALNameSpace", DALNameSpace);
-				
-				this.GetTemplate("AdminEntityUC_Designer.cst").RenderToFile(rootPathWebAdmin + "\\Controls\\Admin\\" + GetClassName(SourceTable.Name) + "UC.ascx", true);
-				
-				AddExecutionTime(waNode);
-			}	
-			
-			//----------------------------------------------------------------------------------------------------------------------------------------------
-			//-- Web Admin ASCX pages
-			//----------------------------------------------------------------------------------------------------------------------------------------------
-			if (true || !File.Exists(rootPathWebAdmin + "\\Controls\\Admin\\" + GetClassName(SourceTable.Name) + "UC.ascx.cs"))
-			{
-				XmlElement wacNode = AddFileNode(tableNode, GetClassName(SourceTable.Name) + "UC.ascx.cs");
-								
-				this.GetTemplate("AdminEntityUC_CodeBehind.cst").SetProperty("SourceTable", SourceTable);
-				this.GetTemplate("AdminEntityUC_CodeBehind.cst").SetProperty("SourceTables", _sourceTables);
-				this.GetTemplate("AdminEntityUC_CodeBehind.cst").SetProperty("NameSpace", BLLNameSpace);
-				this.GetTemplate("AdminEntityUC_CodeBehind.cst").SetProperty("DALNameSpace", DALNameSpace);
-				
-				this.GetTemplate("AdminEntityUC_CodeBehind.cst").RenderToFile(rootPathWebAdmin + "\\Controls\\Admin\\" + GetClassName(SourceTable.Name) + "UC.ascx.cs", true);
-				
-				AddExecutionTime(wacNode);
-			}	
-		}
 		
 		
 		AddExecutionTime(tableNode);

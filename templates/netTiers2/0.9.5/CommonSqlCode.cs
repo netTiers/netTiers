@@ -660,6 +660,49 @@ namespace MoM.Templates
 		}
 		#endregion
 		
+        #region 6b - Web Advanced Options
+        /// <summary>
+        /// Build and return a concatened list of columns that are contained in the specified key. (ex: Column1, Column2() )
+        /// </summary>
+        /// <param name="keys"> the key instance.</param>
+        public string GetDataKeyNames(ColumnSchemaCollection keys)
+        {
+            StringBuilder Name = new StringBuilder();
+            for (int x = 0; x < keys.Count; x++)
+            {
+                Name.Append(GetPropertyName(keys[x].Name));
+                if (x < keys.Count - 1)
+                {
+                    Name.Append(", ");
+                }
+            }
+            return Name.ToString();
+        }
+
+        /// <summary>
+        /// Returns TableSchemaCollection of tables by a fk
+        /// </summary>
+        /// <param name="col"></param>
+        /// <param name="sourceTables"></param>
+        /// <returns></returns>
+        public TableSchemaCollection GetTablesCollectionByFk(ColumnSchema col, TableSchemaCollection sourceTables)
+        {
+            TableSchemaCollection SourceTablesRelated = new TableSchemaCollection();
+
+            for (int x = 0; x < sourceTables.Count; x++)
+            {
+                TableSchema SourceTable = sourceTables[x];
+                foreach (ColumnSchema tCol in SourceTable.Columns)
+                {
+                    if (col.Name == tCol.Name && col.SystemType == tCol.SystemType && tCol.IsForeignKeyMember && !tCol.IsPrimaryKeyMember)
+                        SourceTablesRelated.Add(SourceTable);
+                }
+            }
+
+            return SourceTablesRelated;
+        }
+
+        #endregion
 
 		/// <summary>
 		/// Remove any non-word characters from a name (word characters are a-z, A-Z, 0-9, _)
