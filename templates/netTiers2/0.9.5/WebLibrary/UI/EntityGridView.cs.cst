@@ -1,4 +1,4 @@
-﻿<%@ CodeTemplate Language="C#" TargetLanguage="Text" Description="" Debug="True" ResponseEncoding="UTF-8" %>
+<%@ CodeTemplate Language="C#" TargetLanguage="Text" Description="" Debug="True" ResponseEncoding="UTF-8" %>
 <%@ Property Name="RootNameSpace" Type="System.String" Category="Data" Description="Website Namespace." %>
 #region Using directives
 
@@ -16,11 +16,12 @@ using <%=RootNameSpace%>;
 namespace <%=RootNameSpace%>.Web.UI
 {
     /// <summary>
-    /// Add more features to the already powerful build-in GridView
+    /// Inherits all features of instinct GridView Control. EntityGridView allows 
+    /// multi-sort, control of page size, export data to excel.
     /// </summary>
     /// <remarks>
-    /// GridView Multi Sorting technic has been adapted from the following article:
-    /// http://aspalliance.com/666
+    /// Multi-sort technic is used from here: http://aspalliance.com/666
+    /// Excel export technic is used from here: http://www.codeproject.com/csharp/export2excel.asp
     /// </remarks>
     public class EntityGridView : GridView
     {
@@ -212,6 +213,10 @@ namespace <%=RootNameSpace%>.Web.UI
 
         #region Life Cycle
 
+        /// <summary>
+        /// Occurs when the server control is initialized.
+        /// </summary>
+        /// <param name="e"></param>
         protected override void OnInit(EventArgs e)
         {
             base.OnInit(e);
@@ -241,6 +246,10 @@ namespace <%=RootNameSpace%>.Web.UI
         }
 
 
+        /// <summary>
+        /// Occurs when the hyperlink to sort a column is clicked, but before the EntityGridView control handles the sort operation. 
+        /// </summary>
+        /// <param name="e"></param>
         protected override void OnSorting(GridViewSortEventArgs e)
         {
             if (AllowMultiColumnSorting)
@@ -249,6 +258,10 @@ namespace <%=RootNameSpace%>.Web.UI
             base.OnSorting(e);
         }
 
+        /// <summary>
+        /// Occurs when a row is created in a GridView control. 
+        /// </summary>
+        /// <param name="e"></param>
         protected override void OnRowCreated(GridViewRowEventArgs e)
         {
             base.OnRowCreated(e);
@@ -264,6 +277,11 @@ namespace <%=RootNameSpace%>.Web.UI
             }
         }
 
+
+        /// <summary>
+        /// Occurs after the Control object is loaded but prior to rendering. 
+        /// </summary>
+        /// <param name="e"></param>
         protected override void OnPreRender(EventArgs e)
         {
             base.OnPreRender(e);
@@ -274,6 +292,10 @@ namespace <%=RootNameSpace%>.Web.UI
         #endregion
 
         #region Help Methonds
+        /// <summary>
+        /// Determining the first column in the column collection that has SortExpression value set, and using this column as a default sort column
+        /// </summary>
+        /// <returns></returns>
         protected string GetDefaultSortColumn()
         {
             string SortColumnName = string.Empty;
@@ -386,10 +408,8 @@ namespace <%=RootNameSpace%>.Web.UI
 
         #region cboPageSize_SelectedIndexChanged
         /// <summary> 
-        /// this function edits is being triggered whenever 'All' link is clicked
+        /// Occurs when the value of the SelectedIndex property changes. 
         /// </summary> 
-        /// <paramname="sender"></param> 
-        /// <paramname="e"></param> 
         private void cboPageSize_SelectedIndexChanged(object sender, System.EventArgs e)
         {
             // -- reset current page index to 0, that is nessessary so that there won't be a situation when datagrid current page index is off causing an exception
@@ -531,13 +551,16 @@ namespace <%=RootNameSpace%>.Web.UI
 
 
     /// <summary>
-    /// Exports a datagrid to a excel file. 
+    /// Exports a gridview to a excel file. 
     /// </summary>
     /// <requirements>Microsoft Excel 97 or above should be installed on the client machine in order to make 
     /// this function work
     /// </requirements>
     public class GridViewExcelExporter
     {
+        /// <summary>
+        /// Ctor of the GridViewExcelExporter class
+        /// </summary>
         public GridViewExcelExporter()
         {
         }
@@ -546,8 +569,6 @@ namespace <%=RootNameSpace%>.Web.UI
         /// <summary>
         /// Exports the datagrid to an Excel file with the name of the datasheet provided by the passed in parameter
         /// </summary>
-        /// <param name="reportName">Name of the datasheet.
-        /// </param>
         public virtual void Export(string reportName, Page CurrentPage, Control NtGridView)
         {
             System.Web.UI.HtmlControls.HtmlForm htmlForm = new System.Web.UI.HtmlControls.HtmlForm();
@@ -635,7 +656,7 @@ namespace <%=RootNameSpace%>.Web.UI
         }
 
         /// <summary>
-        /// Clears the child controls of a Datagrid to make sure all controls are LiteralControls
+        /// Clears the child controls of a EntityGridView to make sure all controls are LiteralControls
         /// </summary>
         /// <param name="dg">Datagrid to be cleared and verified</param>
         protected void ClearChildControls(System.Web.UI.WebControls.GridView dg)
