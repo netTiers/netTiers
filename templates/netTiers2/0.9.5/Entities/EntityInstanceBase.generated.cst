@@ -94,6 +94,8 @@ namespace <%=NameSpace%>
 	public class <%=className%>EventArgs : System.EventArgs
 	{
 		private <%=className%>Column column;
+		private object value;
+		
 		
 		///<summary>
 		/// Initalizes a new Instance of the <%=className%>EventArgs class.
@@ -103,12 +105,28 @@ namespace <%=NameSpace%>
 			this.column = column;
 		}
 		
+		///<summary>
+		/// Initalizes a new Instance of the <%=className%>EventArgs class.
+		///</summary>
+		public <%=className%>EventArgs(<%=className%>Column column, object value)
+		{
+			this.column = column;
+			this.value = value;
+		}
+		
 		
 		///<summary>
 		/// The <%=className%>Column that was modified, which has raised the event.
 		///</summary>
 		///<value cref="<%=className%>Column" />
 		public <%=className%>Column Column { get { return this.column; } }
+		
+		/// <summary>
+        /// Gets the current value of the column.
+        /// </summary>
+        /// <value>The current value of the column.</value>
+		public object Value{ get { return this.value; } }
+
 	}
 	#endregion
 	
@@ -255,17 +273,8 @@ namespace <%=NameSpace%>
 		/// <param name="column">The <see cref="<%=className%>Column"/> which has raised the event.</param>
 		public void OnColumnChanging(<%=className%>Column column)
 		{
-			if(IsEntityTracked && EntityState != EntityState.Added)
-				EntityManager.StopTracking(EntityTrackingKey);
-				
-			if (!SuppressEntityEvents)
-			{
-				<%=className%>EventHandler handler = ColumnChanging;
-				if(handler != null)
-				{
-					handler(this, new <%=className%>EventArgs(column));
-				}
-			}
+			OnColumnChanging(column, null);
+			return;
 		}
 		
 		/// <summary>
@@ -274,12 +283,44 @@ namespace <%=NameSpace%>
 		/// <param name="column">The <see cref="<%=className%>Column"/> which has raised the event.</param>
 		public void OnColumnChanged(<%=className%>Column column)
 		{
+			OnColumnChanged(column, null);
+			return;
+		} 
+		
+		
+		/// <summary>
+		/// Raises the <see cref="ColumnChanging" /> event.
+		/// </summary>
+		/// <param name="column">The <see cref="<%=className%>Column"/> which has raised the event.</param>
+		/// <param name="value">The changed value.</param>
+		public void OnColumnChanging(<%=className%>Column column, object value)
+		{
+			if(IsEntityTracked && EntityState != EntityState.Added)
+				EntityManager.StopTracking(EntityTrackingKey);
+				
+			if (!SuppressEntityEvents)
+			{
+				<%=className%>EventHandler handler = ColumnChanging;
+				if(handler != null)
+				{
+					handler(this, new <%=className%>EventArgs(column, value));
+				}
+			}
+		}
+		
+		/// <summary>
+		/// Raises the <see cref="ColumnChanged" /> event.
+		/// </summary>
+		/// <param name="column">The <see cref="<%=className%>Column"/> which has raised the event.</param>
+		/// <param name="value">The changed value.</param>
+		public void OnColumnChanged(<%=className%>Column column, object value)
+		{
 			if (!SuppressEntityEvents)
 			{
 				<%=className%>EventHandler handler = ColumnChanged;
 				if(handler != null)
 				{
-					handler(this, new <%=className%>EventArgs(column));
+					handler(this, new <%=className%>EventArgs(column, value));
 				}
 			
 				// warn the parent list that i have changed
@@ -349,7 +390,7 @@ namespace <%=NameSpace%>
 				//}
 				<% } %>
 					
-				OnColumnChanging(<%=className%>Column.<%=GetPropertyName(cols[x]) %>);
+				OnColumnChanging(<%=className%>Column.<%=GetPropertyName(cols[x]) %>, this.entityData.<%= GetPropertyName(cols[x]) %>);
 				this.entityData.<%= GetPropertyName(cols[x]) %> = value;
 				<% if ( cols[x].IsPrimaryKeyMember ) { %>
 				this.EntityId.<%= GetPropertyName(cols[x]) %> = value;
@@ -358,7 +399,7 @@ namespace <%=NameSpace%>
 				{
 					this.EntityState = EntityState.Changed;
 				}
-				OnColumnChanged(<%=className%>Column.<%=GetPropertyName(cols[x]) %>);
+				OnColumnChanged(<%=className%>Column.<%=GetPropertyName(cols[x]) %>, this.entityData.<%= GetPropertyName(cols[x]) %>);
 				OnPropertyChanged("<%=GetPropertyName(cols[x]) %>");
 			}
 		}
