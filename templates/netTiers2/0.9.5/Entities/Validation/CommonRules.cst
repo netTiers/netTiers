@@ -287,7 +287,7 @@ namespace <%=NameSpace%>.Validation
                {
                   string value = (string)p.GetValue(target, null);
 
-                  if (!Regex.IsMatch(value, expression))
+                  if (value == null || !Regex.IsMatch(value, expression))
                   {
                      if (string.IsNullOrEmpty(e.Description)) e.Description = String.Format("{0} do not match the regular expression {1}", e.PropertyName, expression);
                      return false;
@@ -441,7 +441,12 @@ namespace <%=NameSpace%>.Validation
 						}
 						catch(Exception)
 						{
-							// failed to get the property value (it's null)
+							return true;
+						}
+						
+						// if the property is read from a nullable type, then a null valid is considered as allowed
+						if (p.PropertyType.Name.Equals(typeof(Nullable<>).Name) && value == null)
+						{
 							return true;
 						}
             
