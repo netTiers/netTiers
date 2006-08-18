@@ -117,6 +117,43 @@ namespace <%= NameSpace %>
 		}
 
 		/// <summary>
+		/// Queues a method for execution. The method executes
+		/// when a thread pool thread becomes available.
+		/// </summary>
+		/// <param name="start">A delegate specifying which method to run
+		/// when the <see cref="Thread"/> is started.</param>
+		/// <returns>Returns true if the method is successfully queued.</returns>
+		public static bool EnqueueOnThreadPool(ThreadStart start)
+		{
+			ConnectionScope scope = ConnectionScope.Current;
+
+			return ThreadPool.QueueUserWorkItem(delegate(object state)
+			{
+				ConnectionScope.Copy(scope);
+				start();
+			}, null);
+		}
+
+		/// <summary>
+		/// Queues a method for execution. The method executes
+		/// when a thread pool thread becomes available.
+		/// </summary>
+		/// <param name="start">A delegate specifying which method to run
+		/// when the <see cref="Thread"/> is started.</param>
+		/// <param name="state">An object containing data to be used by the method.</param>
+		/// <returns>Returns true if the method is successfully queued.</returns>
+		public static bool EnqueueOnThreadPool(ParameterizedThreadStart start, object state)
+		{
+			ConnectionScope scope = ConnectionScope.Current;
+
+			return ThreadPool.QueueUserWorkItem(delegate(object originalState)
+			{
+				ConnectionScope.Copy(scope);
+				start(originalState);
+			}, state);
+		}
+
+		/// <summary>
 		/// Copies the values from the specified <paramref name="scope"/> object
 		/// to the <see cref="ConnectionScope"/> used by the current thread.
 		/// </summary>

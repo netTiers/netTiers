@@ -48,7 +48,7 @@ namespace <%= WebNameSpace %>.Data
 	/// property of the specified business object class.</typeparam>
 	[CLSCompliant(true)]
 	[ParseChildren(true), PersistChildren(false)]
-	public abstract class BaseDataSource<Entity, EntityKey> : DataSourceControl, IListDataSource
+	public abstract class BaseDataSource<Entity, EntityKey> : DataSourceControl, IListDataSource, IDataSourceEvents
 		where Entity : new()
 		where EntityKey : new()
 	{
@@ -313,6 +313,26 @@ namespace <%= WebNameSpace %>.Data
 		{
 			get { return View.UpdateDateTimeNames; }
 			set { View.UpdateDateTimeNames = value; }
+		}
+
+		/// <summary>
+		/// Gets or sets a comma-separated list of the entity's property names that will
+		/// be initialized to the current user identity's name during an insert operation.
+		/// </summary>
+		public String InsertUserNames
+		{
+			get { return View.InsertUserNames; }
+			set { View.InsertUserNames = value; }
+		}
+
+		/// <summary>
+		/// Gets or sets a comma-separated list of the entity's property names that will
+		/// be initialized to the current user identity's name during an update operation.
+		/// </summary>
+		public String UpdateUserNames
+		{
+			get { return View.UpdateUserNames; }
+			set { View.UpdateUserNames = value; }
 		}
 
 		#endregion Properties
@@ -841,6 +861,8 @@ namespace <%= WebNameSpace %>.Data
 
 		private String _insertDateTimeNames;
 		private String _updateDateTimeNames;
+		private String _insertUserNames;
+		private String _updateUserNames;
 		
 		private bool _enableTransaction = true;
 		private bool _enableRecursiveDeepLoad;
@@ -977,6 +999,26 @@ namespace <%= WebNameSpace %>.Data
 		{
 			get { return _updateDateTimeNames; }
 			set { _updateDateTimeNames = value; }
+		}
+
+		/// <summary>
+		/// Gets or sets a comma-separated list of the entity's property names that will
+		/// be initialized to the current user identity's name during an insert operation.
+		/// </summary>
+		internal String InsertUserNames
+		{
+			get { return _insertUserNames; }
+			set { _insertUserNames = value; }
+		}
+
+		/// <summary>
+		/// Gets or sets a comma-separated list of the entity's property names that will
+		/// be initialized to the current user identity's name during an update operation.
+		/// </summary>
+		internal String UpdateUserNames
+		{
+			get { return _updateUserNames; }
+			set { _updateUserNames = value; }
 		}
 		
 		/// <summary>
@@ -1409,8 +1451,9 @@ namespace <%= WebNameSpace %>.Data
 			OnAfterInserting(new LinkedDataSourceEventArgs(entity, 0));
 
 			// set date/time values
-			String[] names = GetInsertDateTimeNames();
-			EntityUtil.InitEntityDateTimeValues(entity, names);
+			EntityUtil.InitEntityDateTimeValues(entity, GetInsertDateTimeNames());
+			// set user name values
+			InitEntityUserNameValues(entity, GetInsertUserNames());
 			// set property values
 			SetPropertyValues(entity, values);
 			SetEntityKeyValues(entity);
@@ -1526,8 +1569,9 @@ namespace <%= WebNameSpace %>.Data
 			OnAfterUpdating(new LinkedDataSourceEventArgs(entity, entityIndex));
 
 			// set date/time values
-			String[] names = GetUpdateDateTimeNames();
-			EntityUtil.InitEntityDateTimeValues(entity, names);
+			EntityUtil.InitEntityDateTimeValues(entity, GetUpdateDateTimeNames());
+			// set user name values
+			InitEntityUserNameValues(entity, GetUpdateUserNames());
 			// set property values
 			SetPropertyValues(entity, values);
 
@@ -1935,6 +1979,25 @@ namespace <%= WebNameSpace %>.Data
 		protected virtual void SetEntityKeyValues(Entity entity)
 		{
 		}
+
+		/// <summary>
+		/// Initializes the properties specified in propertyNames with
+		/// the value of the current user's name for the specified entity.
+		/// </summary>
+		/// <param name="entity"></param>
+		/// <param name="propertyNames"></param>
+		protected virtual void InitEntityUserNameValues(Entity entity, String[] propertyNames)
+		{
+			if ( entity != null && propertyNames != null && HttpContext.Current.User != null )
+			{
+				String userName = HttpContext.Current.User.Identity.Name;
+
+				foreach ( String propertyName in propertyNames )
+				{
+					EntityUtil.SetPropertyValue(entity, propertyName, userName);
+				}
+			}
+		}
 		
 		/// <summary>
 		/// Gets an array of valid DateTime property names to
@@ -1954,6 +2017,26 @@ namespace <%= WebNameSpace %>.Data
 		internal String[] GetUpdateDateTimeNames()
 		{
 			return GetNames(UpdateDateTimeNames);
+		}
+
+		/// <summary>
+		/// Gets an array of valid property names to
+		/// initialize during an insert operation.
+		/// </summary>
+		/// <returns>Returns an array of property names.</returns>
+		internal String[] GetInsertUserNames()
+		{
+			return GetNames(InsertUserNames);
+		}
+
+		/// <summary>
+		/// Gets an array of valid property names to
+		/// initialize during an update operation.
+		/// </summary>
+		/// <returns>Returns an array of property names.</returns>
+		internal String[] GetUpdateUserNames()
+		{
+			return GetNames(UpdateUserNames);
 		}
 
 		/// <summary>
