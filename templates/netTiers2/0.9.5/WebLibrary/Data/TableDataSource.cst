@@ -97,7 +97,11 @@
 		//Debug.WriteLine("GetByFK:");
 		for(int j = 0; j < fkeys.Count; j++)
 		{
+			if(IsForeignKeyCoveredByIndex(fkeys[j]) && IncludeGetListByIX)
+				continue;
+				
 			string fkName = "GetBy" + GetKeysName(fkeys[j].ForeignKeyMemberColumns);
+			
 			//Debug.WriteLine(fkName);
 			if(!fkMethodNames.Contains(fkName) && !methodNames.Contains(fkName)){
 				fkMethodNames.Add(fkName);
@@ -641,6 +645,9 @@ private string WriteFKSelectStatements(string tableName, IList methods)
 	StringBuilder sb = new StringBuilder();
 	foreach ( TableKeySchema tableKey in SourceTable.ForeignKeys )
 	{
+		if(IsForeignKeyCoveredByIndex(tableKey) && IncludeGetListByIX)
+				continue;
+				
 		// dupe check
 		if ( !methods.Contains(GetKeysName(tableKey.ForeignKeyMemberColumns)) )
 		{

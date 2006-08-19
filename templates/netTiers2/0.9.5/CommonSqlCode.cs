@@ -2673,17 +2673,10 @@ namespace MoM.Templates
 		/// <param name="keys"> the key instance.</param>
 		public string GetKeysName(ColumnSchemaCollection keys)
 		{	
-			ArrayList cols = new ArrayList();
-			for(int x=0; x < keys.Count; x++)
-			{
-				cols.Add(keys[x].Name);
-			}
-			cols.Sort();
-			
 			StringBuilder Name = new StringBuilder();
-			for(int x=0; x < cols.Count; x++)
+			for(int x=0; x < keys.Count;x++)
 			{
-				Name.Append(GetPropertyName(keys[keys.IndexOf(cols[x].ToString())]));
+				Name.Append( GetPropertyName(keys[x].Name) );
 			}
 			return Name.ToString();
 		}
@@ -3135,19 +3128,7 @@ namespace MoM.Templates
 			IndexSchemaCollection indexes = table.Indexes;
 							
 			TableKeySchemaCollection primaryKeyCollection = table.PrimaryKeys;
-			
-			//SchemaExplorer BugFix - PrimaryKey will not be added if the foreign key is referencing the same table.
-			/*
-			if (primaryKeyCollection.Count == 0 && table.PrimaryKey != null)
-			{
-				primaryKeyCollection = new TableKeySchemaCollection();
-				foreach (TableKeySchema key in table.Keys)
-				{
-					if (key.ForeignKeyTable == table) primaryKeyCollection.Add(key);
-				}	
-			}
-			*/
-			
+				
 			foreach(TableKeySchema keyschema in primaryKeyCollection)
 			{
 				
@@ -3157,7 +3138,6 @@ namespace MoM.Templates
 					continue;
 				}
 				
-				//Add 1-1 relations	
 				if (IsRelationOneToOne(keyschema))
 				{
 					//Response.Write(table.Name);
@@ -3177,7 +3157,7 @@ namespace MoM.Templates
 					collectionInfo.TableKey = keyschema;
 					
 					_collections.Add(collectionInfo);
-			  	}
+				}
 				//Add 1-N,N-1 relations
 				else
 				{
@@ -3192,12 +3172,28 @@ namespace MoM.Templates
 					collectionInfo.CollectionName = GetCollectionPropertyName(collectionInfo.SecondaryTable);
 					collectionInfo.CollectionTypeName = GetCollectionClassName(collectionInfo.SecondaryTable);
 					//collectionInfo.CallParams = GetFunctionRelationshipCallParameters(table.PrimaryKey.MemberColumns);
-					collectionInfo.CallParams = GetFunctionRelationshipCallParameters(keyschema.PrimaryKeyMemberColumns);
-					collectionInfo.GetByKeysName = "GetBy" + GetKeysName(keyschema.ForeignKeyMemberColumns);
+					
+					//collectionInfo.CallParams = GetFunctionRelationshipCallParameters(keyschema.PrimaryKeyMemberColumns);
+					//collectionInfo.GetByKeysName = "GetBy" + GetKeysName(keyschema.ForeignKeyMemberColumns);
+					
+					
+					if (IsForeignKeyCoveredByIndex(keyschema))
+					{
+						IndexSchema idx = GetIndexCoveringForeignKey(keyschema);
+						
+						collectionInfo.CallParams = GetFunctionRelationshipCallParametersInKeyOrder(idx.MemberColumns, keyschema);
+						collectionInfo.GetByKeysName = "GetBy" + GetKeysName(idx.MemberColumns);
+					}
+					else
+					{
+						collectionInfo.GetByKeysName = "GetBy" + GetKeysName(keyschema.ForeignKeyMemberColumns);
+						collectionInfo.CallParams = GetFunctionRelationshipCallParameters(keyschema.PrimaryKeyMemberColumns);
+					}
+					
 					collectionInfo.TableKey = keyschema;
 					_collections.Add(collectionInfo);
 				}
-		    }
+			}
 			
 			//Add N-N relations
 			// TODO -> only if option is activated
@@ -3244,7 +3240,7 @@ namespace MoM.Templates
 		}
 
 		/// <summary>
-		/// 
+		/// Gets params for a method based on the columns
 		/// </summary>
 		public string GetFunctionRelationshipCallParameters(ColumnSchemaCollection columns)
 		{
@@ -3258,6 +3254,33 @@ namespace MoM.Templates
 			}
 			return output.ToString();
 		}
+
+		/// <summary>
+		/// Orders the params for a method, based on the ordered column list.  It's useful when dealing with the IsForeignKeyCoveredByIndex method, which the 
+		/// columns may be in different orders
+		/// </summary>
+		public string GetFunctionRelationshipCallParametersInKeyOrder(ColumnSchemaCollection orderedColumns, TableKeySchema keySchema)
+		{
+			ColumnSchemaCollection unorderedColumns = keySchema.ForeignKeyMemberColumns;
+			ColumnSchemaCollection entityColumns = keySchema.PrimaryKeyMemberColumns;
+			
+			StringBuilder output = new StringBuilder();
+			for (int j = 0; j < orderedColumns.Count; j++)
+			{
+				for (int i = 0; i < unorderedColumns.Count; i++)
+				{
+					if (orderedColumns[j].Name.ToLower() != unorderedColumns[i].Name.ToLower())
+						continue;
+						
+					if (j > 0)
+						output.Append(", ");
+						
+					output.AppendFormat("entity.{0}", GetPropertyName(entityColumns[i].Name));
+				}
+			}
+			return output.ToString();
+		}
+		
 
 	
 		///<summary>
@@ -3526,6 +3549,43 @@ namespace MoM.Templates
 			}
 			
 			return isCovered;
+		}
+		
+		
+		public IndexSchema GetIndexCoveringForeignKey(TableKeySchema fKey)
+		{
+			bool isCovered = false;
+				
+			//If the Foreign key is also covered by an index, let the index 
+			//processing handle the Get methods
+			foreach(IndexSchema i in fKey.ForeignKeyTable.Indexes)
+			{
+				ColumnSchemaCollection fkCols = fKey.ForeignKeyMemberColumns;
+				
+				//First, the index must contain the same number of columns as the key
+				if (fkCols.Count != i.MemberColumns.Count)
+					continue;
+					
+				//Index must contain the same columns
+				bool hasAllColumns = true;
+				foreach(ColumnSchema column in fkCols)
+				{
+					if(!i.MemberColumns.Contains(column.Name))
+					{
+						hasAllColumns = false;
+						break;
+					}
+				}
+				
+				if ( hasAllColumns )
+				{
+					//Index is a match - stop looking
+					isCovered = true;
+					return i;
+				}	
+			}
+			
+			return null;
 		}
 		
 		/// <summary>
