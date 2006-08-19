@@ -43,6 +43,59 @@ namespace <%=DALNameSpace%>
 		{
 		}
 		
+		#region Public LoadProvider
+		/// <summary>
+        /// Enables the DataRepository to programatically create and 
+        /// pass in a <c>NetTiersProvider</c> during runtime.
+        /// </summary>
+        /// <param name="provider">An instatiated NetTiersProvider.</param>
+        public static void LoadProvider(NetTiersProvider provider)
+        {
+			LoadProvider(provider, false);
+        }
+		
+		/// <summary>
+        /// Enables the DataRepository to programatically create and 
+        /// pass in a <c>NetTiersProvider</c> during runtime.
+        /// </summary>
+        /// <param name="provider">An instatiated NetTiersProvider.</param>
+        /// <param name="setAsDefault">ability to set any valid provider as the default provider for the DataRepository.</param>
+		public static void LoadProvider(NetTiersProvider provider, bool setAsDefault)
+        {
+            if (provider == null)
+                throw new ArgumentNullException("provider");
+
+            if (_providers == null)
+			{
+				lock(SyncRoot)
+				{
+            		if (_providers == null)
+						_providers = new NetTiersProviderCollection();
+				}
+			}
+			
+            if (_providers[provider.Name] == null)
+            {
+                lock (_providers.SyncRoot)
+                {
+                    _providers.Add(provider);
+                }
+            }
+
+            if (_provider == null || setAsDefault)
+            {
+                lock (SyncRoot)
+                {
+                    if(_provider == null)
+                         _provider = provider;
+                }
+            }
+        }
+		#endregion 
+		
+		///<summary>
+		/// Configuration based provider loading, will load the providers on first call.
+		///</summary>
 		private static void LoadProviders()
         {
             // Avoid claiming lock if providers are already loaded
