@@ -332,7 +332,7 @@
 				NetTiersProvider dataProvider = ConnectionScope.Current.DataProvider;					
 				
 				//Access Repository
-				<%= returnTypeVar %> = <%=newCollection%>dataProvider.<%= GetProviderName(className) %>.GetBy<%=GetKeysName(indexes[j].MemberColumns)%>(transactionManager, <%= GetFunctionCallParameters(indexes[j].MemberColumns) %>, start, pageLength)  <%=newCollectionEnd%>;
+				<%= returnTypeVar %> = <%=newCollection%>dataProvider.<%= GetProviderName(className) %>.GetBy<%=GetKeysName(indexes[j].MemberColumns)%>(transactionManager, <%= GetFunctionCallParameters(indexes[j].MemberColumns) %>, start, pageLength, out totalCount)  <%=newCollectionEnd%>;
 			
 				//if borrowed tran, leave open for next call
 				
@@ -624,7 +624,7 @@
 			SecurityContext.IsAuthorized("<%= action %>");
 			
 			if (!<%= memberMethodEntityCall %>.IsValid)
-				throw new Entities.EntityNotValidException(<%= memberMethodEntityCall %>, "<%= action %>");
+				throw new Entities.EntityNotValidException(<%= memberMethodEntityCall %>, "<%= action %>", <%= memberMethodEntityCall %>.Error);
 			
 			TransactionManager transactionManager = null; 
 			<% if (action != "Save") { %>
@@ -708,7 +708,7 @@
 		
 			if (!entityCollection.IsValid)
 			{
-				throw new Entities.EntityNotValidException(entityCollection, "<%= action %>");
+				throw new Entities.EntityNotValidException(entityCollection, "<%= action %>", DomainUtil.GetErrorsFromList<<%= className %>>(entityCollection));
 			}
 			
 			TransactionManager transactionManager = null; 

@@ -13,6 +13,7 @@
 <%@ CodeTemplate Src="CommonSqlCode.cs" Inherits="MoM.Templates.CommonSqlCode" Language="C#" TargetLanguage="Text" Description="NetTiers main template." Debug="True"%>
 <%@ Assembly Name="SchemaExplorer" %>
 <%@ Assembly Name="System.Design" %>
+<%@ Assembly Name="System.DirectoryServices" %>
 <%@ Assembly Name="System.Web" %>
 <%@ Assembly Name="System.Xml" %>
 
@@ -60,8 +61,7 @@
 
 <%-- 6.0 webservice --%>
 <%@ Property Name="GenerateWebservice" Type="System.Boolean" Default="false" Category="06. Web - Advanced" Description="Indicates if the webservice dataaccesslayer should be generated" %>
-<%-- Property Name="WebServiceVirtualDirectoryName" Type="System.String" Category="WebService" Description="" Default="NetTiersWS" --%>
-<%@ Property Name="WebServiceUrl" Type="System.String" Category="06. Web - Advanced" Description="The base url for the webservice, eg: http://localhost/NetTiersWS" Default="" Optional="true"%>
+<%@ Property Name="AttemptCreateLocalVirtualDirectory" Type="System.Boolean" Default="false" Category="06. Web - Advanced" Description="Indicates if you would like the generator to attempt to create the virtual directory for the url specified in WebServiceUrl if it doesn't exist for the WebserviceOutput directory." %>
 
 <%-- 6.5 ASP.Net Website --%>
 <%@ Property Name="GenerateWebsite" Type="System.Boolean" Default="true" Category="06b. Website - Advanced" Description="Indicates if a complete website should be generated." %>
@@ -111,6 +111,7 @@
 
 	private string _outputDirectory = String.Empty;
 	private string _WebServiceOutputPath = String.Empty; 
+	private string _WebServiceUrl = String.Empty; 
 	
 	private TableSchemaCollection _sourceTables;
 	private ViewSchemaCollection _sourceViews;
@@ -327,6 +328,26 @@
 		{
 			if (value.EndsWith("\\")) value = value.Substring(0, value.Length - 1);
 			_WebServiceOutputPath = value;
+		} 
+	}
+
+	[CodeTemplateProperty(CodeTemplatePropertyOption.Optional)]
+	[Category("06. Web - Advanced")]
+	[Description("The IIS virtual directory path for the WebService files. This path should match with the WebserviceOutputPath.")]
+	[DefaultValue("http://localhost/NetTiersWS")]
+	public string WebServiceUrl
+	{ 
+		get
+		{
+			if (_WebServiceUrl.Length == 0)
+			{
+				return "http://localhost/" + (SourceDatabase != null ? GetClassName(SourceDatabase.Name) + "Services" : "NetTiersWebServices");
+			}
+			return _WebServiceUrl;
+		}
+		set
+		{
+			_WebServiceUrl = value;
 		} 
 	}
 	
@@ -1116,10 +1137,16 @@ public void Go()
 		
 		// ws implementation
 		if (GenerateWebservice)
-		{	
+		{
 			SafeCreateDirectory(rootPathDALWS);
 			SafeCreateDirectory(rootPathDALWS + "\\Views");
 			SafeCreateDirectory(rootPathDALWS + "\\Web References\\WsProxy");
+			
+			if (AttemptCreateLocalVirtualDirectory)
+			{
+				if(!AttemptCreateLocalVirtualDirectoryByPath())
+					Debug.WriteLine("Virtual Directory for web services not created, either it already exists, it does not have proper permissions");
+			}
 			
 			//SafeCreateDirectory(rootPathDAL + "\\WebServiceClient");
 			//SafeCreateDirectory(rootPathDAL + "\\WebServiceClient\\Views");
@@ -3519,6 +3546,72 @@ private CodesmithVersion GetCodesmithVersion()
 	}
 	
 	return CodesmithVersion.Unknown;
+}
+
+///<summary>
+///  If generating webservices this method will attempt to create a virtual 
+/// directory on the local IIS server.
+///</summary>
+private bool AttemptCreateLocalVirtualDirectoryByPath()
+{
+	try
+	{
+		if (this.WebServiceUrl == null || this.WebServiceUrl.Trim().Length == 0)
+			return false;
+		
+		if (this.WebServiceOutputPath == null || this.WebServiceOutputPath.Trim().Length == 0)
+			return false;
+			
+		if (!Directory.Exists(this.WebServiceOutputPath))
+		{
+			SafeCreateDirectory(this.WebServiceOutputPath);		
+			
+			//Could not create the directory for the WebServiceOutput Path;
+			if (!Directory.Exists(this.WebServiceOutputPath))
+				return false;
+		}
+		
+		System.Uri uri = new System.Uri(this.WebServiceUrl);
+		
+		//could not find virtual directory from URI, return;
+		if (uri.Segments.Length < 2)
+			return false;
+			
+		System.DirectoryServices.DirectoryEntry rootDirectory
+			= new System.DirectoryServices.DirectoryEntry(string.Format("IIS://{0}/W3SVC/1/Root", uri.Host));
+		
+		rootDirectory.RefreshCache();
+		
+		//check if virtual directory already exists
+		foreach(System.DirectoryServices.DirectoryEntry v in rootDirectory.Children)
+     	{
+      	    if (v.Name == uri.Segments[1])
+	        {
+				return false;
+			}
+		}	
+		
+		System.DirectoryServices.DirectoryEntry newVirtualDirectory = rootDirectory.Children.Add(uri.Segments[1], "IIsWebVirtualDir");
+		
+		newVirtualDirectory.Properties["Path"].Insert(0, this.WebServiceOutputPath);
+		newVirtualDirectory.CommitChanges();
+		rootDirectory.CommitChanges();
+		
+		//create application for the virtual dir
+		newVirtualDirectory.Invoke("AppCreate", true);
+		
+		newVirtualDirectory.CommitChanges();
+		rootDirectory.CommitChanges();
+		
+		newVirtualDirectory.Close();
+		rootDirectory.Close();
+	}
+	catch(Exception exc)
+	{
+		Debug.WriteLine("Could not automatically create virtual directory for web service\n" + exc.Message);
+		return false;
+	}
+  return true;
 }
 
 private void SetCommonProperties(String template)
