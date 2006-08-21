@@ -562,7 +562,10 @@
 														//Foreach View
 														"Components\\Views\\ComponentViewService.cst",
 														"Components\\Views\\ComponentViewServiceBase.cst",														
-														
+
+														"Components\\Views\\ComponentView.cst",
+														"Components\\Views\\ComponentViewBase.cst",														
+
 														//Single Output
 														"Components\\IComponentEntity.cst",
 														"Components\\ConnectionScope.cst",
@@ -883,7 +886,9 @@ public void Go()
 		OverwritePartialClassStub = false;
 	}
 	
+		
 	MoM.Templates.ComponentPatternType ComponentPattern = IncludeComponentLayer;
+
 	DebugWriteLine("ComponentPattern: "+ComponentPattern.ToString());
 	
 	// Build Namespaces
@@ -899,6 +904,9 @@ public void Go()
 	string WebsiteNameSpace = NameSpace + ".Website";
 	string SQLNamespace = NameSpace + "." +  (SQLFolderName.Length > 0 ?  SQLFolderName : "SQL");
 	
+	string factoryType = (ComponentPattern == MoM.Templates.ComponentPatternType.DomainModel ? string.Format("{0}.{1}", ComponentsNameSpace, "ComponentEntityFactory") : string.Format("{0}.{1}", BLLNameSpace, "EntityFactory")); 
+
+
 	// Build output pathes
 	string rootPathBLL = OutputDirectory + "\\" + BLLNameSpace;
 	//string rootPathCustomCode = rootPathBLL + "\\" + (CustomCodeFolderName != null ? CustomCodeFolderName : string.Empty);
@@ -1690,7 +1698,6 @@ public void Go()
 		
 		// Generates the configuration files
 		string configFile = "App." + (vsnetVersion == VSNetVersion.v2005 ? "config.2005" : "config") + ".cst";
-		string factoryType = (ComponentPattern == MoM.Templates.ComponentPatternType.DomainModel ? string.Format("{0}.{1}", ComponentsNameSpace, "ComponentEntityFactory") : string.Format("{0}.{1}", BLLNameSpace, "EntityFactory")); 
 		
 		// Configuration files for the unit test project
 		if (IncludeUnitTest != MoM.Templates.UnitTestStyle.None)
@@ -2202,6 +2209,7 @@ public void Go()
 			this.GetTemplate(webConfigTemplate).SetProperty("BLLNameSpace", BLLNameSpace);
 			this.GetTemplate(webConfigTemplate).SetProperty("DALNameSpace", DALNameSpace);
 			this.GetTemplate(webConfigTemplate).SetProperty("WebNameSpace", WebLibNameSpace);
+			this.GetTemplate(webConfigTemplate).SetProperty("FactoryType", factoryType);
 			this.GetTemplate(webConfigTemplate).SetProperty("ConnectionString", SourceDatabase.ConnectionString);
 			
 			if ( IncludeAtlasLibrary )
@@ -2503,6 +2511,8 @@ public void Go()
 
 		//this.GetTemplate(projectTemplate).RenderToFile(rootPathDAL + "\\" + DALNameSpace + ".csproj", true);
 		this.RenderToFile(projectTemplate, rootPathDAL + "\\" + DALNameSpace + ".csproj", true);
+		
+		;
 		
 		// DAL sqlclient
 		AddFileNode(commonNode, BLLNameSpace + "."+DataAccessLayerNameSpace+".SqlClient.csproj");
@@ -2833,6 +2843,52 @@ public void Go()
 		//XmlElement coNode = AddFileNode(tableNode, GetPartialClassName(GetClassName(SourceTable.Name)) + ".cs");
 		if (ComponentPattern == MoM.Templates.ComponentPatternType.DomainModel)
 		{
+			if (!File.Exists(rootPathComponents + "\\Views\\" + GetClassName(SourceView.Name) + ".cs")) 
+			{
+				///Components
+				XmlElement comBaseNode = AddFileNode(tableNode,  GetClassName(SourceView.Name) + ".cs");
+								
+				this.GetTemplate("ComponentView.cst").SetProperty("NameSpace", ComponentsNameSpace);
+				this.GetTemplate("ComponentView.cst").SetProperty("BLLNameSpace", BLLNameSpace);
+				this.GetTemplate("ComponentView.cst").SetProperty("DALNameSpace", DALNameSpace);
+				this.GetTemplate("ComponentView.cst").SetProperty("UsePartialClass", UsePartialClass);
+				
+				this.GetTemplate("ComponentView.cst").SetProperty("SourceView", SourceView);
+				this.GetTemplate("ComponentViewBase.cst").SetProperty("SourceViews", _sourceViews);
+				
+				this.GetTemplate("ComponentView.cst").SetProperty("ComponentPattern", ComponentPattern);
+				this.GetTemplate("ComponentView.cst").SetProperty("CustomNonMatchingReturnType", CustomNonMatchingReturnType);				
+				this.GetTemplate("ComponentView.cst").SetProperty("CustomProcedureStartsWith", CustomProcedureStartsWith);			
+				this.GetTemplate("ComponentView.cst").SetProperty("ProcedurePrefix", ProcedurePrefix.Replace(" ", ""));
+	
+				this.RenderToFile("ComponentView.cst", rootPathComponents + "\\Views\\" + GetClassName(SourceView.Name) + ".cs", true);
+			
+				AddExecutionTime(comBaseNode);
+			}			
+						
+			///Components
+			XmlElement comBaseNode1 = AddFileNode(tableNode, GetPartialClassName(GetAbstractServiceClassName(SourceView.Name) + ".cs"));
+					
+			this.GetTemplate("ComponentViewBase.cst").SetProperty("NameSpace", ComponentsNameSpace);
+			this.GetTemplate("ComponentViewBase.cst").SetProperty("BLLNameSpace", BLLNameSpace);
+			this.GetTemplate("ComponentViewBase.cst").SetProperty("DALNameSpace", DALNameSpace);
+			this.GetTemplate("ComponentViewBase.cst").SetProperty("UsePartialClass", UsePartialClass);
+
+			this.GetTemplate("ComponentViewBase.cst").SetProperty("SourceView", SourceView);
+			this.GetTemplate("ComponentViewBase.cst").SetProperty("SourceViews", _sourceViews);
+			
+			this.GetTemplate("ComponentViewBase.cst").SetProperty("IncludeCustoms", IncludeCustoms);
+			this.GetTemplate("ComponentViewBase.cst").SetProperty("IncludeGetList", IncludeGetList);
+			this.GetTemplate("ComponentViewBase.cst").SetProperty("IncludeFind", IncludeFind);
+
+			this.GetTemplate("ComponentViewBase.cst").SetProperty("ComponentPatternType", ComponentPattern);
+			this.GetTemplate("ComponentViewBase.cst").SetProperty("CustomNonMatchingReturnType", CustomNonMatchingReturnType);				
+			this.GetTemplate("ComponentViewBase.cst").SetProperty("CustomProcedureStartsWith", CustomProcedureStartsWith);			
+			this.GetTemplate("ComponentViewBase.cst").SetProperty("ProcedurePrefix", ProcedurePrefix.Replace(" ", ""));
+
+			this.RenderToFile("ComponentViewBase.cst", rootPathComponents + "\\Views\\" + GetPartialClassName(GetAbstractClassName(SourceView.Name)) + ".cs", true);
+	
+			AddExecutionTime(comBaseNode1);
 		}
 		else if (ComponentPattern == MoM.Templates.ComponentPatternType.ServiceLayer)
 		{
@@ -3062,6 +3118,8 @@ public void Go()
 			//XmlElement coNode = AddFileNode(tableNode, GetPartialClassName(GetClassName(SourceTable.Name)) + ".cs");
 			if (ComponentPattern == MoM.Templates.ComponentPatternType.DomainModel)
 			{
+				
+				
 				if (!File.Exists(rootPathComponents + "\\" + GetClassName(SourceTable.Name) + ".cs")) // || OverwritePartialClassStub)
 				{
 					XmlElement coBaseNode = AddFileNode(tableNode,  GetClassName(SourceTable.Name) + ".cs");
@@ -3585,13 +3643,13 @@ private bool AttemptCreateLocalVirtualDirectoryByPath()
 		//check if virtual directory already exists
 		foreach(System.DirectoryServices.DirectoryEntry v in rootDirectory.Children)
      	{
-      	    if (v.Name == uri.Segments[1])
+      	    if (v.Name == uri.Segments[uri.Segments.Length - 1])
 	        {
 				return false;
 			}
-		}	
+		}
 		
-		System.DirectoryServices.DirectoryEntry newVirtualDirectory = rootDirectory.Children.Add(uri.Segments[1], "IIsWebVirtualDir");
+		System.DirectoryServices.DirectoryEntry newVirtualDirectory = rootDirectory.Children.Add(uri.Segments[uri.Segments.Length - 1], "IIsWebVirtualDir");
 		
 		newVirtualDirectory.Properties["Path"].Insert(0, this.WebServiceOutputPath);
 		newVirtualDirectory.CommitChanges();

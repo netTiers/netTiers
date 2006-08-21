@@ -206,7 +206,15 @@ namespace <%=DALNameSpace%>.Bases
 			{
 				if(recordnum >= start)
 				{
-					<%=className%> entity = new <%=className%>();
+					<%=className%> entity = null;
+					if (DataRepository.Provider.UseEntityFactory)
+					{
+						entity = EntityManager.CreateViewEntity<<%=className%>>("<%=className%>",  DataRepository.Provider.EntityCreationalFactoryType); 
+					}
+					else
+					{
+						entity = new <%= className %>();
+					}
 					<%for (int x=0; x < cols.Count;x++) { %>
 					<%= GetObjectPropertySetExpression(cols[x], "reader", "entity", 4) %>;
 					//<%= GetObjectPropertyAccessor(cols[x],"entity")%> = (Convert.IsDBNull(reader["<%=cols[x].Name%>"]))?<%= GetCSDefaultByType(cols[x])%>:(<%=GetCSType(cols[x])%>)reader["<%=cols[x].Name%>"];

@@ -110,6 +110,42 @@ namespace <%=NameSpace%>
         }
         #endregion 
 
+        #region CreateViewEntity
+        /// <summary>
+        /// instatiates a new instance of the entity for view entities that don't implement IEntity and can't be tracked
+        /// </summary>
+        /// <typeparam name="Entity">is the default type to create, and will be the return type.</typeparam>
+        /// <param name="typeString">type string to create</param>
+        /// <param name="entityFactoryType">factory used to try to create this entity.</param>
+        /// <returns>Created entity of T</returns>
+        public static Entity CreateViewEntity<Entity>(string typeString, Type entityFactoryType) where Entity : class, new()
+        {
+            #region Validation
+            if (string.IsNullOrEmpty(typeString))
+                throw new ArgumentException("typeString");
+
+            if (entityFactoryType == null)
+                throw new ArgumentException("entityFactoryType");
+            #endregion 
+
+            Entity entity = default(Entity);
+            
+            //Generated Table Entities Type
+            Type defaultType = typeof(Entity);
+
+            
+            IEntityFactory factory = null;
+            if (EntityFactories.ContainsKey(entityFactoryType.FullName))
+                factory = EntityFactories[entityFactoryType.FullName];
+            else
+                factory = TryAddEntityFactory(entityFactoryType);
+         
+            entity = factory.CreateViewEntity(typeString, defaultType) as Entity;
+            
+            return entity;
+        }
+        #endregion 
+		
 		#region LocateEntity
 		/// <summary>
         /// Locates an entity for retrieval from the <see cref="Locator"/> if tracking is enabled.

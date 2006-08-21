@@ -53,7 +53,7 @@
 	string newCollectionClassNameEnd = "";
 	string newEntityCollectionClassName = "";
 	string newEntityCollectionClassNameEnd = "";	
-	
+		
 	if (ComponentPattern == MoM.Templates.ComponentPatternType.DomainModel)
 	{		
 	    //collectionClassName = collectionClassName; //.Replace("TList", "TList");
@@ -124,6 +124,7 @@
 		private static readonly int defaultMaxRecords = 10000;
 		#endregion 
 		
+		<% if (false) {%>
 		#region SecurityContext
 		/*
 		///<summary>
@@ -139,6 +140,7 @@
 		}
 		*/
 		#endregion 
+		<% } %>
 		
 		#region Data Access Methods
 			
@@ -158,29 +160,9 @@
 			return Get(whereClause, orderBy, 0, defaultMaxRecords, out totalCount);
 		}
 
-		/*
-		/// <summary>
-        /// Gets a page of rows from the DataSource.
-        /// </summary>
-        /// <param name="whereClause">Specifies the condition for the rows returned by a query (Name='John Doe', Name='John Doe' AND Id='1', Name='John Doe' OR Id='1').</param>
-        /// <param name="orderBy">Specifies the sort criteria for the rows in the DataSource (Name ASC; BirthDay DESC, Name ASC);</param>
-        /// <param name="start">Row number at which to start reading.</param>
-        /// <param name="pageLength">Number of rows to return.</param>
-        /// <param name="count">The total number of rows in the data source</param>
-        /// <param name="transactionManager"><see cref="TransactionManager"/> object</param>
-        /// <remarks></remarks>
-        /// <returns>Returns a typed collection of <%= className %> objects.</returns>
-		<%= constructorAccessModifier %> <%=collectionClassName%> Get(string whereClause, string orderBy, int start, int pageLength, out int totalCount)
-		{
-			TransactionManager transactionManager = null; 
-			return Get(transactionManager, whereClause, orderBy, start, pageLength, out totalCount);
-		}
-		*/
-		
 		/// <summary>
 		/// Returns rows meeting the whereClause condition from the DataSource.
 		/// </summary>
-		/// <param name="transactionManager">A <see cref="TransactionManager"/> object.</param>		
 		/// <param name="whereClause">Specifies the condition for the rows returned by a query (Name='John Doe', Name='John Doe' AND Id='1', Name='John Doe' OR Id='1').</param>
         /// <param name="orderBy">Specifies the sort criteria for the rows in the DataSource (Name ASC; BirthDay DESC, Name ASC);</param>
 		/// <param name="start">Row number at which to start reading.</param>
@@ -188,7 +170,7 @@
 		/// <param name="totalCount">out parameter to get total records for query</param>
 		/// <remarks>Does NOT Support Advanced Operations such as SubSelects.  See GetPaged for that functionality.</remarks>
 		/// <returns>Returns a typed collection <%=collectionClassNameComment %> of <c><%= className %></c> objects.</returns>
-		<%= interfaceImplModifier %> <%=collectionClassName%> Get(TransactionManager transactionManager, string whereClause, string orderBy, int start, int pageLength, out int totalCount)
+		<%= interfaceImplModifier %> <%=collectionClassName%> Get(string whereClause, string orderBy, int start, int pageLength, out int totalCount)
 		{
 			// throws security exception if not authorized
 			//SecurityContext.IsAuthorized("Get");
@@ -196,7 +178,8 @@
 			// get this data
 			<%= collectionClassName %> list = null;
 			totalCount = -1;
-			
+			TransactionManager transactionManager = null; 
+
 			try
             {	
 				//since this is a read operation, don't create a tran by default, only use tran if provided to us for custom isolation level
@@ -234,27 +217,15 @@
 			return <%=partialClassInternalPrefix%>GetAll(0, defaultMaxRecords, out totalCount);
 		}
 
-        /// <summary>
-        /// Get a set portion of a complete list of <see cref="<%= className %>" /> entities
-        /// </summary>
-        /// <param name="start">Row number at which to start reading.</param>
-        /// <param name="pageLength">Number of rows to return.</param>
-        /// <param name="totalCount">out parameter, number of total rows in given query.</param>
-        /// <returns>a <see cref="<%= collectionClassNameComment %>"/> </returns>
-		<%= constructorAccessModifier %> <%=collectionClassName %> <%=partialClassInternalPrefix%>GetAll(int start, int pageLength, out int totalCount) 
-		{
-			TransactionManager transactionManager = null;
-            return GetAll(transactionManager, start, pageLength, out totalCount);
-		}
+       
 		/// <summary>
 		/// Get a set portion of a complete list of <see cref="<%= className %>" /> entities
 		/// </summary>
-		/// <param name="transactionManager">A <see cref="TransactionManager"/> object.</param>		
 		/// <param name="start">Row number at which to start reading.</param>
 		/// <param name="pageLength">Number of rows to return.</param>
 		/// <param name="totalCount">out parameter, number of total rows in given query.</param>
 		/// <returns>a <see cref="<%= collectionClassNameComment %>"/> </returns>
-		<%= interfaceImplModifier %> <%=collectionClassName %> <%=partialClassInternalPrefix%>GetAll(TransactionManager transactionManager, int start, int pageLength, out int totalCount) 
+		<%= interfaceImplModifier %> <%=collectionClassName %> <%=partialClassInternalPrefix%>GetAll(int start, int pageLength, out int totalCount) 
 		{
 			// throws security exception if not authorized
 			//SecurityContext.IsAuthorized("GetAll");
@@ -262,7 +233,8 @@
 			// get this data
 			<%= collectionClassName %> list = null;
 			totalCount = -1;
-			
+			TransactionManager transactionManager = null; 
+
 			try
             {	
 				//since this is a read operation, don't create a tran by default, only use tran if provided to us for custom isolation level
@@ -321,23 +293,7 @@
 		/// <param name="totalCount">Out Parameter, Number of rows in the DataSource.</param>
 		/// <remarks></remarks>
 		/// <returns>Returns a typed collection of <c><%= className %></c> objects.</returns>
-		<%= constructorAccessModifier %> <%=collectionClassName %> <%=partialClassInternalPrefix%>GetPaged(string whereClause,string orderBy, int start, int pageLength, out int totalCount)
-		{
-			TransactionManager transactionManager = null; 
-			return <%=partialClassInternalPrefix%>GetPaged(transactionManager, null, null, start, pageLength, out totalCount);
-		}
-		/// <summary>
-		/// Gets a page of entity rows with a <see cref="<%=collectionClassNameComment %>" /> from the DataSource with a where clause and order by clause.
-		/// </summary>
-		/// <param name="transactionManager">A <see cref="TransactionManager"/> object.</param>
-		/// <param name="whereClause">Specifies the condition for the rows returned by a query (Name='John Doe', Name='John Doe' AND Id='1', Name='John Doe' OR Id='1').</param>
-		/// <param name="orderBy">Specifies the sort criteria for the rows in the DataSource (Name ASC; BirthDay DESC, Name ASC).</param>
-		/// <param name="start">Row number at which to start reading.</param>
-		/// <param name="pageLength">Number of rows to return.</param>
-		/// <param name="totalCount">Out Parameter, Number of rows in the DataSource.</param>
-		/// <remarks></remarks>
-		/// <returns>Returns a typed collection of <c><%= className %></c> objects.</returns>
-		<%= interfaceImplModifier %> <%=collectionClassName %> <%=partialClassInternalPrefix%>GetPaged(TransactionManager transactionManager, string whereClause,string orderBy, int start, int pageLength, out int totalCount)
+		<%= interfaceImplModifier %> <%=collectionClassName %> <%=partialClassInternalPrefix%>GetPaged(string whereClause,string orderBy, int start, int pageLength, out int totalCount)
 		{
 			// throws security exception if not authorized
 			//SecurityContext.IsAuthorized("GetPaged");
@@ -345,7 +301,8 @@
 			// get this data
 			<%= collectionClassName %> list = null;
 			totalCount = -1;
-			
+			TransactionManager transactionManager = null; 
+
 			try
             {	
 				//since this is a read operation, don't create a tran by default, only use tran if provided to us for custom isolation level

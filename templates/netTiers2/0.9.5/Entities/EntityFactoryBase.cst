@@ -131,6 +131,18 @@ namespace <%=NameSpace%>
         {
             return Create(typeString, defaultType);
         }
+
+        /// <summary>
+        /// Create a view entity based on a string.
+        /// It will autodiscover the type based on any information we can gather.
+        /// </summary>
+        /// <param name="typeString">string of entity to discover and create</param>
+        /// <param name="defaultType">if string is not found defaultType will be created.</param>
+        /// <returns>Created object</returns>
+        public virtual object CreateViewEntity(string typeString, Type defaultType)
+        {
+            return CreateReadOnlyEntity(typeString, defaultType);
+        }
         #endregion
 
         #region Static Create Methods
@@ -176,13 +188,64 @@ namespace <%=NameSpace%>
         /// <returns>IEntity</returns>
         public static IEntity Create(string typeString, Type defaultType)
         {
+            return CoreCreate(typeString, defaultType) as IEntity;
+        }
+
+        /// <summary>
+        /// Creates an <see cref="IEntity"/> object and begins tracking on the object.
+        /// </summary>
+        /// <param name="type">known type to create</param>
+        /// <returns>created IEntity object</returns>
+        public static IEntity Create(Type type)
+        {
+            if (type.GetInterface("IEntity") == null)
+                throw new ArgumentException("Type Parameter must implement the IEntity interface.");
+
+            IEntity entity = CoreCreate(type) as IEntity;
+            
+            return entity;
+        }
+
+        #region CreateReadOnlyEntity
+        /// <summary>
+        /// Create an entity based on a string from a view.  It will autodiscover the type based on any information we can gather.
+        /// </summary>
+        /// <param name="typeString"></param>
+        /// <param name="defaultType"></param>
+        /// <returns>Object</returns>
+        public static Object CreateReadOnlyEntity(string typeString, Type defaultType)
+        {
+            return CoreCreate(typeString, defaultType);
+        }
+
+        /// <summary>
+        /// Creates an view object.
+        /// </summary>
+        /// <param name="type">known type to create</param>
+        /// <returns>created view ReadOnlyEntity entity object</returns>
+        public static Object CreateReadOnlyEntity(Type type)
+        {
+            return CoreCreate(type);
+        }
+        #endregion 
+
+        #region CoreCreate
+
+        /// <summary>
+        /// Create an entity based on a string.  It will autodiscover the type based on any information we can gather.
+        /// </summary>
+        /// <param name="typeString"></param>
+        /// <param name="defaultType"></param>
+        /// <returns>object</returns>
+        private static Object CoreCreate(string typeString, Type defaultType)
+        {
             if (string.IsNullOrEmpty(typeString))
                 throw new ArgumentException("Entity can not be null or empty when being passed into the factory.");
 
             typeString = string.Format("{0}.{1}", currentEntityAssemblyNamespace, typeString);
-                    
+
             if (internalTypeCache.ContainsKey(typeString))
-                return Create(internalTypeCache[typeString]);
+                return CoreCreate(internalTypeCache[typeString]);
 
             // resolve the type
             Type targetType = ResolveType(typeString);
@@ -197,22 +260,19 @@ namespace <%=NameSpace%>
                     throw new ArgumentException(string.Format("This type '{0}' can not be resolved.  Please ensure that your NetTiersService Section is correct in the configuration file.", typeString));
             }
 
-            return Create(targetType);
+            return CoreCreate(targetType);
         }
 
         /// <summary>
-        /// Creates an <see cref="IEntity"/> object and begins tracking on the object.
+        /// Creates an object and begins .
         /// </summary>
         /// <param name="type">known type to create</param>
-        /// <returns>created IEntity object</returns>
-        public static IEntity Create(Type type)
+        /// <returns>created object</returns>
+        private static object CoreCreate(Type type)
         {
-            if (type.GetInterface("IEntity") == null)
-                throw new ArgumentException("Type Parameter must implement the IEntity interface.");
-
             if (!internalTypeCache.ContainsValue(type))
             {
-                lock(syncRoot)
+                lock (syncRoot)
                 {
                     internalTypeCache.Add(type.FullName, type);
                 }
@@ -222,16 +282,18 @@ namespace <%=NameSpace%>
             OnEntityCreating(type);
 
             //create entity based on passed in type.
-            IEntity entity = Activator.CreateInstance(type) as IEntity;
+            Object entity = Activator.CreateInstance(type) as Object;
 
             if (entity == null)
                 throw new ArgumentException(string.Format("This type '{0}' can not be resolved correctly to instatiate your entity.  Please ensure that your NetTiersService Section is correct in the configuration file.", type.FullName));
 
             //fire post created event
-            OnEntityCreated(entity, type);
+            OnEntityCreated(entity as IEntity, type);
 
             return entity;
         }
+        #endregion 
+
         #endregion 
         
         #region Helper Methods
