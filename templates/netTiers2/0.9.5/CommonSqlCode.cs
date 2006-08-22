@@ -966,9 +966,14 @@ namespace MoM.Templates
 		   	name = Regex.Replace(name, @"[\W]", "");
 			name = GetCamelCaseName(name);
 			
-			if (Array.IndexOf(csharpKeywords, name) >= 0)
-				name = "@" + name;
-				
+			foreach(string keyword in csharpKeywords)
+			{
+				if (keyword == name)
+				{
+					name = "@" + name;
+				}
+			}	
+			
 			if (Regex.IsMatch(name, @"^[\d]"))
 				name="data" + name;
 			
@@ -2908,6 +2913,10 @@ namespace MoM.Templates
 			if ((type1 == "numeric" && type2 == "decimal") || (type2 == "numeric" && type1 == "decimal"))
 			{
 				return true;
+			}
+			else if ((type1 == "varchar" && type2 == "nvarchar") || (type2 == "varchar" && type2 == "nvarchar"))
+			{
+					return true;   
 			}
 			return (type1 == type2);
 		}
