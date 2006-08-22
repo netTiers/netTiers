@@ -5,63 +5,68 @@
 		<html>
 			<head>
 				<title> <xsl:value-of select="title" /> </title>
-				<link href="http://nettiers.sourceforge.net/default.css" rel="stylesheet" type="text/css"/>
-				<style>
-					span.executionTime {font-style: italic; color: #003366;}
-				TD.menu {
-					FONT-FAMILY: Tahoma, Arial; HEIGHT: 30px; BACKGROUND-COLOR: #99cc99; padding: 4px; border-style: outset; border-color:lightgreen; border-width: 4px;
-				}
-				.handCursor {  cursor: hand}
-				.pointerCursor {  cursor: pointer}
-				</style>
-				<script language="javascript">
-				var currentMenu="Summary";
-				function showMenu(elementName){
-					if(elementName != currentMenu){
-					document.getElementById(elementName).style.display = "inline";
-					document.getElementById(currentMenu).style.display = "none";
-					currentMenu = elementName;
-					}
-				
-				}
-        </script>
+                <link href="http://nettiers.com/common/styles.css" rel="stylesheet" type="text/css"/>
+                <style>
+				      span.executionTime {font-style: italic; color: #55AEED;}
+	            </style>
 			</head>
 	
 			<body>
 				<table width="100%" border="0" cellspacing="2" cellpadding="2">
 					<tr>
-						<td width="300"><h1><img src="http://nettiers.sourceforge.net/images/logo.gif" alt=".netTiers Logo. By Micheal" /></h1></td>
-						<td><h2>.netTiers Generation Report</h2></td>
+                        <td width="300">
+                            <a href="http://nettiers.com/download.aspx" target="_blank"><img border="0" src="http://nettiers.com/img/netTiersLogo2.0_small.gif" alt=".netTiers 2.0"  /></a>
+                            <hr /><div>
+                              <a href="http://nettiers.com/">Website</a>
+                             &#160;&#160; | &#160;&#160; 
+                             <a href="http://community.codesmithtools.com/forums/default.aspx?GroupID=11/">Forums</a>
+                             &#160;&#160; | &#160;&#160; 
+                             <a href="http://sourceforge.net/projects/nettiers/">Sourceforge</a>
+                             &#160;&#160; | &#160;&#160; 
+                             <a href="https://www.nettiers.com/download.aspx">Downloads</a>
+                            </div>
+                           <hr />
+                        <h2>Generation Report</h2>
+                        <div style="width:70%">
+                        <span class="content">.netTiers is a set of open source code generation templates that
+                            simplify the tasks of creating customized Application Framework for your Microsoft.Net
+                            applications in just a few minutes.&#160;
+                            <br/>
+                            <br/>
+                            This report shows you a list of all of your selected .net class that were generated.  This report
+                            also shows gives a quick start configuration instructions so that you can get started using .netTiers.
+                            If you need further documentation, please check out the documentation section of this report.
+                         </span>
+                         </div>
+                        </td>
 					</tr>
 				</table>
 								
 				<table width="100%" border="0" cellspacing="2" cellpadding="2">
 				  	<tr>
-					  <td width="15%" valign="top">					    	
-					    	<xsl:call-template name="navigation"/>
-						</td>
-						<td valign="top"  class="codeCopy"> 
-						  <table>
-            <tr>
-              <td class="menu" onmouseover="this.style.cursor='hand'" onclick="showMenu('Summary')">Generation Summary
-              </td>
-              <td class="menu" onmouseover="this.style.cursor='hand'" onclick="showMenu('Configuration')">Configuration</td>
-              <td class="menu" onmouseover="this.style.cursor='hand'" onclick="showMenu('Documentation')">Documentation</td>
-              <td class="menu" onmouseover="this.style.cursor='hand'" onclick="showMenu('ReportDetails')">Generation Details</td>
-            </tr>
-          </table>
-          <div id="Summary" style="display:inline">
+        				<td valign="top" width="100%" >
+                        <h2>Sections</h2>
+                        <ol>
+							<li><a href="#summary">Summary</a></li>
+							<li><a href="#Configuration">Configuration</a></li>
+							<li><a href="#documentation">Documentation</a></li>
+							<li><a href="#details">Details - Generated Classes</a></li>
+                        </ol>
             
-            <xsl:apply-templates select="summary"/>
-          </div>
-          <div id="Configuration" style="display:none">
-			<p> Below are the steps to to configure the .netTiers components.</p>
+            <div id="Summary" style="display:inline">
+              <a name="summary"></a>
+              <h3>Generation Summary <a href="#top" class="calloutlink" >Top</a></h3>
+ 				<xsl:apply-templates select="summary"/>
+            </div>
+          	<div id="Configuration" style="display:inline">
+              <a name="Configuration"></a>
+              <h3>.netTiers Quick Configuration <a href="#top" class="calloutlink" >Top</a></h3>
+			  <p> Below are the steps to to configure the .netTiers components.</p>
 			
-                        <p>To Configure your application to use .netTiers, add the following sections to 
-              your App / Web config files.
+              <p>To Configure your application to use .netTiers, add the following sections to your App / Web config files.
 			
 			 You can find more information on how to set this up at<br/> 
-			 <a href="http://community.codesmithtools.com/forums/permalink/9769/9769/ShowThread.aspx#9769">.netTiers 2 Install and Configuration Document</a>
+			 <a href="http://nettiers.com/documentation.aspx">.netTiers 2 Install and Configuration Document</a>
             </p>
             <p>1. Add a new section to the configSettings</p>
             
@@ -87,17 +92,17 @@
     useStoredProcedure: if true indicates that we use the stored procedures, otherwise, we use parametrized queries that are embedded.
     -->
     &lt;add 
-	    name="SqlNetTiersProvider" 
-	    type="<xsl:value-of select="//NetTiersReport/@DALNameSpace" />.SqlClient.SqlNetTiersProvider, <xsl:value-of select="//NetTiersReport/@DALNameSpace" />.SqlClient"
-	    connectionStringName="netTiersConnectionString"
-	    useStoredProcedure="false"
-	    providerInvariantName="System.Data.SqlClient" 
-		entityFactoryType="<xsl:value-of select="//NetTiersReport/@FactoryType" />"
-		useEntityFactory="true"
-		enableEntityTracking="true"
-		enableMethodAuthorization="false"
-		useStoredProcedure="false"
-		/&gt;
+	name="SqlNetTiersProvider" 
+	type="<xsl:value-of select="//NetTiersReport/@DALNameSpace" />.SqlClient.SqlNetTiersProvider, <xsl:value-of select="//NetTiersReport/@DALNameSpace" />.SqlClient"
+	connectionStringName="netTiersConnectionString"
+	useStoredProcedure="false"
+	providerInvariantName="System.Data.SqlClient" 
+	entityFactoryType="<xsl:value-of select="//NetTiersReport/@FactoryType" />"
+	useEntityFactory="true"
+	enableEntityTracking="true"
+	enableMethodAuthorization="false"
+	useStoredProcedure="false"
+  /&gt;
     <!-- 
       *** WebserviceClient Provider ***
       The url parameter indicates the webservices url (ex: http://localhost/NorthWind/NorthWindServices.aspx)
@@ -110,70 +115,101 @@
   &lt;/providers&gt;
 &lt;/netTiersService&gt;
  </pre>
+          </div>
+          <div id="Documentation" style="display:inline">
+            <a name="documentation"></a>
+            <h3>Documentation <a href="#top" class="calloutlink" >Top</a></h3>
+            <a href="http://www.nettiers.com/Documentation.aspx">.netTiers 2.0 Getting Started</a><br /><br />
 
+            <b>Sample API Usage</b>
+            <br /><table style="border: 1px dashed rgb(255, 153, 0); background-color: rgb(255, 255, 223);" bgcolor="#ffffdf"><tbody><tr><td><pre><font color="black" face="Courier New" size="2">
+AccountService accountsService = <font color="blue">new</font> AccountsService();<font color="green">
+//GetAll()</font>
+TList&lt;Accounts&gt; accountList = accountsService.GetAll();
+
+<font color="green">//GetPagedl()</font>
+TList&lt;Accounts&gt; accountList = 
+accountsService.GetPaged("IsActive = 1 AND AccountName LIKE 'smi%'");
+
+<font color="green">//GetByFk()</font>
+TList&lt;Accounts&gt; accountList = accountsService.GetByCustomerId(25);
+
+<font color="green">//GetIX()</font>
+TList&lt;Accounts&gt; accountList = accountsService.GetByAccountCreatedDate(<font color="blue">new</font> DateTime("1/1/2006"));<br /><br /><font color="green">
+//Get()</font>
+entity.Entitykey;
+Accounts account = accountsService.Get(entity.EntityKey);
+
+<font color="green">//Insert()</font>
+Account accountEntity = <font color="blue">new</font> Account();
+accountEntity.AccountName = "MyAccountName";
+accountEntity.CreatedDate = DateTime.Now;
+
+accountsService.Insert(accountEntity);
+accountEntity.AccountId <font color="green">// is now populated</font>
+<font color="green">
+//Delete()</font>
+bool result = accountsService.Delete(accountEntity);
+
+<font color="green">//Delete()</font>
+bool result = accountsService.Delete(23);
+
+<font color="green">//Update()</font>
+accountEntity.AccountName = "MyAccountName 2";
+accountsService.Update(accountEntity);
+        
+<font color="green">//GetByManyToManyl()</font>
+TList&lt;Customers&gt; accountList = accountsService.GetCustomers_From_AccountsReceivable();
+					            
+<font color="green">//GetCustomProcedureName()</font>
+TList&lt;Accounts&gt; accountList = accountsService.GetByAccountMaturationDate();
+    
+<font color="green">//DeepLoadByIdl() using PK</font>
+Account account = accountsService.DeepLoadByAccountId(id, <font color="blue">false</font>, DeepLoadType.IncludeChildren, typeof(Customers), typeof(TList&lt;ChartOfAccounts&gt;));<br /><br /><font color="green">//DeepLoadByIdl() using FK</font>
+TList&lt;Account&gt; account = accountsService.DeepLoadByCustomerId(id, <font color="blue">false</font>, DeepLoadType.IncludeChildren, typeof(Customers), typeof(TList&lt;ChartOfAccounts&gt;));<br /><br /><font color="green">//already instatiated objects</font>
+<font color="green">//DeepLoad</font>
+accountsService.DeepLoad(myAccountEntity, <font color="blue">false</font>, DeepLoadType.IncludeChildren, typeof(Customers), typeof(TList&lt;ChartOfAccounts&gt;));<br /><br /><font color="green">
+Response.Write(accountsService.CustomerIdSource.LastName); <font color="green">// is now filled</font>
+Response.Write(accountsService.ChartOfAccountsCollection.Count); <font color="green">// is now filled</font>
+
+//DeepSave</font>
+accountsService.DeepSave(myAccountEntity, <font color="blue">false</font>, DeepSaveType.IncludeChildren, typeof(Customers), typeof(TList&lt;ChartOfAccounts&gt;));<br /><br /></font>
+	</pre></td></tr></tbody></table>
+            <br />
           </div>
-          <div id="Documentation" style="display:none">
-            <a href="http://www.nettiers.com/nettiers2-manual-v1.aspx">View Documentation</a>
-          </div>
-		<div id="ReportDetails" style="display:none">
-				<!-- Report Details Page -->
+          <div id="ReportDetails" style="display:inline">
+            <a name="details"></a>
+            <h3>Report Details <a href="#top" class="calloutlink" >Top</a></h3>
 				<xsl:call-template name="report"/>
-		</div>
-						</td>
-					</tr>
-				</table>
-		
-				<hr noshade="noshade"/>
-								
-				<table width="100%" border="0" cellspacing="2" cellpadding="2">
-					<tr>
-						<td></td>
-						<td></td>
-					</tr>
-				</table>
-				<xsl:call-template name="copyrightinfo"/>
-				<xsl:call-template name="sourceforgeLogo"/>
-			</body>
-		</html>
-	</xsl:template>
-	
-	<xsl:template name="navigation">
-		<p><strong>Navigation</strong></p>
-		<ul>
-			<li><a href="http://nettiers.sourceforge.net/">Website</a></li>
-			<li><a href="http://community.codesmithtools.com/forums/default.aspx?GroupID=11/">Forums</a></li>
-			<li><a href="http://sourceforge.net/projects/nettiers/">Sourceforge&#160;Site</a></li>
-			<li><a href="https://www.nettiers.com/nightly.aspx">Downloads</a></li>
-			<li><a href="http://tracker.nettiers.com">Bugs</a></li>
-		</ul>
-		
-		<p><strong>Documentation</strong></p>
-		<ul>
-				<li><a href="http://nettiers.com/nettiers-manual-v1.aspx">Manual for .netTiers 1</a></li>
-				<li><a href="http://nettiers.com/nettiers2-manual-v1.aspx">Manual for .netTiers 2</a></li>
-			<!--<li><a href="http://www.nettiers.com/api/index.html">Sample Api Documentation</a></li>>-->
-			<li><a href="https://sourceforge.net/mailarchive/forum.php?forum_id=42604">Mailing&#160;List</a></li>
-			<!-- <li><a href="http://www.nettiers.com/nettiers-manual.html#faq">FAQ</a></li>-->
-		</ul>
-
-		<p><strong>Related Links</strong></p>
-		<ul>
-			<li><a href="http://www.codesmithtools.com/">CodeSmith</a></li>
-			<li><a href="http://msdn.microsoft.com/library/default.asp?url=/library/en-us/dnbda/html/BOAGag.asp">3 tiers design</a></li>
-		</ul>
+		  </div>
+			</td>
+		</tr>
+	</table>
+	<hr noshade="noshade"/>
+					
+	<table width="100%" border="0" cellspacing="2" cellpadding="2">
+		<tr>
+			<td></td>
+			<td></td>
+		</tr>
+	</table>
+	<xsl:call-template name="copyrightinfo"/>
+	<xsl:call-template name="sourceforgeLogo"/>
+	</body>
+	</html>
 	</xsl:template>
 	
 	<xsl:template name="copyrightinfo">
 		<div align="center">
-			.NetTiers&#160;2005
+			.netTiersOpen Source Group, 2006
 		</div>
 	</xsl:template>
 	
 	<xsl:template name="sourceforgeLogo">
 		<div align="center">
-			<a href="http://sourceforge.net">
-				<img src="http://sourceforge.net/sflogo.php?group_id=118735" width="88" height="31" border="0" alt="SourceForge Logo"/>
-			</a>
+         <a href="http://sourceforge.net">
+                <img src="http://sourceforge.net/sflogo.php?group_id=118735" width="88" height="31" border="0" alt="SourceForge Logo" />
+              </a>
 		</div>
 	</xsl:template>
 	
