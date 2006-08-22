@@ -6,6 +6,7 @@
 <%@ Property Name="IncludeGetList" Type="System.Boolean" Default="True" Category="Options" Description="If true getlist functions will be generated." %>
 <%@ Property Name="IncludeFind" Type="System.Boolean" Default="True" Category="Options" Description="If true Find functions will be generated." %>
 <%@ Property Name="IncludeDatabaseFeatures" Type="MoM.Templates.DatabaseType" Category="02. Framework Generation - Optional" Description="Indicates which database specific features to generate." Default="None" %>
+<%@ Property Name="IncludeComponentLayer" Type="MoM.Templates.ComponentPatternType" Category="02. Framework Generation - Optional" Description="The pattern type to implement in the Component Layer." Default="None" %>
 
 <%@ Assembly Name="SchemaExplorer" %>
 <%@ Assembly Name="System.Design" %>
@@ -228,18 +229,18 @@ namespace <%= WebNameSpace %>.Data
 			{
 				<% if ( IncludeGetList ) { %>
 				case ReadOnlyDataSourceSelectMethod.Get:
-					entityList = Provider.Get(GetTransactionManager(), WhereClause, OrderBy, <%= pagingProperty %>, PageSize, out count);
+					entityList = Provider.Get(<%= TransactionManager %>WhereClause, OrderBy, <%= pagingProperty %>, PageSize, out count);
 					break;
 				case ReadOnlyDataSourceSelectMethod.GetPaged:
-					entityList = Provider.GetPaged(GetTransactionManager(), WhereClause, OrderBy, <%= pagingProperty %>, PageSize, out count);
+					entityList = Provider.GetPaged(<%= TransactionManager %>WhereClause, OrderBy, <%= pagingProperty %>, PageSize, out count);
 					break;
 				case ReadOnlyDataSourceSelectMethod.GetAll:
-					entityList = Provider.GetAll(GetTransactionManager(), StartIndex, PageSize, out count);
+					entityList = Provider.GetAll(<%= TransactionManager %>StartIndex, PageSize, out count);
 					break;
 				<% } // end if ( IncludeGetList ) %>
 				<% if ( IncludeFind ) { %>
 				case ReadOnlyDataSourceSelectMethod.Find:
-					entityList = Provider.Find(GetTransactionManager(), FilterParameters, OrderBy, StartIndex, PageSize, out count);
+					entityList = Provider.Find(<%= TransactionManager %>FilterParameters, OrderBy, StartIndex, PageSize, out count);
 					break;
 				<% } // end if ( IncludeFind ) %>
 				default:
@@ -284,3 +285,10 @@ namespace <%= WebNameSpace %>.Data
 
 	#endregion ReadOnlyDataSourceSelectMethod
 }
+
+<script runat="template">
+private string TransactionManager
+{
+	get { return (IncludeComponentLayer != MoM.Templates.ComponentPatternType.ServiceLayer) ? "GetTransactionManager(), " : ""; }
+}
+</script>
