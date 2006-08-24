@@ -140,8 +140,8 @@
 		}
 		*/
 		#endregion 
+
 		<% } %>
-		
 		#region Data Access Methods
 			
 		<% if (IncludeGetList) { %>		
@@ -342,8 +342,78 @@
 			return totalCount;
 		}
 		#endregion <%=partialClassInternalPrefix%>GetPaged	
+
 		<% } %>	
+		<% if (IncludeFind) { %>
+		#region Find Methods
+
+		/// <summary>
+		/// 	Returns rows from the DataSource that meet the parameter conditions.
+		/// </summary>
+		/// <param name="parameters">A collection of <see cref="SqlFilterParameter"/> objects.</param>
+		/// <returns>Returns a typed collection of <c><%= className %></c> objects.</returns>
+		<%= constructorAccessModifier %> <%=collectionClassName%> Find(SqlFilterParameterCollection parameters)
+		{
+			return Find(parameters, null);
+		}
 		
+		/// <summary>
+		/// 	Returns rows from the DataSource that meet the parameter conditions.
+		/// </summary>
+		/// <param name="parameters">A collection of <see cref="SqlFilterParameter"/> objects.</param>
+		/// <param name="orderBy">Specifies the sort criteria for the rows in the DataSource (Name ASC; BirthDay DESC, Name ASC);</param>
+		/// <returns>Returns a typed collection of <c><%= className %></c> objects.</returns>
+		<%= constructorAccessModifier %> <%=collectionClassName%> Find(SqlFilterParameterCollection parameters, string orderBy)
+		{
+			int count = 0;
+			return Find(parameters, orderBy, 0, defaultMaxRecords, out count);
+		}
+		
+		/// <summary>
+		/// 	Returns rows from the DataSource that meet the parameter conditions.
+		/// </summary>
+		/// <param name="parameters">A collection of <see cref="SqlFilterParameter"/> objects.</param>
+		/// <param name="orderBy">Specifies the sort criteria for the rows in the DataSource (Name ASC; BirthDay DESC, Name ASC);</param>
+		/// <param name="start">Row number at which to start reading.</param>
+		/// <param name="pageLength">Number of rows to return.</param>
+		/// <param name="count">out. The number of rows that match this query.</param>
+		/// <returns>Returns a typed collection of <c><%= className %></c> objects.</returns>
+		<%= interfaceImplModifier %> <%=collectionClassName%> Find(SqlFilterParameterCollection parameters, string orderBy, int start, int pageLength, out int count)
+		{
+			// throws security exception if not authorized
+			//SecurityContext.IsAuthorized("Find");
+								
+			// get this data
+			TransactionManager transactionManager = null; 
+			<%= collectionClassName %> list = null;
+			count = -1;
+			
+			try
+            {	
+				//since this is a read operation, don't create a tran by default, only use tran if provided to us for custom isolation level
+				transactionManager = ConnectionScope.ValidateOrCreateTransaction(noTranByDefault);
+				NetTiersProvider dataProvider = ConnectionScope.Current.DataProvider;
+					
+				//Access repository
+				list = <%=newCollectionClassName%>dataProvider.<%= GetProviderName(className) %>.Find(transactionManager, parameters, orderBy, start, pageLength, out count)<%=newCollectionClassNameEnd%>;
+			}
+            catch (Exception exc)
+            {
+				//if open, rollback, it's possible this is part of a larger commit
+                if (transactionManager != null && transactionManager.IsOpen) 
+					transactionManager.Rollback();
+				
+				//Handle exception based on policy
+                if (DomainUtil.HandleException(exc, layerExceptionPolicy)) 
+					throw;
+			}
+			
+			return list;
+		}
+		
+		#endregion Find Methods
+		
+		<% } // end if (IncludeFind) { %>
 		<% if (IncludeCustoms) { %>
 		#region Custom Methods
 		<%
@@ -481,7 +551,7 @@
 		} // end foreach command	
 		%>
 		#endregion
-		<% }//endif (IncludeCustoms) %>
 		
+		<% }//endif (IncludeCustoms) %>
 		#endregion Data Access Methods
 		

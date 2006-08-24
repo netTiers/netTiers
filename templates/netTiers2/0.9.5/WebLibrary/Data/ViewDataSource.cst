@@ -2,22 +2,36 @@
 <%@ Property Name="BLLNameSpace" Optional="False" Type="System.String" Category="Style" Description="Object Namespace." %>
 <%@ Property Name="DALNameSpace" Optional="False" Type="System.String" Category="Style" Description="DAL Namespace." %>
 <%@ Property Name="WebNameSpace" Optional="False" Type="System.String" Category="Style" Description="Web Namespace." %>
+<%@ Property Name="ComponentLayerNameSpace" Optional="False" Type="System.String" Category="Style" Description="Component Namespace." %>
 
 <%@ Property Name="SourceView" Type="SchemaExplorer.ViewSchema" Category="Connection" Description="Table that the data access class should be based on." %>
+<%@ Property Name="IncludeComponentLayer" Type="MoM.Templates.ComponentPatternType" Category="02. Framework Generation - Optional" Description="The pattern type to implement in the Component Layer." Default="None" %>
 
 <%@ Assembly Name="SchemaExplorer" %>
 <%@ Assembly Name="System.Design" %>
 <%
+	bool IsServiceLayer = (IncludeComponentLayer == MoM.Templates.ComponentPatternType.ServiceLayer);
+	
 	string viewName = SourceView.Name;
 	string className = GetClassName(viewName);
 	string providerName = GetProviderName(viewName);
+	string providerBaseName = GetProviderBaseName(viewName);
 	string providerObject = "DataRepository." + providerName;
+	
+	if ( IsServiceLayer )
+	{
+		providerBaseName = GetServiceClassName(viewName);
+		providerObject = String.Format("new {0}()", providerBaseName);
+	}
 %>
 #region Using Directives
 using System;
 using System.ComponentModel;
 using <%= BLLNameSpace %>;
 using <%= DALNameSpace %>;
+<% if ( IsServiceLayer ) { %>
+using <%= ComponentLayerNameSpace %>;
+<% } %>
 #endregion
 
 namespace <%= WebNameSpace %>.Data

@@ -335,6 +335,17 @@ namespace <%= WebNameSpace %>.Data
 			set { View.UpdateUserNames = value; }
 		}
 
+		/// <summary>
+		/// Gets or sets a comma-separated list of the entity's property names that will
+		/// be set to String.Empty if they contain null values prior to executing an
+		/// insert or update operation.
+		/// </summary>
+		public String ConvertNullToEmptyStringNames
+		{
+			get { return View.ConvertNullToEmptyStringNames; }
+			set { View.ConvertNullToEmptyStringNames = value; }
+		}
+
 		#endregion Properties
 
 		#region Methods
@@ -863,6 +874,7 @@ namespace <%= WebNameSpace %>.Data
 		private String _updateDateTimeNames;
 		private String _insertUserNames;
 		private String _updateUserNames;
+		private String _convertNullToEmptyStringNames;
 		
 		private bool _enableTransaction = true;
 		private bool _enableRecursiveDeepLoad;
@@ -1019,6 +1031,17 @@ namespace <%= WebNameSpace %>.Data
 		{
 			get { return _updateUserNames; }
 			set { _updateUserNames = value; }
+		}
+
+		/// <summary>
+		/// Gets or sets a comma-separated list of the entity's property names that will
+		/// be set to String.Empty if they contain null values prior to executing an
+		/// insert or update operation.
+		/// </summary>
+		internal String ConvertNullToEmptyStringNames
+		{
+			get { return _convertNullToEmptyStringNames; }
+			set { _convertNullToEmptyStringNames = value; }
 		}
 		
 		/// <summary>
@@ -1234,7 +1257,7 @@ namespace <%= WebNameSpace %>.Data
 					EntityId = GetEntityId(entity);
 
 					// raise linked event
-					OnAfterSelected(new LinkedDataSourceEventArgs(entity, 0));
+					OnAfterSelected(new LinkedDataSourceEventArgs(entity, values, 0));
 				}
 			}
 			catch ( Exception ex )
@@ -1448,8 +1471,10 @@ namespace <%= WebNameSpace %>.Data
 			int count = 0;
 
 			// raise linked event
-			OnAfterInserting(new LinkedDataSourceEventArgs(entity, 0));
+			OnAfterInserting(new LinkedDataSourceEventArgs(entity, values, 0));
 
+			// convert null properties to empty strings
+			InitConvertNullToEmptyStringValues(entity, values);
 			// set date/time values
 			EntityUtil.InitEntityDateTimeValues(entity, GetInsertDateTimeNames());
 			// set user name values
@@ -1474,7 +1499,7 @@ namespace <%= WebNameSpace %>.Data
 					count = 1;
 
 					OnInserted(statusArgs);
-					OnAfterInserted(new LinkedDataSourceEventArgs(entity, 0));
+					OnAfterInserted(new LinkedDataSourceEventArgs(entity, values, 0));
 					RaiseChangedEvent();
 				}
 			}
@@ -1566,8 +1591,10 @@ namespace <%= WebNameSpace %>.Data
 
 			// raise linked event
 			int entityIndex = entityList.IndexOf(entity);
-			OnAfterUpdating(new LinkedDataSourceEventArgs(entity, entityIndex));
+			OnAfterUpdating(new LinkedDataSourceEventArgs(entity, values, entityIndex));
 
+			// convert null properties to empty strings
+			InitConvertNullToEmptyStringValues(entity, values);
 			// set date/time values
 			EntityUtil.InitEntityDateTimeValues(entity, GetUpdateDateTimeNames());
 			// set user name values
@@ -1591,7 +1618,7 @@ namespace <%= WebNameSpace %>.Data
 					count = 1;
 
 					OnUpdated(statusArgs);
-					OnAfterUpdated(new LinkedDataSourceEventArgs(entity, entityIndex));
+					OnAfterUpdated(new LinkedDataSourceEventArgs(entity, values, entityIndex));
 					RaiseChangedEvent();
 				}
 			}
@@ -2000,6 +2027,29 @@ namespace <%= WebNameSpace %>.Data
 		}
 		
 		/// <summary>
+		/// Initializes the properties specified in the ConvertNullToEmptyStringNames property
+		/// to String.Empty if they contain null values for the specified entity.
+		/// </summary>
+		/// <param name="entity"></param>
+		/// <param name="values"></param>
+		protected virtual void InitConvertNullToEmptyStringValues(Entity entity, IDictionary values)
+		{
+			String[] propertyNames = GetConvertNullToEmptyStringNames();
+			
+			if ( entity != null && propertyNames != null )
+			{
+				foreach ( String propertyName in propertyNames )
+				{
+					if ( String.IsNullOrEmpty(values[propertyName] as String) )
+					{
+						values.Remove(propertyName);
+						EntityUtil.SetPropertyValue(entity, propertyName, String.Empty);
+					}
+				}
+			}
+		}
+		
+		/// <summary>
 		/// Gets an array of valid DateTime property names to
 		/// initialize during an insert operation.
 		/// </summary>
@@ -2037,6 +2087,16 @@ namespace <%= WebNameSpace %>.Data
 		internal String[] GetUpdateUserNames()
 		{
 			return GetNames(UpdateUserNames);
+		}
+
+		/// <summary>
+		/// Gets an array of valid property names to
+		/// initialize during an insert or update operation.
+		/// </summary>
+		/// <returns>Returns an array of property names.</returns>
+		internal String[] GetConvertNullToEmptyStringNames()
+		{
+			return GetNames(ConvertNullToEmptyStringNames);
 		}
 
 		/// <summary>

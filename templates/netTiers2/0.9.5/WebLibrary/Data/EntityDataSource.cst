@@ -1167,7 +1167,7 @@ namespace <%= WebNameSpace %>.Data
 						if ( arguments.TotalRowCount > 0 && list.Count > 0 )
 						{
 							// raise linked event
-							OnAfterSelected(new LinkedDataSourceEventArgs(list[EntityIndex], EntityIndex));
+							OnAfterSelected(new LinkedDataSourceEventArgs(list[EntityIndex], _owner.GetParameterValueMap(), EntityIndex));
 						}
 					}
 				}
@@ -1236,7 +1236,7 @@ namespace <%= WebNameSpace %>.Data
 				}
 
 				// raise linked event
-				OnAfterInserting(new LinkedDataSourceEventArgs(entity, 0));
+				OnAfterInserting(new LinkedDataSourceEventArgs(entity, values, 0));
 
 				// set date/time values
 				String[] names = GetInsertDateTimeNames();
@@ -1262,7 +1262,7 @@ namespace <%= WebNameSpace %>.Data
 						count = 1;
 						UpdateEntityId(entityList);
 						OnInserted(new EntityDataSourceMethodEventArgs(entityList, 0, values, count));
-						OnAfterInserted(new LinkedDataSourceEventArgs(entity, 0));
+						OnAfterInserted(new LinkedDataSourceEventArgs(entity, values, 0));
 						RaiseChangedEvent();
 					}
 				}
@@ -1344,7 +1344,7 @@ namespace <%= WebNameSpace %>.Data
 				Object entity = GetCurrentEntity();
 
 				// raise linked event
-				OnAfterUpdating(new LinkedDataSourceEventArgs(entity, EntityIndex));
+				OnAfterUpdating(new LinkedDataSourceEventArgs(entity, values, EntityIndex));
 
 				// set date/time values
 				String[] names = GetUpdateDateTimeNames();
@@ -1364,7 +1364,7 @@ namespace <%= WebNameSpace %>.Data
 						count = 1;
 						UpdateEntityId(entityList);
 						OnUpdated(new EntityDataSourceMethodEventArgs(entityList, EntityIndex, values, count));
-						OnAfterUpdated(new LinkedDataSourceEventArgs(entity, EntityIndex));
+						OnAfterUpdated(new LinkedDataSourceEventArgs(entity, values, EntityIndex));
 						RaiseChangedEvent();
 					}
 				}
@@ -1515,7 +1515,7 @@ namespace <%= WebNameSpace %>.Data
 						}
 						else
 						{
-							entity = EntityUtil.InvokeMethod(Provider, SelectMethod);
+							entity = EntityUtil.InvokeMethod(Provider, SelectMethod, GetArgumentValues(true));
 						}
 					}
 					if ( entity != null )
@@ -1599,6 +1599,40 @@ namespace <%= WebNameSpace %>.Data
 				{
 					throw new NullReferenceException("entityList cannot be null");
 				}
+			}
+
+			private Object[] GetArgumentValues()
+			{
+				return GetArgumentValues(false);
+			}
+
+			private Object[] GetArgumentValues(bool convertStringToGuid)
+			{
+				IOrderedDictionary values = _owner.GetParameterValueMap();
+				ParameterCollection parameters = _owner.Parameters;
+				Object[] result = new Object[parameters.Count];
+				Parameter parameter;
+				Object value;
+
+				for ( int i = 0; i < parameters.Count; i++ )
+				{
+					parameter = parameters[i];
+					value = values[parameter.Name];
+
+					if ( convertStringToGuid && value is string )
+					{
+						// System.TypeCode and DataSource parameters do not support Guid, this is a workaround.
+						Guid valueAsGuid;
+						if ( EntityUtil.GuidTryParse(value as string, out valueAsGuid) )
+						{
+							value = valueAsGuid;
+						}
+					}
+
+					result[i] = value;
+				}
+
+				return GetArgs(result);
 			}
 
 			private Object[] GetArgs(params Object[] args)

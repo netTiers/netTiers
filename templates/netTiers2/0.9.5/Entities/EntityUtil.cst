@@ -14,6 +14,8 @@
 using System;
 using System.Collections;
 using System.Reflection;
+using System.Text;
+using System.Text.RegularExpressions;
 #endregion
 
 namespace <%= NameSpace %>
@@ -220,15 +222,18 @@ namespace <%= NameSpace %>
 		/// <returns>The result of the method invocation.</returns>
 		public static Object InvokeMethod(Object entity, String methodName, Object[] args, Type[] types)
 		{
-			Object returnValue = null;
-
 			MethodInfo m = GetMethod(entity, methodName, types);
-			if ( m != null )
+
+			if ( m == null )
 			{
-				returnValue = m.Invoke(entity, args);
+				// If this were not late-binding it would basically be a compilation error.
+				// Throw an exception in order to fail early and in an obvious manner.
+				string format = "The method '{0}' with arguments '{1}' could not be located on the specified entity.";
+				string typesValue = (types == null) ? "()" : "(" + GetTypeNames(types) + ")";
+				throw new ArgumentException(string.Format(format, methodName, typesValue));
 			}
 
-			return returnValue;
+			return m.Invoke(entity, args);
 		}
 
 		/// <summary>
@@ -771,6 +776,76 @@ namespace <%= NameSpace %>
 
 				list.Remove(item);
 			}
+		}
+
+		/// <summary>
+		/// Converts the string representation of a Guid to its Guid 
+		/// equivalent. A return value indicates whether the operation 
+		/// succeeded. 
+		/// </summary>
+		/// <param name="s">A string containing a Guid to convert.</param>
+		/// <param name="result">
+		/// When this method returns, contains the Guid value equivalent to 
+		/// the Guid contained in <paramref name="s"/>, if the conversion 
+		/// succeeded, or <see cref="Guid.Empty"/> if the conversion failed. 
+		/// The conversion fails if the <paramref name="s"/> parameter is a 
+		/// <see langword="null" /> reference (<see langword="Nothing" /> in 
+		/// Visual Basic), or is not of the correct format. 
+		/// </param>
+		/// <value>
+		/// <see langword="true" /> if <paramref name="s"/> was converted 
+		/// successfully; otherwise, <see langword="false" />.
+		/// </value>
+		/// <exception cref="ArgumentNullException">
+		///        Thrown if <pararef name="s"/> is <see langword="null"/>.
+		/// </exception>
+		public static bool GuidTryParse(string s, out Guid result)
+		{
+			if ( s == null )
+				throw new ArgumentNullException("s");
+
+			Regex format = new Regex(
+				"^[A-Fa-f0-9]{32}$|" +
+				"^({|\\()?[A-Fa-f0-9]{8}-([A-Fa-f0-9]{4}-){3}[A-Fa-f0-9]{12}(}|\\))?$|" +
+				"^({)?[0xA-Fa-f0-9]{3,10}(, {0,1}[0xA-Fa-f0-9]{3,6}){2}, {0,1}({)([0xA-Fa-f0-9]{3,4}, {0,1}){7}[0xA-Fa-f0-9]{3,4}(}})$");
+			
+			Match match = format.Match(s);
+			
+			if ( match.Success )
+			{
+				result = new Guid(s);
+				return true;
+			}
+			else
+			{
+				result = Guid.Empty;
+				return false;
+			}
+		}
+
+		/// <summary>Outputs a string containing the type names, delimited by ", "</summary>
+		/// <param name="types" type="System.Type[]">
+		///     <para>The types to show.</para>
+		/// </param>
+		/// <returns>A string value...</returns>
+		public static string GetTypeNames(params Type[] types)
+		{
+			StringBuilder builder = new StringBuilder();
+			Type type;
+
+			for ( int index = 0; index < types.Length; index++ )
+			{
+				type = types[index];
+
+				if ( builder.Length > 0 )
+				{
+					builder.Append(", ");
+				}
+
+				builder.Append(type.Name);
+			}
+
+			return builder.ToString();
 		}
 	}
 }
