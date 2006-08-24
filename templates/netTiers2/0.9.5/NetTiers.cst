@@ -990,11 +990,11 @@ public void Go()
 	_CurrentPhase = "Parameter Validation";
 	DebugWriteLine("Current Phase: "+_CurrentPhase);
 	
-	XmlElement parametersNode = AddFileNode(initNode, "Validating parameters.");
+	XmlElement parametersNode = AddMessageNode(initNode, 0, "Validating parameters.");
 	
 	
 	// load all the sub templates
-	XmlElement templatesNode = AddFileNode(initNode, "Loading templates.");
+	XmlElement templatesNode = AddMessageNode(initNode, 0, "Loading templates.");
 	_CurrentPhase = "Templates compilation";
 	DebugWriteLine("Current Phase: "+_CurrentPhase);
 
@@ -1068,6 +1068,8 @@ public void Go()
 		return;
 	}
 	
+	SetProgress(_sourceTables.Count + _sourceViews.Count);
+	
 	// check the enum tables format (int + text)
 	if (_enumTables == null) _enumTables = new TableSchemaCollection();	
 	TableSchemaCollection _enums = (TableSchemaCollection)_enumTables.Clone(); //new TableSchemaCollection();
@@ -1095,7 +1097,7 @@ public void Go()
 	//----------------------------------------------------------------------------------------------------------------------------------------------
 	// CREATING FOLDERS AND COPYING DEPENDENCIES.
 	//----------------------------------------------------------------------------------------------------------------------------------------------
-	AddFileNode(initNode, "Creating folders and copying dependencies.");
+	AddMessageNode(initNode, 0, "Creating folders and copying dependencies.");
 	SafeCreateDirectory(OutputDirectory + "\\References");
 	
 	if(GenerateBusinessLogicLayer)
@@ -3558,6 +3560,69 @@ private bool DoesSupportCodesmithBuildTask()
 	return (isPro && (int)GetCodesmithVersion() >= (int)CodesmithVersion.Codesmith32);
 }		
 
+
+#region CodeSmith Progression
+///<summary>
+/// Sets progress using reflection to continue to support lower versions of CodeSmith
+/// this.Progress.MaximumValue = count;
+///</summary>
+private void SetProgress(int count)
+{
+	System.Reflection.PropertyInfo	prop = this.GetType().GetProperty("Progress");
+	if (prop != null && prop.CanRead)
+	{
+		progressionType = prop.PropertyType;
+		progression = prop.GetValue(this, null);
+		
+		if (progression == null)
+			return;
+			
+		//progression = Convert.ChangeType(progression, progressType);
+		
+		System.Reflection.PropertyInfo maxValue = progressionType.GetProperty("MaximumValue");
+		if (maxValue != null && maxValue.CanWrite)
+		{
+			maxValue.SetValue(progression, count * (Directory.Exists(this.OutputDirectory) ? 5: 10) /*5||10 files per entity */ + 100 /* common files */, null);
+		}
+
+		System.Reflection.PropertyInfo step = progressionType.GetProperty("Step");
+		if (step != null && step.CanWrite)
+		{
+			step.SetValue(progression, 1, null);
+		}
+	}
+}
+
+private System.Type progressionType = null;
+private object progression = null;
+private System.Reflection.MethodInfo performStepMethod = null;
+private bool canPerformProgress = true;
+
+///<summary>
+/// Uses reflection to perform the step of progression in CodeSmith to support older versions
+/// Mimicks this.Progress.PerformStep()
+///</summary>
+private void PerformStep()
+{
+	if (!canPerformProgress)
+		return;
+		
+	if(progression != null && progressionType != null)
+	{
+		if (performStepMethod == null)
+			performStepMethod = progressionType.GetMethod("PerformStep");
+		
+		if(performStepMethod == null)
+		{	
+			canPerformProgress = false;
+			return;
+		}
+		
+		performStepMethod.Invoke(progression, null);
+	}	
+}
+#endregion 
+
 ///<summary>
 ///
 ///</summary>
@@ -3691,7 +3756,8 @@ private void SetCommonProperties(String template)
 
 private XmlElement AddMessageNode(XmlElement rootNode, int level, string message)
 {
-	
+
+	Trace.WriteLine(string.Format("{0}*Message:{1}", Tab(level), message));
 	XmlElement node = docOutput.CreateElement("Message");
 	
 	XmlAttribute attLevel = docOutput.CreateAttribute("level");
@@ -3713,11 +3779,12 @@ private XmlElement AddMessageNode(XmlElement rootNode, int level, string message
 private XmlElement AddFileNode(XmlElement rootNode, string filename)
 {
 	XmlElement node = docOutput.CreateElement("File");
-		
+	Trace.WriteLine(string.Format("\t*File Created: {0}", filename));	
+	PerformStep();
+	
 	XmlAttribute attName = docOutput.CreateAttribute("name");
 	attName.Value = filename;
 	node.Attributes.Append(attName);
-	
 	XmlAttribute attTime = docOutput.CreateAttribute("startTime");
 	attTime.Value = DateTime.Now.ToFileTime().ToString();
 	node.Attributes.Append(attTime);
@@ -3752,6 +3819,7 @@ private XmlElement AddTableNode(TableSchema table)
 private XmlElement AddTableNode(string tableName)
 {
 	XmlElement node = docOutput.CreateElement("Table");
+	Trace.WriteLine(string.Format("*Analyzing Entity: {0}", tableName));
 	
 	XmlAttribute attName = docOutput.CreateAttribute("name");
 	attName.Value = tableName;
