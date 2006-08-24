@@ -342,9 +342,21 @@ namespace <%= NameSpace %>
 		/// <param name="propertyValue">The property value.</param>
 		public static void SetPropertyValue(Object item, String propertyName, Object propertyValue)
 		{
-			PropertyInfo property = null;
-			SetPropertyValue(item, propertyName, propertyValue, out property);
+			SetPropertyValue(item, propertyName, propertyValue, true);
 		}
+
+      /// <summary>
+      /// Sets the value of the property with the specified name.
+      /// </summary>
+      /// <param name="item">An object instance.</param>
+      /// <param name="propertyName">The property name.</param>
+      /// <param name="propertyValue">The property value.</param>
+      /// <param name="convertBlankToNull">Boolean indicating whether empty strings should be converted to null values.</param>
+      public static void SetPropertyValue(Object item, String propertyName, Object propertyValue, bool convertBlankToNull)
+      {
+         PropertyInfo property = null;
+         SetPropertyValue(item, propertyName, propertyValue, out property, convertBlankToNull);
+      }
 
 		/// <summary>
 		/// Sets the value of the property with the specified name.
@@ -355,14 +367,27 @@ namespace <%= NameSpace %>
 		/// <param name="property">A reference to the <see cref="PropertyInfo"/> object.</param>
 		public static void SetPropertyValue(Object item, String propertyName, Object propertyValue, out PropertyInfo property)
 		{
-			property = GetProperty(item, propertyName);
-
-			if ( property != null && property.CanWrite )
-			{
-				Object value = ChangeType(propertyValue, property.PropertyType);
-				property.SetValue(item, value, null);
-			}
+         SetPropertyValue(item, propertyName, propertyValue, out property, true);
 		}
+
+      /// <summary>
+      /// Sets the value of the property with the specified name.
+      /// </summary>
+      /// <param name="item">An object instance.</param>
+      /// <param name="propertyName">The property name.</param>
+      /// <param name="propertyValue">The property value.</param>
+      /// <param name="property">A reference to the <see cref="PropertyInfo"/> object.</param>
+      /// <param name="convertBlankToNull">Boolean indicating whether empty strings should be converted to null values.</param>
+      public static void SetPropertyValue(Object item, String propertyName, Object propertyValue, out PropertyInfo property, bool convertBlankToNull)
+      {
+         property = GetProperty(item, propertyName);
+
+         if (property != null && property.CanWrite)
+         {
+            Object value = ChangeType(propertyValue, property.PropertyType,convertBlankToNull);
+            property.SetValue(item, value, null);
+         }
+      }
 
 		/// <summary>
 		/// Sets the value of the property with the specified name to the value
