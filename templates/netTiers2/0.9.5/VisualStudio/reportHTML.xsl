@@ -95,7 +95,6 @@
 	name="SqlNetTiersProvider" 
 	type="<xsl:value-of select="//NetTiersReport/@DALNameSpace" />.SqlClient.SqlNetTiersProvider, <xsl:value-of select="//NetTiersReport/@DALNameSpace" />.SqlClient"
 	connectionStringName="netTiersConnectionString"
-	useStoredProcedure="false"
 	providerInvariantName="System.Data.SqlClient" 
 	entityFactoryType="<xsl:value-of select="//NetTiersReport/@FactoryType" />"
 	useEntityFactory="true"
