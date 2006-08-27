@@ -25,6 +25,7 @@ using SchemaExplorer;
 using System;
 using System.Windows.Forms.Design;
 using System.Collections;
+using System.Collections.Generic;
 using System.ComponentModel;
 using System.Data;
 using System.Data.SqlClient;
@@ -59,6 +60,7 @@ namespace MoM.Templates
 		private string manyToManyFormat		= "{0}From{1}";
 		private string strippedTablePrefixes		= "tbl;tbl_";
 		private string aliasFilePath 		= "";
+		private string customProcedureStartsWith = "_{0}_";
 		private string procedurePrefix = "";
 		private string auditUserField = "";
 		private string auditDateField = "";
@@ -293,6 +295,14 @@ namespace MoM.Templates
 					return;
 				this.procedurePrefix = value;
 			}
+		}
+		
+		[Category("07. CRUD - Advanced")]
+		[Description("If you include custom stored procedures, this is the pattern that NetTiers will look for your custom stored procedures to start with. A string format will be used to match the beginning of the procedure pattern.  So, {0}=TableName, {1}=ProcedurePrefix(See Property Below).  By default NetTiers will look at tables that starts with '_{0}_', which means it will detect the procedure _TableName_GetByBirthdate, '{1}_cust_{0}' would match usp_cust_tablename_GetByAny; the appropriate methods will be generated.")]
+		public string CustomProcedureStartsWith
+		{
+			get { return this.customProcedureStartsWith; }
+			set { this.customProcedureStartsWith = value; }
 		}
 
 		public enum CustomNonMatchingReturnType
@@ -3755,6 +3765,34 @@ namespace MoM.Templates
                 }
             return _tbChild;
         }
+		
+		public IDictionary<string, CommandSchema> GetCustomProcedures(TableSchema table)
+		{
+			return GetCustomProcedures(table.Name, table.Database.Commands);
+		}
+		
+		public IDictionary<string, CommandSchema> GetCustomProcedures(ViewSchema view)
+		{
+			return GetCustomProcedures(view.Name, view.Database.Commands);
+		}
+		
+		public IDictionary<string, CommandSchema> GetCustomProcedures(string objectName, CommandSchemaCollection allCommands)
+		{
+			string customPrefix = string.Format(CustomProcedureStartsWith, objectName, ProcedurePrefix);
+			IDictionary<string, CommandSchema> procs = new Dictionary<string, CommandSchema>();
+			string customName;
+			
+			foreach ( CommandSchema proc in allCommands )
+			{
+				if ( proc.Name.StartsWith(customPrefix) )
+				{
+					customName = proc.Name.Substring(customPrefix.Length);
+					procs.Add(customName, proc);
+				}
+			}
+			
+			return procs;
+		}
 	}
 
 	#region Retry

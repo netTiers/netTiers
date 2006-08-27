@@ -80,7 +80,8 @@
 <%-- 7.0 CRUD Options --%>
 <%@ Property Name="IncludeCustoms" Type="System.Boolean" Default="True" Category="07. CRUD - Advanced" Description="If true custom stored procedures (that starts with '_TableName_') will be detected and generated." %>
 <%@ Property Name="CustomNonMatchingReturnType" Type="CustomNonMatchingReturnType" Default="DataSet" Category="07. CRUD - Advanced" Description="When using custom stored procedures, if the returned rows do not match the fields in an entity, a DataSet or IDataReader will be returned. Choose One.  This is useful if you've returned more than one resultset in a custom procedure; you can use a ConvertToDataSet(IDataReader) method in the Utility class to convert that to a DataSet." %>
-<%@ Property Name="CustomProcedureStartsWith" Type="System.String" Default="_{0}_" Category="07. CRUD - Advanced" Description="If you include custom stored procedures, this is the pattern that NetTiers will look for your custom stored procedures to start with. A string format will be used to match the beginning of the procedure pattern.  So, {0}=TableName, {1}=ProcedurePrefix(See Property Below).  By default NetTiers will look at tables that starts with '_{0}_', which means it will detect the procedure _TableName_GetByBirthdate, '{1}_cust_{0}' would match usp_cust_tablename_GetByAny; the appropriate methods will be generated." %>
+<%-- moved this property to CustomSqlCode.cs
+<%@ Property Name="CustomProcedureStartsWith" Type="System.String" Default="_{0}_" Category="07. CRUD - Advanced" Description="If you include custom stored procedures, this is the pattern that NetTiers will look for your custom stored procedures to start with. A string format will be used to match the beginning of the procedure pattern.  So, {0}=TableName, {1}=ProcedurePrefix(See Property Below).  By default NetTiers will look at tables that starts with '_{0}_', which means it will detect the procedure _TableName_GetByBirthdate, '{1}_cust_{0}' would match usp_cust_tablename_GetByAny; the appropriate methods will be generated." %> --%>
 <%@ Property Name="IncludeDrop" Type="System.Boolean" Default="True" Category="07. CRUD - Advanced" Description="If true drop statements will be generated to drop existing stored procedures." %>
 <%@ Property Name="IncludeInsert" Type="System.Boolean" Default="True" Category="07. CRUD - Advanced" Description="If true insert procedures will be generated." %>
 <%@ Property Name="IncludeUpdate" Type="System.Boolean" Default="True" Category="07. CRUD - Advanced" Description="If true update procedures will be generated." %>
@@ -822,7 +823,8 @@ public void LoadTemplates()
 			((CodeSmith.Engine.CodeTemplate)_CodeTemplates[key]).SetProperty("ManyToManyFormat", ManyToManyFormat);
 			((CodeSmith.Engine.CodeTemplate)_CodeTemplates[key]).SetProperty("AliasFilePath", AliasFilePath);
 			((CodeSmith.Engine.CodeTemplate)_CodeTemplates[key]).SetProperty("StrippedTablePrefixes", StrippedTablePrefixes);
-		
+			((CodeSmith.Engine.CodeTemplate)_CodeTemplates[key]).SetProperty("ProcedurePrefix", ProcedurePrefix);
+			((CodeSmith.Engine.CodeTemplate)_CodeTemplates[key]).SetProperty("CustomProcedureStartsWith", CustomProcedureStartsWith);
 		}
 		catch(Exception) {}
 	}
@@ -2148,6 +2150,7 @@ public void Go()
 			this.GetTemplate("TableDataSource.cst").SetProperty("WebNameSpace", WebLibNameSpace);
 			this.GetTemplate("TableDataSource.cst").SetProperty("ComponentLayerNameSpace", ComponentsNameSpace);
 			this.GetTemplate("TableDataSource.cst").SetProperty("IncludeComponentLayer", IncludeComponentLayer);
+			this.GetTemplate("TableDataSource.cst").SetProperty("IncludeCustoms", IncludeCustoms);
 			
 			foreach ( TableSchema table in _sourceTables )
 			{
@@ -2160,7 +2163,11 @@ public void Go()
 			this.GetTemplate("ViewDataSource.cst").SetProperty("DALNameSpace", DALNameSpace);
 			this.GetTemplate("ViewDataSource.cst").SetProperty("WebNameSpace", WebLibNameSpace);
 			this.GetTemplate("ViewDataSource.cst").SetProperty("ComponentLayerNameSpace", ComponentsNameSpace);
+			this.GetTemplate("ViewDataSource.cst").SetProperty("IncludeDatabaseFeatures", IncludeDatabaseFeatures);
 			this.GetTemplate("ViewDataSource.cst").SetProperty("IncludeComponentLayer", IncludeComponentLayer);
+			this.GetTemplate("ViewDataSource.cst").SetProperty("IncludeCustoms", IncludeCustoms);
+			this.GetTemplate("ViewDataSource.cst").SetProperty("IncludeGetList", IncludeGetList);
+			this.GetTemplate("ViewDataSource.cst").SetProperty("IncludeFind", IncludeFind);
 			
 			foreach ( ViewSchema view in _sourceViews )
 			{
