@@ -44,7 +44,7 @@
 	IndexSchemaCollection indexes = SourceTable.Indexes;
 	
 	// collection of custom stored procedures
-	IDictionary<string, CommandSchema> procs = GetCustomProcedures(SourceTable);
+	IDictionary procs = GetCustomProcedures(SourceTable);
 	
 	string tableName = SourceTable.Name;
 	string className = GetClassName(tableName);
@@ -148,10 +148,10 @@
 		CommandSchema command;
 		string methodName;
 		
-		foreach ( KeyValuePair<string, CommandSchema> p in procs )
+		foreach ( DictionaryEntry p in procs )
 		{
-			methodName = p.Key;
-			command = p.Value;
+			methodName = (string) p.Key;
+			command = (CommandSchema) p.Value;
 			
 			// currently we only support custom methods with matching return values
 			if ( IsMatching(command, SourceTable) && !methodNames.Contains(methodName) )
@@ -735,7 +735,7 @@ private string WriteManyToManySelectStatements(string tableName, IList methods)
 
 private string WriteCustomSelectStatements(string tableName, IList methods, bool isServiceLayer)
 {
-	IDictionary<string, CommandSchema> procs = GetCustomProcedures(SourceTable);
+	IDictionary procs = GetCustomProcedures(SourceTable);
 	StringBuilder sb = new StringBuilder();
 	CommandSchema command;
 	string methodName;
@@ -743,11 +743,11 @@ private string WriteCustomSelectStatements(string tableName, IList methods, bool
 	string pagingParams = "StartIndex, PageSize";
 	string methodParams;
 
-	foreach ( KeyValuePair<string, CommandSchema> p in procs )
+	foreach ( DictionaryEntry p in procs )
 	{
-		methodName = p.Key;
-		command = p.Value;
-		
+		methodName = (string) p.Key;
+		command = (CommandSchema) p.Value;
+
 		// currently we only support custom methods with matching return values
 		if ( IsMatching(command, SourceTable) && !methods.Contains(methodName) )
 		{
@@ -876,7 +876,7 @@ private string WriteBreakStatement()
 	return sb.ToString();
 }
 
-private string WriteParameterDeclarations(IndexSchemaCollection indexes, TableKeySchemaCollection fkeys, IDictionary<string, CommandSchema> procs)
+private string WriteParameterDeclarations(IndexSchemaCollection indexes, TableKeySchemaCollection fkeys, IDictionary procs)
 {
 	StringBuilder sb = new StringBuilder(Environment.NewLine);
 	ArrayList columns = new ArrayList();

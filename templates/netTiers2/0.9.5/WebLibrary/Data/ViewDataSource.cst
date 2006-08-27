@@ -20,7 +20,7 @@
 <%@ Import Namespace="System.Text" %>
 <%
 	// collection of custom stored procedures
-	IDictionary<string, CommandSchema> procs = GetCustomProcedures(SourceView);
+	IDictionary procs = GetCustomProcedures(SourceView);
 	
 	bool IsServiceLayer = (IncludeComponentLayer == MoM.Templates.ComponentPatternType.ServiceLayer);
 	string pagingProperty = "StartIndex";
@@ -64,10 +64,10 @@
 		CommandSchema command;
 		string methodName;
 		
-		foreach ( KeyValuePair<string, CommandSchema> p in procs )
+		foreach ( DictionaryEntry p in procs )
 		{
-			methodName = p.Key;
-			command = p.Value;
+			methodName = (string) p.Key;
+			command = (CommandSchema) p.Value;
 			
 			// currently we only support custom methods with matching return values
 			if ( IsMatching(command, SourceView) && !methodNames.Contains(methodName) )
@@ -419,7 +419,7 @@ private string TransactionManager
 	get { return (IncludeComponentLayer != MoM.Templates.ComponentPatternType.ServiceLayer) ? "GetTransactionManager(), " : ""; }
 }
 
-private string WriteParameterDeclarations(IDictionary<string, CommandSchema> procs)
+private string WriteParameterDeclarations(IDictionary procs)
 {
 	StringBuilder sb = new StringBuilder(Environment.NewLine);
 	ArrayList columns = new ArrayList();
@@ -458,7 +458,7 @@ private void WriteParameterDeclaration(ParameterSchema param, StringBuilder sb)
 
 private string WriteCustomSelectStatements(string tableName, IList methods, bool isServiceLayer)
 {
-	IDictionary<string, CommandSchema> procs = GetCustomProcedures(SourceView);
+	IDictionary procs = GetCustomProcedures(SourceView);
 	StringBuilder sb = new StringBuilder();
 	CommandSchema command;
 	string methodName;
@@ -466,11 +466,11 @@ private string WriteCustomSelectStatements(string tableName, IList methods, bool
 	string pagingParams = "StartIndex, PageSize";
 	string methodParams;
 
-	foreach ( KeyValuePair<string, CommandSchema> p in procs )
+	foreach ( DictionaryEntry p in procs )
 	{
-		methodName = p.Key;
-		command = p.Value;
-		
+		methodName = (string) p.Key;
+		command = (CommandSchema) p.Value;
+
 		// currently we only support custom methods with matching return values
 		if ( IsMatching(command, SourceView) && !methods.Contains(methodName) )
 		{

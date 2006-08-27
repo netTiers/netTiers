@@ -3128,20 +3128,21 @@ namespace MoM.Templates
 		#endregion 
 		
 		#region Custom Stored Procedures
-		public IDictionary<string, CommandSchema> GetCustomProcedures(TableSchema table)
+		
+		public IDictionary GetCustomProcedures(TableSchema table)
 		{
 			return GetCustomProcedures(table.Name, table.Database.Commands);
 		}
 		
-		public IDictionary<string, CommandSchema> GetCustomProcedures(ViewSchema view)
+		public IDictionary GetCustomProcedures(ViewSchema view)
 		{
 			return GetCustomProcedures(view.Name, view.Database.Commands);
 		}
 		
-		public IDictionary<string, CommandSchema> GetCustomProcedures(string objectName, CommandSchemaCollection allCommands)
+		public IDictionary GetCustomProcedures(string objectName, CommandSchemaCollection allCommands)
 		{
 			string customPrefix = string.Format(CustomProcedureStartsWith, objectName, ProcedurePrefix);
-			IDictionary<string, CommandSchema> procs = new Dictionary<string, CommandSchema>();
+			IDictionary procs = new Hashtable();
 			string customName;
 			
 			foreach ( CommandSchema proc in allCommands )
