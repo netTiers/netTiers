@@ -9,6 +9,7 @@
 <%@ Assembly Name="System.Design" %>
 <%@ Import Namespace="SchemaExplorer" %>
 
+<%@ Property Name="BLLNameSpace" Type="System.String" Category="Data" Description="BLL Namespace." %>
 <%@ Property Name="DALNameSpace" Type="System.String" Category="Data" Description="DAL Namespace." %>
 <%@ Property Name="SourceTables" Type="SchemaExplorer.TableSchemaCollection" Category="Connection" Description="Tables of the system." %>
 <%@ Property Name="SourceViews" Type="SchemaExplorer.ViewSchemaCollection" Category="Connection" Description="Tables of the system." %>
@@ -24,6 +25,7 @@ using System.Configuration.Provider;
 using System.Collections.Specialized;
 using System.Data;
 using System.Data.Common;
+using <%=BLLNameSpace%>;
 using <%=DALNameSpace%>.Bases;
 
 #endregion
@@ -37,15 +39,23 @@ namespace <%=DALNameSpace%>.WebServiceClient
 	{
 		private static object syncRoot = new Object();
 		private string _applicationName;
-		private string _url;
+		private string url;
         
 		/// <summary>
-		/// Initializes a new instance of the <see cref="WsDataProvider"/> class.
+		/// Initializes a new instance of the <see cref="WsNetTiersProvider"/> class.
 		///</summary>
 		public WsNetTiersProvider()
 		{			
 		}
 		
+		/// <summary>
+        /// Initializes the provider.
+        /// </summary>
+        /// <param name="name">The friendly name of the provider.</param>
+        /// <param name="config">A collection of the name/value pairs representing the provider-specific attributes specified in the configuration for this provider.</param>
+        /// <exception cref="T:System.ArgumentNullException">The name of the provider is null.</exception>
+        /// <exception cref="T:System.InvalidOperationException">An attempt is made to call <see cref="M:System.Configuration.Provider.ProviderBase.Initialize(System.String,System.Collections.Specialized.NameValueCollection)"></see> on a provider after the provider has already been initialized.</exception>
+        /// <exception cref="T:System.ArgumentException">The name of the provider has a length of zero.</exception>
 		public override void Initialize(string name, NameValueCollection config)
         {
             // Verify that config isn't null
@@ -81,13 +91,13 @@ namespace <%=DALNameSpace%>.WebServiceClient
             config.Remove("applicationName");
 
 
-            #region "Initialize Url"
+            #region Initialize Url
             string url  = config["url"];
            	if (string.IsNullOrEmpty(url))
             {
                 throw new ProviderException("Empty or missing url");
             }
-            this._url = url;
+            this.url = url;
             config.Remove("url");
             #endregion
 
@@ -107,10 +117,13 @@ namespace <%=DALNameSpace%>.WebServiceClient
 			<% } %>
         }
         
+		/// <summary>
+		/// Current Url for WebService EndPoint
+		/// </summary>
         public string Url
         {
-        	get {return this._url;}
-        	set {this._url = value;}
+        	get {return this.url;}
+        	set {this.url = value;}
         }
 		
 		/// <summary>
@@ -123,7 +136,7 @@ namespace <%=DALNameSpace%>.WebServiceClient
 		}
 		
 		///<summary>
-		/// Indicates if the current <c cref="DataProviderBase"/> implementation supports Transacton.
+		/// Indicates if the current <c cref="NetTiersProvider"/> implementation supports Transacton.
 		///</summary>
 		public override bool IsTransactionSupported
 		{
@@ -156,7 +169,7 @@ namespace <%=DALNameSpace%>.WebServiceClient
 					{
 						if (inner<%=providerClassName%> == null)
 						{
-							this.inner<%=providerClassName%> = new Ws<%=providerClassName%>(this._url);
+							this.inner<%=providerClassName%> = new Ws<%=providerClassName%>(this.url);
 						}
 					}
 				}
@@ -189,7 +202,7 @@ namespace <%=DALNameSpace%>.WebServiceClient
 					{
 						if (inner<%=providerName%> == null)
 						{
-							this.inner<%=providerName%> = new Ws<%=providerName%>(this._url);
+							this.inner<%=providerName%> = new Ws<%=providerName%>(this.url);
 						}
 					}
 				}
@@ -211,7 +224,7 @@ namespace <%=DALNameSpace%>.WebServiceClient
 		public override int ExecuteNonQuery(string storedProcedureName, params object[] parameterValues)
 		{
 			<%=WebReferenceName%>.<%=ProxyClassName%> proxy = new <%=WebReferenceName%>.<%=ProxyClassName%>();
-			proxy.Url = this._url;
+			proxy.Url = this.url;
 			return proxy.ExecuteNonQuery(storedProcedureName, parameterValues);
 		}
 
@@ -256,7 +269,7 @@ namespace <%=DALNameSpace%>.WebServiceClient
 		public override int ExecuteNonQuery(CommandType commandType, string commandText)
 		{
 			<%=WebReferenceName%>.<%=ProxyClassName%> proxy = new <%=WebReferenceName%>.<%=ProxyClassName%>();
-			proxy.Url = this._url;
+			proxy.Url = this.url;
 			return proxy.ExecuteNonQuery((<%=WebReferenceName%>.CommandType)Enum.Parse(typeof(<%=WebReferenceName%>.CommandType), commandType.ToString(), false), commandText);
 		}
 		/// <summary>
@@ -351,7 +364,7 @@ namespace <%=DALNameSpace%>.WebServiceClient
 		public override DataSet ExecuteDataSet(string storedProcedureName, params object[] parameterValues)
 		{
 			<%=WebReferenceName%>.<%=ProxyClassName%> proxy = new <%=WebReferenceName%>.<%=ProxyClassName%>();
-			proxy.Url = this._url;
+			proxy.Url = this.url;
 			return proxy.ExecuteDataSet(storedProcedureName, parameterValues);
 		}
 
@@ -398,7 +411,7 @@ namespace <%=DALNameSpace%>.WebServiceClient
 		public override DataSet ExecuteDataSet(CommandType commandType, string commandText)
 		{
 			<%=WebReferenceName%>.<%=ProxyClassName%> proxy = new <%=WebReferenceName%>.<%=ProxyClassName%>();
-			proxy.Url = this._url;
+			proxy.Url = this.url;
 			return proxy.ExecuteDataSet((<%=WebReferenceName%>.CommandType)Enum.Parse(typeof(<%=WebReferenceName%>.CommandType), commandType.ToString(), false), commandText);
 		}
 		
@@ -425,7 +438,7 @@ namespace <%=DALNameSpace%>.WebServiceClient
 		public override object ExecuteScalar(string storedProcedureName, params object[] parameterValues)
 		{
 			<%=WebReferenceName%>.<%=ProxyClassName%> proxy = new <%=WebReferenceName%>.<%=ProxyClassName%>();
-			proxy.Url = this._url;
+			proxy.Url = this.url;
 			return proxy.ExecuteScalar(storedProcedureName, parameterValues);
 		}
 
@@ -471,7 +484,7 @@ namespace <%=DALNameSpace%>.WebServiceClient
 		public override object ExecuteScalar(CommandType commandType, string commandText)
 		{
 			<%=WebReferenceName%>.<%=ProxyClassName%> proxy = new <%=WebReferenceName%>.<%=ProxyClassName%>();
-			proxy.Url = this._url;
+			proxy.Url = this.url;
 			return proxy.ExecuteScalar((<%=WebReferenceName%>.CommandType)Enum.Parse(typeof(<%=WebReferenceName%>.CommandType), commandType.ToString(), false), commandText);	
 		}
 		/// <summary>

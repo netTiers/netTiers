@@ -13,7 +13,7 @@
 		the same table. You can also optionally use the main script which will run them all
 		for you.
 --%>
-<%@ CodeTemplate Src="..\CommonSqlCode.cs" Inherits="MoM.Templates.CommonSqlCode" Language="C#" TargetLanguage="C#" Description="Business object base class"  ResponseEncoding="UTF-8"%>
+<%@ CodeTemplate Src="..\CommonSqlCode.cs" Debug="True" Inherits="MoM.Templates.CommonSqlCode" Language="C#" TargetLanguage="C#" Description="Business object base class"  ResponseEncoding="UTF-8"%>
 <%@ Assembly Name="SchemaExplorer" %>
 <%@ Assembly Name="System.Design" %>
 <%@ Import Namespace="SchemaExplorer" %>
@@ -1321,64 +1321,57 @@ protected static string ONE_TO_MANY = @"
 ///<summary>
 ///   Writes out the property string of all the relationship object collections.
 ///</summary>
-private void WriteRelationshipPropertyString() {
-		
-		///Loop Child Collections
-		foreach (CollectionInfo item in GetChildrenCollections(SourceTable, SourceTables))
+private void WriteRelationshipPropertyString() 
+{
+
+	///Loop Child Collections
+	foreach (CollectionInfo item in GetChildrenCollections(SourceTable, SourceTables).Values)
+	{
+		///Assign by RelationshipType, Then Write to Response
+		switch((int)item.CollectionRelationshipType)
 		{
-			
-			///Assign by RelationshipType, Then Write to Response
-			switch((int)item.CollectionRelationshipType)
-			{
-				///One To One Relationship
-				case (int)RelationshipType.OneToOne:
-					object[] oneToOneParams = {
-								GetClassName(item.SecondaryTable), 
-								GetClassName(item.PkIdxName),
-								IncludeWCFDataAttributes ? ", DataMember" : string.Empty
-					};
-					item.PropertyString = string.Format(ONE_TO_ONE
-						, oneToOneParams);
-					break;
-					
-				///One To Many, Many To One
-				case (int)RelationshipType.OneToMany:
-				case (int)RelationshipType.ManyToOne:
-				    object[] oneToManyParams = {
-							GetCollectionClassName(item.SecondaryTable)
-							, item.PkIdxName
-							, GetClassName(item.SecondaryTable)
-							, GetCollectionPropertyName(item.SecondaryTable)
-							, IncludeWCFDataAttributes ? ", DataMember" : string.Empty
-					};
-				item.PropertyString = string.Format(ONE_TO_MANY, oneToManyParams);
+			///One To One Relationship
+			case (int)RelationshipType.OneToOne:								
+				object[] oneToOneParams = {
+							item.PropertyNameUnique,
+							item.TypeName,
+							IncludeWCFDataAttributes ? ", DataMember" : string.Empty
+				};
+				item.PropertyName = string.Format(ONE_TO_ONE, oneToOneParams);
 				break;
 				
-				///Many To Many
-				case (int)RelationshipType.ManyToMany:
-					object[] manyToManyParams = {
-							//GetCollectionPropertyName(item.CleanName) + "_From_" + GetClassName(item.JunctionTable), 
-							item.CollectionName
-							,	GetCollectionClassName(item.SecondaryTable)
-							,	item.JunctionTable
-							, item.CleanName
-							, IncludeWCFDataAttributes ? ", DataMember" : string.Empty
-					};
-					item.PropertyString = string.Format(MANY_TO_MANY, manyToManyParams);
-					break;
-				default:
-					break;
-			}
+			///One To Many, Many To One
+			case (int)RelationshipType.OneToMany:
+			case (int)RelationshipType.ManyToOne:
+				object[] oneToManyParams = {
+						item.TypeName
+						, item.PkIdxName
+						, item.SecondaryTable
+						, item.PropertyNameUnique
+						, IncludeWCFDataAttributes ? ", DataMember" : string.Empty
+				};
+			item.PropertyName = string.Format(ONE_TO_MANY, oneToManyParams);
+			break;
 			
-			if (!RenderedChildren.Contains(item.CleanName))
-			{
-				///Write it out to the resonse stream
-				Response.Write(item.PropertyString);	
-				RenderedChildren.Add(item.CleanName);
-			}
-		}///End foreach loop
-		
-		///enable use for the next template
-		RenderedChildren.Clear();
+			///Many To Many
+			case (int)RelationshipType.ManyToMany:
+				object[] manyToManyParams = {
+							item.PropertyNameUnique
+						,	item.TypeName
+						,	item.JunctionTable
+						, 	item.CleanName
+						, 	IncludeWCFDataAttributes ? ", DataMember" : string.Empty
+				};
+				item.PropertyName = string.Format(MANY_TO_MANY, manyToManyParams);
+				break;
+			default:
+				break;
 		}
+	
+		///Write it out to the resonse stream
+		Response.Write(item.PropertyName);	
+	
+	}///End foreach loop
+		
+}
 </script>

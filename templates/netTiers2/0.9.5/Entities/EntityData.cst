@@ -67,8 +67,9 @@
 		<% } //end for each non PK column %>
 		#endregion
 			
-		#endregion "Variable Declarations"
+		#endregion Variable Declarations
 		
+		#region Clone
 		public Object Clone()
 		{
 			<%=structName%> _tmp = new <%=structName%>();
@@ -86,15 +87,19 @@
 			
 			return _tmp;
 		}
+		#endregion 
 		
 <% 
 		
 if(IncludeRelations)
 {	
+	Response.Write("\t\t#region Data Properties"+Environment.NewLine);
 	WriteRelationshipPropertyString();
+	Response.Write(Environment.NewLine + "\t\t#endregion Data Properties"+ Environment.NewLine );
 }
 		
 %>
+
 	}//End struct
 
 <script runat="template">
@@ -102,52 +107,79 @@ if(IncludeRelations)
 /// Many To Many Relationship Class Template Property String
 ///</summary>
 protected static string MANY_TO_MANY = @"
-	  private {1} {2};
-      public {1} {0}
-      {{
-         get
-         {{
-            if ({2} == null)
-            {{
-               {2} = new {1}();
-            }}
-
-            return {2};
-         }}
-         set {{ {2} = value; }}
-      }}
+		#region {0}
+		
+		private {1} {2};
+		
+		/// <summary>
+		///	Holds a collection of entity objects
+		///	which are related to this object through the junction table {2}
+		/// </summary>	
+		public {1} {0}
+		{{
+			get
+			{{
+				if ({2} == null)
+				{{
+				{2} = new {1}();
+				}}
+	
+				return {2};
+			}}
+			set {{ {2} = value; }}
+		}}
+		
+		#endregion 
 ";
 
 ///<summary>
 /// One to One Relationship Class Template Property String
 ///</summary>		
 protected static string ONE_TO_ONE = @"
-	  private {0} {1};
-      public {0} {0}
-      {{
-         get {{		return {1};		}}
-         set {{ 	{1} = value; 	}}
-      }}
+		#region {0}
+		
+		private {2} {1};
+		
+		/// <summary>
+		///	Holds a  {2} entity object
+		///	which is related to this object through the relation {1}
+		/// </summary>
+		public {2} {0}
+		{{
+			get {{		return {1};		}}
+			set {{ 	{1} = value; 	}}
+		}}
+		
+		#endregion 
 ";
 		
 ///<summary>
 /// One To Many Relationship Class Template Property String
 ///</summary>		
 protected static string ONE_TO_MANY = @"
-	  private {3} {1};
-      public {3} {0}
-      {{
-         get
-         {{
-            if ({1} == null)
-            {{
-               {1} = new {3}();
-            }}
-
-            return {1};
-         }}
-         set {{ {1} = value; }}
-      }}
+		#region {0}
+		
+		private {2} {1};
+		
+		/// <summary>
+		///	Holds a collection of entity objects
+		///	which are related to this object through the relation {1}
+		/// </summary>	
+		public {2} {0}
+		{{
+			get
+			{{
+				if ({1} == null)
+				{{
+				{1} = new {2}();
+				}}
+	
+				return {1};
+			}}
+			set {{ {1} = value; }}
+		}}
+		
+		#endregion
 ";
 		
 ///<summary>
@@ -156,57 +188,49 @@ protected static string ONE_TO_MANY = @"
 private void WriteRelationshipPropertyString()
 {	
 	///Loop Child Collections
-	foreach (CollectionInfo item in GetChildrenCollections(SourceTable, SourceTables))
+	foreach (CollectionInfo item in GetChildrenCollections(SourceTable, SourceTables).Values)
 	{
-		
 		///Assign by RelationshipType, Then Write to Response
 		switch((int)item.CollectionRelationshipType)
 		{
 			///One To One Relationship
-			case (int)RelationshipType.OneToOne:
+			case (int)RelationshipType.OneToOne:			
 				object[] oneToOneParams = {
-							GetClassName(item.SecondaryTable), 
-							GetPrivateName(item.SecondaryTable) + item.GetByKeysName.Substring(5)
+							item.PropertyNameUnique,
+							item.FieldName,
+							item.TypeName
 				};
-				item.PropertyString = string.Format(ONE_TO_ONE, oneToOneParams);
+				item.PropertyName = string.Format(ONE_TO_ONE, oneToOneParams);
 				break;
 				
 			///One To Many, Many To One
 			case (int)RelationshipType.OneToMany:
 			case (int)RelationshipType.ManyToOne:
 			    object[] oneToManyParams = {
-						GetCollectionPropertyName(item.SecondaryTable)
-						, GetPrivateName(item.SecondaryTable) + item.GetByKeysName.Substring(5)
-						, GetClassName(item.SecondaryTable)
-						, GetCollectionClassName(item.SecondaryTable)						
+						  item.PropertyNameUnique
+						, item.FieldName
+						, item.TypeName
 				};
-			item.PropertyString = string.Format(ONE_TO_MANY, oneToManyParams);
+			item.PropertyName = string.Format(ONE_TO_MANY, oneToManyParams);
 			break;
 			
 			///Many To Many
 			case (int)RelationshipType.ManyToMany:
 				object[] manyToManyParams = {
-						//GetCollectionClassName(item.CleanName) + "_From_" + GetClassName(item.JunctionTable), 
-						item.CollectionName,
-						GetCollectionClassName(item.SecondaryTable),
-						GetPrivateName(item.SecondaryTable) + item.GetByKeysName.Substring(5)
+						item.PropertyNameUnique,
+						item.CollectionTypeName,
+						item.FieldName
 				};
-				item.PropertyString = string.Format(MANY_TO_MANY, manyToManyParams);
+				item.PropertyName = string.Format(MANY_TO_MANY, manyToManyParams);
 				break;
 			default:
 				break;
 		}
 		
-		if (!RenderedChildren.Contains(item.CleanName))
-		{
-			///Write it out to the resonse stream
-			Response.Write(item.PropertyString);	
-			RenderedChildren.Add(item.CleanName);
-		}
-	}///End foreach loop
+		///Write it out to the response stream
+		Response.Write(item.PropertyName);	
 	
-	///enable use for the next template
-	RenderedChildren.Clear();
+	}///End foreach loop
 }
 </script>
 

@@ -43,20 +43,28 @@
 				</table>
 								
 				<table width="100%" border="0" cellspacing="2" cellpadding="2">
-				  	<tr>
-        				<td valign="top" width="100%" >
-                        <h2>Sections</h2>
+				<tr>
+					<td>
+					<h2>Sections</h2>
                         <ol>
 							<li><a href="#summary">Summary</a></li>
 							<li><a href="#Configuration">Configuration</a></li>
 							<li><a href="#documentation">Documentation</a></li>
 							<li><a href="#details">Details - Generated Classes</a></li>
                         </ol>
-            
+						</td>
+				</tr>
+				<tr>
+        			<td valign="top" width="100%" >
             <div id="Summary" style="display:inline">
               <a name="summary"></a>
               <h3>Generation Summary <a href="#top" class="calloutlink" >Top</a></h3>
- 				<xsl:apply-templates select="summary"/>
+				<span class="docSubHeader">Generated Solution Found: </span><br />
+				<span class="content">
+					<ul><li> <xsl:value-of select="//NetTiersReport/@SolutionLink" /> </li></ul>
+				</span>
+				
+				<xsl:apply-templates select="summary"/>
             </div>
           	<div id="Configuration" style="display:inline">
               <a name="Configuration"></a>
@@ -213,7 +221,6 @@ accountsService.DeepSave(myAccountEntity, <font color="blue">false</font>, DeepS
 	</xsl:template>
 	
 	<xsl:template match="summary">
-	  
 	  <table>
 	    <tr>
 	      <td width="200">Total Object Created</td>
@@ -276,7 +283,7 @@ accountsService.DeepSave(myAccountEntity, <font color="blue">false</font>, DeepS
 			<xsl:if test="@executionTime">[<xsl:value-of select="@executionTime" />]<br/></xsl:if>
 		</li>
 	</xsl:template>
-	
+		
 	<xsl:template match="Message" mode="error">
 		<pre style="padding: 10px; border: 1px #808080 dashed; background: #ffffef; color: red;"><xsl:value-of select="@message"/></pre>
 	</xsl:template>

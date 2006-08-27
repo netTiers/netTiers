@@ -116,7 +116,7 @@ namespace <%=DALNameSpace%>.WebServiceClient
 		/// <summary>
 		/// the Url of the webservice.
 		/// </summary>
-		protected string _url;
+		private string url;
 			
 		#endregion Declarations
 		
@@ -137,16 +137,21 @@ namespace <%=DALNameSpace%>.WebServiceClient
 		/// <param name="url">The url to the nettiers webservice.</param>
 		public <%=abstractRepositoryClassName%>(string url)
 		{
-			this._url = url;
+			this.Url = url;
 		}
 			
 		#endregion Constructors
 		
+		#region Url
+		///<summary>
+		/// Current URL for webservice endpoint. 
+		///</summary>
 		public string Url
         {
-        	get {return this._url;}
-        	set {this._url = value;}
+        	get {return url;}
+        	set {url = value;}
         }
+		#endregion 
 		
 		#region Convertion utility
 		
@@ -264,7 +269,7 @@ namespace <%=DALNameSpace%>.WebServiceClient
 		/// <param name="start">Row number at which to start reading.</param>
 		/// <param name="pagelen">Number of rows to return.</param>
 	<% for (int i = 0; i < junctionTableKey.ForeignKeyMemberColumns.Count; i++) { %>
-		/// <param name="<%= junctionTableKey.ForeignKeyMemberColumns[i].Name%>"><%=junctionTableKey.ForeignKeyMemberColumns[i].Description%></param>
+		/// <param name="<%= GetPrivateName(junctionTableKey.ForeignKeyMemberColumns[i].Name) %>"><%=junctionTableKey.ForeignKeyMemberColumns[i].Description%></param>
 	<% } %>
 		/// <param name="count">Number of rows in the DataSource.</param>
 		/// <remarks></remarks>
@@ -272,7 +277,7 @@ namespace <%=DALNameSpace%>.WebServiceClient
 		public override <%=GetCollectionClassName(primaryTable.Name)%> GetBy<%=functionname%>(TransactionManager transactionManager, <%=GetFunctionHeaderParameters(junctionTableKey.ForeignKeyMemberColumns)%>, int start, int pagelen, out int count)
 		{
 			<%=WebReferenceName%>.<%=ProxyClassName%> proxy = new <%=WebReferenceName%>.<%=ProxyClassName%>();
-			proxy.Url = this._url;
+			proxy.Url = Url;
 				
 			<%=WebReferenceName%>.<%=GetClassName(primaryTable.Name)%>[] items = proxy.<%=providerName + "_GetBy" + functionname%>(<%= GetFunctionCallParameters(junctionTableKey.ForeignKeyMemberColumns) %>, start, pagelen, out count);
 	
@@ -297,7 +302,7 @@ namespace <%=DALNameSpace%>.WebServiceClient
 			/// 	Deletes a row from the DataSource.
 			/// </summary>
 			<% for (int i = 0; i < SourceTable.PrimaryKey.MemberColumns.Count; i++) { %>
-			/// <param name="<%= SourceTable.PrimaryKey.MemberColumns[i].Name%>"><%= SourceTable.PrimaryKey.MemberColumns[i].Description%>. Primary Key.</param>	
+			/// <param name="<%= GetPrivateName(SourceTable.PrimaryKey.MemberColumns[i].Name) %>"><%= SourceTable.PrimaryKey.MemberColumns[i].Description%>. Primary Key.</param>	
 			<% } %>
 			/// <param name="transactionManager"><see cref="TransactionManager"/> object</param>
 			/// <remarks>Deletes based on primary key(s).</remarks>
@@ -306,7 +311,7 @@ namespace <%=DALNameSpace%>.WebServiceClient
 			{
 				// call the proxy
 				<%=WebReferenceName%>.<%=ProxyClassName%> proxy = new <%=WebReferenceName%>.<%=ProxyClassName%>();
-				proxy.Url = this._url;
+				proxy.Url = Url;
 				
 				bool result = proxy.<%=providerName%>_Delete(<%= GetFunctionCallParameters(SourceTable.PrimaryKey.MemberColumns) %><% if(RowVersion != null) {Response.Write(", " + GetPrivateName(RowVersion.Name));}%>);				
 				return result;
@@ -333,7 +338,7 @@ namespace <%=DALNameSpace%>.WebServiceClient
 		public override <%=collectionClassName%> Find(TransactionManager transactionManager, string whereClause, int start, int pagelen, out int count)
 		{
 			<%=WebReferenceName%>.<%=ProxyClassName%> proxy = new <%=WebReferenceName%>.<%=ProxyClassName%>();
-			proxy.Url = this._url;
+			proxy.Url = Url;
 			
 			<%=WebReferenceName%>.<%=GetClassName(SourceTable.Name)%>[] items = proxy.<%=providerName + "_Find"%>(whereClause, start, pagelen, out count);
 			
@@ -359,7 +364,7 @@ namespace <%=DALNameSpace%>.WebServiceClient
 		public override <%=collectionClassName%> GetAll(TransactionManager transactionManager, int start, int pageLength, out int count)
 		{
 			<%=WebReferenceName%>.<%=ProxyClassName%> proxy = new <%=WebReferenceName%>.<%=ProxyClassName%>();
-			proxy.Url = this._url;
+			proxy.Url = Url;
 				
 			<%=WebReferenceName%>.<%=GetClassName(SourceTable.Name)%>[] items = proxy.<%=providerName%>_GetAll(start, pageLength, out count);
 			
@@ -387,7 +392,7 @@ namespace <%=DALNameSpace%>.WebServiceClient
 			orderBy = orderBy ?? string.Empty;
 			
 			<%=WebReferenceName%>.<%=ProxyClassName%> proxy = new <%=WebReferenceName%>.<%=ProxyClassName%>();
-			proxy.Url = this._url;
+			proxy.Url = Url;
 			
 			<%=WebReferenceName%>.<%=GetClassName(SourceTable.Name)%>[] items = proxy.<%=providerName%>_GetPaged(whereClause, orderBy, start, pageLength, out count);
 			
@@ -426,7 +431,7 @@ namespace <%=DALNameSpace%>.WebServiceClient
 		public override <%=collectionClassName%> GetBy<%=GetKeysName(fkeys[j].ForeignKeyMemberColumns)%>(TransactionManager transactionManager, <%= GetFunctionHeaderParameters(fkeys[j].ForeignKeyMemberColumns) %>, int start, int pageLength, out int count)
 		{
 			<%=WebReferenceName%>.<%=ProxyClassName%> proxy = new <%=WebReferenceName%>.<%=ProxyClassName%>();
-			proxy.Url = this._url;
+			proxy.Url = Url;
 			<%=WebReferenceName%>.<%=GetClassName(SourceTable.Name)%>[] items = proxy.<%=providerName%>_GetBy<%=GetKeysName(fkeys[j].ForeignKeyMemberColumns)%>(<%= GetFunctionCallParameters(fkeys[j].ForeignKeyMemberColumns) %>, start, pageLength, out count);
 			
 			return Convert(items); 
@@ -475,11 +480,11 @@ namespace <%=DALNameSpace%>.WebServiceClient
 		/// <param name="transactionManager"><see cref="TransactionManager"/> object</param>
 		/// <param name="count">out parameter to get total records for query</param>	
 		/// <remarks></remarks>
-		/// <returns>Returns an instance of the <see cref="<%=returnType%>"/> class.</returns>
+		/// <returns>Returns an instance of the <see cref="<%=returnType.Replace("<", "&lt;").Replace(">", "&gt;")%>"/> class.</returns>
 		public override <%=returnType%> GetBy<%=GetKeysName(indexes[j].MemberColumns)%>(TransactionManager transactionManager, <%= GetFunctionHeaderParameters(indexes[j].MemberColumns) %>, int start, int pageLength, out int count)
 		{
 			<%=WebReferenceName%>.<%=ProxyClassName%> proxy = new <%=WebReferenceName%>.<%=ProxyClassName%>();
-			proxy.Url = this._url;
+			proxy.Url = Url;
 			<%=WebReferenceName%>.<%=GetClassName(SourceTable.Name)%><% if (!isUnique) Response.Write("[]");%> items = proxy.<%=providerName%>_GetBy<%=GetKeysName(indexes[j].MemberColumns)%>(<%= GetFunctionCallParameters(indexes[j].MemberColumns) %>, start, pageLength, out count);
 			
 			return Convert(items); 
@@ -502,7 +507,7 @@ namespace <%=DALNameSpace%>.WebServiceClient
 		public override bool Insert(TransactionManager transactionManager, <%=className%> entity)
 		{
 			<%=WebReferenceName%>.<%=ProxyClassName%> proxy = new <%=WebReferenceName%>.<%=ProxyClassName%>();
-			proxy.Url = this._url;
+			proxy.Url = Url;
 			
 			try
 			{
@@ -521,7 +526,7 @@ namespace <%=DALNameSpace%>.WebServiceClient
 		/// Lets you efficiently bulk many entity to the database.
 		/// </summary>
 		/// <param name="transactionManager">NOTE: The transaction manager should be null for the web service client implementation.</param>
-		/// <param name="entities">The entities.</param>
+		/// <param name="entityList">The entities.</param>
 		/// <remarks>
 		/// After inserting into the datasource, the <%=className%> object will be updated
 		/// to refelect any changes made by the datasource. (ie: identity or computed columns)
@@ -529,7 +534,7 @@ namespace <%=DALNameSpace%>.WebServiceClient
 		public override void BulkInsert(TransactionManager transactionManager, TList<<%=className%>> entityList)
 		{
 			<%=WebReferenceName%>.<%=ProxyClassName%> proxy = new <%=WebReferenceName%>.<%=ProxyClassName%>();
-			proxy.Url = this._url;
+			proxy.Url = Url;
 			try
 			{
 				proxy.<%=providerName%>_BulkInsert(Convert(entityList));
@@ -557,7 +562,7 @@ namespace <%=DALNameSpace%>.WebServiceClient
 		public override bool Update(TransactionManager transactionManager, <%=className%> entity)
 		{
 			<%=WebReferenceName%>.<%=ProxyClassName%> proxy = new <%=WebReferenceName%>.<%=ProxyClassName%>();
-			proxy.Url = this._url;
+			proxy.Url = Url;
 			
 			try
 			{
@@ -580,7 +585,6 @@ namespace <%=DALNameSpace%>.WebServiceClient
 		#region Custom Methods
 		
 	<% 
-	System.Diagnostics.Trace.WriteLine(string.Format("{0},{1},{2}", CustomProcedureStartsWith, SourceTable.Name, ProcedurePrefix));
 	string prefix = string.Format(CustomProcedureStartsWith, SourceTable.Name, ProcedurePrefix);
 	foreach(CommandSchema command in SourceTable.Database.Commands)
 	{
@@ -615,7 +619,7 @@ namespace <%=DALNameSpace%>.WebServiceClient
 		public override <%=returnType%> <%=methodName%>(TransactionManager transactionManager, int start, int pageLength <%=TransformStoredProcedureInputsToMethod(true, command.InputParameters) + TransformStoredProcedureOutputsToMethod(true, command.AllOutputParameters) %>)
 		{
 			<%=WebReferenceName%>.<%=ProxyClassName%> proxy = new <%=WebReferenceName%>.<%=ProxyClassName%>();
-			proxy.Url = this._url;
+			proxy.Url = Url;
 			
 			<% if (returnType == collectionClassName) { %>
 			<%=WebReferenceName%>.<%=GetClassName(SourceTable.Name)%>[] items = proxy.<%=providerName%>_<%=methodName%>(start, pageLength <%=TransformStoredProcedureInputsToDataAccess(true, command.InputParameters) + TransformStoredProcedureOutputsToDataAccess(true, command.AllOutputParameters)%>);

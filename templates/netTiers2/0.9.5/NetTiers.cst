@@ -130,7 +130,7 @@
 		{
 			if (rootNamespace.Length == 0)
 			{
-				rootNamespace =  (SourceDatabase != null ? SourceDatabase.Name : "");
+				rootNamespace =  (ChooseSourceDatabase != null ? ChooseSourceDatabase.Name : "");
 			}
 			return rootNamespace;
 		}
@@ -179,7 +179,7 @@
 		{
 			if (_outputDirectory.Length == 0)
 			{
-				return @"c:\NetTiers\" + (SourceDatabase != null ? SourceDatabase.Name : "Output");
+				return @"c:\NetTiers\" + (ChooseSourceDatabase != null ? SourceDatabase.Name : "Output");
 			}
 			else
 			{
@@ -321,7 +321,7 @@
 		{
 			if (_WebServiceOutputPath.Length == 0)
 			{
-				return @"c:\NetTiers\" + (SourceDatabase != null ? SourceDatabase.Name + @"\WebServices" : @"Output\WebServices");
+				return @"c:\NetTiers\" + (ChooseSourceDatabase != null ? ChooseSourceDatabase.Name + @"\WebServices" : @"Output\WebServices");
 			}
 			return _WebServiceOutputPath;
 		}
@@ -342,7 +342,7 @@
 		{
 			if (_WebServiceUrl.Length == 0)
 			{
-				return "http://localhost/" + (SourceDatabase != null ? GetClassName(SourceDatabase.Name) + "Services" : "NetTiersWebServices");
+				return "http://localhost/" + (ChooseSourceDatabase != null ? GetClassName(ChooseSourceDatabase.Name) + "Services" : "NetTiersWebServices");
 			}
 			return _WebServiceUrl;
 		}
@@ -352,7 +352,7 @@
 		} 
 	}
 	
-	#region "Properties used by the wizard to report progression"
+	#region Properties used by the wizard to report progression
 	
 	private int _counter = 0;
 	[Browsable(false)]
@@ -802,6 +802,8 @@ public void LoadTemplates()
 	{
 		string key = System.IO.Path.GetFileName(_templatesFileName);
 		
+		Trace.WriteLine("\t*Compiling Template: " + _templatesFileName);
+		
 		if (_CodeTemplates.Contains(key))
 		{
 			continue;
@@ -850,23 +852,6 @@ public void LoadTemplates()
 public CodeTemplate GetTemplate(string templateType)
 {
 	return (CodeSmith.Engine.CodeTemplate)_CodeTemplates[templateType];
-}
-
-public void SafeCreateDirectory(string path)
-{
-	if (!Directory.Exists(path))
-	{
-		Directory.CreateDirectory(path);
-	}
-}
-
-/// <summary>
-/// Copy the specified file.
-/// </summary>
-public void SafeCopyFile(string path, string destination)
-{
-	FileInfo file1 = new FileInfo(path);
-	file1.CopyTo(destination, true);
 }
 
 /// <summary>
@@ -921,7 +906,7 @@ public void Go()
 	string rootPathUT = OutputDirectory + "\\" + UTNameSpace;
 	string rootPathSQL = OutputDirectory + "\\" + SQLNamespace;
 	
-	string rootPathWS  = WebServiceOutputPath; //OutputDirectory + "\\" + WebServiceVirtualDirectoryName;
+	string rootPathWS  = WebServiceOutputPath; 
 	string specialPath = vsnetIntegration == VSNetIntegration.SeparatedProjects ? ((IncludeUnitTest != MoM.Templates.UnitTestStyle.None) ? rootPathUT : rootPathDAL) : OutputDirectory;
 	
 	bool HasCustomCode = (CustomCodeFolderName != null && CustomCodeFolderName.Trim().Length > 0 );
@@ -939,6 +924,10 @@ public void Go()
 	attDALNS.Value = DALNameSpace;
 	docOutput.DocumentElement.Attributes.Append(attDALNS);
 
+	XmlAttribute attSolution = docOutput.CreateAttribute("SolutionLink");
+	attSolution.Value = GetSolutionFileLink();
+	docOutput.DocumentElement.Attributes.Append(attSolution);
+	
 	XmlAttribute attConn = docOutput.CreateAttribute("ConnectionString");
 	attConn.Value = SourceDatabase.ConnectionString;
 	docOutput.DocumentElement.Attributes.Append(attConn);		
@@ -959,32 +948,16 @@ public void Go()
 		IncludeDelete = true;
 	}
 	
-	if (vsnetVersion == VSNetVersion.v2003) 
+	try
 	{
-		try
-		{
-			Microsoft.Win32.RegistryKey key = Microsoft.Win32.Registry.LocalMachine.OpenSubKey(@"SOFTWARE\Microsoft\.NETFramework");
-			sdkInstallRoot = string.Format("{0}\\Bin\\", key.GetValue("sdkInstallRootv1.1"));
-			key.Close();
-		}
-		catch
-		{
-			sdkInstallRoot = @"C:\Program Files\Microsoft Visual Studio .NET 2003\SDK\v1.1\Bin\";
-		}
+		Microsoft.Win32.RegistryKey key = Microsoft.Win32.Registry.LocalMachine.OpenSubKey(@"SOFTWARE\Microsoft\.NETFramework");
+		sdkInstallRoot = string.Format("{0}\\Bin\\", key.GetValue("sdkInstallRootv2.0"));
+		key.Close();
 	}
-	if (vsnetVersion == VSNetVersion.v2005) 
+	catch
 	{
-		try
-		{
-			Microsoft.Win32.RegistryKey key = Microsoft.Win32.Registry.LocalMachine.OpenSubKey(@"SOFTWARE\Microsoft\.NETFramework");
-			sdkInstallRoot = string.Format("{0}\\Bin\\", key.GetValue("sdkInstallRootv2.0"));
-			key.Close();
-		}
-		catch
-		{
-			sdkInstallRoot = @"c:\Program Files\Microsoft Visual Studio 8\SDK\v2.0\Bin\";
-		}		
-	}
+		sdkInstallRoot = @"c:\Program Files\Microsoft Visual Studio 8\SDK\v2.0\Bin\";
+	}		
 	
 	DebugWriteLine(string.Format("sdkInstallRoot: {0}", sdkInstallRoot));
 	
@@ -992,15 +965,15 @@ public void Go()
 	_CurrentPhase = "Parameter Validation";
 	DebugWriteLine("Current Phase: "+_CurrentPhase);
 	
-	XmlElement parametersNode = AddMessageNode(initNode, 0, "Validating parameters.");
+	XmlElement parametersNode = AddMessageNode(initNode, 0, "Validating parameters.", false);
 	
 	
 	// load all the sub templates
-	XmlElement templatesNode = AddMessageNode(initNode, 0, "Loading templates.");
+	XmlElement templatesNode = AddMessageNode(initNode, 0, "Loading templates.", false);
 	_CurrentPhase = "Templates compilation";
 	DebugWriteLine("Current Phase: "+_CurrentPhase);
-
 	LoadTemplates();
+	
 	AddExecutionTime(templatesNode);
 	
 	_CurrentPhase = "Check datasource";
@@ -1049,14 +1022,14 @@ public void Go()
 			//if (_tmp[i].PrimaryKey == null || _tmp[i].PrimaryKey.MemberColumns.Count == 0)
 			if (!HasPrimaryKey(_tmp[i]))
 			{
-				AddMessageNode(initNode, 1, "Table " + _tmp[i].Name + " does not have a primary key, it will not be generated.");
+				AddMessageNode(initNode, 1, "Table " + _tmp[i].Name + " does not have a primary key, it will not be generated.", true);
 				_sourceTables.Remove(_tmp[i]);
 				DebugWriteLine("Remove table (no PK): "+_tmp[i].Name);
 			}
 		}
 		catch(ApplicationException e)
 		{
-			AddMessageNode(initNode, 1, "Table " + _tmp[i].Name + " does not have a primary key, it will not be generated.");
+			AddMessageNode(initNode, 1, "Table " + _tmp[i].Name + " does not have a primary key, it will not be generated.", true);
 			_sourceTables.Remove(_tmp[i]);
 			DebugWriteLine("ApplicationException: "+e.Message);
 		}
@@ -1066,7 +1039,7 @@ public void Go()
 	// if no tables, exit;		
 	if (_sourceTables.Count == 0 && _sourceViews.Count == 0)
 	{
-		AddMessageNode(initNode, 2, "No valid tables in the selection.");
+		AddMessageNode(initNode, 2, "No valid tables in the selection.", true);
 		return;
 	}
 	
@@ -1083,11 +1056,9 @@ public void Go()
 			ValidForEnum(_enums[i]);
 			//Response.Write("table is valide");
 		}
-		catch(ApplicationException e)
+		catch(Exception e)
 		{
-			//Response.Write(e.Message);
-			//Debugger.Break();
-			AddMessageNode(initNode, 1, "Table " + _enums[i].Name + " is not eligible for enum generation: " + e.Message);
+			AddMessageNode(initNode, 1, "Table " + _enums[i].Name + " is not eligible for enum generation: " + e.Message , true);
 			_enumTables.Remove(_enums[i]);
 			DebugWriteLine("ApplicationException: "+e.Message);
 		}
@@ -1099,7 +1070,7 @@ public void Go()
 	//----------------------------------------------------------------------------------------------------------------------------------------------
 	// CREATING FOLDERS AND COPYING DEPENDENCIES.
 	//----------------------------------------------------------------------------------------------------------------------------------------------
-	AddMessageNode(initNode, 0, "Creating folders and copying dependencies.");
+	AddMessageNode(initNode, 0, "Creating folders and copying dependencies.", false);
 	SafeCreateDirectory(OutputDirectory + "\\References");
 	
 	if(GenerateBusinessLogicLayer)
@@ -1306,7 +1277,7 @@ public void Go()
 	
 	//------------------------
 	// start code generation
-	XmlElement commonNode = docOutput.CreateElement("common");
+	System.Xml.XmlElement commonNode = docOutput.CreateElement("common");
 	XmlAttribute att2 = docOutput.CreateAttribute("startTime");
 	att2.Value = DateTime.Now.ToFileTime().ToString();
 	commonNode.Attributes.Append(att2);	
@@ -1681,11 +1652,11 @@ public void Go()
 			}
 			catch(System.Data.SqlClient.SqlException sex)
 			{
-				AddMessageNode(spNode, 2, string.Format("Error while execution Sql file. {0}", sex));
+				AddMessageNode(spNode, 2, string.Format("Error while execution Sql file. {0}", sex), true);
 			}
 			catch(Exception ex)
 			{
-				AddMessageNode(spNode, 2, string.Format("Error while execution Sql file. {0}", ex));
+				AddMessageNode(spNode, 2, string.Format("Error while execution Sql file. {0}", ex), true);
 			}			
 		}
 		
@@ -1858,6 +1829,8 @@ public void Go()
 		if (GenerateWebservice)
 		{
 			AddFileNode(commonNode, "WebServiceClient\\WsNetTiersProvider.cs");
+			
+			this.GetTemplate("WsNetTiersProvider.cst").SetProperty("BLLNameSpace", BLLNameSpace);
 			this.GetTemplate("WsNetTiersProvider.cst").SetProperty("DALNameSpace", DALNameSpace);
 			this.GetTemplate("WsNetTiersProvider.cst").SetProperty("SourceTables", _sourceTables);
 			this.GetTemplate("WsNetTiersProvider.cst").SetProperty("SourceViews", _sourceViews);
@@ -1941,42 +1914,6 @@ public void Go()
 		//AddFileNode(commonNode, "Web.config");
 		//this.GetTemplate("Web.config.cst").SetProperty("ConnectionString", SourceDatabase.ConnectionString);
 		//this.GetTemplate("Web.config.cst").RenderToFile(rootPathWS + "\\Web.config", true);
-					
-		
-		/*
-		//----------------------------------------------------------------------------------------------------------------------------------------------
-		// Generating webreference for visual studio
-		// 
-		// 1. wsdl /out:c:\Web References\WsProxy\Reference.cs http://commerce.services/CustomerServices.asmx?WSDL
-		// 2. disco /out:c:\Web References\WsProxy\ http://commerce.services/CustomerServices.asmx
-		//----------------------------------------------------------------------------------------------------------------------------------------------
-		
-		AddFileNode(commonNode, "WSDL file");
-		
-		Process p = new Process();
-		p.StartInfo.RedirectStandardOutput = true;
-		p.StartInfo.UseShellExecute = false;
-		p.StartInfo.FileName = "\"" + sdkInstallRoot + "wsdl\"";
-		p.StartInfo.Arguments = "/out:\"" + rootPathWS + "\\Web References\\WsProxy\\Reference.cs\" \"" + WebServiceUrl + "?WSDL\"";
-		p.Start();
-		p.WaitForExit();
-		
-		//Response.Write(p.StartInfo.FileName);
-		//Response.Write(p.StartInfo.Arguments);
-				
-		AddFileNode(commonNode, "DISCO file");
-		
-		//Response.WriteLine("2. Generating Web Reference file: DISCO.");
-		//Response.WriteLine("\"" + sdkInstallRoot + "disco\" /out:\"" + rootPathDAL + "\\Web References\\WsProxy\" \"" + WebServiceUrl + "\"");
-		Process p2 = new Process();
-		p2.StartInfo.RedirectStandardOutput = true;
-		p2.StartInfo.UseShellExecute = false;
-		p2.StartInfo.FileName = "\"" + sdkInstallRoot + "disco\"";
-		p2.StartInfo.Arguments = "/out:\"" + rootPathWS + "\\Web References\\WsProxy\" \"" + WebServiceUrl + "\"";
-		p2.Start();
-		p2.WaitForExit();
-		//AddFileNode(discoNode, 0, p2.StandardOutput.ReadToEnd());
-		*/
 		
 		// The WebInfo file for the WebService
 		if (vsnetVersion != VSNetVersion.v2005)
@@ -3037,6 +2974,7 @@ public void Go()
 			{
 				XmlElement wsDalcViewNode = AddFileNode(tableNode, "WebServiceClient\\Views\\"+ GetProviderName(SourceView.Name) + ".cs");
 				//Response.WriteLine("Building concrete SqlClient Repository class : SqlClient\\" + GetProviderName(SourceTable.Name));
+				this.GetTemplate("WsEntityViewProvider.cst").SetProperty("BLLNameSpace", BLLNameSpace);
 				this.GetTemplate("WsEntityViewProvider.cst").SetProperty("DALNameSpace", DALNameSpace);
 				this.GetTemplate("WsEntityViewProvider.cst").SetProperty("ClassName", GetClassName(SourceView.Name));
 				this.GetTemplate("WsEntityViewProvider.cst").SetProperty("ProviderName", "Ws" + GetProviderName(SourceView.Name));
@@ -3469,23 +3407,33 @@ public void Go()
 		AddExecutionTime(tableNode);
 		_CurrentObjectIndex++;
 	}
-	XmlElement summaryElement = docOutput.CreateElement("summary");
-	XmlElement objectCount = docOutput.CreateElement("objectCount");
-	objectCount.InnerText = Counter.ToString();
 	
-	
-	XmlElement messageCount = docOutput.CreateElement("messageCount");
-	messageCount.InnerText= this.ErrorMessageCount.ToString();
-	
-	summaryElement.AppendChild(objectCount);
-	summaryElement.AppendChild(messageCount);
-	
-	docOutput.DocumentElement.AppendChild(summaryElement);
-	AddExecutionTime(docOutput.DocumentElement);
-	docOutput.Save(OutputDirectory + "\\report.xml");
+	if (this.GenerateWebservice)
+	{
+		//CreateWebServiceProxies(rootPathDALWS);
+	}
 	
 	try 
 	{
+		
+		
+		XmlElement summaryElement = docOutput.CreateElement("summary");
+		XmlElement objectCount = docOutput.CreateElement("objectCount");
+		objectCount.InnerText = Counter.ToString();
+		
+		
+		XmlElement messageCount = docOutput.CreateElement("messageCount");
+		messageCount.InnerText= this.ErrorMessageCount.ToString();
+		
+		summaryElement.AppendChild(objectCount);
+		summaryElement.AppendChild(messageCount);
+		
+		docOutput.DocumentElement.AppendChild(summaryElement);
+		AddExecutionTime(docOutput.DocumentElement);
+		docOutput.Save(OutputDirectory + "\\report.xml");
+	
+
+		
 		//XPathDocument doc = new XPathDocument(OutputDirectory + "\\report.xml");
 		XslTransform xslt = new XslTransform();
 		xslt.Load(this.CodeTemplateInfo.DirectoryName + "\\VisualStudio\\reportHTML.xsl");
@@ -3496,13 +3444,14 @@ public void Go()
 		
 		if (ViewReport)
 		{
+			string file = @"file:\\\" + OutputDirectory +  "\\report.html";
 			// replace all invalid Url characters with URL Encoded version
 			string[] invalidUrlCharacters = { "#" };
 			string outputDirectory = OutputDirectory;
 			for (int i = 0; i < invalidUrlCharacters.Length; i++)
 				outputDirectory = outputDirectory.Replace(invalidUrlCharacters[i], System.Web.HttpUtility.UrlEncode(invalidUrlCharacters[i]));
 
-			string file = @"file:\\\" + outputDirectory + "\\report.html";
+			
 			Process.Start(file);
 		}
 		
@@ -3519,9 +3468,8 @@ public void Go()
 			
 			if(!found)
 			{
-				string process = OutputDirectory + "\\" + NameSpace + ".sln";
 				string args = "/build debug";
-				using (Process p = Process.Start(process, args))
+				using (Process p = Process.Start(GetSolutionFileLink(), args))
 				{
 				}
 			}
@@ -3532,9 +3480,12 @@ public void Go()
 		Response.WriteLine("Transformation failed, an error has occured:");
 		Response.WriteLine(e);
 	}
-		
-	Response.WriteLine("Generation complete. Execution time: " + (DateTime.Now - startTime).ToString());
+
+	string exTime = "Generation complete. Execution time: " + (DateTime.Now - startTime).ToString();
+	Trace.WriteLine(exTime);
+	Response.WriteLine(exTime);
 }
+
 
 ///<summary>
 ///
@@ -3631,6 +3582,11 @@ private void PerformStep()
 	}	
 }
 #endregion 
+
+private string GetSolutionFileLink()
+{
+	return  @"file:\\\" + OutputDirectory +  "\\" + NameSpace + ".sln";	
+}
 
 ///<summary>
 ///
@@ -3748,6 +3704,49 @@ private bool AttemptCreateLocalVirtualDirectoryByPath()
   return true;
 }
 
+private void CreateWebServiceProxies(string clientPath)
+{
+		try
+		{
+			if (Directory.Exists(this.sdkInstallRoot))
+			{
+				//----------------------------------------------------------------------------------------------------------------------------------------------
+				// Generating webreference for visual studio
+				// 
+				// 1. wsdl /out:c:\Web References\WsProxy\Reference.cs http://commerce.services/CustomerServices.asmx?WSDL
+				// 2. disco /out:c:\Web References\WsProxy\ http://commerce.services/CustomerServices.asmx
+				//----------------------------------------------------------------------------------------------------------------------------------------------
+				
+				Process p = new Process();
+				p.StartInfo.RedirectStandardOutput = true;
+				p.StartInfo.UseShellExecute = false;
+				p.StartInfo.FileName = "\"" + sdkInstallRoot + "wsdl\"";
+				p.StartInfo.Arguments = "/out:\"" + clientPath + "\\Web References\\WsProxy\\Reference.cs\" \"" + WebServiceUrl + "?WSDL\"";
+				p.Start();
+				p.WaitForExit();
+				
+				//Response.Write(p.StartInfo.FileName);
+				//Response.Write(p.StartInfo.Arguments);
+						
+				
+				//Response.WriteLine("2. Generating Web Reference file: DISCO.");
+				//Response.WriteLine("\"" + sdkInstallRoot + "disco\" /out:\"" + rootPathDAL + "\\Web References\\WsProxy\" \"" + WebServiceUrl + "\"");
+				Process p2 = new Process();
+				p2.StartInfo.RedirectStandardOutput = true;
+				p2.StartInfo.UseShellExecute = false;
+				p2.StartInfo.FileName = "\"" + sdkInstallRoot + "disco\"";
+				p2.StartInfo.Arguments = "/out:\"" + clientPath + "\\Web References\\WsProxy\" \"" + WebServiceUrl + "\"";
+				p2.Start();
+				p2.WaitForExit();
+				//AddFileNode(discoNode, 0, p2.StandardOutput.ReadToEnd());
+			}
+		}
+		catch(Exception exc)
+		{
+			Trace.WriteLine("WSDL && DISCO FAILED: " + exc.Message);
+		}
+}
+
 private void SetCommonProperties(String template)
 {
 	this.GetTemplate(template).SetProperty("IncludeGet", IncludeGet);
@@ -3763,7 +3762,7 @@ private void SetCommonProperties(String template)
 	this.GetTemplate(template).SetProperty("IncludeRelations", IncludeRelations);
 }
 
-private XmlElement AddMessageNode(XmlElement rootNode, int level, string message)
+private XmlElement AddMessageNode(XmlElement rootNode, int level, string message, bool isError)
 {
 
 	Trace.WriteLine(string.Format("{0}*Message:{1}", Tab(level), message));
@@ -3772,7 +3771,10 @@ private XmlElement AddMessageNode(XmlElement rootNode, int level, string message
 	XmlAttribute attLevel = docOutput.CreateAttribute("level");
 	attLevel.Value = string.Format("{0}", level);
 	node.Attributes.Append(attLevel);
-	this._errorMessageCount++;
+	
+	if (isError)
+		this._errorMessageCount++;
+	
 	XmlAttribute attTime = docOutput.CreateAttribute("startTime");
 	attTime.Value = DateTime.Now.ToFileTime().ToString();
 	node.Attributes.Append(attTime);

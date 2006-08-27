@@ -59,8 +59,8 @@ namespace MoM.Templates
 		private string enumFormat 			= "{0}List";
 		private string manyToManyFormat		= "{0}From{1}";
 		private string strippedTablePrefixes		= "tbl;tbl_";
-		private string aliasFilePath 		= "";
 		private string customProcedureStartsWith = "_{0}_";
+		private string aliasFilePath 		= "";
 		private string procedurePrefix = "";
 		private string auditUserField = "";
 		private string auditDateField = "";
@@ -296,7 +296,7 @@ namespace MoM.Templates
 				this.procedurePrefix = value;
 			}
 		}
-		
+
 		[Category("07. CRUD - Advanced")]
 		[Description("If you include custom stored procedures, this is the pattern that NetTiers will look for your custom stored procedures to start with. A string format will be used to match the beginning of the procedure pattern.  So, {0}=TableName, {1}=ProcedurePrefix(See Property Below).  By default NetTiers will look at tables that starts with '_{0}_', which means it will detect the procedure _TableName_GetByBirthdate, '{1}_cust_{0}' would match usp_cust_tablename_GetByAny; the appropriate methods will be generated.")]
 		public string CustomProcedureStartsWith
@@ -304,7 +304,7 @@ namespace MoM.Templates
 			get { return this.customProcedureStartsWith; }
 			set { this.customProcedureStartsWith = value; }
 		}
-
+		
 		public enum CustomNonMatchingReturnType
 		{
 			DataSet,
@@ -3009,7 +3009,8 @@ namespace MoM.Templates
 			}
 		}
 		#endregion
-				
+		
+		#region Column Comparer
 		// [ab 013105] column name sorting comparer
 		public class columnSchemaComparer : IComparer  
 		{
@@ -3022,9 +3023,142 @@ namespace MoM.Templates
 			}
 				
       	}
+      	#endregion
+		
+		#region Utils
+		
+		#region Recursive Copy Code
+		///<summary>
+		/// Safely Copies all files from one directory to another
+		///</summary>
+		public void SafeCopyAll(string path, string destination) 
+		{ 
+			System.IO.DirectoryInfo dir = new System.IO.DirectoryInfo(path); 
+			SafeCopyAll(dir, destination); 
+		} 
+		
+		///<summary>
+		/// Safely Copies all files from one directory to another
+		///</summary>
+		public void SafeCopyAll(System.IO.DirectoryInfo dir, string destination) 
+		{ 
+			string path; 
+			foreach ( System.IO.FileInfo f in dir.GetFiles() ) 
+			{ 
+				f.CopyTo(System.IO.Path.Combine(destination, f.Name), true); 
+			} 
+			
+			foreach ( System.IO.DirectoryInfo d in dir.GetDirectories() ) 
+			{ 
+				path = System.IO.Path.Combine(destination, d.Name); 
+				SafeCreateDirectory(path); 
+				SafeCopyAll(d, path); 
+			} 
+		} 
+		
+		/// <summary>
+		/// Copy the specified file.
+		/// </summary>
+		public void SafeCreateDirectory(string path)
+		{
+			if (!Directory.Exists(path))
+			{
+				Directory.CreateDirectory(path);
+			}
+		}
+		
+		/// <summary>
+		/// Copy the specified file.
+		/// </summary>
+		public void SafeCopyFile(string path, string destination)
+		{
+			FileInfo file1 = new FileInfo(path);
+			file1.CopyTo(destination, true);
+		}
+
+		#endregion 
+		
+		#region Recursive Get Files
+		///<summary>
+		/// Get's all available files with the proper extensions for inclusion into a project
+		/// NOTE: Not Tested
+		///</summary>
+		public System.Collections.IList  GetFiles(string path) 
+		{ 
+				System.IO.DirectoryInfo dir = new System.IO.DirectoryInfo(path); 
+			
+			return GetFiles(dir, new System.Collections.ArrayList()); 
+		} 
+		
+		///<summary>
+		/// Get's all available files with the proper extensions for inclusion into a project
+		/// NOTE: Not Tested
+		///</summary>
+		public System.Collections.IList GetFiles(System.IO.DirectoryInfo dir, System.Collections.ArrayList files) 
+		{ 
+			string path; 
+			foreach (System.IO.FileInfo f in dir.GetFiles() ) 
+			{
+				if (Array.IndexOf(IncludeExtensions, f.Extension) >= 0)
+					files.Add(f);
+			} 
+			
+			foreach (System.IO.DirectoryInfo d in dir.GetDirectories() ) 
+			{ 
+				path = System.IO.Path.Combine(dir.FullName, d.Name); 
+				files.AddRange(GetFiles(d, files)); 
+			} 
+			
+			return files;
+		} 
+		#endregion 
+		
+      	#region File Extensions
+		private static string[] IncludeExtensions = new string[]{".arj", ".asa",".asax", ".ascx", ".asmx", ".ashx", ".asp", ".aspx", ".au", ".avi", ".bat", ".bmp", 
+													  ".cab", ".chm", ".com", ".config", ".cs", ".css", ".disco", ".dll", ".doc", 
+													  ".exe", ".png", ".gif", ".hlp", ".htm", ".html", ".jpg", ".inc", ".ini", 
+													  ".log", ".mdb", ".mid", ".midi", ".mov", ".mp3", ".mpg", ".mpeg", ".fla", ".swf",
+													  ".cur", ".ico", ".resx", ".jsl", ".cd", ".rdlc", ".js", ".vbs", ".wsf", ".master", 
+													  ".skin", ".pdf", ".ppt", ".psd", ".sys", ".txt", ".tif", ".vb", ".vbs", ".vsdisco", 
+													  ".wav", ".wri", ".xls", ".xml", ".xsd", ".xslt", ".zip", ".rpt", ".java",
+													  ".settings", ".cfm", ".cfmx", ".jsp", ".mdf", ".ldf" };
+													
+		#endregion 
+		
+		#endregion 
+		
+		#region Custom Stored Procedures
+		public IDictionary<string, CommandSchema> GetCustomProcedures(TableSchema table)
+		{
+			return GetCustomProcedures(table.Name, table.Database.Commands);
+		}
+		
+		public IDictionary<string, CommandSchema> GetCustomProcedures(ViewSchema view)
+		{
+			return GetCustomProcedures(view.Name, view.Database.Commands);
+		}
+		
+		public IDictionary<string, CommandSchema> GetCustomProcedures(string objectName, CommandSchemaCollection allCommands)
+		{
+			string customPrefix = string.Format(CustomProcedureStartsWith, objectName, ProcedurePrefix);
+			IDictionary<string, CommandSchema> procs = new Dictionary<string, CommandSchema>();
+			string customName;
+			
+			foreach ( CommandSchema proc in allCommands )
+			{
+				if ( proc.Name.StartsWith(customPrefix) )
+				{
+					customName = proc.Name.Substring(customPrefix.Length);
+					procs.Add(customName, proc);
+				}
+			}
+			
+			return procs;
+		}
+		
+		#endregion 
       	
-      	
-      	#region Execute sql file
+		#region Execute sql file
 
 		public void ExecuteSqlInFile(string pathToScriptFile, string connectionString ) 
 		{
@@ -3097,9 +3231,7 @@ namespace MoM.Templates
 		}
 
 		#endregion
-      	
-
-		
+	
 		#region Children Collections
 		
 		/////////////////////////////////////////////////////////////////////////////////////
@@ -3109,45 +3241,46 @@ namespace MoM.Templates
 		///<summary>
 		///  An ArrayList of all the child collections for this table.
 		///</summary>
-		private ArrayList _collections = new ArrayList();
+		private System.Collections.ArrayList _collections = new System.Collections.ArrayList();
 		
 		///<summary>
 		///  An ArrayList of all the properties rendered.  
 		///  Eliminate Dupes through common junction tables and fk relationships
 		///</summary>
-		private ArrayList _renderedChildren = new ArrayList();
+		private System.Collections.Hashtable relationshipDictionary = new System.Collections.Hashtable();
 		
-		///<summary>
-		///  Holds the current table of the children collections being collected
-		///</summary>
-		private string _currentTable = string.Empty;
-
-
-	
 		///<summary>
 		///	Returns an array list of Child Collections of the object
 		///</summary>
-		public ArrayList GetChildrenCollections(SchemaExplorer.TableSchema table, SchemaExplorer.TableSchemaCollection tables) 
+		public System.Collections.Hashtable GetChildrenCollections(SchemaExplorer.TableSchema table, SchemaExplorer.TableSchemaCollection tables) 
 		{
-			//CleanUp
-			if(CurrentTable != table.Name)
+			//System.Diagnostics.Debugger.Break();
+			
+			///  An ArrayList of all the child collections for this table.
+			System.Collections.Hashtable _collections = new System.Collections.Hashtable();
+		
+			CurrentTable = table.Name;
+			
+			//Check Cache
+			if( relationshipDictionary[table.Name] == null )
 			{
-				_collections.Clear();
-				_renderedChildren.Clear();
-				CurrentTable = table.Name;
+				relationshipDictionary[table.Name] = _collections;
 			}
-			
-			if (_collections.Count > 0)
-				return _collections;
-			
+			else 
+			{
+				return relationshipDictionary[table.Name] as System.Collections.Hashtable;
+			}
+	
 			//Provides Informatoin about the foreign keys
-			TableKeySchemaCollection fkeys = table.ForeignKeys;
+			SchemaExplorer.TableKeySchemaCollection fkeys = table.ForeignKeys;
 			
 			//Provides information about the indexes contained in the table. 
 			IndexSchemaCollection indexes = table.Indexes;
-							
+			
+			// All keys that relate to this table
 			TableKeySchemaCollection primaryKeyCollection = table.PrimaryKeys;
-				
+			
+			//for each relationship
 			foreach(TableKeySchema keyschema in primaryKeyCollection)
 			{
 				
@@ -3159,63 +3292,104 @@ namespace MoM.Templates
 				
 				if (IsRelationOneToOne(keyschema))
 				{
-					//Response.Write(table.Name);
 					CollectionInfo collectionInfo = new CollectionInfo();
+
+					#region Additional 1:1 meta-data properties
 					collectionInfo.PkColNames = GetColumnNames(table.PrimaryKey.MemberColumns);
-					collectionInfo.PkIdxName = keyschema.Name;
 					collectionInfo.PrimaryTable = GetClassName(table);
 					collectionInfo.SecondaryTable = GetClassName(keyschema.ForeignKeyTable);
 					collectionInfo.SecondaryTablePkColNames = GetColumnNames(keyschema.ForeignKeyTable.PrimaryKey.MemberColumns);
-					collectionInfo.CollectionRelationshipType = RelationshipType.OneToOne;
-					collectionInfo.CleanName = GetClassName(collectionInfo.SecondaryTable);//GetClassName(keyschema.ForeignKeyTable.Name);		
+					collectionInfo.CollectionRelationshipType = RelationshipType.OneToOne;			
 					collectionInfo.CollectionName = GetCollectionPropertyName(collectionInfo.SecondaryTable);
 					collectionInfo.CollectionTypeName = GetCollectionClassName(collectionInfo.SecondaryTable);
-					//collectionInfo.CallParams = GetFunctionRelationshipCallParameters(table.PrimaryKey.MemberColumns);
-					collectionInfo.CallParams = GetFunctionRelationshipCallParameters(keyschema.PrimaryKeyMemberColumns);
-					collectionInfo.GetByKeysName = "GetBy" + GetKeysName(keyschema.ForeignKeyMemberColumns);
 					collectionInfo.TableKey = keyschema;
+					collectionInfo.CleanName = GetClassName(collectionInfo.SecondaryTable);
+
+					#endregion 
+
+					//Key Name - Each collection should have a unique key namce
+					collectionInfo.PkIdxName = keyschema.Name;
+										
+					// Method to fill this entity
+					collectionInfo.GetByKeysName = "GetBy" + GetKeysName(keyschema.ForeignKeyMemberColumns);
 					
-					_collections.Add(collectionInfo);
+					// Params to fill this entity
+					collectionInfo.CallParams = GetFunctionRelationshipCallParameters(keyschema.PrimaryKeyMemberColumns);
+					
+					// Property String Name for a this relationship
+					collectionInfo.PropertyName = GetClassName(collectionInfo.SecondaryTable);
+
+					// Property String Name for a this relationship
+					collectionInfo.PropertyNameUnique = GetClassName(collectionInfo.SecondaryTable);
+
+					// Property Type for this relationship
+					collectionInfo.TypeName = GetClassName(collectionInfo.SecondaryTable);
+					
+					// Field Variable String
+					collectionInfo.FieldName = GetPrivateName(collectionInfo.SecondaryTable) + GetKeysName(keyschema.ForeignKeyMemberColumns);
+
+					AddToCollection(_collections, collectionInfo);
 				}
 				//Add 1-N,N-1 relations
 				else
 				{
 					CollectionInfo collectionInfo = new CollectionInfo();
+					
+					#region Additional 1:N meta-data properties
+					
 					collectionInfo.PkColNames = GetColumnNames(table.PrimaryKey.MemberColumns);
-					collectionInfo.PkIdxName = keyschema.Name;
 					collectionInfo.PrimaryTable = GetClassName(table);
 					collectionInfo.SecondaryTable = GetClassName(keyschema.ForeignKeyTable);
 					collectionInfo.SecondaryTablePkColNames = GetColumnNames(keyschema.ForeignKeyTable.PrimaryKey.MemberColumns);
 					collectionInfo.CollectionRelationshipType = RelationshipType.OneToMany;
-					collectionInfo.CleanName = GetClassName(collectionInfo.SecondaryTable); 
 					collectionInfo.CollectionName = GetCollectionPropertyName(collectionInfo.SecondaryTable);
+					collectionInfo.TableKey = keyschema;
+					collectionInfo.CleanName = GetClassName(collectionInfo.SecondaryTable); 
 					collectionInfo.CollectionTypeName = GetCollectionClassName(collectionInfo.SecondaryTable);
-					//collectionInfo.CallParams = GetFunctionRelationshipCallParameters(table.PrimaryKey.MemberColumns);
 					
-					//collectionInfo.CallParams = GetFunctionRelationshipCallParameters(keyschema.PrimaryKeyMemberColumns);
-					//collectionInfo.GetByKeysName = "GetBy" + GetKeysName(keyschema.ForeignKeyMemberColumns);
+					#endregion 
+					
+					//Key Name - Each collection should have a unique key namce
+					collectionInfo.PkIdxName = keyschema.Name;
 					
 					
+					// Gets Method Calls
 					if (IsForeignKeyCoveredByIndex(keyschema))
 					{
 						IndexSchema idx = GetIndexCoveringForeignKey(keyschema);
 						
-						collectionInfo.CallParams = GetFunctionRelationshipCallParametersInKeyOrder(idx.MemberColumns, keyschema);
+						// Method to fill this entity
 						collectionInfo.GetByKeysName = "GetBy" + GetKeysName(idx.MemberColumns);
+
+						// Params to fill this entity
+						collectionInfo.CallParams = GetFunctionRelationshipCallParametersInKeyOrder(idx.MemberColumns, keyschema);
 					}
 					else
 					{
+						// Method to fill this entity
 						collectionInfo.GetByKeysName = "GetBy" + GetKeysName(keyschema.ForeignKeyMemberColumns);
+						
+						// Params to fill this entity
 						collectionInfo.CallParams = GetFunctionRelationshipCallParameters(keyschema.PrimaryKeyMemberColumns);
-					}
-					
-					collectionInfo.TableKey = keyschema;
-					_collections.Add(collectionInfo);
+					}	
+
+					// Usually the same as the property string
+					collectionInfo.PropertyName = GetCollectionPropertyName(collectionInfo.SecondaryTable);
+
+					// Usually the same as the property string
+					collectionInfo.PropertyNameUnique = GetCollectionPropertyName(collectionInfo.SecondaryTable);
+
+					// Usually the same as the property type
+					collectionInfo.TypeName = GetCollectionClassName(collectionInfo.SecondaryTable);
+
+					// Field Variable String
+					collectionInfo.FieldName = GetPrivateName(collectionInfo.SecondaryTable) + GetKeysName(keyschema.ForeignKeyMemberColumns);
+
+					AddToCollection(_collections, collectionInfo);
 				}
 			}
-			
+
 			//Add N-N relations
-			// TODO -> only if option is activated
 			foreach(TableKeySchema key in primaryKeyCollection)
 			{
 				// Check that the key is related to a junction table and that this key relate a PK in this junction table
@@ -3232,8 +3406,8 @@ namespace MoM.Templates
 																			
 							CollectionInfo collectionInfo = new CollectionInfo();
 					
+							#region Additional M:M meta-data 
 							collectionInfo.PkColNames = GetColumnNames(table.PrimaryKey.MemberColumns);
-							collectionInfo.PkIdxName = junctionTableKey.Name;
 							collectionInfo.PrimaryTable = GetClassName(table);
 							collectionInfo.SecondaryTable = GetClassName(junctionTableKey.PrimaryKeyTable);
 							collectionInfo.SecondaryTablePkColNames = GetColumnNames(junctionTableKey.PrimaryKeyTable.PrimaryKey.MemberColumns);
@@ -3241,23 +3415,88 @@ namespace MoM.Templates
 							collectionInfo.CollectionName = string.Format("{0}_From_{1}", GetCollectionPropertyName( collectionInfo.SecondaryTable), GetClassName(collectionInfo.JunctionTable)); //GetManyToManyName(GetCollectionClassName( collectionInfo.SecondaryTable), collectionInfo.JunctionTable);
 							collectionInfo.CollectionTypeName = GetCollectionClassName( collectionInfo.SecondaryTable);
 							collectionInfo.CollectionRelationshipType = RelationshipType.ManyToMany;
-							
-							///Find FK junc table key, used for loading scenarios
 							collectionInfo.FkColNames = GetColumnNames(secondaryTable.PrimaryKey.MemberColumns);
-							collectionInfo.CallParams = GetFunctionRelationshipCallParameters(table.PrimaryKey.MemberColumns);						
+							collectionInfo.TableKey = key;		
+							collectionInfo.CleanName = string.Format(manyToManyFormat, GetClassName(collectionInfo.SecondaryTable), GetClassName(junctionTable.Name)); 
+							#endregion 
+							
+							//Key Name - Each collection should have a unique key name
+							collectionInfo.PkIdxName = junctionTableKey.Name;
+							
+							// Property Name
+							collectionInfo.PropertyName = string.Format("{0}_From_{1}", GetCollectionPropertyName( collectionInfo.SecondaryTable), GetClassName(collectionInfo.JunctionTable)); 
+
+							// Uninque Property Name, in case of conflict
+							collectionInfo.PropertyNameUnique = string.Format("{0}_From_{1}", GetCollectionPropertyName( collectionInfo.SecondaryTable), GetClassName(collectionInfo.JunctionTable)); 
+
+							// Field Variable String
+							collectionInfo.FieldName = GetManyToManyName(key, GetCleanName(junctionTable.Name)).Substring(5);
+							
+							// Property/Field Type Name
+							collectionInfo.TypeName = GetCollectionClassName(collectionInfo.SecondaryTable);
+							
+							//Method Params
+							collectionInfo.CallParams = GetFunctionRelationshipCallParameters(table.PrimaryKey.MemberColumns);
+							
+							//Method Name
 							collectionInfo.GetByKeysName = GetManyToManyName(key, GetCleanName(junctionTable.Name));
 							
-							collectionInfo.TableKey = key;		
-							
-							collectionInfo.CleanName = string.Format(manyToManyFormat, GetClassName(collectionInfo.SecondaryTable), GetClassName(junctionTable.Name)); 
-							_collections.Add(collectionInfo);
+							AddToCollection(_collections, collectionInfo);
 						}
 					}
 				}
 			}// end N-N relations
-		return _collections; 
+			
+			return _collections; 
 		}
-
+		
+		public void AddToCollection(System.Collections.Hashtable _collections, CollectionInfo collectionInfo)
+		{
+			if(_collections[collectionInfo.PropertyName] == null)
+			{
+				_collections[collectionInfo.PropertyName] = collectionInfo;
+			}
+			else
+			{
+				CollectionInfo tmp = (CollectionInfo)_collections[collectionInfo.PropertyName];
+				tmp.PropertyNameUnique = collectionInfo.PropertyName + tmp.GetByKeysName.Substring(3);
+				
+				collectionInfo.PropertyName += collectionInfo.GetByKeysName.Substring(3);
+				collectionInfo.PropertyNameUnique += collectionInfo.GetByKeysName.Substring(3);
+				_collections[collectionInfo.PropertyName] = collectionInfo;
+			}
+		}
+		#endregion 
+		
+		#region CollectionInfo class
+		///<summary>
+		///	Child relationship structure information and their <see cref="RelationshipType" />
+		/// to store in the ChildCollections ArrayList
+		///</summary>
+		public class CollectionInfo 
+		{
+			public string CleanName;
+			public string[] PkColNames;
+			public string PkIdxName;
+			public string[] FkColNames;
+			public string FkIdxName;
+			public string PrimaryTable;
+			public string SecondaryTable;
+			public string[] SecondaryTablePkColNames;
+			public string JunctionTable;
+			public string CollectionName = string.Empty;
+			public string CollectionTypeName = string.Empty;
+			public string CallParams = string.Empty;
+			public string PropertyName = string.Empty;
+			public string PropertyNameUnique = string.Empty;
+			public string TypeName = string.Empty;
+			public string FieldName = string.Empty;
+			public string GetByKeysName = string.Empty;
+			public RelationshipType CollectionRelationshipType;	
+			public TableKeySchema TableKey = null;
+		}
+		#endregion
+			
 		/// <summary>
 		/// Gets params for a method based on the columns
 		/// </summary>
@@ -3401,77 +3640,7 @@ namespace MoM.Templates
 			return true;			
 		}
 		
-		/*
-		
-		///<summary>
-		/// returns true all primary key columns have is a foreign key relationship
-		/// </summary>
-		public bool Many2ManyCompliant(TableKeySchema primaryKey)
-		{
-			// une seul column vers la table pivot
-			if (primaryKey.ForeignKeyMemberColumns.Count != 1)
-				return false;
-			
-			// une seul column venant de la table primaire
-			if (primaryKey.PrimaryKeyMemberColumns.Count != 1)
-				return false;
-			
-			
-			// Junction table require a primary on two columns
-			if (primaryKey.ForeignKeyTable.PrimaryKey == null || primaryKey.ForeignKeyTable.PrimaryKey.MemberColumns.Count != 2)
-			{
-				//Response.WriteLine(string.Format("IsJunctionTable: The table {0} doesn't have a primary key.", table.Name));
-				return false;
-			}
-			
-			// And each primary key member columns must be part of relation
-			for (int i=0;i < primaryKey.ForeignKeyTable.PrimaryKey.MemberColumns.Count; i++)
-			{
-				if (!primaryKey.ForeignKeyTable.PrimaryKey.MemberColumns[i].IsForeignKeyMember)
-					return false;
-				
-				//if (!primaryKey.ForeignKeyTable.PrimaryKey.MemberColumns[i].IsPrimaryKeyMember)
-				//	return false;
-			}
-			
-			// the foreign column of the relation must be a junction table's primary key member's column
-			//if (primaryKey.ForeignKeyTable.PrimaryKey.MemberColumns[0] != primaryKey.ForeignKeyMemberColumns[0] && primaryKey.ForeignKeyTable.PrimaryKey.MemberColumns[1] != primaryKey.ForeignKeyMemberColumns[0])
-			//{
-			//	return false;
-			//}
-			
-			if (!primaryKey.ForeignKeyMemberColumns[0].IsPrimaryKeyMember)	return false;
-			
-			return true;			
-		}
-*/
 
-/*
-		public bool IsJunctionTable(TableSchema table)
-			{
-				bool RetValue;
-				ColumnSchemaCollection keys;
-				RetValue = false;
-				if(table.PrimaryKey.MemberColumns.Count > 1)
-				{
-					keys = new ColumnSchemaCollection(SourceTable.PrimaryKey.MemberColumns);
-					foreach(ColumnSchema primarykey in keys)
-					{
-						if(primarykey.IsForeignKeyMember)
-						{
-							RetValue = true;
-						}
-						else
-						{
-							RetValue = false;
-							break;
-						}
-					} 
-				}
-				return RetValue;
-			}
-*/
-		
 		public bool IsRelationOneToOne(TableKeySchema keyschema) //, PrimaryKeySchema primaryKey)
 		{
 			bool result = true;
@@ -3507,31 +3676,7 @@ namespace MoM.Templates
 		}
 		
 		
-		///<summary>
-		///	Returns whether or not a table key is a one to one 
-		/// relationship with another table.
-		/// WARNING: Assumes first column is the FK.
-		///</summary>
-		/*
-		public bool IsRelationOneToOne(TableKeySchema keyschema)
-		{
-			foreach(IndexSchema i in keyschema.ForeignKeyTable.Indexes)
-			{
-				if((i.MemberColumns[0].Name == keyschema.ForeignKeyMemberColumns[0].Name) && (!IsJunctionTable(keyschema.ForeignKeyTable)))
-				{
-					if(i.IsUnique || i.IsPrimaryKey)
-					{
-						return true;
-					}
-					else
-					{
-						return false;
-					}
-				}	
-			}
-			return false;
-		}
-		*/
+
 		
 		public bool IsForeignKeyCoveredByIndex(TableKeySchema fKey)
 		{
@@ -3644,19 +3789,8 @@ namespace MoM.Templates
 			
 		}
 
-
-		/*
-		///<summary>
-		///	TODO : Returns any string mutations that will be used for a string.
-		/// Ex. singular string to be used within the template 
-		///     All spaces from table or column names removed
-		///</summary>
-		public static string CleanName(string s){
-			return s.Replace(" ", string.Empty);
-		}
-		*/
+		private string _currentTable = string.Empty;
 		
-
 		///<summary>
 		///  Store the most recent SourceTable of the templates,
 		///  Used to clean up upon new SourceTable execution.  
@@ -3673,9 +3807,9 @@ namespace MoM.Templates
 		///  Eliminates the Dupes.
 		///</summary>
 		[BrowsableAttribute(false)]
-		public  ArrayList RenderedChildren {
-			get{return _renderedChildren;}
-			set {_renderedChildren = value;}
+		public  System.Collections.Hashtable RelationshipDictionary {
+			get{return relationshipDictionary;}
+			set {relationshipDictionary = value;}
 		}
 		
 		
@@ -3691,61 +3825,158 @@ namespace MoM.Templates
 			ManyToMany
 		}
 		
+		#region GetParent/Child Tables
 		///<summary>
-		///	Child relationship structure information and their <see cref="RelationshipType" />
-		/// to store in the ChildCollections ArrayList
+		/// Get's the parent tables if any based on a child table.
 		///</summary>
-		public class CollectionInfo {
-			public string CleanName;
-			public string[] PkColNames;
-			public string PkIdxName;
-			public string[] FkColNames;
-			public string FkIdxName;
-			public string PrimaryTable;
-			public string SecondaryTable;
-			public string[] SecondaryTablePkColNames;
-			public string JunctionTable;
-			public string CollectionName = string.Empty;
-			public string CollectionTypeName = string.Empty;
-			public string CallParams = string.Empty;
-			public string PropertyString = string.Empty;
-			public string GetByKeysName = string.Empty;
-			public RelationshipType CollectionRelationshipType;	
-			public TableKeySchema TableKey = null;
-		}
-	#endregion		
-	
-	///<summary>
-	/// Get's the parent tables if any based on a child table.
-	///</summary>
-	public TableSchemaCollection GetParentTables(SchemaExplorer.TableSchema table){
-            TableSchemaCollection _tbParent= new TableSchemaCollection();
-            if(CurrentTable != table.Name){
-                CurrentTable = table.Name;
-            }
-            DatabaseSchema _dbCurrent;
-            _dbCurrent=table.Database;
-            
-            foreach(TableSchema _tb in _dbCurrent.Tables){
-                if(CurrentTable!=_tb.Name){
-                    foreach(ColumnSchema _col in _tb.PrimaryKey.MemberColumns){
-                        foreach(ColumnSchema col in table.Columns){
-                            if (col.Name == _col.Name){
-                                _tbParent.Add(_tb);
-                            }
-                        }                        
-                    }
-                }
-            }
-            return _tbParent;
-        }
-		
+		public TableSchemaCollection GetParentTables(SchemaExplorer.TableSchema table){
+				TableSchemaCollection _tbParent= new TableSchemaCollection();
+				if(CurrentTable != table.Name){
+					CurrentTable = table.Name;
+				}
+				DatabaseSchema _dbCurrent;
+				_dbCurrent=table.Database;
+				
+				foreach(TableSchema _tb in _dbCurrent.Tables){
+					if(CurrentTable!=_tb.Name){
+						foreach(ColumnSchema _col in _tb.PrimaryKey.MemberColumns){
+							foreach(ColumnSchema col in table.Columns){
+								if (col.Name == _col.Name){
+									_tbParent.Add(_tb);
+								}
+							}                        
+						}
+					}
+				}
+				return _tbParent;
+			}
 			
-		///<summary>
-		///  Get's all the child tables based on a parent table
-		///</summary>
-		public TableSchemaCollection GetChildTables(SchemaExplorer.TableSchema table)
+				
+			///<summary>
+			///  Get's all the child tables based on a parent table
+			///</summary>
+			public TableSchemaCollection GetChildTables(SchemaExplorer.TableSchema table)
+			{
+				TableSchemaCollection _tbChild= new TableSchemaCollection();
+					if(CurrentTable != table.Name){
+						CurrentTable = table.Name;
+					}
+					DatabaseSchema _dbCurrent;
+					_dbCurrent=table.Database;
+					foreach(TableSchema _tb in _dbCurrent.Tables){
+						if(CurrentTable!=_tb.Name){
+							foreach(ColumnSchema _col in _tb.Columns){
+								foreach(ColumnSchema primaryCol in table.PrimaryKey.MemberColumns){
+									if (_col.Name == primaryCol.Name){
+										_tbChild.Add(_tb);
+									}
+								}                       
+							}
+						}
+					}
+				return _tbChild;
+			}
+		}
+		#endregion 
+
+		#region Retry
+		public enum SleepStyle
+		{ 
+			/// <summary>Each sleep will be the <i>n</i> milliseconds.</summary>
+			Constant, 
+			/// <summary>Each sleep will increase by <i>n</i>*<i>attempts</i> milliseconds.</summary>
+			Linear, 
+			/// <summary>Each sleep will increase exponential by <i>n</i>^<i>attempts</i> milliseconds.</summary>
+			Exponential 
+		}
+		#endregion
+		
+		#region UnitTests
+		
+		public enum UnitTestStyle
 		{
+			/// <summary>No unit test should be included.</summary>
+			None,
+			/// <summary>NUnit tests should be generated.</summary>
+			NUnit,
+			/// <summary>VSTS test should be gerenated.</summary>
+			VSTS
+		}
+		#endregion
+		
+		#region ComponentPatternType
+		public enum ComponentPatternType
+		{
+			/// <summary>No Component Pattern Generation should be included.</summary>
+			None,
+			/// <summary>A Service Layer Pattern should be included.</summary>
+			ServiceLayer,
+			/// <summary>A Domain Model Pattern Generation should be included.</summary>
+			DomainModel
+		}
+		#endregion
+		
+		#region DatabaseType
+		public enum DatabaseType
+		{
+			/// <summary>No specific database type.</summary>
+			None,
+			/// <summary>SQL Server 2000.</summary>
+			//SQLServer2000,
+			/// <summary>SQL Server 2005.</summary>
+			SQLServer2005
+			/// <summary>Oracle 8i.</summary>
+			//Oracle8i,
+			/// <summary>Oracle 9i.</summary>
+			//Oracle9i,
+			/// <summary>Oracle 10g.</summary>
+			//Oracle10g,
+		}
+		#endregion
+
+		#region Archived Depricated
+		/*
+		///<summary>
+		/// returns true all primary key columns have is a foreign key relationship
+		/// </summary>
+		public bool Many2ManyCompliant(TableKeySchema primaryKey)
+		{
+			// une seul column vers la table pivot
+			if (primaryKey.ForeignKeyMemberColumns.Count != 1)
+				return false;
+			
+			// une seul column venant de la table primaire
+			if (primaryKey.PrimaryKeyMemberColumns.Count != 1)
+				return false;
+			
+			
+			// Junction table require a primary on two columns
+			if (primaryKey.ForeignKeyTable.PrimaryKey == null || primaryKey.ForeignKeyTable.PrimaryKey.MemberColumns.Count != 2)
+			{
+				//Response.WriteLine(string.Format("IsJunctionTable: The table {0} doesn't have a primary key.", table.Name));
+				return false;
+			}
+			
+			// And each primary key member columns must be part of relation
+			for (int i=0;i < primaryKey.ForeignKeyTable.PrimaryKey.MemberColumns.Count; i++)
+			{
+				if (!primaryKey.ForeignKeyTable.PrimaryKey.MemberColumns[i].IsForeignKeyMember)
+					return false;
+				
+				//if (!primaryKey.ForeignKeyTable.PrimaryKey.MemberColumns[i].IsPrimaryKeyMember)
+				//	return false;
+			}
+			
+			// the foreign column of the relation must be a junction table's primary key member's column
+			//if (primaryKey.ForeignKeyTable.PrimaryKey.MemberColumns[0] != primaryKey.ForeignKeyMemberColumns[0] && primaryKey.ForeignKeyTable.PrimaryKey.MemberColumns[1] != primaryKey.ForeignKeyMemberColumns[0])
+			//{
+			//	return false;
+			//}
+			
+			if (!primaryKey.ForeignKeyMemberColumns[0].IsPrimaryKeyMember)	return false;
+			
+			return true;			
+		}
             TableSchemaCollection _tbChild= new TableSchemaCollection();
                 if(CurrentTable != table.Name){
                     CurrentTable = table.Name;
@@ -3766,89 +3997,35 @@ namespace MoM.Templates
             return _tbChild;
         }
 		
-		public IDictionary<string, CommandSchema> GetCustomProcedures(TableSchema table)
-		{
-			return GetCustomProcedures(table.Name, table.Database.Commands);
-		}
-		
-		public IDictionary<string, CommandSchema> GetCustomProcedures(ViewSchema view)
-		{
-			return GetCustomProcedures(view.Name, view.Database.Commands);
-		}
-		
-		public IDictionary<string, CommandSchema> GetCustomProcedures(string objectName, CommandSchemaCollection allCommands)
-		{
-			string customPrefix = string.Format(CustomProcedureStartsWith, objectName, ProcedurePrefix);
-			IDictionary<string, CommandSchema> procs = new Dictionary<string, CommandSchema>();
-			string customName;
-			
-			foreach ( CommandSchema proc in allCommands )
-			{
-				if ( proc.Name.StartsWith(customPrefix) )
-				{
-					customName = proc.Name.Substring(customPrefix.Length);
-					procs.Add(customName, proc);
-				}
-			}
-			
-			return procs;
-		}
+
 	}
 
-	#region Retry
-	public enum SleepStyle
-	{ 
-		/// <summary>Each sleep will be the <i>n</i> milliseconds.</summary>
-		Constant, 
-		/// <summary>Each sleep will increase by <i>n</i>*<i>attempts</i> milliseconds.</summary>
-		Linear, 
-		/// <summary>Each sleep will increase exponential by <i>n</i>^<i>attempts</i> milliseconds.</summary>
-		Exponential 
-	}
-	#endregion
-	
-	#region UnitTests
-	
-	public enum UnitTestStyle
-	{
-		/// <summary>No unit test should be included.</summary>
-		None,
-		/// <summary>NUnit tests should be generated.</summary>
-		NUnit,
-		/// <summary>VSTS test should be gerenated.</summary>
-		VSTS
-	}
-	#endregion
-	
-	#region ComponentPatternType
-	public enum ComponentPatternType
-	{
-		/// <summary>No Component Pattern Generation should be included.</summary>
-		None,
-		/// <summary>A Service Layer Pattern should be included.</summary>
-		ServiceLayer,
-		/// <summary>A Domain Model Pattern Generation should be included.</summary>
-		DomainModel
-	}
-	#endregion
-	
-	#region DatabaseType
-	public enum DatabaseType
-	{
-		/// <summary>No specific database type.</summary>
-		None,
-		/// <summary>SQL Server 2000.</summary>
-		//SQLServer2000,
-		/// <summary>SQL Server 2005.</summary>
-		SQLServer2005
-		/// <summary>Oracle 8i.</summary>
-		//Oracle8i,
-		/// <summary>Oracle 9i.</summary>
-		//Oracle9i,
-		/// <summary>Oracle 10g.</summary>
-		//Oracle10g,
-	}
-	#endregion
-	
+		public bool IsJunctionTable(TableSchema table)
+			{
+				bool RetValue;
+				ColumnSchemaCollection keys;
+				RetValue = false;
+				if(table.PrimaryKey.MemberColumns.Count > 1)
+				{
+					keys = new ColumnSchemaCollection(SourceTable.PrimaryKey.MemberColumns);
+					foreach(ColumnSchema primarykey in keys)
+					{
+						if(primarykey.IsForeignKeyMember)
+						{
+							RetValue = true;
+						}
+						else
+						{
+							RetValue = false;
+							break;
+						}
+					} 
+				}
+				return RetValue;
+			}
+
+*/
+#endregion 		
+
 }
 

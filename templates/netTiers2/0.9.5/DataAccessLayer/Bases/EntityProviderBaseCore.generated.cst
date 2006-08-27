@@ -822,15 +822,13 @@ namespace <%=DALNameSpace%>.Bases
 				addedList2.Add(fkPropertyName);
 				
 				string callParams = GetFunctionThisParametersWithNullable(tableKey.ForeignKeyMemberColumns, "entity");
-			%>
-			<%
-			if (showOnce)
-			{
-			%>
-			#region Composite Source Children
+		%>
+			<%if (showOnce){
+			Response.Write(@"
+			#region Composite Source Parents
 			//Fill Source Composite Properties, however, don't call deep load on them.  
 			//So they only get filled a single level deep.
-			<%
+			");
 			}			
 			%>
 
@@ -862,17 +860,17 @@ namespace <%=DALNameSpace%>.Bases
 					{
 					%>
 					#endregion 
-					<%
-						showOnce = false;
-					}
-				} // end foreach
-			  %>
+		<%
+				showOnce = false;
+				}
+			} // end foreach
+		 %>
 			
 			// Load Entity through Provider
 			<% 
 			int ctr = 0;
-				
-			foreach(CollectionInfo item in GetChildrenCollections(SourceTable, SourceTables))
+			
+			foreach(CollectionInfo item in GetChildrenCollections(SourceTable, SourceTables).Values)
 			{				
 				string listTypeName = item.CollectionTypeName.StartsWith("List") ? item.CollectionTypeName : item.CollectionTypeName.Substring(1);
 				if (ctr == 0)
@@ -881,54 +879,55 @@ namespace <%=DALNameSpace%>.Bases
 			%>
 			<% if (item.CollectionRelationshipType == RelationshipType.ManyToMany) { %>
 			
-			#region <%=item.CollectionName%>
+			#region <%= item.PropertyNameUnique %>
 			// RelationshipType.ManyToMany
-			if (CanDeepLoad(entity, "List<<%=GetClassName(item.SecondaryTable).Trim()%>>", "<%=item.CollectionName%>", deepLoadType, innerList))
+			if (CanDeepLoad(entity, "List<<%=GetClassName(item.SecondaryTable).Trim()%>>", "<%= item.PropertyNameUnique %>", deepLoadType, innerList))
 			{
-				entity.<%=item.CollectionName%> = DataRepository.<%=GetProviderClassName(item.SecondaryTable)%>.GetBy<%=item.GetByKeysName%>(transactionManager, <%=item.CallParams%>);			 
+				entity.<%=item.PropertyNameUnique %> = DataRepository.<%=GetProviderClassName(item.SecondaryTable)%>.GetBy<%=item.GetByKeysName%>(transactionManager, <%=item.CallParams%>);			 
 		
 				#if NETTIERS_DEBUG
-				Debug.WriteLine("- property '<%=item.CollectionName%>' loaded.");
+				Debug.WriteLine("- property '<%=item.PropertyNameUnique%>' loaded.");
 				#endif 
 
-				if (deep && entity.<%=item.CollectionName%>.Count > 0)
+				if (deep && entity.<%=item.PropertyNameUnique%>.Count > 0)
 				{
-					DataRepository.<%=GetProviderClassName(item.SecondaryTable)%>.DeepLoad(transactionManager, entity.<%=item.CollectionName%>, deep, deepLoadType, childTypes, innerList);
+					DataRepository.<%=GetProviderClassName(item.SecondaryTable)%>.DeepLoad(transactionManager, entity.<%= item.PropertyNameUnique %>, deep, deepLoadType, childTypes, innerList);
 				}
 			}
-			#endregion <%=item.CollectionName%>
+			#endregion
 			
 			<% } else if (item.CollectionRelationshipType == RelationshipType.OneToOne) { %>
 			
-			#region <%=item.CleanName%>
+			#region <%=item.PropertyNameUnique%>
 			// RelationshipType.OneToOne
-			if (CanDeepLoad(entity, "<%= item.CleanName  %>", "<%=item.CleanName%>", deepLoadType, innerList))
+			if (CanDeepLoad(entity, "<%= item.PropertyNameUnique  %>", "<%=item.PropertyNameUnique%>", deepLoadType, innerList))
 			{
-				entity.<%=item.CleanName%> = DataRepository.<%=GetProviderClassName(item.SecondaryTable)%>.<%=item.GetByKeysName%>(transactionManager, <%=item.CallParams%>);
-				Trace.WriteLine("- property '<%=item.CleanName%>' loaded.");
+				entity.<%=item.PropertyNameUnique%> = DataRepository.<%=GetProviderClassName(item.SecondaryTable)%>.<%=item.GetByKeysName%>(transactionManager, <%=item.CallParams%>);
+				Trace.WriteLine("- property '<%=item.PropertyNameUnique%>' loaded.");
 
-				if (deep && entity.<%=item.CleanName%> != null)
+				if (deep && entity.<%=item.PropertyNameUnique%> != null)
 				{
-					DataRepository.<%=GetProviderClassName(item.SecondaryTable)%>.DeepLoad(transactionManager, entity.<%=item.CleanName%>, deep, deepLoadType, childTypes, innerList);
+					DataRepository.<%=GetProviderClassName(item.SecondaryTable)%>.DeepLoad(transactionManager, entity.<%=item.PropertyNameUnique %>, deep, deepLoadType, childTypes, innerList);
 				}
 			}
 			#endregion 
 			
-			<% } else { %>
+			<% } else { 
+			%>
 			
-			#region <%=item.CollectionName%>
+			#region <%=item.PropertyNameUnique%>
 			//Relationship Type One : Many
 			if (CanDeepLoad(entity, "<%= listTypeName.Trim() %>", "<%=item.CollectionName%>", deepLoadType, innerList)) 
 			{
 				#if NETTIERS_DEBUG
-				Debug.WriteLine("- property '<%=item.CollectionName%>' loaded.");
+				Debug.WriteLine("- property '<%=item.PropertyNameUnique%>' loaded.");
 				#endif 
 
-				entity.<%=item.CollectionName%> = DataRepository.<%=GetProviderClassName(item.SecondaryTable)%>.<%=item.GetByKeysName%>(transactionManager, <%=item.CallParams%>);
+				entity.<%=item.PropertyNameUnique%> = DataRepository.<%=GetProviderClassName(item.SecondaryTable)%>.<%=item.GetByKeysName%>(transactionManager, <%=item.CallParams%>);
 
-				if (deep && entity.<%=item.CollectionName%>.Count > 0)
+				if (deep && entity.<%=item.PropertyNameUnique%>.Count > 0)
 				{
-					DataRepository.<%=GetProviderClassName(item.SecondaryTable)%>.DeepLoad(transactionManager, entity.<%=item.CollectionName%>, deep, deepLoadType, childTypes, innerList);
+					DataRepository.<%=GetProviderClassName(item.SecondaryTable)%>.DeepLoad(transactionManager, entity.<%= item.PropertyNameUnique %>, deep, deepLoadType, childTypes, innerList);
 				}
 			}		
 			#endregion 
@@ -999,7 +998,9 @@ namespace <%=DALNameSpace%>.Bases
 
 			<%
 			int ctr2 = 0;
-			foreach(CollectionInfo item in GetChildrenCollections(SourceTable, SourceTables)) { 
+			
+			foreach(CollectionInfo item in GetChildrenCollections(SourceTable, SourceTables).Values) 
+			{	
 				string listTypeName = item.CollectionTypeName.StartsWith("List") ? item.CollectionTypeName : item.CollectionTypeName.Substring(1);
 
 					if (ctr == 0)
@@ -1022,8 +1023,8 @@ namespace <%=DALNameSpace%>.Bases
 				Response.Write("\n\t\t\t\tentity."+ item.CleanName +"." + GetPropertyName(item.TableKey.ForeignKeyMemberColumns[i].Name) + " = entity." + GetPropertyName(item.TableKey.PrimaryKeyMemberColumns[i].Name) + ";");
 			}
 			%>
-			if (entity.<%=item.CleanName%> != null)
-				DataRepository.<%=GetProviderClassName(item.SecondaryTable)%>.DeepSave(transactionManager, entity.<%=item.CleanName%>, deepSaveType, childTypes);
+			if (entity.<%=item.PropertyNameUnique%> != null)
+				DataRepository.<%=GetProviderClassName(item.SecondaryTable)%>.DeepSave(transactionManager, entity.<%=item.PropertyNameUnique%>, deepSaveType, childTypes);
 			} 
 			#endregion 
 			<% 
@@ -1036,7 +1037,7 @@ namespace <%=DALNameSpace%>.Bases
 				|| (deepSaveType == DeepSaveType.ExcludeChildren && innerList["<%= listTypeName %>"] == null))
 			{
 			// update each child parent id with the real parent id (mostly used on insert)
-			foreach(<%=item.CleanName%> child in entity.<%=item.CollectionName %>)
+			foreach(<%=item.CleanName%> child in entity.<%= item.PropertyNameUnique %>)
 			{
 				<% for(int i=0; i<item.TableKey.ForeignKeyMemberColumns.Count; i++)
 				{
@@ -1044,19 +1045,20 @@ namespace <%=DALNameSpace%>.Bases
 				}%>
 			}
 			
-			if (entity.<%=item.CollectionName%>.Count > 0 || entity.<%=item.CollectionName%>.DeletedItems.Count > 0)
-				DataRepository.<%=GetProviderClassName(item.SecondaryTable)%>.DeepSave(transactionManager, entity.<%=item.CollectionName%>, deepSaveType, childTypes);
+			if (entity.<%=item.PropertyNameUnique %>.Count > 0 || entity.<%=item.PropertyNameUnique%>.DeletedItems.Count > 0)
+				DataRepository.<%=GetProviderClassName(item.SecondaryTable)%>.DeepSave(transactionManager, entity.<%=item.PropertyNameUnique%>, deepSaveType, childTypes);
 			} 
 			#endregion 
 			<% }
 			else if (item.CollectionRelationshipType == RelationshipType.ManyToMany && IncludeManyToMany) 
-			{ %>
-			#region List<<%= item.SecondaryTable %>>
+			{ 
+			%>
+			#region <%= item.PropertyNameUnique %>>
 			if ((deepSaveType == DeepSaveType.IncludeChildren && innerList["List<<%=item.SecondaryTable%>>"] != null)
 				|| (deepSaveType == DeepSaveType.ExcludeChildren && innerList["List<<%=item.SecondaryTable%>>"] == null))
 			{
-				if (entity.<%=item.CollectionName%>.Count > 0 || entity.<%=item.CollectionName%>.DeletedItems.Count > 0)
-					DataRepository.<%=GetProviderClassName(item.SecondaryTable)%>.DeepSave(transactionManager, entity.<%=item.CollectionName %>, deepSaveType, childTypes); 
+				if (entity.<%=item.PropertyNameUnique%>.Count > 0 || entity.<%=item.PropertyNameUnique%>.DeletedItems.Count > 0)
+					DataRepository.<%=GetProviderClassName(item.SecondaryTable)%>.DeepSave(transactionManager, entity.<%=item.PropertyNameUnique %>, deepSaveType, childTypes); 
 			}
 			#endregion 
 		<% } %>
@@ -1105,7 +1107,7 @@ namespace <%=DALNameSpace%>.Bases
 			} // end if
 		} // end foreach
 	%><%
-	foreach(CollectionInfo item in GetChildrenCollections(SourceTable, SourceTables))
+	foreach(CollectionInfo item in GetChildrenCollections(SourceTable, SourceTables).Values)
 	{	
 		if (item.CollectionRelationshipType != RelationshipType.OneToOne)
 		{
