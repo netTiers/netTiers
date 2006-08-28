@@ -17,6 +17,7 @@
 <%@ Property Name="DALSqlGuid" Type="System.String" Category="Style" Description="DAL Project Guid" %>
 <%@ Property Name="DALWSGuid" Type="System.String" Category="Style" Description="DAL Project Guid" %>
 <%@ Property Name="ComponentLayerNameSpace" Type="System.String" Category="Data" Description="Component Layer Namespace." %>
+<%@ Property Name="ComponentPattern" Default="None" Type="MoM.Templates.ComponentPatternType" Category="Data" Description="Component Layer Pattern Type." %>
 <%@ Property Name="ComponentsGuid" Type="System.String" Category="Style" Description="Component Project Guid" %>
 <%@ Property Name="WSGuid" Type="System.String" Category="Context" Description="WS Project Guid" %>
 <%@ Property Name="UTGuid" Type="System.String" Category="Context" Description="Unit tests Project Guid" %>
@@ -91,10 +92,14 @@ EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "<%=DALWSNameSpace%>", "<%=DALWSNameSpace%>\<%=DALWSNameSpace%>.csproj", "{<%=DALWSGuid%>}"
 EndProject
 <% } %>
-<% if (IncludeWebservice) { %>
+<% if (IncludeWebservice) { 
+	string componentReference = string.Empty;
+	if (ComponentPattern == MoM.Templates.ComponentPatternType.ServiceLayer)
+		componentReference = string.Format("{{{0}}}|{1}.dll;", ComponentsGuid, ComponentLayerNameSpace);
+%>
 Project("{E24C65DC-7377-472B-9ABA-BC803B73C61A}") = "<%=WebServiceUrl%>", "<%=WebServiceUrl%>", "{<%=WSGuid%>}"
 	ProjectSection(WebsiteProperties) = preProject
-		ProjectReferences = "{<%=BLLGuid%>}|<%=BLLNameSpace%>.dll;{<%=DALGuid%>}|<%=DALNameSpace%>.dll;{<%=DALSqlGuid%>}|<%=DALSqlNameSpace%>"
+		ProjectReferences = "{<%=BLLGuid%>}|<%=BLLNameSpace%>.dll;{<%=DALGuid%>}|<%=DALNameSpace%>.dll;{<%=DALSqlGuid%>}|<%=DALSqlNameSpace%>.dll;<%= componentReference %>"
 		Debug.AspNetCompiler.PhysicalPath = "<%=rootPathWS%>"
 		Debug.AspNetCompiler.TargetPath = "<%=WebServiceUrl%>"
 		Debug.AspNetCompiler.Updateable = "true"
