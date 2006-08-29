@@ -193,6 +193,20 @@ namespace <%= WebNameSpace %>.Data
 			set { propertyName = value; }
 		}
 
+		/// <summary>
+		/// The ComparisionType member variable.
+		/// </summary>
+		private SqlComparisonType comparisonType;
+
+		/// <summary>
+		/// Gets or sets the ComparisionType property.
+		/// </summary>
+		public SqlComparisonType ComparisionType
+		{
+			get { return comparisonType; }
+			set { comparisonType = value; }
+		}
+
 		#endregion Properties
 
 		#region Methods
@@ -204,14 +218,19 @@ namespace <%= WebNameSpace %>.Data
 		/// <param name="isCallback">Indicates whether this is a callback request.</param>
 		protected virtual String GetFilterValue(Control control, bool isCallback)
 		{
-			IList<Control> controls = FormUtil.GetControls(control.Page, ControlID);
-			//Control input = FormUtil.FindControl(control, ControlID);
-			Control input = null;
+			Control input = FormUtil.FindControl(control, ControlID);
 			Object value = null;
 
-			if ( controls != null && controls.Count > 0 )
+			if ( input == null )
 			{
-				input = controls[0];
+				// if the ControlID was not found using the supplied control, we will
+				// search the entire conrol tree for the current page
+				IList<Control> controls = FormUtil.GetControls(control.Page, ControlID);
+
+				if ( controls != null && controls.Count > 0 )
+				{
+					input = controls[0];
+				}
 			}
 			if ( input != null )
 			{
@@ -225,7 +244,22 @@ namespace <%= WebNameSpace %>.Data
 				}
 			}
 
-			return String.Format("{0}", value);
+			String format = "{0}";
+
+			if ( ComparisionType == SqlComparisonType.Contains )
+			{
+				format = "%{0}%";
+			}
+			else if ( ComparisionType == SqlComparisonType.StartsWith )
+			{
+				format = "{0}%";
+			}
+			else if ( ComparisionType == SqlComparisonType.EndsWith )
+			{
+				format = "%{0}";
+			}
+
+			return String.Format(format, value);
 		}
 
 		/// <summary>
