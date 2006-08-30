@@ -1906,13 +1906,28 @@ namespace MoM.Templates
 		/// </summary>
 		public string TransformStoredProcedureInputsToDataAccess(bool alwaysStartWithaComa, ParameterSchemaCollection inputParameters)
 		{
+			return TransformStoredProcedureInputsToDataAccess(alwaysStartWithaComa, inputParameters, false);
+		}
+		
+		/// <summary>
+		/// Transform the list of sql parameters to a list of ExecuteXXXXX parameters.
+		/// </summary>
+		public string TransformStoredProcedureInputsToDataAccess(bool alwaysStartWithaComa, ParameterSchemaCollection inputParameters, bool useCustomPrefix)
+		{
 			StringBuilder temp = new StringBuilder();
 			for(int i=0; i<inputParameters.Count; i++)
 			{
 				if ( (i>0) || alwaysStartWithaComa )
 					temp.Append(", ");
 
-				temp.Append( GetPrivateName(inputParameters[i].Name.Substring(1)) );
+				if ( useCustomPrefix )
+				{
+					temp.Append( GetCustomVariableName(inputParameters[i].Name.Substring(1)) );
+				}
+				else
+				{
+					temp.Append( GetPrivateName(inputParameters[i].Name.Substring(1)) );
+				}
 			}
 			
 			return temp.ToString();
@@ -1992,13 +2007,28 @@ namespace MoM.Templates
 		/// </summary>
 		public string TransformStoredProcedureOutputsToDataAccess(bool alwaysStartWithaComa, ParameterSchemaCollection outputParameters)
 		{
+			return TransformStoredProcedureOutputsToDataAccess(alwaysStartWithaComa, outputParameters, false);
+		}
+		
+		/// <summary>
+		/// Transform the list of sql parameters to a list of ExecuteXXXXX parameters.
+		/// </summary>
+		public string TransformStoredProcedureOutputsToDataAccess(bool alwaysStartWithaComa, ParameterSchemaCollection outputParameters, bool useCustomPrefix)
+		{
 			StringBuilder temp = new StringBuilder();
 			for(int i=0; i<outputParameters.Count; i++)
 			{
 				if ( (i>0) || alwaysStartWithaComa )
 					temp.Append(", ");
 
-				temp.AppendFormat("ref {0}", GetPrivateName(outputParameters[i].Name.Substring(1)) );
+				if ( useCustomPrefix )
+				{
+					temp.AppendFormat("ref {0}", GetCustomVariableName(outputParameters[i].Name.Substring(1)) );
+				}
+				else
+				{
+					temp.AppendFormat("ref {0}", GetPrivateName(outputParameters[i].Name.Substring(1)) );
+				}
 			}
 			
 			return temp.ToString();
@@ -3155,6 +3185,11 @@ namespace MoM.Templates
 			}
 			
 			return procs;
+		}
+
+		public string GetCustomVariableName(string paramName)
+		{
+			return string.Format("sp_{0}", GetPropertyName(paramName));
 		}
 		
 		#endregion 

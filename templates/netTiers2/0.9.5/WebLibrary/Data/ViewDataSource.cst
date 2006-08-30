@@ -242,7 +242,6 @@ namespace <%= WebNameSpace %>.Data
 			Hashtable values = CollectionsUtil.CreateCaseInsensitiveHashtable(GetParameterValues());
 			IList<<%= className %>> results = null;
 			// <%= className %> item;
-			int? totalCount = 0;
 			count = 0;
 			<%= WriteParameterDeclarations(procs) %>
 			switch ( SelectMethod )
@@ -279,11 +278,6 @@ namespace <%= WebNameSpace %>.Data
 			if ( count < 1 )
 			{
 				count = results.Count;
-
-				if ( totalCount.Value > 0 )
-				{
-					count = totalCount.Value;
-				}
 			}
 			
 			return results;
@@ -428,19 +422,19 @@ private string WriteParameterDeclarations(IDictionary procs)
 	{
 		foreach ( ParameterSchema param in command.InputParameters )
 		{
-			if( !columns.Contains(param.Name.Substring(1)) )
+			if( !columns.Contains(param.Name) )
 			{
-				columns.Add(param.Name.Substring(1));
-				WriteParameterDeclaration(param, sb);
+				columns.Add(param.Name);
+				WriteParameterDeclaration(param, sb, false);
 			}
 		}
-		/* not sure if this is needed
+		/* not supported in views yet
 		foreach ( ParameterSchema param in command.AllOutputParameters )
 		{
-			if( !columns.Contains(param.Name.Substring(1)) )
+			if( !columns.Contains(param.Name) )
 			{
-				columns.Add(param.Name.Substring(1));
-				WriteParameterDeclaration(param, sb);
+				columns.Add(param.Name);
+				WriteParameterDeclaration(param, sb, true);
 			}
 		} */
 	}
@@ -448,11 +442,12 @@ private string WriteParameterDeclarations(IDictionary procs)
 	return sb.ToString();
 }
 
-private void WriteParameterDeclaration(ParameterSchema param, StringBuilder sb)
+private void WriteParameterDeclaration(ParameterSchema param, StringBuilder sb, bool useDefaultValue)
 {
 	sb.AppendFormat("\t\t\t{1} {0};{2}",
-					GetPrivateName(param.Name.Substring(1)),
+					GetCustomVariableName(param.Name),
 					GetCSType(param),
+					(useDefaultValue ? string.Format(" = {0}", GetCSDefaultByType(param)) : ""),
 					Environment.NewLine);
 }
 
@@ -474,8 +469,8 @@ private string WriteCustomSelectStatements(string tableName, IList methods, bool
 		// currently we only support custom methods with matching return values
 		if ( IsMatching(command, SourceView) && !methods.Contains(methodName) )
 		{
-//			methodParams = TransformStoredProcedureInputsToDataAccess(!isServiceLayer, command.InputParameters) + TransformStoredProcedureOutputsToDataAccess(command.InputParameters.Count > 0, command.AllOutputParameters);
-			methodParams = TransformStoredProcedureInputsToDataAccess(!isServiceLayer, command.InputParameters);
+//			methodParams = TransformStoredProcedureInputsToDataAccess(!isServiceLayer, command.InputParameters, true) + TransformStoredProcedureOutputsToDataAccess(command.InputParameters.Count > 0, command.AllOutputParameters, true);
+			methodParams = TransformStoredProcedureInputsToDataAccess(!isServiceLayer, command.InputParameters, true);
 			methods.Add(methodName);
 			sb.Append(WriteCaseStatement(tableName, methodName, false));
 			sb.Append(WriteParameterStatements(command.InputParameters, tableName));
@@ -503,16 +498,16 @@ private string WriteParameterStatements(ParameterSchemaCollection parameters, st
 		if ( param.AllowDBNull )
 		{
 			sb.AppendFormat("\t\t\t\t\t{0} = ({2}) EntityUtil.ChangeType(values[\"{1}\"], typeof({2}));{3}",
-							GetPrivateName(GetPrivateName(param.Name.Substring(1))),
-							GetPropertyName(param.Name.Substring(1)),
+							GetCustomVariableName(param.Name),
+							GetPropertyName(param.Name),
 							GetCSType(param),
 							Environment.NewLine);
 		}
 		else
 		{
 			sb.AppendFormat("\t\t\t\t\t{0} = ( values[\"{1}\"] != null ) ? ({2}) EntityUtil.ChangeType(values[\"{1}\"], typeof({2})) : {3};{4}",
-							GetPrivateName(param.Name.Substring(1)),
-							GetPropertyName(param.Name.Substring(1)),
+							GetCustomVariableName(param.Name),
+							GetPropertyName(param.Name),
 							GetCSType(param),
 							GetCSDefaultByType(param),
 							Environment.NewLine);
@@ -542,4 +537,5 @@ private string WriteBreakStatement()
 	StringBuilder sb = new StringBuilder();
 	sb.AppendFormat("\t\t\t\t\tbreak;{0}", Environment.NewLine);
 	return sb.ToString();
-}</script>
+}
+</script>
