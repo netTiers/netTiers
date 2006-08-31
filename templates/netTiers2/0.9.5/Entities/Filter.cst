@@ -91,17 +91,6 @@ namespace <%=NameSpace %>
 		{		
 			List.Remove(value);
 		}
-
-/*
-		/// <summary>
-		/// Elements the changed.
-		/// </summary>
-		/// <param name="cust">The cust.</param>
-		internal void ElementChanged(Expression cust) 
-		{        
-			int index = List.IndexOf(cust);        		
-		}
-*/
 	}
 	
 	
@@ -181,27 +170,27 @@ namespace <%=NameSpace %>
 	/// <summary>
 	/// Represents a filter.
 	/// </summary>
-	public sealed class Filter
+    public sealed class Filter<T, Entity>
+        where T : ListBase<Entity>
 	{
-		/// <summary>
-		/// Initializes a new instance of the <see cref="Filter"/> class.
-		/// </summary>
+        /// <summary>
+        /// Initializes a new instance of the <see cref="T:Filter&lt;T, Entity&gt;"/> class.
+        /// </summary>
 		public Filter()
 		{
 		}
 		
-		/// <summary>
-		/// Initializes a new instance of the <see cref="Filter"/> class.
-		/// </summary>
-		/// <param name="ObjToFilter">The obj to filter.</param>
-		/// <param name="filterdItemsBackupList">The filterd items backup list.</param>
-		/// <param name="itemType">Type of the item.</param>
-		/// <param name="Filter">The filter.</param>
-		public Filter(object ObjToFilter, IList filterdItemsBackupList, Type itemType, string Filter)
+        /// <summary>
+        /// Initializes a new instance of the <see cref="T:Filter&lt;T, Entity&gt;"/> class.
+        /// </summary>
+        /// <param name="objToFilter">The obj to filter.</param>
+        /// <param name="filter">The filter.</param>
+		public Filter(T objToFilter, string filter)
 		{			
-			this.ApplyFilter(ObjToFilter, filterdItemsBackupList, itemType, Filter);
+			this.ApplyFilter(objToFilter, filter);
 		}
 		
+		#region IsOk
 		/// <summary>
 		/// Determines whether the specified object property value is ok.
 		/// </summary>
@@ -219,7 +208,7 @@ namespace <%=NameSpace %>
 			{
 				if (ObjectPropertyValue.TrimEnd() == UserValue.TrimEnd()) {Rt = true;}
 			}
-			else if(Operator == "<>" |Operator == "!=")
+			else if(Operator == "<>" | Operator == "!=")
 			{
 				if (ObjectPropertyValue.TrimEnd() != UserValue.TrimEnd()) {Rt = true;}
 			}
@@ -563,7 +552,6 @@ namespace <%=NameSpace %>
 			}
 			
 			Type TypeOfValue = ObjectPropertyValue.GetType();
-			//Object FilterValue  = Convert.ChangeType(CorrectUserValue(UserValue),TypeOfValue) ;
 			Object FilterValue  = CorrectUserValue(UserValue) ;
 			
 			if (TypeOfValue ==typeof(string))
@@ -610,30 +598,25 @@ namespace <%=NameSpace %>
 			{throw new Exception("Filtering is not possible on the type " + TypeOfValue.ToString());}
 			return Rt;
 		}
+		#endregion 
 		
-		/// <summary>
-		/// Applies the filter.
-		/// </summary>
-		/// <param name="objToFilter">The obj to filter.</param>
-		/// <param name="filterdItemsBackupList">The filterd items backup list.</param>
-		/// <param name="itemType">Type of the item.</param>
-		/// <param name="StrFilter">The STR filter.</param>
-		public void ApplyFilter(object objToFilter, IList filterdItemsBackupList, Type itemType, string StrFilter)
+        /// <summary>
+        /// Applies the filter.
+        /// </summary>
+        /// <param name="ObjectToFilter">The object to filter.</param>
+        /// <param name="StrFilter">The STR filter.</param>
+        public void ApplyFilter(T ObjectToFilter, string StrFilter) 
 		{
-			
-			//DateTime D1 = DateTime.Now ;
-
-			IList ObjectToFilter = (IList)objToFilter;
 			int CountValue = ObjectToFilter.Count;
 			Expressions ListOfExpressions = new Expressions(StrFilter);
-
+			Type itemType = typeof(Entity);
 
 			//Loading items of the collection
 			bool [] Validations;
 			bool AllIsOK;
 			
 			PropertyInfo [] PropsInfo = new PropertyInfo[ListOfExpressions.Count ];
-			for(int x = 0; x< ListOfExpressions.Count;x++)
+			for(int x = 0; x < ListOfExpressions.Count; x++)
 			{
 				PropsInfo	[x] = itemType.GetProperty (ListOfExpressions.Item(x).PropertyName,BindingFlags.Public | BindingFlags.Instance | BindingFlags.IgnoreCase );
 				if( PropsInfo[x] == null) 
@@ -642,10 +625,9 @@ namespace <%=NameSpace %>
 				}
 			}
 			
-			for (int f = 0; f<= (ObjectToFilter.Count -1); f++)
+			for (int f = 0; f <= (ObjectToFilter.Count -1); f++)
 			{
 				object CollectionItem = ObjectToFilter[f];
-				Type TypeOfItem = CollectionItem.GetType();
 
 				Validations = new bool[ListOfExpressions.Count ];
 				AllIsOK = true;
@@ -663,24 +645,18 @@ namespace <%=NameSpace %>
 					{
 						Validations[t] = this.IsOk(PropertyValue, ListOfExpressions.Item(t).Operator , ListOfExpressions.Item(t).UserValue );
 					}
+					
 					if (Validations[t] == false)
-					{AllIsOK = false;}
-					//System.Diagnostics.Trace.WriteLine("time : " + (DateTime.Now - timeSt1).TotalMilliseconds.ToString() + " cicle : " + cicle.ToString());
-					//timeSt1 = DateTime.Now;
-					//cicle++;
+						AllIsOK = false;
 				}
 
 				if (AllIsOK == false)
 				{
-					ObjectToFilter.Remove(CollectionItem);
-					filterdItemsBackupList.Add(CollectionItem);
+					ObjectToFilter.RemoveFilteredItem(f);
 					CountValue -= 1;
 					f -= 1;
 				}
-			}
-	
-			//DateTime D2= DateTime.Now ;
-			//Console.WriteLine((D2-D1).ToString());
+			}	
 		}
 	}
 }

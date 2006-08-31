@@ -71,17 +71,6 @@ namespace <%=NameSpace%>
          // save the bindable properties in a local field
          _propertyCollection = EntityHelper.GetBindableProperties(typeof(T));
 		
-		//TODO: Planned on removing 
-		/* 
-		foreach (PropertyDescriptor propDesc in _propertyCollection) 
-		 {
-            if (propDesc.SupportsChangeEvents)
-            {
-               supportsChangeEventsProperties.Add(propDesc);
-            }
-         }
-		*/
-		
          // save the name of the type for use in the IDE GUI
          _listName = typeof(T).Name;
       }
@@ -419,8 +408,8 @@ namespace <%=NameSpace%>
       {
          // Restore the state without filter
          for (int i = 0; i < this.excludedItems.Count; i++)
-         {
-            this.Add(this.excludedItems[i]);
+         {           
+			this.Add(this.excludedItems[i]);
          }
 
          // Clear the filterd items
@@ -429,7 +418,7 @@ namespace <%=NameSpace%>
          // Application du filtre si non vide
          if (this._filterString != null & this._filterString.Length > 0)
          {
-            Filter MyFilter = new Filter(this, this.excludedItems, typeof(T), this._filterString);
+            Filter<ListBase<T>, T> MyFilter = new Filter<ListBase<T>, T>(this, this._filterString);
          }
 
          // Send a IBindingList list event
@@ -457,15 +446,29 @@ namespace <%=NameSpace%>
          {
             if (!match(this.Items[i]))
             {
-               this.excludedItems.Add(this.Items[i]);
-               base.RemoveAt(i);
+               RemoveFilteredItem(i);
             }
          }
 
          // Send a IBindingList list event
          OnListChanged(new ListChangedEventArgs(ListChangedType.Reset, 0, 0));
       }
+      
+	  /// <summary>
+      /// Removes the non criteria matching item at the specified index for the current filter set.
+	  /// Adds the Item to the ExcludedItem  collection without changing EntityState
+      /// </summary>
+      /// <param name="index">The zero-based index of non criteria matching item to remove.</param>
+      internal void RemoveFilteredItem(int index)
+      {
+          T item = Items[index];
 
+          if (item != null)
+          {
+			  ExcludedItems.Add(item);
+              base.RemoveItem(index);
+          }
+      }
       #endregion
 
       #endregion
