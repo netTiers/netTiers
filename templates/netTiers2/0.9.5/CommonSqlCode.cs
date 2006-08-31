@@ -25,7 +25,6 @@ using SchemaExplorer;
 using System;
 using System.Windows.Forms.Design;
 using System.Collections;
-using System.Collections.Generic;
 using System.ComponentModel;
 using System.Data;
 using System.Data.SqlClient;
