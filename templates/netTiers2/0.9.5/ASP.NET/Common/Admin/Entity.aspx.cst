@@ -82,6 +82,7 @@
 				<asp:CommandField ShowSelectButton="True" ShowEditButton="True" />				
 <%
 					string entityDSO = string.Empty;					
+					int suffix = 1;
 					
 					foreach( ColumnSchema column in colsUpdatable)
 					{
@@ -91,8 +92,9 @@
 							if (column.IsForeignKeyMember) 
 							{					
 								string tempDSO = string.Empty;
-								Response.Write(WriteTemplateField(column, 4, out tempDSO) + "\r\n");
+								Response.Write(WriteTemplateField(column, 4, out tempDSO, suffix) + "\r\n");
 								entityDSO+=tempDSO;
+								suffix++;
 							}
 							else 
 							{
@@ -132,7 +134,7 @@
 
 
 <script runat="template">
-public string WriteTemplateField(ColumnSchema column, int tabs, out string entityDSO) {
+public string WriteTemplateField(ColumnSchema column, int tabs, out string entityDSO, int suffix) {
 	string propertyName = GetPropertyName(column);
 	string s = string.Empty;
 	
@@ -141,12 +143,7 @@ public string WriteTemplateField(ColumnSchema column, int tabs, out string entit
 	string pkDisplayField = String.Empty;	
 	string objectDataSource = String.Empty;
 	string pkCSType = String.Empty;
-	string suffix = String.Empty;
-	
-	if (column.Table.Name == column.Table.ForeignKeys[0].ForeignKeyTable.Name) 
-	{
-		suffix = "1";	
-	}
+
 	foreach (TableKeySchema tableKey in column.Table.ForeignKeys)
 	{
 		ColumnSchema fKeyColumn = tableKey.ForeignKeyMemberColumns[0];
@@ -180,21 +177,21 @@ public string WriteTemplateField(ColumnSchema column, int tabs, out string entit
 		}
 	}
 	
-	s += Tab(4) + "<asp:TemplateField HeaderText=\"" + objectDataSource + "\">\r\n";
+	s += Tab(4) + "<asp:TemplateField HeaderText=\"" + fkPropertyName + "\">\r\n";
 	s += Tab(4) + "<ItemTemplate>\r\n";
-	s += Tab(4) + "		<asp:Repeater ID=\"" + pkPropertyName + "\" runat=\"server\" DataSourceID=\"" + objectDataSource + "Filter\">\r\n";
+	s += Tab(4) + "		<asp:Repeater ID=\"" + pkPropertyName + suffix.ToString() + "\" runat=\"server\" DataSourceID=\"" + objectDataSource + "Filter" + suffix.ToString() + "\">\r\n";
 	s += Tab(4) + "			<ItemTemplate>\r\n";
 	s += Tab(4) + "				<%# Eval(\"" + pkDisplayField + "\") %>\r\n";
 	s += Tab(4) + "			</ItemTemplate>\r\n";
 	s += Tab(4) + "		</asp:Repeater>\r\n\r\n";			
-	s += Tab(4) + "		<data:EntityDataSourceFilter ID=\"" + objectDataSource + "Filter\" runat=\"server\"\r\n";
-	s += Tab(4) + "			DataSourceID=\"" + objectDataSource + "DataSource" + suffix + "\"\r\n";
+	s += Tab(4) + "		<data:EntityDataSourceFilter ID=\"" + objectDataSource + "Filter" + suffix.ToString() + "\" runat=\"server\"\r\n";
+	s += Tab(4) + "			DataSourceID=\"" + objectDataSource + "DataSource" + suffix.ToString() + "\"\r\n";
 	s += Tab(4) + "			Filter='<%# String.Format(\"" + pkPropertyName + " = {0}\", Eval(\"" + fkPropertyName + "\")) %>'\r\n";
 	s += Tab(4) + "		/>\r\n";
 	s += Tab(4) + "	</ItemTemplate>\r\n";
 	s += Tab(4) + "</asp:TemplateField>\r\n\r\n";
 
-	entityDSO = Tab(2) + "<data:" + objectDataSource + "DataSource ID=\"" + objectDataSource + "DataSource" + suffix + "\" runat=\"server\"\r\n";
+	entityDSO = Tab(2) + "<data:" + objectDataSource + "DataSource ID=\"" + objectDataSource + "DataSource" + suffix.ToString() + "\" runat=\"server\"\r\n";
 	entityDSO += Tab(3) + "SelectMethod=\"GetAll\"\r\n";
 	entityDSO += Tab(2) + "/>\r\n\r\n";
 	return s;
