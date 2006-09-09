@@ -274,7 +274,7 @@ namespace <%= WebNameSpace %>.Data
 					break;
 			}
 
-			if ( count < 1 )
+			if ( results != null && count < 1 )
 			{
 				count = results.Count;
 			}
@@ -417,25 +417,31 @@ private string WriteParameterDeclarations(IDictionary procs)
 	StringBuilder sb = new StringBuilder(Environment.NewLine);
 	ArrayList columns = new ArrayList();
 
-	foreach ( CommandSchema command in procs.Values )
+	if ( IncludeCustoms )
 	{
-		foreach ( ParameterSchema param in command.InputParameters )
+		foreach ( CommandSchema command in procs.Values )
 		{
-			if( !columns.Contains(GetCustomVariableName(param.Name)) )
+			if ( IsMatching(command, SourceView) )
 			{
-				columns.Add(GetCustomVariableName(param.Name));
-				WriteParameterDeclaration(param, sb, false);
+				foreach ( ParameterSchema param in command.InputParameters )
+				{
+					if( !columns.Contains(GetCustomVariableName(param.Name)) )
+					{
+						columns.Add(GetCustomVariableName(param.Name));
+						WriteParameterDeclaration(param, sb, false);
+					}
+				}
+				/* not supported in views yet
+				foreach ( ParameterSchema param in command.AllOutputParameters )
+				{
+					if( !columns.Contains(GetCustomVariableName(param.Name)) )
+					{
+						columns.Add(GetCustomVariableName(param.Name));
+						WriteParameterDeclaration(param, sb, true);
+					}
+				} */
 			}
 		}
-		/* not supported in views yet
-		foreach ( ParameterSchema param in command.AllOutputParameters )
-		{
-			if( !columns.Contains(GetCustomVariableName(param.Name)) )
-			{
-				columns.Add(GetCustomVariableName(param.Name));
-				WriteParameterDeclaration(param, sb, true);
-			}
-		} */
 	}
 	
 	return sb.ToString();

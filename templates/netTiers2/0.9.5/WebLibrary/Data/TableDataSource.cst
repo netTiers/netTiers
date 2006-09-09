@@ -379,7 +379,7 @@ namespace <%= WebNameSpace %>.Data
 			}
 
 			<% if ( IncludeCustoms ) { %>
-			if ( count < 1 )
+			if ( results != null && count < 1 )
 			{
 				count = results.Count;
 
@@ -943,22 +943,28 @@ private string WriteParameterDeclarations(IndexSchemaCollection indexes, TableKe
 			}
 		}
 	}
-	foreach ( CommandSchema command in procs.Values )
+	if ( IncludeCustoms )
 	{
-		foreach ( ParameterSchema param in command.InputParameters )
+		foreach ( CommandSchema command in procs.Values )
 		{
-			if( !columns.Contains(GetCustomVariableName(param.Name)) )
+			if ( IsMatching(command, SourceTable) )
 			{
-				columns.Add(GetCustomVariableName(param.Name));
-				WriteParameterDeclaration(param, sb, false);
-			}
-		}
-		foreach ( ParameterSchema param in command.AllOutputParameters )
-		{
-			if( !columns.Contains(GetCustomVariableName(param.Name)) )
-			{
-				columns.Add(GetCustomVariableName(param.Name));
-				WriteParameterDeclaration(param, sb, true);
+				foreach ( ParameterSchema param in command.InputParameters )
+				{
+					if( !columns.Contains(GetCustomVariableName(param.Name)) )
+					{
+						columns.Add(GetCustomVariableName(param.Name));
+						WriteParameterDeclaration(param, sb, false);
+					}
+				}
+				foreach ( ParameterSchema param in command.AllOutputParameters )
+				{
+					if( !columns.Contains(GetCustomVariableName(param.Name)) )
+					{
+						columns.Add(GetCustomVariableName(param.Name));
+						WriteParameterDeclaration(param, sb, true);
+					}
+				}
 			}
 		}
 	}
