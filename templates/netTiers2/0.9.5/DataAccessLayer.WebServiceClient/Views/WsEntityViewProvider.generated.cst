@@ -14,7 +14,6 @@
 
 <%@ Property Name="IncludeCustoms" Type="System.Boolean" Default="True" Category="Options" Description="If true customs stored procedures will be generated as functions." %>
 <%@ Property Name="CustomNonMatchingReturnType" Type="CustomNonMatchingReturnType" Default="DataSet" Category="Options" Description="When using custom stored procedures, if the returned rows do not match the fields in an entity, a DataSet or IDataReader will be returned. Choose One.  This is useful if you've returned more than one resultset in a custom procedure; you can use a ConvertToDataSet(IDataReader) method in the Utility class to convert that to a DataSet." %>
-<%@ Property Name="CustomProcedureStartsWith" Type="System.String" Default="_{0}_" Category="Options" Description="If you include custom stored procedures, this is the pattern that NetTiers will look for your custom stored procedures. A string format will be used to match the procedure pattern.  So, {0}=TableName, {1}=StoredProc Prefix.  By default NetTiers will look at tables that starts with '_{0}_', which means it will detect the procedure _TableName_GetByBirthdate and will be detected and generated." %>
 <%@ Property Name="IncludeGetList" Type="System.Boolean" Default="True" Category="Options" Description="If true getlist functions will be generated." %>
 <%@ Property Name="IncludeGetListByFK" Type="System.Boolean" Default="True" Category="Options" Description="If true get functions will be generated." %>
 <%@ Property Name="IncludeGetListByIX" Type="System.Boolean" Default="True" Category="Options" Description="If true getlist functions will be generated." %>
@@ -97,16 +96,17 @@ namespace <%=DALNameSpace%>.WebServiceClient
 		}
 			
 		#endregion Constructors
-			
+		
+		#region Url
 		///<summary>
 		/// Current URL for webservice endpoint. 
 		///</summary>
-
 		public string Url
         {
         	get {return this.url;}
         	set {this.url = value;}
         }
+		#endregion 
 	
 		#region Convertion utility
 		
@@ -244,36 +244,29 @@ namespace <%=DALNameSpace%>.WebServiceClient
 <%
  	} //end IncludeGetList
 %>
-	
-
 <%/*---------------------------------------------------------------------------------
 							CUSTOM STORED PROCEDURES
   -------------------------------------------------------------------------------*/%>
-
 <% if (IncludeCustoms) { %>
-
 	#region Custom Methods
 	
 <% 
-	string prefix = string.Format(CustomProcedureStartsWith, SourceView.Name, ProcedurePrefix);
-	foreach(CommandSchema command in SourceView.Database.Commands)
-	{
-		//Response.WriteLine("// " + command.Name);
+	System.Collections.IDictionary procs = GetCustomProcedures(SourceView);
 	
-		// If the stored procedure is targeting the current table.
-		if (command.Name.StartsWith(prefix))
-		{
-			string methodName = command.Name.Substring(prefix.Length);
-			string returnType = "void";
-						
-			if (IsMatching(command, SourceView))
-			{
-				returnType = collectionClassName;
-			}
-			else	// client can not use IDataReader
-			{
-				returnType = "DataSet";
-			}
+	foreach(DictionaryEntry item in procs)
+	{
+		SchemaExplorer.CommandSchema command = (SchemaExplorer.CommandSchema) item.Value;
+		string methodName  = item.Key.ToString();
+		//if (methodName == "Get" || methodName == "GetAll")
+			//methodName += "Custom";
+		
+		string returnType = GetReturnCustomProcReturnType(CustomNonMatchingReturnType, SourceView, command);
+		
+		if (returnType == "IDataReader")
+			returnType = "DataSet"; 
+			
+		string returnTypeForComment = returnType.Replace("<", "&lt;").Replace(">", "&gt;");		
+			
 %>
 	#region <%=command.Name%>
 
@@ -283,8 +276,8 @@ namespace <%=DALNameSpace%>.WebServiceClient
 	/// <param name="start">Row number at which to start reading.</param>
 	/// <param name="pageLength">Number of rows to return.</param>
 	/// <param name="transactionManager"><see cref="TransactionManager"/> object</param>
-	/// <remark>This method is generate from a stored procedure.</remark>
-	/// <returns>A <see cref="<%=returnType%>"/> instance.</returns>
+	/// <remark>This method is generate from a stored procedure.</remark><% if (returnType != "void") {%>
+		/// <returns>A <see cref="<%=returnTypeForComment%>"/> instance.</returns><%}%>
 	public override <%=returnType%> <%=methodName%>(TransactionManager transactionManager, int start, int pageLength <%=TransformStoredProcedureInputsToMethod(true, command.InputParameters)%>)
 	{
 		<%=WebReferenceName%>.<%=ProxyClassName%> proxy = new <%=WebReferenceName%>.<%=ProxyClassName%>();
@@ -300,10 +293,7 @@ namespace <%=DALNameSpace%>.WebServiceClient
 	
 	#endregion	
 	
-<%
-		}
-	}
-%>
+<%	} 	%>
 
 	#endregion
 

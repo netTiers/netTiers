@@ -1,4 +1,4 @@
-﻿<%@ CodeTemplate Src="..\..\..\CommonSqlCode.cs" Inherits="MoM.Templates.CommonSqlCode" Language="C#" TargetLanguage="C#" Description="Template description here." Debug="False"  ResponseEncoding="UTF-8"%>
+﻿<%@ CodeTemplate Src="..\..\..\CommonSqlCode.cs" Inherits="MoM.Templates.CommonSqlCode" Language="C#" TargetLanguage="C#" Description="Template description here." Debug="True"  ResponseEncoding="UTF-8"%>
 <%@ Assembly Name="SchemaExplorer" %>
 <%@ Assembly Name="System.Design" %>
 <%@ Import Namespace="SchemaExplorer" %>
@@ -7,7 +7,6 @@
 
 <%@ Property Name="IncludeCustoms" Type="System.Boolean" Default="True" Category="Options" Description="If true customs stored procedures will be generated as functions." %>
 <%@ Property Name="CustomNonMatchingReturnType" Type="CustomNonMatchingReturnType" Default="DataSet" Category="Options" Description="When using custom stored procedures, if the returned rows do not match the fields in an entity, a DataSet or IDataReader will be returned. Choose One.  This is useful if you've returned more than one resultset in a custom procedure; you can use a ConvertToDataSet(IDataReader) method in the Utility class to convert that to a DataSet." %>
-<%@ Property Name="CustomProcedureStartsWith" Type="System.String" Default="_{0}_" Category="Options" Description="If you include custom stored procedures, this is the pattern that NetTiers will look for your custom stored procedures. A string format will be used to match the procedure pattern.  So, {0}=TableName, {1}=StoredProc Prefix.  By default NetTiers will look at tables that starts with '_{0}_', which means it will detect the procedure _TableName_GetByBirthdate and will be detected and generated." %>
 <%@ Property Name="ProcedurePrefix" Optional="True" Type="System.String" Category="Style" Description="Prefix for Strored Procedures" %>
 <%@ Property Name="IncludeGetList" Type="System.Boolean" Default="True" Category="Options" Description="If true getlist functions will be generated." %>
 <%@ Property Name="IncludeGetListByIX" Type="System.Boolean" Default="True" Category="Options" Description="If true getlist functions will be generated." %>
@@ -55,29 +54,15 @@ namespace <%=DALNameSpace%>.Bases
 		#region Custom Methods
 		
 	<%
-		string prefix = string.Format(CustomProcedureStartsWith, SourceView.Name, ProcedurePrefix);
-		foreach(CommandSchema command in SourceView.Database.Commands)
+		System.Collections.IDictionary procs = GetCustomProcedures(SourceView);
+		foreach(System.Collections.DictionaryEntry item in procs)
 		{
-			// If the stored procedure is targeting the current table.
-			if (!command.Name.StartsWith(prefix))
-			{
-				continue;
-			}
-			
-			string methodName = command.Name.Substring(prefix.Length);
-			string returnType = string.Empty;
-			
-			// if the sp return row of the table
-			if (IsMatching(command, SourceView))
-			{
-				returnType = collectionClassName;
-			}
-			else	// Return a basic DataSet
-			{
-				returnType = CustomNonMatchingReturnType.ToString();
-			}
-			
+			CommandSchema command = (CommandSchema) item.Value;
+			string methodName  = item.Key.ToString();		
+			string returnType = GetReturnCustomProcReturnType(CustomNonMatchingReturnType, SourceView, command);
 			string returnTypeForComment = returnType.Replace("<", "&lt;").Replace(">", "&gt;");
+			string returnKeyword = (returnType != "void" ? "return" : string.Empty);	
+
 	%>
 		
 		#region <%=command.Name%>
@@ -85,11 +70,11 @@ namespace <%=DALNameSpace%>.Bases
 		/// <summary>
 		///	This method wrap the '<%=command.Name%>' stored procedure. 
 		/// </summary><%=TransformStoredProcedureInputsToMethodComments(command.InputParameters)%>
-		/// <remark>This method is generate from a stored procedure.</remark>
-		/// <returns>A <see cref="<%=returnTypeForComment%>"/> instance.</returns>
+		/// <remark>This method is generate from a stored procedure.</remark><% if (returnType != "void") {%>
+		/// <returns>A <see cref="<%=returnTypeForComment%>"/> instance.</returns><%}%>
 		public <%=returnType%> <%=methodName%>(<%=TransformStoredProcedureInputsToMethod(false, command.InputParameters)%>)
 		{
-			return <%=methodName%>(null, 0, int.MaxValue <%=TransformStoredProcedureInputsToDataAccess(true, command.InputParameters)%>);
+			<%= returnKeyword %> <%=methodName%>(null, 0, int.MaxValue <%=TransformStoredProcedureInputsToDataAccess(true, command.InputParameters)%>);
 		}
 		
 		/// <summary>
@@ -97,11 +82,11 @@ namespace <%=DALNameSpace%>.Bases
 		/// </summary><%=TransformStoredProcedureInputsToMethodComments(command.InputParameters)%>
 		/// <param name="start">Row number at which to start reading.</param>
 		/// <param name="pageLength">Number of rows to return.</param>
-		/// <remark>This method is generate from a stored procedure.</remark>
-		/// <returns>A <see cref="<%=returnTypeForComment%>"/> instance.</returns>
+		/// <remark>This method is generate from a stored procedure.</remark><% if (returnType != "void") {%>
+		/// <returns>A <see cref="<%=returnTypeForComment%>"/> instance.</returns><%}%>
 		public <%=returnType%> <%=methodName%>(int start, int pageLength<%=TransformStoredProcedureInputsToMethod(true, command.InputParameters)%>)
 		{
-			return <%=methodName%>(null, start, pageLength <%=TransformStoredProcedureInputsToDataAccess(true, command.InputParameters)%>);
+			<%= returnKeyword %> <%=methodName%>(null, start, pageLength <%=TransformStoredProcedureInputsToDataAccess(true, command.InputParameters)%>);
 		}
 				
 		/// <summary>
@@ -121,8 +106,8 @@ namespace <%=DALNameSpace%>.Bases
 		/// <param name="start">Row number at which to start reading.</param>
 		/// <param name="pageLength">Number of rows to return.</param>
 		/// <param name="transactionManager"><see cref="TransactionManager"/> object</param>
-		/// <remark>This method is generate from a stored procedure.</remark>
-		/// <returns>A <see cref="<%=returnTypeForComment%>"/> instance.</returns>
+		/// <remark>This method is generate from a stored procedure.</remark><% if (returnType != "void") {%>
+		/// <returns>A <see cref="<%=returnTypeForComment%>"/> instance.</returns><%}%>
 		public abstract <%=returnType%> <%=methodName%>(TransactionManager transactionManager, int start, int pageLength <%=TransformStoredProcedureInputsToMethod(true, command.InputParameters)%>);
 		
 		#endregion

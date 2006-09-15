@@ -6,6 +6,7 @@
 <%@ Import Namespace="System.Text" %>
 
 <%@ Property Name="SourceTable" Type="SchemaExplorer.TableSchema" Category="Connection" Description="Table that the data access class should be based on." %>
+<%@ Property Name="SourceTables" Type="SchemaExplorer.TableSchemaCollection" Category="Connection" Description="All Tables that are selected, this will be used to see which relationships are available." %>
 
 <%@ Property Name="NameSpace" Type="System.String" Category="Style" Description="ASP 2.0 Namespace" %>
 <%@ Property Name="WebProjectNameSpace" Type="System.String" Category="Style" Description="ASP 2.0 Namespace" %>
@@ -95,7 +96,7 @@ public partial class <%=entityName%>Edit : System.Web.UI.Page
 			// -- SetDefaultMode checks for one parameter if it exists, so that 
 			// -- it sets the right mode for the FormView
 		%>
-		FormUtil.SetDefaultMode(FormView1, "<%=keys[0].Name%>");
+		FormUtil.SetDefaultMode(FormView1, "<%=GetPropertyName(keys[0].Name)%>");
 	}
 <%
 	if (!IsJunctionTable(SourceTable))
@@ -103,6 +104,10 @@ public partial class <%=entityName%>Edit : System.Web.UI.Page
 		TableSchemaCollection tablesRelated1 = GetTablesCollectionByFk(SourceTable.PrimaryKey.MemberColumns[0], sourceTables);
 		for (int x = 0; x < tablesRelated1.Count; x++)
 		{  
+			//Related Table must be in SourceTables
+			if (!SourceTables.Contains(tablesRelated1[x]))
+				continue;
+				
 			string entityRelated = GetClassName(tablesRelated1[x].Name);
 			ColumnSchemaCollection keysRelatedCol = tablesRelated1[x].PrimaryKey.MemberColumns;
 			string keysRelated = GetKeysName(keysRelatedCol);
@@ -134,13 +139,13 @@ public partial class <%=entityName%>Edit : System.Web.UI.Page
 
 
 <script runat="template">
-	private string getUrlFk(ColumnSchemaCollection fkeys, string entityRelated) 
+	private string getUrlFk(SchemaExplorer.ColumnSchemaCollection fkeys, string entityRelated) 
 	{
         string s = string.Empty;
 		string g = string.Empty;
 		
         for (int x = 0; x < fkeys.Count; x++)
-        {
+        {			
             s += string.Format("{0}={{" + x + "}}", GetPropertyName(fkeys[x].Name));
 			g += string.Format("GridView{1}.SelectedDataKey.Values[{0}]", x.ToString(), entityRelated);
             if (x < fkeys.Count - 1)
@@ -169,7 +174,7 @@ public partial class <%=entityName%>Edit : System.Web.UI.Page
         //for (int x = 0; x < keys.Count; x++)
 		for (int x = 0; x < 1; x++)  // -- use only first pk
         {
-            s += string.Format("{0}='{{" + x + "}}'", GetPropertyName(keys[x].Name));
+            s += string.Format("{0}='{{" + x + "}}'", keys[x].Name);
 			g += string.Format("Request.QueryString[\"{0}\"].ToString()", GetPropertyName(keys[x].Name));
             
 			/*

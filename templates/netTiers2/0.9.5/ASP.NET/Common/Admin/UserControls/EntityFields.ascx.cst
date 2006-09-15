@@ -6,12 +6,13 @@
 <%@ Import Namespace="System.Text" %>
 
 <%@ Property Name="SourceTable" Type="SchemaExplorer.TableSchema" Category="Connection" Description="Table that the data access class should be based on." %>
+<%@ Property Name="SourceTables" Type="SchemaExplorer.TableSchemaCollection" Category="Connection" Description="All Tables that are selected, this will be used to see which relationships are available." %>
+
 <%@ Property Name="NameSpace" Type="System.String" Category="Style" Description="Class Namespace." %>
 <%@ Property Name="BLLNameSpace" Type="System.String" Category="Data" Description="BLL Namespace." %>
 <%@ Property Name="SourceDatabase" Type="SchemaExplorer.DatabaseSchema" Optional="False" Category="DataSource" 	Description="Database that the stored procedures should be based on." %>
 <%@ Property Name="IncludeAtlasLibrary" Type="System.Boolean" Default="false" Category="06b. Website - Advanced" Description="Indicates whether to include a reference to the Atlas component library." %>
 <%@ Property Name="IncludeAtlasToolkit" Type="System.Boolean" Default="false" Category="06b. Website - Advanced" Description="Indicates whether to include a reference to the Atlas Control Toolkit. This property is only taken into account when IncludeAtlasLibrary is true." %>
-
 <%
 
 	// Collection of all columns in the table.
@@ -38,7 +39,9 @@
 	foreach (ColumnSchema column in cols)
 	{	
 		if ( ! IsIdentityColumn(column) && ! IsComputed(column))
+		{		
 			colsUpdatable.Add(column); 
+		}
 	}
 	
 	TableKeySchemaCollection fKeysSingle = new TableKeySchemaCollection();
@@ -62,12 +65,8 @@
 	string providerName = GetProviderName(SourceTable.Name);
 	
 
-	TableSchemaCollection sourceTables = new TableSchemaCollection();
-	
-	for (int i=0; i < SourceDatabase.Tables.Count; i++)
-	{
-		sourceTables.Add(SourceDatabase.Tables[i]);
-	}
+	TableSchemaCollection sourceTables = SourceTables;
+
 %>
 <%%@ Control Language="C#" ClassName="<%=entityName%>Fields" %%>
 
@@ -80,12 +79,15 @@
 						//Exclude the primary key columns
 						if ( !IsGuidColumn(column))
 						{
-							string propertyName = GetPropertyName(column);							
+							string propertyName = GetPropertyName(column);
+							string editorControl = GetEditorControl(column, "", fkeys);
+							if (editorControl == null || editorControl == string.Empty)
+								continue;
 %>							
 			<tr>
 				<td class="literal"><%=propertyName%>:</td>
 				<td>
-					<%=GetEditorControl(column, "", fkeys)%>
+					<%= editorControl %>
 				</td>
 			</tr>				
 <%
@@ -201,6 +203,10 @@ public string GetEditorControl(ColumnSchema column, string prefix, TableKeySchem
 			
 			foreach ( TableKeySchema tableKey in fkeys)
 			{
+				//Key Tables must be in SourceTables
+				if (!SourceTables.Contains(tableKey.ForeignKeyTable) || !SourceTables.Contains(tableKey.PrimaryKeyTable))
+					continue;
+				
 				//Must be a single-column FK
 				ColumnSchema fKeyColumn = tableKey.ForeignKeyMemberColumns[0];
 				if ( GetPropertyName(fKeyColumn) == propertyName )
@@ -233,12 +239,15 @@ public string GetEditorControl(ColumnSchema column, string prefix, TableKeySchem
 			}
 			//ColumnSchema c = null;
 			
-			controlDecl = String.Format("<asp:DropDownList runat=\"server\" ID=\"{0}\" DataSourceID=\"{3}{5}DataSource\" DataTextField=\"{2}\" DataValueField=\"{1}\" SelectedValue='<%# {4} %>'></asp:DropDownList>", controlID, pkPropertyName, pkDisplayField, propertyName, bindSignature, objectDataSource);
-			controlDecl += "\n";
-			controlDecl += Tab(5) + "<data:" + objectDataSource + "DataSource ID=\"" + propertyName + objectDataSource + "DataSource\" runat=\"server\"\n ";
-			controlDecl += Tab(6) +"SelectMethod=\"GetAll\"\n ";
-			controlDecl += Tab(5) +">\n";
-			controlDecl += Tab(5) +"</data:" + objectDataSource + "DataSource>";
+			if (pkPropertyName != string.Empty)
+			{
+				controlDecl = String.Format("<asp:DropDownList runat=\"server\" ID=\"{0}\" DataSourceID=\"{3}{5}DataSource\" DataTextField=\"{2}\" DataValueField=\"{1}\" SelectedValue='<%# {4} %>'></asp:DropDownList>", controlID, pkPropertyName, pkDisplayField, propertyName, bindSignature, objectDataSource);
+				controlDecl += "\n";
+				controlDecl += Tab(5) + "<data:" + objectDataSource + "DataSource ID=\"" + propertyName + objectDataSource + "DataSource\" runat=\"server\"\n ";
+				controlDecl += Tab(6) +"SelectMethod=\"GetAll\"\n ";
+				controlDecl += Tab(5) +">\n";
+				controlDecl += Tab(5) +"</data:" + objectDataSource + "DataSource>";
+			}
 		}
 	else
 	{

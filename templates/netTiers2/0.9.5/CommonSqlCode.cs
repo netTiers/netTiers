@@ -63,6 +63,7 @@ namespace MoM.Templates
 		private string procedurePrefix = "";
 		private string auditUserField = "";
 		private string auditDateField = "";
+		private bool cspUseDefaultValForNonNullableTypes = false;
 		
 		private Hashtable aliases = null;
 		
@@ -304,6 +305,14 @@ namespace MoM.Templates
 			set { this.customProcedureStartsWith = value; }
 		}
 		
+		[Category("07. CRUD - Advanced")]
+		[Description("By Default, any parameter in the Custom Stored Procedure will be a nullable type if it's a value type.  Setting this flag to true will only allow the param value types that specify NULL, such as (@param1 int=NULL), be nullable i.e. (int? param1).  While the rest of the params, @param2 int, will be regular (int param2).")]
+		public bool CSPUseDefaultValForNonNullableTypes
+		{
+			get { return this.cspUseDefaultValForNonNullableTypes; }
+			set { this.cspUseDefaultValForNonNullableTypes = value; }
+		}
+		
 		public enum CustomNonMatchingReturnType
 		{
 			DataSet,
@@ -339,23 +348,37 @@ namespace MoM.Templates
 		/// </summary>
 		/// <param name="name">Name to be changed</param>
 		/// <returns>CamelCased version of the name</returns>
-		public string GetCamelCaseName(string name)
-		{
-			if (name.Equals(name.ToUpper()))
-				return name.ToLower().Replace(" ","");
-			else
-				return name.Substring(0, 1).ToLower() + name.Substring(1).Replace(" ","");
-		}
-		
-		/// <summary>
-		/// Get the Pascal cased version of a name.  
-		/// </summary>
-		/// <param name="name">Name to be changed</param>
-		/// <returns>PascalCased version of the name</returns>
-		public string GetPascalCaseName(string name)
-		{		
-			return name.Substring(0, 1).ToUpper() + name.Substring(1);
-		}
+        public string GetCamelCaseName(string name)
+        {
+            if (name.Equals(name.ToUpper()) && !name.Contains("_"))
+                return name.ToLower().Replace(" ", "");
+            else
+            {
+                // first get the PascalCase version of the name (DRY)
+                string pascalName = GetPascalCaseName(name);
+                // now lowercase the first character to transform it to camelCase
+                return pascalName.Substring(0, 1).ToLower() + pascalName.Substring(1);
+            }
+        }
+
+        /// <summary>
+        /// Get the Pascal cased version of a name.  
+        /// </summary>
+        /// <param name="name">Name to be changed</param>
+        /// <returns>PascalCased version of the name</returns>
+        public string GetPascalCaseName(string name)
+        {
+            char[] splitter = { '_', ' ' };
+            string[] splitNames = name.Split(splitter);
+            string pascalName = "";
+            foreach (string s in splitNames)
+            {
+                if (s.Length > 0)
+                    pascalName += s.Substring(0, 1).ToUpper() + s.Substring(1);
+            }
+
+            return pascalName;
+        }
 		
 		/// <summary>
 		/// Remove any non-word characters from a SchemaObject's name (word characters are a-z, A-Z, 0-9, _)
@@ -1921,7 +1944,7 @@ namespace MoM.Templates
 
 				if ( useCustomPrefix )
 				{
-					temp.Append( GetCustomVariableName(inputParameters[i].Name.Substring(1)) );
+					temp.Append( GetCustomVariableName(inputParameters[i].Name.Substring(1) + GetPropertyName(inputParameters[i].Command.Name)) );
 				}
 				else
 				{
@@ -1940,7 +1963,7 @@ namespace MoM.Templates
 			StringBuilder temp = new StringBuilder();
 			for(int i=0; i<inputParameters.Count; i++)
 			{
-				temp.AppendFormat("{2}\t\t\t/// <param name=\"{0}\"> A <c>{1}</c> instance.</param>", GetPrivateName(inputParameters[i].Name.Substring(1)), GetCSType(inputParameters[i]).Replace("<", "&lt;").Replace(">", "&gt;"), "\r\n");
+				temp.AppendFormat("{2}\t\t/// <param name=\"{0}\"> A <c>{1}</c> instance.</param>", GetPrivateName(inputParameters[i].Name.Substring(1)).Replace("@", ""), GetCSType(inputParameters[i]).Replace("<", "&lt;").Replace(">", "&gt;"), "\r\n");
 			}
 			
 			return temp.ToString();
@@ -1958,7 +1981,7 @@ namespace MoM.Templates
 			}
 			for(int i=0; i<command.InputOutputParameters.Count; i++)
 			{
-				temp += string.Format("{2}\t\t\t/// <param name=\"{0}\"> An output  <c>{1}</c> instance.</param>", GetPrivateName(command.InputOutputParameters[i].Name.Substring(1)), GetCSType(command.InputOutputParameters[i]), Environment.NewLine);
+				temp += string.Format("{2}\t\t\t/// <param name=\"{0}\"> An output  <c>{1}</c> instance.</param>", GetPrivateName(command.InputOutputParameters[i].Name.Substring(1)).Replace("@", ""), GetCSType(command.InputOutputParameters[i]), Environment.NewLine);
 			}
 			
 			return temp;
@@ -2041,7 +2064,7 @@ namespace MoM.Templates
 			StringBuilder temp = new StringBuilder();
 			for(int i=0; i<outputParameters.Count; i++)
 			{
-				temp.AppendFormat("{2}\t\t\t/// <param name=\"{0}\"> A <c>{1}</c> instance.</param>", GetPrivateName(outputParameters[i].Name.Substring(1)), GetCSType(outputParameters[i]).Replace("<", "&lt;").Replace(">", "&gt;"), Environment.NewLine);
+				temp.AppendFormat("{2}\t\t\t/// <param name=\"{0}\"> A <c>{1}</c> instance.</param>", GetPrivateName(outputParameters[i].Name.Substring(1)).Replace("@", ""), GetCSType(outputParameters[i]).Replace("<", "&lt;").Replace(">", "&gt;"), Environment.NewLine);
 			}
 			
 			return temp.ToString();
@@ -2195,11 +2218,55 @@ namespace MoM.Templates
 			//else if (field.NativeType.ToLower() == "xml")
 			//	return "System.Xml.XmlNode";
 			else if (!IsCSReferenceDataType(field) && field.AllowDBNull)
+			{
+				if (field is ParameterSchema && CSPUseDefaultValForNonNullableTypes)
+				{
+										
+					if (!DefaultIsNull(	(ParameterSchema)field ))
+						return field.SystemType.ToString();
+				}
+				
 				return field.SystemType.ToString() + "?";
+			}
 			else
 				return field.SystemType.ToString();
-			//return GetCSType(field.DataType);
 		}
+		
+		#region Defualt Param Value
+		
+        public static string parseParameterRegex = @"
+			CREATE\s+PROC(?:EDURE)?                               # find the start of the stored procedure
+			.*?                                                   # skip all content until we get to the name of the parameter that we are looking for
+			{0}                                                   # name of the parameter we are interested in
+			\s+[\w\.\(\)\[\]]+                                    # parameter data type
+			(?:\s*\=\s*(?<default>(?:'[^']*' | [\w]+)))?          # parameter default value
+			(?:\s*(?:OUTPUT)?\s*,?\s*--\s*(?<comment>[^\r\n]*))?  # parameter comment
+			.*?^\s*AS\s*(?:--[^\r\n]*)?\s*$                       # end of stored procedure definition";
+
+		///<summary>
+		/// Checks a Parameter Schema if NULL is set to the default value of that procedure param
+		///</summary>
+		public bool DefaultIsNull(ParameterSchema param)
+		{
+			if (param == null)
+				return false;
+				
+			System.Text.RegularExpressions.Regex regex = new System.Text.RegularExpressions.Regex(String.Format(parseParameterRegex, param.Name), 
+				System.Text.RegularExpressions.RegexOptions.IgnoreCase | 
+				System.Text.RegularExpressions.RegexOptions.Multiline | 
+				System.Text.RegularExpressions.RegexOptions.Singleline | 
+				System.Text.RegularExpressions.RegexOptions.CultureInvariant | 
+				System.Text.RegularExpressions.RegexOptions.IgnorePatternWhitespace);
+				
+            System.Text.RegularExpressions.Match match = regex.Match(param.Command.CommandText);
+            if (match != null && match.Success)
+			{
+				if (match.Groups["default"].Value != null && match.Groups["default"].Value.ToString().Trim().ToUpper() == "NULL")
+					return true;
+			}	
+			return false;
+		}
+		#endregion 
 		
 		/// <summary>
 		/// Convert database types to C# types, withou nullable support.
@@ -2873,35 +2940,43 @@ namespace MoM.Templates
 		/// <param name="table">The table</param>
 		public bool IsMatching(CommandSchema command, TableSchema table)
 		{
-			if (command.CommandResults.Count == 0)
-				return false;
-				
-			if (command.CommandResults[0].Columns.Count != table.Columns.Count)
+			try
 			{
-				return false;
-			}
-			
-			for(int i=0; i<table.Columns.Count; i++)
-			{
-				if (IsComputed(table.Columns[i]))
-					continue;
-			
-				if (!command.CommandResults[0].Columns.Contains(table.Columns[i].Name.ToLower()))
+				if (command.CommandResults.Count == 0)
+					return false;
+					
+				if (command.CommandResults[0].Columns.Count != table.Columns.Count)
 				{
 					return false;
 				}
 				
-				// manage the xml column type separately
-				if ( table.Columns[i].NativeType == "xml" && (command.CommandResults[0].Columns[i].NativeType == "sql_variant" || command.CommandResults[0].Columns[i].NativeType == "ntext"))
+				for(int i=0; i<table.Columns.Count; i++)
 				{
-					continue;
+					if (IsComputed(table.Columns[i]))
+						continue;
+				
+					if (!command.CommandResults[0].Columns.Contains(table.Columns[i].Name.ToLower()))
+					{
+						return false;
+					}
+					
+					// manage the xml column type separately
+					if ( table.Columns[i].NativeType == "xml" && (command.CommandResults[0].Columns[i].NativeType == "sql_variant" || command.CommandResults[0].Columns[i].NativeType == "ntext"))
+					{
+						continue;
+					}
+					else if (!SqlTypesAreEquivalent(command.CommandResults[0].Columns[i].NativeType, table.Columns[i].NativeType))
+					{
+						return false;
+					}
 				}
-				else if (!SqlTypesAreEquivalent(command.CommandResults[0].Columns[i].NativeType, table.Columns[i].NativeType))
-				{
-					return false;
-				}
+				return true;
+			}	
+			catch(Exception exc)
+			{
+				System.Diagnostics.Debug.WriteLine("Procedure Threw Exception: " + command.Name);
+				return false;	
 			}
-			return true;
 		}
 		
 		/// <summary>
@@ -2911,32 +2986,40 @@ namespace MoM.Templates
 		/// <param name="view">The view</param>
 		public bool IsMatching(CommandSchema command, ViewSchema view)
 		{
-			if (command.CommandResults.Count == 0)
-				return false;
-				
-			if (command.CommandResults[0].Columns.Count != view.Columns.Count)
+			try
 			{
-				return false;
-			}
-			
-			for(int i=0; i<view.Columns.Count; i++)
-			{	
-				if (!command.CommandResults[0].Columns.Contains(view.Columns[i].Name.ToLower()))
+				if (command.CommandResults.Count == 0)
+					return false;
+					
+				if (command.CommandResults[0].Columns.Count != view.Columns.Count)
 				{
 					return false;
 				}
 				
-				// manage the xml column type separately
-				if ( view.Columns[i].NativeType == "xml" && (command.CommandResults[0].Columns[i].NativeType == "sql_variant" || command.CommandResults[0].Columns[i].NativeType == "ntext"))
-				{
-					continue;
+				for(int i=0; i<view.Columns.Count; i++)
+				{	
+					if (!command.CommandResults[0].Columns.Contains(view.Columns[i].Name.ToLower()))
+					{
+						return false;
+					}
+					
+					// manage the xml column type separately
+					if ( view.Columns[i].NativeType == "xml" && (command.CommandResults[0].Columns[i].NativeType == "sql_variant" || command.CommandResults[0].Columns[i].NativeType == "ntext"))
+					{
+						continue;
+					}
+					else if (!SqlTypesAreEquivalent(command.CommandResults[0].Columns[i].NativeType, view.Columns[i].NativeType))
+					{
+						return false;
+					}
 				}
-				else if (!SqlTypesAreEquivalent(command.CommandResults[0].Columns[i].NativeType, view.Columns[i].NativeType))
- 				{
-					return false;
-				}
+				return true;
+			}	
+			catch(Exception exc)
+			{
+				System.Diagnostics.Debug.WriteLine("!!ERROR!! - Procedure Threw Exception: " + command.Name);
+				return false;	
 			}
-			return true;
 		}
 		
 		/// <summary>
@@ -3169,23 +3252,90 @@ namespace MoM.Templates
 		}
 		
 		public IDictionary GetCustomProcedures(string objectName, CommandSchemaCollection allCommands)
-		{
+		{		
 			string customPrefix = string.Format(CustomProcedureStartsWith, objectName, ProcedurePrefix);
 			IDictionary procs = new Hashtable();
 			string customName;
+			bool discover = true;
+			System.Collections.ArrayList invalids = new System.Collections.ArrayList();
+			string current = string.Empty;
 			
-			foreach ( CommandSchema proc in allCommands )
+			while(discover)
 			{
-				if ( proc.Name.StartsWith(customPrefix) )
+				try
 				{
-					customName = proc.Name.Substring(customPrefix.Length);
-					procs.Add(customName, proc);
+					procs.Clear();
+					foreach ( CommandSchema proc in allCommands )
+					{
+						if (proc == null)
+							continue;
+							
+						current = proc.Name;
+						if (invalids.Contains(proc.Name))
+							continue;
+							
+						if ( proc.Name.ToLower().StartsWith(customPrefix.ToLower()) )
+						{
+							customName = proc.Name.Substring(customPrefix.Length);
+							procs.Add(customName, proc);
+						}
+					}
+					discover = false;
 				}
+				catch(Exception exc)
+				{
+					System.Diagnostics.Debug.WriteLine("Stored Procedure Command Failed: " + current);	
+					invalids.Add(current);
+				}	
 			}
-			
+		
 			return procs;
 		}
 
+		public string GetReturnCustomProcReturnType(CustomNonMatchingReturnType nonMatchingReturnType, SchemaExplorer.TableSchema table, SchemaExplorer.CommandSchema command)
+		{
+			string returnType = "void";
+			try
+			{
+				if (IsMatching(command, table))
+				{
+					returnType = GetCollectionClassName(table.Name);
+				}
+				else if (command.CommandResults != null && command.CommandResults.Count > 0)
+				{
+					returnType = nonMatchingReturnType.ToString();				
+				}
+			}
+			catch(Exception exc)
+			{
+				System.Diagnostics.Debug.WriteLine("!!ERROR!!: Could not get return type from " + command.Name);	
+			}	
+			return returnType;	
+		}
+
+		
+		public string GetReturnCustomProcReturnType(CustomNonMatchingReturnType nonMatchingReturnType, SchemaExplorer.ViewSchema view, SchemaExplorer.CommandSchema command)
+		{
+			string returnType = "void";
+			try
+			{
+				if (IsMatching(command, view))
+				{
+					returnType = GetViewCollectionClassName(view.Name);
+				}
+				else if (command.CommandResults != null && command.CommandResults.Count > 0)
+				{
+					returnType = nonMatchingReturnType.ToString();
+				}
+			}
+			catch(Exception exc)
+			{
+				System.Diagnostics.Debug.WriteLine("!!ERROR!!: Could not get return type from " + command.Name);	
+			}	
+			
+			return returnType;	
+		}
+		
 		public string GetCustomVariableName(string paramName)
 		{
 			return string.Format("sp_{0}", GetPropertyName(paramName));
@@ -3495,9 +3645,15 @@ namespace MoM.Templates
 			{
 				CollectionInfo tmp = (CollectionInfo)_collections[collectionInfo.PropertyName];
 				tmp.PropertyNameUnique = collectionInfo.PropertyName + tmp.GetByKeysName.Substring(3);
-				
+
 				collectionInfo.PropertyName += collectionInfo.GetByKeysName.Substring(3);
 				collectionInfo.PropertyNameUnique += collectionInfo.GetByKeysName.Substring(3);
+
+				if (_collections[collectionInfo.PropertyNameUnique] != null)
+				{
+					collectionInfo.PropertyName += "From" + GetPropertyName(collectionInfo.PkIdxName);
+					collectionInfo.PropertyNameUnique += "From" + GetPropertyName(collectionInfo.PkIdxName);
+				}
 				_collections[collectionInfo.PropertyName] = collectionInfo;
 			}
 		}

@@ -6,6 +6,7 @@
 <%@ Import Namespace="System.Text" %>
 
 <%@ Property Name="SourceTable" Type="SchemaExplorer.TableSchema" Category="Connection" Description="Table that the data access class should be based on." %>
+<%@ Property Name="SourceTables" Type="SchemaExplorer.TableSchemaCollection" Category="Connection" Description="All Tables that are selected, this will be used to see which relationships are available." %>
 
 <%@ Property Name="NameSpace" Type="System.String" Category="Style" Description="Class Namespace." %>
 <%@ Property Name="BLLNameSpace" Type="System.String" Category="Data" Description="BLL Namespace." %>
@@ -115,6 +116,10 @@
 		TableSchemaCollection tablesRelated = GetTablesCollectionByFk(SourceTable.PrimaryKey.MemberColumns[0], sourceTables);
 		for (int x = 0; x < tablesRelated.Count; x++)
 		{  
+			//Related Table must be in SourceTables
+			if (!SourceTables.Contains(tablesRelated[x]))
+				continue;
+
 			string entityRelated = GetClassName(tablesRelated[x].Name);
 			ColumnSchemaCollection keysRelatedCol = tablesRelated[x].PrimaryKey.MemberColumns;
 			string keysRelated = GetKeysName(keysRelatedCol);

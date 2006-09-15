@@ -18,7 +18,6 @@
 <%@ Property Name="IncludeFind" Type="System.Boolean" Default="True" Category="Options" Description="If true find functions will be generated." %>
 <%@ Property Name="ComponentPattern" Optional="False" Type="MoM.Templates.ComponentPatternType" Category="Pattern" Description="Component Pattern Type." %>
 <%@ Property Name="CustomNonMatchingReturnType" Type="CustomNonMatchingReturnType" Default="DataSet" Category="Options" Description="When using custom stored procedures, if the returned rows do not match the fields in an entity, a DataSet or IDataReader will be returned. Choose One.  This is useful if you've returned more than one resultset in a custom procedure; you can use a ConvertToDataSet(IDataReader) method in the Utility class to convert that to a DataSet." %>
-<%@ Property Name="CustomProcedureStartsWith" Type="System.String" Default="_{0}_" Category="Options" Description="If you include custom stored procedures, this is the pattern that NetTiers will look for your custom stored procedures. A string format will be used to match the procedure pattern.  So, {0}=TableName, {1}=StoredProc Prefix.  By default NetTiers will look at tables that starts with '_{0}_', which means it will detect the procedure _TableName_GetByBirthdate and will be detected and generated." %>
 <%@ Property Name="ProcedurePrefix" Optional="True" Type="System.String" Category="Style" Description="Prefix for Strored Procedures" %>
 <%@ Property Name="UsePartialClass" Type="System.Boolean" Default="true" Category="General" Description="Indicates if partial class should be generated." %>
 <%@ Property Name="RenderOverload" Type="System.Boolean" Default="False" Category="Options" Description="If true the overloaded methods will be generated." %>
@@ -981,85 +980,43 @@
 		<% if (IncludeCustoms) { %>
 		#region Custom Methods
 		<%
-		string prefix = string.Format(CustomProcedureStartsWith, SourceTable.Name, ProcedurePrefix);
-
-		int i=0;
-		bool valid = false;
-		IList commandsCollection = new ArrayList();
-		try
-		{
-			foreach(CommandSchema c in SourceTable.Database.Commands)
-			{
-				commandsCollection.Add(c);
-			}
-			
-			while (!valid)
-			{
-				try
-				{
-					for(;i < commandsCollection.Count; i++)
-					{	
-						if (!((CommandSchema)commandsCollection[i]).Name.StartsWith(prefix))
-						{
-							commandsCollection.RemoveAt(i);
-						}
-					}
-					valid = true;
-				}
-				catch(Exception exc)
-				{
-					Debug.WriteLine("Stored Procedure Command Failed: " + ((CommandSchema)commandsCollection[i]).Name);	
-					commandsCollection.RemoveAt(i);
-				}
-			}
-		}
-		catch(Exception exc)
-		{
-			Debug.WriteLine("Retrieving Stored Procedure Information Failed.", exc.ToString());	
-		}
+		// collection of custom stored procedures
+		System.Collections.IDictionary procs = GetCustomProcedures(SourceTable);
 		
-		foreach(CommandSchema command in commandsCollection)
+		
+		foreach(System.Collections.DictionaryEntry item in procs)
 		{
-			// If the stored procedure is targeting the current table.
-			if (!command.Name.StartsWith(prefix))
-			{
-				continue;
-			}
-			
-			string methodName = command.Name.Substring(prefix.Length);
-			string returnType = "void";
-			
+			SchemaExplorer.CommandSchema command = (SchemaExplorer.CommandSchema) item.Value;
+			string methodName  = item.Key.ToString();		
+		
+			string returnType = GetReturnCustomProcReturnType(CustomNonMatchingReturnType, SourceTable, command);
+					
 			string newCollection = "";
 			string newCollectionEnd = "";
 				
-			// if the sp return row of the table
-			if (IsMatching(command, SourceTable))
+			if (returnType.Contains("List<"))
 			{
-				returnType = collectionClassName;
 				newCollection = newCollectionClassName;
 				newCollectionEnd = newCollectionClassNameEnd;
-			}
-			else	// Return a basic DataSet
-			{
-				returnType = CustomNonMatchingReturnType.ToString();
 			}
 			
 			string returnTypeForComment = returnType.Replace("<", "{").Replace(">", "}");
 			string overloadParms = TransformStoredProcedureInputsToMethod(false, command.InputParameters) + TransformStoredProcedureOutputsToMethod(command.InputParameters.Count > 0, command.AllOutputParameters);
 			string overloadCall = TransformStoredProcedureInputsToDataAccess(true, command.InputParameters) + TransformStoredProcedureOutputsToDataAccess(true, command.AllOutputParameters);
 			string parms = TransformStoredProcedureInputsToMethod(true, command.InputParameters) + TransformStoredProcedureOutputsToMethod(true, command.AllOutputParameters);
-			
+			string returnKeyword = (returnType != "void" ? "return" : string.Empty);	
+
 		%>
 		
 		#region <%=command.Name%>
 		/// <summary>
 		///	This method wrap the '<%=command.Name%>' stored procedure. 
 		/// </summary><%=TransformStoredProcedureInputsToMethodComments(command.InputParameters) + TransformStoredProcedureOutputsToMethodComments(command.AllOutputParameters)%>
-		/// <remark>This method is generate from a stored procedure.</remark>
-		/// <returns>A <see cref="<%=returnTypeForComment%>"/> instance.</returns>
+		/// <remark>This method is generate from a stored procedure.</remark><% if (returnType != "void") {%>
+		/// <returns>A <see cref="<%=returnTypeForComment%>"/> instance.</returns><%}%>
 		<%= constructorAccessModifier %>  <%=returnType%> <%=methodName%>(<%= overloadParms %>)
 		{
-			return <%=methodName%>(<%= overloadCall.Length > 0 ? overloadCall.TrimStart(',') + "," : "" %> 0, defaultMaxRecords );
+			<%= returnKeyword %> <%=methodName%>(<%= overloadCall.Length > 0 ? overloadCall.TrimStart(',') + "," : "" %> 0, defaultMaxRecords );
 		}
 	
 		/// <summary>
@@ -1067,8 +1024,8 @@
 		/// </summary><%=TransformStoredProcedureInputsToMethodComments(command.InputParameters) + TransformStoredProcedureOutputsToMethodComments(command.AllOutputParameters)%>
 		/// <param name="start">Row number at which to start reading.</param>
 		/// <param name="pageLength">Number of rows to return.</param>
-		/// <remark>This method is generate from a stored procedure.</remark>
-		/// <returns>A <see cref="<%=returnTypeForComment%>"/> instance.</returns>
+		/// <remark>This method is generate from a stored procedure.</remark><% if (returnType != "void") {%>
+		/// <returns>A <see cref="<%=returnTypeForComment%>"/> instance.</returns><%}%>
 		<%= constructorAccessModifier %>  <%=returnType%> <%=methodName%>(<%= (parms.Length > 0 ? parms.TrimStart(',') + "," : "") %> int start, int pageLength)
 		{
 			// throws security exception if not authorized

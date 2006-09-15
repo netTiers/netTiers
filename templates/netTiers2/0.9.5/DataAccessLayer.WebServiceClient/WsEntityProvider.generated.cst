@@ -15,7 +15,6 @@
 
 <%@ Property Name="IncludeCustoms" Type="System.Boolean" Default="True" Category="Options" Description="If true customs stored procedures will be generated as functions." %>
 <%@ Property Name="CustomNonMatchingReturnType" Type="CustomNonMatchingReturnType" Default="DataSet" Category="Options" Description="When using custom stored procedures, if the returned rows do not match the fields in an entity, a DataSet or IDataReader will be returned. Choose One.  This is useful if you've returned more than one resultset in a custom procedure; you can use a ConvertToDataSet(IDataReader) method in the Utility class to convert that to a DataSet." %>
-<%@ Property Name="CustomProcedureStartsWith" Type="System.String" Default="_{0}_" Category="Options" Description="If you include custom stored procedures, this is the pattern that NetTiers will look for your custom stored procedures. A string format will be used to match the procedure pattern.  So, {0}=TableName, {1}=StoredProc Prefix.  By default NetTiers will look at tables that starts with '_{0}_', which means it will detect the procedure _TableName_GetByBirthdate and will be detected and generated." %>
 <%@ Property Name="ProcedurePrefix" Optional="True" Type="System.String" Category="Style" Description="Prefix for Strored Procedures" %>
 <%@ Property Name="IncludeInsert" Type="System.Boolean" Default="True" Category="Options" Description="If true insert functions will be generated." %>
 <%@ Property Name="IncludeUpdate" Type="System.Boolean" Default="True" Category="Options" Description="If true update functions will be generated." %>
@@ -24,7 +23,7 @@
 <%@ Property Name="IncludeGetList" Type="System.Boolean" Default="True" Category="Options" Description="If true getlist functions will be generated." %>
 <%@ Property Name="IncludeGetListByFK" Type="System.Boolean" Default="True" Category="Options" Description="If true get functions will be generated." %>
 <%@ Property Name="IncludeGetListByIX" Type="System.Boolean" Default="True" Category="Options" Description="If true getlist functions will be generated." %>
-<%@ Property Name="IncludeFind" Type="System.Boolean" Default="False" Category="Options" Description="If true find functions will be generated." %>
+<%@ Property Name="IncludeFind" Type="System.Boolean" Default="True" Category="Options" Description="If true find functions will be generated." %>
 <%@ Property Name="IncludeManyToMany" Type="System.Boolean" Default="True" Category="Options" Description="If true select statements will be generated for any many to many relationship." %>
 
 <%@ Property Name="InsertSuffix" Type="System.String" Default="_Insert" Category="Style" Description="Suffix to use for all generated INSERT functions." %>
@@ -41,6 +40,9 @@
 <%@ Property Name="ProxyClassName" Type="System.String" Default="WsProxy" Optional="True" Category="Decoration" Description="The WebService Proxy Class Name." %>
 
 <%
+	System.Collections.ArrayList methods = new System.Collections.ArrayList();
+	methods.Add("GetAll");
+
 	// Name of the table being worked on.
 	string name = SourceTable.Name;
 	
@@ -257,6 +259,8 @@ namespace <%=DALNameSpace%>.WebServiceClient
 					{
 						TableSchema secondaryTable = junctionTableKey.PrimaryKeyTable;
 						string functionname = GetManyToManyName(junctionTableKey, GetCleanName(junctionTable.Name));
+						methods.Add("GetBy" + functionname);
+
 %>					
 		#region GetBy<%=functionname%>
 		
@@ -295,7 +299,9 @@ namespace <%=DALNameSpace%>.WebServiceClient
 		<%} //endif(IncludeManyToMany) %>
 		
 		
-		<% if (IncludeDelete && SourceTable.PrimaryKey != null) {%>
+		<% if (IncludeDelete && SourceTable.PrimaryKey != null) {
+				methods.Add("Delete");
+		%>
 		#region Delete Functions			
 			
 			/// <summary>
@@ -321,7 +327,9 @@ namespace <%=DALNameSpace%>.WebServiceClient
 		<% } //endif(includedelete) %>
 	
 		
-		<% if (IncludeFind) { %>
+		<% if (IncludeFind) { 
+				methods.Add("Find");
+			%>
 		#region Find Functions
 		
 		
@@ -349,7 +357,10 @@ namespace <%=DALNameSpace%>.WebServiceClient
 		<% } //endif (IncludeFind) %>
 		
 		
-		<% if (IncludeGetList) { %>
+		<% if (IncludeGetList) { 
+				methods.Add("GetAll");
+				methods.Add("GetPaged");
+			%>
 		#region GetList Functions
 				
 		/// <summary>
@@ -413,6 +424,9 @@ namespace <%=DALNameSpace%>.WebServiceClient
 				continue;
 					
 				getbyKeys.Add(GetKeysName(fkeys[j].ForeignKeyMemberColumns));
+				
+				methods.Add("GetBy" + GetKeysName(fkeys[j].ForeignKeyMemberColumns));
+				
 	%>
 		
 		/// <summary>
@@ -467,6 +481,9 @@ namespace <%=DALNameSpace%>.WebServiceClient
 				returnType = className;
 				isUnique = true;
 			}
+			
+			methods.Add("GetBy" + GetKeysName(indexes[j].MemberColumns));
+			
 	%>
 					
 		/// <summary>
@@ -495,7 +512,10 @@ namespace <%=DALNameSpace%>.WebServiceClient
 	<%	}//end if includegetlistbyix %>
 	
 	
-	<% if (IncludeInsert) { %>
+	<% if (IncludeInsert) { 
+		methods.Add("Insert");
+		methods.Add("BulkInsert");
+		%>
 		#region Insert Functions
 		/// <summary>
 		/// 	Inserts a <%=className%> object into the datasource using a transaction.
@@ -549,7 +569,10 @@ namespace <%=DALNameSpace%>.WebServiceClient
 	<%	}//endif (IncludeInsert) %>
 	
 	
-	<% if (IncludeUpdate) { %>	
+	<% if (IncludeUpdate) { 
+		methods.Add("Update");
+		
+		%>	
 		#region Update Functions
 						
 		/// <summary>
@@ -585,25 +608,20 @@ namespace <%=DALNameSpace%>.WebServiceClient
 		#region Custom Methods
 		
 	<% 
-	string prefix = string.Format(CustomProcedureStartsWith, SourceTable.Name, ProcedurePrefix);
-	foreach(CommandSchema command in SourceTable.Database.Commands)
-	{
-		//Response.WriteLine("// " + command.Name);
+	System.Collections.IDictionary procs = GetCustomProcedures(SourceTable);
 	
-		// If the stored procedure is targeting the current table.
-		if (command.Name.StartsWith(prefix))
-		{
-			string methodName = command.Name.Substring(prefix.Length);
-			string returnType = "void";
-						
-			if (IsMatching(command, SourceTable))
-			{
-				returnType = collectionClassName;
-			}
-			else	// Return a basic DataSet
-			{
-				returnType = this.CustomNonMatchingReturnType.ToString();
-			}
+	foreach(DictionaryEntry item in procs)
+	{
+		SchemaExplorer.CommandSchema command = (SchemaExplorer.CommandSchema) item.Value;
+		string methodName  = item.Key.ToString();
+		
+		string uniqueMethodName = methodName;
+		
+		//if (methods.Contains(methodName))
+			//uniqueMethodName = methodName + "Custom";
+			
+		string returnType = GetReturnCustomProcReturnType(CustomNonMatchingReturnType, SourceTable, command);
+		string returnTypeForComment = returnType.Replace("<", "&lt;").Replace(">", "&gt;");		
 	%>
 	
 		#region <%=command.Name%>
@@ -614,20 +632,20 @@ namespace <%=DALNameSpace%>.WebServiceClient
 		/// <param name="start">Row number at which to start reading.</param>
 		/// <param name="pageLength">Number of rows to return.</param>
 		/// <param name="transactionManager"><see cref="TransactionManager"/> object</param>
-		/// <remark>This method is generate from a stored procedure.</remark>
-		/// <returns>A <see cref="<%=returnType%>"/> instance.</returns>
+		/// <remark>This method is generate from a stored procedure.</remark><% if (returnType != "void") {%>
+		/// <returns>A <see cref="<%=returnTypeForComment%>"/> instance.</returns><%}%>
 		public override <%=returnType%> <%=methodName%>(TransactionManager transactionManager, int start, int pageLength <%=TransformStoredProcedureInputsToMethod(true, command.InputParameters) + TransformStoredProcedureOutputsToMethod(true, command.AllOutputParameters) %>)
 		{
 			<%=WebReferenceName%>.<%=ProxyClassName%> proxy = new <%=WebReferenceName%>.<%=ProxyClassName%>();
 			proxy.Url = Url;
 			
 			<% if (returnType == collectionClassName) { %>
-			<%=WebReferenceName%>.<%=GetClassName(SourceTable.Name)%>[] items = proxy.<%=providerName%>_<%=methodName%>(start, pageLength <%=TransformStoredProcedureInputsToDataAccess(true, command.InputParameters) + TransformStoredProcedureOutputsToDataAccess(true, command.AllOutputParameters)%>);
+			<%=WebReferenceName%>.<%=GetClassName(SourceTable.Name)%>[] items = proxy.<%=providerName%>_<%=uniqueMethodName%>(start, pageLength <%=TransformStoredProcedureInputsToDataAccess(true, command.InputParameters) + TransformStoredProcedureOutputsToDataAccess(true, command.AllOutputParameters)%>);
 			return Convert(items); 
 			<% } else if (returnType == "void") { %>
-			proxy.<%=className%>_<%=providerName%>(<%=TransformStoredProcedureInputsToDataAccess(false, command.InputParameters) + TransformStoredProcedureOutputsToDataAccess(true, command.AllOutputParameters)%>);
+			proxy.<%=providerName%>_<%= uniqueMethodName %>(<%=TransformStoredProcedureInputsToDataAccess(false, command.InputParameters) + TransformStoredProcedureOutputsToDataAccess(true, command.AllOutputParameters)%>);
 			<% } else if (returnType == "DataSet"){ %>
-			return proxy.<%=providerName%>_<%=methodName%>(start, pageLength<%=TransformStoredProcedureInputsToDataAccess(true, command.InputParameters) + TransformStoredProcedureOutputsToDataAccess(true, command.AllOutputParameters)%>);
+			return proxy.<%=providerName%>_<%=uniqueMethodName%>(start, pageLength<%=TransformStoredProcedureInputsToDataAccess(true, command.InputParameters) + TransformStoredProcedureOutputsToDataAccess(true, command.AllOutputParameters)%>);
 			<% } else { %>
 				throw new NotSupportedException("This <%=methodName%> for custom procedure <%=command.Name%> is implemented to return an IDataReader.  These are not supported by the client proxy.");
 			<% } %>		
@@ -636,7 +654,6 @@ namespace <%=DALNameSpace%>.WebServiceClient
 		#endregion
 		
 	<%
-			}
 		}
 	%>
 		

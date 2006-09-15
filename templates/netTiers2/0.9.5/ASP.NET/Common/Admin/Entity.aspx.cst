@@ -6,6 +6,7 @@
 <%@ Import Namespace="System.Text" %>
 
 <%@ Property Name="SourceTable" Type="SchemaExplorer.TableSchema" Category="Connection" Description="Table that the data access class should be based on." %>
+<%@ Property Name="SourceTables" Type="SchemaExplorer.TableSchemaCollection" Category="Connection" Description="All Tables that are selected, this will be used to see which relationships are available." %>
 
 <%@ Property Name="NameSpace" Type="System.String" Category="Style" Description="Class Namespace." %>
 <%@ Property Name="BLLNameSpace" Type="System.String" Category="Data" Description="BLL Namespace." %>
@@ -137,21 +138,31 @@
 public string WriteTemplateField(ColumnSchema column, int tabs, out string entityDSO, int suffix) {
 	string propertyName = GetPropertyName(column);
 	string s = string.Empty;
+	entityDSO = string.Empty;
+	
 	
 	string pkPropertyName = String.Empty;
+	string pkColumnName = String.Empty;
 	string fkPropertyName = String.Empty;
+	string fkColumnName = String.Empty;
 	string pkDisplayField = String.Empty;	
 	string objectDataSource = String.Empty;
 	string pkCSType = String.Empty;
 
 	foreach (TableKeySchema tableKey in column.Table.ForeignKeys)
 	{
+		//Key Tables must be in SourceTables
+		if (!SourceTables.Contains(tableKey.ForeignKeyTable) || !SourceTables.Contains(tableKey.PrimaryKeyTable))
+			continue;
+			
 		ColumnSchema fKeyColumn = tableKey.ForeignKeyMemberColumns[0];
 		fkPropertyName = GetPropertyName(fKeyColumn);
 		
 		if ( GetPropertyName(fKeyColumn) == propertyName )
 		{
 			pkPropertyName = GetPropertyName(tableKey.PrimaryKeyMemberColumns[0].Name);	
+			pkColumnName = tableKey.PrimaryKeyMemberColumns[0].Name;
+			
 			pkCSType = GetCSType(tableKey.PrimaryKeyMemberColumns[0]);
 			
 			//Find the first non-key column for display
@@ -176,7 +187,9 @@ public string WriteTemplateField(ColumnSchema column, int tabs, out string entit
 			break;						
 		}
 	}
-	
+	if (fkPropertyName == string.Empty)
+		return s;
+		
 	s += Tab(4) + "<asp:TemplateField HeaderText=\"" + fkPropertyName + "\">\r\n";
 	s += Tab(4) + "<ItemTemplate>\r\n";
 	s += Tab(4) + "		<asp:Repeater ID=\"" + pkPropertyName + suffix.ToString() + "\" runat=\"server\" DataSourceID=\"" + objectDataSource + "Filter" + suffix.ToString() + "\">\r\n";
@@ -198,18 +211,18 @@ public string WriteTemplateField(ColumnSchema column, int tabs, out string entit
 }
 
 public string WriteBoundField(ColumnSchema column, int tabs) {
-	string propertyName = GetPropertyName(column);
+	string propertyName = GetPropertyName(column.Name);
 
 	// -- exclude DbType.Xml from report
 	if (column.NativeType.ToLower().Equals("xml")) return string.Empty;
 	
 	if (column.NativeType != "text" && column.NativeType != "ntext") 
 	{
-		return string.Format("{1}<asp:BoundField DataField=\"{0}\" HeaderText=\"{0}\" SortExpression=\"{0}\" {2} />", propertyName, Tab(tabs), (column.IsPrimaryKeyMember)?"ReadOnly":"");								
+		return string.Format("{1}<asp:BoundField DataField=\"{0}\" HeaderText=\"{0}\" SortExpression=\"{2}\" {3} />", propertyName, Tab(tabs), column.Name, (column.IsPrimaryKeyMember)?"ReadOnly":"");								
 	}
 	else 
 	{
-		return string.Format("{1}<asp:BoundField DataField=\"{0}\" HeaderText=\"{0}\" SortExpression=\"\" {2} />", propertyName, Tab(tabs), (column.IsPrimaryKeyMember)?"ReadOnly":"");
+		return string.Format("{1}<asp:BoundField DataField=\"{0}\" HeaderText=\"{0}\" SortExpression=\"\" {3} />", propertyName, Tab(tabs), column.Name, (column.IsPrimaryKeyMember)?"ReadOnly":"");
 	}
 }
 </script>

@@ -15,7 +15,7 @@
 <%@ Assembly Name="SchemaExplorer" %>
 <%@ Assembly Name="System.Design" %>
 <%@ Import Namespace="SchemaExplorer" %>
-<%@ Import Namespace="System.Collections" %>
+<%@ Import Namespace="System.Collections"%>
 <%@ Import Namespace="System.Text" %>
 
 <%@ Property Name="SourceTables" Type="SchemaExplorer.TableSchemaCollection" Category="Connection" Description="Tables of the system." %>
@@ -23,7 +23,6 @@
 
 <%@ Property Name="IncludeCustoms" Type="System.Boolean" Default="True" Category="Options" Description="If true customs stored procedures will be generated as functions." %>
 <%@ Property Name="CustomNonMatchingReturnType" Type="CustomNonMatchingReturnType" Default="DataSet" Category="Options" Description="When using custom stored procedures, if the returned rows do not match the fields in an entity, a DataSet or IDataReader will be returned. Choose One.  This is useful if you've returned more than one resultset in a custom procedure; you can use a ConvertToDataSet(IDataReader) method in the Utility class to convert that to a DataSet." %>
-<%@ Property Name="CustomProcedureStartsWith" Type="System.String" Default="_{0}_" Category="Options" Description="If you include custom stored procedures, this is the pattern that NetTiers will look for your custom stored procedures. A string format will be used to match the procedure pattern.  So, {0}=TableName, {1}=StoredProc Prefix.  By default NetTiers will look at tables that starts with '_{0}_', which means it will detect the procedure _TableName_GetByBirthdate and will be detected and generated." %>
 <%@ Property Name="IncludeInsert" Type="System.Boolean" Default="True" Category="Options" Description="If true insert functions will be generated." %>
 <%@ Property Name="IncludeUpdate" Type="System.Boolean" Default="True" Category="Options" Description="If true update functions will be generated." %>
 <%@ Property Name="IncludeSave" Type="System.Boolean" Default="True" Category="Options" Description="If true combined insert/update functions will be generated." %>
@@ -278,8 +277,7 @@ namespace <%=DALNameSpace%>.SqlClient
 			} //end foreach			
 	 	}// end if(IsJunctionTable(junctionTableKey.ForeignKeyTable)) %>
 	<%}//end foreach pkey %>
-	#endregion
-	
+		#endregion
 	<%} //end if many to many %>
 	
 <% if (IncludeDelete && SourceTable.PrimaryKey != null) {%>
@@ -1157,29 +1155,15 @@ namespace <%=DALNameSpace%>.SqlClient
 		#region Custom Methods
 	
 <% 
-	string prefix = string.Format(CustomProcedureStartsWith, SourceTable.Name, ProcedurePrefix);
-	DebugWriteLine("Looking for stored procedures matching prefix: "+prefix);
-	foreach(CommandSchema command in SourceTable.Database.Commands)
-	{
-		//Response.WriteLine("// " + command.Name);
+	System.Collections.IDictionary procs = GetCustomProcedures(SourceTable);
 	
-		// If the stored procedure is targeting the current table.
-		if (command.Name.StartsWith(prefix))
-		{
-			string methodName = command.Name.Substring(prefix.Length);
-			string returnType = "void";
-						
-			if (IsMatching(command, SourceTable))
-			{
-				returnType = collectionClassName;
-			}
-			else	// Return a basic DataSet
-			{
-				returnType = CustomNonMatchingReturnType.ToString();
-			}
-			
-			string returnTypeForComment = returnType.Replace("<", "&lt;").Replace(">", "&gt;");
-%>
+	foreach(DictionaryEntry item in procs)
+	{  
+		SchemaExplorer.CommandSchema command = (SchemaExplorer.CommandSchema) item.Value;
+		string methodName  = item.Key.ToString();					
+		string returnType = GetReturnCustomProcReturnType(CustomNonMatchingReturnType, SourceTable, command);
+		string returnTypeForComment = returnType.Replace("<", "&lt;").Replace(">", "&gt;");%>
+
 		#region <%=command.Name%>
 					
 		/// <summary>
@@ -1188,25 +1172,25 @@ namespace <%=DALNameSpace%>.SqlClient
 		/// <param name="start">Row number at which to start reading.</param>
 		/// <param name="pageLength">Number of rows to return.</param>
 		/// <param name="transactionManager"><see cref="TransactionManager"/> object</param>
-		/// <remark>This method is generate from a stored procedure.</remark>
-		/// <returns>A <see cref="<%=returnTypeForComment%>"/> instance.</returns>
-		public override <%=returnType%> <%=methodName%>(TransactionManager transactionManager, int start, int pageLength <%=TransformStoredProcedureInputsToMethod(true, command.InputParameters) + TransformStoredProcedureOutputsToMethod(true, command.AllOutputParameters)%>)
+		/// <remark>This method is generate from a stored procedure.</remark><% if (returnType != "void") {%>
+		/// <returns>A <see cref="<%=returnTypeForComment%>"/> instance.</returns><%}%>
+		public override <%= returnType %> <%=methodName%>(TransactionManager transactionManager, int start, int pageLength <%=TransformStoredProcedureInputsToMethod(true, command.InputParameters) + TransformStoredProcedureOutputsToMethod(true, command.AllOutputParameters)%>)
 		{
 			SqlDatabase database = new SqlDatabase(this._connectionString);
 			DbCommand commandWrapper = database.GetStoredProcCommand("<%=command.Name%>");
 			
-			<% foreach(ParameterSchema col in command.InputParameters)	{%>			
-				database.AddInParameter(commandWrapper, "@<%=GetPropertyName(col.Name)%>", <%=GetDbType(col)%>,  <%=GetPrivateName(col.Name)%> );
-			<%}%>
+		<% foreach(ParameterSchema col in command.InputParameters)	{%>			
+			database.AddInParameter(commandWrapper, "@<%=GetPropertyName(col.Name)%>", <%=GetDbType(col)%>,  <%=GetPrivateName(col.Name)%> );
+		<%}%>
 	
-			<% foreach(ParameterSchema col in command.AllOutputParameters)	{ %>
-				database.AddParameter(commandWrapper, "@<%=GetPropertyName(col.Name)%>", DbType.<%=col.DataType.ToString()%>, ParameterDirection.InputOutput, "", DataRowVersion.Current,<%=GetPrivateName(col.Name)%>);
-			<%}%>
+		<% foreach(ParameterSchema col in command.AllOutputParameters)	{ %>
+			database.AddParameter(commandWrapper, "@<%=GetPropertyName(col.Name)%>", DbType.<%=col.DataType.ToString()%>, ParameterDirection.InputOutput, "", DataRowVersion.Current,<%=GetPrivateName(col.Name)%>);
+		<%}%>
 			
-			<%
+			<%			
 			//Set up the output params
 			StringBuilder outputValues = new StringBuilder();
-			
+
 			foreach(ParameterSchema outParam in command.AllOutputParameters)
 			{
 				outputValues.AppendFormat("\t\t\t{0} =  Utility.GetParameterValue<{1}>(commandWrapper.Parameters[\"@{2}\"]);\n",GetPrivateName(outParam.Name), GetCSType(outParam), GetPropertyName(outParam.Name)); 
@@ -1238,16 +1222,14 @@ namespace <%=DALNameSpace%>.SqlClient
 			{
 				dr = Utility.ExecuteReader(database, commandWrapper);
 			}
-			//These won't get set until the data reader is closed.  So Comment them out.			
-			/*
+
 <%=outputValues.ToString()%>
-			*/
 
 			return dr;
 			<% } else if (returnType == "void") { %>
 			if (transactionManager != null)
 			{	
-				Utility.ExecuteNonQuery(commandWrapper, transactionManager.TransactionObject);
+				Utility.ExecuteNonQuery(transactionManager, commandWrapper );
 			}
 			else
 			{
@@ -1257,7 +1239,7 @@ namespace <%=DALNameSpace%>.SqlClient
 <%=outputValues.ToString()%>
 				
 				return;
-			<% } else if 	(returnType == collectionClassName) { %>
+			<% } else if 	(collectionClassName.Contains(returnType)) { %>
 			IDataReader reader = null;
 
 			if (transactionManager != null)
@@ -1270,7 +1252,7 @@ namespace <%=DALNameSpace%>.SqlClient
 			}			
 			
 			//Create Collection
-			<% if (returnType == collectionClassName) {%>
+			<% if (collectionClassName.Contains(returnType)) {%>
 				<%=collectionClassName%> rows = new <%=collectionClassName%>();
 				try
 				{    
@@ -1297,7 +1279,6 @@ namespace <%=DALNameSpace%>.SqlClient
 		}
 		#endregion
 <%
-		}
 	}
 %>
 		#endregion

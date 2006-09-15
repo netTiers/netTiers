@@ -15,7 +15,6 @@
 
 <%@ Property Name="IncludeCustoms" Type="System.Boolean" Default="True" Category="Options" Description="If true customs stored procedures will be generated as functions." %>
 <%@ Property Name="CustomNonMatchingReturnType" Type="CustomNonMatchingReturnType" Default="DataSet" Category="Options" Description="When using custom stored procedures, if the returned rows do not match the fields in an entity, a DataSet or IDataReader will be returned. Choose One.  This is useful if you've returned more than one resultset in a custom procedure; you can use a ConvertToDataSet(IDataReader) method in the Utility class to convert that to a DataSet." %>
-<%@ Property Name="CustomProcedureStartsWith" Type="System.String" Default="_{0}_" Category="Options" Description="If you include custom stored procedures, this is the pattern that NetTiers will look for your custom stored procedures. A string format will be used to match the procedure pattern.  So, {0}=TableName, {1}=StoredProc Prefix.  By default NetTiers will look at tables that starts with '_{0}_', which means it will detect the procedure _TableName_GetByBirthdate and will be detected and generated." %>
 <%@ Property Name="ProcedurePrefix" Optional="True" Type="System.String" Category="Style" Description="Prefix for Strored Procedures" %>
 
 <%@ Property Name="IncludeInsert" Type="System.Boolean" Default="True" Category="Options" Description="If true insert functions will be generated." %>
@@ -56,6 +55,7 @@ using <%=DALNameSpace+".SqlClient"%>;
 public class <%=ClassName%> : WebService 
 {
 	<% 
+	System.Collections.ArrayList methods = new System.Collections.ArrayList();
 	for (int tableIndex = 0; tableIndex < SourceTables.Count; tableIndex++) 
 	{
 		// point to the current table
@@ -129,6 +129,7 @@ public class <%=ClassName%> : WebService
 					{
 						TableSchema secondaryTable = junctionTableKey.PrimaryKeyTable;
 						string functionname = GetManyToManyName(junctionTableKey, GetCleanName(junctionTable.Name));
+						methods.Add(providerName + "_GetBy" + functionname);
 %>
 
 	#region GetBy<%=functionname%>
@@ -149,7 +150,9 @@ public class <%=ClassName%> : WebService
 	#endregion	
 	<% } %>
 	
-	<% if (IncludeDelete) {%>
+	<% if (IncludeDelete) {
+		methods.Add(providerName + "_Delete");
+		%>
 	#region Delete Functions
 	
 		
@@ -173,7 +176,9 @@ public class <%=ClassName%> : WebService
 	#endregion
 	<% } %>
 	
-	<% if (IncludeFind) { %>
+	<% if (IncludeFind) { 
+		methods.Add(providerName + "_Find");
+		%>
 	#region Find Functions
 	
 	/// <summary>
@@ -192,7 +197,10 @@ public class <%=ClassName%> : WebService
 	<% } %>
 	
 	
-	<% if (IncludeGetList) { %>
+	<% if (IncludeGetList) { 
+		methods.Add(providerName + "_GetAll");
+		methods.Add(providerName + "_GetPaged");
+		%>
 	#region GetList Functions
 		
 	/// <summary>
@@ -240,6 +248,7 @@ public class <%=ClassName%> : WebService
 				continue;
 									
 			getbyKeys.Add(GetKeysName(fkeys[j].ForeignKeyMemberColumns));
+			methods.Add(providerName + "_GetBy" + GetKeysName(fkeys[j].ForeignKeyMemberColumns));
 %>
 	
 	/// <summary>
@@ -288,6 +297,9 @@ public class <%=ClassName%> : WebService
 				returnType = className;
 				isUnique = true;
 			}
+			
+			methods.Add(providerName + "_GetBy" + GetKeysName(indexes[j].MemberColumns));
+			
 %>
 	
 	/// <summary>
@@ -311,7 +323,9 @@ public class <%=ClassName%> : WebService
 	#endregion Get By Index Functions
 	<% } %>
 	
-	<% if (IncludeInsert) { %>
+	<% if (IncludeInsert) { 
+		methods.Add(providerName + "_Insert");
+		%>
 	#region Insert Functions
 		
 	/// <summary>
@@ -340,10 +354,12 @@ public class <%=ClassName%> : WebService
 	{
 		<%=DALNameSpace%>.DataRepository.<%=providerName%>.BulkInsert(entityList);
 	}
-	#endregion "Insert Functions"
+	#endregion Insert Functions
 	<% } %>
 			
-	<% if (IncludeUpdate) { %>	
+	<% if (IncludeUpdate) {
+		methods.Add(providerName + "_Update");
+		%>	
 	#region Update Functions
 		
 	/// <summary>
@@ -360,47 +376,45 @@ public class <%=ClassName%> : WebService
 		return entity;
 	}
 
-	#endregion "Update Functions"
+	#endregion Update Functions
 	<% } %>
 
 	<% if (IncludeCustoms) { %>
 	#region Custom Methods
 	
 <%
-	string prefix = string.Format(CustomProcedureStartsWith, SourceTable.Name, ProcedurePrefix);
-	foreach(CommandSchema command in SourceTable.Database.Commands)
+	System.Collections.IDictionary procs = GetCustomProcedures(SourceTable);
+	
+	foreach(DictionaryEntry item in procs)
 	{
-		// If the stored procedure is targeting the current table.
-		if (command.Name.StartsWith(prefix))
-		{
-			string methodName = command.Name.Substring(prefix.Length);
-			string returnType = "void";
-						
-			if (IsMatching(command, SourceTable))
-			{
-				returnType = collectionClassName;
-			}
-			else	// Return a basic DataSet
-			{
-				returnType = "DataSet";
-			}
+		SchemaExplorer.CommandSchema command = (SchemaExplorer.CommandSchema) item.Value;
+		string methodName  = item.Key.ToString();
+		string uniqueMethodName = methodName;
+		
+		if (methods.Contains(providerName + "_" + methodName))
+			uniqueMethodName = methodName + "Custom";
+			
+		string returnType = GetReturnCustomProcReturnType(CustomNonMatchingReturnType, SourceTable, command);
+		string returnKeyword = returnType == "void" ? "" : "return ";
+		if (returnType == "IDataReader")
+			returnType = "DataSet"; 
+			
 %>
 	
 	/// <summary>
 	///	This method wrap the <%=command.Name%> stored procedure. 
 	/// </summary>
 	[WebMethod(Description="This method wrap the <%=command.Name%> stored procedure.")]
-	public <%=returnType%> <%=providerName%>_<%=methodName%>(int start, int pageLength <%=TransformStoredProcedureInputsToMethod(true, command.InputParameters) + TransformStoredProcedureOutputsToMethod(true, command.AllOutputParameters)%>)
+	public <%=returnType%> <%=providerName%>_<%=uniqueMethodName%>(int start, int pageLength <%=TransformStoredProcedureInputsToMethod(true, command.InputParameters) + TransformStoredProcedureOutputsToMethod(true, command.AllOutputParameters)%>)
 	{
 	    <% if (returnType == "DataSet") { %>
-		    return <% if (CustomNonMatchingReturnType.ToString() == "IDataReader" ) { %><%=DALNameSpace%>.Utility.ConvertDataReaderToDataSet(<%}%><%=DALNameSpace%>.DataRepository.<%=providerName%>.<%=methodName%>(start, pageLength <%=TransformStoredProcedureInputsToDataAccess(true, command.InputParameters) + TransformStoredProcedureOutputsToDataAccess(true, command.AllOutputParameters)%>)<% if (CustomNonMatchingReturnType.ToString() == "IDataReader" ) { %>)<%}%>;
+		    <%= returnKeyword %> <% if (CustomNonMatchingReturnType.ToString() == "IDataReader" ) { %><%=DALNameSpace%>.Utility.ConvertDataReaderToDataSet(<%}%><%=DALNameSpace%>.DataRepository.<%=providerName%>.<%=methodName%>(start, pageLength <%=TransformStoredProcedureInputsToDataAccess(true, command.InputParameters) + TransformStoredProcedureOutputsToDataAccess(true, command.AllOutputParameters)%>)<% if (CustomNonMatchingReturnType.ToString() == "IDataReader" ) { %>)<%}%>;
 	    <% } else { %>
-		    return <%=DALNameSpace%>.DataRepository.<%=providerName%>.<%=methodName%>(start, pageLength <%=TransformStoredProcedureInputsToDataAccess(true, command.InputParameters)%>);
+		    <%= returnKeyword %> <%=DALNameSpace%>.DataRepository.<%=providerName%>.<%=methodName%>(start, pageLength <%=TransformStoredProcedureInputsToDataAccess(true, command.InputParameters)%>);
 	    <% } %>
 	}
 		
 <%
-		}
 	}	
 %>
 	
@@ -415,12 +429,17 @@ public class <%=ClassName%> : WebService
 	----------------------------------------------------------- */
 	<% foreach(ViewSchema SourceView in SourceViews)
 	{
+		
 		string className = NameSpace + "." + GetClassName(SourceView.Name);
 		string providerName = GetProviderName(SourceView.Name);		
 		string collectionClassName = NameSpace + "." + GetViewCollectionClassName(SourceView.Name);
+		
+		methods.Add(providerName + "_Get");
 	 	%>
 	
-	<% if (IncludeGetList) { %>
+	<% if (IncludeGetList) { 
+		methods.Add(providerName + "_GetAll");
+		%>
 	#region GetList Functions
 		
 	/// <summary>
@@ -457,23 +476,21 @@ public class <%=ClassName%> : WebService
 	#region Custom Methods
 	
 <%
-	string prefix = string.Format(CustomProcedureStartsWith, SourceView.Name, ProcedurePrefix);
-	foreach(CommandSchema command in SourceView.Database.Commands)
+	System.Collections.IDictionary procs = GetCustomProcedures(SourceView);
+	
+	foreach(DictionaryEntry item in procs)
 	{
-		// If the stored procedure is targeting the current table.
-		if (command.Name.StartsWith(prefix))
-		{
-			string methodName = command.Name.Substring(prefix.Length);
-			string returnType = "void";
+		SchemaExplorer.CommandSchema command = (SchemaExplorer.CommandSchema) item.Value;
+		string methodName  = item.Key.ToString();
+		
+		string uniqueMethodName = methodName;
+		if (methods.Contains(providerName + "_" + methodName))
+			uniqueMethodName = methodName + "Custom";
 			
-			if (IsMatching(command, SourceView))
-			{
-				returnType = collectionClassName;
-			}
-			else	// Return a basic DataSet
-			{
-				returnType = "DataSet";
-			}
+		string returnType = GetReturnCustomProcReturnType(CustomNonMatchingReturnType, SourceView, command);
+		string returnKeyword = returnType == "void" ? "" : "return ";
+		if (returnType == "IDataReader")
+			returnType = "DataSet"; 
 %>
 	
 	/// <summary>
@@ -482,12 +499,16 @@ public class <%=ClassName%> : WebService
 	[WebMethod(Description="This method wrap the <%=command.Name%> stored procedure.")]
 	public <%=returnType%> <%=providerName%>_<%=methodName%>(int start, int pageLength <%=TransformStoredProcedureInputsToMethod(true, command.InputParameters)%>)
 	{
-		return <%=DALNameSpace%>.DataRepository.<%=providerName%>.<%=methodName%>(start, pageLength <%=TransformStoredProcedureInputsToDataAccess(true, command.InputParameters)%>);
+		<% if (returnType == "DataSet") { %>
+		    <%= returnKeyword %> <% if (CustomNonMatchingReturnType.ToString() == "IDataReader" ) { %><%=DALNameSpace%>.Utility.ConvertDataReaderToDataSet(<%}%><%=DALNameSpace%>.DataRepository.<%=providerName%>.<%=methodName%>(start, pageLength <%=TransformStoredProcedureInputsToDataAccess(true, command.InputParameters) + TransformStoredProcedureOutputsToDataAccess(true, command.AllOutputParameters)%>)<% if (CustomNonMatchingReturnType.ToString() == "IDataReader" ) { %>)<%}%>;
+	    <% } else { %>
+			<%= returnKeyword %> <%=DALNameSpace%>.DataRepository.<%=providerName%>.<%=methodName%>(start, pageLength <%=TransformStoredProcedureInputsToDataAccess(true, command.InputParameters)%>);
+		<% } %>
+		
 	}
 		
 	
 <%
-		} // end if 
 	}	// foreach command
 %>
 	

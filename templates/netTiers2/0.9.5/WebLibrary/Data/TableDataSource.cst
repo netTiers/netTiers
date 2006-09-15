@@ -1,4 +1,4 @@
-<%@ CodeTemplate Language="C#" TargetLanguage="C#" Src="..\..\CommonSqlCode.cs" Inherits="MoM.Templates.CommonSqlCode" Debug="True" Description="Template description here." %>
+﻿<%@ CodeTemplate Language="C#" TargetLanguage="C#" Src="..\..\CommonSqlCode.cs" Inherits="MoM.Templates.CommonSqlCode" Debug="True" Description="Template description here." ResponseEncoding="UTF-8"%>
 <%@ Property Name="BLLNameSpace" Optional="False" Type="System.String" Category="Style" Description="Object Namespace." %>
 <%@ Property Name="DALNameSpace" Optional="False" Type="System.String" Category="Style" Description="DAL Namespace." %>
 <%@ Property Name="WebNameSpace" Optional="False" Type="System.String" Category="Style" Description="Web Namespace." %>
@@ -776,7 +776,7 @@ private string WriteCustomSelectStatements(string tableName, IList methods, bool
 			{
 				sb.AppendFormat("\t\t\t\t\tcustomOutput.Add(\"{0}\", {1});{2}",
 								GetPropertyName(param.Name),
-								GetCustomVariableName(param.Name),
+								GetCustomVariableName(param.Name + GetPropertyName(command.Name)),
 								Environment.NewLine);
 			}
 			sb.Append(WriteBreakStatement());
@@ -836,7 +836,7 @@ private string WriteParameterStatements(ParameterSchemaCollection parameters, st
 		if ( param.AllowDBNull )
 		{
 			sb.AppendFormat("\t\t\t\t\t{0} = ({2}) EntityUtil.ChangeType(values[\"{1}\"], typeof({2}));{3}",
-							GetCustomVariableName(param.Name),
+							GetCustomVariableName(param.Name + GetPropertyName(param.Command.Name)),
 							GetPropertyName(param.Name),
 							GetCSType(param),
 							Environment.NewLine);
@@ -844,7 +844,7 @@ private string WriteParameterStatements(ParameterSchemaCollection parameters, st
 		else
 		{
 			sb.AppendFormat("\t\t\t\t\t{0} = ( values[\"{1}\"] != null ) ? ({2}) EntityUtil.ChangeType(values[\"{1}\"], typeof({2})) : {3};{4}",
-							GetCustomVariableName(param.Name),
+							GetCustomVariableName(param.Name + GetPropertyName(param.Command.Name)),
 							GetPropertyName(param.Name),
 							GetCSType(param),
 							GetCSDefaultByType(param),
@@ -944,24 +944,26 @@ private string WriteParameterDeclarations(IndexSchemaCollection indexes, TableKe
 		}
 	}
 	if ( IncludeCustoms )
-	{
+	{	
 		foreach ( CommandSchema command in procs.Values )
 		{
 			if ( IsMatching(command, SourceTable) )
 			{
 				foreach ( ParameterSchema param in command.InputParameters )
 				{
-					if( !columns.Contains(GetCustomVariableName(param.Name)) )
+					string unique = GetCustomVariableName(param.Name + GetPropertyName(command.Name));
+					if( !columns.Contains(unique) )
 					{
-						columns.Add(GetCustomVariableName(param.Name));
+						columns.Add(unique);
 						WriteParameterDeclaration(param, sb, false);
 					}
 				}
 				foreach ( ParameterSchema param in command.AllOutputParameters )
 				{
-					if( !columns.Contains(GetCustomVariableName(param.Name)) )
+					string unique = GetCustomVariableName(param.Name + GetPropertyName(command.Name));
+					if( !columns.Contains(unique) )
 					{
-						columns.Add(GetCustomVariableName(param.Name));
+						columns.Add(unique);
 						WriteParameterDeclaration(param, sb, true);
 					}
 				}
@@ -983,7 +985,7 @@ private void WriteParameterDeclaration(ColumnSchema column, StringBuilder sb)
 private void WriteParameterDeclaration(ParameterSchema param, StringBuilder sb, bool useDefaultValue)
 {
 	sb.AppendFormat("\t\t\t{1} {0}{2};{3}",
-					GetCustomVariableName(param.Name),
+					GetCustomVariableName(param.Name + GetPropertyName(param.Command.Name)),
 					GetCSType(param),
 					(useDefaultValue ? string.Format(" = {0}", GetCSDefaultByType(param)) : ""),
 					Environment.NewLine);
