@@ -1,0 +1,133 @@
+<%@ CodeTemplate Language="C#" TargetLanguage="C#" Description="Dal utility class" %>
+<%@ Property Name="DALNameSpace" Type="System.String" Category="Data" Description="DAL Namespace." %>
+<%@ Property Name="NameSpace" Type="System.String" Category="Data" Description="DAL Namespace." %>
+
+using System;
+using System.Data;
+using Microsoft.Practices.EnterpriseLibrary.Data;
+
+namespace <%=DALNameSpace%>
+{
+
+	#region Repository Enumerations
+	
+	#region Load/Save Enums
+
+	/// <summary>
+	/// DeepLoad options for deep loading entities
+	/// </summary>
+	public enum DeepLoadType : int
+	{
+		/// <summary>
+		/// Will Include a child property collection 1 Level Deep
+		/// </summary>
+		IncludeChildren = 1,
+		
+		/// <summary>
+		/// Will Exclude a child property collection
+		/// </summary>
+		ExcludeChildren = 2,
+					
+		/// <summary>
+		/// Will ignore the request and return the entity.
+		/// </summary>
+		Ignore = 3
+	}
+
+	/// <summary>
+	/// DeepSave options for deep saving entities
+	/// </summary>
+	public enum DeepSaveType : int
+	{
+		/// <summary>Will Include a child property collection</summary>
+		IncludeChildren = 1,
+
+		/// <summary>Will Exclude a child property collection</summary>
+		ExcludeChildren = 2,
+
+		/// <summary>Will ignore the request and return the entity.</summary>
+		Ignore = 3
+	}
+	#endregion
+		
+	#endregion
+
+		
+	/// <summary>
+	/// Contains some helper function for SQL.
+	/// </summary>
+	public sealed class Utility
+	{
+		private Utility()
+		{
+			// All static methods
+		}
+
+		#region Helper Methods
+		/// <summary>
+		/// Get a default value for a given data type
+		/// </summary>
+		/// <param name="dataType">Data type for which to get the default value</param>
+		/// <returns>An object of the default value.</returns>
+		public static Object GetDefaultByType(DbType dataType)
+		{
+			switch (dataType)
+			{
+				case DbType.AnsiString: return string.Empty;
+				case DbType.AnsiStringFixedLength: return string.Empty;
+				case DbType.Binary: return 0;
+				case DbType.Boolean: return false;
+				case DbType.Byte: return 0;
+				case DbType.Currency: return 0;
+				case DbType.Date: return DateTime.MinValue;
+				case DbType.DateTime: return DateTime.MinValue;
+				case DbType.Decimal: return 0;
+				case DbType.Double: return 0;
+				case DbType.Guid: return Guid.Empty;
+				case DbType.Int16: return 0;
+				case DbType.Int32: return 0;
+				case DbType.Int64: return 0;
+				case DbType.Object: return null;
+				case DbType.Single: return 0;
+				case DbType.String: return String.Empty;
+				case DbType.StringFixedLength: return string.Empty;
+				case DbType.Time: return DateTime.MinValue;
+				case DbType.VarNumeric: return 0;
+				default: return null;
+			}
+		}
+
+		/// <summary>
+		/// Get Value or Default Value from an IDataParamater
+		/// Based on DbType
+		/// </summary>
+		/// <param name="p">The IDataParameter instance type is used to determine the default value.</param>
+		/// <returns></returns>
+		public static Object GetDataValue(IDataParameter p)
+		{
+			if (p.Value != DBNull.Value) 
+				return p.Value;
+			else
+				return GetDefaultByType(p.DbType);
+		}
+
+		/// <summary>
+		/// Checks to see if the Default Value has been set to the parameter.
+		/// If it's the default value, then create.
+		/// </summary>
+		/// <param name="val">The value we want to check.</param>
+		/// <param name="dbtype">The DbType from wich we take the default value.</param>
+		/// <returns></returns>
+		public static object DefaultToDBNull(object val, DbType dbtype){
+			if (val == null || Object.Equals(val, GetDefaultByType(dbtype)))
+				return System.DBNull.Value;
+			else
+				return val;
+		}
+		#endregion
+		
+		
+		
+
+	}
+}

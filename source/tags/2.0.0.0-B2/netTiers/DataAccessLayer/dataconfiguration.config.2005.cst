@@ -1,0 +1,34 @@
+<%@ CodeTemplate Language="C#" TargetLanguage="Xml" Description="data Configuration file" %>
+<%@ Property Name="ConnectionString" Type="System.String" Category="Data" Description="sql connectionstring." %>
+<?xml version="1.0" encoding="utf-8"?>
+<dataConfiguration>
+  <xmlSerializerSection type="Microsoft.Practices.EnterpriseLibrary.Data.Configuration.DatabaseSettings, Microsoft.Practices.EnterpriseLibrary.Data, Version=1.1.0.0,  Culture=neutral, PublicKeyToken=null">
+    <enterpriseLibrary.databaseSettings xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" defaultInstance="Database Instance" xmlns="http://www.microsoft.com/practices/enterpriselibrary/08-31-2004/data">
+      <databaseTypes>
+        <databaseType name="Sql Server" type="Microsoft.Practices.EnterpriseLibrary.Data.Sql.SqlDatabase, Microsoft.Practices.EnterpriseLibrary.Data, Version=1.1.0.0,  Culture=neutral, PublicKeyToken=null" />
+      </databaseTypes>
+      <instances>
+        <instance name="Database Instance" type="Sql Server" connectionString="Sql Connection String" />
+      </instances>
+      <connectionStrings>
+        <connectionString name="Sql Connection String">
+          <parameters>
+			<%
+				string[] parameters = ConnectionString.Split(';');
+				foreach(string parameter in parameters)
+				{
+					string[] keypair = parameter.Split('=');
+					if (keypair.Length == 2) {%>
+				<parameter name="<%=keypair[0].Trim()%>" value="<%=keypair[1].Trim()%>" isSensitive="false" />
+					<%}
+					else {%>
+					<!-- <%=parameter%> -->
+					<%}
+				}
+			%>            
+          </parameters>
+        </connectionString>
+      </connectionStrings>
+    </enterpriseLibrary.databaseSettings>
+  </xmlSerializerSection>
+</dataConfiguration>

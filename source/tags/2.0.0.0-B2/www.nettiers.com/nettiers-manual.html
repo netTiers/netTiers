@@ -1,0 +1,748 @@
+<html>
+<head>
+<META http-equiv="Content-Type" content="text/html; charset=ISO-8859-1">
+<title>.NetTiers</title>
+<link rel="stylesheet" href="stylesheet.css" type="text/css">
+<meta name="generator" content="DocBook XSL Stylesheets V1.68.1">
+</head>
+<body bgcolor="white" text="black" link="#0000FF" vlink="#840084" alink="#0000FF">
+<div class="book" lang="en">
+<div class="titlepage">
+<div><div class="mediaobject" align="left"><img src="images/logo.gif" align="left"></div><div><h1 class="title"><a name="IDAHAAO"></a>.NetTiers</h1></div><div><h2 class="subtitle">The .Net data tiers generator</h2></div><div><div class="authorgroup"><div class="author"><h3 class="author"><span class="firstname">John</span> <span class="surname">Roland</span></h3></div></div></div><div><p class="copyright">Copyright © 2005 http://cstemplates.sourceforge.org</p></div><div><p class="pubdate">$Date$</p></div><div><p class="releaseinfo">$Revision$</p></div></div>
+<hr>
+</div>
+<div class="toc"><p><b>Table of Contents</b></p><dl><dt><span class="preface"><a href="#IDAPBAO">Preface</a></span></dt><dt><span class="chapter"><a href="#IDACEAO">1. Concepts</a></span></dt><dt><span class="chapter"><a href="#IDAZEAO">2. Northwind samples</a></span></dt><dd><dl><dt><span class="section"><a href="#IDA3EAO">Sample model</a></span></dt><dt><span class="section"><a href="#IDAEHAO">Code examples :</a></span></dt></dl></dd><dt><span class="chapter"><a href="#IDAUHAO">3. Configuration</a></span></dt><dd><dl><dt><span class="section"><a href="#IDAYHAO"></a></span></dt></dl></dd><dt><span class="chapter"><a href="#IDAIIAO">4. Deep load, Deep save</a></span></dt><dd><dl><dt><span class="section"><a href="#IDAMIAO"></a></span></dt></dl></dd><dt><span class="chapter"><a href="#IDAPIAO">5. Adding Data access methods, based on your own stored procedures</a></span></dt><dd><dl><dt><span class="section"><a href="#IDATIAO">Overview</a></span></dt><dt><span class="section"><a href="#IDAEJAO">Sample</a></span></dt></dl></dd><dt><span class="chapter"><a href="#IDAXJAO">6. the nAnt file</a></span></dt><dt><span class="chapter"><a href="#IDAMKAO">7. Templates parameters</a></span></dt><dt><span class="chapter"><a href="#IDA5OAO">8. Unit tests</a></span></dt><dt><span class="chapter"><a href="#IDAGQAO">9. Recommandations</a></span></dt><dd><dl><dt><span class="section"><a href="#IDAKQAO">Database design guide</a></span></dt></dl></dd><dt><span class="chapter"><a href="#IDADRAO">10. Roadmap</a></span></dt><dd><dl><dt><span class="section"><a href="#IDAHRAO">v0.9 - Childebert</a></span></dt><dt><span class="section"><a href="#IDADSAO">v1.0 - Clotaire</a></span></dt></dl></dd><dt><span class="chapter"><a href="#IDAYSAO">11. Project information</a></span></dt><dd><dl><dt><span class="section"><a href="#IDA2SAO">Description</a></span></dt><dt><span class="section"><a href="#IDAQTAO">Contributors</a></span></dt></dl></dd></dl></div>
+<div class="list-of-tables">
+<p><b>List of Tables</b></p>
+<dl>
+<dt>2.1. <a href="#IDADFAO">The employee Table</a></dt>
+<dt>7.1. <a href="#IDASKAO">DataSource category</a></dt>
+<dt>7.2. <a href="#IDAZLAO">General category</a></dt>
+<dt>7.3. <a href="#IDA3NAO">Parameters for webservice</a></dt>
+</dl>
+</div>
+<div class="preface" lang="en">
+<div class="titlepage">
+<div><div><h2 class="title"><a name="IDAPBAO"></a>Preface</h2></div></div>
+</div>
+<p>
+	    	.NetTiers are CodeSmith templates for object-relational mapping that takes an existing SQLServer database and automatically generates
+	        a personnalized Data Tiers application block to use in your .Net applications.  
+	     </p>
+<p>
+			Core features include:
+		</p>
+<div class="itemizedlist">
+<ul type="disc">
+<li>
+				Generate the business objects (called entities) with a 1:1
+				mapping ( an entity for each table, with a property for each
+				column).
+		
+				<div class="itemizedlist">
+<ul type="circle">
+<li>
+						Serializable
+					</li>
+<li>
+						trigger events
+					</li>
+<li>
+						Implements an IEntity interface, which contains the columns
+						that are present in every table
+					</li>
+</ul>
+</div>
+</li>
+<li>
+					Generate Repositories classes for Database operations :
+		
+				<div class="itemizedlist">
+<ul type="circle">
+<li>
+						Support for basic CRUD: UPDATE, DELETE, INSERT, SELECT ALL, PAGED SELECT, FIND
+					</li>
+<li>
+						Support for queries using primary key
+					</li>
+<li>
+						Support for queries using foreign key
+					</li>
+<li>
+						Support for queries using keys that are part of an index
+					</li>
+<li>
+						Support for queries using keys that are part of a junction table
+					</li>
+<li>
+						Support for user defined queries using a very simple naming rule (_TableName_xxxxxxx)
+					</li>
+<li>
+						Support for Deep loading and saving, with children type selection and optional recursivity.
+					</li>
+<li>
+						Support for find methods, with paging and sorting. (builded with the datagrid in mind :-)
+					</li>
+</ul>
+</div>
+</li>
+<li>
+				Generate strongly-typed collections for entities and repositories.
+
+				<div class="itemizedlist">
+<ul type="circle">
+<li>
+						Implement CollectionBase , IBindingList, IList and ICloneable
+					</li>
+<li>
+						Sortable, even Unsortable !
+					</li>
+<li>
+						bindable to datagrid, or any winform or asp.net controls
+					</li>
+</ul>
+</div>
+</li>
+<li>
+				it creates <span class="emphasis"><em>ASP.NET webservice</em></span> for distributed programming.
+			</li>
+<li>
+				Create the stored procedures script and can automatically install them on the server.
+			</li>
+<li>
+				Generates configurable <span class="emphasis"><em>Visual Studio</em></span> projects/solution.
+			</li>
+<li>
+				A full set of nUnit tests.
+			</li>
+<li>
+				Each object has a concrete and a base class which it inherit
+				from. The concrete class is generated just once, so you have can use
+				it to add you custom code.
+			</li>
+<li>
+				the code is fully commented (it use to Description extended properties of the data table and column) and follow the microsoft naming guidelines.
+			</li>
+<li>
+				Open source ! You can modify the templates and contribute (<a href="http://www.sourceforge.net/projects/cstemplates" target="_top">http://www.sourceforge.net/projects/cstemplates</a>)
+			</li>
+</ul>
+</div>
+</div>
+<div class="chapter" lang="en">
+<div class="titlepage">
+<div><div><h2 class="title"><a name="IDACEAO"></a>Chapter 1. Concepts</h2></div></div>
+</div>
+<p>
+	       This data tiers is composed of custom business entities components (the data itself) and data access logic components (the persistence logic).
+	       This design is inspired from the Microsoft patterns &amp; practices guide <a href="http://msdn.microsoft.com/library/default.asp?url=/library/en-us/dnbda/html/BOAGag.asp" target="_top">Designing Data Tier Components and Passing Data Through Tiers</a>:
+	    </p>
+<div class="mediaobject"><img src="images\design.gif"></div>
+</div>
+<div class="chapter" lang="en">
+<div class="titlepage">
+<div><div><h2 class="title"><a name="IDAZEAO"></a>Chapter 2. Northwind samples</h2></div></div>
+</div>
+<div class="toc">
+<p><b>Table of Contents</b></p>
+<dl>
+<dt><span class="section"><a href="#IDA3EAO">Sample model</a></span></dt>
+<dt><span class="section"><a href="#IDAEHAO">Code examples :</a></span></dt>
+</dl>
+</div>
+<div class="section" lang="en">
+<div class="titlepage">
+<div><div><h2 class="title" style="clear: both"><a name="IDA3EAO"></a>Sample model</h2></div></div>
+</div>
+<p>To demonstrate the basis of the templates, we will use the following "Employee" Table:</p>
+<div class="table"><a name="IDADFAO"></a><p class="title"><b>Table 2.1. The employee Table</b></p>
+<table summary="The employee Table" border="1">
+<colgroup><col><col><col></colgroup>
+<thead>
+<tr>
+<th>The Employee Northwind table</th>
+<th>The generated entity class</th>
+<th>The generated repository class</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>
+								<div class="mediaobject"><img src="images\Employee_DatabaseTable.png"></div>
+							</td>
+<td>
+								<div class="mediaobject"><img src="images\Employee_ClassEntity.png"></div>
+							</td>
+<td>
+								<div class="mediaobject"><img src="images\Employee_RepositoryEntity.png"></div>
+							</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+<div class="section" lang="en">
+<div class="titlepage">
+<div><div><h2 class="title" style="clear: both"><a name="IDAEHAO"></a>Code examples :</h2></div></div>
+</div>
+<pre class="programlisting">
+using Company.Product.DataAccessLayer;
+			
+// Get all the employee, sort it on the LastName and print them out 
+EmployeeCollection employees = EmployeeRepository.GetAll(connectionString);
+employees.Sort(EmployeeColumns.LastName, ListSortDirection.Ascending);
+foreach(Employee employee in employees)
+{
+	Console.WriteLine("{1} {0}", employee.FirstName, employee.LastName);
+}
+</pre>
+<pre class="programlisting">
+// Create a new record and save
+Employee employee = new Employee();
+employee.FirstName = "John";employee.LastName = "Doe";
+employee.BirthDate = DateTime.Now;employee.Address = "10 , fake street";
+employee.City = "Metroplolis";employee.Country = "USA";
+employee.HireDate = DateTime.Now;
+employee.HomePhone = "0123456789";
+employee.Notes = "This is a fake employee";
+employee.Title = "M";
+employee.TitleOfCourtesy = "Dear";
+employee.PostalCode = "5556";
+employee.Region = "New-York";
+
+EmployeeRepository.Current.Save(connectionString, employee);
+	</pre>
+<pre class="programlisting">
+// Select by Index and Update
+EmployeeCollection employees = EmployeeRepository.GetByLastName(connectionString, "Doe");
+if (employees.Count == 1)
+{
+	employees[0].Notes = "This is a modified fake employee";
+	EmployeeRepository.Current.Save(connectionString, employees[0]);
+	
+	Console.Write(employees[0]);
+}
+	</pre>
+<pre class="programlisting">
+// Select by primary key and Delete 
+// (Demonstrate that insert, update, delete methods can also take collection as parameter)
+EmployeeCollection employees = EmployeeRepository.GetByEmployeeID(connectionString, 13);
+EmployeeRepository.Current.Delete(connectionString, employees);
+	</pre>
+<pre class="programlisting">
+// The SqlClient can work with transactions.
+// Also show the Save method, wich encapsulate the use of Insert, Update and Delete methods.
+TransactionManager transaction = new TransactionManager(connectionString);
+transaction.BeginTransaction();
+try
+{
+	// Insert
+	Employee employee = new Employee();
+	employee.FirstName = "John";
+	employee.LastName = "Doe";
+	employee.BirthDate = DateTime.Now;
+	employee.Address = "10 , fake street";
+	employee.City = "Metroplolis";
+	employee.Country = "USA";
+	employee.HireDate = DateTime.Now;
+	employee.HomePhone = "0123456789";
+	mployee.Notes = "This is a fake employee";
+	employee.Title = "M";
+	employee.TitleOfCourtesy = "Dear";
+	employee.PostalCode = "5556";
+	employee.Region = "New-York";
+	EmployeeRepository.Current.Save(transaction, employee);
+	
+	// Update
+	employee.Notes = "This is a modified fake employee";
+	EmployeeRepository.Current.Save(transaction, employee); 
+	transaction.Commit();
+	Console.WriteLine("ok");
+
+} 
+catch(Exception
+{
+	transaction.Rollback();
+	Console.WriteLine("nok");
+}
+	</pre>
+</div>
+</div>
+<div class="chapter" lang="en">
+<div class="titlepage">
+<div><div><h2 class="title"><a name="IDAUHAO"></a>Chapter 3. Configuration</h2></div></div>
+</div>
+<div class="toc">
+<p><b>Table of Contents</b></p>
+<dl>
+<dt><span class="section"><a href="#IDAYHAO"></a></span></dt>
+</dl>
+</div>
+<div class="section" lang="en">
+<div class="titlepage"></div>
+<p>The generated files contains also an application configuration file that store the connection string (for the sql provider) or the url (for the webservice provider).</p>
+<pre class="programlisting">
+&lt;DataAccessLayer&gt;
+	&lt;!-- The url of the webservice that will be consumed by the WebServiceClient repositories --&gt;
+	&lt;add key="url" value="http://localhost/NorthWindServices.asmx" /&gt;
+	
+	&lt;!-- The connectionstring to the database that will be consumed by the sqlClient repositories --&gt;
+	&lt;add key="connectionString" value="Server=(local);Database=northwind;Trusted_Connection=True" /&gt;
+	
+	&lt;!-- Indicates the type of client that is used by the "Factories" repositories --&gt;
+	&lt;add key="clientType" value="sqlClient|WebServiceClient" /&gt;
+&lt;/DataAccessLayer&gt;
+				</pre>
+</div>
+</div>
+<div class="chapter" lang="en">
+<div class="titlepage">
+<div><div><h2 class="title"><a name="IDAIIAO"></a>Chapter 4. Deep load, Deep save</h2></div></div>
+</div>
+<div class="toc">
+<p><b>Table of Contents</b></p>
+<dl>
+<dt><span class="section"><a href="#IDAMIAO"></a></span></dt>
+</dl>
+</div>
+<div class="section" lang="en">
+<div class="titlepage"></div>
+			like to robert doc
+		</div>
+</div>
+<div class="chapter" lang="en">
+<div class="titlepage">
+<div><div><h2 class="title"><a name="IDAPIAO"></a>Chapter 5. Adding Data access methods, based on your own stored procedures</h2></div></div>
+</div>
+<div class="toc">
+<p><b>Table of Contents</b></p>
+<dl>
+<dt><span class="section"><a href="#IDATIAO">Overview</a></span></dt>
+<dt><span class="section"><a href="#IDAEJAO">Sample</a></span></dt>
+</dl>
+</div>
+<div class="section" lang="en">
+<div class="titlepage">
+<div><div><h2 class="title" style="clear: both"><a name="IDATIAO"></a>Overview</h2></div></div>
+</div>
+<p>
+	          To add new methods to the Data access logic components (xxRepository classes), you can add them to the
+	          concrete classes. As opposite to the Base classes which are overwriten at each generation, the concrete class at only generated once.
+	          That solution is good, but presents some disavantages:
+	          <div class="itemizedlist"><ul type="disc"><li>You'll have to write many overloads in order to offer the same functionnalities than generated code</li><li>Many classes have to be changes: interface, factory, sqlClient, webServiceClient.</li><li>It is always difficult to manage mixed generated and authored code.</li></ul></div>
+	
+	          There is an alternative: generate methods from your own stored procedures.
+	          To activate this, turn the "Include custom sql" option to True.
+	          Then your stored procedure name must starts with '_TableName_' followed by the text you want as Method name.
+	          This naming convention will permit the templates to detect your stored procedure, and to create the method in the correct repository class (xxTableNameRepository).
+			</p>
+</div>
+<div class="section" lang="en">
+<div class="titlepage">
+<div><div><h2 class="title" style="clear: both"><a name="IDAEJAO"></a>Sample</h2></div></div>
+</div>
+<p>
+				As the best explanation is probably an example, just take a look at the Product table from the Northwind database,
+				and imagine we want the list of products that have units in stock that are bellow a given value.
+				So we first create the following stored procedure:
+			</p>
+<pre class="programlisting">
+-- Get the products that have less units in stock than the @UnitsInStock parameter.
+CREATE PROCEDURE dbo._Products_GetWithStockBelow
+@UnitsInStock smallint
+AS
+
+SELECT
+[ProductID],
+[ProductName],
+[SupplierID],
+[CategoryID],
+[QuantityPerUnit],
+[UnitPrice],
+[UnitsInStock],
+[UnitsOnOrder],
+[ReorderLevel],
+[Discontinued]
+FROM
+[dbo].[Products]
+WHERE
+[UnitsInStock] &lt; @UnitsInStock
+GO
+	      </pre>
+<p>
+				After that we can run the generation, and look at the SqlClient ProductRepository class "Custom Methods" region:
+			</p>
+<pre class="programlisting">
+	          
+/// &lt;summary&gt;
+///	This method wrap the '_Products_GetWithStockBelow' stored procedure. 
+/// &lt;/summary&gt;
+/// &lt;param name="UnitsInStock"&gt; A &lt;c&gt;System.Int16&lt;/c&gt; instance.&lt;/param&gt;
+/// &lt;param name="start"&gt;Row number at which to start reading.&lt;/param&gt;
+/// &lt;param name="pageLength"&gt;Number of rows to return.&lt;/param&gt;
+/// &lt;remark&gt;This method is generate from a stored procedure.&lt;/remark&gt;
+/// &lt;returns&gt;A &lt;see cref="ProductCollection" /&gt; instance.&lt;/returns&gt;
+public  ProductCollection GetWithStockBelow(int start, int pageLength , System.Int16 UnitsInStock)
+{
+	return GetWithStockBelow(this.transactionManager, this.connectionString, 0, int.MaxValue , UnitsInStock);
+}
+
+/// &lt;summary&gt;
+///	This method wrap the '_Products_GetWithStockBelow' stored procedure. 
+/// &lt;/summary&gt;
+/// &lt;param name="UnitsInStock"&gt; A &lt;c&gt;System.Int16&lt;/c&gt; instance.&lt;/param&gt;
+/// &lt;param name="transactionManager"&gt;&lt;see cref="TransactionManager" /&gt; object&lt;/param&gt;
+/// &lt;remark&gt;This method is generate from a stored procedure.&lt;/remark&gt;
+/// &lt;returns&gt;A &lt;see cref="ProductCollection" /&gt; instance.&lt;/returns&gt;
+public  ProductCollection GetWithStockBelow(TransactionManager transactionManager , System.Int16 UnitsInStock)
+{
+	return GetWithStockBelow(transactionManager, string.Empty , 0, int.MaxValue , UnitsInStock);
+}
+
+/// &lt;summary&gt;
+///	This method wrap the '_Products_GetWithStockBelow' stored procedure. 
+/// &lt;/summary&gt;
+/// &lt;param name="UnitsInStock"&gt; A &lt;c&gt;System.Int16&lt;/c&gt; instance.&lt;/param&gt;
+/// &lt;param name="connectionString"&gt;Connection string to datasource.&lt;/param&gt;
+/// &lt;remark&gt;This method is generate from a stored procedure.&lt;/remark&gt;
+/// &lt;returns&gt;A &lt;see cref="ProductCollection" /&gt; instance.&lt;/returns&gt;
+public  ProductCollection GetWithStockBelow(string connectionString , System.Int16 UnitsInStock)
+{
+	return GetWithStockBelow(null, this.connectionString, 0, int.MaxValue , UnitsInStock);
+}
+
+/// &lt;summary&gt;
+///	This method wrap the '_Products_GetWithStockBelow' stored procedure. 
+/// &lt;/summary&gt;
+/// &lt;param name="UnitsInStock"&gt; A &lt;c&gt;System.Int16&lt;/c&gt; instance.&lt;/param&gt;
+/// &lt;remark&gt;This method is generate from a stored procedure.&lt;/remark&gt;
+/// &lt;returns&gt;A &lt;see cref="ProductCollection" /&gt; instance.&lt;/returns&gt;
+public  ProductCollection GetWithStockBelow(System.Int16 UnitsInStock)
+{
+	return GetWithStockBelow(this.transactionManager, this.connectionString, 0, int.MaxValue , UnitsInStock);
+}
+
+	
+/// &lt;summary&gt;
+///	This method wrap the '_Products_GetWithStockBelow' stored procedure. 
+/// &lt;/summary&gt;
+/// &lt;param name="UnitsInStock"&gt; A &lt;c&gt;System.Int16&lt;/c&gt; instance.&lt;/param&gt;
+/// &lt;param name="start"&gt;Row number at which to start reading.&lt;/param&gt;
+/// &lt;param name="pageLength"&gt;Number of rows to return.&lt;/param&gt;
+/// &lt;param name="transactionManager"&gt;&lt;see cref="TransactionManager" /&gt; object&lt;/param&gt;
+/// &lt;param name="connectionString"&gt;Connection string to datasource.&lt;/param&gt;
+/// &lt;remark&gt;This method is generate from a stored procedure.&lt;/remark&gt;
+/// &lt;returns&gt;A &lt;see cref="ProductCollection" /&gt; instance.&lt;/returns&gt;
+protected  ProductCollection GetWithStockBelow(TransactionManager transactionManager, string connectionString, int start, int pageLength , System.Int16 UnitsInStock)
+{
+	SqlDataReader reader;
+	if (transactionManager != null)
+		reader = SqlHelper.ExecuteReader(transactionManager.TransactionObject, "_Products_GetWithStockBelow", UnitsInStock);
+	else
+		reader = SqlHelper.ExecuteReader(connectionString, "_Products_GetWithStockBelow", UnitsInStock);
+	
+	//Create Collection
+	ProductCollection rows = new ProductCollection();
+	Fill(reader, rows, start, pageLength);
+	reader.Close();
+	return rows;
+}
+	
+	          </pre>
+<p>
+	            As you can see, all the overloads are generated, with parameters and paging for both sqlClient and webServiceClient.
+	       </p>
+</div>
+</div>
+<div class="chapter" lang="en">
+<div class="titlepage">
+<div><div><h2 class="title"><a name="IDAXJAO"></a>Chapter 6. the nAnt file</h2></div></div>
+</div>
+<p>
+	            The template generates a nAnt build file. I will not explain here what is nant, you can find more information at <a href="http://nant.sourceforge.net" target="_top">nAnt homepage</a>.
+	            Basically, it is used to compile the program from a command line, and without the need of visual studio,
+	            but  it's not limited to that: it also contains targets to run nUnit tests and build nDoc documentation.
+	        </p>
+<div class="mediaobject"><img src="images\nAnt.PNG"></div>
+</div>
+<div class="chapter" lang="en">
+<div class="titlepage">
+<div><div><h2 class="title"><a name="IDAMKAO"></a>Chapter 7. Templates parameters</h2></div></div>
+</div>
+<p>The templates are configurable in many aspects:</p>
+<div class="table"><a name="IDASKAO"></a><p class="title"><b>Table 7.1. DataSource category</b></p>
+<table summary="DataSource category" border="1">
+<colgroup><col><col></colgroup>
+<tbody>
+<tr>
+<td>SourceDatabase</td>
+<td>The database from which you want to create the application block.</td>
+</tr>
+<tr>
+<td>SourceTables</td>
+<td>The list of table you want to include in the generation.</td>
+</tr>
+<tr>
+<td>EntireDatabase</td>
+<td>Indicates if all the tables have to be included, in consequence it overrides the SourceTables list.</td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="table"><a name="IDAZLAO"></a><p class="title"><b>Table 7.2. General category</b></p>
+<table summary="General category" border="1">
+<colgroup><col><col></colgroup>
+<tbody>
+<tr>
+<td>OuputDirectory</td>
+<td>The root path destination for the generation.</td>
+</tr>
+<tr>
+<td>BusinessLogicLayerFolderName</td>
+<td>The OuputDirectory's sub-folder name for the BLL code
+					(entity and entity collection), it is recommended to let it
+					blank.</td>
+</tr>
+<tr>
+<td>DataAccessLayerFolderName</td>
+<td>The OuputDirectory's sub-folder name for the
+					DAL(Repository) code (recommended value: DataAccessLayer)</td>
+</tr>
+<tr>
+<td>SqlFolderName</td>
+<td>The OuputDirectory's sub-folder name for the stored
+					procedure script (recommended value: SQL)</td>
+</tr>
+<tr>
+<td>NameSpace</td>
+<td>The root namespace for the project. DAL subfolder name is
+					used with this parameter for the DAL namespace (namespace
+					structure = directory structure)</td>
+</tr>
+<tr>
+<td>GenerateUnitTest</td>
+<td>Indicates if the nUnit tests have to be generated.</td>
+</tr>
+<tr>
+<td>VsNetIntegration</td>
+<td>Specify the kind of visual studio integratrion: none,
+					single project, separated project (BLL and DAL).</td>
+</tr>
+<tr>
+<td>VsNetVersion</td>
+<td>Specify the version of visual studio.</td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="table"><a name="IDA3NAO"></a><p class="title"><b>Table 7.3. Parameters for webservice</b></p>
+<table summary="Parameters for webservice" border="1">
+<colgroup><col><col></colgroup>
+<tbody>
+<tr>
+<td>GenerateWebService</td>
+<td>Indicates if the asp.net webservice and the associated DAL
+					have to be generated.</td>
+</tr>
+<tr>
+<td>WebServiceOutputPath</td>
+<td>The full path to the asp.net webservice folder (example:	c:\inetpub\wwwroot\WebServices)</td>
+</tr>
+<tr>
+<td>WebServiceUrl</td>
+<td>The url that match with the WebServiceOutputPath (example:
+					http://localhost/WebServices/)</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+<div class="chapter" lang="en">
+<div class="titlepage">
+<div><div><h2 class="title"><a name="IDA5OAO"></a>Chapter 8. Unit tests</h2></div></div>
+</div>
+<p>
+				The templates can optionnaly generate some nUnit tests. So far these tests are limited to:
+			</p>
+<div class="itemizedlist">
+<ul type="disc">
+<li>Insert</li>
+<li>Update</li>
+<li>GetAll</li>
+<li>Delete</li>
+<li>DeepLoad</li>
+<li>Serialization</li>
+</ul>
+</div>
+<div class="screenshot">
+<div class="mediaobject"><img src="images\Northwind_UnitTests.png"></div>
+</div>
+</div>
+<div class="chapter" lang="en">
+<div class="titlepage">
+<div><div><h2 class="title"><a name="IDAGQAO"></a>Chapter 9. Recommandations</h2></div></div>
+</div>
+<div class="toc">
+<p><b>Table of Contents</b></p>
+<dl>
+<dt><span class="section"><a href="#IDAKQAO">Database design guide</a></span></dt>
+</dl>
+</div>
+<div class="section" lang="en">
+<div class="titlepage">
+<div><div><h2 class="title" style="clear: both"><a name="IDAKQAO"></a>Database design guide</h2></div></div>
+</div>
+<p>
+				In a perfect world, the following rules should be applied to your database to get the best of the templates:
+			</p>
+<div class="itemizedlist">
+<ul type="disc">
+<li>
+					Tables name are singular and Pascal Case.
+				</li>
+<li>
+					Fields are Pascal Case and a description is provided.
+				</li>
+<li>
+					Foreign keys are associated to a relation
+				</li>
+<li>
+					Field or group of fields that will be used to made a query on
+				this table are indexed.
+				</li>
+<li>
+					Custom stored procedure's name start with an underscore,
+				followed by the name of the target table.
+				</li>
+<li>
+					Don't end a table's name with the word "Collection".
+				</li>
+<li>
+					Don't have a table named "ListItem".
+				</li>
+</ul>
+</div>
+</div>
+</div>
+<div class="chapter" lang="en">
+<div class="titlepage">
+<div><div><h2 class="title"><a name="IDADRAO"></a>Chapter 10. Roadmap</h2></div></div>
+</div>
+<div class="toc">
+<p><b>Table of Contents</b></p>
+<dl>
+<dt><span class="section"><a href="#IDAHRAO">v0.9 - Childebert</a></span></dt>
+<dt><span class="section"><a href="#IDADSAO">v1.0 - Clotaire</a></span></dt>
+</dl>
+</div>
+<div class="section" lang="en">
+<div class="titlepage">
+<div><div><h2 class="title" style="clear: both"><a name="IDAHRAO"></a>v0.9 - Childebert</h2></div></div>
+</div>
+<div class="itemizedlist">
+<ul type="disc">
+<li>
+<p>Deep loading and saving</p>
+</li>
+<li>
+<p>More coverage with the unit test</p>
+</li>
+<li>
+<p>Inclusion of custom SQL queries in the DataAccessLayer</p>
+</li>
+<li>
+<p>Generation of nAnt and nDoc files</p>
+</li>
+</ul>
+</div>
+</div>
+<div class="section" lang="en">
+<div class="titlepage">
+<div><div><h2 class="title" style="clear: both"><a name="IDADSAO"></a>v1.0 - Clotaire</h2></div></div>
+</div>
+<div class="itemizedlist">
+<ul type="disc">
+<li>
+					Support for views
+				</li>
+<li>
+					Use of entreprise library configuration and data access application blocks
+				</li>
+<li>
+					A winform wizard interface
+				</li>
+<li>
+					Batch file generation
+				</li>
+<li>
+					Business rule validator
+				</li>
+<li>
+					Generation report
+				</li>
+</ul>
+</div>
+</div>
+</div>
+<div class="chapter" lang="en">
+<div class="titlepage">
+<div><div><h2 class="title"><a name="IDAYSAO"></a>Chapter 11. Project information</h2></div></div>
+</div>
+<div class="toc">
+<p><b>Table of Contents</b></p>
+<dl>
+<dt><span class="section"><a href="#IDA2SAO">Description</a></span></dt>
+<dt><span class="section"><a href="#IDAQTAO">Contributors</a></span></dt>
+</dl>
+</div>
+<div class="section" lang="en">
+<div class="titlepage">
+<div><div><h2 class="title" style="clear: both"><a name="IDA2SAO"></a>Description</h2></div></div>
+</div>
+<p>The project is open source and is hosted at <a href="http://sourceforge.net/projects/cstemplates" target="_top">sourceforge</a>. You
+			can also search for information or support via the <a href="http://www.ericjsmith.net/codesmith/forum/default.aspx?f=9&amp;m=3323" target="_top">codesmith
+			forum</a>. The templates were originally developped by
+			<span class="authorinitials">Ryan Hurdon</span> and are now maintained by
+			<span class="authorinitials">John Roland</span>. Here are the list of actual
+			contributors:</p>
+</div>
+<div class="section" lang="en">
+<div class="titlepage">
+<div><div><h2 class="title" style="clear: both"><a name="IDAQTAO"></a>Contributors</h2></div></div>
+</div>
+<div class="itemizedlist">
+<ul type="disc">
+<li>
+					Ryan Hurdon (Creator of the templates)
+				</li>
+<li>
+					John Roland (refactoring, base classes, webservice, unit tests,
+				events, Visual studio integration, debuging)
+				</li>
+<li>
+					Oskar Austegard for the sptemplate script.
+				</li>
+<li>
+					Dave Kekish (multiple primary keys)
+				</li>
+<li>
+					Fabio Fabrizio (Find methods, GetPaged methods)
+				</li>
+<li>
+					Robert Hinojosa (deep load, deep save, entities's children
+				refactoring, view state, business rules, and more)
+				</li>
+<li>
+					_ab for computed columns
+				</li>
+<li>
+					Steven Smith for the shuffle method on collection
+				</li>
+</ul>
+</div><a href="http://sourceforge.net" target="_top">
+				<div class="mediaobject"><img src="http://sourceforge.net/sflogo.php?group_id=YOUR_GROUP_ID_GOES_HERE&amp;type=7"></div>
+			</a></div>
+</div>
+</div>
+</body>
+</html>
