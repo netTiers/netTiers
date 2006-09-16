@@ -1,0 +1,2050 @@
+<?xml version="1.0"?>
+<doc>
+    <assembly>
+        <name>Microsoft.Practices.EnterpriseLibrary.Caching</name>
+    </assembly>
+    <members>
+        <member name="T:Microsoft.Practices.EnterpriseLibrary.Caching.Expirations.NeverExpired">
+            <summary>
+            This class reflects an expiration policy of never being expired.
+            </summary>
+        </member>
+        <member name="T:Microsoft.Practices.EnterpriseLibrary.Caching.ICacheItemExpiration">
+            <summary>
+            Allows end users to implement their own cache item expiration schema.
+            </summary>
+        </member>
+        <member name="M:Microsoft.Practices.EnterpriseLibrary.Caching.ICacheItemExpiration.HasExpired">
+            <summary>
+            Specifies if item has expired or not.
+            </summary>
+            <returns>Returns true if the item has expired, otherwise false.</returns>
+        </member>
+        <member name="M:Microsoft.Practices.EnterpriseLibrary.Caching.ICacheItemExpiration.Notify">
+            <summary>
+            Called to tell the expiration that the CacheItem to which this expiration belongs has been touched by the user
+            </summary>
+        </member>
+        <member name="M:Microsoft.Practices.EnterpriseLibrary.Caching.ICacheItemExpiration.Initialize(Microsoft.Practices.EnterpriseLibrary.Caching.CacheItem)">
+            <summary>
+            Called to give the instance the opportunity to initialize itself from information contained in the CacheItem.
+            </summary>
+            <param name="owningCacheItem">CacheItem that owns this expiration object</param>
+        </member>
+        <member name="M:Microsoft.Practices.EnterpriseLibrary.Caching.Expirations.NeverExpired.HasExpired">
+            <summary>
+            Always returns false
+            </summary>
+            <returns>False always</returns>
+        </member>
+        <member name="M:Microsoft.Practices.EnterpriseLibrary.Caching.Expirations.NeverExpired.Notify">
+            <summary>
+            Not used
+            </summary>
+        </member>
+        <member name="M:Microsoft.Practices.EnterpriseLibrary.Caching.Expirations.NeverExpired.Initialize(Microsoft.Practices.EnterpriseLibrary.Caching.CacheItem)">
+            <summary>
+            Not used
+            </summary>
+            <param name="owningCacheItem">Not used</param>
+        </member>
+        <member name="T:Microsoft.Practices.EnterpriseLibrary.Caching.Configuration.StorageEncryptionProviderData">
+            <summary>
+            Base class for configuration data defined for all types of StorageEncryptionProviders
+            </summary>
+        </member>
+        <member name="M:Microsoft.Practices.EnterpriseLibrary.Caching.Configuration.StorageEncryptionProviderData.#ctor">
+            <summary>
+            Default constructor
+            </summary>
+        </member>
+        <member name="M:Microsoft.Practices.EnterpriseLibrary.Caching.Configuration.StorageEncryptionProviderData.#ctor(System.String)">
+            <summary>
+            Initialize a new instance of the <see cref="T:Microsoft.Practices.EnterpriseLibrary.Caching.Configuration.StorageEncryptionProviderData"/> class.
+            </summary>
+            <param name="name">
+            The name of the <see cref="T:Microsoft.Practices.EnterpriseLibrary.Caching.Configuration.StorageEncryptionProviderData"/>.
+            </param>
+        </member>
+        <member name="T:Microsoft.Practices.EnterpriseLibrary.Caching.CacheItem">
+            <summary>
+            This class contains all data important to define an item stored in the cache. It holds both the key and 
+            value specified by the user, as well as housekeeping information used internally by this block. It is public, 
+            rather than internal, to allow block extenders access to it inside their own implementations of IBackingStore.
+            </summary>
+        </member>
+        <member name="M:Microsoft.Practices.EnterpriseLibrary.Caching.CacheItem.#ctor(System.String,System.Object,Microsoft.Practices.EnterpriseLibrary.Caching.CacheItemPriority,Microsoft.Practices.EnterpriseLibrary.Caching.ICacheItemRefreshAction,Microsoft.Practices.EnterpriseLibrary.Caching.ICacheItemExpiration[])">
+            <summary>
+            Constructs a fully formed CacheItem. 
+            </summary>
+            <param name="key">Key identifying this CacheItem</param>
+            <param name="value">Value to be stored. May be null.</param>
+            <param name="scavengingPriority">Scavenging priority of CacheItem. See <see cref="T:Microsoft.Practices.EnterpriseLibrary.Caching.CacheItemPriority"/> for values.</param>
+            <param name="refreshAction">Object supplied by caller that will be invoked upon expiration of the CacheItem. May be null.</param>
+            <param name="expirations">Param array of ICacheItemExpiration objects. May provide 0 or more of these.</param>
+        </member>
+        <member name="M:Microsoft.Practices.EnterpriseLibrary.Caching.CacheItem.#ctor(System.DateTime,System.String,System.Object,Microsoft.Practices.EnterpriseLibrary.Caching.CacheItemPriority,Microsoft.Practices.EnterpriseLibrary.Caching.ICacheItemRefreshAction,Microsoft.Practices.EnterpriseLibrary.Caching.ICacheItemExpiration[])">
+            <summary>
+            Constructs a fully formed CacheItem. This constructor is to be used when restoring an existing
+            CacheItem from the backing store. As such, it does not generate its own Guid for this instance,
+            but allows the guid to be passed in, as read from the backing store.
+            </summary>
+            <param name="lastAccessedTime">Time this CacheItem last accessed by user.</param>
+            <param name="key">Key provided  by the user for this cache item. May not be null.</param>
+            <param name="value">Value to be stored. May be null.</param>
+            <param name="scavengingPriority">Scavenging priority of CacheItem. See <see cref="T:Microsoft.Practices.EnterpriseLibrary.Caching.CacheItemPriority"/> for values.</param>
+            <param name="refreshAction">Object supplied by caller that will be invoked upon expiration of the CacheItem. May be null.</param>
+            <param name="expirations">Param array of ICacheItemExpiration objects. May provide 0 or more of these.</param>
+        </member>
+        <member name="M:Microsoft.Practices.EnterpriseLibrary.Caching.CacheItem.Replace(System.Object,Microsoft.Practices.EnterpriseLibrary.Caching.ICacheItemRefreshAction,Microsoft.Practices.EnterpriseLibrary.Caching.CacheItemPriority,Microsoft.Practices.EnterpriseLibrary.Caching.ICacheItemExpiration[])">
+            <summary>
+            Replaces the internals of the current cache item with the given new values. This is strictly used in the Cache
+            class when adding a new item into the cache. By replacing the item's contents, rather than replacing the item
+            itself, it allows us to keep a single reference in the cache, simplifying locking.
+            </summary>
+            <param name="value">Value to be stored. May be null.</param>
+            <param name="scavengingPriority">Scavenging priority of CacheItem. See <see cref="T:Microsoft.Practices.EnterpriseLibrary.Caching.CacheItemPriority"/> for values.</param>
+            <param name="refreshAction">Object supplied by caller that will be invoked upon expiration of the CacheItem. May be null.</param>
+            <param name="expirations">Param array of ICacheItemExpiration objects. May provide 0 or more of these.</param>
+        </member>
+        <member name="M:Microsoft.Practices.EnterpriseLibrary.Caching.CacheItem.HasExpired">
+            <summary>
+            Evaluates all expirations associated with this cache item to determine if it 
+            should be considered expired. Evaluation stops as soon as any expiration returns true. 
+            </summary>
+            <returns>True if item should be considered expired, according to policies
+            defined in this item's expirations.</returns>
+        </member>
+        <member name="M:Microsoft.Practices.EnterpriseLibrary.Caching.CacheItem.TouchedByUserAction(System.Boolean)">
+            <summary>
+            Intended to be used internally only. This method is called whenever a CacheItem is touched through the action of a user. It
+            prevents this CacheItem from being expired or scavenged during an in-progress expiration or scavenging process. It has no effect
+            on subsequent expiration or scavenging processes.
+            </summary>
+        </member>
+        <member name="M:Microsoft.Practices.EnterpriseLibrary.Caching.CacheItem.TouchedByUserAction(System.Boolean,System.DateTime)">
+            <summary>
+            Intended to be used internally only. This method is called whenever a CacheItem is touched through the action of a user. It
+            prevents this CacheItem from being expired or scavenged during an in-progress expiration or scavenging process. It has no effect
+            on subsequent expiration or scavenging processes.
+            </summary>
+        </member>
+        <member name="M:Microsoft.Practices.EnterpriseLibrary.Caching.CacheItem.SetLastAccessedTime(System.DateTime)">
+            <summary>
+            Present for testing purposes only. Should not be called by application code 
+            </summary>
+            <param name="specificAccessedTime">Timestamp to be used when setting last accessed time.</param>
+        </member>
+        <member name="P:Microsoft.Practices.EnterpriseLibrary.Caching.CacheItem.ScavengingPriority">
+            <summary>
+            Returns the <see cref="T:Microsoft.Practices.EnterpriseLibrary.Caching.CacheItemPriority"/> assigned to this CacheItem
+            </summary>
+        </member>
+        <member name="P:Microsoft.Practices.EnterpriseLibrary.Caching.CacheItem.Expirations">
+            <summary>
+            Returns array of ICacheItemExpirations assigned to this CacheItem
+            </summary>
+        </member>
+        <member name="P:Microsoft.Practices.EnterpriseLibrary.Caching.CacheItem.LastAccessedTime">
+            <summary>
+            Returns the last accessed time of this CacheItem
+            </summary>
+        </member>
+        <member name="P:Microsoft.Practices.EnterpriseLibrary.Caching.CacheItem.WillBeExpired">
+            <summary>
+            Intended to be used internally only. The value should be true when an item is eligible to be expired.
+            </summary>
+        </member>
+        <member name="P:Microsoft.Practices.EnterpriseLibrary.Caching.CacheItem.EligibleForScavenging">
+            <summary>
+            Intended to be used internally only. The value should be true when an item is eligible for scavenging.
+            </summary>
+        </member>
+        <member name="P:Microsoft.Practices.EnterpriseLibrary.Caching.CacheItem.Value">
+            <summary>
+            Returns the cached value of this CacheItem
+            </summary>
+        </member>
+        <member name="P:Microsoft.Practices.EnterpriseLibrary.Caching.CacheItem.Key">
+            <summary>
+            Returns the key associated with this CacheItem
+            </summary>
+        </member>
+        <member name="P:Microsoft.Practices.EnterpriseLibrary.Caching.CacheItem.RefreshAction">
+            <summary>
+            Intended to be used internally only. Returns object used to refresh expired CacheItems.
+            </summary>
+        </member>
+        <member name="T:Microsoft.Practices.EnterpriseLibrary.Caching.ICacheItemRefreshAction">
+            <summary>
+            This interface defines the contract that must be implemented to create an object that can be used to refresh 
+            an expired item from the cache. The implementing class must be serializable. Care must be taken when implementing 
+            this interface not to create an object that maintains too much state about its environment, as all portions of its
+            environment will be serialized as well, creating possibly a huge object graph.
+            </summary>
+        </member>
+        <member name="M:Microsoft.Practices.EnterpriseLibrary.Caching.ICacheItemRefreshAction.Refresh(System.String,System.Object,Microsoft.Practices.EnterpriseLibrary.Caching.CacheItemRemovedReason)">
+            <summary>
+            Called when an item expires from the cache. This method can be used to notify an application that
+            the expiration occured, cause the item to be refetched and refreshed from its original location, or 
+            perform any other application-specific action. 
+            </summary>
+            <param name="removedKey">Key of item removed from cache. Will never be null.</param>
+            <param name="expiredValue">Value from cache item that was just expired</param>
+            <param name="removalReason">Reason the item was removed from the cache. See <see cref="T:Microsoft.Practices.EnterpriseLibrary.Caching.CacheItemRemovedReason"/></param>
+            <remarks>This method should catch and handle any exceptions thrown during its operation. No exceptions should leak
+            out of it.</remarks>
+        </member>
+        <member name="T:Microsoft.Practices.EnterpriseLibrary.Caching.ExpirationTask">
+            <summary>
+            Summary description for ExpirationTask.
+            </summary>
+        </member>
+        <member name="T:Microsoft.Practices.EnterpriseLibrary.Caching.Expirations.ExtendedFormatTime">
+            <summary>
+            This provider tests if a item was expired using a extended format.
+            </summary>
+        </member>
+        <member name="M:Microsoft.Practices.EnterpriseLibrary.Caching.Expirations.ExtendedFormatTime.#ctor">
+            <summary>
+            Creates an instance of the class.
+            </summary>
+        </member>
+        <member name="M:Microsoft.Practices.EnterpriseLibrary.Caching.Expirations.ExtendedFormatTime.#ctor(System.String)">
+            <summary>
+            Convert the input format to the extented time format.
+            </summary>
+            <param name="timeFormat">
+            This contains the expiration information
+            </param>
+        </member>
+        <member name="M:Microsoft.Practices.EnterpriseLibrary.Caching.Expirations.ExtendedFormatTime.#ctor(System.Runtime.Serialization.SerializationInfo,System.Runtime.Serialization.StreamingContext)">
+            <summary>
+            This method performs the deserialziaton of members of the 
+            current class.
+            </summary>
+            <param name="info">
+            A SerializationInfo object which is deserialized by the 
+            formatter and then passed to current constructor
+            </param>
+            <param name="context">
+            A StreamingContext that describes the source of the 
+            serialized stream from where the Serialization object 
+            is retrieved
+            </param>
+        </member>
+        <member name="M:Microsoft.Practices.EnterpriseLibrary.Caching.Expirations.ExtendedFormatTime.HasExpired">
+            <summary>
+            Specifies if item has expired or not.
+            </summary>
+            <returns>
+            Returns true if the data is expired otherwise false
+            </returns>
+        </member>
+        <member name="M:Microsoft.Practices.EnterpriseLibrary.Caching.Expirations.ExtendedFormatTime.Notify">
+            <summary>
+            Notifies that the item was recently used.
+            </summary>
+        </member>
+        <member name="M:Microsoft.Practices.EnterpriseLibrary.Caching.Expirations.ExtendedFormatTime.Initialize(Microsoft.Practices.EnterpriseLibrary.Caching.CacheItem)">
+            <summary>
+            Not used
+            </summary>
+            <param name="owningCacheItem">Not used</param>
+        </member>
+        <member name="M:Microsoft.Practices.EnterpriseLibrary.Caching.Expirations.ExtendedFormatTime.GetObjectData(System.Runtime.Serialization.SerializationInfo,System.Runtime.Serialization.StreamingContext)">
+            <summary>
+            This method performs the serialization of members of the 
+            current class.
+            </summary>
+            <param name="info">
+            A SerializationInfo object which is deserialized by the 
+            formatter and then passed to current constructor.
+            </param>
+            <param name="context">
+            A StreamingContext that describes the source of the 
+            serialized stream from where the Serialization object 
+            is retrieved.
+            </param>
+        </member>
+        <member name="T:Microsoft.Practices.EnterpriseLibrary.Caching.Configuration.IsolatedStorageCacheStorageData">
+            <summary>
+            Configuration data defining IsolatedStorageCacheStorageData. This configuration section adds the name
+            of the Isolated Storage area to use to store data.
+            </summary>
+        </member>
+        <member name="T:Microsoft.Practices.EnterpriseLibrary.Caching.Configuration.CacheStorageData">
+            <summary>
+            Configuration data defining CacheStorageData. This configuration section defines the name and type
+            of the IBackingStore used by a CacheManager
+            </summary>
+        </member>
+        <member name="M:Microsoft.Practices.EnterpriseLibrary.Caching.Configuration.CacheStorageData.#ctor">
+            <summary>
+            Initializes a new instance of the <see cref="T:Microsoft.Practices.EnterpriseLibrary.Caching.Configuration.CacheStorageData"/> class.
+            </summary>
+        </member>
+        <member name="M:Microsoft.Practices.EnterpriseLibrary.Caching.Configuration.CacheStorageData.#ctor(System.String)">
+            <summary>
+            Initialize a new instance of the <see cref="T:Microsoft.Practices.EnterpriseLibrary.Caching.Configuration.CacheManagerData"/> class.
+            </summary>
+            <param name="name">
+            The name of the <see cref="T:Microsoft.Practices.EnterpriseLibrary.Caching.Configuration.CacheManagerData"/>.
+            </param>
+        </member>
+        <member name="M:Microsoft.Practices.EnterpriseLibrary.Caching.Configuration.CacheStorageData.#ctor(System.String,Microsoft.Practices.EnterpriseLibrary.Caching.Configuration.StorageEncryptionProviderData)">
+            <summary>
+            Initialize a new instance of the <see cref="T:Microsoft.Practices.EnterpriseLibrary.Caching.Configuration.CacheManagerData"/> class.
+            </summary>
+            <param name="name">
+            The name of the <see cref="T:Microsoft.Practices.EnterpriseLibrary.Caching.Configuration.CacheManagerData"/>.
+            </param>
+            <param name="storageEncryption">
+            Storage Encryption data defined in configuration
+            </param>
+        </member>
+        <member name="P:Microsoft.Practices.EnterpriseLibrary.Caching.Configuration.CacheStorageData.StorageEncryption">
+            <summary>
+            Storage Encryption data defined in configuration
+            </summary>
+        </member>
+        <member name="M:Microsoft.Practices.EnterpriseLibrary.Caching.Configuration.IsolatedStorageCacheStorageData.#ctor">
+            <summary>
+            Initializes a new instance of the <see cref="T:Microsoft.Practices.EnterpriseLibrary.Caching.Configuration.IsolatedStorageCacheStorageData"/> class.
+            </summary>
+        </member>
+        <member name="M:Microsoft.Practices.EnterpriseLibrary.Caching.Configuration.IsolatedStorageCacheStorageData.#ctor(System.String)">
+            <summary>
+            Initialize a new instance of the <see cref="T:Microsoft.Practices.EnterpriseLibrary.Caching.Configuration.IsolatedStorageCacheStorageData"/> class.
+            </summary>
+            <param name="name">
+            The name of the <see cref="T:Microsoft.Practices.EnterpriseLibrary.Caching.Configuration.IsolatedStorageCacheStorageData"/>.
+            </param>
+        </member>
+        <member name="M:Microsoft.Practices.EnterpriseLibrary.Caching.Configuration.IsolatedStorageCacheStorageData.#ctor(System.String,Microsoft.Practices.EnterpriseLibrary.Caching.Configuration.StorageEncryptionProviderData,System.String)">
+            <summary>
+            Initialize a new instance of the <see cref="T:Microsoft.Practices.EnterpriseLibrary.Caching.Configuration.CacheManagerData"/> class.
+            </summary>
+            <param name="name">
+            The name of the <see cref="T:Microsoft.Practices.EnterpriseLibrary.Caching.Configuration.IsolatedStorageCacheStorageData"/>.
+            </param>
+            <param name="storageEncryption">
+            Storage Encryption data defined in configuration
+            </param>
+            <param name="partitionName">
+            Name of the Isolated Storage area to use.
+            </param>
+        </member>
+        <member name="P:Microsoft.Practices.EnterpriseLibrary.Caching.Configuration.IsolatedStorageCacheStorageData.PartitionName">
+            <summary>
+            Name of the Isolated Storage area to use.
+            </summary>
+        </member>
+        <member name="P:Microsoft.Practices.EnterpriseLibrary.Caching.Configuration.IsolatedStorageCacheStorageData.TypeName">
+            <summary>
+            Gets the IsolatedStorageBackingStore type.
+            </summary>
+        </member>
+        <member name="T:Microsoft.Practices.EnterpriseLibrary.Caching.Instrumentation.ProjectInstaller">
+            <summary>
+            <para>This type supports the Instrumentation infrastructure and is not intended to be used directly from your code.</para>
+            </summary>
+        </member>
+        <member name="M:Microsoft.Practices.EnterpriseLibrary.Caching.Instrumentation.ProjectInstaller.#ctor">
+            <summary/>
+            <exclude/>
+        </member>
+        <member name="T:Microsoft.Practices.EnterpriseLibrary.Caching.CacheManager">
+            <summary>
+            This class represents the interface to caching as shown to the user. All caching operations are performed through this class.
+            </summary>
+        </member>
+        <member name="M:Microsoft.Practices.EnterpriseLibrary.Caching.CacheManager.Contains(System.String)">
+            <summary>
+            Returns true if key refers to item current stored in cache
+            </summary>
+            <param name="key">Key of item to check for</param>
+            <returns>True if item referenced by key is in the cache</returns>
+        </member>
+        <member name="M:Microsoft.Practices.EnterpriseLibrary.Caching.CacheManager.Add(System.String,System.Object)">
+            <summary>
+            Adds new CacheItem to cache. If another item already exists with the same key, that item is removed before
+            the new item is added. If any failure occurs during this process, the cache will not contain the item being added. 
+            Items added with this method will be not expire, and will have a Normal <see cref="T:Microsoft.Practices.EnterpriseLibrary.Caching.CacheItemPriority"/> priority.
+            </summary>
+            <param name="key">Identifier for this CacheItem</param>
+            <param name="value">Value to be stored in cache. May be null.</param>
+            <exception cref="T:System.ArgumentNullException">Provided key is null</exception>
+            <exception cref="T:System.ArgumentException">Provided key is an empty string</exception>
+            <remarks>The CacheManager can be configured to use different storage mechanisms in which to store the CacheItems.
+            Each of these storage mechanisms can throw exceptions particular to their own implementations.</remarks>
+        </member>
+        <member name="M:Microsoft.Practices.EnterpriseLibrary.Caching.CacheManager.Add(System.String,System.Object,Microsoft.Practices.EnterpriseLibrary.Caching.CacheItemPriority,Microsoft.Practices.EnterpriseLibrary.Caching.ICacheItemRefreshAction,Microsoft.Practices.EnterpriseLibrary.Caching.ICacheItemExpiration[])">
+            <summary>
+            Adds new CacheItem to cache. If another item already exists with th esame key, that item is removed before
+            the new item is added. If any failure occurs during this process, the cache will not contain the item being added.
+            </summary>
+            <param name="key">Identifier for this CacheItem</param>
+            <param name="value">Value to be stored in cache. May be null.</param>
+            <param name="scavengingPriority">Specifies the new item's scavenging priority. 
+            See <see cref="T:Microsoft.Practices.EnterpriseLibrary.Caching.CacheItemPriority"/> for more information.</param>
+            <param name="refreshAction">Object provided to allow the cache to refresh a cache item that has been expired. May be null.</param>
+            <param name="expirations">Param array specifying the expiration policies to be applied to this item. May be null or omitted.</param>
+            <exception cref="T:System.ArgumentNullException">Provided key is null</exception>
+            <exception cref="T:System.ArgumentException">Provided key is an empty string</exception>
+            <remarks>The CacheManager can be configured to use different storage mechanisms in which to store the CacheItems.
+            Each of these storage mechanisms can throw exceptions particular to their own implementations.</remarks>
+        </member>
+        <member name="M:Microsoft.Practices.EnterpriseLibrary.Caching.CacheManager.Remove(System.String)">
+            <summary>
+            Removes the given item from the cache. If no item exists with that key, this method does nothing.
+            </summary>
+            <param name="key">Key of item to remove from cache.</param>
+            <exception cref="T:System.ArgumentNullException">Provided key is null</exception>
+            <exception cref="T:System.ArgumentException">Provided key is an empty string</exception>
+            <remarks>The CacheManager can be configured to use different storage mechanisms in which to store the CacheItems.
+            Each of these storage mechanisms can throw exceptions particular to their own implementations.</remarks>
+        </member>
+        <member name="M:Microsoft.Practices.EnterpriseLibrary.Caching.CacheManager.GetData(System.String)">
+            <summary>
+            Returns the value associated with the given key.
+            </summary>
+            <param name="key">Key of item to return from cache.</param>
+            <returns>Value stored in cache</returns>
+            <exception cref="T:System.ArgumentNullException">Provided key is null</exception>
+            <exception cref="T:System.ArgumentException">Provided key is an empty string</exception>
+            <remarks>The CacheManager can be configured to use different storage mechanisms in which to store the CacheItems.
+            Each of these storage mechanisms can throw exceptions particular to their own implementations.</remarks>
+        </member>
+        <member name="M:Microsoft.Practices.EnterpriseLibrary.Caching.CacheManager.Flush">
+            <summary>
+            Removes all items from the cache. If an error occurs during the removal, the cache is left unchanged.
+            </summary>
+            <remarks>The CacheManager can be configured to use different storage mechanisms in which to store the CacheItems.
+            Each of these storage mechanisms can throw exceptions particular to their own implementations.</remarks>
+        </member>
+        <member name="M:Microsoft.Practices.EnterpriseLibrary.Caching.CacheManager.Dispose">
+            <summary>
+            Not intended for public use. Only public due to requirements of IDisposable. If you call this method, your
+            cache will be unusable.
+            </summary>
+        </member>
+        <member name="P:Microsoft.Practices.EnterpriseLibrary.Caching.CacheManager.Count">
+            <summary>
+            Returns the number of items currently in the cache.
+            </summary>
+        </member>
+        <member name="P:Microsoft.Practices.EnterpriseLibrary.Caching.CacheManager.Item(System.String)">
+            <summary>
+            Returns the item identified by the provided key
+            </summary>
+            <param name="key">Key to retrieve from cache</param>
+            <exception cref="T:System.ArgumentNullException">Provided key is null</exception>
+            <exception cref="T:System.ArgumentException">Provided key is an empty string</exception>
+            <remarks>The CacheManager can be configured to use different storage mechanisms in which to store the cache items.
+            Each of these storage mechanisms can throw exceptions particular to their own implementations.</remarks>
+        </member>
+        <member name="T:Microsoft.Practices.EnterpriseLibrary.Caching.Expirations.AbsoluteTime">
+            <summary>
+            This class tests if a data item was expired using a absolute time 
+            schema.
+            </summary>
+        </member>
+        <member name="M:Microsoft.Practices.EnterpriseLibrary.Caching.Expirations.AbsoluteTime.#ctor">
+            <summary>
+            Create a new instance of the class.
+            </summary>
+        </member>
+        <member name="M:Microsoft.Practices.EnterpriseLibrary.Caching.Expirations.AbsoluteTime.#ctor(System.DateTime)">
+            <summary>
+            Create an instance of the class with a time value as input and 
+            convert it to UTC.
+            </summary>
+            <param name="absoluteTime">
+            The time to be checked for expiration
+            </param>
+        </member>
+        <member name="M:Microsoft.Practices.EnterpriseLibrary.Caching.Expirations.AbsoluteTime.#ctor(System.TimeSpan)">
+            <summary>
+            Creates an instance based on a time interval starting from now.
+            </summary>
+            <param name="timeFromNow">Time interval</param>
+        </member>
+        <member name="M:Microsoft.Practices.EnterpriseLibrary.Caching.Expirations.AbsoluteTime.#ctor(System.Runtime.Serialization.SerializationInfo,System.Runtime.Serialization.StreamingContext)">
+            <summary>
+            This method performs the deserialziaton of members of the current 
+            class.
+            </summary>
+            <param name="info">
+            A SerializationInfo object which is deserialized by the formatter
+            and then passed to current constructor
+            </param>
+            <param name="context">
+            A StreamingContext that describes the source of the serialized 
+            stream from where the Serialization object is retrieved
+            </param>
+        </member>
+        <member name="M:Microsoft.Practices.EnterpriseLibrary.Caching.Expirations.AbsoluteTime.HasExpired">
+            <summary>
+            Specifies if item has expired or not.
+            </summary>
+            <remarks>
+            bool isExpired = ICacheItemExpiration.HasExpired();
+            </remarks>
+            <returns>
+            "True", if the data item has expired or "false", if the data item 
+            has not expired
+            </returns>
+        </member>
+        <member name="M:Microsoft.Practices.EnterpriseLibrary.Caching.Expirations.AbsoluteTime.Notify">
+            <summary>
+            Called to notify this object that the CacheItem owning this expiration was just touched by a user action
+            </summary>
+        </member>
+        <member name="M:Microsoft.Practices.EnterpriseLibrary.Caching.Expirations.AbsoluteTime.Initialize(Microsoft.Practices.EnterpriseLibrary.Caching.CacheItem)">
+            <summary>
+            Called to give this object an opportunity to initialize itself from data inside a CacheItem
+            </summary>
+            <param name="owningCacheItem">CacheItem provided to read initialization information from. Will never be null.</param>
+        </member>
+        <member name="M:Microsoft.Practices.EnterpriseLibrary.Caching.Expirations.AbsoluteTime.GetObjectData(System.Runtime.Serialization.SerializationInfo,System.Runtime.Serialization.StreamingContext)">
+            <summary>
+            This method performs the serialziaton of members of the current 
+            class.
+            </summary>
+            <param name="info">
+            A SerializationInfo object which is deserialized by the formatter 
+            and then passed to current constructor
+            </param>
+            <param name="context">
+            A StreamingContext that describes the source of the serialized 
+            stream from where the Serialization object is retrieved
+            </param>
+        </member>
+        <member name="T:Microsoft.Practices.EnterpriseLibrary.Caching.CachingConfigurationView">
+            <summary>
+            <para>Represents a view to navigate the <see cref="T:Microsoft.Practices.EnterpriseLibrary.Caching.Configuration.CacheManagerSettings"/> configuration data.</para>
+            </summary>
+        </member>
+        <member name="M:Microsoft.Practices.EnterpriseLibrary.Caching.CachingConfigurationView.#ctor(Microsoft.Practices.EnterpriseLibrary.Configuration.ConfigurationContext)">
+            <summary>
+            <para>Initialize a new instance of the <see cref="T:Microsoft.Practices.EnterpriseLibrary.Caching.CachingConfigurationView"/> with a <see cref="T:Microsoft.Practices.EnterpriseLibrary.Configuration.ConfigurationContext"/>.</para>
+            </summary>
+            <param name="configurationContext">
+            <para>A <see cref="T:Microsoft.Practices.EnterpriseLibrary.Configuration.ConfigurationContext"/> object.</para>
+            </param>
+        </member>
+        <member name="M:Microsoft.Practices.EnterpriseLibrary.Caching.CachingConfigurationView.GetCacheStorageDataForCacheManager(System.String)">
+            <summary>
+            <para>Gets the <see cref="T:Microsoft.Practices.EnterpriseLibrary.Caching.Configuration.CacheStorageData"/> from configuration for the named <see cref="T:Microsoft.Practices.EnterpriseLibrary.Caching.CacheManager"/></para>
+            </summary>
+            <param name="cacheManagerName">
+            <para>The name of the <see cref="T:Microsoft.Practices.EnterpriseLibrary.Caching.CacheManager"/>.</para>
+            </param>
+            <returns>
+            <para>A <see cref="T:Microsoft.Practices.EnterpriseLibrary.Caching.Configuration.CacheStorageData"/> object.</para>
+            </returns>
+        </member>
+        <member name="M:Microsoft.Practices.EnterpriseLibrary.Caching.CachingConfigurationView.GetDefaultCacheManager">
+            <summary>
+            <para>Gets the name of the default <see cref="T:Microsoft.Practices.EnterpriseLibrary.Caching.Configuration.CacheManagerData"/>.</para>
+            </summary>
+            <returns>
+            <para>The name of the default <see cref="T:Microsoft.Practices.EnterpriseLibrary.Caching.Configuration.CacheManagerData"/>.</para>
+            </returns>
+        </member>
+        <member name="M:Microsoft.Practices.EnterpriseLibrary.Caching.CachingConfigurationView.GetCacheManagerSettings">
+            <summary>
+            <para>Gets the <see cref="T:Microsoft.Practices.EnterpriseLibrary.Caching.Configuration.CacheManagerSettings"/> configuration data.</para>
+            </summary>
+            <returns>
+            <para>The <see cref="T:Microsoft.Practices.EnterpriseLibrary.Caching.Configuration.CacheManagerSettings"/> configuration data.</para>
+            </returns>
+        </member>
+        <member name="M:Microsoft.Practices.EnterpriseLibrary.Caching.CachingConfigurationView.GetCacheManagerData(System.String)">
+            <summary>
+            <para>Gets the <see cref="T:Microsoft.Practices.EnterpriseLibrary.Caching.Configuration.CacheManagerData"/> from configuration for the named <see cref="T:Microsoft.Practices.EnterpriseLibrary.Caching.CacheManager"/></para>
+            </summary>
+            <param name="cacheManagerName">
+            <para>The name of the <see cref="T:Microsoft.Practices.EnterpriseLibrary.Caching.CacheManager"/>.</para>
+            </param>
+            <returns>
+            <para>A <see cref="T:Microsoft.Practices.EnterpriseLibrary.Caching.Configuration.CacheManagerData"/> object.</para>
+            </returns>
+        </member>
+        <member name="M:Microsoft.Practices.EnterpriseLibrary.Caching.CachingConfigurationView.GetStorageEncryptionProviderData(System.String)">
+            <summary>
+            <para>Gets the <see cref="T:Microsoft.Practices.EnterpriseLibrary.Caching.Configuration.StorageEncryptionProviderData"/> from configuration for the named <see cref="T:Microsoft.Practices.EnterpriseLibrary.Caching.CacheManager"/></para>
+            </summary>
+            <param name="cacheManagerName">
+            <para>The name of the <see cref="T:Microsoft.Practices.EnterpriseLibrary.Caching.CacheManager"/>.</para>
+            </param>
+            <returns>
+            <para>A <see cref="T:Microsoft.Practices.EnterpriseLibrary.Caching.Configuration.StorageEncryptionProviderData"/> object.</para>
+            </returns>
+        </member>
+        <member name="T:Microsoft.Practices.EnterpriseLibrary.Caching.CacheItemPriority">
+            <summary>
+            Specifies the item priority levels.
+            </summary>
+        </member>
+        <member name="F:Microsoft.Practices.EnterpriseLibrary.Caching.CacheItemPriority.None">
+            <summary>
+            Should never be seen in nature.
+            </summary>
+        </member>
+        <member name="F:Microsoft.Practices.EnterpriseLibrary.Caching.CacheItemPriority.Low">
+            <summary>
+            Low priority for scavenging.
+            </summary>
+        </member>
+        <member name="F:Microsoft.Practices.EnterpriseLibrary.Caching.CacheItemPriority.Normal">
+            <summary>
+            Normal priority for scavenging.
+            </summary>
+        </member>
+        <member name="F:Microsoft.Practices.EnterpriseLibrary.Caching.CacheItemPriority.High">
+            <summary>
+            High priority for scavenging.
+            </summary>
+        </member>
+        <member name="F:Microsoft.Practices.EnterpriseLibrary.Caching.CacheItemPriority.NotRemovable">
+            <summary>
+            Non-removable priority for scavenging.
+            </summary>
+        </member>
+        <member name="T:Microsoft.Practices.EnterpriseLibrary.Caching.IBackingStore">
+            <summary>
+            <P>This interface defines the contract that must be implemented by all backing stores. 
+            Implementors of this method are responsible for interacting with their underlying
+            persistence mechanisms to store and retrieve CacheItems. All methods below must guarantee 
+            Weak Exception Safety. This means that operations must complete entirely, or them must completely
+            clean up from the failure and leave the cache in a consistent state. The mandatory
+            cleanup process will remove all traces of the item that caused the failure, causing that item
+            to be expunged from the cache entirely.
+            </P>
+            </summary>
+            <remarks>
+            Do to the way the Caching class is implemented, implementations of this class will always be called in 
+            a thread-safe way. There is no need to make these classes thread-safe on its own.
+            </remarks>
+        </member>
+        <member name="M:Microsoft.Practices.EnterpriseLibrary.Caching.IBackingStore.Add(Microsoft.Practices.EnterpriseLibrary.Caching.CacheItem)">
+            <summary>
+            <p>
+            This method is responsible for adding a CacheItem to the BackingStore. This operation must be successful 
+            even if an item with the same key already exists. This method must also meet the Weak Exception Safety guarantee
+            and remove the item from the backing store if any part of the Add fails.
+            </p> 
+            </summary>
+            <param name="newCacheItem">CacheItem to be added</param>
+            <remarks>
+            <p>
+            Other exceptions can be thrown, depending on what individual Backing Store implementations throw during Add
+            </p>
+            </remarks>
+        </member>
+        <member name="M:Microsoft.Practices.EnterpriseLibrary.Caching.IBackingStore.Remove(System.String)">
+            <summary>
+            Removes an item with the given key from the backing store
+            </summary>
+            <param name="key">Key to remove. Must not be null.</param>
+            <remarks>
+            <p>
+            Other exceptions can be thrown, depending on what individual Backing Store implementations throw during Remove
+            </p>
+            </remarks>
+        </member>
+        <member name="M:Microsoft.Practices.EnterpriseLibrary.Caching.IBackingStore.UpdateLastAccessedTime(System.String,System.DateTime)">
+            <summary>
+            Updates the last accessed time for a cache item.
+            </summary>
+            <param name="key">Key to update</param>
+            <param name="timestamp">Time at which item updated</param>
+            <remarks>
+            <p>
+            Other exceptions can be thrown, depending on what individual Backing Store implementations throw during UpdateLastAccessedTime
+            </p>
+            </remarks>
+        </member>
+        <member name="M:Microsoft.Practices.EnterpriseLibrary.Caching.IBackingStore.Flush">
+            <summary>
+            Flushes all CacheItems from backing store. This method must meet the Weak Exception Safety guarantee.
+            </summary>
+            <remarks>
+            <p>
+            Other exceptions can be thrown, depending on what individual Backing Store implementations throw during Flush
+            </p>
+            </remarks>
+        </member>
+        <member name="M:Microsoft.Practices.EnterpriseLibrary.Caching.IBackingStore.Load">
+            <summary>
+            Loads all CacheItems from backing store. 
+            </summary>
+            <returns>Hashtable filled with all existing CacheItems.</returns>
+            <remarks>
+            <p>
+            Other exceptions can be thrown, depending on what individual Backing Store implementations throw during Load
+            </p>
+            </remarks>
+        </member>
+        <member name="P:Microsoft.Practices.EnterpriseLibrary.Caching.IBackingStore.CurrentCacheManager">
+            <summary>
+            <para>When implemented by a class, gets the current name of the <see cref="T:Microsoft.Practices.EnterpriseLibrary.Caching.CacheManager"/> using this instance.</para>
+            </summary>
+            <value>
+            <para>The current name of the <see cref="T:Microsoft.Practices.EnterpriseLibrary.Caching.CacheManager"/> using this instance.</para>
+            </value>
+        </member>
+        <member name="P:Microsoft.Practices.EnterpriseLibrary.Caching.IBackingStore.Count">
+            <summary>
+            Number of objects stored in the backing store
+            </summary>
+        </member>
+        <member name="T:Microsoft.Practices.EnterpriseLibrary.Caching.Configuration.CacheManagerSettings">
+            <summary>
+            Overall configuration settings for Caching
+            </summary>
+        </member>
+        <member name="F:Microsoft.Practices.EnterpriseLibrary.Caching.Configuration.CacheManagerSettings.ConfigurationNamespace">
+            <summary>
+            <para>Gets the Xml namespace for this root node.</para>
+            </summary>
+            <value>
+            <para>The Xml namespace for this root node.</para>
+            </value>
+        </member>
+        <member name="F:Microsoft.Practices.EnterpriseLibrary.Caching.Configuration.CacheManagerSettings.SectionName">
+            <summary>
+            Configuration key for cache manager settings.
+            </summary>
+        </member>
+        <member name="P:Microsoft.Practices.EnterpriseLibrary.Caching.Configuration.CacheManagerSettings.DefaultCacheManager">
+            <summary>
+            Defines the default manager instance to use when no other manager is specified
+            </summary>
+        </member>
+        <member name="P:Microsoft.Practices.EnterpriseLibrary.Caching.Configuration.CacheManagerSettings.CacheManagers">
+            <summary>
+            Defines the collection of CacheManagerData instances
+            </summary>
+        </member>
+        <member name="T:Microsoft.Practices.EnterpriseLibrary.Caching.Configuration.CacheManagerData">
+            <summary>
+            Configuration data defining CacheManagerData. Defines the information needed to properly configure
+            a CacheManager instance.
+            </summary>
+        </member>
+        <member name="M:Microsoft.Practices.EnterpriseLibrary.Caching.Configuration.CacheManagerData.#ctor">
+            <summary>
+            Initialize a new instance of the <see cref="T:Microsoft.Practices.EnterpriseLibrary.Caching.Configuration.CacheManagerData"/> class.
+            </summary>
+        </member>
+        <member name="M:Microsoft.Practices.EnterpriseLibrary.Caching.Configuration.CacheManagerData.#ctor(System.String)">
+            <summary>
+            Initialize a new instance of the <see cref="T:Microsoft.Practices.EnterpriseLibrary.Caching.Configuration.CacheManagerData"/> class with a name.
+            </summary>
+            <param name="name">
+            The name of the <see cref="T:Microsoft.Practices.EnterpriseLibrary.Caching.Configuration.CacheManagerData"/>.
+            </param>
+        </member>
+        <member name="M:Microsoft.Practices.EnterpriseLibrary.Caching.Configuration.CacheManagerData.#ctor(System.String,System.Int32,System.Int32,System.Int32)">
+            <summary>
+            Initialize a new instance of the <see cref="T:Microsoft.Practices.EnterpriseLibrary.Caching.Configuration.CacheManagerData"/> class.
+            </summary>
+            <param name="name">
+            The name of the <see cref="T:Microsoft.Practices.EnterpriseLibrary.Caching.Configuration.CacheManagerData"/>.
+            </param>
+            <param name="expirationPollFrequencyInSeconds">
+            Frequency in seconds of expiration polling cycle
+            </param>
+            <param name="maximumElementsInCacheBeforeScavenging">
+            Maximum number of items in cache before an add causes scavenging to take place
+            </param>
+            <param name="numberToRemoveWhenScavenging">
+            Number of items to remove from cache when scavenging
+            </param>
+        </member>
+        <member name="M:Microsoft.Practices.EnterpriseLibrary.Caching.Configuration.CacheManagerData.#ctor(System.String,System.Int32,System.Int32,System.Int32,Microsoft.Practices.EnterpriseLibrary.Caching.Configuration.CacheStorageData)">
+            <summary>
+            Initialize a new instance of the <see cref="T:Microsoft.Practices.EnterpriseLibrary.Caching.Configuration.CacheManagerData"/> class.
+            </summary>
+            <param name="name">
+            The name of the <see cref="T:Microsoft.Practices.EnterpriseLibrary.Caching.Configuration.CacheManagerData"/>.
+            </param>
+            <param name="expirationPollFrequencyInSeconds">
+            Frequency in seconds of expiration polling cycle
+            </param>
+            <param name="maximumElementsInCacheBeforeScavenging">
+            Maximum number of items in cache before an add causes scavenging to take place
+            </param>
+            <param name="numberToRemoveWhenScavenging">
+            Number of items to remove from cache when scavenging
+            </param>
+            <param name="cacheStorage">
+            CacheStorageData object from configuration describing how data is stored 
+            in the cache.
+            </param>
+        </member>
+        <member name="P:Microsoft.Practices.EnterpriseLibrary.Caching.Configuration.CacheManagerData.TypeName">
+            <summary>
+            Overriden. Always returns the type name of the <see cref="T:Microsoft.Practices.EnterpriseLibrary.Caching.CacheManager"/> class.
+            This property is ignored by the XmlSerializer.
+            </summary>
+        </member>
+        <member name="P:Microsoft.Practices.EnterpriseLibrary.Caching.Configuration.CacheManagerData.ExpirationPollFrequencyInSeconds">
+            <summary>
+            Frequency in seconds of expiration polling cycle
+            </summary>
+        </member>
+        <member name="P:Microsoft.Practices.EnterpriseLibrary.Caching.Configuration.CacheManagerData.MaximumElementsInCacheBeforeScavenging">
+            <summary>
+            Maximum number of items in cache before an add causes scavenging to take place
+            </summary>
+        </member>
+        <member name="P:Microsoft.Practices.EnterpriseLibrary.Caching.Configuration.CacheManagerData.NumberToRemoveWhenScavenging">
+            <summary>
+            Number of items to remove from cache when scavenging
+            </summary>
+        </member>
+        <member name="P:Microsoft.Practices.EnterpriseLibrary.Caching.Configuration.CacheManagerData.CacheStorage">
+            <summary>
+            CacheStorageData object from configuration describing how data is stored 
+            in the cache.
+            </summary>
+        </member>
+        <member name="T:Microsoft.Practices.EnterpriseLibrary.Caching.Cache">
+            <summary>
+            The real worker of the block. The Cache class is the traffic cop that prevents 
+            resource contention among the different threads in the system. It also will act
+            as the remoting gateway when that feature is added to the cache.
+            </summary>
+        </member>
+        <member name="T:Microsoft.Practices.EnterpriseLibrary.Caching.ICacheOperations">
+            <summary>
+            Summary description for ICacheOperations.
+            </summary>
+        </member>
+        <member name="M:Microsoft.Practices.EnterpriseLibrary.Caching.Cache.RemoveItemFromCache(System.String,Microsoft.Practices.EnterpriseLibrary.Caching.CacheItemRemovedReason)">
+            <devdoc>
+            This seemingly redundant method is here to be called through the ICacheOperations 
+            interface. I put this in place to break any dependency from any other class onto 
+            the Cache class
+            </devdoc>
+        </member>
+        <member name="M:Microsoft.Practices.EnterpriseLibrary.Caching.Cache.Flush">
+            <devdoc>
+            There may still be thread safety issues in this class with respect to expirations
+            and scavenging, but I really doubt that either of those will be happening while
+            a Flush is in progress. It seems that the most likely scenario for a flush
+            to be called is at the very start of a program, or when absolutely nothing else
+            is going on. Calling flush in the middle of an application would seem to be
+            an "interesting" thing to do in normal circumstances.
+            </devdoc>
+        </member>
+        <member name="T:Microsoft.Practices.EnterpriseLibrary.Caching.Instrumentation.CachingServiceCacheScavengedEvent">
+            <summary>
+            <para>This type supports the Instrumentation infrastructure and is not intended to be used directly from your code.</para>
+            </summary>
+            <devdoc>
+            Instrumentation event called when the cache is scavenged.
+            </devdoc>
+        </member>
+        <member name="T:Microsoft.Practices.EnterpriseLibrary.Caching.Instrumentation.CachingServiceEvent">
+            <summary>
+            <para>This type supports the Instrumentation infrastructure and is not intended to be used directly from your code.</para>
+            </summary>
+        </member>
+        <member name="F:Microsoft.Practices.EnterpriseLibrary.Caching.Instrumentation.CachingServiceEvent.internalEvent">
+            <summary/>
+            <exclude/>
+            <devdoc>
+            The internal event object responsible for the Performance Counters and
+            the EventLog.  It also fired the WMI event when fired.
+            </devdoc>
+        </member>
+        <member name="F:Microsoft.Practices.EnterpriseLibrary.Caching.Instrumentation.CachingServiceEvent.eventMessage">
+            <summary/>
+            <exclude/>
+            <devdoc>
+            The message for the event.
+            </devdoc>
+        </member>
+        <member name="M:Microsoft.Practices.EnterpriseLibrary.Caching.Instrumentation.CachingServiceEvent.#ctor">
+            <summary/>
+            <exclude/>
+        </member>
+        <member name="M:Microsoft.Practices.EnterpriseLibrary.Caching.Instrumentation.CachingServiceEvent.#ctor(System.String[],Microsoft.Practices.EnterpriseLibrary.Common.Instrumentation.EventLogIdentifier[])">
+            <summary/>
+            <exclude/>
+        </member>
+        <member name="M:Microsoft.Practices.EnterpriseLibrary.Caching.Instrumentation.CachingServiceEvent.#ctor(System.String[])">
+            <summary/>
+            <param name="counterNames"/>
+            <exclude/>
+            <devdoc>
+            Factory method to create a new InstrumentedEvent based on the counterNames
+            </devdoc>
+        </member>
+        <member name="M:Microsoft.Practices.EnterpriseLibrary.Caching.Instrumentation.CachingServiceEvent.FireAuxEvent(System.String)">
+            <summary/>
+            <param name="message"/>
+            <exclude/>
+            <devdoc>
+            Fires the internal Aux Event with the message to include in the event.
+            </devdoc>
+        </member>
+        <member name="M:Microsoft.Practices.EnterpriseLibrary.Caching.Instrumentation.CachingServiceEvent.FireAuxEvent(System.String,System.Diagnostics.EventLogEntryType)">
+            <summary/>
+            <param name="message"/>
+            <param name="eventLogType"/>
+            <exclude/>
+            <devdoc>
+            Fires the internal Aux Event with the message to include in the event and event log entry type
+            </devdoc>
+        </member>
+        <member name="M:Microsoft.Practices.EnterpriseLibrary.Caching.Instrumentation.CachingServiceEvent.FireAuxEvent(System.String,Microsoft.Practices.EnterpriseLibrary.Common.Instrumentation.PerformanceCounterInstances[],System.Int64[])">
+            <summary/>
+            <param name="message"/>
+            <param name="counterInstances"/>
+            <param name="values"/>
+            <exclude/>
+            <devdoc>
+            Fires the internal Aux Event with the message to include in the event and event log entry type
+            </devdoc>
+        </member>
+        <member name="P:Microsoft.Practices.EnterpriseLibrary.Caching.Instrumentation.CachingServiceEvent.Message">
+            <summary/>
+            <exclude/>
+            <devdoc>
+            Exposes the message of the internalEvent. 
+            </devdoc>
+        </member>
+        <member name="T:Microsoft.Practices.EnterpriseLibrary.Caching.Instrumentation.CachingServiceEvent.CounterIdentifier">
+            <summary/>
+            <exclude/>
+            <devdoc>
+            Index to the Counters array.
+            </devdoc>
+        </member>
+        <member name="T:Microsoft.Practices.EnterpriseLibrary.Caching.Instrumentation.CachingServiceEvent.Log">
+            <summary/>
+            <exclude/>
+            <devdoc>
+            Event Log Event IDs
+            </devdoc>
+        </member>
+        <member name="M:Microsoft.Practices.EnterpriseLibrary.Caching.Instrumentation.CachingServiceCacheScavengedEvent.Fire(System.Int64,System.Int64,System.Int32)">
+            <summary/>
+            <param name="itemRemoved"/>
+            <param name="sizeLimit"/>
+            <param name="scavengingRange"/>
+            <exclude/>
+            <devdoc>
+            Fires the event to instrumentation with the number of items removed, the size limit and scavenging range.
+            </devdoc>
+        </member>
+        <member name="P:Microsoft.Practices.EnterpriseLibrary.Caching.Instrumentation.CachingServiceCacheScavengedEvent.NumberOfItemRemoved">
+            <summary/>
+            <exclude/>
+            <devdoc>
+            Returns the number of items removed during this scavenging pass
+            </devdoc>
+        </member>
+        <member name="P:Microsoft.Practices.EnterpriseLibrary.Caching.Instrumentation.CachingServiceCacheScavengedEvent.ConfiguredSizeLimit">
+            <summary/>
+            <exclude/>
+            <devdoc>
+            Returns the maximum number of elements stored in the cache before scavenging occurs.
+            </devdoc>
+        </member>
+        <member name="P:Microsoft.Practices.EnterpriseLibrary.Caching.Instrumentation.CachingServiceCacheScavengedEvent.ScavengingRange">
+            <summary/>
+            <exclude/>
+            <devdoc>
+            Returns the number of items scavenged from the cache
+            </devdoc>
+        </member>
+        <member name="T:Microsoft.Practices.EnterpriseLibrary.Caching.Expirations.ExtendedFormat">
+             <devdoc>
+             Represents the extended format for the cache.
+             </devdoc>    
+             <remarks>
+             Extended format syntax : <br/><br/>
+             
+             Minute       - 0-59 <br/>
+             Hour         - 0-23 <br/>
+             Day of month - 1-31 <br/>
+             Month        - 1-12 <br/>
+             Day of week  - 0-6 (Sunday is 0) <br/>
+             Wildcards    - * means run every <br/>
+             Examples: <br/>
+             * * * * *    - expires every minute<br/>
+             5 * * * *    - expire 5th minute of every hour <br/>
+             * 21 * * *   - expire every minute of the 21st hour of every day <br/>
+             31 15 * * *  - expire 3:31 PM every day <br/>
+             7 4 * * 6    - expire Saturday 4:07 AM <br/>
+             15 21 4 7 *  - expire 9:15 PM on 4 July <br/>
+            	Therefore 6 6 6 6 1 means:
+            	•	have we crossed/entered the 6th minute AND
+            	•	have we crossed/entered the 6th hour AND 
+            	•	have we crossed/entered the 6th day AND
+            	•	have we crossed/entered the 6th month AND
+            	•	have we crossed/entered A MONDAY?
+            
+            	Therefore these cases should exhibit these behaviors:
+            
+            	getTime = DateTime.Parse( "02/20/2003 04:06:55 AM" );
+            	nowTime = DateTime.Parse( "06/07/2003 07:07:00 AM" );
+            	isExpired = ExtendedFormatHelper.IsExtendedExpired( "6 6 6 6 1", getTime, nowTime );
+            	TRUE, ALL CROSSED/ENTERED
+            			
+            	getTime = DateTime.Parse( "02/20/2003 04:06:55 AM" );
+            	nowTime = DateTime.Parse( "06/07/2003 07:07:00 AM" );
+            	isExpired = ExtendedFormatHelper.IsExtendedExpired( "6 6 6 6 5", getTime, nowTime );
+            	TRUE
+            			
+            	getTime = DateTime.Parse( "02/20/2003 04:06:55 AM" );
+            	nowTime = DateTime.Parse( "06/06/2003 06:06:00 AM" );
+            	isExpired = ExtendedFormatHelper.IsExtendedExpired( "6 6 6 6 *", getTime, nowTime );
+            	TRUE
+            	
+            			
+            	getTime = DateTime.Parse( "06/05/2003 04:06:55 AM" );
+            	nowTime = DateTime.Parse( "06/06/2003 06:06:00 AM" );
+            	isExpired = ExtendedFormatHelper.IsExtendedExpired( "6 6 6 6 5", getTime, nowTime );
+            	TRUE
+            						
+            	getTime = DateTime.Parse( "06/05/2003 04:06:55 AM" );
+            	nowTime = DateTime.Parse( "06/06/2005 05:06:00 AM" );
+            	isExpired = ExtendedFormatHelper.IsExtendedExpired( "6 6 6 6 1", getTime, nowTime );
+            	TRUE
+            						
+            	getTime = DateTime.Parse( "06/05/2003 04:06:55 AM" );
+            	nowTime = DateTime.Parse( "06/06/2003 05:06:00 AM" );
+            	isExpired = ExtendedFormatHelper.IsExtendedExpired( "6 6 6 6 1", getTime, nowTime );
+            	FALSE:  we did not cross 6th hour, nor did we cross Monday
+            						
+            	getTime = DateTime.Parse( "06/05/2003 04:06:55 AM" );
+            	nowTime = DateTime.Parse( "06/06/2003 06:06:00 AM" );
+            	isExpired = ExtendedFormatHelper.IsExtendedExpired( "6 6 6 6 5", getTime, nowTime );
+            	TRUE, we cross/enter Friday
+            
+            
+            	getTime = DateTime.Parse( "06/05/2003 04:06:55 AM" );
+            	nowTime = DateTime.Parse( "06/06/2003 06:06:00 AM" );
+            	isExpired = ExtendedFormatHelper.IsExtendedExpired( "6 6 6 6 1", getTime, nowTime );
+            	FALSE:  we don’t cross Monday but all other conditions satisfied
+             </remarks>
+        </member>
+        <member name="T:Microsoft.Practices.EnterpriseLibrary.Caching.BackingStoreFactory">
+            <summary>
+            Represents a factory for creating <see cref="T:Microsoft.Practices.EnterpriseLibrary.Caching.IBackingStore"/> object
+            from the configuration data in a specified <see cref="T:Microsoft.Practices.EnterpriseLibrary.Configuration.ConfigurationContext"/>.
+            </summary>
+        </member>
+        <member name="M:Microsoft.Practices.EnterpriseLibrary.Caching.BackingStoreFactory.#ctor">
+            <summary>
+            <para>Initialize a new instance of the <see cref="T:Microsoft.Practices.EnterpriseLibrary.Caching.BackingStoreFactory"/> class.</para>
+            </summary>
+        </member>
+        <member name="M:Microsoft.Practices.EnterpriseLibrary.Caching.BackingStoreFactory.#ctor(Microsoft.Practices.EnterpriseLibrary.Configuration.ConfigurationContext)">
+            <summary>
+            Initializes a new instance of the <see cref="T:Microsoft.Practices.EnterpriseLibrary.Caching.BackingStoreFactory"/> class.
+            </summary>
+            <param name="context">Current configuration context</param>
+        </member>
+        <member name="M:Microsoft.Practices.EnterpriseLibrary.Caching.BackingStoreFactory.CreateBackingStore(System.String)">
+            <summary>
+            Creates an <see cref="T:Microsoft.Practices.EnterpriseLibrary.Caching.IBackingStore"/> from the configuration
+            data associated with the specified Cache Manager.
+            </summary>
+            <param name="cacheManagerName">The name of the cache manager that is creating the <see cref="T:Microsoft.Practices.EnterpriseLibrary.Caching.IBackingStore"/>.</param>
+            <returns>An <see cref="T:Microsoft.Practices.EnterpriseLibrary.Caching.IBackingStore"/>.</returns>
+        </member>
+        <member name="M:Microsoft.Practices.EnterpriseLibrary.Caching.BackingStoreFactory.GetConfigurationType(System.String)">
+            <summary>
+            <para>Gets the <see cref="T:System.Type"/> of the <see cref="T:Microsoft.Practices.EnterpriseLibrary.Caching.IBackingStore"/> for the factory to create for a <see cref="T:Microsoft.Practices.EnterpriseLibrary.Caching.CacheManager"/>.</para>
+            </summary>
+            <param name="cacheManagerName">
+            <para>The name of the cache manager to create the <see cref="T:Microsoft.Practices.EnterpriseLibrary.Caching.IBackingStore"/>.</para>
+            </param>
+            <returns>
+            <para>The <see cref="T:System.Type"/> of the <see cref="T:Microsoft.Practices.EnterpriseLibrary.Caching.IBackingStore"/> to create.</para>
+            </returns>
+        </member>
+        <member name="M:Microsoft.Practices.EnterpriseLibrary.Caching.BackingStoreFactory.CreateConfigurationView">
+            <summary>
+            <para>Creates the <see cref="T:Microsoft.Practices.EnterpriseLibrary.Caching.CachingConfigurationView"/> for the factory.</para>
+            </summary>
+            <returns>
+            <para>The <see cref="T:Microsoft.Practices.EnterpriseLibrary.Caching.CachingConfigurationView"/> for the factory.</para>
+            </returns>
+        </member>
+        <member name="M:Microsoft.Practices.EnterpriseLibrary.Caching.BackingStoreFactory.InitializeConfigurationProvider(System.String,Microsoft.Practices.EnterpriseLibrary.Configuration.IConfigurationProvider)">
+            <summary>
+            <para>Initialize the <see cref="T:Microsoft.Practices.EnterpriseLibrary.Configuration.IConfigurationProvider"/> by invoking the <see cref="M:Microsoft.Practices.EnterpriseLibrary.Configuration.IConfigurationProvider.Initialize(Microsoft.Practices.EnterpriseLibrary.Configuration.ConfigurationView)"/> method.</para>
+            </summary>
+            <param name="cacheManagerName">
+            <para>The name of the <see cref="T:Microsoft.Practices.EnterpriseLibrary.Caching.CacheManager"/>.</para>
+            </param>
+            <param name="provider">
+            <para>The <see cref="T:Microsoft.Practices.EnterpriseLibrary.Configuration.IConfigurationProvider"/> to initialize.</para>
+            </param>
+        </member>
+        <member name="T:Microsoft.Practices.EnterpriseLibrary.Caching.Instrumentation.CachingServiceItemReadEvent">
+            <summary>
+            <para>This type supports the Instrumentation infrastructure and is not intended to be used directly from your code.</para>
+            </summary>
+            <devdoc>
+            Instrumentation event called when item is read from cache
+            </devdoc>
+        </member>
+        <member name="M:Microsoft.Practices.EnterpriseLibrary.Caching.Instrumentation.CachingServiceItemReadEvent.Fire(System.Boolean)">
+            <summary/>
+            <param name="hitOrMiss"/>
+            <exclude/>
+            <devdoc>
+            Fires event to instrumentation with notification of a hit or miss in the cache.
+            </devdoc>
+        </member>
+        <member name="T:Microsoft.Practices.EnterpriseLibrary.Caching.ICacheScavenger">
+            <summary>
+            Summary description for ICacheScavenger.
+            </summary>
+        </member>
+        <member name="T:Microsoft.Practices.EnterpriseLibrary.Caching.CacheManagerFactory">
+            <summary>
+            Factory for CacheManagers. This class is responsible for creating all the internal
+            classes needed to implement a CacheManager.
+            </summary>
+        </member>
+        <member name="M:Microsoft.Practices.EnterpriseLibrary.Caching.CacheManagerFactory.#ctor">
+            <summary>
+            <para>Initialize a new instance of the <see cref="T:Microsoft.Practices.EnterpriseLibrary.Caching.CacheManagerFactory"/> class.</para>
+            </summary>
+        </member>
+        <member name="M:Microsoft.Practices.EnterpriseLibrary.Caching.CacheManagerFactory.#ctor(Microsoft.Practices.EnterpriseLibrary.Configuration.ConfigurationContext)">
+            <summary>
+            Creates a CacheManager from the given ConfigurationContext
+            </summary>
+            <param name="configurationContext">Configuration information to use when creating CacheManagers. May not be null.</param>
+        </member>
+        <member name="M:Microsoft.Practices.EnterpriseLibrary.Caching.CacheManagerFactory.GetCacheManager">
+            <summary>
+            Gets the default CacheManager as defined in the currently used context
+            </summary>
+            <returns>Default CacheManager</returns>
+        </member>
+        <member name="M:Microsoft.Practices.EnterpriseLibrary.Caching.CacheManagerFactory.GetCacheManager(System.String)">
+            <summary>
+            Gets the CacheManager specified by the given name
+            </summary>
+            <param name="cacheManagerName">CacheManager to return</param>
+            <returns>Specified CacheManager instance. Note that calling this method multiple times
+            for the same named CacheManager will return the same object each time.</returns>
+        </member>
+        <member name="M:Microsoft.Practices.EnterpriseLibrary.Caching.CacheManagerFactory.CreateObject(System.String,System.Type)">
+            <summary>
+            <para>Construct an instance of a named configuration <see cref="T:Microsoft.Practices.EnterpriseLibrary.Caching.CacheManager"/> by the <paramref name="type"/>.</para>
+            </summary>
+            <param name="cacheManagerName">
+            <para>The name from configuration of the <see cref="T:Microsoft.Practices.EnterpriseLibrary.Caching.CacheManager"/> to create.</para>
+            </param>
+            <param name="type"><para>The <see cref="T:System.Type"/> to create.</para></param>
+            <returns><para>A <see cref="T:Microsoft.Practices.EnterpriseLibrary.Caching.CacheManager"/> object.</para>.</returns>
+        </member>
+        <member name="M:Microsoft.Practices.EnterpriseLibrary.Caching.CacheManagerFactory.GetConfigurationType(System.String)">
+            <summary>
+            <para>Gets the <see cref="T:System.Type"/> of the <see cref="T:Microsoft.Practices.EnterpriseLibrary.Caching.CacheManager"/> for the factory to create.</para>
+            </summary>
+            <param name="cacheManagerName">
+            <para>The name from configuration of the <see cref="T:Microsoft.Practices.EnterpriseLibrary.Caching.CacheManager"/>.</para>
+            </param>
+            <returns>
+            <para>The <see cref="T:System.Type"/> of the <see cref="T:Microsoft.Practices.EnterpriseLibrary.Caching.CacheManager"/> to create.</para>
+            </returns>
+        </member>
+        <member name="M:Microsoft.Practices.EnterpriseLibrary.Caching.CacheManagerFactory.CreateExpirationTask(Microsoft.Practices.EnterpriseLibrary.Caching.ICacheOperations)">
+            <summary>
+            Method protected for testing purposes. Do not call this method
+            </summary>
+            <param name="cacheOperations">For testing only.</param>
+            <returns>For testing only.</returns>
+        </member>
+        <member name="T:Microsoft.Practices.EnterpriseLibrary.Caching.BackingStoreImplementations.IsolatedStorageCacheItem">
+            <summary>
+            Represents a CacheItem as stored in Isolated Storage. This class is responsible for storing and
+            restoring the item from the underlying file system store.
+            </summary>
+        </member>
+        <member name="M:Microsoft.Practices.EnterpriseLibrary.Caching.BackingStoreImplementations.IsolatedStorageCacheItem.#ctor(System.IO.IsolatedStorage.IsolatedStorageFile,System.String,Microsoft.Practices.EnterpriseLibrary.Caching.BackingStoreImplementations.IStorageEncryptionProvider)">
+            <summary>
+            Instance constructor. Ensures that the storage location in Isolated Storage is prepared
+            for reading and writing. This class stores each individual field of the CacheItem into its own
+            file inside the directory specified by itemDirectoryRoot.
+            </summary>
+            <param name="storage">Isolated Storage area to use. May not be null.</param>
+            <param name="itemDirectoryRoot">Complete path in Isolated Storage where the cache item should be stored. May not be null.</param>
+            <param name="encryptionProvider">Encryption provider</param>
+        </member>
+        <member name="M:Microsoft.Practices.EnterpriseLibrary.Caching.BackingStoreImplementations.IsolatedStorageCacheItem.Store(Microsoft.Practices.EnterpriseLibrary.Caching.CacheItem)">
+            <summary>
+            Stores specified CacheItem into IsolatedStorage at location specified in constructor
+            </summary>
+            <param name="itemToStore">The <see cref="T:Microsoft.Practices.EnterpriseLibrary.Caching.CacheItem"/> to store.</param>
+        </member>
+        <member name="M:Microsoft.Practices.EnterpriseLibrary.Caching.BackingStoreImplementations.IsolatedStorageCacheItem.Load">
+            <summary>
+            Loads a CacheItem from IsolatedStorage from the location specified in the constructor
+            </summary>
+            <returns>CacheItem loaded from IsolatedStorage</returns>
+        </member>
+        <member name="M:Microsoft.Practices.EnterpriseLibrary.Caching.BackingStoreImplementations.IsolatedStorageCacheItem.UpdateLastAccessedTime(System.DateTime)">
+            <summary>
+            Updates the last accessed time for the CacheItem stored at this location in Isolated Storage
+            </summary>
+            <param name="newTimestamp">New timestamp</param>
+        </member>
+        <member name="T:Microsoft.Practices.EnterpriseLibrary.Caching.Configuration.CustomCacheStorageData">
+            <summary>
+            Allows for custom <c>CacheStorageData</c> configuration.
+            </summary>
+        </member>
+        <member name="M:Microsoft.Practices.EnterpriseLibrary.Caching.Configuration.CustomCacheStorageData.#ctor">
+            <summary>
+            Initializes a new instance of the <see cref="T:Microsoft.Practices.EnterpriseLibrary.Caching.Configuration.CustomCacheStorageData"/> class.
+            </summary>
+        </member>
+        <member name="M:Microsoft.Practices.EnterpriseLibrary.Caching.Configuration.CustomCacheStorageData.#ctor(System.String)">
+            <summary>
+            Initialize a new instance of the <see cref="T:Microsoft.Practices.EnterpriseLibrary.Caching.Configuration.CustomCacheStorageData"/> class.
+            </summary>
+            <param name="name">
+            The name of the <see cref="T:Microsoft.Practices.EnterpriseLibrary.Caching.Configuration.CustomCacheStorageData"/>.
+            </param>
+        </member>
+        <member name="M:Microsoft.Practices.EnterpriseLibrary.Caching.Configuration.CustomCacheStorageData.#ctor(System.String,System.String)">
+            <summary>
+            Initialize a new instance of the <see cref="T:Microsoft.Practices.EnterpriseLibrary.Caching.Configuration.CustomCacheStorageData"/> class.
+            </summary>
+            <param name="name">
+            The name of the <see cref="T:Microsoft.Practices.EnterpriseLibrary.Caching.Configuration.CustomCacheStorageData"/>.
+            </param>
+            <param name="typeName">
+            Gets the type for the <see cref="T:Microsoft.Practices.EnterpriseLibrary.Caching.Configuration.CustomCacheStorageData"/>.
+            </param>
+        </member>
+        <member name="M:Microsoft.Practices.EnterpriseLibrary.Caching.Configuration.CustomCacheStorageData.#ctor(System.String,System.String,Microsoft.Practices.EnterpriseLibrary.Caching.Configuration.StorageEncryptionProviderData)">
+            <summary>
+            Initialize a new instance of the <see cref="T:Microsoft.Practices.EnterpriseLibrary.Caching.Configuration.CacheManagerData"/> class.
+            </summary>
+            <param name="name">
+            The name of the <see cref="T:Microsoft.Practices.EnterpriseLibrary.Caching.Configuration.CacheManagerData"/>.
+            </param>
+            <param name="typeName">
+            Gets the type for the <see cref="T:Microsoft.Practices.EnterpriseLibrary.Caching.Configuration.CustomCacheStorageData"/>.
+            </param>
+            <param name="storageEncryption">
+            Storage Encryption data defined in configuration
+            </param>
+        </member>
+        <member name="P:Microsoft.Practices.EnterpriseLibrary.Caching.Configuration.CustomCacheStorageData.Extensions">
+            <summary>
+            Retrieves custom configuration attributes
+            </summary>
+        </member>
+        <member name="P:Microsoft.Practices.EnterpriseLibrary.Caching.Configuration.CustomCacheStorageData.TypeName">
+            <summary>
+            Gets the type for the <see cref="T:Microsoft.Practices.EnterpriseLibrary.Caching.Configuration.CustomCacheStorageData"/>.
+            </summary>
+        </member>
+        <member name="T:Microsoft.Practices.EnterpriseLibrary.Caching.Configuration.CacheManagerDataCollection">
+            <summary>
+            Represents a collection of <see cref="T:Microsoft.Practices.EnterpriseLibrary.Caching.Configuration.CacheManagerData"/> settings.
+            </summary>
+        </member>
+        <member name="M:Microsoft.Practices.EnterpriseLibrary.Caching.Configuration.CacheManagerDataCollection.Add(Microsoft.Practices.EnterpriseLibrary.Caching.Configuration.CacheManagerData)">
+            <summary>
+            Add a new <see cref="T:Microsoft.Practices.EnterpriseLibrary.Caching.Configuration.CacheManagerData"/> to the collection.
+            </summary>
+            <param name="data">Distribution strategy to add.</param>
+        </member>
+        <member name="M:Microsoft.Practices.EnterpriseLibrary.Caching.Configuration.CacheManagerDataCollection.AddRange(Microsoft.Practices.EnterpriseLibrary.Caching.Configuration.CacheManagerDataCollection)">
+            <summary>
+            Adds the items in the specified collection to the current collection.
+            </summary>
+            <param name="collection">A <see cref="T:Microsoft.Practices.EnterpriseLibrary.Caching.Configuration.CacheManagerDataCollection"/>.</param>
+        </member>
+        <member name="M:Microsoft.Practices.EnterpriseLibrary.Caching.Configuration.CacheManagerDataCollection.CopyTo(Microsoft.Practices.EnterpriseLibrary.Caching.Configuration.CacheManagerData[],System.Int32)">
+            <summary>
+            Copies the elements of the <see cref="T:Microsoft.Practices.EnterpriseLibrary.Caching.Configuration.CacheManagerDataCollection"/>
+            </summary>
+            <param name="array">The one-dimensional Array that is the destination of the elements copied from <see cref="T:Microsoft.Practices.EnterpriseLibrary.Caching.Configuration.CacheManagerDataCollection"/>.</param>
+            <param name="index">The zero-based index in <paramref name="array"/> at which copying begins. </param>
+        </member>
+        <member name="P:Microsoft.Practices.EnterpriseLibrary.Caching.Configuration.CacheManagerDataCollection.Item(System.Int32)">
+            <summary>
+            <para>Gets or sets the <see cref="T:Microsoft.Practices.EnterpriseLibrary.Caching.Configuration.CacheManagerData"/> at the specified <paramref name="index"/>.</para>
+            </summary>
+            <param name="index">
+            <para>The index of the <see cref="T:Microsoft.Practices.EnterpriseLibrary.Caching.Configuration.CacheManagerData"/> to get or set.</para>
+            </param>
+            <para>The value associated with the specified <paramref name="index"/>. If the specified <paramref name="index"/> is not found, attempting to get it returns a <see langword="null"/> reference (Nothing in Visual Basic), and attempting to set it creates a new entry using the specified <paramref name="index"/>.</para>
+        </member>
+        <member name="P:Microsoft.Practices.EnterpriseLibrary.Caching.Configuration.CacheManagerDataCollection.Item(System.String)">
+            <summary>
+            Indexer to retrieve a named <see cref="T:Microsoft.Practices.EnterpriseLibrary.Caching.Configuration.CacheManagerData"/>.
+            </summary>        
+            <param name="name">Name of CacheManagerData to retrieve</param>
+        </member>
+        <member name="T:Microsoft.Practices.EnterpriseLibrary.Caching.BackingStoreImplementations.IStorageEncryptionProvider">
+            <summary>
+            Not intended for direct use.  Provides symmetric encryption and decryption services 
+            to Isolated and Database backing stores.  Allows this block to use 
+            Security.Cryptography without having a direct reference to that assembly.
+            </summary>
+        </member>
+        <member name="M:Microsoft.Practices.EnterpriseLibrary.Caching.BackingStoreImplementations.IStorageEncryptionProvider.Encrypt(System.Byte[])">
+            <summary>
+            Encrypt backing store data.
+            </summary>
+            <param name="plaintext">Clear bytes.</param>
+            <returns>Encrypted bytes.</returns>
+        </member>
+        <member name="M:Microsoft.Practices.EnterpriseLibrary.Caching.BackingStoreImplementations.IStorageEncryptionProvider.Decrypt(System.Byte[])">
+            <summary>
+            Decrypt backing store data.
+            </summary>
+            <param name="ciphertext">Encrypted bytes.</param>
+            <returns>Decrypted bytes.</returns>
+        </member>
+        <member name="T:Microsoft.Practices.EnterpriseLibrary.Caching.BackingStoreImplementations.IsolatedStorageCacheItemField">
+            <summary>
+            Defines the mechanism to store and read individual fields from IsolatedStorage. This class maintains no
+            state with respect to the data read from IsolatedStorage, so it may be reused to reread or rewrite the same field
+            repeatedly.
+            </summary>
+        </member>
+        <member name="M:Microsoft.Practices.EnterpriseLibrary.Caching.BackingStoreImplementations.IsolatedStorageCacheItemField.#ctor(System.IO.IsolatedStorage.IsolatedStorageFile,System.String,System.String,Microsoft.Practices.EnterpriseLibrary.Caching.BackingStoreImplementations.IStorageEncryptionProvider)">
+            <summary>
+            Instance constructor
+            </summary>
+            <param name="storage">IsolatedStorage area to use. May not be null.</param>
+            <param name="fieldName">Name of the file in which the field value is stored. May not be null.</param>
+            <param name="fileSystemLocation">Complete path to directory where file specified in fieldName is to be found. May not be null.</param>
+            <param name="encryptionProvider">Encryption provider</param>
+        </member>
+        <member name="M:Microsoft.Practices.EnterpriseLibrary.Caching.BackingStoreImplementations.IsolatedStorageCacheItemField.Write(System.Object,System.Boolean)">
+            <summary>
+            Writes value to specified location in IsolatedStorage
+            </summary>
+            <param name="itemToWrite">Object to write into Isolated Storage</param>
+            <param name="encrypted">True if item written is to be encrypted</param>
+        </member>
+        <member name="M:Microsoft.Practices.EnterpriseLibrary.Caching.BackingStoreImplementations.IsolatedStorageCacheItemField.Overwrite(System.Object)">
+            <summary>
+            Overwrites given field in Isolated Storage. Item will not be encrypted
+            </summary>
+            <param name="itemToWrite">Object to write into Isolated Storage</param>
+        </member>
+        <member name="M:Microsoft.Practices.EnterpriseLibrary.Caching.BackingStoreImplementations.IsolatedStorageCacheItemField.Read(System.Boolean)">
+            <summary>
+            Reads value from specified location in IsolatedStorage
+            </summary>
+            <param name="encrypted">True if field is stored as encrypted</param>
+            <returns>Value read from IsolatedStorage. This value may be null if the value stored is null.</returns>
+        </member>
+        <member name="M:Microsoft.Practices.EnterpriseLibrary.Caching.BackingStoreImplementations.IsolatedStorageCacheItemField.WriteField(System.Object,System.IO.IsolatedStorage.IsolatedStorageFileStream,System.Boolean)">
+            <summary>
+            Responsible for writing value to IsolatedStorage using given IsolatedStorageFileStream reference. Subclasses
+            may override this method to provide different implementations of writing to Isolated Storage.
+            </summary>
+            <param name="itemToWrite">Value to write. May be null.</param>
+            <param name="fileStream">Stream to which value should be written. May not be null.</param>
+            <param name="encrypted">True if item is to be encrypted</param>
+        </member>
+        <member name="M:Microsoft.Practices.EnterpriseLibrary.Caching.BackingStoreImplementations.IsolatedStorageCacheItemField.ReadField(System.IO.IsolatedStorage.IsolatedStorageFileStream,System.Boolean)">
+            <summary>
+            Responsible for reading value from IsolatedStorage using given IsolatedStorageFileStream reference. Subclasses
+            may override this method to provide different implementations of reading from IsolatedStorage.
+            </summary>
+            <param name="fileStream">Stream from which value should be written. May not be null.</param>
+            <param name="encrypted">True if item is stored encrypted</param>
+            <returns>Value read from Isolated Storage. May be null if value stored is null</returns>
+        </member>
+        <member name="T:Microsoft.Practices.EnterpriseLibrary.Caching.Instrumentation.CachingServiceInternalFailureEvent">
+            <summary>
+            <para>This type supports the Instrumentation infrastructure and is not intended to be used directly from your code.</para>
+            </summary>
+        </member>
+        <member name="T:Microsoft.Practices.EnterpriseLibrary.Caching.Instrumentation.CachingServiceFailureEvent">
+            <summary>
+            <para>This type supports the Instrumentation infrastructure and is not intended to be used directly from your code.</para>
+            </summary>
+        </member>
+        <member name="F:Microsoft.Practices.EnterpriseLibrary.Caching.Instrumentation.CachingServiceFailureEvent.reportedException">
+            <summary/>
+            <exclude/>
+            <devdoc>
+            Exception reported from the failure
+            </devdoc>
+        </member>
+        <member name="F:Microsoft.Practices.EnterpriseLibrary.Caching.Instrumentation.CachingServiceFailureEvent.reportedExceptionMessage">
+            <summary/>
+            <exclude/>
+            <devdoc>
+            Message for the reported exception
+            </devdoc>
+        </member>
+        <member name="M:Microsoft.Practices.EnterpriseLibrary.Caching.Instrumentation.CachingServiceFailureEvent.#ctor(Microsoft.Practices.EnterpriseLibrary.Common.Instrumentation.EventLogIdentifier[])">
+            <summary/>
+            <param name="eventLogIdentifiers"/>
+            <exclude/>
+        </member>
+        <member name="P:Microsoft.Practices.EnterpriseLibrary.Caching.Instrumentation.CachingServiceFailureEvent.ExceptionStackTrace">
+            <summary/>
+            <exclude/>
+            <devdoc>
+            Returns stack trace of reported exception
+            </devdoc>
+        </member>
+        <member name="P:Microsoft.Practices.EnterpriseLibrary.Caching.Instrumentation.CachingServiceFailureEvent.ExceptionMessage">
+            <summary/>
+            <exclude/>
+            <devdoc>
+            Returns message associated with reported exception
+            </devdoc>
+        </member>
+        <member name="M:Microsoft.Practices.EnterpriseLibrary.Caching.Instrumentation.CachingServiceInternalFailureEvent.Fire(System.String)">
+            <summary/>
+            <param name="message"/>
+            <exclude/>
+            <devdoc>
+            Fires the event to instrumentation with a message
+            </devdoc>
+        </member>
+        <member name="M:Microsoft.Practices.EnterpriseLibrary.Caching.Instrumentation.CachingServiceInternalFailureEvent.Fire(System.String,System.Exception)">
+            <summary/>
+            <param name="message"/>
+            <param name="ex"/>
+            <exclude/>
+            <devdoc>
+            Fires to event to instrumentation with a message and reported exception
+            </devdoc>
+        </member>
+        <member name="P:Microsoft.Practices.EnterpriseLibrary.Caching.Instrumentation.CachingServiceInternalFailureEvent.ConfigurationFilePath">
+            <summary/>
+            <exclude/>
+            <devdoc>
+            The path of the pricipal configuration file.
+            </devdoc>
+        </member>
+        <member name="T:Microsoft.Practices.EnterpriseLibrary.Caching.ExpirationPollTimer">
+            <summary>
+            Summary description for ExpirationPollTimer.
+            </summary>
+        </member>
+        <member name="T:Microsoft.Practices.EnterpriseLibrary.Caching.BackingStoreImplementations.IsolatedStorageBackingStore">
+            <summary>
+            Implementation of IBackingStore that stores its CacheItems into IsolatedStorage.
+            </summary>
+            <remarks>
+            This class assumes a tree-structured storage schema. Each named instance of an Isolated Storage area creates a 
+            separate, top-level directory in Isolated Storage. This is to allow a user to segregate different areas in IsoStore
+            to allow multiple applications to use their own logically separate areas. Inside each of these areas, each CacheItem is stored
+            in its own subdirectory, with separate files in those subdirectories representing the different pieces of a CacheItem. 
+            The item was split like this to allow for several optimizations. The first optimization is that now, the essence of a CacheItem
+            can be restored indepedently of the underlying value. It is the deserialization of the value object that could conceivably 
+            be very time consuming, so by splitting it off into its own file, that deserialization process could be delayed until the value is 
+            actually needed. The second optimization is that we are now able to update the last accessed time for a CacheItem without 
+            to bring the entire CacheItem into memory, make the update, and then reserialize it.
+            </remarks>
+        </member>
+        <member name="T:Microsoft.Practices.EnterpriseLibrary.Caching.BackingStoreImplementations.BaseBackingStore">
+            <summary>
+            Base class for backing stores. Contains implementations of common policies
+            and utilities usable by all backing stores.
+            </summary>
+        </member>
+        <member name="M:Microsoft.Practices.EnterpriseLibrary.Caching.BackingStoreImplementations.BaseBackingStore.#ctor">
+            <summary>
+            Inherited constructor
+            </summary>
+        </member>
+        <member name="M:Microsoft.Practices.EnterpriseLibrary.Caching.BackingStoreImplementations.BaseBackingStore.Finalize">
+            <summary>
+            Finalizer for BaseBackingStore
+            </summary>
+        </member>
+        <member name="M:Microsoft.Practices.EnterpriseLibrary.Caching.BackingStoreImplementations.BaseBackingStore.Dispose">
+            <summary>
+            Dispose method for all backing stores. This implementation is sufficient for any class that does not need any finalizer behavior
+            </summary>
+        </member>
+        <member name="M:Microsoft.Practices.EnterpriseLibrary.Caching.BackingStoreImplementations.BaseBackingStore.Dispose(System.Boolean)">
+            <summary>
+            Disposing method as used in the Dispose pattern
+            </summary>
+            <param name="disposing">True if we are called during Dispose. False if we are called from finalizer</param>
+        </member>
+        <member name="M:Microsoft.Practices.EnterpriseLibrary.Caching.BackingStoreImplementations.BaseBackingStore.Remove(System.String)">
+            <summary>
+            Removes an item with the given key from the backing store
+            </summary>
+            <param name="key">Key to remove. Must not be null.</param>
+            <remarks>
+            <p>
+            Other exceptions can be thrown, depending on what individual Backing Store implementations throw during Remove
+            </p>
+            </remarks>
+        </member>
+        <member name="M:Microsoft.Practices.EnterpriseLibrary.Caching.BackingStoreImplementations.BaseBackingStore.Remove(System.Int32)">
+            <summary>
+            Removes an item with the given storage key from the backing store.
+            </summary>
+            <param name="storageKey">Unique storage key for the cache item to be removed</param>
+            <remarks>
+            <p>
+            Other exceptions can be thrown, depending on what individual Backing Store implementations throw during Remove
+            </p>
+            </remarks>
+        </member>
+        <member name="M:Microsoft.Practices.EnterpriseLibrary.Caching.BackingStoreImplementations.BaseBackingStore.UpdateLastAccessedTime(System.String,System.DateTime)">
+            <summary>
+            Updates the last accessed time for a cache item.
+            </summary>
+            <param name="key">Key to update</param>
+            <param name="timestamp">Time at which item updated</param>
+            <remarks>
+            <p>
+            Other exceptions can be thrown, depending on what individual Backing Store implementations throw during UpdateLastAccessedTime
+            </p>
+            </remarks>
+        </member>
+        <member name="M:Microsoft.Practices.EnterpriseLibrary.Caching.BackingStoreImplementations.BaseBackingStore.UpdateLastAccessedTime(System.Int32,System.DateTime)">
+            <summary>
+            Updates the last accessed time for a cache item referenced by this unique storage key
+            </summary>
+            <param name="storageKey">Unique storage key for cache item</param>
+            <param name="timestamp">Time at which item updated</param>
+        </member>
+        <member name="M:Microsoft.Practices.EnterpriseLibrary.Caching.BackingStoreImplementations.BaseBackingStore.Flush">
+            <summary>
+            Flushes all CacheItems from backing store. This method must meet the Strong Exception Safety guarantee.
+            </summary>
+            <remarks>
+            <p>
+            Other exceptions can be thrown, depending on what individual Backing Store implementations throw during Flush
+            </p>
+            </remarks>
+        </member>
+        <member name="M:Microsoft.Practices.EnterpriseLibrary.Caching.BackingStoreImplementations.BaseBackingStore.Add(Microsoft.Practices.EnterpriseLibrary.Caching.CacheItem)">
+            <summary>
+            <p>
+            This method is responsible for adding a CacheItem to the BackingStore. This operation must be successful 
+            even if an item with the same key already exists. This method must also meet the exception safety guarantee
+            and make sure that all traces of the new or old item are gone if the add fails in any way.
+            </p> 
+            </summary>
+            <param name="newItem">CacheItem to be added</param>
+            <remarks>
+            <p>
+            Other exceptions can be thrown, depending on what individual Backing Store implementations throw during Add
+            </p>
+            </remarks>
+        </member>
+        <member name="M:Microsoft.Practices.EnterpriseLibrary.Caching.BackingStoreImplementations.BaseBackingStore.Load">
+            <summary>
+            Loads all CacheItems from underlying database.
+            </summary>
+            <returns>Hashtable containing all existing CacheItems.</returns>
+            <remarks>Exceptions thrown depend on the implementation of the underlying database.</remarks>
+        </member>
+        <member name="M:Microsoft.Practices.EnterpriseLibrary.Caching.BackingStoreImplementations.BaseBackingStore.RemoveOldItem(System.Int32)">
+            <summary>
+            Removed existing item stored in persistence store with same key as new item
+            </summary>
+            <param name="storageKey">Unique key for cache item</param>
+        </member>
+        <member name="M:Microsoft.Practices.EnterpriseLibrary.Caching.BackingStoreImplementations.BaseBackingStore.AddNewItem(System.Int32,Microsoft.Practices.EnterpriseLibrary.Caching.CacheItem)">
+            <summary>
+            Adds new item to persistence store
+            </summary>
+            <param name="storageKey">Unique key for cache item</param>
+            <param name="newItem">Item to be added to cache. May not be null.</param>
+        </member>
+        <member name="M:Microsoft.Practices.EnterpriseLibrary.Caching.BackingStoreImplementations.BaseBackingStore.LoadDataFromStore">
+            <summary>
+            Responsible for loading items from underlying persistence store. This method should do
+            no filtering to remove expired items.
+            </summary>
+            <returns>Hash table of all items loaded from persistence store</returns>
+        </member>
+        <member name="P:Microsoft.Practices.EnterpriseLibrary.Caching.BackingStoreImplementations.BaseBackingStore.CurrentCacheManager">
+            <summary>
+            <para>Gets the current name of the <see cref="T:Microsoft.Practices.EnterpriseLibrary.Caching.CacheManager"/> using this instance.</para>
+            </summary>
+            <value>
+            <para>The current name of the <see cref="T:Microsoft.Practices.EnterpriseLibrary.Caching.CacheManager"/> using this instance.</para>
+            </value>
+        </member>
+        <member name="P:Microsoft.Practices.EnterpriseLibrary.Caching.BackingStoreImplementations.BaseBackingStore.Count">
+            <summary>
+            Number of objects stored in the backing store
+            </summary>
+        </member>
+        <member name="M:Microsoft.Practices.EnterpriseLibrary.Caching.BackingStoreImplementations.IsolatedStorageBackingStore.#ctor">
+            <summary>
+            Default constructor
+            </summary>
+        </member>
+        <member name="M:Microsoft.Practices.EnterpriseLibrary.Caching.BackingStoreImplementations.IsolatedStorageBackingStore.#ctor(System.String)">
+            <summary>
+            Initialize Isolated Storage for this CacheItem by creating the directory where it will be stored. This 
+            constructor should only be used for testing, and never called from production code.
+            </summary>
+            <param name="storageAreaName">Identifier for this Isolated Storage area. May not be null.</param>
+        </member>
+        <member name="M:Microsoft.Practices.EnterpriseLibrary.Caching.BackingStoreImplementations.IsolatedStorageBackingStore.Initialize(Microsoft.Practices.EnterpriseLibrary.Configuration.ConfigurationView)">
+            <summary>
+            Initializes a new instance of the <see cref="T:Microsoft.Practices.EnterpriseLibrary.Caching.BackingStoreImplementations.IsolatedStorageBackingStore"/> class given the configuration data
+            </summary>
+            <param name="configurationView">An <see cref="T:Microsoft.Practices.EnterpriseLibrary.Caching.CachingConfigurationView"></see> object</param>
+        </member>
+        <member name="M:Microsoft.Practices.EnterpriseLibrary.Caching.BackingStoreImplementations.IsolatedStorageBackingStore.Flush">
+            <summary>
+            Removes all items from this Isolated Storage area.
+            </summary>
+        </member>
+        <member name="M:Microsoft.Practices.EnterpriseLibrary.Caching.BackingStoreImplementations.IsolatedStorageBackingStore.Remove(System.Int32)">
+            <summary>
+            Removes the named item from Isolated Storage.
+            </summary>
+            <param name="storageKey">Identifier for CacheItem to remove.</param>
+        </member>
+        <member name="M:Microsoft.Practices.EnterpriseLibrary.Caching.BackingStoreImplementations.IsolatedStorageBackingStore.UpdateLastAccessedTime(System.Int32,System.DateTime)">
+            <summary>
+            Updates the last accessed time for the specified CacheItem stored in Isolated Storage
+            </summary>
+            <param name="storageKey">Identifer for CacheItem to remove.</param>
+            <param name="newTimestamp">New timestamp for CacheItem.</param>
+        </member>
+        <member name="M:Microsoft.Practices.EnterpriseLibrary.Caching.BackingStoreImplementations.IsolatedStorageBackingStore.Dispose(System.Boolean)">
+            <summary>
+            <para>Releases the unmanaged resources used by the <see cref="T:Microsoft.Practices.EnterpriseLibrary.Caching.BackingStoreImplementations.IsolatedStorageBackingStore"/> and optionally releases the managed resources.</para>
+            </summary>
+            <param name="disposing">
+            <para><see langword="true"/> to release both managed and unmanaged resources; <see langword="false"/> to release only unmanaged resources.</para>
+            </param>
+        </member>
+        <member name="M:Microsoft.Practices.EnterpriseLibrary.Caching.BackingStoreImplementations.IsolatedStorageBackingStore.LoadDataFromStore">
+            <summary>
+            Loads data from persistence store
+            </summary>
+            <returns>A Hashtable containing the cache items.</returns>
+        </member>
+        <member name="M:Microsoft.Practices.EnterpriseLibrary.Caching.BackingStoreImplementations.IsolatedStorageBackingStore.RemoveOldItem(System.Int32)">
+            <summary>
+            Remove existing item stored in persistence store with same key as new item
+            </summary>
+            <param name="storageKey">Item being removed from cache.</param>
+        </member>
+        <member name="M:Microsoft.Practices.EnterpriseLibrary.Caching.BackingStoreImplementations.IsolatedStorageBackingStore.AddNewItem(System.Int32,Microsoft.Practices.EnterpriseLibrary.Caching.CacheItem)">
+            <summary>
+            Adds new item to persistence store
+            </summary>
+            <param name="storageKey">Unique key for storage item</param>
+            <param name="newItem">Item to be added to cache. May not be null.</param>
+        </member>
+        <member name="P:Microsoft.Practices.EnterpriseLibrary.Caching.BackingStoreImplementations.IsolatedStorageBackingStore.Count">
+            <summary>
+            Returns the number of CacheItems in the Isolated Storage segment identified by the name passed in at construction
+            </summary>
+        </member>
+        <member name="T:Microsoft.Practices.EnterpriseLibrary.Caching.ProducerConsumerQueue">
+            <summary>
+            Summary description for ProducerConsumerQueue.
+            </summary>
+        </member>
+        <member name="T:Microsoft.Practices.EnterpriseLibrary.Caching.Expirations.SlidingTime">
+            <summary>
+            This provider tests if a item was expired using a time slice schema.
+            </summary>
+        </member>
+        <member name="M:Microsoft.Practices.EnterpriseLibrary.Caching.Expirations.SlidingTime.#ctor(System.TimeSpan)">
+            <summary>
+            Create an instance of this class with the timespan for expiration.
+            </summary>
+            <param name="slidingExpiration">
+            Expiration time span
+            </param>
+        </member>
+        <member name="M:Microsoft.Practices.EnterpriseLibrary.Caching.Expirations.SlidingTime.#ctor(System.TimeSpan,System.DateTime)">
+            <devdoc>
+            This constructor is for testing purposes only. Never, ever call it in a real program
+            </devdoc>
+        </member>
+        <member name="M:Microsoft.Practices.EnterpriseLibrary.Caching.Expirations.SlidingTime.#ctor(System.Runtime.Serialization.SerializationInfo,System.Runtime.Serialization.StreamingContext)">
+            <summary>
+            This method performs the deserialziaton of members of the current 
+            class.
+            </summary>
+            <param name="info">
+            A SerializationInfo object which is deserialized by the formatter 
+            and then passed to current constructor
+            </param>
+            <param name="context">
+            A StreamingContext that describes the source of the serialized 
+            stream from where the Serialization object is retrieved
+            </param>
+        </member>
+        <member name="M:Microsoft.Practices.EnterpriseLibrary.Caching.Expirations.SlidingTime.GetObjectData(System.Runtime.Serialization.SerializationInfo,System.Runtime.Serialization.StreamingContext)">
+            <summary>
+            This method performs the serialziaton of members of the current 
+            class.
+            </summary>
+            <param name="info">
+            A SerializationInfo object which is deserialized by the formatter 
+            and then passed to current constructor
+            </param>
+            <param name="context">
+            A StreamingContext that describes the source of the serialized 
+            stream from where the Serialization object is retrieved
+            </param>
+        </member>
+        <member name="M:Microsoft.Practices.EnterpriseLibrary.Caching.Expirations.SlidingTime.HasExpired">
+            <summary>
+            Specifies if item has expired or not.
+            </summary>
+            <returns>Returns true if the item has expired otherwise false.</returns>
+        </member>
+        <member name="M:Microsoft.Practices.EnterpriseLibrary.Caching.Expirations.SlidingTime.Notify">
+            <summary>
+            Notifies that the item was recently used.
+            </summary>
+        </member>
+        <member name="M:Microsoft.Practices.EnterpriseLibrary.Caching.Expirations.SlidingTime.Initialize(Microsoft.Practices.EnterpriseLibrary.Caching.CacheItem)">
+            <summary>
+            Used to set the initial value of TimeLastUsed. This method is invoked during the reinstantiation of
+            an instance from a persistent store. 
+            </summary>
+            <param name="owningCacheItem">CacheItem to which this expiration belongs.</param>
+        </member>
+        <member name="M:Microsoft.Practices.EnterpriseLibrary.Caching.Expirations.SlidingTime.CheckSlidingExpiration(System.DateTime,System.DateTime,System.TimeSpan)">
+            <summary>
+            Check whether the sliding time has expired.
+            </summary>
+            <param name="nowDateTime">Current time </param>
+            <param name="lastUsed">The last time when the item has been used</param>
+            <param name="slidingExpiration">The span of sliding expiration</param>
+            <returns>True if the item was expired, otherwise false</returns>
+        </member>
+        <member name="P:Microsoft.Practices.EnterpriseLibrary.Caching.Expirations.SlidingTime.ItemSlidingExpiration">
+            <summary>
+            Returns sliding time window that must be exceeded for expiration to occur
+            </summary>
+        </member>
+        <member name="P:Microsoft.Practices.EnterpriseLibrary.Caching.Expirations.SlidingTime.TimeLastUsed">
+            <summary>
+            Returns time that this object was last touched
+            </summary>
+        </member>
+        <member name="T:Microsoft.Practices.EnterpriseLibrary.Caching.BackingStoreImplementations.StorageEncryptionFactory">
+            <summary>
+            Not intended for direct use.  Creates cache backing store encryption providers.
+            </summary>
+        </member>
+        <member name="M:Microsoft.Practices.EnterpriseLibrary.Caching.BackingStoreImplementations.StorageEncryptionFactory.#ctor">
+            <summary>
+            <para>Initialize a new instance of the of the <see cref="T:Microsoft.Practices.EnterpriseLibrary.Caching.BackingStoreImplementations.StorageEncryptionFactory"/> class.</para>
+            </summary>
+        </member>
+        <member name="M:Microsoft.Practices.EnterpriseLibrary.Caching.BackingStoreImplementations.StorageEncryptionFactory.#ctor(Microsoft.Practices.EnterpriseLibrary.Configuration.ConfigurationContext)">
+            <summary>
+            Initializes the factory with a specified configuration context.
+            </summary>
+            <param name="configurationContext">The configuration context.</param>
+        </member>
+        <member name="M:Microsoft.Practices.EnterpriseLibrary.Caching.BackingStoreImplementations.StorageEncryptionFactory.CreateSymmetricProvider(System.String)">
+            <summary>
+            Returns the encryption provider specified in configuration
+            </summary>
+            <param name="cacheManagerName">Name of cache manager as defined in configuration.</param>
+            <returns>Encryption provider as defined in configuration</returns>
+        </member>
+        <member name="M:Microsoft.Practices.EnterpriseLibrary.Caching.BackingStoreImplementations.StorageEncryptionFactory.CreateConfigurationView">
+            <summary>
+            <para>Creates the <see cref="T:Microsoft.Practices.EnterpriseLibrary.Caching.CachingConfigurationView"/> for the factory.</para>
+            </summary>
+            <returns>
+            <para>The <see cref="T:Microsoft.Practices.EnterpriseLibrary.Caching.CachingConfigurationView"/> for the factory.</para>
+            </returns>
+        </member>
+        <member name="M:Microsoft.Practices.EnterpriseLibrary.Caching.BackingStoreImplementations.StorageEncryptionFactory.GetConfigurationType(System.String)">
+            <summary>
+            <para>Gets the <see cref="T:System.Type"/> of the <see cref="T:Microsoft.Practices.EnterpriseLibrary.Caching.BackingStoreImplementations.IStorageEncryptionProvider"/> for the factory to create for a <see cref="T:Microsoft.Practices.EnterpriseLibrary.Caching.CacheManager"/>.</para>
+            </summary>
+            <param name="cacheManagerName">
+            <para>The name of the cache manager to create the <see cref="T:Microsoft.Practices.EnterpriseLibrary.Caching.BackingStoreImplementations.IStorageEncryptionProvider"/>.</para>
+            </param>
+            <returns>
+            <para>The <see cref="T:System.Type"/> of the <see cref="T:Microsoft.Practices.EnterpriseLibrary.Caching.BackingStoreImplementations.IStorageEncryptionProvider"/> to create.</para>
+            </returns>
+        </member>
+        <member name="T:Microsoft.Practices.EnterpriseLibrary.Caching.Instrumentation.CachingServiceCacheFlushedEvent">
+            <summary>
+            <para>This type supports the Instrumentation infrastructure and is not intended to be used directly from your code.</para>
+            </summary>
+            <devdoc>
+            Instrumentation event called when the cache is flushed.
+            </devdoc>
+        </member>
+        <member name="M:Microsoft.Practices.EnterpriseLibrary.Caching.Instrumentation.CachingServiceCacheFlushedEvent.FireEvent">
+            <summary/>
+            <exclude/>
+        </member>
+        <member name="T:Microsoft.Practices.EnterpriseLibrary.Caching.BackingStoreImplementations.NullBackingStore">
+            <summary>
+            This class is used when no backing store is needed to support the caching storage policy.
+            Its job is to provide an implementation of a backing store that does nothing, merely enabling
+            the cache to provide a strictly in-memory cache.
+            </summary>
+        </member>
+        <member name="M:Microsoft.Practices.EnterpriseLibrary.Caching.BackingStoreImplementations.NullBackingStore.#ctor">
+            <summary>
+            Not used
+            </summary>
+        </member>
+        <member name="M:Microsoft.Practices.EnterpriseLibrary.Caching.BackingStoreImplementations.NullBackingStore.Initialize(Microsoft.Practices.EnterpriseLibrary.Configuration.ConfigurationView)">
+            <summary>
+            Not Used
+            </summary>
+            <param name="configurationView">Not used</param>
+        </member>
+        <member name="M:Microsoft.Practices.EnterpriseLibrary.Caching.BackingStoreImplementations.NullBackingStore.Add(Microsoft.Practices.EnterpriseLibrary.Caching.CacheItem)">
+            <summary>
+            Not used
+            </summary>
+            <param name="newCacheItem">Not used</param>
+        </member>
+        <member name="M:Microsoft.Practices.EnterpriseLibrary.Caching.BackingStoreImplementations.NullBackingStore.Remove(System.String)">
+            <summary>
+            Not used
+            </summary>
+            <param name="key">Not used</param>
+        </member>
+        <member name="M:Microsoft.Practices.EnterpriseLibrary.Caching.BackingStoreImplementations.NullBackingStore.UpdateLastAccessedTime(System.String,System.DateTime)">
+            <summary>
+            Not used
+            </summary>
+            <param name="key">Not used</param>
+            <param name="timestamp">Not used</param>
+        </member>
+        <member name="M:Microsoft.Practices.EnterpriseLibrary.Caching.BackingStoreImplementations.NullBackingStore.Flush">
+            <summary>
+            Not used
+            </summary>
+        </member>
+        <member name="M:Microsoft.Practices.EnterpriseLibrary.Caching.BackingStoreImplementations.NullBackingStore.Load">
+            <summary>
+            Always returns an empty hash table.
+            </summary>
+            <returns>Empty hash table</returns>
+        </member>
+        <member name="M:Microsoft.Practices.EnterpriseLibrary.Caching.BackingStoreImplementations.NullBackingStore.Dispose">
+            <summary>
+            Empty dispose implementation
+            </summary>
+        </member>
+        <member name="P:Microsoft.Practices.EnterpriseLibrary.Caching.BackingStoreImplementations.NullBackingStore.CurrentCacheManager">
+            <summary>
+            Not used
+            </summary>
+        </member>
+        <member name="P:Microsoft.Practices.EnterpriseLibrary.Caching.BackingStoreImplementations.NullBackingStore.Count">
+            <summary>
+            Always returns 0
+            </summary>
+        </member>
+        <member name="T:Microsoft.Practices.EnterpriseLibrary.Caching.CacheFactory">
+            <summary>
+            Static factory class used to get instances of a specified CacheManager
+            </summary>
+        </member>
+        <member name="M:Microsoft.Practices.EnterpriseLibrary.Caching.CacheFactory.GetCacheManager">
+            <summary>
+            Returns the default CacheManager instance. The same instance should be returned each time this method
+            is called. The name of the instance to treat as the default CacheManager is defined in the configuration file.
+            Guaranteed to return an intialized CacheManager if no exception thrown
+            </summary>
+            <returns>Default cache manager instance.</returns>
+            <exception cref="T:System.Configuration.ConfigurationException">Unable to create default CacheManager</exception>
+        </member>
+        <member name="M:Microsoft.Practices.EnterpriseLibrary.Caching.CacheFactory.GetCacheManager(System.String)">
+            <summary>
+            Returns the named CacheManager instance. Guaranteed to return an initialized CacheManager if no exception thrown.
+            </summary>
+            <param name="cacheManagerName">Name defined in configuration for the cache manager to instantiate</param>
+            <returns>The requested CacheManager instance.</returns>
+            <exception cref="T:System.ArgumentNullException">cacheManagerName is null</exception>
+            <exception cref="T:System.ArgumentException">cacheManagerName is empty</exception>
+            <exception cref="T:System.Configuration.ConfigurationException">Could not find instance specified in cacheManagerName</exception>
+            <exception cref="T:System.InvalidOperationException">Error processing configuration information defined in application configuration file.</exception>
+        </member>
+        <member name="T:Microsoft.Practices.EnterpriseLibrary.Caching.Instrumentation.CachingServiceItemTurnoverEvent">
+            <summary>
+            <para>This type supports the Instrumentation infrastructure and is not intended to be used directly from your code.</para>
+            </summary>
+            <devdoc>
+            Instrumentation event called when the items in cache change. 
+            </devdoc>
+        </member>
+        <member name="M:Microsoft.Practices.EnterpriseLibrary.Caching.Instrumentation.CachingServiceItemTurnoverEvent.FireAddItems(System.Int64)">
+            <summary/>
+            <param name="addCount"/>
+            <exclude/>
+            <devdoc>
+            Fires event when an item is added to the cache with the number of item added.
+            </devdoc>
+        </member>
+        <member name="M:Microsoft.Practices.EnterpriseLibrary.Caching.Instrumentation.CachingServiceItemTurnoverEvent.FireRemoveItems(System.Int64)">
+            <summary/>
+            <param name="removeCount"/>
+            <exclude/>
+            <devdoc>
+            Fires event when an item is removed from the cache with the number of items removed.
+            </devdoc>
+        </member>
+        <member name="M:Microsoft.Practices.EnterpriseLibrary.Caching.Instrumentation.CachingServiceItemTurnoverEvent.SetItemsTotal(System.Int64)">
+            <summary/>
+            <param name="totalItems"/>
+            <exclude/>
+            <devdoc>
+            Sets the total number of items in the cache
+            </devdoc>
+        </member>
+        <member name="T:Microsoft.Practices.EnterpriseLibrary.Caching.CacheItemRemovedReason">
+            <summary>
+            The reason that the cache item was removed.
+            </summary>
+        </member>
+        <member name="F:Microsoft.Practices.EnterpriseLibrary.Caching.CacheItemRemovedReason.Expired">
+            <summary>
+            The item has expired.
+            </summary>
+        </member>
+        <member name="F:Microsoft.Practices.EnterpriseLibrary.Caching.CacheItemRemovedReason.Removed">
+            <summary>
+            The item was manually removed from the cache.
+            </summary>
+        </member>
+        <member name="F:Microsoft.Practices.EnterpriseLibrary.Caching.CacheItemRemovedReason.Scavenged">
+            <summary>
+            The item was removed by the scavenger because it had a lower priority that any other item in the cache.
+            </summary>
+        </member>
+        <member name="F:Microsoft.Practices.EnterpriseLibrary.Caching.CacheItemRemovedReason.Unknown">
+            <summary>
+            Reserved. Do not use.
+            </summary>
+        </member>
+        <member name="T:Microsoft.Practices.EnterpriseLibrary.Caching.SerializationUtility">
+            <summary>
+            Utility class for serializing and deserializing objects to and from byte streams
+            </summary>
+        </member>
+        <member name="M:Microsoft.Practices.EnterpriseLibrary.Caching.SerializationUtility.ToBytes(System.Object)">
+            <summary>
+            Converts an object into an array of bytes. Object must be serializable.
+            </summary>
+            <param name="objectToSerialize">Object to serialize. May be null.</param>
+            <returns>Serialized object, or null if input was null.</returns>
+        </member>
+        <member name="M:Microsoft.Practices.EnterpriseLibrary.Caching.SerializationUtility.ToObject(System.Byte[])">
+            <summary>
+            Converts a byte array into an object. 
+            </summary>
+            <param name="serializedObject">Object to deserialize. May be null.</param>
+            <returns>Deserialized object, or null if input was null.</returns>
+        </member>
+        <member name="T:Microsoft.Practices.EnterpriseLibrary.Caching.RefreshActionInvoker">
+            <devdoc>
+            Purpose of this class is to encapsulate the behavior of how ICacheItemRefreshActions
+            are invoked in the background.
+            </devdoc>
+        </member>
+        <member name="M:Microsoft.Practices.EnterpriseLibrary.Caching.RefreshActionInvoker.InvokeRefreshAction(Microsoft.Practices.EnterpriseLibrary.Caching.CacheItem,Microsoft.Practices.EnterpriseLibrary.Caching.CacheItemRemovedReason)">
+            <summary>
+            Invokes the refresh action on a thread pool thread
+            </summary>
+            <param name="removedCacheItem">Cache item being removed. Must never be null.</param>
+            <param name="removalReason">The reason the item was removed.</param>
+        </member>
+        <member name="T:Microsoft.Practices.EnterpriseLibrary.Caching.Expirations.FileDependency">
+            <summary>
+            This class tracks a file cache dependency.
+            </summary>
+        </member>
+        <member name="M:Microsoft.Practices.EnterpriseLibrary.Caching.Expirations.FileDependency.#ctor(System.String)">
+            <summary>
+            Constructor with one argument.
+            </summary>
+            <param name="fullFileName">
+            Indicates the name of the file
+            </param>
+        </member>
+        <member name="M:Microsoft.Practices.EnterpriseLibrary.Caching.Expirations.FileDependency.#ctor(System.Runtime.Serialization.SerializationInfo,System.Runtime.Serialization.StreamingContext)">
+            <summary>
+            This method performs the deserialization of members of the 
+            current class.
+            </summary>
+            <param name="info">
+            A SerializationInfo object which is deserialized by the 
+            formatter and then passed to current constructor
+            </param>
+            <param name="context">
+            A StreamingContext that describes the source of the 
+            serialized stream from where the Serialization object 
+            is retrieved
+            </param>
+        </member>
+        <member name="M:Microsoft.Practices.EnterpriseLibrary.Caching.Expirations.FileDependency.HasExpired">
+            <summary>
+            Specifies if the item has expired or not.
+            </summary>
+            <returns>Returns true if the item has expired, otherwise false.</returns>
+        </member>
+        <member name="M:Microsoft.Practices.EnterpriseLibrary.Caching.Expirations.FileDependency.Notify">
+            <summary>
+            Notifies that the item was recently used.
+            </summary>
+        </member>
+        <member name="M:Microsoft.Practices.EnterpriseLibrary.Caching.Expirations.FileDependency.Initialize(Microsoft.Practices.EnterpriseLibrary.Caching.CacheItem)">
+            <summary>
+            Not used
+            </summary>
+            <param name="owningCacheItem">Not used</param>
+        </member>
+        <member name="M:Microsoft.Practices.EnterpriseLibrary.Caching.Expirations.FileDependency.GetObjectData(System.Runtime.Serialization.SerializationInfo,System.Runtime.Serialization.StreamingContext)">
+            <summary>
+            This method performs the serialization of members of the 
+            current class.
+            </summary>
+            <param name="info">
+            A SerializationInfo object which is deserialized by the 
+            formatter and then passed to current constructor
+            </param>
+            <param name="context">
+            A StreamingContext that describes the source of the 
+            serialized stream from where the Serialization object 
+            is retrieved
+            </param>
+        </member>
+        <member name="P:Microsoft.Practices.EnterpriseLibrary.Caching.Expirations.FileDependency.LastModifiedTime">
+            <summary>
+            Returns time watched file was last modified.
+            </summary>
+        </member>
+    </members>
+</doc>

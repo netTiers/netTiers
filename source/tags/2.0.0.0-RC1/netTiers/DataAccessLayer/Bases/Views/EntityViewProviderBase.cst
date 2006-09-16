@@ -1,0 +1,419 @@
+<%--
+ * $Id: EntityViewProviderBase.cst,v 1.4 2005/11/22 20:34:07 jroland Exp $
+ * Last modified by $Author$
+ * Last modified at $Date$
+ * $Revision$
+--%>
+<%@ CodeTemplate Src="..\..\..\CommonSqlCode.cs" Inherits="MoM.Templates.CommonSqlCode" Language="C#" TargetLanguage="C#" Description="Template description here." Debug="False" %>
+<%@ Assembly Name="SchemaExplorer" %>
+<%@ Assembly Name="System.Design" %>
+<%@ Import Namespace="SchemaExplorer" %>
+
+<%@ Property Name="SourceView" Type="SchemaExplorer.ViewSchema" Category="Connection" Description="Table that the data access class should be based on." %>
+	
+<%@ Property Name="IncludeCustoms" Type="System.Boolean" Default="True" Category="Options" Description="If true customs stored procedures will be generated as functions." %>
+<%@ Property Name="IncludeGetList" Type="System.Boolean" Default="True" Category="Options" Description="If true getlist functions will be generated." %>
+<%@ Property Name="IncludeGetListByIX" Type="System.Boolean" Default="True" Category="Options" Description="If true getlist functions will be generated." %>
+
+<%@ Property Name="NameSpace" Type="System.String" Category="Style" Description="Class Namespace." %>
+<%@ Property Name="DALNameSpace" Type="System.String" Category="Style" Description="Class Namespace." %>
+	
+	 
+<%
+	// Name of the table being worked on.
+	string name = SourceView.Name;
+	
+	// Collection of all columns in the table.
+	ViewColumnSchemaCollection cols = SourceView.Columns;
+	
+	string className = GetClassName(SourceView.Name);
+	string collectionClassName = GetCollectionClassName(SourceView.Name);
+	string baseProviderName = GetProviderBaseName(SourceView.Name);
+	
+	// this array store each Get BY MemberColumns in order to avoid to create doublon Get methods
+	System.Collections.ArrayList getbyKeys = new System.Collections.ArrayList();
+
+%>
+#region Using directives
+
+using System;
+using System.Data;
+using System.Collections;
+using System.Diagnostics;
+using NetTiers.Configuration;
+using <%=NameSpace%>;
+using <%=DALNameSpace%>;
+
+#endregion
+
+namespace <%=DALNameSpace%>.Bases
+{	
+	///<summary>
+	/// This class is the base class for any <see cref="<%=baseProviderName%>"/> implementation.
+	/// It exposes CRUD methods as well as selecting on index, foreign keys and custom stored procedures.
+	///</summary>
+	public abstract class <%=baseProviderName%>
+	{
+		
+			
+		<% if (IncludeGetList) { %>
+		#region "GetList Functions"
+		
+		/// <summary>
+		/// 	Gets All rows from the DataSource.
+		/// </summary>
+		/// <returns>Returns a typed collection of <%=className%> objects.</returns>
+		public <%=collectionClassName%> GetAll()
+		{
+			return GetAll(0, int.MaxValue);
+		}
+		
+		/// <summary>
+		/// 	Gets All rows from the DataSource.
+		/// </summary>
+		/// <param name="start">Row number at which to start reading.</param>
+		/// <param name="pageLength">Number of rows to return.</param>
+		/// <remarks>Uses connection string object was created with.</remarks>
+		/// <returns>Returns a typed collection of <%=className%> objects.</returns>
+		public <%=collectionClassName%> GetAll(int start, int pageLength)
+		{	
+			return GetAll(null, start, pageLength);		
+		}
+		
+		/// <summary>
+		/// 	Gets All rows from the DataSource.
+		/// </summary>
+		/// <param name="transactionManager"><see cref="TransactionManager"/> object</param>
+		/// <remarks></remarks>
+		/// <returns>Returns a typed collection of <%=className%> objects.</returns>
+		public <%=collectionClassName%> GetAll(TransactionManager transactionManager)
+		{
+			return GetAll(transactionManager, 0, int.MaxValue);		
+		}
+		
+		/// <summary>
+		/// 	Gets All rows from the DataSource.
+		/// </summary>
+		/// <param name="transactionManager"><see cref="TransactionManager"/> object</param>
+		/// <param name="start">Row number at which to start reading.</param>
+		/// <param name="pageLength">Number of rows to return.</param>
+		/// <remarks></remarks>
+		/// <returns>Returns a typed collection of <%=className%> objects.</returns>
+		public abstract <%=collectionClassName%> GetAll(TransactionManager transactionManager, int start, int pageLength);
+		
+		#endregion
+		
+		#region Get filtered and sorted
+		
+		/// <summary>
+		/// Gets a page of rows from the DataSource.
+		/// </summary>
+		/// <remarks></remarks>
+		/// <returns>Returns a typed collection of <%=className%> objects.</returns>
+		public <%=collectionClassName%> Get()
+		{
+			return Get(null, null, null, 0, int.MaxValue);
+		}
+		
+		/// <summary>
+		/// Gets a page of rows from the DataSource.
+		/// </summary>
+		/// <param name="transactionManager"><see cref="TransactionManager"/> object</param>
+		/// <remarks></remarks>
+		/// <returns>Returns a typed collection of <%=className%> objects.</returns>
+		public <%=collectionClassName%> Get(TransactionManager transactionManager)
+		{
+			return Get(transactionManager, null, null, 0, int.MaxValue);
+		}
+		
+		/// <summary>
+		/// Gets a page of rows from the DataSource.
+		/// </summary>
+		/// <param name="start">Row number at which to start reading.</param>
+		/// <param name="pageLength">Number of rows to return.</param>
+		/// <remarks></remarks>
+		/// <returns>Returns a typed collection of <%=className%> objects.</returns>
+		public <%=collectionClassName%> Get(int start, int pageLength)
+		{
+			return Get(null, null, null, start, pageLength);
+		}
+		
+		/// <summary>
+		/// Gets a page of rows from the DataSource.
+		/// </summary>
+		/// <param name="start">Row number at which to start reading.</param>
+		/// <param name="pageLength">Number of rows to return.</param>
+		/// <param name="transactionManager"><see cref="TransactionManager"/> object</param>
+		/// <remarks></remarks>
+		/// <returns>Returns a typed collection of <%=className%> objects.</returns>
+		public <%=collectionClassName%> Get(TransactionManager transactionManager, int start, int pageLength)
+		{
+			return Get(transactionManager, null, null, start, pageLength);		
+		}
+		
+		/// <summary>
+		/// Gets a page of rows from the DataSource.
+		/// </summary>
+		/// <param name="whereClause">.</param>
+		/// <param name="orderBy">Specifies the sort criteria for the rows in the DataSource (Name ASC; BirthDay DESC, Name ASC);</param>
+		/// <remarks></remarks>
+		/// <returns>Returns a typed collection of <%=className%> objects.</returns>
+		public <%=collectionClassName%> Get(string whereClause, string orderBy)
+		{
+			return Get(whereClause, orderBy, 0, int.MaxValue);
+		}
+		
+		/// <summary>
+		/// Gets a page of rows from the DataSource.
+		/// </summary>
+		/// <param name="whereClause">.</param>
+		/// <param name="orderBy">Specifies the sort criteria for the rows in the DataSource (Name ASC; BirthDay DESC, Name ASC);</param>
+		/// <param name="transactionManager"><see cref="TransactionManager"/> object</param>
+		/// <remarks></remarks>
+		/// <returns>Returns a typed collection of <%=className%> objects.</returns>
+		public <%=collectionClassName%> Get(TransactionManager transactionManager, string whereClause, string orderBy)
+		{
+			return Get(transactionManager, whereClause, orderBy, 0, int.MaxValue);
+		}
+						
+		/// <summary>
+		/// Gets a page of rows from the DataSource.
+		/// </summary>
+		/// <param name="start">Row number at which to start reading.</param>
+		/// <param name="pageLength">Number of rows to return.</param>
+		/// <param name="whereClause">Specifies the condition for the rows returned by a query (Name='John Doe', Name='John Doe' AND Id='1', Name='John Doe' OR Id='1').</param>
+		/// <param name="orderBy">Specifies the sort criteria for the rows in the DataSource (Name ASC; BirthDay DESC, Name ASC);</param>
+		/// <remarks></remarks>
+		/// <returns>Returns a typed collection of <%=className%> objects.</returns>
+		public <%=collectionClassName%> Get(string whereClause, string orderBy, int start, int pageLength)
+		{
+			return Get(null, whereClause, orderBy, start, pageLength);
+		}
+		
+		/// <summary>
+		/// Gets a page of rows from the DataSource.
+		/// </summary>
+		/// <param name="start">Row number at which to start reading.</param>
+		/// <param name="pageLength">Number of rows to return.</param>
+		/// <param name="whereClause">Specifies the condition for the rows returned by a query (Name='John Doe', Name='John Doe' AND Id='1', Name='John Doe' OR Id='1').</param>
+		/// <param name="orderBy">Specifies the sort criteria for the rows in the DataSource (Name ASC; BirthDay DESC, Name ASC);</param>
+		/// <param name="transactionManager"><see cref="TransactionManager"/> object</param>
+		/// <remarks></remarks>
+		/// <returns>Returns a typed collection of <%=className%> objects.</returns>
+		public abstract <%=collectionClassName%> Get(TransactionManager transactionManager, string whereClause, string orderBy, int start, int pageLength);
+		
+		#endregion
+			
+	<% } //endif (IncludeGetList) %>
+			
+	
+	<% if (IncludeCustoms) { %>
+		#region Custom Methods
+		
+	<%
+		string prefix = "_" + SourceView.Name + "_";
+		foreach(CommandSchema command in SourceView.Database.Commands)
+		{
+			// If the stored procedure is targeting the current table.
+			if (!command.Name.StartsWith(prefix))
+			{
+				continue;
+			}
+			
+			string methodName = command.Name.Substring(prefix.Length);
+			string returnType = CustomMethodReturnType(command,collectionClassName,SourceView);
+			
+	%>
+		
+		#region <%=command.Name%>
+		
+		/// <summary>
+		///	This method wrap the '<%=command.Name%>' stored procedure. 
+		/// </summary><%=TransformStoredProcedureInputsToMethodComments(command.InputParameters)+ TransformStoredProcedureOutputsToMethodComments(command.AllOutputParameters)%>
+		/// <remark>This method is generate from a stored procedure.</remark>
+		/// <returns>A <see cref="<%=returnType%>"/> instance.</returns>
+		public <%=returnType%> <%=methodName%>(<%=TransformStoredProcedureInputsToMethod(false, command.InputParameters)+ TransformStoredProcedureOutputsToMethodComments(command.AllOutputParameters)%>)
+		{
+			<% if(returnType != "void")%>return <%=methodName%>(null<% if(returnType == collectionClassName){%>, 0, int.MaxValue <%}%> <%=TransformStoredProcedureInputsToDataAccess(true, command.InputParameters)+ TransformStoredProcedureOutputsToDataAccess(true, command.AllOutputParameters)%>);
+		}
+		<%
+		   //this function is not needed if returnType is void
+		if(returnType == collectionClassName)
+		{
+		%>
+		/// <summary>
+		///	This method wrap the '<%=command.Name%>' stored procedure. 
+		/// </summary><%=TransformStoredProcedureInputsToMethodComments(command.InputParameters)+ TransformStoredProcedureOutputsToMethodComments(command.AllOutputParameters)%>
+		/// <param name="start">Row number at which to start reading.</param>
+		/// <param name="pageLength">Number of rows to return.</param>
+		/// <remark>This method is generate from a stored procedure.</remark>
+		/// <returns>A <see cref="<%=returnType%>"/> instance.</returns>
+		public <%=returnType%> <%=methodName%>(int start, int pageLength<%=TransformStoredProcedureInputsToMethod(true, command.InputParameters)+ TransformStoredProcedureOutputsToMethod(command.InputParameters.Count > 0, command.AllOutputParameters)%>)
+		{
+			<% if(returnType != "void")%>return <%=methodName%>(null<% if(returnType == collectionClassName){%>, 0, int.MaxValue <%}%> <%=TransformStoredProcedureInputsToDataAccess(true, command.InputParameters)+ TransformStoredProcedureOutputsToDataAccess(true, command.AllOutputParameters)+ TransformStoredProcedureOutputsToDataAccess(true, command.AllOutputParameters)%>);
+		}
+		<%
+		}
+		%>
+		<%
+		   //this function is not needed if returnType is void
+		if(returnType == collectionClassName)
+		{
+		%>
+		/// <summary>
+		///	This method wrap the '<%=command.Name%>' stored procedure. 
+		/// </summary><%=TransformStoredProcedureInputsToMethodComments(command.InputParameters)+ TransformStoredProcedureOutputsToMethodComments(command.AllOutputParameters)%>
+		/// <remark>This method is generate from a stored procedure.</remark><% if (returnType != "void") {%>
+		/// <param name="transactionManager"><see cref="TransactionManager"/> object</param>
+		/// <returns>A <see cref="<%=returnType%>"/> instance.</returns><%}%>
+		public <%=returnType%> <%=methodName%>(TransactionManager transactionManager<%=TransformStoredProcedureInputsToMethod(true, command.InputParameters)+ TransformStoredProcedureOutputsToMethod(command.InputParameters.Count > 0, command.AllOutputParameters)%>)
+		{
+			<% if(returnType != "void")%>return <%=methodName%>(<% if(returnType == collectionClassName){%> 0, int.MaxValue <%}%> <%=TransformStoredProcedureInputsToDataAccess(true, command.InputParameters)+ TransformStoredProcedureOutputsToDataAccess(true, command.AllOutputParameters)%>);
+		}
+		<%
+		}
+		%>
+		/// <summary>
+		///	This method wrap the '<%=command.Name%>' stored procedure. 
+		/// </summary><%=TransformStoredProcedureInputsToMethodComments(command.InputParameters)+ TransformStoredProcedureOutputsToMethodComments(command.AllOutputParameters)%>
+		/// <param name="start">Row number at which to start reading.</param>
+		/// <param name="pageLength">Number of rows to return.</param>
+		/// <param name="transactionManager"><see cref="TransactionManager"/> object</param>
+		/// <remark>This method is generate from a stored procedure.</remark>
+		/// <returns>A <see cref="<%=returnType%>"/> instance.</returns>
+		public abstract <%=returnType%> <%=methodName%>(TransactionManager transactionManager<% if(returnType == collectionClassName){%>, int start, int pageLength<%}%> <%=TransformStoredProcedureInputsToMethod(true, command.InputParameters)+ TransformStoredProcedureOutputsToMethod(command.InputParameters.Count > 0, command.AllOutputParameters)%>);
+
+		#endregion
+<%
+		}	//end foreach command
+%>
+		
+		#endregion
+	<% } %>
+	
+		#region "Helper Functions"	
+		
+		/*
+		///<summary>
+		/// Fill an <%=collectionClassName%> From a DataSet
+		///</summary>
+		/// <param name="dataSet">the DataSet</param>
+		/// <param name="rows">The collection to fill</param>
+		/// <param name="start">Start row</param>
+		/// <param name="pagelen">number of row.</param>
+		///<returns><see chref="<%=collectionClassName%>"/></returns>
+		protected static <%=collectionClassName%> Fill(DataSet dataSet, <%=collectionClassName%> rows, int start, int pagelen)
+		{
+			if (dataSet.Tables.Count == 1)
+			{
+				return Fill(dataSet.Tables[0], rows, start, pagelen);
+			}
+			else
+			{
+				return new <%=collectionClassName%>();
+			}	
+		}
+		
+		
+		///<summary>
+		/// Fill an <%=collectionClassName%> From a DataTable
+		///</summary>
+		/// <param name="dataTable">the DataTable that hold the data.</param>
+		/// <param name="rows">The collection to fill</param>
+		/// <param name="start">Start row</param>
+		/// <param name="pagelen">number of row.</param>
+		///<returns><see chref="<%=collectionClassName%>"/></returns>
+		protected static <%=collectionClassName%> Fill(DataTable dataTable, <%=collectionClassName%> rows, int start, int pagelen)
+		{
+			int recordnum = 0;
+			
+			System.Collections.IEnumerator dataRows =  dataTable.Rows.GetEnumerator();
+			
+			while (dataRows.MoveNext() && (pagelen != 0))
+			{
+				if(recordnum >= start)
+				{
+					DataRow row = (DataRow)dataRows.Current;
+				
+					<%=className%> c = new <%=className%>();
+					<%for (int x=0; x < cols.Count;x++) { %>
+					<%= GetObjectPropertyAccessor(cols[x], "c")%> = (Convert.IsDBNull(row["<%=cols[x].Name%>"]))?<%= GetCSDefaultByType(cols[x])%>:(<%=GetCSType(cols[x])%>)row["<%=cols[x].Name%>"];
+					<% } //end for %>
+					c.AcceptChanges();
+					rows.Add(c);
+					pagelen -= 1;
+				}
+				recordnum += 1;
+			}
+			return rows;
+		}
+		*/	
+						
+		///<summary>
+		/// Fill an <see cref="<%=collectionClassName%>"/> From a DataReader.
+		///</summary>
+		/// <param name="reader">Datareader</param>
+		/// <param name="rows">The collection to fill</param>
+		/// <param name="start">Start row</param>
+		/// <param name="pageLength">number of row.</param>
+		///<returns>a <see cref="<%=collectionClassName%>"/></returns>
+		protected <%=collectionClassName%> Fill(IDataReader reader, <%=collectionClassName%> rows, int start, int pageLength)
+		{
+			int recordnum = 0;
+			while (reader.Read() && (pageLength != 0))
+			{
+				if(recordnum >= start)
+				{
+					<%=className%> entity = new <%=className%>();
+					<%for (int x=0; x < cols.Count;x++) { %>
+					<%= GetObjectPropertySetExpression(cols[x], "reader", "entity", 4) %>;
+					//<%= GetObjectPropertyAccessor(cols[x],"entity")%> = (Convert.IsDBNull(reader["<%=cols[x].Name%>"]))?<%= GetCSDefaultByType(cols[x])%>:(<%=GetCSType(cols[x])%>)reader["<%=cols[x].Name%>"];
+					<% } //end for %>
+					entity.AcceptChanges();
+					rows.Add(entity);
+					pageLength -= 1;
+				}
+				recordnum += 1;
+			}
+			return rows;
+		}
+		
+		
+		/// <summary>
+		/// Refreshes the <see cref="<%=className%>"/> object from the <see cref="IDataReader"/>.
+		/// </summary>
+		/// <param name="reader">The <see cref="IDataReader"/> to read from.</param>
+		/// <param name="entity">The <see cref="<%=className%>"/> object to refresh.</param>
+		protected void RefreshEntity(IDataReader reader, <%=className%> entity)
+		{
+			reader.Read();
+			<%for (int x=0; x < cols.Count;x++) { %>
+			<%= GetObjectPropertySetExpression(cols[x], "reader", "entity", 4) %>;
+			//<%= GetObjectPropertyAccessor(cols[x], "entity")%> = (Convert.IsDBNull(reader["<%=cols[x].Name%>"]))?<%= GetCSDefaultByType(cols[x])%>:(<%=GetCSType(cols[x])%>)reader["<%=cols[x].Name%>"];
+			<% } //end for %>
+			reader.Close();
+	
+			entity.AcceptChanges();
+		}
+		
+		/*
+		/// <summary>
+		/// Refreshes the <see cref="<%=className%>"/> object from the <see cref="DataSet"/>.
+		/// </summary>
+		/// <param name="dataSet">The <see cref="DataSet"/> to read from.</param>
+		/// <param name="entity">The <see cref="<%=className%>"/> object.</param>
+		protected static void RefreshEntity(DataSet dataSet, <%=className%> entity)
+		{
+			DataRow dataRow = dataSet.Tables[0].Rows[0];
+			
+			<%for (int x=0; x < cols.Count;x++) { %>
+			<%= GetObjectPropertyAccessor(cols[x], "entity")%> = (Convert.IsDBNull(dataRow["<%=cols[x].Name%>"]))?<%= GetCSDefaultByType(cols[x])%>:(<%=GetCSType(cols[x])%>)dataRow["<%=cols[x].Name%>"];
+			<% } //end for %>
+			entity.AcceptChanges();
+		}
+		*/
+			
+		#endregion "Helper Functions"
+		
+	}//end class
+} // end namespace

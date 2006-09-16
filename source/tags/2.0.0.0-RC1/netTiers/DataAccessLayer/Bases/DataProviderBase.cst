@@ -1,0 +1,252 @@
+<%@ CodeTemplate Src="..\..\CommonSqlCode.cs" Inherits="MoM.Templates.CommonSqlCode" Language="C#" TargetLanguage="C#" Description="Template description here." %>
+<%@ Assembly Name="SchemaExplorer" %>
+<%@ Assembly Name="System.Design" %>
+<%@ Import Namespace="SchemaExplorer" %>
+
+<%@ Property Name="DALNameSpace" Type="System.String" Category="Data" Description="DAL Namespace." %>
+<%@ Property Name="SourceTables" Type="SchemaExplorer.TableSchemaCollection" Category="Connection" Description="Tables of the system." %>
+<%@ Property Name="SourceViews" Type="SchemaExplorer.ViewSchemaCollection" Category="Connection" Description="Tables of the system." %>
+
+#region Using directives
+
+using System;
+using System.Data;
+
+#endregion
+
+namespace <%=DALNameSpace%>.Bases
+{	
+	///<summary>
+	/// The base class to implements to create a data provider.
+	///</summary>
+	public abstract class DataProviderBase
+	{
+		///<summary>
+		/// Indicates if the current <c cref="DataProviderBase"/> implementation is supporting Transactions.
+		///</summary>
+		public abstract bool IsTransactionSupported{get;}
+		
+		/// <summary>
+		/// Creates a new <c cref="TransactionManager"/> instance from the current datasource.
+		/// </summary>
+		/// <returns></returns>
+		public virtual TransactionManager CreateTransaction() {throw new NotSupportedException();}
+		
+		
+		<% foreach(TableSchema SourceTable in SourceTables) { 
+			string providerName = GetProviderName(SourceTable.Name);
+			string providerBaseName = GetProviderBaseName(SourceTable.Name);
+		%>			
+		///<summary>
+		/// Current <%=providerBaseName%> instance.
+		///</summary>
+		public virtual <%=providerBaseName%> <%=providerName%>{get {throw new NotImplementedException();}}
+		
+		<%}%>
+		
+		<% foreach(ViewSchema SourceView in SourceViews) { 
+			string providerName = GetProviderName(SourceView.Name);
+			string providerBaseName = GetProviderBaseName(SourceView.Name);
+		%>			
+		///<summary>
+		/// Current <%=providerBaseName%> instance.
+		///</summary>
+		public virtual <%=providerBaseName%> <%=providerName%>{get {throw new NotImplementedException();}}
+		
+		<%}%>
+					
+		#region "General data access methods"
+
+		#region "ExecuteNonQuery"
+		/// <summary>
+		/// Executes the non query.
+		/// </summary>
+		/// <param name="storedProcedureName">Name of the stored procedure.</param>
+		/// <param name="parameterValues">The parameter values.</param>
+		/// <returns></returns>
+		public abstract int ExecuteNonQuery(string storedProcedureName, params object[] parameterValues);		
+		/// <summary>
+		/// Executes the non query.
+		/// </summary>
+		/// <param name="transactionManager">The transaction manager.</param>
+		/// <param name="storedProcedureName">Name of the stored procedure.</param>
+		/// <param name="parameterValues">The parameter values.</param>
+		/// <returns></returns>
+		public abstract int ExecuteNonQuery(TransactionManager transactionManager, string storedProcedureName, params object[] parameterValues);
+		
+		/// <summary>
+		/// Executes the non query.
+		/// </summary>
+		/// <param name="commandWrapper">The command wrapper.</param>
+		public abstract void ExecuteNonQuery(Microsoft.Practices.EnterpriseLibrary.Data.DBCommandWrapper commandWrapper);
+		/// <summary>
+		/// Executes the non query.
+		/// </summary>
+		/// <param name="transactionManager">The transaction manager.</param>
+		/// <param name="commandWrapper">The command wrapper.</param>
+		public abstract void ExecuteNonQuery(TransactionManager transactionManager, Microsoft.Practices.EnterpriseLibrary.Data.DBCommandWrapper commandWrapper);
+
+		/// <summary>
+		/// Executes the non query.
+		/// </summary>
+		/// <param name="commandType">Type of the command.</param>
+		/// <param name="commandText">The command text.</param>
+		/// <returns></returns>
+		public abstract int ExecuteNonQuery(CommandType commandType, string commandText);
+		/// <summary>
+		/// Executes the non query.
+		/// </summary>
+		/// <param name="transactionManager">The transaction manager.</param>
+		/// <param name="commandType">Type of the command.</param>
+		/// <param name="commandText">The command text.</param>
+		/// <returns></returns>
+		public abstract int ExecuteNonQuery(TransactionManager transactionManager, CommandType commandType, string commandText);
+		#endregion
+
+		#region "ExecuteReader"
+		/// <summary>
+		/// Executes the reader.
+		/// </summary>
+		/// <param name="storedProcedureName">Name of the stored procedure.</param>
+		/// <param name="parameterValues">The parameter values.</param>
+		/// <returns></returns>
+		public abstract IDataReader ExecuteReader(string storedProcedureName, params object[] parameterValues);		
+		/// <summary>
+		/// Executes the reader.
+		/// </summary>
+		/// <param name="transactionManager">The transaction manager.</param>
+		/// <param name="storedProcedureName">Name of the stored procedure.</param>
+		/// <param name="parameterValues">The parameter values.</param>
+		/// <returns></returns>
+		public abstract IDataReader ExecuteReader(TransactionManager transactionManager, string storedProcedureName, params object[] parameterValues);
+		
+		/// <summary>
+		/// Executes the reader.
+		/// </summary>
+		/// <param name="commandWrapper">The command wrapper.</param>
+		/// <returns></returns>
+		public abstract IDataReader ExecuteReader(Microsoft.Practices.EnterpriseLibrary.Data.DBCommandWrapper commandWrapper);
+		/// <summary>
+		/// Executes the reader.
+		/// </summary>
+		/// <param name="transactionManager">The transaction manager.</param>
+		/// <param name="commandWrapper">The command wrapper.</param>
+		/// <returns></returns>
+		public abstract IDataReader ExecuteReader(TransactionManager transactionManager, Microsoft.Practices.EnterpriseLibrary.Data.DBCommandWrapper commandWrapper);
+
+		/// <summary>
+		/// Executes the reader.
+		/// </summary>
+		/// <param name="commandType">Type of the command.</param>
+		/// <param name="commandText">The command text.</param>
+		/// <returns></returns>
+		public abstract IDataReader ExecuteReader(CommandType commandType, string commandText);
+		/// <summary>
+		/// Executes the reader.
+		/// </summary>
+		/// <param name="transactionManager">The transaction manager.</param>
+		/// <param name="commandType">Type of the command.</param>
+		/// <param name="commandText">The command text.</param>
+		/// <returns></returns>
+		public abstract IDataReader ExecuteReader(TransactionManager transactionManager, CommandType commandType, string commandText);
+		#endregion
+
+		#region "ExecuteDataSet"
+		/// <summary>
+		/// Executes the data set.
+		/// </summary>
+		/// <param name="storedProcedureName">Name of the stored procedure.</param>
+		/// <param name="parameterValues">The parameter values.</param>
+		/// <returns></returns>
+		public abstract DataSet ExecuteDataSet(string storedProcedureName, params object[] parameterValues);		
+		/// <summary>
+		/// Executes the data set.
+		/// </summary>
+		/// <param name="transactionManager">The transaction manager.</param>
+		/// <param name="storedProcedureName">Name of the stored procedure.</param>
+		/// <param name="parameterValues">The parameter values.</param>
+		/// <returns></returns>
+		public abstract DataSet ExecuteDataSet(TransactionManager transactionManager, string storedProcedureName, params object[] parameterValues);
+		
+		/// <summary>
+		/// Executes the data set.
+		/// </summary>
+		/// <param name="commandWrapper">The command wrapper.</param>
+		/// <returns></returns>
+		public abstract DataSet ExecuteDataSet(Microsoft.Practices.EnterpriseLibrary.Data.DBCommandWrapper commandWrapper);
+		/// <summary>
+		/// Executes the data set.
+		/// </summary>
+		/// <param name="transactionManager">The transaction manager.</param>
+		/// <param name="commandWrapper">The command wrapper.</param>
+		/// <returns></returns>
+		public abstract DataSet ExecuteDataSet(TransactionManager transactionManager, Microsoft.Practices.EnterpriseLibrary.Data.DBCommandWrapper commandWrapper);
+
+		/// <summary>
+		/// Executes the data set.
+		/// </summary>
+		/// <param name="commandType">Type of the command.</param>
+		/// <param name="commandText">The command text.</param>
+		/// <returns></returns>
+		public abstract DataSet ExecuteDataSet(CommandType commandType, string commandText);
+		/// <summary>
+		/// Executes the data set.
+		/// </summary>
+		/// <param name="transactionManager">The transaction manager.</param>
+		/// <param name="commandType">Type of the command.</param>
+		/// <param name="commandText">The command text.</param>
+		/// <returns></returns>
+		public abstract DataSet ExecuteDataSet(TransactionManager transactionManager, CommandType commandType, string commandText);
+		#endregion
+
+		#region "ExecuteScalar"
+		/// <summary>
+		/// Executes the scalar.
+		/// </summary>
+		/// <param name="storedProcedureName">Name of the stored procedure.</param>
+		/// <param name="parameterValues">The parameter values.</param>
+		/// <returns></returns>
+		public abstract object ExecuteScalar(string storedProcedureName, params object[] parameterValues);		
+		/// <summary>
+		/// Executes the scalar.
+		/// </summary>
+		/// <param name="transactionManager">The transaction manager.</param>
+		/// <param name="storedProcedureName">Name of the stored procedure.</param>
+		/// <param name="parameterValues">The parameter values.</param>
+		/// <returns></returns>
+		public abstract object ExecuteScalar(TransactionManager transactionManager, string storedProcedureName, params object[] parameterValues);
+		
+		/// <summary>
+		/// Executes the scalar.
+		/// </summary>
+		/// <param name="commandWrapper">The command wrapper.</param>
+		/// <returns></returns>
+		public abstract object ExecuteScalar(Microsoft.Practices.EnterpriseLibrary.Data.DBCommandWrapper commandWrapper);
+		/// <summary>
+		/// Executes the scalar.
+		/// </summary>
+		/// <param name="transactionManager">The transaction manager.</param>
+		/// <param name="commandWrapper">The command wrapper.</param>
+		/// <returns></returns>
+		public abstract object ExecuteScalar(TransactionManager transactionManager, Microsoft.Practices.EnterpriseLibrary.Data.DBCommandWrapper commandWrapper);
+
+		/// <summary>
+		/// Executes the scalar.
+		/// </summary>
+		/// <param name="commandType">Type of the command.</param>
+		/// <param name="commandText">The command text.</param>
+		/// <returns></returns>
+		public abstract object ExecuteScalar(CommandType commandType, string commandText);
+		/// <summary>
+		/// Executes the scalar.
+		/// </summary>
+		/// <param name="transactionManager">The transaction manager.</param>
+		/// <param name="commandType">Type of the command.</param>
+		/// <param name="commandText">The command text.</param>
+		/// <returns></returns>
+		public abstract object ExecuteScalar(TransactionManager transactionManager, CommandType commandType, string commandText);
+		#endregion
+		
+		#endregion
+	}
+}
