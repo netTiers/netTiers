@@ -1,0 +1,121 @@
+<%@ CodeTemplate Language="C#" TargetLanguage="C#" Description="Configuration class template." %>
+<%@ Property Name="DALNameSpace" Type="System.String" Category="Data" Description="DAL Namespace." %>
+<%@ Property Name="DotNet2" Type="System.Boolean" Category="Data" Description="version of the .net framework." %>
+#region Using Directives
+
+using System;
+using System.Data;
+using NetTiers.Configuration;
+using Microsoft.Practices.EnterpriseLibrary.Configuration;
+
+#endregion
+
+namespace <%=DALNameSpace%>
+{
+	/// <summary>
+	/// Encaspulate the access to the configuration settings for this assembly.
+	/// </summary>
+	public class Configuration
+	{
+		private static volatile Configuration current;
+		private static object syncRoot = new Object();
+		
+		private NetTiersSettings settings;
+		
+		
+		/// <summary>
+		/// Creates a new <see cref="Configuration"/> instance.
+		/// </summary>
+		private Configuration()
+		{
+			try
+			{
+				this.settings = Microsoft.Practices.EnterpriseLibrary.Configuration.ConfigurationManager.GetConfiguration(NetTiers.Configuration.NetTiersSettings.SectionName) as NetTiers.Configuration.NetTiersSettings;
+				ConfigurationManager.ConfigurationChanged += new ConfigurationChangedEventHandler(ConfigurationManager_ConfigurationChanged);
+			}
+			
+			catch(System.Configuration.Configuration<% if (DotNet2){%>Errors<%}%>Exception ex)
+			{
+				throw new System.Configuration.Configuration<% if (DotNet2){%>Errors<%}%>Exception("Failed to load configuration files." + Environment.NewLine + "You may need to start the enterprise library configuration console to configure the nettiers application block." + Environment.NewLine + "Otherwise, check that the config files are deployed in the ouput folder (this can be done by a post build event:" + Environment.NewLine + "copy \"$(ProjectDir)*.config\" \"$(TargetDir)\")", ex);
+			}
+		}
+
+		/// <summary>
+		/// 
+		/// </summary>
+		/// <param name="sender"></param>
+		/// <param name="e"></param>
+		private void ConfigurationManager_ConfigurationChanged(object sender, ConfigurationChangedEventArgs e)
+		{
+			if ( e.SectionName == NetTiers.Configuration.NetTiersSettings.SectionName )
+			{
+				this.settings = ConfigurationManager.GetConfiguration(NetTiers.Configuration.NetTiersSettings.SectionName) as NetTiers.Configuration.NetTiersSettings;
+			}
+		}
+
+		/// <summary>
+		/// The current settings value for the configuration object.
+		/// </summary>
+		/// <value></value>
+		public static Configuration Current
+   		{
+      		get 
+      		{
+         		if (current == null) 
+         		{
+            		lock (syncRoot) 
+            		{
+               			if (current == null) 
+                  			current = new Configuration();
+            		}
+         		}
+
+         		return current;
+      		}
+   		}
+
+		#region Public properties
+	
+		/// <summary>
+		/// Gets the collection of user <c cref="DataProviderData"/>.
+		/// </summary>
+		/// <value></value>
+		public DataProviderDataCollection DataProviderDataCollection
+		{
+			get {return this.settings.DataProviders;}
+		}
+
+		/// <summary>
+		/// Gets the default data provider.
+		/// </summary>
+		/// <value></value>
+		public string DefaultDataProvider
+		{
+			get {return this.settings.DefaultDataProvider;}
+		}
+
+		/// <summary>
+		/// Gets the data provider with the specified name.
+		/// </summary>
+		/// <param name="dataProviderName">Name of the data provider.</param>
+		/// <returns></returns>
+		public DataProviderData GetDataProvider(string dataProviderName)
+		{
+			return this.DataProviderDataCollection[this.DefaultDataProvider];
+		}
+		
+		/// <summary>
+		/// Gets the <see cref="DataProviderData"/> instance.
+		/// </summary>
+		/// <value></value>
+		public DataProviderData DefaultDataProviderSettings
+		{
+			get
+			{
+				return this.settings.DataProviders[this.settings.DefaultDataProvider];
+			}
+		}
+						
+		#endregion
+	}
+}
