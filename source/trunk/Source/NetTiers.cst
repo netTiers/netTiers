@@ -829,10 +829,14 @@ public void LoadTemplates()
 			((CodeSmith.Engine.CodeTemplate)_CodeTemplates[key]).SetProperty("StrippedTablePrefixes", StrippedTablePrefixes);
 			((CodeSmith.Engine.CodeTemplate)_CodeTemplates[key]).SetProperty("ProcedurePrefix", ProcedurePrefix);
 			((CodeSmith.Engine.CodeTemplate)_CodeTemplates[key]).SetProperty("CustomProcedureStartsWith", CustomProcedureStartsWith);
+			GetTemplate(key).SetProperty("MethodNamesValues", MethodNamesValues);
 		}
-		catch(Exception) {}
+		catch ( Exception ex )
+		{
+			Trace.WriteLine("\tWARNING: " + ex);
+		}
 	}
-
+	
 	// do this because the individual compile errors are erased
 	// Question: what erases the results pane before each compile - can we do it before top compile only?
 
@@ -854,6 +858,11 @@ public void LoadTemplates()
 public CodeTemplate GetTemplate(string templateType)
 {
 	return (CodeSmith.Engine.CodeTemplate)_CodeTemplates[templateType];
+}
+
+public MoM.Templates.CommonSqlCode GetTemplateBase(string templateType)
+{
+	return (MoM.Templates.CommonSqlCode) GetTemplate(templateType);
 }
 
 /// <summary>
@@ -1876,7 +1885,7 @@ public void Go()
 			this.GetTemplate("ServiceLayer.WebService.cst").SetProperty("ComponentsNameSpace", ComponentsNameSpace);
 			this.GetTemplate("ServiceLayer.WebService.cst").SetProperty("BLLNameSpace", BLLNameSpace);
 				
-			this.GetTemplate("ServiceLayer.WebService.cst").SetProperty("ClassName", SourceDatabase.Name + "Services");
+			this.GetTemplate("ServiceLayer.WebService.cst").SetProperty("ClassName", GetClassName(SourceDatabase.Name) + "Services");
 			this.GetTemplate("ServiceLayer.WebService.cst").SetProperty("WebServiceUrl", WebServiceUrl);
 			
 			this.RenderToFile("ServiceLayer.WebService.cst", rootPathWS + "\\" + GetClassName(SourceDatabase.Name) + "BLLServices.asmx", true);
@@ -1907,7 +1916,7 @@ public void Go()
 		this.GetTemplate("WebService.cst").SetProperty("DALNameSpace", DALNameSpace);
 		this.GetTemplate("WebService.cst").SetProperty("BLLNameSpace", BLLNameSpace);
 			
-		this.GetTemplate("WebService.cst").SetProperty("ClassName", SourceDatabase.Name + "Services");
+		this.GetTemplate("WebService.cst").SetProperty("ClassName", GetClassName(SourceDatabase.Name) + "Services");
 		this.GetTemplate("WebService.cst").SetProperty("WebServiceUrl", WebServiceUrl);
 		
 		this.RenderToFile("WebService.cst", rootPathWS + "\\" + GetClassName(SourceDatabase.Name) + "Services.asmx", true);

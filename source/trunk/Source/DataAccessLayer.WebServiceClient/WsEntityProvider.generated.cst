@@ -300,9 +300,9 @@ namespace <%=DALNameSpace%>.WebServiceClient
 		
 		
 		<% if (IncludeDelete && SourceTable.PrimaryKey != null) {
-				methods.Add("Delete");
+				methods.Add(MethodNames.Delete);
 		%>
-		#region Delete Functions			
+		#region <%= MethodNames.Delete %> Methods
 			
 			/// <summary>
 			/// 	Deletes a row from the DataSource.
@@ -313,24 +313,24 @@ namespace <%=DALNameSpace%>.WebServiceClient
 			/// <param name="transactionManager"><see cref="TransactionManager"/> object</param>
 			/// <remarks>Deletes based on primary key(s).</remarks>
 			/// <returns>Returns true if operation suceeded.</returns>
-			public override bool Delete(TransactionManager transactionManager, <%= GetFunctionHeaderParameters(SourceTable.PrimaryKey.MemberColumns) %><% if(RowVersion != null) {Response.Write(", byte[] " + GetPrivateName(RowVersion.Name));}%>)
+			public override bool <%= MethodNames.Delete %>(TransactionManager transactionManager, <%= GetFunctionHeaderParameters(SourceTable.PrimaryKey.MemberColumns) %><% if(RowVersion != null) {Response.Write(", byte[] " + GetPrivateName(RowVersion.Name));}%>)
 			{
 				// call the proxy
 				<%=WebReferenceName%>.<%=ProxyClassName%> proxy = new <%=WebReferenceName%>.<%=ProxyClassName%>();
 				proxy.Url = Url;
 				
-				bool result = proxy.<%=providerName%>_Delete(<%= GetFunctionCallParameters(SourceTable.PrimaryKey.MemberColumns) %><% if(RowVersion != null) {Response.Write(", " + GetPrivateName(RowVersion.Name));}%>);				
+				bool result = proxy.<%=providerName%>_<%= MethodNames.Delete %>(<%= GetFunctionCallParameters(SourceTable.PrimaryKey.MemberColumns) %><% if(RowVersion != null) {Response.Write(", " + GetPrivateName(RowVersion.Name));}%>);				
 				return result;
 			}
 			
-			#endregion
+			#endregion <%= MethodNames.Delete %> Methods
 		<% } //endif(includedelete) %>
 	
 		
 		<% if (IncludeFind) { 
-				methods.Add("Find");
+				methods.Add(MethodNames.Find);
 			%>
-		#region Find Functions
+		#region <%= MethodNames.Find %> Methods
 		
 		
 		/// <summary>
@@ -343,25 +343,25 @@ namespace <%=DALNameSpace%>.WebServiceClient
 		/// <param name="count">Number of rows in the DataSource.</param>
 		/// <remarks>Operators must be capitalized (OR, AND)</remarks>
 		/// <returns>Returns a typed collection of <%=className%> objects.</returns>
-		public override <%=collectionClassName%> Find(TransactionManager transactionManager, string whereClause, int start, int pagelen, out int count)
+		public override <%=collectionClassName%> <%= MethodNames.Find %>(TransactionManager transactionManager, string whereClause, int start, int pagelen, out int count)
 		{
 			<%=WebReferenceName%>.<%=ProxyClassName%> proxy = new <%=WebReferenceName%>.<%=ProxyClassName%>();
 			proxy.Url = Url;
 			
-			<%=WebReferenceName%>.<%=GetClassName(SourceTable.Name)%>[] items = proxy.<%=providerName + "_Find"%>(whereClause, start, pagelen, out count);
+			<%=WebReferenceName%>.<%=GetClassName(SourceTable.Name)%>[] items = proxy.<%=providerName %>_<%= MethodNames.Find %>(whereClause, start, pagelen, out count);
 			
 			return Convert(items); 
 		}
 		
-		#endregion Find Functions
+		#endregion <%= MethodNames.Find %> Methods
 		<% } //endif (IncludeFind) %>
 		
 		
 		<% if (IncludeGetList) { 
-				methods.Add("GetAll");
-				methods.Add("GetPaged");
+				methods.Add(MethodNames.GetAll);
+				methods.Add(MethodNames.GetPaged);
 			%>
-		#region GetList Functions
+		#region <%= MethodNames.GetAll %> Methods
 				
 		/// <summary>
 		/// 	Gets All rows from the DataSource.
@@ -372,19 +372,19 @@ namespace <%=DALNameSpace%>.WebServiceClient
 		/// <param name="count">out parameter to get total records for query</param>			
 		/// <remarks></remarks>
 		/// <returns>Returns a typed collection of <%=className%> objects.</returns>
-		public override <%=collectionClassName%> GetAll(TransactionManager transactionManager, int start, int pageLength, out int count)
+		public override <%=collectionClassName%> <%= MethodNames.GetAll %>(TransactionManager transactionManager, int start, int pageLength, out int count)
 		{
 			<%=WebReferenceName%>.<%=ProxyClassName%> proxy = new <%=WebReferenceName%>.<%=ProxyClassName%>();
 			proxy.Url = Url;
 				
-			<%=WebReferenceName%>.<%=GetClassName(SourceTable.Name)%>[] items = proxy.<%=providerName%>_GetAll(start, pageLength, out count);
+			<%=WebReferenceName%>.<%=GetClassName(SourceTable.Name)%>[] items = proxy.<%=providerName%>_<%= MethodNames.GetAll %>(start, pageLength, out count);
 			
 			return Convert(items); 
 		}
 		
-		#endregion
+		#endregion <%= MethodNames.GetAll %> Methods
 		
-		#region Get Paged
+		#region <%= MethodNames.GetPaged %> Methods
 						
 		/// <summary>
 		/// Gets a page of rows from the DataSource.
@@ -397,7 +397,7 @@ namespace <%=DALNameSpace%>.WebServiceClient
 		/// <param name="count">Number of rows in the DataSource.</param>
 		/// <remarks></remarks>
 		/// <returns>Returns a typed collection of <%=className%> objects.</returns>
-		public override <%=collectionClassName%> GetPaged(TransactionManager transactionManager, string whereClause, string orderBy, int start, int pageLength, out int count)
+		public override <%=collectionClassName%> <%= MethodNames.GetPaged %>(TransactionManager transactionManager, string whereClause, string orderBy, int start, int pageLength, out int count)
 		{
 			whereClause = whereClause ?? string.Empty;
 			orderBy = orderBy ?? string.Empty;
@@ -405,13 +405,13 @@ namespace <%=DALNameSpace%>.WebServiceClient
 			<%=WebReferenceName%>.<%=ProxyClassName%> proxy = new <%=WebReferenceName%>.<%=ProxyClassName%>();
 			proxy.Url = Url;
 			
-			<%=WebReferenceName%>.<%=GetClassName(SourceTable.Name)%>[] items = proxy.<%=providerName%>_GetPaged(whereClause, orderBy, start, pageLength, out count);
+			<%=WebReferenceName%>.<%=GetClassName(SourceTable.Name)%>[] items = proxy.<%=providerName%>_<%= MethodNames.GetPaged %>(whereClause, orderBy, start, pageLength, out count);
 			
 			// Create a collection and fill it with the dataset
 			return Convert(items); 
 		}
 		
-		#endregion		
+		#endregion <%= MethodNames.GetPaged %> Methods
 		<% } //endif (IncludeGetList) %>
 	
 		
@@ -513,10 +513,10 @@ namespace <%=DALNameSpace%>.WebServiceClient
 	
 	
 	<% if (IncludeInsert) { 
-		methods.Add("Insert");
-		methods.Add("BulkInsert");
+		methods.Add(MethodNames.Insert);
+		methods.Add(MethodNames.BulkInsert);
 		%>
-		#region Insert Functions
+		#region <%= MethodNames.Insert %> Methods
 		/// <summary>
 		/// 	Inserts a <%=className%> object into the datasource using a transaction.
 		/// </summary>
@@ -524,14 +524,14 @@ namespace <%=DALNameSpace%>.WebServiceClient
 		/// <param name="entity"><%=className%> object to insert.</param>		
 		/// <remarks></remarks>		
 		/// <returns>Returns true if operation is successful.</returns>
-		public override bool Insert(TransactionManager transactionManager, <%=className%> entity)
+		public override bool <%= MethodNames.Insert %>(TransactionManager transactionManager, <%=className%> entity)
 		{
 			<%=WebReferenceName%>.<%=ProxyClassName%> proxy = new <%=WebReferenceName%>.<%=ProxyClassName%>();
 			proxy.Url = Url;
 			
 			try
 			{
-				<%=WebReferenceName%>.<%=GetClassName(SourceTable.Name)%> result = proxy.<%=providerName%>_Insert(Convert(entity));
+				<%=WebReferenceName%>.<%=GetClassName(SourceTable.Name)%> result = proxy.<%=providerName%>_<%= MethodNames.Insert %>(Convert(entity));
 				Convert(entity, result);
 				return true;
 			}
@@ -551,13 +551,13 @@ namespace <%=DALNameSpace%>.WebServiceClient
 		/// After inserting into the datasource, the <%=className%> object will be updated
 		/// to refelect any changes made by the datasource. (ie: identity or computed columns)
 		/// </remarks>
-		public override void BulkInsert(TransactionManager transactionManager, TList<<%=className%>> entityList)
+		public override void <%= MethodNames.BulkInsert %>(TransactionManager transactionManager, TList<<%=className%>> entityList)
 		{
 			<%=WebReferenceName%>.<%=ProxyClassName%> proxy = new <%=WebReferenceName%>.<%=ProxyClassName%>();
 			proxy.Url = Url;
 			try
 			{
-				proxy.<%=providerName%>_BulkInsert(Convert(entityList));
+				proxy.<%=providerName%>_<%= MethodNames.BulkInsert %>(Convert(entityList));
 			}
 			catch (Exception ex)
 			{	
@@ -565,15 +565,15 @@ namespace <%=DALNameSpace%>.WebServiceClient
 			}
 		}
 
-		#endregion
+		#endregion <%= MethodNames.Insert %> Methods
 	<%	}//endif (IncludeInsert) %>
 	
 	
 	<% if (IncludeUpdate) { 
-		methods.Add("Update");
+		methods.Add(MethodNames.Update);
 		
 		%>	
-		#region Update Functions
+		#region <%= MethodNames.Update %> Methods
 						
 		/// <summary>
 		/// 	Update an existing row in the datasource.
@@ -582,14 +582,14 @@ namespace <%=DALNameSpace%>.WebServiceClient
 		/// <param name="entity"><%=className%> object to update.</param>		
 		/// <remarks></remarks>
 		/// <returns>Returns true if operation is successful.</returns>
-		public override bool Update(TransactionManager transactionManager, <%=className%> entity)
+		public override bool <%= MethodNames.Update %>(TransactionManager transactionManager, <%=className%> entity)
 		{
 			<%=WebReferenceName%>.<%=ProxyClassName%> proxy = new <%=WebReferenceName%>.<%=ProxyClassName%>();
 			proxy.Url = Url;
 			
 			try
 			{
-				<%=WebReferenceName%>.<%=GetClassName(SourceTable.Name)%> result = proxy.<%=providerName%>_Update(Convert(entity));
+				<%=WebReferenceName%>.<%=GetClassName(SourceTable.Name)%> result = proxy.<%=providerName%>_<%= MethodNames.Update %>(Convert(entity));
 				Convert(entity, result);
 				entity.AcceptChanges();
 				return true;
@@ -601,7 +601,7 @@ namespace <%=DALNameSpace%>.WebServiceClient
 			}
 		}
 		
-		#endregion
+		#endregion <%= MethodNames.Update %> Methods
 	<%	}//endif %>
 			
 	<% if (IncludeCustoms) { %>

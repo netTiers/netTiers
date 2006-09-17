@@ -236,7 +236,7 @@ namespace <%=DALNameSpace%>.Bases
 		
 		<%} //endif(IncludeManyToMany) %>
 		<% if (IncludeDelete && SourceTable.PrimaryKey != null) {%>
-		#region Delete Functions
+		#region <%= MethodNames.Delete %> Methods
 
 		/// <summary>
 		/// 	Deletes a row from the DataSource.
@@ -244,9 +244,9 @@ namespace <%=DALNameSpace%>.Bases
 		/// <param name="transactionManager">A <see cref="TransactionManager"/> object.</param>
 		/// <param name="key">The unique identifier of the row to delete.</param>
 		/// <returns>Returns true if operation suceeded.</returns>
-		public override bool Delete(TransactionManager transactionManager, <%= keyClassName %> key)
+		public override bool <%= MethodNames.Delete %>(TransactionManager transactionManager, <%= keyClassName %> key)
 		{
-			return Delete(transactionManager, <%= GetFunctionObjectParameters(pkCols, "key") %><% if(RowVersion != null) {Response.Write(String.Format(", ((key.Entity != null) ? key.Entity.{0} : new byte[0])", GetPropertyName(RowVersion.Name)));}%>);
+			return <%= MethodNames.Delete %>(transactionManager, <%= GetFunctionObjectParameters(pkCols, "key") %><% if(RowVersion != null) {Response.Write(String.Format(", ((key.Entity != null) ? key.Entity.{0} : new byte[0])", GetPropertyName(RowVersion.Name)));}%>);
 		}
 		
 		/// <summary>
@@ -260,9 +260,9 @@ namespace <%=DALNameSpace%>.Bases
 		<% } %>
 		/// <remarks>Deletes based on primary key(s).</remarks>
 		/// <returns>Returns true if operation suceeded.</returns>
-		public bool Delete(<%= GetFunctionHeaderParameters(SourceTable.PrimaryKey.MemberColumns) %><% if(RowVersion != null) {Response.Write(", byte[] " + GetPrivateName(RowVersion.Name));}%>)
+		public bool <%= MethodNames.Delete %>(<%= GetFunctionHeaderParameters(SourceTable.PrimaryKey.MemberColumns) %><% if(RowVersion != null) {Response.Write(", byte[] " + GetPrivateName(RowVersion.Name));}%>)
 		{
-			return Delete(null, <%= GetFunctionCallParameters(SourceTable.PrimaryKey.MemberColumns) %><% if(RowVersion != null) {Response.Write(", " + GetPrivateName(RowVersion.Name));}%>);
+			return <%= MethodNames.Delete %>(null, <%= GetFunctionCallParameters(SourceTable.PrimaryKey.MemberColumns) %><% if(RowVersion != null) {Response.Write(", " + GetPrivateName(RowVersion.Name));}%>);
 		}
 		
 		/// <summary>
@@ -277,9 +277,9 @@ namespace <%=DALNameSpace%>.Bases
 		<% } %>
 		/// <remarks>Deletes based on primary key(s).</remarks>
 		/// <returns>Returns true if operation suceeded.</returns>
-		public abstract bool Delete(TransactionManager transactionManager, <%= GetFunctionHeaderParameters(SourceTable.PrimaryKey.MemberColumns) %><% if(RowVersion != null) {Response.Write(", byte[] " + GetPrivateName(RowVersion.Name));}%>);		
+		public abstract bool <%= MethodNames.Delete %>(TransactionManager transactionManager, <%= GetFunctionHeaderParameters(SourceTable.PrimaryKey.MemberColumns) %><% if(RowVersion != null) {Response.Write(", byte[] " + GetPrivateName(RowVersion.Name));}%>);		
 		
-		#endregion
+		#endregion <%= MethodNames.Delete %> Methods
 		
 		<% } //endif(includedelete) %>
 		<% if (IncludeGetListByFK) { %>
@@ -404,7 +404,7 @@ namespace <%=DALNameSpace%>.Bases
 		/// <param name="start">Row number at which to start reading, the first row is 0.</param>
 		/// <param name="pageLength">Number of rows to return.</param>
 		/// <returns>Returns an instance of the Entity class.</returns>
-		public override <%= className %> Get(TransactionManager transactionManager, <%= keyClassName %> key, int start, int pageLength)
+		public override <%= className %> <%= MethodNames.Get %>(TransactionManager transactionManager, <%= keyClassName %> key, int start, int pageLength)
 		{
 			return GetBy<%=GetKeysName(pkCols)%>(transactionManager, <%= GetFunctionObjectParameters(pkCols, "key") %>, start, pageLength);
 		}
@@ -767,7 +767,7 @@ namespace <%=DALNameSpace%>.Bases
 		
 		<%-- Going to require knowing the foreign key indexes in order to do deep loading. --%>
 		<% if ( IncludeRelations && IncludeGetListByFK ) { %>
-		#region DeepLoad
+		#region <%= MethodNames.DeepLoad %> Methods
 		/// <summary>
 		/// Deep Loads the <see cref="IEntity"/> object with criteria based of the child 
 		/// property collections only N Levels Deep based on the <see cref="DeepLoadType"/>.
@@ -783,7 +783,7 @@ namespace <%=DALNameSpace%>.Bases
 		/// <param name="innerList">A collection of child types for easy access.</param>
 	    /// <exception cref="ArgumentNullException">entity or childTypes is null.</exception>
 	    /// <exception cref="ArgumentException">deepLoadType has invalid value.</exception>
-		internal override void DeepLoad(TransactionManager transactionManager, <%= className %> entity, bool deep, DeepLoadType deepLoadType, System.Type[] childTypes, ChildEntityTypesList innerList)
+		internal override void <%= MethodNames.DeepLoad %>(TransactionManager transactionManager, <%= className %> entity, bool deep, DeepLoadType deepLoadType, System.Type[] childTypes, ChildEntityTypesList innerList)
 		{
 			if(entity == null)
 				return;
@@ -835,7 +835,7 @@ namespace <%=DALNameSpace%>.Bases
 			
 				if (deep && entity.<%=compositePropertyName%> != null)
 				{
-					DataRepository.<%=GetProviderClassName(pkClassName)%>.DeepLoad(transactionManager, entity.<%=compositePropertyName%>, deep, deepLoadType, childTypes, innerList);
+					DataRepository.<%=GetProviderClassName(pkClassName)%>.<%= MethodNames.DeepLoad %>(transactionManager, entity.<%=compositePropertyName%>, deep, deepLoadType, childTypes, innerList);
 				}
 			}
 			#endregion <%=compositePropertyName%>
@@ -876,7 +876,7 @@ namespace <%=DALNameSpace%>.Bases
 
 				if (deep && entity.<%=item.PropertyNameUnique%>.Count > 0)
 				{
-					DataRepository.<%=GetProviderClassName(item.SecondaryTable)%>.DeepLoad(transactionManager, entity.<%= item.PropertyNameUnique %>, deep, deepLoadType, childTypes, innerList);
+					DataRepository.<%=GetProviderClassName(item.SecondaryTable)%>.<%= MethodNames.DeepLoad %>(transactionManager, entity.<%= item.PropertyNameUnique %>, deep, deepLoadType, childTypes, innerList);
 				}
 			}
 			#endregion
@@ -892,7 +892,7 @@ namespace <%=DALNameSpace%>.Bases
 
 				if (deep && entity.<%=item.PropertyNameUnique%> != null)
 				{
-					DataRepository.<%=GetProviderClassName(item.SecondaryTable)%>.DeepLoad(transactionManager, entity.<%=item.PropertyNameUnique %>, deep, deepLoadType, childTypes, innerList);
+					DataRepository.<%=GetProviderClassName(item.SecondaryTable)%>.<%= MethodNames.DeepLoad %>(transactionManager, entity.<%=item.PropertyNameUnique %>, deep, deepLoadType, childTypes, innerList);
 				}
 			}
 			#endregion 
@@ -912,7 +912,7 @@ namespace <%=DALNameSpace%>.Bases
 
 				if (deep && entity.<%=item.PropertyNameUnique%>.Count > 0)
 				{
-					DataRepository.<%=GetProviderClassName(item.SecondaryTable)%>.DeepLoad(transactionManager, entity.<%= item.PropertyNameUnique %>, deep, deepLoadType, childTypes, innerList);
+					DataRepository.<%=GetProviderClassName(item.SecondaryTable)%>.<%= MethodNames.DeepLoad %>(transactionManager, entity.<%= item.PropertyNameUnique %>, deep, deepLoadType, childTypes, innerList);
 				}
 			}		
 			#endregion 
@@ -923,7 +923,7 @@ namespace <%=DALNameSpace%>.Bases
 		#endregion 
 		
 		<% 	if ( IncludeSave ) { %>
-		#region DeepSave
+		#region <%= MethodNames.DeepSave %> Methods
 
 		/// <summary>
 		/// Deep Save the entire object graph of the <%= className %> object with criteria based of the child 
@@ -934,13 +934,13 @@ namespace <%=DALNameSpace%>.Bases
 		/// <param name="deepSaveType">DeepSaveType Enumeration to Include/Exclude object property collections from Save.</param>
 		/// <param name="childTypes"><%= className %> Property Collection Type Array To Include or Exclude from Save</param>
 		/// <param name="innerList">A Hashtable of child types for easy access.</param>
-		internal override void DeepSave(TransactionManager transactionManager, <%= className %> entity, DeepSaveType deepSaveType, System.Type[] childTypes, Hashtable innerList)
+		internal override void <%= MethodNames.DeepSave %>(TransactionManager transactionManager, <%= className %> entity, DeepSaveType deepSaveType, System.Type[] childTypes, Hashtable innerList)
 		{	
 			if (entity == null)
 				return;
 				
 			// Save Root Entity through Provider
-			this.Save(transactionManager, entity);
+			this.<%= MethodNames.Save %>(transactionManager, entity);
 			
 			#region Composite Source Properties
 			//Save Source Composite Properties, however, don't call deep save on them.  
@@ -972,7 +972,7 @@ namespace <%=DALNameSpace%>.Bases
 			{
 				if (entity.<%=compositePropertyName%> != null )
 				{			
-					DataRepository.<%= GetProviderName(pkClassName) %>.Save(transactionManager, entity.<%=compositePropertyName%>);
+					DataRepository.<%= GetProviderName(pkClassName) %>.<%= MethodNames.Save %>(transactionManager, entity.<%=compositePropertyName%>);
 				}
 			}
 			#endregion 
@@ -989,7 +989,7 @@ namespace <%=DALNameSpace%>.Bases
 				string listTypeName = item.CollectionTypeName.StartsWith("List") ? item.CollectionTypeName : item.CollectionTypeName.Substring(1);
 
 					if (ctr == 0)
-						Response.Write("\t\t\t\t//deep save child collections  - Call DeepSave() Methods on Children" + Environment.NewLine);
+						Response.Write("\t\t\t\t//deep save child collections  - Call " + MethodNames.DeepSave + "() Methods on Children" + Environment.NewLine);
 					ctr++;
 			%>
 
@@ -1009,7 +1009,7 @@ namespace <%=DALNameSpace%>.Bases
 			}
 			%>
 			if (entity.<%=item.PropertyNameUnique%> != null)
-				DataRepository.<%=GetProviderClassName(item.SecondaryTable)%>.DeepSave(transactionManager, entity.<%=item.PropertyNameUnique%>, deepSaveType, childTypes);
+				DataRepository.<%=GetProviderClassName(item.SecondaryTable)%>.<%= MethodNames.DeepSave %>(transactionManager, entity.<%=item.PropertyNameUnique%>, deepSaveType, childTypes);
 			} 
 			#endregion 
 			<% 
@@ -1031,7 +1031,7 @@ namespace <%=DALNameSpace%>.Bases
 			}
 			
 			if (entity.<%=item.PropertyNameUnique %>.Count > 0 || entity.<%=item.PropertyNameUnique%>.DeletedItems.Count > 0)
-				DataRepository.<%=GetProviderClassName(item.SecondaryTable)%>.DeepSave(transactionManager, entity.<%=item.PropertyNameUnique%>, deepSaveType, childTypes);
+				DataRepository.<%=GetProviderClassName(item.SecondaryTable)%>.<%= MethodNames.DeepSave %>(transactionManager, entity.<%=item.PropertyNameUnique%>, deepSaveType, childTypes);
 			} 
 			#endregion 
 			<% }
@@ -1043,7 +1043,7 @@ namespace <%=DALNameSpace%>.Bases
 				|| (deepSaveType == DeepSaveType.ExcludeChildren && innerList["List<<%=item.SecondaryTable%>>"] == null))
 			{
 				if (entity.<%=item.PropertyNameUnique%>.Count > 0 || entity.<%=item.PropertyNameUnique%>.DeletedItems.Count > 0)
-					DataRepository.<%=GetProviderClassName(item.SecondaryTable)%>.DeepSave(transactionManager, entity.<%=item.PropertyNameUnique %>, deepSaveType, childTypes); 
+					DataRepository.<%=GetProviderClassName(item.SecondaryTable)%>.<%= MethodNames.DeepSave %>(transactionManager, entity.<%=item.PropertyNameUnique %>, deepSaveType, childTypes); 
 			}
 			#endregion 
 		<% } %>

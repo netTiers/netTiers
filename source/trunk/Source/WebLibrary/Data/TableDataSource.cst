@@ -71,16 +71,16 @@
 
 	if ( IncludeGetListByIX )
 	{
-		methodNames.Add("Get");
+		methodNames.Add(MethodNames.Get);
 	}
 	if ( IncludeGetList )
 	{
-		methodNames.Add("GetAll");
-		methodNames.Add("GetPaged");
+		methodNames.Add(MethodNames.GetAll);
+		methodNames.Add(MethodNames.GetPaged);
 	}
 	if ( IncludeFind )
 	{
-		methodNames.Add("Find");
+		methodNames.Add(MethodNames.Find);
 	}
 	if ( IncludeGetListByIX )
 	{
@@ -216,7 +216,7 @@ namespace <%= WebNameSpace %>.Data
 		{
 			get
 			{
-				<%= className %>SelectMethod selectMethod = <% if ( IncludeGetList ) { %><%= className %>SelectMethod.GetAll<% } else { %>default(<%= className %>SelectMethod)<% } %>;
+				<%= className %>SelectMethod selectMethod = <% if ( IncludeGetList ) { %><%= className %>SelectMethod.<%= MethodNames.GetAll %><% } else { %>default(<%= className %>SelectMethod)<% } %>;
 				Object method = ViewState["SelectMethod"];
 				if ( method != null )
 				{
@@ -336,19 +336,19 @@ namespace <%= WebNameSpace %>.Data
 				if ( IncludeGetList )
 				{
 				%>
-				case <%= className %>SelectMethod.GetAll:
-                    results = <%= providerName %>.GetAll(<%= TransactionManager %>StartIndex, PageSize, out count);
+				case <%= className %>SelectMethod.<%= MethodNames.GetAll %>:
+                    results = <%= providerName %>.<%= MethodNames.GetAll %>(<%= TransactionManager %>StartIndex, PageSize, out count);
                     break;
-				case <%= className %>SelectMethod.GetPaged:
-					results = <%= providerName %>.GetPaged(<%= TransactionManager %>WhereClause, OrderBy, PageIndex, PageSize, out count);
+				case <%= className %>SelectMethod.<%= MethodNames.GetPaged %>:
+					results = <%= providerName %>.<%= MethodNames.GetPaged %>(<%= TransactionManager %>WhereClause, OrderBy, PageIndex, PageSize, out count);
 					break;
 				<% } // end if ( IncludeGetList ) { %>
 				<% if ( IncludeFind ) { %>
-				case <%= className %>SelectMethod.Find:
+				case <%= className %>SelectMethod.<%= MethodNames.Find %>:
 					if ( FilterParameters != null )
-						results = <%= providerName %>.Find(<%= TransactionManager %>FilterParameters, OrderBy, StartIndex, PageSize, out count);
+						results = <%= providerName %>.<%= MethodNames.Find %>(<%= TransactionManager %>FilterParameters, OrderBy, StartIndex, PageSize, out count);
 					else
-						results = <%= providerName %>.Find(<%= TransactionManager %>WhereClause, StartIndex, PageSize, out count);
+						results = <%= providerName %>.<%= MethodNames.Find %>(<%= TransactionManager %>WhereClause, StartIndex, PageSize, out count);
                     break;
 				<% } // end if ( IncludeFind ) {
 				if ( IncludeGetListByIX )
@@ -405,7 +405,7 @@ namespace <%= WebNameSpace %>.Data
 		protected override void GetSelectParameters(IDictionary values)
 		{
 			<% if ( IncludeGetListByIX ) { %>
-			if ( SelectMethod == <%= className %>SelectMethod.Get || SelectMethod == <%= className %>SelectMethod.GetBy<%= GetKeysName(SourceTable.PrimaryKey.MemberColumns) %> )
+			if ( SelectMethod == <%= className %>SelectMethod.<%= MethodNames.Get %> || SelectMethod == <%= className %>SelectMethod.GetBy<%= GetKeysName(SourceTable.PrimaryKey.MemberColumns) %> )
 			{
 				EntityId = GetEntityKey(values);
 			}
@@ -449,7 +449,7 @@ namespace <%= WebNameSpace %>.Data
 					GetTransactionManager();
 					<% } %>
 					// execute deep load method
-					<%= providerName %>.DeepLoad(<%= TransactionManager %>GetCurrentEntity(), EnableRecursiveDeepLoad);
+					<%= providerName %>.<%= MethodNames.DeepLoad %>(<%= TransactionManager %>GetCurrentEntity(), EnableRecursiveDeepLoad);
 					// set loaded flag
 					IsDeepLoaded = true;
 				}
@@ -468,7 +468,7 @@ namespace <%= WebNameSpace %>.Data
 			GetTransactionManager();
 			<% } %>
 			// execute deep load method
-			<%= providerName %>.DeepLoad(<%= TransactionManager %>entityList, properties.Recursive, properties.Method, properties.GetTypes());
+			<%= providerName %>.<%= MethodNames.DeepLoad %>(<%= TransactionManager %>entityList, properties.Recursive, properties.Method, properties.GetTypes());
 		}
 
 		<% } // end if ( IncludeRelations && IncludeGetListByFK ) %>
@@ -620,13 +620,14 @@ private string WriteUniqueIndexSelectStatements(string tableName, ColumnSchemaCo
 	
 	if ( isGet )
 	{
-		methods.Add("Get");
-		sb.AppendFormat("\t\t\t\tcase {0}SelectMethod.Get:{1}", GetClassName(tableName), Environment.NewLine);
+		methods.Add(MethodNames.Get);
+		sb.AppendFormat("\t\t\t\tcase {0}SelectMethod.{1}:{2}", GetClassName(tableName), MethodNames.Get, Environment.NewLine);
 		sb.AppendFormat("\t\t\t\t\t{0} entityKey  = new {0}();{1}", GetKeyClassName(tableName), Environment.NewLine);
 		sb.AppendFormat("\t\t\t\t\tentityKey.Load(values);{0}", Environment.NewLine);
-		sb.AppendFormat("\t\t\t\t\titem = {1}.Get({0}entityKey);{2}",
+		sb.AppendFormat("\t\t\t\t\titem = {1}.{2}({0}entityKey);{3}",
 						TransactionManager,
 						GetProviderName(tableName),
+						MethodNames.Get,
 						Environment.NewLine);
 	}
 	else

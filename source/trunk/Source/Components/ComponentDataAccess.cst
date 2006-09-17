@@ -237,12 +237,11 @@
 		/// <param name="key">The unique identifier of the row to retrieve.</param>
 		/// <returns>Returns an instance of the Entity class.</returns>
 		[DataObjectMethod(DataObjectMethodType.Select)]
-		public override <%=className%>  Get(<%= keyClassName %> key)
+		public override <%=className%> <%= MethodNames.Get %>(<%= keyClassName %> key)
 		{
 			return <%=partialClassInternalPrefix%>GetBy<%=GetKeysName(keys)%>(<%= GetFunctionObjectParameters(keys, "key") %>);
 		}
 		<% } %>
-		
 		<%	
 			/// this array store each Get BY index
 			/// The goal is to avoid to create double bet by index function
@@ -354,15 +353,15 @@
 		<% } %>
 	
 		<% if (IncludeGetList) { %>
-		#region <%=partialClassInternalPrefix%>GetList
+		#region <%=partialClassInternalPrefix%><%= MethodNames.GetAll %>
 		/// <summary>
 		/// Get a complete collection of <see cref="<%= className %>" /> entities.
 		/// </summary>
 		/// <returns></returns>
-		<%= interfaceImplModifier %> <%=collectionClassName %> <%=partialClassInternalPrefix%>GetAll() 
+		<%= interfaceImplModifier %> <%=collectionClassName %> <%=partialClassInternalPrefix%><%= MethodNames.GetAll %>() 
 		{
 			int totalCount = -1;
-			return <%=partialClassInternalPrefix%>GetAll(0, defaultMaxRecords, out totalCount);
+			return <%=partialClassInternalPrefix%><%= MethodNames.GetAll %>(0, defaultMaxRecords, out totalCount);
 		}
 
 		/// <summary>
@@ -372,10 +371,10 @@
 		/// <param name="pageLength">Number of rows to return.</param>
 		/// <param name="totalCount">out parameter, number of total rows in given query.</param>
 		/// <returns>a <see cref="<%= collectionClassNameComment %>"/> </returns>
-		<%= constructorAccessModifier %> <%=collectionClassName %> <%=partialClassInternalPrefix%>GetAll(int start, int pageLength, out int totalCount) 
+		<%= constructorAccessModifier %> <%=collectionClassName %> <%=partialClassInternalPrefix%><%= MethodNames.GetAll %>(int start, int pageLength, out int totalCount) 
 		{
 			// throws security exception if not authorized
-			SecurityContext.IsAuthorized("GetAll");
+			SecurityContext.IsAuthorized("<%= MethodNames.GetAll %>");
 			
 			// get this data
 			<%= collectionClassName %> list = null;
@@ -389,7 +388,7 @@
 				NetTiersProvider dataProvider = ConnectionScope.Current.DataProvider;					
 
 				//Access repository
-				list = <%=newCollectionClassName%>dataProvider.<%= GetProviderName(className) %>.GetAll(transactionManager, start, pageLength, out totalCount)<%=newCollectionClassNameEnd%>;	
+				list = <%=newCollectionClassName%>dataProvider.<%= GetProviderName(className) %>.<%= MethodNames.GetAll %>(transactionManager, start, pageLength, out totalCount)<%=newCollectionClassNameEnd%>;	
 			}
             catch (Exception exc)
             {
@@ -403,18 +402,18 @@
 			}
 			return list;
 		}
-		#endregion <%=partialClassInternalPrefix%>GetAll
+		#endregion <%=partialClassInternalPrefix%><%= MethodNames.GetAll %>
 
-		#region <%=partialClassInternalPrefix%>GetPaged
+		#region <%=partialClassInternalPrefix%><%= MethodNames.GetPaged %>
 		/// <summary>
 		/// Gets a page of <see cref="<%=collectionClassNameComment %>" /> rows from the DataSource.
 		/// </summary>
 		/// <param name="totalCount">Out Parameter, Number of rows in the DataSource.</param>
 		/// <remarks></remarks>
 		/// <returns>Returns a typed collection of <c><%= className %></c> objects.</returns>
-		<%= constructorAccessModifier %> <%=collectionClassName %> <%=partialClassInternalPrefix%>GetPaged(out int totalCount)
+		<%= constructorAccessModifier %> <%=collectionClassName %> <%=partialClassInternalPrefix%><%= MethodNames.GetPaged %>(out int totalCount)
 		{
-			return <%=partialClassInternalPrefix%>GetPaged(null, null, 0, defaultMaxRecords, out totalCount);
+			return <%=partialClassInternalPrefix%><%= MethodNames.GetPaged %>(null, null, 0, defaultMaxRecords, out totalCount);
 		}
 		
 		/// <summary>
@@ -425,9 +424,9 @@
 		/// <param name="totalCount">Number of rows in the DataSource.</param>
 		/// <remarks></remarks>
 		/// <returns>Returns a typed collection of <c><%= className %></c> objects.</returns>
-		<%= constructorAccessModifier %> <%=collectionClassName %> <%=partialClassInternalPrefix%>GetPaged(int start, int pageLength, out int totalCount)
+		<%= constructorAccessModifier %> <%=collectionClassName %> <%=partialClassInternalPrefix%><%= MethodNames.GetPaged %>(int start, int pageLength, out int totalCount)
 		{
-			return <%=partialClassInternalPrefix%>GetPaged(null, null, start, pageLength, out totalCount);
+			return <%=partialClassInternalPrefix%><%= MethodNames.GetPaged %>(null, null, start, pageLength, out totalCount);
 		}
 
 		/// <summary>
@@ -440,10 +439,10 @@
 		/// <param name="totalCount">Out Parameter, Number of rows in the DataSource.</param>
 		/// <remarks></remarks>
 		/// <returns>Returns a typed collection of <c><%= className %></c> objects.</returns>
-		<%= interfaceImplModifier %> <%=collectionClassName %> <%=partialClassInternalPrefix%>GetPaged(string whereClause,string orderBy, int start, int pageLength, out int totalCount)
+		<%= interfaceImplModifier %> <%=collectionClassName %> <%=partialClassInternalPrefix%><%= MethodNames.GetPaged %>(string whereClause,string orderBy, int start, int pageLength, out int totalCount)
 		{
 			// throws security exception if not authorized
-			SecurityContext.IsAuthorized("GetPaged");
+			SecurityContext.IsAuthorized("<%= MethodNames.GetPaged %>");
 			
 			// get this data
 			<%= collectionClassName %> list = null;
@@ -457,7 +456,7 @@
 				NetTiersProvider dataProvider = ConnectionScope.Current.DataProvider;
 					
 				//Access repository
-				list = <%=newCollectionClassName%>dataProvider.<%= GetProviderName(className) %>.GetPaged(transactionManager, whereClause, orderBy, start, pageLength, out totalCount)<%=newCollectionClassNameEnd%>;
+				list = <%=newCollectionClassName%>dataProvider.<%= GetProviderName(className) %>.<%= MethodNames.GetPaged %>(transactionManager, whereClause, orderBy, start, pageLength, out totalCount)<%=newCollectionClassNameEnd%>;
 				
 				//if borrowed tran, leave open for next call
 			}
@@ -483,18 +482,18 @@
 		/// <param name="whereClause">Specifies the condition for the rows returned by a query (Name='John Doe', Name='John Doe' AND Id='1', Name='John Doe' OR Id='1').</param>
 		/// <param name="totalCount">Number of rows in the DataSource.</param>
 		/// <returns>Returns the number of rows.</returns>
-		public int GetTotalItems(string whereClause, out int totalCount)
+		public int <%= MethodNames.GetTotalItems %>(string whereClause, out int totalCount)
 		{
-			GetPaged(whereClause, null, 0, defaultMaxRecords, out totalCount);
+			<%= partialClassInternalPrefix %><%= MethodNames.GetPaged %>(whereClause, null, 0, defaultMaxRecords, out totalCount);
 			return totalCount;
 		}
-		#endregion <%=partialClassInternalPrefix%>GetPaged	
+		#endregion <%=partialClassInternalPrefix%><%= MethodNames.GetPaged %>	
 		<% } %>
 				
 		<% if (IncludeFind) { %>
-		#region <%=partialClassInternalPrefix%>Find
+		#region <%=partialClassInternalPrefix%><%= MethodNames.Find %>
 		
-		#region Parsed Find Methods
+		#region Parsed <%= MethodNames.Find %> Methods
 		
 		/// <summary>
 		/// Attempts to do a parameterized version of a simple whereclause. 
@@ -503,10 +502,10 @@
 		/// <param name="whereClause">Specifies the condition for the rows returned by a query (Name='John Doe', Name='John Doe' AND Id='1', Name='John Doe' OR Id='1').</param>
 		/// <remarks>Does NOT Support Advanced Operations such as SubSelects.  See GetPaged for that functionality.</remarks>
 		/// <returns>Returns a typed collection of Entity objects.</returns>
-		<%= constructorAccessModifier %> <%=collectionClassName%> Find(string whereClause)
+		<%= constructorAccessModifier %> <%=collectionClassName%> <%= MethodNames.Find %>(string whereClause)
 		{
 			int totalCount = -1;
-			return Find(whereClause, 0, defaultMaxRecords, out totalCount);
+			return <%= MethodNames.Find %>(whereClause, 0, defaultMaxRecords, out totalCount);
 		}	
 		
 		/// <summary>
@@ -518,10 +517,10 @@
 		/// <param name="totalCount">out parameter to get total records for query</param>
 		/// <remarks>Does NOT Support Advanced Operations such as SubSelects.  See GetPaged for that functionality.</remarks>
 		/// <returns>Returns a typed collection <%=collectionClassNameComment %> of <c><%= className %></c> objects.</returns>
-		<%= interfaceImplModifier %> <%=collectionClassName%> Find(string whereClause, int start, int pageLength, out int totalCount)
+		<%= interfaceImplModifier %> <%=collectionClassName%> <%= MethodNames.Find %>(string whereClause, int start, int pageLength, out int totalCount)
 		{
 			// throws security exception if not authorized
-			SecurityContext.IsAuthorized("Find");
+			SecurityContext.IsAuthorized("<%= MethodNames.Find %>");
 								
 			// get this data
 			<%= collectionClassName %> list = null;
@@ -535,7 +534,7 @@
 				NetTiersProvider dataProvider = ConnectionScope.Current.DataProvider;
 					
 				//Access repository
-				list = <%=newCollectionClassName%>dataProvider.<%= GetProviderName(className) %>.Find(transactionManager, whereClause, start, pageLength, out totalCount)<%=newCollectionClassNameEnd%>;
+				list = <%=newCollectionClassName%>dataProvider.<%= GetProviderName(className) %>.<%= MethodNames.Find %>(transactionManager, whereClause, start, pageLength, out totalCount)<%=newCollectionClassNameEnd%>;
 				
 				//if borrowed tran, leave open for next call
 			}
@@ -552,18 +551,18 @@
 			return list;
 		}
 		
-		#endregion Parsed Find Methods
+		#endregion Parsed <%= MethodNames.Find %> Methods
 		
-		#region Parameterized Find Methods
+		#region Parameterized <%= MethodNames.Find %> Methods
 
 		/// <summary>
 		/// 	Returns rows from the DataSource that meet the parameter conditions.
 		/// </summary>
 		/// <param name="parameters">A collection of <see cref="SqlFilterParameter"/> objects.</param>
 		/// <returns>Returns a typed collection of <c><%= className %></c> objects.</returns>
-		<%= constructorAccessModifier %> <%=collectionClassName%> Find(SqlFilterParameterCollection parameters)
+		<%= constructorAccessModifier %> <%=collectionClassName%> <%= MethodNames.Find %>(SqlFilterParameterCollection parameters)
 		{
-			return Find(parameters, null);
+			return <%= MethodNames.Find %>(parameters, null);
 		}
 		
 		/// <summary>
@@ -572,10 +571,10 @@
 		/// <param name="parameters">A collection of <see cref="SqlFilterParameter"/> objects.</param>
 		/// <param name="orderBy">Specifies the sort criteria for the rows in the DataSource (Name ASC; BirthDay DESC, Name ASC);</param>
 		/// <returns>Returns a typed collection of <c><%= className %></c> objects.</returns>
-		<%= constructorAccessModifier %> <%=collectionClassName%> Find(SqlFilterParameterCollection parameters, string orderBy)
+		<%= constructorAccessModifier %> <%=collectionClassName%> <%= MethodNames.Find %>(SqlFilterParameterCollection parameters, string orderBy)
 		{
 			int count = 0;
-			return Find(parameters, orderBy, 0, defaultMaxRecords, out count);
+			return <%= MethodNames.Find %>(parameters, orderBy, 0, defaultMaxRecords, out count);
 		}
 		
 		/// <summary>
@@ -587,10 +586,10 @@
 		/// <param name="pageLength">Number of rows to return.</param>
 		/// <param name="count">out. The number of rows that match this query.</param>
 		/// <returns>Returns a typed collection of <c><%= className %></c> objects.</returns>
-		<%= constructorAccessModifier %> <%=collectionClassName%> Find(SqlFilterParameterCollection parameters, string orderBy, int start, int pageLength, out int count)
+		<%= constructorAccessModifier %> <%=collectionClassName%> <%= MethodNames.Find %>(SqlFilterParameterCollection parameters, string orderBy, int start, int pageLength, out int count)
 		{
 			// throws security exception if not authorized
-			SecurityContext.IsAuthorized("Find");
+			SecurityContext.IsAuthorized("<%= MethodNames.Find %>");
 								
 			// get this data
 			TransactionManager transactionManager = null; 
@@ -604,7 +603,7 @@
 				NetTiersProvider dataProvider = ConnectionScope.Current.DataProvider;
 					
 				//Access repository
-				list = <%=newCollectionClassName%>dataProvider.<%= GetProviderName(className) %>.Find(transactionManager, parameters, orderBy, start, pageLength, out count)<%=newCollectionClassNameEnd%>;
+				list = <%=newCollectionClassName%>dataProvider.<%= GetProviderName(className) %>.<%= MethodNames.Find %>(transactionManager, parameters, orderBy, start, pageLength, out count)<%=newCollectionClassNameEnd%>;
 			}
             catch (Exception exc)
             {
@@ -620,26 +619,35 @@
 			return list;
 		}
 		
-		#endregion Parameterized Find Methods
+		#endregion Parameterized <%= MethodNames.Find %> Methods
 		
 		#endregion
 		<% } //endif (IncludeFind) 
 		
 			string returnEntity = IsServiceLayer ? className : "void";
 			string useReturn = IsServiceLayer ? "return " : "";
+			string methodType = "Fill";
 			
 			ArrayList actions = new ArrayList();
 			if (IncludeInsert)
-				actions.Add("Insert");
+				actions.Add(MethodNames.Insert);
 			if (IncludeUpdate)
-				actions.Add("Update");
+				actions.Add(MethodNames.Update);
 			if (IncludeSave)
-				actions.Add("Save");
+				actions.Add(MethodNames.Save);
 			if (IncludeDelete)
-				actions.Add("Delete");
+				actions.Add(MethodNames.Delete);
 				
 			foreach(string action in actions)
 			{
+				if ( action == MethodNames.Insert )
+					methodType = "Insert";
+				else if ( action == MethodNames.Update || action == MethodNames.Save )
+					methodType = "Update";
+				else if ( action == MethodNames.Delete )
+					methodType = "Delete";
+				else // default
+					methodType = "Fill";
 		%>
 		
 		#region <%=partialClassInternalPrefix%><%= action %>
@@ -658,7 +666,7 @@
 		/// <example>
         /// The following code shows the usage of the <%= action %> Method with an already open transaction.
         /// <code>
-		<% if (action == "Insert") {%>
+		<% if (action == MethodNames.Insert) {%>
 		/// <%= className %> entity = new <%= className %>();
 		<% }
 		else {%>
@@ -689,8 +697,8 @@
         ///	}
         /// </code>
         /// </example>
-		[DataObjectMethod(DataObjectMethodType.<%= (action == "Save" ? "Update" : action) %>)]
-		<%= (IsServiceLayer && (action != "Save")) ? interfaceImplModifier : constructorAccessModifierOnMembers %> <%= (action != "Save" ? "bool" : returnEntity) %> <%=partialClassInternalPrefix%><%= action %>(<%= memberMethodEntity %>)
+		[DataObjectMethod(DataObjectMethodType.<%= methodType %>)]
+		<%= (IsServiceLayer && (action != MethodNames.Save)) ? interfaceImplModifier : constructorAccessModifierOnMembers %> <%= (action != MethodNames.Save ? "bool" : returnEntity) %> <%=partialClassInternalPrefix%><%= action %>(<%= memberMethodEntity %>)
 		{
 			// throws security exception if not authorized
 			SecurityContext.IsAuthorized("<%= action %>");
@@ -699,7 +707,7 @@
 				throw new Entities.EntityNotValidException(<%= memberMethodEntityCall %>, "<%= action %>", <%= memberMethodEntityCall %>.Error);
 			
 			TransactionManager transactionManager = null; 
-			<% if (action != "Save") { %>
+			<% if (action != MethodNames.Save) { %>
 			bool result = false;
 			<% } %>
 			
@@ -712,7 +720,7 @@
 				NetTiersProvider dataProvider = ConnectionScope.Current.DataProvider;
 					
 				//Persist Entity
-				<% if (action != "Save") { %>result = <% } %>dataProvider.<%= GetProviderName(className) %>.<%= action %>(transactionManager, <%= memberMethodEntityCall %>); 
+				<% if (action != MethodNames.Save) { %>result = <% } %>dataProvider.<%= GetProviderName(className) %>.<%= action %>(transactionManager, <%= memberMethodEntityCall %>); 
 				
 				//if persisted and tran not borrowed, commit
 				if(!isBorrowedTransaction && transactionManager != null && transactionManager.IsOpen)
@@ -730,7 +738,7 @@
 			}
 			<% if ( action != "Save" || IsServiceLayer ) { %>
 			
-			return <%= ((action != "Save") ? "result" : memberMethodEntityCall ) %>;
+			return <%= ((action != MethodNames.Save) ? "result" : memberMethodEntityCall ) %>;
 			<% } %>
 		}
 		#endregion <%= action %> Entity
@@ -772,7 +780,7 @@
         ///	}
         /// ]]></code>
         /// </example>
-		[DataObjectMethod(DataObjectMethodType.<%= (action == "Save" ? "Update" : action) %>)]
+		[DataObjectMethod(DataObjectMethodType.<%= methodType %>)]
 		<%= constructorAccessModifier %> <%=collectionClassName%> <%=partialClassInternalPrefix%><%= action %>(<%=collectionClassName%> entityCollection)
 		{
 			// throws security exception if not authorized
@@ -819,16 +827,16 @@
 		<%	}//end for loop %>
 
 		<% if (IncludeDelete && SourceTable.PrimaryKey != null) {%>
-		#region  <%=partialClassInternalPrefix%> Delete
+		#region  <%=partialClassInternalPrefix%> <%= MethodNames.Delete %>
 		<% if (IsServiceLayer) { %>
 		/// <summary>
 		/// 	Deletes a row from the DataSource.
 		/// </summary>
 		/// <param name="key">The unique identifier of the row to delete.</param>
 		/// <returns>Returns true if operation suceeded.</returns>
-		public bool Delete(<%= keyClassName %> key)
+		public bool <%= MethodNames.Delete %>(<%= keyClassName %> key)
 		{
-			return Delete(<%= GetFunctionObjectParameters(keys, "key") %> <% if(RowVersion != null) {Response.Write(String.Format(", ((key.Entity != null) ? key.Entity.{0} : new byte[0])", GetPropertyName(RowVersion.Name)));}%>);
+			return <%= MethodNames.Delete %>(<%= GetFunctionObjectParameters(keys, "key") %> <% if(RowVersion != null) {Response.Write(String.Format(", ((key.Entity != null) ? key.Entity.{0} : new byte[0])", GetPropertyName(RowVersion.Name)));}%>);
 		}
 		<% } %>
 		
@@ -844,10 +852,10 @@
 		/// <remarks>Deletes based on primary key(s).</remarks>
 		/// <returns>Returns true if operation suceeded.</returns>
 		[DataObjectMethod(DataObjectMethodType.Delete)]
-		<%= constructorAccessModifierOnMembers %> bool <%=partialClassInternalPrefix%>Delete(<%= GetFunctionHeaderParameters(keys) %><% if(RowVersion != null) {Response.Write(", byte[] " + GetPrivateName(RowVersion.Name));}%>)
+		<%= constructorAccessModifierOnMembers %> bool <%=partialClassInternalPrefix%><%= MethodNames.Delete %>(<%= GetFunctionHeaderParameters(keys) %><% if(RowVersion != null) {Response.Write(", byte[] " + GetPrivateName(RowVersion.Name));}%>)
 		{
 			// throws security exception if not authorized
-			SecurityContext.IsAuthorized("Delete");
+			SecurityContext.IsAuthorized("<%= MethodNames.Delete %>");
 
 			bool result = false;
 			TransactionManager transactionManager = null; 
@@ -860,7 +868,7 @@
 				NetTiersProvider dataProvider = ConnectionScope.Current.DataProvider;
                 
 				//Delete
-				result = dataProvider.<%= GetProviderName(className) %>.Delete(transactionManager, <%= GetFunctionCallParameters(keys) %><% if(RowVersion != null) {Response.Write(", " + GetPrivateName(RowVersion.Name));}%>);
+				result = dataProvider.<%= GetProviderName(className) %>.<%= MethodNames.Delete %>(transactionManager, <%= GetFunctionCallParameters(keys) %><% if(RowVersion != null) {Response.Write(", " + GetPrivateName(RowVersion.Name));}%>);
 	        
 				//If success, Commit
 				if(!isBorrowedTransaction && transactionManager != null && transactionManager.IsOpen)
@@ -1076,7 +1084,7 @@
 		
 		<% // Going to require knowing the foreign key indexes in order to do deep loading.
 		if (IncludeGetListByFK) { %>  
-		#region DeepLoad
+		#region <%= MethodNames.DeepLoad %>
 		<% if (IncludeGetListByIX) { %>	
 		#region Deep Load By Entity Keys
 		<%	if (getbyKeys != null)
@@ -1121,17 +1129,17 @@
 		/// <param name="childTypes"><%= className %> Property Collection Type Array To Include or Exclude from Load</param>
 		/// <returns>Returns an instance of the <see cref="<%= returnTypeForComment %>"/> class and DeepLoaded.</returns>
 		[DataObjectMethod(DataObjectMethodType.Select)]
-		<%=constructorAccessModifier %> <%= returnType %> <%=partialClassInternalPrefix%>DeepLoadBy<%=GetKeysName(indexes[j].MemberColumns)%>(<%= GetFunctionHeaderParameters(indexes[j].MemberColumns) %>, bool deep, DeepLoadType deepLoadType, params System.Type[] childTypes)
+		<%=constructorAccessModifier %> <%= returnType %> <%=partialClassInternalPrefix%><%= MethodNames.DeepLoad %>By<%=GetKeysName(indexes[j].MemberColumns)%>(<%= GetFunctionHeaderParameters(indexes[j].MemberColumns) %>, bool deep, DeepLoadType deepLoadType, params System.Type[] childTypes)
 		{
 			// throws security exception if not authorized
-			SecurityContext.IsAuthorized("DeepLoadBy<%=GetKeysName(indexes[j].MemberColumns)%>");		    
+			SecurityContext.IsAuthorized("<%= MethodNames.DeepLoad %>By<%=GetKeysName(indexes[j].MemberColumns)%>");		    
 			bool isBorrowedTransaction = ConnectionScope.Current.HasTransaction;				
 	
 			<%= returnType %> <%= returnTypeVar %> = <%=partialClassInternalPrefix%>GetBy<%=GetKeysName(indexes[j].MemberColumns)%>(<%= GetFunctionCallParameters(indexes[j].MemberColumns) %>);
 			
 			//Check to see if <%= returnTypeVar %> is not null, before attempting to Deep Load
 			if (<%= returnTypeVar %> != null)
-				<%= partialClassInternalPrefix %>DeepLoad(<%= returnTypeVar %>, deep, deepLoadType, childTypes);
+				<%= partialClassInternalPrefix %><%= MethodNames.DeepLoad %>(<%= returnTypeVar %>, deep, deepLoadType, childTypes);
 			
 			return <%= returnTypeVar %>;
 		}
@@ -1141,19 +1149,19 @@
 		<%	}//end Deep Load By IX %>
 		#endregion 
 
-		#region Deep Load By Entity
+		#region <%= MethodNames.DeepLoad %> By Entity
 		/// <summary>
 		/// <%= constructorAccessModifier %>Deep Load the IEntity object with all of the child 
 		/// property collections only 1 Level Deep.
 		/// </summary>
 		/// <param name="entity"><%= className %> Object</param>
 		/// <remarks>
-		/// <seealso cref="DeepLoad(<%= className %>)"/> overloaded methods for a recursive N Level deep loading method.
+		/// <seealso cref="<%= MethodNames.DeepLoad %>(<%= className %>)"/> overloaded methods for a recursive N Level deep loading method.
 		/// </remarks>
 		[DataObjectMethod(DataObjectMethodType.Select)]
-		<%= constructorAccessModifier %> void <%=partialClassInternalPrefix%>DeepLoad(<%= className %> entity)
+		<%= constructorAccessModifier %> void <%=partialClassInternalPrefix%><%= MethodNames.DeepLoad %>(<%= className %> entity)
 		{
-			<%=partialClassInternalPrefix%>DeepLoad(entity, false, DeepLoadType.ExcludeChildren, Type.EmptyTypes);
+			<%=partialClassInternalPrefix%><%= MethodNames.DeepLoad %>(entity, false, DeepLoadType.ExcludeChildren, Type.EmptyTypes);
 		}
 		
 		/// <summary>
@@ -1161,14 +1169,14 @@
 		/// property collections only 1 Level Deep.
 		/// </summary>
 		/// <remarks>
-		/// <seealso cref="DeepLoad(<%= className %>)"/> overloaded methods for a recursive N Level deep loading method.
+		/// <seealso cref="<%= MethodNames.DeepLoad %>(<%= className %>)"/> overloaded methods for a recursive N Level deep loading method.
 		/// </remarks>
 		/// <param name="entity"><%= className %> Object</param>
 		/// <param name="deep">Boolean. A flag that indicates whether to recursively save all Property Collection that are descendants of this instance. If True, saves the complete object graph below this object. If False, saves this object only. </param>
 		[DataObjectMethod(DataObjectMethodType.Select)]
-		<%= constructorAccessModifier %> void <%=partialClassInternalPrefix%>DeepLoad(<%= className %> entity, bool deep)
+		<%= constructorAccessModifier %> void <%=partialClassInternalPrefix%><%= MethodNames.DeepLoad %>(<%= className %> entity, bool deep)
 		{
-			<%=partialClassInternalPrefix%>DeepLoad(entity, deep, DeepLoadType.ExcludeChildren, Type.EmptyTypes);
+			<%=partialClassInternalPrefix%><%= MethodNames.DeepLoad %>(entity, deep, DeepLoadType.ExcludeChildren, Type.EmptyTypes);
 		}
 			
 		/// <summary>
@@ -1184,10 +1192,10 @@
 		/// <param name="deepLoadType">DeepLoadType Enumeration to Include/Exclude object property collections from Load.</param>
 		/// <param name="childTypes"><%= className %> Property Collection Type Array To Include or Exclude from Load</param>
 		[DataObjectMethod(DataObjectMethodType.Select)]
-		<%= constructorAccessModifier %> void <%=partialClassInternalPrefix%>DeepLoad(<%= className %> entity, bool deep, DeepLoadType deepLoadType, params System.Type[] childTypes)
+		<%= constructorAccessModifier %> void <%=partialClassInternalPrefix%><%= MethodNames.DeepLoad %>(<%= className %> entity, bool deep, DeepLoadType deepLoadType, params System.Type[] childTypes)
 		{
 			// throws security exception if not authorized
-			SecurityContext.IsAuthorized("DeepLoad");
+			SecurityContext.IsAuthorized("<%= MethodNames.DeepLoad %>");
 			TransactionManager transactionManager = null; 
 
 			try
@@ -1197,7 +1205,7 @@
 				NetTiersProvider dataProvider = ConnectionScope.Current.DataProvider;
 				
 				//Call Deep Load from the Repository
-				dataProvider.<%= GetProviderName(className) %>.DeepLoad(transactionManager, entity, deep, deepLoadType, childTypes);
+				dataProvider.<%= GetProviderName(className) %>.<%= MethodNames.DeepLoad %>(transactionManager, entity, deep, deepLoadType, childTypes);
 	        
 				//leave tran open if used
             	
@@ -1216,33 +1224,33 @@
 		}
 		#endregion
 		
-		#region Deep Load By Entity Collection
+		#region <%= MethodNames.DeepLoad %> By Entity Collection
 		/// <summary>
 		/// Deep Loads the <see cref="<%=collectionClassNameComment %>" /> object with all of the child 
 		/// property collections only 1 Level Deep.
 		/// </summary>
 		/// <remarks>
-		/// <seealso cref="DeepLoad(<%= className %>)"/> overloaded methods for a recursive N Level deep loading method.
+		/// <seealso cref="<%= MethodNames.DeepLoad %>(<%= className %>)"/> overloaded methods for a recursive N Level deep loading method.
 		/// </remarks>
 		/// <param name="entityCollection">the <see cref="<%=collectionClassNameComment %>" /> Object to deep loads.</param>
 		[DataObjectMethod(DataObjectMethodType.Select)]
-		<%= constructorAccessModifier %> void <%=partialClassInternalPrefix%>DeepLoad(<%= collectionClassName %> entityCollection)
+		<%= constructorAccessModifier %> void <%=partialClassInternalPrefix%><%= MethodNames.DeepLoad %>(<%= collectionClassName %> entityCollection)
 		{
-			<%=partialClassInternalPrefix%>DeepLoad(entityCollection, false, DeepLoadType.ExcludeChildren, Type.EmptyTypes);
+			<%=partialClassInternalPrefix%><%= MethodNames.DeepLoad %>(entityCollection, false, DeepLoadType.ExcludeChildren, Type.EmptyTypes);
 		}
 		
 		/// <summary>
 		/// Deep Loads the <see cref="<%=collectionClassNameComment %>" /> object.
 		/// </summary>
 		/// <remarks>
-		/// <seealso cref="DeepLoad(<%= className %>)"/> overloaded methods for a recursive N Level deep loading method.
+		/// <seealso cref="<%= MethodNames.DeepLoad %>(<%= className %>)"/> overloaded methods for a recursive N Level deep loading method.
 		/// </remarks>
 		/// <param name="entityCollection">the <see cref="<%=collectionClassNameComment %>" /> Object to deep loads.</param>
 		/// <param name="deep">Boolean. A flag that indicates whether to recursively save all Property Collection that are descendants of this instance. If True, saves the complete object graph below this object. If False, saves this object only. </param>
 		[DataObjectMethod(DataObjectMethodType.Select)]
-		<%= constructorAccessModifier %> void <%=partialClassInternalPrefix%>DeepLoad(<%= collectionClassName %> entityCollection, bool deep)
+		<%= constructorAccessModifier %> void <%=partialClassInternalPrefix%><%= MethodNames.DeepLoad %>(<%= collectionClassName %> entityCollection, bool deep)
 		{
-			<%=partialClassInternalPrefix%>DeepLoad(entityCollection, deep, DeepLoadType.ExcludeChildren, Type.EmptyTypes);
+			<%=partialClassInternalPrefix%><%= MethodNames.DeepLoad %>(entityCollection, deep, DeepLoadType.ExcludeChildren, Type.EmptyTypes);
 		}	
 
 		/// <summary>
@@ -1259,10 +1267,10 @@
 		///	</param>
 		/// <param name="childTypes"><see cref="<%= className %>"/> Property Collection Type Array To Include or Exclude from Load</param>
 		[DataObjectMethod(DataObjectMethodType.Select, false)]
-		<%= interfaceImplModifier %> void <%=partialClassInternalPrefix%>DeepLoad(<%= collectionClassName %> entityCollection, bool deep, DeepLoadType deepLoadType, params System.Type[] childTypes)
+		<%= interfaceImplModifier %> void <%=partialClassInternalPrefix%><%= MethodNames.DeepLoad %>(<%= collectionClassName %> entityCollection, bool deep, DeepLoadType deepLoadType, params System.Type[] childTypes)
 		{	
 			// throws security exception if not authorized
-			SecurityContext.IsAuthorized("DeepLoad");
+			SecurityContext.IsAuthorized("<%= MethodNames.DeepLoad %>");
 			TransactionManager transactionManager = null; 
 
 			try
@@ -1272,7 +1280,7 @@
 				NetTiersProvider dataProvider = ConnectionScope.Current.DataProvider;
 				
 				//Call Deep Load from the Repository
-				dataProvider.<%= GetProviderName(className) %>.DeepLoad(transactionManager, <%=newEntityCollectionClassName%>entityCollection<%=newEntityCollectionClassNameEnd%>, deep, deepLoadType, childTypes);
+				dataProvider.<%= GetProviderName(className) %>.<%= MethodNames.DeepLoad %>(transactionManager, <%=newEntityCollectionClassName%>entityCollection<%=newEntityCollectionClassNameEnd%>, deep, deepLoadType, childTypes);
 	        
 				//leave transaction open if used, this read is part of a larger transaction
 			}
@@ -1294,18 +1302,18 @@
 		
 		<%	} // end if %>
 		<%  if (IncludeSave) { %>
-		#region DeepSave
+		#region <%= MethodNames.DeepSave %>
 		
-		#region Deep Save By Entity
+		#region <%= MethodNames.DeepSave %> By Entity
 		/// <summary>
 		/// <%= constructorAccessModifier %>Deep Saves the <see cref="<%= className %>"/> object with all of the child
 		/// property collections N Levels Deep.
 		/// </summary>
 		/// <param name="entity"><%= className %> Object</param>
 		[DataObjectMethod(DataObjectMethodType.Update)]
-		<%= constructorAccessModifier %> bool <%=partialClassInternalPrefix%>DeepSave(<%= className %> entity)
+		<%= constructorAccessModifier %> bool <%=partialClassInternalPrefix%><%= MethodNames.DeepSave %>(<%= className %> entity)
 		{
-			return <%=partialClassInternalPrefix%>DeepSave(entity, DeepSaveType.ExcludeChildren, Type.EmptyTypes);
+			return <%=partialClassInternalPrefix%><%= MethodNames.DeepSave %>(entity, DeepSaveType.ExcludeChildren, Type.EmptyTypes);
 		}
 		
 		/// <summary>
@@ -1316,14 +1324,14 @@
 		/// <param name="deepSaveType">DeepSaveType Enumeration to Include/Exclude object property collections from Save.</param>
 		/// <param name="childTypes"><c><%= className %></c> property Type Array To Include or Exclude from Save</param>
 		[DataObjectMethod(DataObjectMethodType.Update)]
-		<%= interfaceImplModifier %> bool <%=partialClassInternalPrefix%>DeepSave(<%= className %> entity, DeepSaveType deepSaveType, params System.Type[] childTypes)
+		<%= interfaceImplModifier %> bool <%=partialClassInternalPrefix%><%= MethodNames.DeepSave %>(<%= className %> entity, DeepSaveType deepSaveType, params System.Type[] childTypes)
 		{
 			// throws security exception if not authorized
-			SecurityContext.IsAuthorized("DeepSave");
+			SecurityContext.IsAuthorized("<%= MethodNames.DeepSave %>");
 			
 			if (!entity.IsValid)
 			{
-				throw new Entities.EntityNotValidException(entity, "DeepSave");
+				throw new Entities.EntityNotValidException(entity, "<%= MethodNames.DeepSave %>");
 			}
 			
 			bool result = false;
@@ -1338,7 +1346,7 @@
 				NetTiersProvider dataProvider = ConnectionScope.Current.DataProvider;
 				
 				//Save
-				result = dataProvider.<%= GetProviderName(className) %>.DeepSave(transactionManager, entity, deepSaveType, childTypes);
+				result = dataProvider.<%= GetProviderName(className) %>.<%= MethodNames.DeepSave %>(transactionManager, entity, deepSaveType, childTypes);
 				
 				//If success, Commit
 				if (!isBorrowedTransaction && transactionManager != null && transactionManager.IsOpen)
@@ -1360,16 +1368,16 @@
 		}
 		#endregion
 		
-		#region Deep Save By Entity Collection
+		#region <%= MethodNames.DeepSave %> By Entity Collection
 		/// <summary>
 		/// Deep Save the entire <see cref="<%=collectionClassNameComment %>" /> object with all of the child 
 		/// property collections.
 		/// </summary>
 		/// <param name="entityCollection"><%= collectionClassNameComment %> Object</param>
 		[DataObjectMethod(DataObjectMethodType.Update)]
-		<%= constructorAccessModifier %> bool <%=partialClassInternalPrefix%>DeepSave(<%= collectionClassName %> entityCollection)
+		<%= constructorAccessModifier %> bool <%=partialClassInternalPrefix%><%= MethodNames.DeepSave %>(<%= collectionClassName %> entityCollection)
 		{
-			return <%=partialClassInternalPrefix%>DeepSave(entityCollection, DeepSaveType.ExcludeChildren, Type.EmptyTypes);
+			return <%=partialClassInternalPrefix%><%= MethodNames.DeepSave %>(entityCollection, DeepSaveType.ExcludeChildren, Type.EmptyTypes);
 		}
 		
 		/// <summary>
@@ -1380,14 +1388,14 @@
 		/// <param name="deepSaveType">DeepSaveType Enumeration to Include/Exclude object property collections from Save.</param>
 		/// <param name="childTypes"><%= className %> Property Collection Type Array To Include or Exclude from Save</param>
 		[DataObjectMethod(DataObjectMethodType.Update)]
-		<%= interfaceImplModifier %> bool <%=partialClassInternalPrefix%>DeepSave(<%= collectionClassName %> entityCollection, DeepSaveType deepSaveType, params System.Type[] childTypes)
+		<%= interfaceImplModifier %> bool <%=partialClassInternalPrefix%><%= MethodNames.DeepSave %>(<%= collectionClassName %> entityCollection, DeepSaveType deepSaveType, params System.Type[] childTypes)
 		{				
 			// throws security exception if not authorized
-			SecurityContext.IsAuthorized("DeepSave");
+			SecurityContext.IsAuthorized("<%= MethodNames.DeepSave %>");
 			
 			if (!entityCollection.IsValid)
 			{
-				throw new Entities.EntityNotValidException(entityCollection, "DeepSave");
+				throw new Entities.EntityNotValidException(entityCollection, "<%= MethodNames.DeepSave %>");
 			}
 			
 			bool result = false;
@@ -1400,7 +1408,7 @@
 				//since this is a read operation, don't create a tran by default, only use tran if provided to us for custom isolation level
 				transactionManager = ConnectionScope.ValidateOrCreateTransaction();
 				NetTiersProvider dataProvider = ConnectionScope.Current.DataProvider;
-				result = dataProvider.<%= GetProviderName(className) %>.DeepSave(transactionManager, <%= newEntityCollectionClassName %>entityCollection<%= newEntityCollectionClassNameEnd %>,  deepSaveType, childTypes);
+				result = dataProvider.<%= GetProviderName(className) %>.<%= MethodNames.DeepSave %>(transactionManager, <%= newEntityCollectionClassName %>entityCollection<%= newEntityCollectionClassNameEnd %>,  deepSaveType, childTypes);
 				
 				//If success and not borrowed, Commit
 				if (!isBorrowedTransaction && transactionManager != null && transactionManager.IsOpen)

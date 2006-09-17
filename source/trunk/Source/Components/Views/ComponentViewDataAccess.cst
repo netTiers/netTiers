@@ -144,7 +144,7 @@
 		#region Data Access Methods
 			
 		<% if (IncludeGetList) { %>		
-		#region <%=partialClassInternalPrefix%>Get 
+		#region <%=partialClassInternalPrefix%><%= MethodNames.Get %> 
 		/// <summary>
 		/// Attempts to do a parameterized version of a simple whereclause. 
 		/// Returns rows meeting the whereClause condition from the DataSource.
@@ -153,10 +153,10 @@
         /// <param name="orderBy">Specifies the sort criteria for the rows in the DataSource (Name ASC; BirthDay DESC, Name ASC);</param>
 		/// <remarks>Does NOT Support Advanced Operations such as SubSelects.  See GetPaged for that functionality.</remarks>
 		/// <returns>Returns a typed collection of Entity objects.</returns>
-		<%= interfaceImplModifier %> <%=collectionClassName%> Get(string whereClause, string orderBy)
+		<%= interfaceImplModifier %> <%=collectionClassName%> <%= MethodNames.Get %>(string whereClause, string orderBy)
 		{
 			int totalCount = -1;
-			return Get(whereClause, orderBy, 0, defaultMaxRecords, out totalCount);
+			return <%= MethodNames.Get %>(whereClause, orderBy, 0, defaultMaxRecords, out totalCount);
 		}
 
 		/// <summary>
@@ -169,10 +169,10 @@
 		/// <param name="totalCount">out parameter to get total records for query</param>
 		/// <remarks>Does NOT Support Advanced Operations such as SubSelects.  See GetPaged for that functionality.</remarks>
 		/// <returns>Returns a typed collection <%=collectionClassNameComment %> of <c><%= className %></c> objects.</returns>
-		<%= interfaceImplModifier %> <%=collectionClassName%> Get(string whereClause, string orderBy, int start, int pageLength, out int totalCount)
+		<%= interfaceImplModifier %> <%=collectionClassName%> <%= MethodNames.Get %>(string whereClause, string orderBy, int start, int pageLength, out int totalCount)
 		{
 			// throws security exception if not authorized
-			//SecurityContext.IsAuthorized("Get");
+			//SecurityContext.IsAuthorized("<%= MethodNames.Get %>");
 								
 			// get this data
 			<%= collectionClassName %> list = null;
@@ -186,7 +186,7 @@
 				NetTiersProvider dataProvider = ConnectionScope.Current.DataProvider;
 					
 				//Access repository
-				list = <%=newCollectionClassName%>dataProvider.<%= GetProviderName(className) %>.Get(transactionManager, whereClause, orderBy, start, pageLength, out totalCount)<%=newCollectionClassNameEnd%>;
+				list = <%=newCollectionClassName%>dataProvider.<%= GetProviderName(className) %>.<%= MethodNames.Get %>(transactionManager, whereClause, orderBy, start, pageLength, out totalCount)<%=newCollectionClassNameEnd%>;
 				
 				//if borrowed tran, leave open for next call
 			}
@@ -203,17 +203,17 @@
 			return list;
 		}
 		
-		#endregion		
+		#endregion <%= MethodNames.Get %> Methods
 		
-		#region <%=partialClassInternalPrefix%>GetList
+		#region <%=partialClassInternalPrefix%><%= MethodNames.GetAll %>
 		/// <summary>
 		/// Get a complete collection of <see cref="<%= className %>" /> entities.
 		/// </summary>
 		/// <returns></returns>
-		<%= constructorAccessModifier %> <%=collectionClassName %> <%=partialClassInternalPrefix%>GetAll() 
+		<%= constructorAccessModifier %> <%=collectionClassName %> <%=partialClassInternalPrefix%><%= MethodNames.GetAll %>() 
 		{
 			int totalCount = -1;
-			return <%=partialClassInternalPrefix%>GetAll(0, defaultMaxRecords, out totalCount);
+			return <%=partialClassInternalPrefix%><%= MethodNames.GetAll %>(0, defaultMaxRecords, out totalCount);
 		}
 
        
@@ -224,10 +224,10 @@
 		/// <param name="pageLength">Number of rows to return.</param>
 		/// <param name="totalCount">out parameter, number of total rows in given query.</param>
 		/// <returns>a <see cref="<%= collectionClassNameComment %>"/> </returns>
-		<%= interfaceImplModifier %> <%=collectionClassName %> <%=partialClassInternalPrefix%>GetAll(int start, int pageLength, out int totalCount) 
+		<%= interfaceImplModifier %> <%=collectionClassName %> <%=partialClassInternalPrefix%><%= MethodNames.GetAll %>(int start, int pageLength, out int totalCount) 
 		{
 			// throws security exception if not authorized
-			//SecurityContext.IsAuthorized("GetAll");
+			//SecurityContext.IsAuthorized("<%= MethodNames.GetAll %>");
 			
 			// get this data
 			<%= collectionClassName %> list = null;
@@ -241,7 +241,7 @@
 				NetTiersProvider dataProvider = ConnectionScope.Current.DataProvider;					
 
 				//Access repository
-				list = <%=newCollectionClassName%>dataProvider.<%= GetProviderName(className) %>.GetAll(transactionManager, start, pageLength, out totalCount)<%=newCollectionClassNameEnd%>;	
+				list = <%=newCollectionClassName%>dataProvider.<%= GetProviderName(className) %>.<%= MethodNames.GetAll %>(transactionManager, start, pageLength, out totalCount)<%=newCollectionClassNameEnd%>;	
 			}
             catch (Exception exc)
             {
@@ -255,18 +255,18 @@
 			}
 			return list;
 		}
-		#endregion <%=partialClassInternalPrefix%>GetAll
+		#endregion <%=partialClassInternalPrefix%><%= MethodNames.GetAll %>
 
-		#region <%=partialClassInternalPrefix%>GetPaged
+		#region <%=partialClassInternalPrefix%><%= MethodNames.GetPaged %>
 		/// <summary>
 		/// Gets a page of <see cref="<%=collectionClassNameComment %>" /> rows from the DataSource.
 		/// </summary>
 		/// <param name="totalCount">Out Parameter, Number of rows in the DataSource.</param>
 		/// <remarks></remarks>
 		/// <returns>Returns a typed collection of <c><%= className %></c> objects.</returns>
-		<%= constructorAccessModifier %> <%=collectionClassName %> <%=partialClassInternalPrefix%>GetPaged(out int totalCount)
+		<%= constructorAccessModifier %> <%=collectionClassName %> <%=partialClassInternalPrefix%><%= MethodNames.GetPaged %>(out int totalCount)
 		{
-			return <%=partialClassInternalPrefix%>GetPaged(null, null, 0, defaultMaxRecords, out totalCount);
+			return <%=partialClassInternalPrefix%><%= MethodNames.GetPaged %>(null, null, 0, defaultMaxRecords, out totalCount);
 		}
 		
 		/// <summary>
@@ -277,9 +277,9 @@
 		/// <param name="totalCount">Number of rows in the DataSource.</param>
 		/// <remarks></remarks>
 		/// <returns>Returns a typed collection of <c><%= className %></c> objects.</returns>
-		<%= constructorAccessModifier %> <%=collectionClassName %> <%=partialClassInternalPrefix%>GetPaged(int start, int pageLength, out int totalCount)
+		<%= constructorAccessModifier %> <%=collectionClassName %> <%=partialClassInternalPrefix%><%= MethodNames.GetPaged %>(int start, int pageLength, out int totalCount)
 		{
-			return <%=partialClassInternalPrefix%>GetPaged(null, null, start, pageLength, out totalCount);
+			return <%=partialClassInternalPrefix%><%= MethodNames.GetPaged %>(null, null, start, pageLength, out totalCount);
 		}
 
 		/// <summary>
@@ -292,10 +292,10 @@
 		/// <param name="totalCount">Out Parameter, Number of rows in the DataSource.</param>
 		/// <remarks></remarks>
 		/// <returns>Returns a typed collection of <c><%= className %></c> objects.</returns>
-		<%= interfaceImplModifier %> <%=collectionClassName %> <%=partialClassInternalPrefix%>GetPaged(string whereClause,string orderBy, int start, int pageLength, out int totalCount)
+		<%= interfaceImplModifier %> <%=collectionClassName %> <%=partialClassInternalPrefix%><%= MethodNames.GetPaged %>(string whereClause,string orderBy, int start, int pageLength, out int totalCount)
 		{
 			// throws security exception if not authorized
-			//SecurityContext.IsAuthorized("GetPaged");
+			//SecurityContext.IsAuthorized("<%= MethodNames.GetPaged %>");
 			
 			// get this data
 			<%= collectionClassName %> list = null;
@@ -309,7 +309,7 @@
 				NetTiersProvider dataProvider = ConnectionScope.Current.DataProvider;
 					
 				//Access repository
-				list = <%=newCollectionClassName%>dataProvider.<%= GetProviderName(className) %>.GetPaged(transactionManager, whereClause, orderBy, start, pageLength, out totalCount)<%=newCollectionClassNameEnd%>;
+				list = <%=newCollectionClassName%>dataProvider.<%= GetProviderName(className) %>.<%= MethodNames.GetPaged %>(transactionManager, whereClause, orderBy, start, pageLength, out totalCount)<%=newCollectionClassNameEnd%>;
 				
 				//if borrowed tran, leave open for next call
 			}
@@ -335,25 +335,25 @@
 		/// <param name="whereClause">Specifies the condition for the rows returned by a query (Name='John Doe', Name='John Doe' AND Id='1', Name='John Doe' OR Id='1').</param>
 		/// <param name="totalCount">Number of rows in the DataSource.</param>
 		/// <returns>Returns the number of rows.</returns>
-		public int GetTotalItems(string whereClause, out int totalCount)
+		public int <%= MethodNames.GetTotalItems %>(string whereClause, out int totalCount)
 		{
-			GetPaged(whereClause, null, 0, defaultMaxRecords, out totalCount);
+			<%= MethodNames.GetPaged %>(whereClause, null, 0, defaultMaxRecords, out totalCount);
 			return totalCount;
 		}
-		#endregion <%=partialClassInternalPrefix%>GetPaged	
+		#endregion <%=partialClassInternalPrefix%><%= MethodNames.GetPaged %>	
 
 		<% } %>	
 		<% if (IncludeFind) { %>
-		#region Find Methods
+		#region <%= MethodNames.Find %> Methods
 
 		/// <summary>
 		/// 	Returns rows from the DataSource that meet the parameter conditions.
 		/// </summary>
 		/// <param name="parameters">A collection of <see cref="SqlFilterParameter"/> objects.</param>
 		/// <returns>Returns a typed collection of <c><%= className %></c> objects.</returns>
-		<%= constructorAccessModifier %> <%=collectionClassName%> Find(SqlFilterParameterCollection parameters)
+		<%= constructorAccessModifier %> <%=collectionClassName%> <%= MethodNames.Find %>(SqlFilterParameterCollection parameters)
 		{
-			return Find(parameters, null);
+			return <%= MethodNames.Find %>(parameters, null);
 		}
 		
 		/// <summary>
@@ -362,10 +362,10 @@
 		/// <param name="parameters">A collection of <see cref="SqlFilterParameter"/> objects.</param>
 		/// <param name="orderBy">Specifies the sort criteria for the rows in the DataSource (Name ASC; BirthDay DESC, Name ASC);</param>
 		/// <returns>Returns a typed collection of <c><%= className %></c> objects.</returns>
-		<%= constructorAccessModifier %> <%=collectionClassName%> Find(SqlFilterParameterCollection parameters, string orderBy)
+		<%= constructorAccessModifier %> <%=collectionClassName%> <%= MethodNames.Find %>(SqlFilterParameterCollection parameters, string orderBy)
 		{
 			int count = 0;
-			return Find(parameters, orderBy, 0, defaultMaxRecords, out count);
+			return <%= MethodNames.Find %>(parameters, orderBy, 0, defaultMaxRecords, out count);
 		}
 		
 		/// <summary>
@@ -377,10 +377,10 @@
 		/// <param name="pageLength">Number of rows to return.</param>
 		/// <param name="count">out. The number of rows that match this query.</param>
 		/// <returns>Returns a typed collection of <c><%= className %></c> objects.</returns>
-		<%= interfaceImplModifier %> <%=collectionClassName%> Find(SqlFilterParameterCollection parameters, string orderBy, int start, int pageLength, out int count)
+		<%= interfaceImplModifier %> <%=collectionClassName%> <%= MethodNames.Find %>(SqlFilterParameterCollection parameters, string orderBy, int start, int pageLength, out int count)
 		{
 			// throws security exception if not authorized
-			//SecurityContext.IsAuthorized("Find");
+			//SecurityContext.IsAuthorized("<%= MethodNames.Find %>");
 								
 			// get this data
 			TransactionManager transactionManager = null; 
@@ -394,7 +394,7 @@
 				NetTiersProvider dataProvider = ConnectionScope.Current.DataProvider;
 					
 				//Access repository
-				list = <%=newCollectionClassName%>dataProvider.<%= GetProviderName(className) %>.Find(transactionManager, parameters, orderBy, start, pageLength, out count)<%=newCollectionClassNameEnd%>;
+				list = <%=newCollectionClassName%>dataProvider.<%= GetProviderName(className) %>.<%= MethodNames.Find %>(transactionManager, parameters, orderBy, start, pageLength, out count)<%=newCollectionClassNameEnd%>;
 			}
             catch (Exception exc)
             {
@@ -410,7 +410,7 @@
 			return list;
 		}
 		
-		#endregion Find Methods
+		#endregion <%= MethodNames.Find %> Methods
 		
 		<% } // end if (IncludeFind) { %>
 		<% if (IncludeCustoms) { %>

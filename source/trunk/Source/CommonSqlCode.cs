@@ -25,12 +25,17 @@ using SchemaExplorer;
 using System;
 using System.Windows.Forms.Design;
 using System.Collections;
+using System.Collections.Specialized;
 using System.ComponentModel;
+using System.ComponentModel.Design.Serialization;
 using System.Data;
 using System.Data.SqlClient;
+using System.Globalization;
+using System.Reflection;
 using System.Text;
 using System.Text.RegularExpressions;
 using System.IO;
+using System.Xml;
 //using System.Diagnostics;
 
 namespace MoM.Templates
@@ -65,6 +70,7 @@ namespace MoM.Templates
 		private string auditDateField = "";
 		private bool cspUseDefaultValForNonNullableTypes = false;
 		
+		private MethodNamesProperty methodNames = null;
 		private Hashtable aliases = null;
 		
 		#region CSharpKeywords
@@ -127,6 +133,33 @@ namespace MoM.Templates
 		
 		
 		#region "9. Code Style public properties"
+		
+		[Category("09. Code style - Advanced")]
+		[Description("The names to use for various generated methods.")]
+		public MethodNamesProperty MethodNames
+		{
+			get
+			{
+				if ( methodNames == null )
+				{
+					methodNames = new MethodNamesProperty();
+				}
+				
+				return methodNames;
+			}
+			set { methodNames = value; }
+		}
+		
+		/// <summary>
+		/// This property is used to set the MethodNames property from NetTiers.cst
+		/// due to runtime error when trying to set it directly using an object value.
+		/// </summary>
+		[Browsable(false)]
+		public string MethodNamesValues
+		{
+			get { return MethodNames.ToString(); }
+			set { MethodNames = new MethodNamesProperty(value); }
+		}
 		
 		[Category("09. Code style - Advanced")]
 		[Description("The table prefixes to strip from the classes name, delimited by comma.")]
@@ -3688,6 +3721,8 @@ namespace MoM.Templates
 		}
 		#endregion
 			
+		#region Relationships
+		
 		/// <summary>
 		/// Gets params for a method based on the columns
 		/// </summary>
@@ -4016,207 +4051,422 @@ namespace MoM.Templates
 			ManyToMany
 		}
 		
+		#endregion Relationships
+		
 		#region GetParent/Child Tables
 		///<summary>
 		/// Get's the parent tables if any based on a child table.
 		///</summary>
-		public TableSchemaCollection GetParentTables(SchemaExplorer.TableSchema table){
-				TableSchemaCollection _tbParent= new TableSchemaCollection();
+		public TableSchemaCollection GetParentTables(SchemaExplorer.TableSchema table)
+		{
+			TableSchemaCollection _tbParent= new TableSchemaCollection();
+			if(CurrentTable != table.Name){
+				CurrentTable = table.Name;
+			}
+			DatabaseSchema _dbCurrent;
+			_dbCurrent=table.Database;
+			
+			foreach(TableSchema _tb in _dbCurrent.Tables){
+				if(CurrentTable!=_tb.Name){
+					foreach(ColumnSchema _col in _tb.PrimaryKey.MemberColumns){
+						foreach(ColumnSchema col in table.Columns){
+							if (col.Name == _col.Name){
+								_tbParent.Add(_tb);
+							}
+						}                        
+					}
+				}
+			}
+			return _tbParent;
+		}
+			
+		///<summary>
+		///  Get's all the child tables based on a parent table
+		///</summary>
+		public TableSchemaCollection GetChildTables(SchemaExplorer.TableSchema table)
+		{
+			TableSchemaCollection _tbChild= new TableSchemaCollection();
 				if(CurrentTable != table.Name){
 					CurrentTable = table.Name;
 				}
 				DatabaseSchema _dbCurrent;
 				_dbCurrent=table.Database;
-				
 				foreach(TableSchema _tb in _dbCurrent.Tables){
 					if(CurrentTable!=_tb.Name){
-						foreach(ColumnSchema _col in _tb.PrimaryKey.MemberColumns){
-							foreach(ColumnSchema col in table.Columns){
-								if (col.Name == _col.Name){
-									_tbParent.Add(_tb);
+						foreach(ColumnSchema _col in _tb.Columns){
+							foreach(ColumnSchema primaryCol in table.PrimaryKey.MemberColumns){
+								if (_col.Name == primaryCol.Name){
+									_tbChild.Add(_tb);
 								}
-							}                        
+							}                       
 						}
 					}
 				}
-				return _tbParent;
-			}
-			
-				
-			///<summary>
-			///  Get's all the child tables based on a parent table
-			///</summary>
-			public TableSchemaCollection GetChildTables(SchemaExplorer.TableSchema table)
-			{
-				TableSchemaCollection _tbChild= new TableSchemaCollection();
-					if(CurrentTable != table.Name){
-						CurrentTable = table.Name;
-					}
-					DatabaseSchema _dbCurrent;
-					_dbCurrent=table.Database;
-					foreach(TableSchema _tb in _dbCurrent.Tables){
-						if(CurrentTable!=_tb.Name){
-							foreach(ColumnSchema _col in _tb.Columns){
-								foreach(ColumnSchema primaryCol in table.PrimaryKey.MemberColumns){
-									if (_col.Name == primaryCol.Name){
-										_tbChild.Add(_tb);
-									}
-								}                       
-							}
-						}
-					}
-				return _tbChild;
-			}
+			return _tbChild;
 		}
 		#endregion 
 
-		#region Retry
-		public enum SleepStyle
-		{ 
-			/// <summary>Each sleep will be the <i>n</i> milliseconds.</summary>
-			Constant, 
-			/// <summary>Each sleep will increase by <i>n</i>*<i>attempts</i> milliseconds.</summary>
-			Linear, 
-			/// <summary>Each sleep will increase exponential by <i>n</i>^<i>attempts</i> milliseconds.</summary>
-			Exponential 
-		}
-		#endregion
-		
-		#region UnitTests
-		
-		public enum UnitTestStyle
-		{
-			/// <summary>No unit test should be included.</summary>
-			None,
-			/// <summary>NUnit tests should be generated.</summary>
-			NUnit,
-			/// <summary>VSTS test should be gerenated.</summary>
-			VSTS
-		}
-		#endregion
-		
-		#region ComponentPatternType
-		public enum ComponentPatternType
-		{
-			/// <summary>No Component Pattern Generation should be included.</summary>
-			None,
-			/// <summary>A Service Layer Pattern should be included.</summary>
-			ServiceLayer,
-			/// <summary>A Domain Model Pattern Generation should be included.</summary>
-			DomainModel
-		}
-		#endregion
-		
-		#region DatabaseType
-		public enum DatabaseType
-		{
-			/// <summary>No specific database type.</summary>
-			None,
-			/// <summary>SQL Server 2000.</summary>
-			//SQLServer2000,
-			/// <summary>SQL Server 2005.</summary>
-			SQLServer2005
-			/// <summary>Oracle 8i.</summary>
-			//Oracle8i,
-			/// <summary>Oracle 9i.</summary>
-			//Oracle9i,
-			/// <summary>Oracle 10g.</summary>
-			//Oracle10g,
-		}
-		#endregion
-
-		#region Archived Depricated
-		/*
-		///<summary>
-		/// returns true all primary key columns have is a foreign key relationship
-		/// </summary>
-		public bool Many2ManyCompliant(TableKeySchema primaryKey)
-		{
-			// une seul column vers la table pivot
-			if (primaryKey.ForeignKeyMemberColumns.Count != 1)
-				return false;
-			
-			// une seul column venant de la table primaire
-			if (primaryKey.PrimaryKeyMemberColumns.Count != 1)
-				return false;
-			
-			
-			// Junction table require a primary on two columns
-			if (primaryKey.ForeignKeyTable.PrimaryKey == null || primaryKey.ForeignKeyTable.PrimaryKey.MemberColumns.Count != 2)
-			{
-				//Response.WriteLine(string.Format("IsJunctionTable: The table {0} doesn't have a primary key.", table.Name));
-				return false;
-			}
-			
-			// And each primary key member columns must be part of relation
-			for (int i=0;i < primaryKey.ForeignKeyTable.PrimaryKey.MemberColumns.Count; i++)
-			{
-				if (!primaryKey.ForeignKeyTable.PrimaryKey.MemberColumns[i].IsForeignKeyMember)
-					return false;
-				
-				//if (!primaryKey.ForeignKeyTable.PrimaryKey.MemberColumns[i].IsPrimaryKeyMember)
-				//	return false;
-			}
-			
-			// the foreign column of the relation must be a junction table's primary key member's column
-			//if (primaryKey.ForeignKeyTable.PrimaryKey.MemberColumns[0] != primaryKey.ForeignKeyMemberColumns[0] && primaryKey.ForeignKeyTable.PrimaryKey.MemberColumns[1] != primaryKey.ForeignKeyMemberColumns[0])
-			//{
-			//	return false;
-			//}
-			
-			if (!primaryKey.ForeignKeyMemberColumns[0].IsPrimaryKeyMember)	return false;
-			
-			return true;			
-		}
-            TableSchemaCollection _tbChild= new TableSchemaCollection();
-                if(CurrentTable != table.Name){
-                    CurrentTable = table.Name;
-                }
-                DatabaseSchema _dbCurrent;
-                _dbCurrent=table.Database;
-                foreach(TableSchema _tb in _dbCurrent.Tables){
-                    if(CurrentTable!=_tb.Name){
-                        foreach(ColumnSchema _col in _tb.Columns){
-                            foreach(ColumnSchema primaryCol in table.PrimaryKey.MemberColumns){
-                                if (_col.Name == primaryCol.Name){
-                                    _tbChild.Add(_tb);
-                                }
-                            }                       
-                        }
-                    }
-                }
-            return _tbChild;
-        }
-		
-
 	}
 
-		public bool IsJunctionTable(TableSchema table)
+	#region Retry
+	public enum SleepStyle
+	{ 
+		/// <summary>Each sleep will be the <i>n</i> milliseconds.</summary>
+		Constant, 
+		/// <summary>Each sleep will increase by <i>n</i>*<i>attempts</i> milliseconds.</summary>
+		Linear, 
+		/// <summary>Each sleep will increase exponential by <i>n</i>^<i>attempts</i> milliseconds.</summary>
+		Exponential 
+	}
+	#endregion
+	
+	#region UnitTests
+	
+	public enum UnitTestStyle
+	{
+		/// <summary>No unit test should be included.</summary>
+		None,
+		/// <summary>NUnit tests should be generated.</summary>
+		NUnit,
+		/// <summary>VSTS test should be gerenated.</summary>
+		VSTS
+	}
+	#endregion
+	
+	#region ComponentPatternType
+	public enum ComponentPatternType
+	{
+		/// <summary>No Component Pattern Generation should be included.</summary>
+		None,
+		/// <summary>A Service Layer Pattern should be included.</summary>
+		ServiceLayer,
+		/// <summary>A Domain Model Pattern Generation should be included.</summary>
+		DomainModel
+	}
+	#endregion
+	
+	#region DatabaseType
+	public enum DatabaseType
+	{
+		/// <summary>No specific database type.</summary>
+		None,
+		/// <summary>SQL Server 2000.</summary>
+		//SQLServer2000,
+		/// <summary>SQL Server 2005.</summary>
+		SQLServer2005
+		/// <summary>Oracle 8i.</summary>
+		//Oracle8i,
+		/// <summary>Oracle 9i.</summary>
+		//Oracle9i,
+		/// <summary>Oracle 10g.</summary>
+		//Oracle10g,
+	}
+	#endregion
+
+	#region MethodNamesProperty
+	
+	[Serializable]
+	[TypeConverter(typeof(MethodNamesTypeConverter))]
+	[PropertySerializer(typeof(XmlPropertySerializer))]
+	public class MethodNamesProperty
+	{
+		public MethodNamesProperty() { }
+		public MethodNamesProperty(string values)
+		{
+			ParseCore(values);
+		}
+		
+		// used for testing
+		private static readonly string _methodNameSuffix = "";
+		
+		private string _get = "Get" + _methodNameSuffix;
+		[NotifyParentProperty(true)]
+		[Description("The name of the method used to perform a Get operation.")]
+		public string Get
+		{
+			get { return _get; }
+			set { if ( IsValid(value) ) _get = value.Trim(); }
+		}
+		
+		private string _getAll = "GetAll" + _methodNameSuffix;
+		[NotifyParentProperty(true)]
+		[Description("The name of the method used to perform a GetAll operation.")]
+		public string GetAll
+		{
+			get { return _getAll; }
+			set { if ( IsValid(value) ) _getAll = value.Trim(); }
+		}
+		
+		private string _getPaged = "GetPaged" + _methodNameSuffix;
+		[NotifyParentProperty(true)]
+		[Description("The name of the method used to perform a GetPaged operation.")]
+		public string GetPaged
+		{
+			get { return _getPaged; }
+			set { if ( IsValid(value) ) _getPaged = value.Trim(); }
+		}
+		
+		private string _find = "Find" + _methodNameSuffix;
+		[NotifyParentProperty(true)]
+		[Description("The name of the method used to perform a Find operation.")]
+		public string Find
+		{
+			get { return _find; }
+			set { if ( IsValid(value) ) _find = value.Trim(); }
+		}
+		
+		private string _insert = "Insert" + _methodNameSuffix;
+		[NotifyParentProperty(true)]
+		[Description("The name of the method used to perform a Insert operation.")]
+		public string Insert
+		{
+			get { return _insert; }
+			set { if ( IsValid(value) ) _insert = value.Trim(); }
+		}
+		
+		private string _update = "Update" + _methodNameSuffix;
+		[NotifyParentProperty(true)]
+		[Description("The name of the method used to perform a Update operation.")]
+		public string Update
+		{
+			get { return _update; }
+			set { if ( IsValid(value) ) _update = value.Trim(); }
+		}
+		
+		private string _save = "Save" + _methodNameSuffix;
+		[NotifyParentProperty(true)]
+		[Description("The name of the method used to perform a Save operation.")]
+		public string Save
+		{
+			get { return _save; }
+			set { if ( IsValid(value) ) _save = value.Trim(); }
+		}
+		
+		private string _delete = "Delete" + _methodNameSuffix;
+		[NotifyParentProperty(true)]
+		[Description("The name of the method used to perform a Delete operation.")]
+		public string Delete
+		{
+			get { return _delete; }
+			set { if ( IsValid(value) ) _delete = value.Trim(); }
+		}
+		
+		private string _deepLoad = "DeepLoad" + _methodNameSuffix;
+		[NotifyParentProperty(true)]
+		[Description("The name of the method used to perform a DeepLoad operation.")]
+		public string DeepLoad
+		{
+			get { return _deepLoad; }
+			set { if ( IsValid(value) ) _deepLoad = value.Trim(); }
+		}
+		
+		private string _deepSave = "DeepSave" + _methodNameSuffix;
+		[NotifyParentProperty(true)]
+		[Description("The name of the method used to perform a DeepSave operation.")]
+		public string DeepSave
+		{
+			get { return _deepSave; }
+			set { if ( IsValid(value) ) _deepSave = value.Trim(); }
+		}
+		
+		private string _getTotalItems = "GetTotalItems" + _methodNameSuffix;
+		[NotifyParentProperty(true)]
+		[Description("The name of the method used to perform a GetTotalItems operation.")]
+		public string GetTotalItems
+		{
+			get { return _getTotalItems; }
+			set { if ( IsValid(value) ) _getTotalItems = value.Trim(); }
+		}
+		
+		private string _bulkInsert = "BulkInsert" + _methodNameSuffix;
+		[NotifyParentProperty(true)]
+		[Description("The name of the method used to perform a BulkInsert operation.")]
+		public string BulkInsert
+		{
+			get { return _bulkInsert; }
+			set { if ( IsValid(value) ) _bulkInsert = value.Trim(); }
+		}
+		
+		private bool IsValid(string value)
+		{
+			return ( value != null && value.Trim().Length > 0 );
+		}
+		
+		private void ParseCore(string value)
+		{
+			if ( !string.IsNullOrEmpty(value) )
 			{
-				bool RetValue;
-				ColumnSchemaCollection keys;
-				RetValue = false;
-				if(table.PrimaryKey.MemberColumns.Count > 1)
-				{
-					keys = new ColumnSchemaCollection(SourceTable.PrimaryKey.MemberColumns);
-					foreach(ColumnSchema primarykey in keys)
-					{
-						if(primarykey.IsForeignKeyMember)
-						{
-							RetValue = true;
-						}
-						else
-						{
-							RetValue = false;
-							break;
-						}
-					} 
-				}
-				return RetValue;
+				string[] values = value.Split(new char[] { ',' });
+				
+				if ( values.Length > 0 )
+					Get = values[0];
+				if ( values.Length > 1 )
+					GetAll = values[1];
+				if ( values.Length > 2 )
+					GetPaged = values[2];
+				if ( values.Length > 3 )
+					Find = values[3];
+				if ( values.Length > 4 )
+					Insert = values[4];
+				if ( values.Length > 5 )
+					Update = values[5];
+				if ( values.Length > 6 )
+					Save = values[6];
+				if ( values.Length > 7 )
+					Delete = values[7];
+				if ( values.Length > 8 )
+					DeepLoad = values[8];
+				if ( values.Length > 9 )
+					DeepSave = values[9];
+				if ( values.Length > 10 )
+					GetTotalItems = values[10];
+				if ( values.Length > 11 )
+					BulkInsert = values[11];
 			}
+		}
+		
+		public static MethodNamesProperty Parse(string value)
+		{
+			return new MethodNamesProperty(value);
+		}
+		
+		public override string ToString()
+		{
+			string[] names = new string[] {
+				Get, GetAll, GetPaged, Find,
+				Insert, Update, Save, Delete,
+				DeepLoad, DeepSave, GetTotalItems,
+				BulkInsert
+			};
+			
+			return string.Join(",", names);
+		}
+	}
+	
+	public class MethodNamesTypeConverter : ExpandableObjectConverter
+	{
+		public override bool CanConvertFrom(ITypeDescriptorContext context, Type t)
+		{
+			if ( t == typeof(string) )
+			{
+				return true;
+			}
+			
+			return base.CanConvertFrom(context, t);
+		}
+		
+		public override object ConvertFrom(ITypeDescriptorContext context, CultureInfo info, object value)
+		{
+			if ( value is string )
+			{
+				return MethodNamesProperty.Parse(value as string);
+			}
+			
+			return base.ConvertFrom(context, info, value);
+		}
+		
+		public override object ConvertTo(ITypeDescriptorContext context, CultureInfo culture, object value, Type t)
+		{
+			if ( t == typeof(string) )
+			{
+				return value.ToString();
+			}
+			
+			return base.ConvertTo(context, culture, value, t);
+		}
+	}
+	
+	#endregion MethodNamesProperty
+	
+	#region Archived Depricated
+	/*
+	///<summary>
+	/// returns true all primary key columns have is a foreign key relationship
+	/// </summary>
+	public bool Many2ManyCompliant(TableKeySchema primaryKey)
+	{
+		// une seul column vers la table pivot
+		if (primaryKey.ForeignKeyMemberColumns.Count != 1)
+			return false;
+		
+		// une seul column venant de la table primaire
+		if (primaryKey.PrimaryKeyMemberColumns.Count != 1)
+			return false;
+		
+		
+		// Junction table require a primary on two columns
+		if (primaryKey.ForeignKeyTable.PrimaryKey == null || primaryKey.ForeignKeyTable.PrimaryKey.MemberColumns.Count != 2)
+		{
+			//Response.WriteLine(string.Format("IsJunctionTable: The table {0} doesn't have a primary key.", table.Name));
+			return false;
+		}
+		
+		// And each primary key member columns must be part of relation
+		for (int i=0;i < primaryKey.ForeignKeyTable.PrimaryKey.MemberColumns.Count; i++)
+		{
+			if (!primaryKey.ForeignKeyTable.PrimaryKey.MemberColumns[i].IsForeignKeyMember)
+				return false;
+			
+			//if (!primaryKey.ForeignKeyTable.PrimaryKey.MemberColumns[i].IsPrimaryKeyMember)
+			//	return false;
+		}
+		
+		// the foreign column of the relation must be a junction table's primary key member's column
+		//if (primaryKey.ForeignKeyTable.PrimaryKey.MemberColumns[0] != primaryKey.ForeignKeyMemberColumns[0] && primaryKey.ForeignKeyTable.PrimaryKey.MemberColumns[1] != primaryKey.ForeignKeyMemberColumns[0])
+		//{
+		//	return false;
+		//}
+		
+		if (!primaryKey.ForeignKeyMemberColumns[0].IsPrimaryKeyMember)	return false;
+		
+		return true;			
+		}
+			TableSchemaCollection _tbChild= new TableSchemaCollection();
+				if(CurrentTable != table.Name){
+					CurrentTable = table.Name;
+				}
+				DatabaseSchema _dbCurrent;
+				_dbCurrent=table.Database;
+				foreach(TableSchema _tb in _dbCurrent.Tables){
+					if(CurrentTable!=_tb.Name){
+						foreach(ColumnSchema _col in _tb.Columns){
+							foreach(ColumnSchema primaryCol in table.PrimaryKey.MemberColumns){
+								if (_col.Name == primaryCol.Name){
+									_tbChild.Add(_tb);
+								}
+							}                       
+						}
+					}
+				}
+			return _tbChild;
+		}
+		
+	}
+
+	public bool IsJunctionTable(TableSchema table)
+		{
+			bool RetValue;
+			ColumnSchemaCollection keys;
+			RetValue = false;
+			if(table.PrimaryKey.MemberColumns.Count > 1)
+			{
+				keys = new ColumnSchemaCollection(SourceTable.PrimaryKey.MemberColumns);
+				foreach(ColumnSchema primarykey in keys)
+				{
+					if(primarykey.IsForeignKeyMember)
+					{
+						RetValue = true;
+					}
+					else
+					{
+						RetValue = false;
+						break;
+					}
+				} 
+			}
+			return RetValue;
+		}
 
 */
-#endregion 		
-
+#endregion 
 }
-
