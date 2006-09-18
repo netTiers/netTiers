@@ -15,7 +15,6 @@
 
 <%@ Property Name="IncludeCustoms" Type="System.Boolean" Default="True" Category="Options" Description="If true customs stored procedures will be generated as functions." %>
 <%@ Property Name="CustomNonMatchingReturnType" Type="CustomNonMatchingReturnType" Default="DataSet" Category="Options" Description="When using custom stored procedures, if the returned rows do not match the fields in an entity, a DataSet or IDataReader will be returned. Choose One.  This is useful if you've returned more than one resultset in a custom procedure; you can use a ConvertToDataSet(IDataReader) method in the Utility class to convert that to a DataSet." %>
-<%@ Property Name="ProcedurePrefix" Optional="True" Type="System.String" Category="Style" Description="Prefix for Strored Procedures" %>
 
 <%@ Property Name="IncludeInsert" Type="System.Boolean" Default="True" Category="Options" Description="If true insert functions will be generated." %>
 <%@ Property Name="IncludeUpdate" Type="System.Boolean" Default="True" Category="Options" Description="If true update functions will be generated." %>
@@ -408,7 +407,7 @@ public class <%=ClassName%> : WebService
 	    <% if (returnType == "DataSet") { %>
 		    <%= returnKeyword %> <% if (CustomNonMatchingReturnType.ToString() == "IDataReader" ) { %><%=DALNameSpace%>.Utility.ConvertDataReaderToDataSet(<%}%><%=DALNameSpace%>.DataRepository.<%=providerName%>.<%=methodName%>(start, pageLength <%=TransformStoredProcedureInputsToDataAccess(true, command.InputParameters) + TransformStoredProcedureOutputsToDataAccess(true, command.AllOutputParameters)%>)<% if (CustomNonMatchingReturnType.ToString() == "IDataReader" ) { %>)<%}%>;
 	    <% } else { %>
-		    <%= returnKeyword %> <%=DALNameSpace%>.DataRepository.<%=providerName%>.<%=methodName%>(start, pageLength <%=TransformStoredProcedureInputsToDataAccess(true, command.InputParameters)%>);
+		    <%= returnKeyword %> <%=DALNameSpace%>.DataRepository.<%=providerName%>.<%=methodName%>(start, pageLength <%=TransformStoredProcedureInputsToDataAccess(true, command.InputParameters) + TransformStoredProcedureOutputsToDataAccess(true, command.AllOutputParameters) %>);
 	    <% } %>
 	}
 		
@@ -500,7 +499,8 @@ public class <%=ClassName%> : WebService
 	public <%=returnType%> <%=providerName%>_<%=methodName%>(int start, int pageLength <%=TransformStoredProcedureInputsToMethod(true, command.InputParameters)%>)
 	{
 		<% if (returnType == "DataSet") { %>
-		    <%= returnKeyword %> <% if (CustomNonMatchingReturnType.ToString() == "IDataReader" ) { %><%=DALNameSpace%>.Utility.ConvertDataReaderToDataSet(<%}%><%=DALNameSpace%>.DataRepository.<%=providerName%>.<%=methodName%>(start, pageLength <%=TransformStoredProcedureInputsToDataAccess(true, command.InputParameters) + TransformStoredProcedureOutputsToDataAccess(true, command.AllOutputParameters)%>)<% if (CustomNonMatchingReturnType.ToString() == "IDataReader" ) { %>)<%}%>;
+		    //<%= returnKeyword %> <% if (CustomNonMatchingReturnType.ToString() == "IDataReader" ) { %><%=DALNameSpace%>.Utility.ConvertDataReaderToDataSet(<%}%><%=DALNameSpace%>.DataRepository.<%=providerName%>.<%=methodName%>(start, pageLength <%=TransformStoredProcedureInputsToDataAccess(true, command.InputParameters) + TransformStoredProcedureOutputsToDataAccess(true, command.AllOutputParameters)%>)<% if (CustomNonMatchingReturnType.ToString() == "IDataReader" ) { %>)<%}%>;
+		    <%= returnKeyword %> <% if (CustomNonMatchingReturnType.ToString() == "IDataReader" ) { %><%=DALNameSpace%>.Utility.ConvertDataReaderToDataSet(<%}%><%=DALNameSpace%>.DataRepository.<%=providerName%>.<%=methodName%>(start, pageLength <%=TransformStoredProcedureInputsToDataAccess(true, command.InputParameters) %>)<% if (CustomNonMatchingReturnType.ToString() == "IDataReader" ) { %>)<%}%>;
 	    <% } else { %>
 			<%= returnKeyword %> <%=DALNameSpace%>.DataRepository.<%=providerName%>.<%=methodName%>(start, pageLength <%=TransformStoredProcedureInputsToDataAccess(true, command.InputParameters)%>);
 		<% } %>
