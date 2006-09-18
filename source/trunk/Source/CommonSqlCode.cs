@@ -34,6 +34,7 @@ using System.Text;
 using System.Text.RegularExpressions;
 using System.IO;
 using System.Xml;
+using System.Xml.Serialization;
 //using System.Diagnostics;
 
 namespace MoM.Templates
@@ -155,7 +156,7 @@ namespace MoM.Templates
 		[Browsable(false)]
 		public string MethodNamesValues
 		{
-			get { return MethodNames.ToString(); }
+			get { return MethodNames.ToStringList(); }
 			set { MethodNames = new MethodNamesProperty(value); }
 		}
 		
@@ -4177,7 +4178,7 @@ namespace MoM.Templates
 	
 	[Serializable]
 	[TypeConverter(typeof(MethodNamesTypeConverter))]
-	[PropertySerializer(typeof(XmlPropertySerializer))]
+	//[PropertySerializer(typeof(XmlPropertySerializer))]
 	public class MethodNamesProperty
 	{
 		public MethodNamesProperty() { }
@@ -4340,7 +4341,7 @@ namespace MoM.Templates
 			return new MethodNamesProperty(value);
 		}
 		
-		public override string ToString()
+		public string ToStringList()
 		{
 			string[] names = new string[] {
 				Get, GetAll, GetPaged, Find,
@@ -4357,7 +4358,7 @@ namespace MoM.Templates
 	{
 		public override bool CanConvertFrom(ITypeDescriptorContext context, Type t)
 		{
-			if ( t == typeof(string) )
+			if ( t == typeof(string) || t == typeof(XmlNode) )
 			{
 				return true;
 			}
@@ -4365,9 +4366,26 @@ namespace MoM.Templates
 			return base.CanConvertFrom(context, t);
 		}
 		
+		public override bool CanConvertTo(ITypeDescriptorContext context, Type t)
+		{
+			if ( t == typeof(XmlNode) )
+			{
+				return true;
+			}
+			
+			return base.CanConvertTo(context, t);
+		}
+		
 		public override object ConvertFrom(ITypeDescriptorContext context, CultureInfo info, object value)
 		{
-			if ( value is string )
+			if ( value is XmlNode )
+			{
+				XmlNode node = (XmlNode) value;
+				XmlSerializer ser = new XmlSerializer(context.PropertyDescriptor.PropertyType);
+				XmlNodeReader reader = new XmlNodeReader(node.FirstChild);
+				return ser.Deserialize(reader);
+			}
+			else if ( value is string )
 			{
 				return MethodNamesProperty.Parse(value as string);
 			}
@@ -4377,9 +4395,20 @@ namespace MoM.Templates
 		
 		public override object ConvertTo(ITypeDescriptorContext context, CultureInfo culture, object value, Type t)
 		{
-			if ( t == typeof(string) )
+			if ( t == typeof(XmlNode) )
 			{
-				return value.ToString();
+				XmlSerializer ser = new XmlSerializer(t);
+				MemoryStream stream = new MemoryStream();
+				ser.Serialize(stream, value);
+				stream.Position = 0;
+				XmlDocument xml = new XmlDocument();
+				xml.Load(stream);
+				stream.Close();
+				return xml.DocumentElement.FirstChild;
+			}
+			else if ( t == typeof(string) )
+			{
+				return ((MethodNamesProperty) value).ToStringList();
 			}
 			
 			return base.ConvertTo(context, culture, value, t);
