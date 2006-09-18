@@ -425,7 +425,7 @@ private string WriteParameterDeclarations(IDictionary procs)
 			{
 				foreach ( ParameterSchema param in command.InputParameters )
 				{
-					string unique = GetCustomVariableName(param.Name + GetPropertyName(command.Name));
+					string unique = GetCustomVariableName(param.Name , command);
 					if( !columns.Contains(unique) )
 					{
 						columns.Add(unique);
@@ -452,7 +452,7 @@ private string WriteParameterDeclarations(IDictionary procs)
 private void WriteParameterDeclaration(ParameterSchema param, StringBuilder sb, bool useDefaultValue)
 {
 	sb.AppendFormat("\t\t\t{1} {0};{2}",
-					GetCustomVariableName(param.Name + GetPropertyName(param.Command.Name)),
+					GetCustomVariableName(param.Name, param.Command),
 					GetCSType(param),
 					(useDefaultValue ? string.Format(" = {0}", GetCSDefaultByType(param)) : ""),
 					Environment.NewLine);
@@ -505,7 +505,7 @@ private string WriteParameterStatements(ParameterSchemaCollection parameters, st
 		if ( param.AllowDBNull )
 		{
 			sb.AppendFormat("\t\t\t\t\t{0} = ({2}) EntityUtil.ChangeType(values[\"{1}\"], typeof({2}));{3}",
-							GetCustomVariableName(param.Name + GetPropertyName(param.Command.Name)),
+							GetCustomVariableName(param.Name, param.Command),
 							GetPropertyName(param.Name),
 							GetCSType(param),
 							Environment.NewLine);
@@ -513,7 +513,7 @@ private string WriteParameterStatements(ParameterSchemaCollection parameters, st
 		else
 		{
 			sb.AppendFormat("\t\t\t\t\t{0} = ( values[\"{1}\"] != null ) ? ({2}) EntityUtil.ChangeType(values[\"{1}\"], typeof({2})) : {3};{4}",
-							GetCustomVariableName(param.Name + GetPropertyName(param.Command.Name)),
+							GetCustomVariableName(param.Name , param.Command),
 							GetPropertyName(param.Name),
 							GetCSType(param),
 							GetCSDefaultByType(param),

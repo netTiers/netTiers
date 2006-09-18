@@ -387,23 +387,17 @@ public class <%=ClassName%> : WebService
 	#region Custom Methods
 	
 <%
-	string prefix = string.Format(CustomProcedureStartsWith, SourceTable.Name, ProcedurePrefix);
-	foreach(CommandSchema command in SourceTable.Database.Commands)
-	{
-		// If the stored procedure is targeting the current table.
-		if (command.Name.StartsWith(prefix))
-		{
-			string methodName = command.Name.Substring(prefix.Length);
-			string returnType = "void";
+	System.Collections.IDictionary procs = GetCustomProcedures(SourceTable);
 						
-			if (IsMatching(command, SourceTable))
-			{
-				returnType = collectionClassName;
-			}
-			else	// Return a basic DataSet
-			{
+	foreach(DictionaryEntry item in procs)
+	{
+		SchemaExplorer.CommandSchema command = (SchemaExplorer.CommandSchema) item.Value;
+		string methodName  = item.Key.ToString();
+						
+		string returnType = GetReturnCustomProcReturnType(CustomNonMatchingReturnType, SourceTable, command);
+		string returnKeyword = returnType == "void" ? "" : "return ";
+		if (returnType == "IDataReader")
 				returnType = "DataSet";
-			}
 %>
 	/// <summary>
 	///	This method wrap the <%=command.Name%> stored procedure. 
@@ -421,7 +415,6 @@ public class <%=ClassName%> : WebService
 	}
 		
 <%
-		}
 	}	
 %>
 	
@@ -482,23 +475,17 @@ public class <%=ClassName%> : WebService
 	#region Custom Methods
 	
 <%
-	string prefix = string.Format(CustomProcedureStartsWith, SourceView.Name, ProcedurePrefix);
-	foreach(CommandSchema command in SourceView.Database.Commands)
+	System.Collections.IDictionary procs = GetCustomProcedures(SourceView);
+	
+	foreach(DictionaryEntry item in procs)
 	{
-		// If the stored procedure is targeting the current table.
-		if (command.Name.StartsWith(prefix))
-		{
-			string methodName = command.Name.Substring(prefix.Length);
-			string returnType = "void";
-			
-			if (IsMatching(command, SourceView))
-			{
-				returnType = collectionClassName;
-			}
-			else	// Return a basic DataSet
-			{
-				returnType = "DataSet";
-			}
+		SchemaExplorer.CommandSchema command = (SchemaExplorer.CommandSchema) item.Value;
+		string methodName  = item.Key.ToString();
+					
+		string returnType = GetReturnCustomProcReturnType(CustomNonMatchingReturnType, SourceView, command);
+		string returnKeyword = returnType == "void" ? "" : "return ";
+		if (returnType == "IDataReader")
+			returnType = "DataSet"; 
 %>
 	
 	/// <summary>
@@ -519,7 +506,6 @@ public class <%=ClassName%> : WebService
 		
 	
 <%
-		} // end if 
 	}	// foreach command
 %>
 	

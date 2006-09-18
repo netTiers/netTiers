@@ -1977,7 +1977,7 @@ namespace MoM.Templates
 
 				if ( useCustomPrefix )
 				{
-					temp.Append( GetCustomVariableName(inputParameters[i].Name.Substring(1) + GetPropertyName(inputParameters[i].Command.Name)) );
+					temp.Append( GetCustomVariableName(inputParameters[i].Name.Substring(1) , inputParameters[i].Command) );
 				}
 				else
 				{
@@ -2078,7 +2078,7 @@ namespace MoM.Templates
 
 				if ( useCustomPrefix )
 				{
-					temp.AppendFormat("ref {0}", GetCustomVariableName(outputParameters[i].Name.Substring(1)) );
+					temp.AppendFormat("ref {0}", GetCustomVariableName(outputParameters[i].Name.Substring(1), outputParameters[i].Command) );
 				}
 				else
 				{
@@ -3368,10 +3368,22 @@ namespace MoM.Templates
 			
 			return returnType;	
 		}
-		
-		public string GetCustomVariableName(string paramName)
+
+		public string GetCustomVariableName(string paramName, SchemaExplorer.CommandSchema command)
 		{
-			return string.Format("sp_{0}", GetPropertyName(paramName));
+			int c = 1;
+			try
+			{
+				for(;c < command.Database.Commands.Count; c++)
+				{
+					CommandSchema tmp = command.Database.Commands[c];
+					
+					if (tmp.Name == command.Name)
+						break;
+				}
+			} catch{}
+			
+			return string.Format("sp{1}_{0}", GetPropertyName(paramName), c);
 		}
 		
 		#endregion 
