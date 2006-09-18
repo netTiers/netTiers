@@ -382,7 +382,7 @@ namespace MoM.Templates
 		/// <returns>CamelCased version of the name</returns>
         public string GetCamelCaseName(string name)
         {
-            if (name.Equals(name.ToUpper()) && !name.Contains("_"))
+            if (name.Equals(name.ToUpper()) && name.IndexOf("_") == -1)
                 return name.ToLower().Replace(" ", "");
             else
             {
@@ -4177,8 +4177,9 @@ namespace MoM.Templates
 	#region MethodNamesProperty
 	
 	[Serializable]
-	[TypeConverter(typeof(MethodNamesTypeConverter))]
-	//[PropertySerializer(typeof(XmlPropertySerializer))]
+	//[TypeConverter(typeof(MethodNamesTypeConverter))]
+	[TypeConverter(typeof(ExpandableObjectConverter))]
+	[PropertySerializer(typeof(XmlPropertySerializer))]
 	public class MethodNamesProperty
 	{
 		public MethodNamesProperty() { }
@@ -4305,7 +4306,7 @@ namespace MoM.Templates
 		
 		private void ParseCore(string value)
 		{
-			if ( !string.IsNullOrEmpty(value) )
+			if ( value != null && value.Length > 0 )
 			{
 				string[] values = value.Split(new char[] { ',' });
 				
@@ -4352,13 +4353,22 @@ namespace MoM.Templates
 			
 			return string.Join(",", names);
 		}
+		
+		public override string ToString()
+		{
+			return "(Expand to edit...)";
+		}
 	}
 	
 	public class MethodNamesTypeConverter : ExpandableObjectConverter
 	{
 		public override bool CanConvertFrom(ITypeDescriptorContext context, Type t)
 		{
-			if ( t == typeof(string) || t == typeof(XmlNode) )
+			if ( t == typeof(string) )
+			{
+				return true;
+			}
+			else if ( t == typeof(XmlNode) )
 			{
 				return true;
 			}
@@ -4378,16 +4388,16 @@ namespace MoM.Templates
 		
 		public override object ConvertFrom(ITypeDescriptorContext context, CultureInfo info, object value)
 		{
-			if ( value is XmlNode )
+			if ( value is string )
+			{
+				return MethodNamesProperty.Parse(value as string);
+			}
+			else if ( value is XmlNode )
 			{
 				XmlNode node = (XmlNode) value;
 				XmlSerializer ser = new XmlSerializer(context.PropertyDescriptor.PropertyType);
 				XmlNodeReader reader = new XmlNodeReader(node.FirstChild);
 				return ser.Deserialize(reader);
-			}
-			else if ( value is string )
-			{
-				return MethodNamesProperty.Parse(value as string);
 			}
 			
 			return base.ConvertFrom(context, info, value);
@@ -4395,7 +4405,11 @@ namespace MoM.Templates
 		
 		public override object ConvertTo(ITypeDescriptorContext context, CultureInfo culture, object value, Type t)
 		{
-			if ( t == typeof(XmlNode) )
+			if ( t == typeof(string) )
+			{
+				return ((MethodNamesProperty) value).ToStringList();
+			}
+			else if ( t == typeof(XmlNode) )
 			{
 				XmlSerializer ser = new XmlSerializer(t);
 				MemoryStream stream = new MemoryStream();
@@ -4405,10 +4419,6 @@ namespace MoM.Templates
 				xml.Load(stream);
 				stream.Close();
 				return xml.DocumentElement.FirstChild;
-			}
-			else if ( t == typeof(string) )
-			{
-				return ((MethodNamesProperty) value).ToStringList();
 			}
 			
 			return base.ConvertTo(context, culture, value, t);
