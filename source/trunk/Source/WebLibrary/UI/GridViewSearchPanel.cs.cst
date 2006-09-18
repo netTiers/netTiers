@@ -1,4 +1,4 @@
-﻿<%@ CodeTemplate Language="C#" TargetLanguage="Text" Description="" Debug="True" ResponseEncoding="UTF-8" %>
+<%@ CodeTemplate Language="C#" TargetLanguage="Text" Description="" Debug="True" ResponseEncoding="UTF-8" %>
 <%@ Property Name="RootNameSpace" Type="System.String" Category="Data" Description="Website Namespace." %>
 <%@ Property Name="BusinessLogicLayerNameSpace" Type="System.String" Category="03. Namespaces - Required" Description="The sub namespace that is added to the root namespace for the entities." Default="Entities" Optional="False" %>
 
@@ -24,12 +24,16 @@ namespace <%=RootNameSpace%>.Web.UI
     /// based on the Business Entity class properties collection and GridView Column HeaderText 
     /// and SortExpression properties.
     /// </summary>
-    public class GridViewSearchPanel: CompositeControl, INamingContainer
+    [
+        Designer(typeof(System.Web.UI.Design.WebControls.CompositeControlDesigner)),
+        ToolboxData("<{0}:GridViewSearchPanel runat=\"server\" GridViewControl=\"GridView1\" BusinessEntityType=\"\" />")
+    ]    
+    public class GridViewSearchPanel: CompositeControl
     {
-        private string _entityGridViewControlID = string.Empty;
+        private string _gridViewControlID = string.Empty;
         private string _businessEntityType = string.Empty;
-        private EntityGridView GridView1;
-        private ILinkedDataSource TypedDataSource;
+        private GridView GridView1;
+        private DataSourceControl TypedDataSource;
 
         /// <summary>
         /// SearchButtonClicked event raised whenever the Search Button Clicked
@@ -56,20 +60,21 @@ namespace <%=RootNameSpace%>.Web.UI
         /// Set / Gets the GridView ControlID
         /// </summary>
         [
+        Browsable(true),
         Description("Set / Gets the GridView ControlID"),
         Category("Misc"),
-        DefaultValue("GridView1"),
+        DefaultValue(""),
         ]
         public string GridViewControlID
         {
-            get { return _entityGridViewControlID; }
-            set { _entityGridViewControlID = value; }
+            get { return _gridViewControlID; }
+            set { _gridViewControlID = value; }
         }
 
         /// <summary>
         /// Set / Gets the whereClause
         /// </summary>
-        protected string whereClause
+        private string whereClause
         {
             get
             {
@@ -92,6 +97,7 @@ namespace <%=RootNameSpace%>.Web.UI
         /// Set / Gets the BusinessEntityType
         /// </summary>
         [
+        Browsable(true),
         Description("Set / Gets the BusinessEntityType"),
         Category("Misc"),
         DefaultValue(""),
@@ -110,43 +116,61 @@ namespace <%=RootNameSpace%>.Web.UI
         #endregion
 
         /// <summary>
+        /// Make sure that CreateChildControls has been called 
+        /// before the control is rendered
+        /// </summary>
+        /// <param name="writer"></param>
+        protected override void Render(HtmlTextWriter writer) 
+        { 
+            base.EnsureChildControls();
+            base.Render(writer);         
+        } 
+
+        /// <summary>
         /// Called by the ASP.NET page framework to notify server controls that 
         /// use composition-based implementation to create any child controls they 
         /// contain in preparation for posting back or rendering. 
         /// </summary>
         protected override void CreateChildControls()
         {
-            base.CreateChildControls();            
-
-            GridView1 = (EntityGridView)this.Parent.FindControl(this.GridViewControlID);
-            TypedDataSource = (ILinkedDataSource)this.Parent.FindControl(GridView1.DataSourceID);
-
-            SetWhereClause(whereClause);
+            // Start with a clean form 
+            base.Controls.Clear();
 
             DropDownList cboFieldName = new DropDownList();
             cboFieldName.ID = "cboFieldName";
             cboFieldName.SkinID = "cboFieldName";
-
-
-            Type t = EntityUtil.GetType(_businessEntityType);
-            System.Reflection.PropertyInfo[] pinfo = t.GetProperties();
-
-            foreach (System.Reflection.PropertyInfo p in pinfo)
+            
+            if (!base.DesignMode)
             {
-                if (p.PropertyType.ToString() == "System.String")
+                GridView1 = (GridView)this.Parent.FindControl(this.GridViewControlID);
+                TypedDataSource = (DataSourceControl)this.Parent.FindControl(GridView1.DataSourceID);
+
+                SetWhereClause(whereClause);
+
+                Type t = EntityUtil.GetType(_businessEntityType);
+                System.Reflection.PropertyInfo[] pinfo = t.GetProperties();
+
+                foreach (System.Reflection.PropertyInfo p in pinfo)
                 {
-                    for (int i = 0; i < GridView1.Columns.Count; i++)
+                    if (p.PropertyType.ToString() == "System.String")
                     {
-                        // -- check if property is the same what specified in the sortexpression of the column
-                        if (p.Name == GridView1.Columns[i].SortExpression)
+                        for (int i = 0; i < GridView1.Columns.Count; i++)
                         {
-                            ListItem li = new ListItem();
-                            li.Text = GridView1.Columns[i].HeaderText;
-                            li.Value = GridView1.Columns[i].SortExpression;
-                            cboFieldName.Items.Add(li);
+                            // -- check if property is the same what specified in the sortexpression of the column
+                            if (p.Name == GridView1.Columns[i].SortExpression)
+                            {
+                                ListItem li = new ListItem();
+                                li.Text = GridView1.Columns[i].HeaderText;
+                                li.Value = GridView1.Columns[i].SortExpression;
+                                cboFieldName.Items.Add(li);
+                            }
                         }
                     }
                 }
+            }
+            else
+            {
+                cboFieldName.Items.Add(new ListItem("FieldName", "FieldValue"));
             }
 
             #region UI implementation
@@ -220,6 +244,7 @@ namespace <%=RootNameSpace%>.Web.UI
             #endregion
 
             base.Controls.Add(tbl);
+            base.ClearChildViewState();
         }
 
         #region Event Methods
