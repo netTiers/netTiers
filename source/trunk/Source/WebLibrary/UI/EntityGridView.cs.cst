@@ -30,6 +30,7 @@ namespace <%=RootNameSpace%>.Web.UI
         private string _defaultSortColumnName = string.Empty;
         private SortDirection _defaultSortDirection = SortDirection.Ascending;
         private string _exportToExcelText = "Excel";
+        private string _exportToolTip = string.Empty;
         private bool _allowExportToExcel = true;
         private int _pageSelectorPageSizeInterval = 10;
         private TableRow _gridPagerRow = null;
@@ -48,6 +49,20 @@ namespace <%=RootNameSpace%>.Web.UI
         {
             get { return _excelExportFileName; }
             set { _excelExportFileName = value; }
+        }
+
+        /// <summary>
+        /// Set / Gets the ToolTip
+        /// </summary>
+        [
+        Description("et / Gets the ToolTip"),
+        Category("Misc"),
+        DefaultValue(""),
+        ]
+        public string ExportToolTip
+        {
+            get { return _exportToolTip; }
+            set { _exportToolTip = value; }
         }
 
         /// <summary>
@@ -373,7 +388,7 @@ namespace <%=RootNameSpace%>.Web.UI
         private LinkButton ExcelButton()
         {
             LinkButton lnkExport = new LinkButton();
-            lnkExport.ToolTip = _exportToExcelText;
+            lnkExport.ToolTip = _exportToolTip;
             lnkExport.Text = _exportToExcelText;
             lnkExport.Click += new EventHandler(lnkExport_Click);
 
@@ -613,8 +628,13 @@ namespace <%=RootNameSpace%>.Web.UI
                 RecursiveClear(control.Controls[i]);
             }
 
+            if (control is Repeater)
+            {
+                // TODO: handle repeater control displayed item when used with EntityDataSourceFilter control
+                control.Parent.Controls.Remove(control);                
+            }            
             //If it is a LinkButton, convert it to a LiteralControl
-            if (control is LinkButton)
+            else if (control is LinkButton)
             {
                 LiteralControl literal = new LiteralControl();
                 control.Parent.Controls.Add(literal);
@@ -664,14 +684,15 @@ namespace <%=RootNameSpace%>.Web.UI
 
             for (int i = dg.Columns.Count - 1; i >= 0; i--)
             {
-                if (dg.Columns[i].GetType().Name == "ButtonColumn" || dg.Columns[i].GetType().Name == "CheckBoxField")
+                if (dg.Columns[i].GetType().Name == "ButtonColumn" 
+                    || dg.Columns[i].GetType().Name == "CheckBoxField"
+                    || dg.Columns[i].GetType().Name == "CommandField")
                 {
-                    dg.Columns.Remove(dg.Columns[i]);
+                    dg.Columns[i].Visible = false;
                 }
             }
 
             this.RecursiveClear(dg);
-
         }
     }
 
