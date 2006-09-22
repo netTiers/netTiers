@@ -32,6 +32,7 @@ namespace <%=RootNameSpace%>.Web.UI
     {
         private string _gridViewControlID = string.Empty;
         private string _businessEntityType = string.Empty;
+        private string _filter = string.Empty;
         private GridView GridView1;
         private DataSourceControl TypedDataSource;
 
@@ -113,6 +114,21 @@ namespace <%=RootNameSpace%>.Web.UI
                 _businessEntityType = value;
             }
         }
+
+        ///<summary>
+        /// Set / Gets the Filter criteria
+        ///</summary>
+        [
+        Browsable(true),
+        Description("Set / Gets the Filter criteria"),
+        Category("Misc"),
+        DefaultValue(""),
+        ]
+        public string Filter
+        {
+            get { return _filter; }
+            set { _filter = value; }
+        }        
         #endregion
 
         /// <summary>
@@ -318,8 +334,15 @@ namespace <%=RootNameSpace%>.Web.UI
             {
                 if (param.Name.Equals("WhereClause"))
                 {
-                    Type pType = param.GetType();
-                    pType.GetProperty("Value").SetValue(param, whereClause, null);
+                    Type pType = param.GetType();                      
+                    if (whereClause == string.Empty)
+                    {
+                        pType.GetProperty("Value").SetValue(param, _filter, null);
+                    }
+                    else
+                    {
+                        pType.GetProperty("Value").SetValue(param, _filter + " AND " + whereClause, null);                        
+                    }
                     break;
                 }
             }
