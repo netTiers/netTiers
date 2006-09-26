@@ -1062,20 +1062,32 @@ namespace <%= DALNameSpace %>.Bases
 				return true;
 			}
 
-			//Create a HashTable list of types for easy access
-			// Loop in order for specific save order.
-			Hashtable innerList = new Hashtable(childTypes.Length);
+			// create a collection of types for easy access
+			ChildEntityTypesList innerList = new ChildEntityTypesList();
 			for(int i=0; i < childTypes.Length; i++)
 			{
 				if (childTypes[i] == null) continue;
 				
 				if (!childTypes[i].IsGenericType)
-					innerList.Add(childTypes[i].Name, childTypes[i]);
+					innerList.Add(childTypes[i].Name);
 				else 
-					innerList.Add(string.Format("List<{0}>" , childTypes[i].GetGenericArguments()[0].Name), childTypes[i]);
-			}
+					innerList.Add(string.Format("List<{0}>" , childTypes[i].GetGenericArguments()[0].Name));
 
+			}
+			
+			#if NETTIERS_DEBUG
+			Debug.Indent();
+			Debug.WriteLine(String.Format("DeepSave object '{0}'", typeof(Entity)));
+			Debug.Indent();
+			#endif 
+			
 			<%= MethodNames.DeepSave %>(mgr, entity, deepSaveType, childTypes, innerList);
+
+			#if NETTIERS_DEBUG
+			Debug.Unindent();
+			Debug.Unindent();
+			Debug.WriteLine("");
+			#endif
 			
 			return true;
 		}
@@ -1090,8 +1102,8 @@ namespace <%= DALNameSpace %>.Bases
 		/// <param name="entity">The Entity object to save.</param>
 		/// <param name="deepSaveType">DeepSaveType Enumeration to Include/Exclude object property collections from Save.</param>
 		/// <param name="childTypes">Entity Property Collection Type Array To Include or Exclude from Save.</param>
-		/// <param name="innerList">A Hashtable of child types for easy access.</param>
-		internal abstract void <%= MethodNames.DeepSave %>(TransactionManager mgr, Entity entity, DeepSaveType deepSaveType, Type[] childTypes, Hashtable innerList);
+		/// <param name="innerList">A <c>ChildEntityTypesList</c> of child types for easy access.</param>
+		internal abstract bool <%= MethodNames.DeepSave %>(TransactionManager mgr, Entity entity, DeepSaveType deepSaveType, Type[] childTypes, ChildEntityTypesList innerList);
 
 		#endregion <%= MethodNames.DeepSave %> Entity
 		
@@ -1135,6 +1147,19 @@ namespace <%= DALNameSpace %>.Bases
 		/// <param name="deepSaveType">DeepSaveType Enumeration to Include/Exclude object property collections from Save.</param>
 		/// <param name="childTypes">Entity Property Collection Type Array To Include or Exclude from Save.</param>
 		public virtual bool <%= MethodNames.DeepSave %>(TransactionManager mgr, TList<Entity> entities, DeepSaveType deepSaveType, params Type[] childTypes)
+		{	
+			return <%= MethodNames.DeepSave %>(mgr, entities, deepSaveType, childTypes, null);
+		}
+		
+		/// <summary>
+		/// Deep Save the Entity objects with criteria based on the child types array and the DeepSaveType.
+		/// </summary>
+		/// <param name="mgr">The transaction manager.</param>
+		/// <param name="entities">TList of Entity objects to save.</param>
+		/// <param name="deepSaveType">DeepSaveType Enumeration to Include/Exclude object property collections from Save.</param>
+		/// <param name="childTypes">Entity Property Collection Type Array To Include or Exclude from Save.</param>
+		/// <param name="innerList">A Hashtable of child types for easy access.</param>
+		internal virtual bool <%= MethodNames.DeepSave %>(TransactionManager mgr, TList<Entity> entities, DeepSaveType deepSaveType, System.Type[] childTypes, ChildEntityTypesList innerList)
 		{
 			#region Argument Validation
 			//Argument checks
@@ -1161,9 +1186,25 @@ namespace <%= DALNameSpace %>.Bases
 			bool deepSaveResult = true;
 			bool result;
 
+			if (innerList == null)
+			{
+				// create a collection of types for easy access
+				innerList = new ChildEntityTypesList();
+				for(int i=0; i < childTypes.Length; i++)
+				{
+					if (childTypes[i] == null) continue;
+					
+					if (!childTypes[i].IsGenericType)
+						innerList.Add(childTypes[i].Name);
+					else 
+						innerList.Add(string.Format("List<{0}>" , childTypes[i].GetGenericArguments()[0].Name));
+	
+				}
+			}
+			
 			foreach ( Entity entity in entities )
 			{
-				result = <%= MethodNames.DeepSave %>(mgr, entity, deepSaveType, childTypes);
+				result = <%= MethodNames.DeepSave %>(mgr, entity, deepSaveType, childTypes, innerList);
 				if ( !result )
 				{
 					deepSaveResult = false;
@@ -1172,7 +1213,7 @@ namespace <%= DALNameSpace %>.Bases
 
 			foreach ( Entity entity in entities.DeletedItems )
 			{
-				result = <%= MethodNames.DeepSave %>(mgr, entity, deepSaveType, childTypes);
+				result = <%= MethodNames.DeepSave %>(mgr, entity, deepSaveType, childTypes, innerList);
 				if ( !result )
 				{
 					deepSaveResult = false;
@@ -1182,7 +1223,6 @@ namespace <%= DALNameSpace %>.Bases
 			entities.DeletedItems.Clear();
 			return deepSaveResult;
 		}
-		
 		#endregion <%= MethodNames.DeepSave %> Entity Collection
 
 		#endregion <%= MethodNames.DeepSave %> Methods
@@ -1217,6 +1257,58 @@ namespace <%= DALNameSpace %>.Bases
 			}
 
 			return false;
+        }
+		
+		
+		private class DeepSession
+        {
+            private List<WeakReference> innerList;
+            public DeepSession()
+            { 
+            }
+
+			/// <summary>
+			/// Adds the specified obj.
+			/// </summary>
+			/// <param name="obj">The obj.</param>
+			public void Add(object obj)
+			{
+				if (obj != null)
+					InnerList.Add(new WeakReference(obj));
+			}
+	
+			/// <summary>
+			/// Determines whether the specified obj has run.
+			/// </summary>
+			/// <param name="obj">The obj.</param>
+			/// <returns>
+			/// 	<c>true</c> if the specified obj has run; otherwise, <c>false</c>.
+			/// </returns>
+			public bool HasRun(object obj)
+			{
+				if (obj == null) return false;
+	
+				if (InnerList.Contains(obj as WeakReference))
+					return true;
+	
+				return false;
+			}
+			
+			/// <summary>
+			/// Gets the inner list.
+			/// </summary>
+			/// <value>The inner list.</value>
+			internal List<WeakReference> InnerList
+			{
+				get 
+				{
+					if (innerList == null)
+					{
+						innerList = new List<WeakReference>();
+					}
+					return innerList; 
+				}
+			}
         }
 		
 		///<summary>

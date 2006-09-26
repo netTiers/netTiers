@@ -68,6 +68,7 @@ namespace MoM.Templates
 		private string auditUserField = "";
 		private string auditDateField = "";
 		private bool cspUseDefaultValForNonNullableTypes = false;
+		private bool parseDbColDefaultVal  = false;
 		
 		private MethodNamesProperty methodNames = null;
 		private Hashtable aliases = null;
@@ -303,6 +304,14 @@ namespace MoM.Templates
 				}
 				this.manyToManyFormat = value;
 			}
+		}
+				
+		[Category("07. CRUD - Advanced")]
+		[Description("If set to true, attempts to parse the Default Value of your column and set it for the default value of the property on initialization.")]
+		public bool ParseDbColDefaultVal
+		{
+			get { return this.parseDbColDefaultVal; }
+			set { this.parseDbColDefaultVal = value; }
 		}
 		
 		[Editor(typeof(System.Windows.Forms.Design.FileNameEditor), typeof(System.Drawing.Design.UITypeEditor))] 
@@ -2242,22 +2251,25 @@ namespace MoM.Templates
 		/// <param name="field">Column or parameter</param>
 		/// <returns>The C# (rough) equivalent of the field's data type</returns>
 		public string GetCSType(DataObjectBase field)
-		{
+		{		
 			if (field.NativeType.ToLower() == "real")
 				return "System.Single" + (field.AllowDBNull?"?":"");
 			else if (field.NativeType.ToLower() == "xml")
 				return "string";
 			//else if (field.NativeType.ToLower() == "xml")
 			//	return "System.Xml.XmlNode";
+			///Only for Custom Stored Procedures that allow nulls for every param
+			else if (CSPUseDefaultValForNonNullableTypes 
+					&& (field is ParameterSchema)
+					&&	!IsCSReferenceDataType(field))
+			{			
+				if (!DefaultIsNull(	(ParameterSchema)field ))
+					return field.SystemType.ToString();
+				else 
+					return field.SystemType.ToString() + "?";
+			}
 			else if (!IsCSReferenceDataType(field) && field.AllowDBNull)
-			{
-				if (field is ParameterSchema && CSPUseDefaultValForNonNullableTypes)
-				{
-										
-					if (!DefaultIsNull(	(ParameterSchema)field ))
-						return field.SystemType.ToString();
-				}
-				
+			{				
 				return field.SystemType.ToString() + "?";
 			}
 			else
@@ -2267,13 +2279,11 @@ namespace MoM.Templates
 		#region Defualt Param Value
 		
         public static string parseParameterRegex = @"
-			CREATE\s+PROC(?:EDURE)?                               # find the start of the stored procedure
-			.*?                                                   # skip all content until we get to the name of the parameter that we are looking for
-			{0}                                                   # name of the parameter we are interested in
-			\s+[\w\.\(\)\[\]]+                                    # parameter data type
-			(?:\s*\=\s*(?<default>(?:'[^']*' | [\w]+)))?          # parameter default value
-			(?:\s*(?:OUTPUT)?\s*,?\s*--\s*(?<comment>[^\r\n]*))?  # parameter comment
-			.*?^\s*AS\s*(?:--[^\r\n]*)?\s*$                       # end of stored procedure definition";
+CREATE\s+PROC(?:EDURE)?                               # find the start of the stored procedure
+.*?                                                   # skip all content until we get to the name of the parameter that we are looking for
+{0}                                                   # name of the parameter we are interested in
+\s+[\w\.\(\)\[\]]+                                    # parameter data type
+(?:\s*\=\s*(?<default>(?:'[^']*' | [\w]+)))?          # parameter default value";
 
 		///<summary>
 		/// Checks a Parameter Schema if NULL is set to the default value of that procedure param
@@ -2282,15 +2292,16 @@ namespace MoM.Templates
 		{
 			if (param == null)
 				return false;
-				
-			System.Text.RegularExpressions.Regex regex = new System.Text.RegularExpressions.Regex(String.Format(parseParameterRegex, param.Name), 
+			
+			System.Text.RegularExpressions.Regex DefaultParamRegex = new System.Text.RegularExpressions.Regex(String.Format(parseParameterRegex, param.Name), 
 				System.Text.RegularExpressions.RegexOptions.IgnoreCase | 
 				System.Text.RegularExpressions.RegexOptions.Multiline | 
 				System.Text.RegularExpressions.RegexOptions.Singleline | 
 				System.Text.RegularExpressions.RegexOptions.CultureInvariant | 
 				System.Text.RegularExpressions.RegexOptions.IgnorePatternWhitespace);
-				
-            System.Text.RegularExpressions.Match match = regex.Match(param.Command.CommandText);
+
+		
+            System.Text.RegularExpressions.Match match = DefaultParamRegex.Match(param.Command.CommandText);
             if (match != null && match.Success)
 			{
 				if (match.Groups["default"].Value != null && match.Groups["default"].Value.ToString().Trim().ToUpper() == "NULL")
@@ -2340,6 +2351,25 @@ namespace MoM.Templates
 		/// <param name="column"></param>
 		public string GetCSDefaultByType(DataObjectBase column)
 		{
+			return GetCSDefaultByType(column, false);
+		}
+		
+		/// <summary>
+		/// 
+		/// </summary>
+		/// <param name="column"></param>
+		public string GetCSDefaultByType(DataObjectBase column, bool forceReturnDefault)
+		{
+			// first attempt to see if the DB defines any default values for this
+			// column.  If so, return it.
+			string defaultValue;
+			if (ParseDbColDefaultVal && !forceReturnDefault)
+			{
+				defaultValue = GetCSDefaultValueByType(column);
+				if (defaultValue != null)
+					return defaultValue;
+			}
+
 			if (column.NativeType.ToLower() == "real")
 				return "0.0F";
 			else
@@ -2418,6 +2448,267 @@ namespace MoM.Templates
 					default: return "null";
 				}
 			}
+		}
+		
+		/// <summary>
+		/// This method returns the default value from the database if it is available.  It returns null
+		/// if no default value could be parsed.
+		/// 
+		/// NOTE: rudimentary support for default values with computations/functions is built in.  Right now th
+		///   only supported function is getdate().  Any others can be added below if desired.
+		/// </summary>
+		/// <param name="column"></param>
+		public string GetCSDefaultValueByType(DataObjectBase column)
+		{
+			if (column == null)
+				return null;
+
+			ExtendedProperty defaultValueProperty = column.ExtendedProperties["CS_Default"];
+			if (defaultValueProperty == null)
+				return null;			
+				
+			string defaultValue = null;
+			
+			#region Convert declarations
+			bool boolConvert;
+			byte byteConvert;
+			decimal decimalConvert;
+			double doubleConvert;
+			float floatConvert;
+			int intConvert;
+			long longConvert;
+			short shortConvert;
+			DateTime dateConvert;
+			Guid guidConvert; 
+			XmlNode xmlNodeConvert;
+			#endregion
+	
+			try
+			{
+				//Get Default Value 
+				defaultValue = defaultValueProperty.Value.ToString();
+				
+				if (defaultValue == null || defaultValue.Trim().Length == 0)
+					return null;
+				
+				// trim off the surrounding ()'s if they exist (SQL Server)
+				while (defaultValue.StartsWith("(") && defaultValue.EndsWith(")") 
+					|| defaultValue.StartsWith("\"") && defaultValue.EndsWith("\""))
+				{
+					defaultValue = defaultValue.Substring(1);
+					defaultValue = defaultValue.Substring(0, defaultValue.Length - 1);
+				}
+				
+				if (IsNumericType(column as ColumnSchema))
+					defaultValue = defaultValue.TrimEnd('.');
+					
+				if (defaultValueProperty.DataType == DbType.String)
+				{
+					// probably a char type.  Let's remove the quotes so parsing is happy
+					if (defaultValue.StartsWith("'") && defaultValue.EndsWith("'"))
+					{
+						defaultValue = defaultValue.Substring(1);
+						defaultValue = defaultValue.Substring(0, defaultValue.Length - 1);
+					}
+		
+					//this is probably a custom function, lets handle it sane-like
+					if (defaultValue.Contains("()"))
+					{
+						if (defaultValue.ToLower() == "getdate()")
+							defaultValue = "DateTime.Now";
+						else if (defaultValue.ToLower() == "newid()")
+							defaultValue = "new Guid()";
+						else
+							return null;
+					}
+				}
+
+				if (column.NativeType.ToLower() == "real")
+				{
+					floatConvert = float.Parse(defaultValue);
+					if (defaultValue != null)
+						return floatConvert.ToString() + "F";
+					else
+						return null;
+				}
+				else
+				{
+					DbType dataType = column.DataType;
+					switch (dataType)
+					{
+						case DbType.AnsiString:
+							if (defaultValue != null)
+								return "\"" + defaultValue + "\"";
+							else
+								return null;
+			
+						case DbType.AnsiStringFixedLength:
+							if (defaultValue != null)
+								return "\"" + defaultValue + "\"";
+							else
+								return null;
+			
+						case DbType.String:
+							if (defaultValue != null)
+								return "\"" + defaultValue + "\"";
+							else
+								return null;
+			
+						case DbType.Boolean:
+						
+							if (defaultValue != null )
+							{
+								if (defaultValue == "1") return "true";
+								if (defaultValue == "0") return "false";
+								if (defaultValue.Trim().ToLower() == "yes") return "true";
+								if (defaultValue.Trim().ToLower() == "no") return "false";
+								if (defaultValue.Trim().ToLower() == "y") return "true";
+								if (defaultValue.Trim().ToLower() == "n") return "false";
+								
+								boolConvert = bool.Parse(defaultValue);
+								return boolConvert.ToString();
+							}
+							else
+								return null;
+			
+						case DbType.StringFixedLength:
+							if (defaultValue != null)
+								return "\"" + defaultValue + "\"";
+							else
+								return null;
+			
+						case DbType.Guid:
+							if (defaultValue == "new Guid()")
+								return defaultValue;
+								
+							guidConvert = new Guid(defaultValue);
+							if (defaultValue != null && guidConvert != null)
+								return "new Guid(\"" + guidConvert.ToString() + "\")";
+							else
+								return null;
+						case DbType.Xml:
+								return null;			
+			
+						//Answer modified was just 0
+						case DbType.Binary:
+							return null;
+			
+						//Answer modified was just 0
+						case DbType.Byte:
+							if (defaultValue != null )
+							{
+								byteConvert = byte.Parse(defaultValue);
+								return "(byte)" + byteConvert.ToString();
+							}
+							else
+								return null;
+			
+						case DbType.Currency:
+							if (defaultValue != null)
+							{
+								decimalConvert = decimal.Parse(defaultValue);
+								return decimalConvert.ToString() + "m";
+							}
+							else
+								return null;
+			
+						case DbType.Date:
+						case DbType.DateTime:
+						
+							if (defaultValue == "DateTime.Now")
+								return "DateTime.Now";
+							
+							dateConvert = DateTime.Parse(defaultValue);
+							if (defaultValue != null )
+								return "new DateTime(\"" + dateConvert.ToString() + "\")";
+					
+							return null;
+						
+						case DbType.Decimal:
+							if (defaultValue != null)
+							{
+								decimalConvert = decimal.Parse(defaultValue);
+								return decimalConvert.ToString() + "m";
+							}
+							else
+								return null;
+			
+						case DbType.Double:
+							if (defaultValue != null)
+							{
+								floatConvert = float.Parse(defaultValue);
+								return floatConvert.ToString() + "f";
+							}
+							else
+								return null;
+			
+						case DbType.Int16:
+							if (defaultValue != null)
+							{
+								shortConvert = short.Parse(defaultValue);
+								return "(short)" + shortConvert.ToString();
+							}
+							else
+								return null;
+			
+						case DbType.Int32:
+							if (defaultValue != null )
+							{
+								intConvert = int.Parse(defaultValue);
+								return "(int)" + intConvert.ToString();
+							}
+							else
+								return null;
+			
+						case DbType.Int64:
+							if (defaultValue != null)
+							{
+								longConvert = long.Parse(defaultValue);
+								return "(long)" + longConvert.ToString();
+							}
+							else
+								return null;
+			
+						case DbType.Object:
+							return null;
+			
+						case DbType.Single:
+							if (defaultValue != null)
+							{
+								floatConvert = float.Parse(defaultValue);
+								return floatConvert.ToString() + "F";
+							}
+							else
+								return null;
+			
+						case DbType.Time:
+							if (defaultValue == "DateTime.Now")
+								return defaultValue;
+							else if (defaultValue != null)
+							{
+								dateConvert = DateTime.Parse(defaultValue);
+								return "DateTime.Parse(\"" + dateConvert.ToString() + "\")";
+							}
+							return null;
+						case DbType.VarNumeric:
+							if (defaultValue != null)
+							{	
+								decimalConvert = decimal.Parse(defaultValue);
+								return decimalConvert.ToString();
+							}
+							else
+								return null;
+						//the following won't be used
+						//		case DbType.SByte: return "0";
+						//		case DbType.UInt16: return "0";
+						//		case DbType.UInt32: return "0";
+						//		case DbType.UInt64: return "0";
+						default: return null;
+					}
+				}
+			}
+			catch{}
+			return null;
 		}
 		
 		public bool IsLengthType(DataObjectBase column)
@@ -2510,7 +2801,7 @@ namespace MoM.Templates
 					case DbType.Date: 
 					case DbType.DateTime: 
 					case DbType.Decimal: 
-					case DbType.Double: 
+					case DbType.Double:
 					case DbType.Int16: 
 					case DbType.Int32: 
 					case DbType.Int64: 
@@ -3506,8 +3797,37 @@ namespace MoM.Templates
 			//Provides information about the indexes contained in the table. 
 			IndexSchemaCollection indexes = table.Indexes;
 			
+			// Begin -- Fix for TableSchema.PrimaryKeys issue 2006-09-21 mwerner
+			// Fix to generate code for recursive relations for a table
+			
 			// All keys that relate to this table
-			TableKeySchemaCollection primaryKeyCollection = table.PrimaryKeys;
+			TableKeySchemaCollection primaryKeyCollection = new TableKeySchemaCollection();
+			primaryKeyCollection.AddRange(table.PrimaryKeys);
+			
+			// Add missing item to primaryKeyCollection 			
+			foreach(TableKeySchema keyschema in fkeys)
+			{
+				if (keyschema.ForeignKeyTable.Equals(table) && keyschema.PrimaryKeyTable.Equals(table))
+				{
+					bool found = false;
+					
+					foreach(TableKeySchema primaryKey in primaryKeyCollection)
+					{
+						if (keyschema.Equals(primaryKey))
+						{
+							found = true;
+							break;
+						}
+					}
+					if (!found)
+					{
+						primaryKeyCollection.Add(keyschema);
+					}					
+				}
+			}
+			
+			// End -- Fix for TableSchema.PrimaryKeys issue 2006-09-21 mwerner
+			
 			
 			//for each relationship
 			foreach(TableKeySchema keyschema in primaryKeyCollection)

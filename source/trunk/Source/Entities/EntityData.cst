@@ -4,7 +4,7 @@
  * Last modified at $Date: 2006-03-18 00:48:43 -0600 (Sat, 18 Mar 2006) $
  * $Revision: 69 $
 --%>
-<%@ CodeTemplate Src="..\CommonSqlCode.cs" Inherits="MoM.Templates.CommonSqlCode" Language="C#" TargetLanguage="C#" Description="Business object base class"%>
+<%@ CodeTemplate Src="..\CommonSqlCode.cs" Inherits="MoM.Templates.CommonSqlCode" Language="C#" TargetLanguage="C#" Description="Business object base class" Debug="True"%>
 <%@ Assembly Name="SchemaExplorer" %>
 <%@ Assembly Name="System.Design" %>
 <%@ Import Namespace="SchemaExplorer" %>
@@ -63,7 +63,7 @@
 		/// <summary>
 		/// <%=SourceTable.NonPrimaryKeyColumns[x].Name%> : <%=GetColumnXmlComment(SourceTable.NonPrimaryKeyColumns[x],2)%>
 		/// </summary>
-		public <%= GetCSType(SourceTable.NonPrimaryKeyColumns[x]) %><%= Tab(2) %>  <%= GetPropertyName(SourceTable.NonPrimaryKeyColumns[x].Name) %> = <% if ( SourceTable.NonPrimaryKeyColumns[x].AllowDBNull) { %>null<% } else { %><%=GetCSDefaultByType(SourceTable.NonPrimaryKeyColumns[x])%><% }%>;
+		public <%= GetCSType(SourceTable.NonPrimaryKeyColumns[x]) %><%= Tab(2) %>  <%= GetPropertyName(SourceTable.NonPrimaryKeyColumns[x].Name) %> = <%=GetParsedDefaultValue(x) %>;
 		<% } //end for each non PK column %>
 		#endregion
 			
@@ -231,6 +231,23 @@ private void WriteRelationshipPropertyString()
 		Response.Write(item.PropertyName);	
 	
 	}///End foreach loop
+}
+
+public string GetParsedDefaultValue(int x)
+{
+	if (!ParseDbColDefaultVal)
+		return GetCSDefaultByType(SourceTable.NonPrimaryKeyColumns[x]); 
+	else
+	{
+		string val = GetCSDefaultByType(SourceTable.NonPrimaryKeyColumns[x]); 
+		string defaultVal = GetCSDefaultByType(SourceTable.NonPrimaryKeyColumns[x], true);
+		
+		if (val == defaultVal
+			&& SourceTable.NonPrimaryKeyColumns[x].AllowDBNull)
+			return "null";
+		else 
+			return val;
+	}
 }
 </script>
 

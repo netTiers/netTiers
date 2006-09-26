@@ -176,12 +176,17 @@ namespace <%=DALNameSpace%>.SqlClient
 		{
 			if (useStoredProcedure)
 			{
-				return database.GetStoredProcCommand(commandName);
+				DbCommand command = database.GetStoredProcCommand(commandName);
+                command.CommandTimeout = DataRepository.Provider.DefaultCommandTimeout;
+                return command;
 			}
 			else
 			{
-				return database.GetSqlStringCommand(StoredProcedureProvider.GetProcedureBodyFromEmbeddedResource(commandName));
-			}
+                DbCommand command = 
+                    database.GetSqlStringCommand(StoredProcedureProvider.GetProcedureBodyFromEmbeddedResource(commandName));
+                command.CommandTimeout = DataRepository.Provider.DefaultCommandTimeout;
+                return command; 
+            }
 		}
 
 		/// <summary>
@@ -210,7 +215,9 @@ namespace <%=DALNameSpace%>.SqlClient
 			// replace dynamic components
 			query = String.Format(query, whereClause, sortExpression, start, (start + pageLength)); 
 
-			return database.GetSqlStringCommand(query);
+            DbCommand command = database.GetSqlStringCommand(query);
+            command.CommandTimeout = DataRepository.Provider.DefaultCommandTimeout;
+            return command; 
 		}
 		
 		#endregion

@@ -453,6 +453,8 @@ namespace <%=NameSpace%>
 		/// Gets or sets the source <see cref="<%=pkClassName%>"/>.
 		/// </summary>
 		/// <value>The source <%=pkClassName%> for <%=fkPropertyName%>.</value>
+		<% if(IsRelationOneToOne(tableKey)) {%>
+        [XmlIgnore()]<% } %>
 		[Browsable(false), BindableAttribute()]
 		public virtual <%=pkClassName%> <%=fkPropertyName%>Source
       	{
@@ -628,13 +630,13 @@ WriteRelationshipPropertyString();
 		#region Methods	
 			
 		///<summary>
-		///  TODO: Revert all changes and restore original values.
+		///  Revert all changes and restore original values.
 		///  Currently not supported.
 		///</summary>
-		/// <exception cref="NotSupportedException">This method is not currently supported and always throws this exception.</exception>
 		public override void CancelChanges()
 		{
-			throw new NotImplementedException("Method currently not Supported.");
+			IEditableObject obj = (IEditableObject) this;
+			obj.CancelEdit();
 		}	
 		
 		#region ICloneable Members
@@ -964,7 +966,10 @@ WriteRelationshipPropertyString();
 					Response.WriteLine(compiler.Errors[i].ToString());
 				}
 			}
-	
+			this.CopyPropertiesTo(template);
+			template.SetProperty("SourceTables", _sourceTables);
+			
+			/*
 			template.SetProperty("SourceTable", SourceTable);
 			template.SetProperty("SourceTables", _sourceTables);
 			template.SetProperty("NameSpace", NameSpace);
@@ -982,7 +987,7 @@ WriteRelationshipPropertyString();
 			template.SetProperty("ManyToManyFormat", ManyToManyFormat);
 			template.SetProperty("AliasFilePath", AliasFilePath);
 			template.SetProperty("StrippedTablePrefixes", StrippedTablePrefixes);
-			
+			*/
 			Response.Write(template.RenderToString());
 		%>
 		#endregion

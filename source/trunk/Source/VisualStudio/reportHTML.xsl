@@ -14,7 +14,7 @@
 			<body>
 				<table width="100%" border="0" cellspacing="2" cellpadding="2">
 					<tr>
-                        <td width="300">
+                        <td width="700">
                             <a href="http://nettiers.com/download.aspx" target="_blank"><img border="0" src="http://nettiers.com/img/netTiersLogo2.0_small.gif" alt=".netTiers 2.0"  /></a>
                             <hr /><div>
                               <a href="http://nettiers.com/">Website</a>

@@ -20,7 +20,7 @@ namespace <%=DALNameSpace%>
 	/// <summary>
 	/// TransactionManager is utility class that decorates a <see cref="IDbTransaction"/> instance.
 	/// </summary>
-	public class TransactionManager
+	public class TransactionManager : IDisposable
 	{
 		#region Fields
 		private Database database;
@@ -185,5 +185,27 @@ namespace <%=DALNameSpace%>
 				this._transactionOpen = false;
 			}
 		}
+		
+		private bool disposed;
+        private static object syncRoot = new object();
+
+        /// <summary>
+        /// Performs application-defined tasks associated with freeing, releasing, or resetting unmanaged resources.
+        /// </summary>
+        public void Dispose()
+        {
+            if (!disposed)
+            {
+                lock (syncRoot)
+                {
+                    disposed = true;
+
+                    if (this.IsOpen)
+                    {
+                        this.Rollback();
+                    }
+                }
+            }
+        }
 	}
 }

@@ -544,6 +544,7 @@ namespace <%=DALNameSpace%>.Bases
 		string returnType = GetReturnCustomProcReturnType(CustomNonMatchingReturnType, SourceTable, command);
 		string returnTypeForComment = returnType.Replace("<", "&lt;").Replace(">", "&gt;");
 		string returnKeyword = (returnType != "void" ? "return" : string.Empty);	
+
 	%>
 		
 		#region <%=command.Name%> 
@@ -884,7 +885,7 @@ namespace <%=DALNameSpace%>.Bases
 			
 			#region <%=item.PropertyNameUnique%>
 			// RelationshipType.OneToOne
-			if (CanDeepLoad(entity, "<%= item.PropertyNameUnique  %>", "<%=item.PropertyNameUnique%>", deepLoadType, innerList))
+			if (CanDeepLoad(entity, "<%= item.TypeName  %>", "<%=item.PropertyNameUnique%>", deepLoadType, innerList))
 			{
 				entity.<%=item.PropertyNameUnique%> = DataRepository.<%=GetProviderClassName(item.SecondaryTable)%>.<%=item.GetByKeysName%>(transactionManager, <%=item.CallParams%>);
 				Trace.WriteLine("- property '<%=item.PropertyNameUnique%>' loaded.");
@@ -933,15 +934,12 @@ namespace <%=DALNameSpace%>.Bases
 		/// <param name="deepSaveType">DeepSaveType Enumeration to Include/Exclude object property collections from Save.</param>
 		/// <param name="childTypes"><%= className %> Property Collection Type Array To Include or Exclude from Save</param>
 		/// <param name="innerList">A Hashtable of child types for easy access.</param>
-		internal override void <%= MethodNames.DeepSave %>(TransactionManager transactionManager, <%= className %> entity, DeepSaveType deepSaveType, System.Type[] childTypes, Hashtable innerList)
+		internal override bool <%= MethodNames.DeepSave %>(TransactionManager transactionManager, <%= className %> entity, DeepSaveType deepSaveType, System.Type[] childTypes, ChildEntityTypesList innerList)
 		{	
 			if (entity == null)
-				return;
-				
-			// Save Root Entity through Provider
-			this.<%= MethodNames.Save %>(transactionManager, entity);
-			
-			#region Composite Source Properties
+				return false;
+							
+			#region Composite Parent Properties
 			//Save Source Composite Properties, however, don't call deep save on them.  
 			//So they only get saved a single level deep.
 			<%	
@@ -966,87 +964,101 @@ namespace <%=DALNameSpace%>.Bases
 			%>
 			
 			#region <%=compositePropertyName%>
-			if ((deepSaveType == DeepSaveType.IncludeChildren && innerList["<%= pkClassName %>"] != null)
-				|| (deepSaveType == DeepSaveType.ExcludeChildren && innerList["<%= pkClassName %>"] == null))
+			if (CanDeepSave(entity, "<%=pkClassName.Trim()%>", "<%=compositePropertyName%>", deepSaveType, innerList) 
+				&& entity.<%=compositePropertyName%> != null)
 			{
-				if (entity.<%=compositePropertyName%> != null )
-				{			
-					DataRepository.<%= GetProviderName(pkClassName) %>.<%= MethodNames.Save %>(transactionManager, entity.<%=compositePropertyName%>);
-				}
+				DataRepository.<%= GetProviderName(pkClassName) %>.<%= MethodNames.Save %>(transactionManager, entity.<%=compositePropertyName%>);
+				entity.<%= fkPropertyName %> = entity.<%=compositePropertyName%>.<%= pkProperty %>;
 			}
 			#endregion 
 			<%	} //end if in SourceTables
 			} // end foreach
 			%>
-			#endregion Composite Source Properties
+			#endregion Composite Parent Properties
 
+			// Save Root Entity through Provider
+			this.<%= MethodNames.Save %>(transactionManager, entity);
+			
+			
 			<%
 			int ctr2 = 0;
+			string[] relations = {"OneToOne", "ManyToMany", "OneToMany", "ManyToOne"};
 			
-			foreach(CollectionInfo item in GetChildrenCollections(SourceTable, SourceTables).Values) 
-			{	
-				string listTypeName = item.CollectionTypeName.StartsWith("List") ? item.CollectionTypeName : item.CollectionTypeName.Substring(1);
-
-					if (ctr == 0)
-						Response.Write("\t\t\t\t//deep save child collections  - Call " + MethodNames.DeepSave + "() Methods on Children" + Environment.NewLine);
-					ctr++;
+			for (int i = 0; i < relations.Length; i++)
+			{
+				foreach(CollectionInfo item in GetChildrenCollections(SourceTable, SourceTables).Values) 
+				{	
+					string listTypeName = item.CollectionTypeName.StartsWith("List") ? item.CollectionTypeName : item.CollectionTypeName.Substring(1);
+	
+						if (ctr == 0)
+							Response.Write("\t\t\t\t//deep save child collections  - Call " + MethodNames.DeepSave + "() Methods on Children" + Environment.NewLine);
+						ctr++;
 			%>
 
 			<%  
-			if (item.CollectionRelationshipType == RelationshipType.OneToOne) 
+			if (relations[i] == RelationshipType.OneToOne.ToString() && item.CollectionRelationshipType == RelationshipType.OneToOne) 
 			{
 			%>
-			#region <%= listTypeName %>
-			if ((deepSaveType == DeepSaveType.IncludeChildren && innerList["<%= listTypeName %>"] != null)
-				|| (deepSaveType == DeepSaveType.ExcludeChildren && innerList["<%= listTypeName %>"] == null))
+			#region <%= item.PropertyNameUnique %>
+			if (CanDeepSave(entity, "<%= item.TypeName  %>", "<%= item.PropertyNameUnique %>", deepSaveType, innerList))
 			{
-			// update each child parent id with the real parent id (mostly used on insert)
-			<%
-			for(int i=0; i<item.TableKey.ForeignKeyMemberColumns.Count; i++)
-			{
-				Response.Write("\n\t\t\t\tentity."+ item.CleanName +"." + GetPropertyName(item.TableKey.ForeignKeyMemberColumns[i].Name) + " = entity." + GetPropertyName(item.TableKey.PrimaryKeyMemberColumns[i].Name) + ";");
-			}
-			%>
-			if (entity.<%=item.PropertyNameUnique%> != null)
-				DataRepository.<%=GetProviderClassName(item.SecondaryTable)%>.<%= MethodNames.DeepSave %>(transactionManager, entity.<%=item.PropertyNameUnique%>, deepSaveType, childTypes);
+
+				if (entity.<%=item.PropertyNameUnique%> != null)
+				{
+					// update each child parent id with the real parent id (mostly used on insert)
+					<%
+					for(int j=0; j<item.TableKey.ForeignKeyMemberColumns.Count; j++)
+					{
+						Response.Write("\n\t\t\t\t\tentity."+ item.CleanName +"." + GetPropertyName(item.TableKey.ForeignKeyMemberColumns[j].Name) + " = entity." + GetPropertyName(item.TableKey.PrimaryKeyMemberColumns[j].Name) + ";" + Environment.NewLine);
+					}
+					%>
+					DataRepository.<%=GetProviderClassName(item.SecondaryTable)%>.<%= MethodNames.DeepSave %>(transactionManager, entity.<%=item.PropertyNameUnique%>, deepSaveType, childTypes, innerList);
+				}
 			} 
 			#endregion 
 			<% 
 			} 
-			else if (item.CollectionRelationshipType == RelationshipType.OneToMany || item.CollectionRelationshipType == RelationshipType.ManyToOne) 
-			{ 
-			%>
-			#region <%= listTypeName %>
-			if ((deepSaveType == DeepSaveType.IncludeChildren && innerList["<%= listTypeName %>"] != null)
-				|| (deepSaveType == DeepSaveType.ExcludeChildren && innerList["<%= listTypeName %>"] == null))
-			{
-			// update each child parent id with the real parent id (mostly used on insert)
-			foreach(<%=item.CleanName%> child in entity.<%= item.PropertyNameUnique %>)
-			{
-				<% for(int i=0; i<item.TableKey.ForeignKeyMemberColumns.Count; i++)
-				{
-					Response.Write("\t\t\t\t\tchild." + GetPropertyName(item.TableKey.ForeignKeyMemberColumns[i].Name) + " = entity." + GetPropertyName(item.TableKey.PrimaryKeyMemberColumns[i].Name) + ";");
-				}%>
-			}
-			
-			if (entity.<%=item.PropertyNameUnique %>.Count > 0 || entity.<%=item.PropertyNameUnique%>.DeletedItems.Count > 0)
-				DataRepository.<%=GetProviderClassName(item.SecondaryTable)%>.<%= MethodNames.DeepSave %>(transactionManager, entity.<%=item.PropertyNameUnique%>, deepSaveType, childTypes);
-			} 
-			#endregion 
-			<% }
-			else if (item.CollectionRelationshipType == RelationshipType.ManyToMany && IncludeManyToMany) 
+			else if (relations[i] == RelationshipType.ManyToMany.ToString() && item.CollectionRelationshipType == RelationshipType.ManyToMany && IncludeManyToMany) 
 			{ 
 			%>
 			#region <%= item.PropertyNameUnique %>>
-			if ((deepSaveType == DeepSaveType.IncludeChildren && innerList["List<<%=item.SecondaryTable%>>"] != null)
-				|| (deepSaveType == DeepSaveType.ExcludeChildren && innerList["List<<%=item.SecondaryTable%>>"] == null))
+			if (CanDeepSave(entity, "List<<%=GetClassName(item.SecondaryTable).Trim()%>>", "<%= item.PropertyNameUnique %>", deepSaveType, innerList))
 			{
 				if (entity.<%=item.PropertyNameUnique%>.Count > 0 || entity.<%=item.PropertyNameUnique%>.DeletedItems.Count > 0)
-					DataRepository.<%=GetProviderClassName(item.SecondaryTable)%>.<%= MethodNames.DeepSave %>(transactionManager, entity.<%=item.PropertyNameUnique %>, deepSaveType, childTypes); 
+					DataRepository.<%=GetProviderClassName(item.SecondaryTable)%>.<%= MethodNames.DeepSave %>(transactionManager, entity.<%=item.PropertyNameUnique %>, deepSaveType, childTypes, innerList); 
 			}
 			#endregion 
-		<% } %>
-		<% }//end foreach CollectionInfo%>
+			<% 	
+			} 
+			else if (
+						(relations[i] == RelationshipType.OneToMany.ToString() && item.CollectionRelationshipType == RelationshipType.OneToMany )
+						|| (relations[i] == RelationshipType.ManyToOne.ToString() && item.CollectionRelationshipType == RelationshipType.ManyToOne)
+					) 
+			{ 
+			%>
+			#region <%= listTypeName %>
+				if (CanDeepSave(entity, "<%= listTypeName.Trim() %>", "<%=item.CollectionName %>", deepSaveType, innerList)) 
+				{	
+					// update each child parent id with the real parent id (mostly used on insert)
+					foreach(<%=item.CleanName%> child in entity.<%= item.PropertyNameUnique %>)
+					{
+						<% for(int j = 0; j < item.TableKey.ForeignKeyMemberColumns.Count; j++)
+						{
+							Response.Write("\t\t\t\t\t\tchild." + GetPropertyName(item.TableKey.ForeignKeyMemberColumns[j].Name) + " = entity." + GetPropertyName(item.TableKey.PrimaryKeyMemberColumns[j].Name) + ";" + Environment.NewLine);
+						}%>
+					}
+				
+				if (entity.<%=item.PropertyNameUnique %>.Count > 0 || entity.<%=item.PropertyNameUnique%>.DeletedItems.Count > 0)
+					DataRepository.<%=GetProviderClassName(item.SecondaryTable)%>.<%= MethodNames.DeepSave %>(transactionManager, entity.<%=item.PropertyNameUnique%>, deepSaveType, childTypes, innerList);
+				} 
+			#endregion 
+				
+			<% 	}
+			  }//end foreach CollectionInfo
+			} //end for each relation
+			%>
+						
+			return true;
 		}
 		#endregion
 		<% 	} // end if ( IncludeSave ) %>

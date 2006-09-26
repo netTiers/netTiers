@@ -28,10 +28,12 @@ namespace <%= NameSpace %>
 	/// Provides storage of global database connection information.
 	/// </summary>
 	[CLSCompliant(true)]
-	public class ConnectionScope
+	public class ConnectionScope : IDisposable
 	{
 		private static readonly string Key = "<%= NameSpace %>.ConnectionScope";
-
+		private  bool disposed;
+        private static object syncRoot = new object(); 
+		
 		/// <summary>
 		/// Initializes a new instance of the ConnectionScope class.
 		/// </summary>
@@ -231,6 +233,72 @@ namespace <%= NameSpace %>
 			return Current.TransactionManager;
 		}
 		
+		/// <summary>
+        /// Completes this unit of work instance of the current transaction.  
+        /// Commits the transaction,  Cleans up Connection, 
+        /// Disposes of TransactionManager which performs unmanaged cleanup.
+        /// </summary>
+        /// <example>
+        ///     try
+        ///     {
+        ///         using (ConnectionScope.CreateTransaction())
+        ///         {
+        ///             // or use ConnectionScope.ValidateOrCreateTransaction(true) 
+        ///             // if you prefer to dynamically check for an existing transaction
+        ///             AccountService.Save(account);
+        ///             LedgerService.Save(generalEntry);
+        /// 
+        ///             //Commit and Cleanup your transaction
+        ///             bool result = ConnectionScope.Complete();
+        ///         }
+        ///     }
+        ///     catch (Exception ex)
+        ///     {
+        ///         // when creating the transaction via the 
+        ///         // using (ConnectionScope.CreateTransaction()) construct, 
+        ///         // there's no need to rollback, handled by 
+        ///         // ConnectionScope Dispose Method.
+        /// 
+        ///         Logger.Write(ex.Message);
+        ///     }
+        ///</example>
+        public static bool Complete()
+        {
+            if (Current.disposed)
+                throw new ObjectDisposedException("ConnectionScope");
+
+            lock (syncRoot)
+            {
+                if (Current.HasTransaction)
+                {
+                    Current.TransactionManager.Commit();
+					return true;
+                }
+				
+				return false;
+            }
+        }
+		
+
+        /// <summary>
+        /// Performs application-defined tasks associated with freeing, releasing, or resetting unmanaged resources.
+        /// </summary>
+        public void Dispose()
+        {
+            if (!disposed)
+            {
+                lock (syncRoot)
+                {
+                    disposed = true;
+
+                    if (Current.HasTransaction)
+                    {
+                        Current.TransactionManager.Rollback();
+                    }
+                }
+            }
+        }
+
 		#endregion Helper Methods
 
 		#region Properties
