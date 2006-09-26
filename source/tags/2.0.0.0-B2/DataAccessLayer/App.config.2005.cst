@@ -1,0 +1,55 @@
+<%@ CodeTemplate Language="C#" TargetLanguage="XML" Description="Configuration file." Debug="true" %>
+<%@ Property Name="IsWebConfig" Type="System.Boolean" Default="False" Category="General" Description="Indicates whether the current configuration file is a web.config file." %>
+<%@ Property Name="DALNameSpace" Type="System.String" Category="Data" Description="DAL Namespace." %>
+<%@ Property Name="ConnectionString" Type="System.String" Category="Data" Description="sql connectionstring." %>
+<%@ Property Name="FactoryType" Type="System.String" Category="Data" Description="The Creational Factory used to create the entities." %>
+<%@ Property Name="WebServiceUrl" Type="System.String" Category="Data" Description="Web service URL." %>
+<?xml version="1.0" encoding="utf-8" ?>
+<configuration>
+  <configSections>
+       <section name="netTiersService"
+        type="<%=DALNameSpace%>.Bases.NetTiersServiceSection, <%=DALNameSpace%>"
+        allowDefinition="MachineToApplication"
+        restartOnExternalChanges="true" />
+  </configSections>
+  
+  <connectionStrings>
+    <add name="netTiersConnectionString" connectionString="<%=ConnectionString%>" />
+  </connectionStrings>
+
+  <netTiersService defaultProvider="SqlNetTiersProvider">
+    <providers>
+    
+    <!--
+    *** SqlClient Provider ***
+    	connectionStringName: sqlclient connection string to the db
+    	useStoredProcedure: if trueindicates that we use the stored procedures, otherwise, we use parametrized queries that are embedded.
+    -->
+      <add 
+        name="SqlNetTiersProvider" 
+        type="<%=DALNameSpace%>.SqlClient.SqlNetTiersProvider, <%=DALNameSpace%>.SqlClient"
+        connectionStringName="netTiersConnectionString"
+        useStoredProcedure="false"
+        providerInvariantName="System.Data.SqlClient"
+		entityFactoryType="<%= FactoryType %>"
+		enableEntityTracking="true"
+		enableMethodAuthorization="false"
+        />
+      <!-- 
+      	*** WebserviceClient Provider ***
+      	The url parameter indicates the webservices url (ex: http://localhost/NorthWind/NorthWindServices.aspx)
+      <add 
+        name="WsNetTiersProvider" 
+        type="<%=DALNameSpace%>.WebServiceClient.WsNetTiersProvider, <%=DALNameSpace%>.WebServiceClient"
+        url="<%=WebServiceUrl%>"
+        />
+     -->
+    </providers>
+  </netTiersService>
+  
+   <% if (IsWebConfig) { %>
+	<system.web>
+		<compilation defaultLanguage="c#" debug="true"/>
+	</system.web>
+	<% } %>
+</configuration>
