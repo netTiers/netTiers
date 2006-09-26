@@ -1,0 +1,215 @@
+<%@ CodeTemplate Src="..\..\..\CommonSqlCode.cs" Inherits="MoM.Templates.CommonSqlCode" Language="C#" TargetLanguage="C#" Description="Generates GridView using EntityDataSource Control." Debug="True" %>
+<%@ Assembly Name="SchemaExplorer" %>
+<%@ Assembly Name="System.Design" %>
+<%@ Import Namespace="SchemaExplorer" %>
+<%@ Import Namespace="System.Collections" %>
+<%@ Import Namespace="System.Text" %>
+
+<%@ Property Name="SourceTable" Type="SchemaExplorer.TableSchema" Category="Connection" Description="Table that the data access class should be based on." %>
+
+<%@ Property Name="NameSpace" Type="System.String" Category="Style" Description="Class Namespace." %>
+<%@ Property Name="BLLNameSpace" Type="System.String" Category="Data" Description="BLL Namespace." %>
+<%@ Property Name="IncludeAtlasLibrary" Type="System.Boolean" Default="false" Category="06b. Website - Advanced" Description="Indicates whether to include a reference to the Atlas component library." %>
+<%@ Property Name="IncludeAtlasToolkit" Type="System.Boolean" Default="false" Category="06b. Website - Advanced" Description="Indicates whether to include a reference to the Atlas Control Toolkit. This property is only taken into account when IncludeAtlasLibrary is true." %>
+
+<%
+
+	// Collection of all columns in the table.
+	ColumnSchemaCollection cols = SourceTable.Columns;
+	
+	// Collection of all columns in the table that are not primary keys.
+	//ColumnSchemaCollection nonKeys = SourceTable.NonPrimaryKeyColumns;
+	
+	// Collection of all primary key columns.
+	ColumnSchemaCollection keys = SourceTable.PrimaryKey.MemberColumns; 
+	
+	// Collection of ForeignKeys. Provides information about the foreign keys 
+	//(keys where the current table is the foreign table) contained in the table. 
+	TableKeySchemaCollection fkeys = SourceTable.ForeignKeys;
+	
+	//Provides information about the primary keys 
+	//(keys where the current table is the primary table) contained in the table. 
+	//TableKeySchemaCollection pkeys = SourceTable.PrimaryKeys;
+	
+	//Provides information about the indexes contained in the table. 
+	//IndexSchemaCollection indexes = SourceTable.Indexes;
+	
+	ColumnSchemaCollection colsUpdatable = new ColumnSchemaCollection();
+	foreach (ColumnSchema column in cols)
+	{
+		if ( ! IsIdentityColumn(column) && ! IsComputed(column) )
+			colsUpdatable.Add(column);
+	}
+	
+	TableKeySchemaCollection fKeysSingle = new TableKeySchemaCollection();
+	foreach(TableKeySchema tableKey in fkeys)
+	{
+		if ( tableKey.ForeignKeyMemberColumns.Count == 1)
+			fKeysSingle.Add(tableKey);
+	}
+
+	// Holds the RowVersion column if there's any
+	ColumnSchema RowVersion = null;
+
+	foreach (ColumnSchema column in cols)
+	{
+		if (column.NativeType.ToLower() == "timestamp")
+			RowVersion = column;
+	}
+
+	string entityName = GetClassName(SourceTable.Name);
+	string className = NameSpace + "." + GetClassName(SourceTable.Name);
+	string providerName = GetProviderName(SourceTable.Name);
+	
+%><%%@ Page Language="C#" Theme="Default" MasterPageFile="~/site.master" AutoEventWireup="true"  CodeFile="<%=entityName%>.aspx.cs" Inherits="<%=entityName%>" Title="<%=entityName%> List" %%>
+
+<asp:Content ID="Content2" ContentPlaceHolderID="ContentPlaceHolder2" Runat="Server"><%=entityName%> List</asp:Content>
+<asp:Content ID="Content1" ContentPlaceHolderID="ContentPlaceHolder1" Runat="Server">
+		
+		<data:EntityGridView ID="GridView1" runat="server"			
+			AutoGenerateColumns="False"					
+			OnSelectedIndexChanged="GridView_SelectedIndexChanged"
+			DataSourceID="<%=entityName%>DataSource"
+			DataKeyNames="<%=GetDataKeyNames(keys)%>"
+			AllowMultiColumnSorting="false"
+			DefaultSortColumnName="" 
+			DefaultSortDirection="Ascending"	
+			ExcelExportFileName="Export_<%=entityName%>.xls"  
+			AllowSorting="true"
+			AllowPaging="true"			
+			>
+			<Columns>
+				<asp:CommandField ShowSelectButton="True" ShowEditButton="True" />				
+<%
+					string entityDSO = string.Empty;					
+					int suffix = 1;
+					
+					foreach( ColumnSchema column in colsUpdatable)
+					{
+						//Exclude the primary key columns
+						if ( !IsGuidColumn(column))
+						{
+							if (column.IsForeignKeyMember) 
+							{					
+								string tempDSO = string.Empty;
+								Response.Write(WriteTemplateField(column, 4, out tempDSO, suffix) + "\r\n");
+								entityDSO+=tempDSO;
+								suffix++;
+							}
+							else 
+							{
+								Response.Write(WriteBoundField(column, 4) + "\r\n");
+							}
+						}
+					}		
+%>				
+			</Columns>
+			<EmptyDataTemplate>
+				<b>No <%=entityName%> Found!</b>
+			</EmptyDataTemplate>
+		</data:EntityGridView>
+		<br />
+		<asp:Button runat="server" ID="btn<%=entityName%>" OnClientClick="javascript:location.href='/<%=NameSpace%>.website/admin/<%=entityName%>Edit.aspx'; return false;" Text="Add New"></asp:Button>
+			
+<%
+	// -- write out the data source object for each templatefield
+	if (entityDSO != string.Empty) Response.Write(entityDSO);
+%>
+		<data:<%=entityName%>DataSource ID="<%=entityName%>DataSource" runat="server"
+			SelectMethod="GetPaged"
+			EnablePaging="True"
+			EnableSorting="True"
+		>
+			<Parameters>
+				<data:CustomParameter Name="WhereClause" Value="" ConvertEmptyStringToNull="false" />
+				<data:CustomParameter Name="OrderByClause" Value="" ConvertEmptyStringToNull="false" />
+				<asp:ControlParameter Name="PageIndex" ControlID="GridView1" PropertyName="PageIndex" Type="Int32" />
+				<asp:ControlParameter Name="PageSize" ControlID="GridView1" PropertyName="PageSize" Type="Int32" />
+				<data:CustomParameter Name="RecordCount" Value="0" Type="Int32" />
+			</Parameters>
+		</data:<%=entityName%>DataSource>
+	    		
+</asp:Content>
+
+
+
+<script runat="template">
+public string WriteTemplateField(ColumnSchema column, int tabs, out string entityDSO, int suffix) {
+	string propertyName = GetPropertyName(column);
+	string s = string.Empty;
+	
+	string pkPropertyName = String.Empty;
+	string fkPropertyName = String.Empty;
+	string pkDisplayField = String.Empty;	
+	string objectDataSource = String.Empty;
+	string pkCSType = String.Empty;
+
+	foreach (TableKeySchema tableKey in column.Table.ForeignKeys)
+	{
+		ColumnSchema fKeyColumn = tableKey.ForeignKeyMemberColumns[0];
+		fkPropertyName = GetPropertyName(fKeyColumn);
+		
+		if ( GetPropertyName(fKeyColumn) == propertyName )
+		{
+			pkPropertyName = GetPropertyName(tableKey.PrimaryKeyMemberColumns[0].Name);	
+			pkCSType = GetCSType(tableKey.PrimaryKeyMemberColumns[0]);
+			
+			//Find the first non-key column for display
+			foreach(ColumnSchema pkColumn in tableKey.PrimaryKeyTable.Columns)
+			{
+				if ( !pkColumn.IsForeignKeyMember && !pkColumn.IsPrimaryKeyMember )
+				{							
+					pkDisplayField = GetPropertyName(pkColumn.Name);
+					break;
+				}
+			}
+			
+			
+			if (objectDataSource == String.Empty )
+			{
+				objectDataSource = GetClassName(tableKey.PrimaryKeyTable.Name);
+			}			
+			if (pkDisplayField == String.Empty )
+			{
+				pkDisplayField = pkPropertyName;
+			}
+			break;						
+		}
+	}
+	
+	s += Tab(4) + "<asp:TemplateField HeaderText=\"" + fkPropertyName + "\">\r\n";
+	s += Tab(4) + "<ItemTemplate>\r\n";
+	s += Tab(4) + "		<asp:Repeater ID=\"" + pkPropertyName + suffix.ToString() + "\" runat=\"server\" DataSourceID=\"" + objectDataSource + "Filter" + suffix.ToString() + "\">\r\n";
+	s += Tab(4) + "			<ItemTemplate>\r\n";
+	s += Tab(4) + "				<%# Eval(\"" + pkDisplayField + "\") %>\r\n";
+	s += Tab(4) + "			</ItemTemplate>\r\n";
+	s += Tab(4) + "		</asp:Repeater>\r\n\r\n";			
+	s += Tab(4) + "		<data:EntityDataSourceFilter ID=\"" + objectDataSource + "Filter" + suffix.ToString() + "\" runat=\"server\"\r\n";
+	s += Tab(4) + "			DataSourceID=\"" + objectDataSource + "DataSource" + suffix.ToString() + "\"\r\n";
+	s += Tab(4) + "			Filter='<%# String.Format(\"" + pkPropertyName + " = {0}\", Eval(\"" + fkPropertyName + "\")) %>'\r\n";
+	s += Tab(4) + "		/>\r\n";
+	s += Tab(4) + "	</ItemTemplate>\r\n";
+	s += Tab(4) + "</asp:TemplateField>\r\n\r\n";
+
+	entityDSO = Tab(2) + "<data:" + objectDataSource + "DataSource ID=\"" + objectDataSource + "DataSource" + suffix.ToString() + "\" runat=\"server\"\r\n";
+	entityDSO += Tab(3) + "SelectMethod=\"GetAll\"\r\n";
+	entityDSO += Tab(2) + "/>\r\n\r\n";
+	return s;
+}
+
+public string WriteBoundField(ColumnSchema column, int tabs) {
+	string propertyName = GetPropertyName(column);
+
+	// -- exclude DbType.Xml from report
+	if (column.NativeType.ToLower().Equals("xml")) return string.Empty;
+	
+	if (column.NativeType != "text" && column.NativeType != "ntext") 
+	{
+		return string.Format("{1}<asp:BoundField DataField=\"{0}\" HeaderText=\"{0}\" SortExpression=\"{0}\" {2} />", propertyName, Tab(tabs), (column.IsPrimaryKeyMember)?"ReadOnly":"");								
+	}
+	else 
+	{
+		return string.Format("{1}<asp:BoundField DataField=\"{0}\" HeaderText=\"{0}\" SortExpression=\"\" {2} />", propertyName, Tab(tabs), (column.IsPrimaryKeyMember)?"ReadOnly":"");
+	}
+}
+</script>
