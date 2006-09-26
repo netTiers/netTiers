@@ -1,4 +1,4 @@
-﻿<%@ CodeTemplate Src="../CommonSqlCode.cs" Inherits="MoM.Templates.CommonSqlCode" Language="C#" TargetLanguage="Text" Description="Template description here." Debug="True"%>
+<%@ CodeTemplate Src="../CommonSqlCode.cs" Inherits="MoM.Templates.CommonSqlCode" Language="C#" TargetLanguage="Text" Description="Template description here." Debug="True"%>
 
 <%@ Property Name="SourceDatabase" Type="SchemaExplorer.DatabaseSchema" Optional="True" Category="Context" Description="Database that the stored procedures should be based on." %>
 <%@ Property Name="SourceTables" Type="SchemaExplorer.TableSchemaCollection" Category="Context" Description="Tables that the stored procedures should be based on." %>
@@ -486,8 +486,11 @@
 		<Compile Include="<%=UTSubFolder%>Views\<%=GetRepositoryTestClassName(SourceViews[i].Name)%>.generated.cs">
 			<SubType>Code</SubType>
 			<DependentUpon><%=GetRepositoryTestClassName(SourceViews[i].Name)%>.cs</DependentUpon>
-		</Compile>					
+		</Compile>
 		<%}	// endif IncludeUnitTest
+		if (IncludeUnitTest == MoM.Templates.UnitTestStyle.VSTS) { %>
+			<None Include="<%=UTSubFolder%>Views\<%=GetRepositoryTestClassName(SourceViews[i].Name)%>.orderedtest"/>
+		<%}	// endif IncludeUnitTest for VSTS ordered test lists
 	}
 			
 	// Loop on each table
@@ -579,7 +582,12 @@
 			  	<SubType>Code</SubType>
 				<DependentUpon><%=GetRepositoryTestClassName(SourceTables[i].Name)%>.cs</DependentUpon>
 			</Compile>
-		<%}	// endif IncludeUnitTest							
+		<%}	// endif IncludeUnitTest
+		
+		if ((IncludeUnitTest == MoM.Templates.UnitTestStyle.VSTS) && !IsJunctionTable(SourceTables[i])) { %>
+			<None Include="<%=UTSubFolder%><%=GetRepositoryTestClassName(SourceTables[i].Name)%>.orderedtest"/>
+		<%}	// endif IncludeUnitTest for VSTS ordered test lists
+						
 		
 		if (IncludeWebserviceClient)
 		{%>
