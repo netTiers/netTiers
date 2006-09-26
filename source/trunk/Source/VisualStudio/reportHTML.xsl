@@ -74,7 +74,7 @@
               <p>To Configure your application to use .netTiers, add the following sections to your App / Web config files.
 			
 			 You can find more information on how to set this up at<br/> 
-			 <a href="http://nettiers.com/documentation.aspx">.netTiers 2 Install and Configuration Document</a>
+			 <a href="http://wiki.nettiers.com">.netTiers 2 Install and Configuration Document @ http://wiki.netTiers.com</a>
             </p>
             <p>1. Add a new section to the configSettings</p>
             
@@ -126,7 +126,7 @@
           <div id="Documentation" style="display:inline">
             <a name="documentation"></a>
             <h3>Documentation <a href="#top" class="calloutlink" >Top</a></h3>
-            <a href="http://www.nettiers.com/Documentation.aspx">.netTiers 2.0 Getting Started</a><br /><br />
+            <a href="http://wiki.nettiers.com">.netTiers 2.0 Getting Started</a><br /><br />
 
             <b>Sample API Usage</b>
             <br /><table style="border: 1px dashed rgb(255, 153, 0); background-color: rgb(255, 255, 223);" bgcolor="#ffffdf"><tbody><tr><td><pre><font color="black" face="Courier New" size="2">
