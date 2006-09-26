@@ -1,0 +1,206 @@
+<%@ Master Language="C#" %>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<script runat="server">
+    protected override void OnLoad(EventArgs e)
+    {
+        ProductSeachTextBox.Focus();
+        base.OnLoad(e);
+    }
+
+    public void SignOut(object sender, EventArgs e)
+    {
+        System.Web.Security.FormsAuthentication.SignOut();
+        Response.Redirect("~");
+    }
+
+    public void SetCultureToProfile(object sender, CommandEventArgs e)
+    {
+        Profile.FavoriteLanguage = (string) e.CommandArgument;
+        Profile.Save();
+        Response.Redirect(Request.RawUrl);
+    }
+    
+    public string GetCurrentPage()
+    {
+        return this.Server.UrlEncode(this.Request.Url.AbsolutePath);
+    }
+</script>
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head runat="server">
+    <title>PetShot .Net 2.0 - .netTiers</title>
+    <style type="text/css">
+     body, td {font: 10pt tahoma }
+        div.category {padding: 4px; border: 1px #f0f0f0 solid; }
+        div.footer
+        {
+            width: 100%;
+            text-align: center;
+            border-top: 1px #c0c0c0 solid;
+            border-bottom: 1px #c0c0c0 solid;
+            padding: 4px;            
+        }
+        div.copyright
+        {
+            width: 100%;
+            text-align: center;
+            padding: 4px;
+        }
+        span.price
+        {
+        color: red;
+        font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+    <form id="form1" runat="server">
+<%--        <atlas:ScriptManager ID="scriptmanager1" EnablePartialRendering="true" runat="Server" />
+--%>
+        <%-- Custom Petshop Sitemap Provider --%>
+        <asp:SiteMapDataSource ID="SiteMapDataSource1" runat="server" SiteMapProvider="PetShopSiteMapProvider" />
+    
+        <table width="100%" height="100%" cellpadding="5" cellspacing="0">
+            <tr >
+                <td colspan="3">
+                    <table width="100%" cellpadding="0" cellspacing="0">
+                        <tr>
+                            <td align="left" style="height: 44px">
+                                <asp:ImageButton ID="btnLogo" runat="server" ToolTip="DNG Pet Shop Logo" CausesValidation="False" ImageUrl="~/images/petshop_logo.png" PostBackUrl="../default.aspx" meta:resourcekey="btnLogoResource1"/>
+                                &nbsp;
+                            </td>
+                            <td align="right" style="height: 44px" valign="top">
+                                <asp:LoginView runat="server" ID="uxLoginView" >
+                                    <AnonymousTemplate>
+                                        <asp:HyperLink ID="lnkSignIn" runat="server" NavigateUrl="~/signin.aspx" meta:resourcekey="lnkSignInResource1">Sign In</asp:HyperLink></a>
+                                        | <CART:LinkInformation ID="uxCartLinkInformatationAnonymous" runat="server" NavigateUrl="~/mycart.aspx" meta:resourcekey="uxCartLinkInformatationAnonymousResource1"/>
+                                    </AnonymousTemplate>
+                                    <LoggedInTemplate>
+                                        <asp:Label ID="lblWelcomeMessage" runat="server" Text="Welcome" meta:resourcekey="lblWelcomeMessageResource1"></asp:Label> <b></b>
+                                        | <asp:HyperLink ID="lnkMyAccount" runat="server" NavigateUrl="~/myaccount.aspx" meta:resourcekey="lnkMyAccountResource1">My Account</asp:HyperLink></a>
+                                        | <CART:LinkInformation id="uxCartLinkInformatation" runat="server" NavigateUrl="~/mycart.aspx" meta:resourcekey="uxCartLinkInformatationResource1"/>
+                                        | <asp:HyperLink ID="lnkAdmin" runat="server" NavigateUrl="~/Admin/default.aspx" meta:resourcekey="lnkAdminResource1">Admin</asp:HyperLink></a>
+                                        | <asp:LinkButton ID="lnkSignOut" runat="server" CausesValidation="False" OnClick="SignOut" meta:resourcekey="lnkSignOutResource1">Sign Out</asp:LinkButton>
+                                     </LoggedInTemplate>
+                                     <RoleGroups>
+                                        <asp:RoleGroup Roles="Admin">
+                                            <ContentTemplate>
+                                                <asp:HyperLink ID="lnkAdmin1" runat="server" NavigateUrl="~/Admin/default.aspx" meta:resourcekey="lnkAdminResource1">Admin</asp:HyperLink></a>
+                                            </ContentTemplate>
+                                        </asp:RoleGroup>
+                                        <asp:RoleGroup Roles="User">
+                                            <ContentTemplate>                                               
+                                            </ContentTemplate>
+                                        </asp:RoleGroup>
+                                    </RoleGroups>
+                                </asp:LoginView>
+                                |
+                                Language <netTiers:CultureList id="ddlCultures" runat="server" AutoPostBack="True"></netTiers:CultureList> 
+                                <br /><br />
+                                <input type="text" id="ProductSeachTextBox" maxlength="50" size="15" runat="server" value='<%#HttpContext.Current.Request["q"] %>' />
+                                <input type="button" id="ProductSearchButton" onclick="return SubmitSearch()" value="Search" />
+                            </td>
+                        </tr>
+                        <tr>
+                            <td colspan="2">
+                                <hr noshade="noshade" size="1" />
+                            </td>
+                        </tr>
+                    </table>
+                </td>
+            </tr>
+            
+            <!-- navigation row-->
+            <tr>
+                <td width="300" rowspan="2" valign="top" >
+                    <asp:table ID="Table1" runat="server" CellPadding="1" CellSpacing="0" BorderWidth="2px" BorderColor="#507CD1" width="100%" EnableViewState="False" meta:resourcekey="Table1Resource1">
+                        <asp:TableHeaderRow ID="TableHeaderRow1" runat="server" meta:resourcekey="TableHeaderRow1Resource1">
+                            <asp:TableCell ID="TableCell1" runat="server" Font-Bold="True" HorizontalAlign="Center" ForeColor="White" BackColor="#507CD1" meta:resourcekey="TableCell1Resource1">Pets</asp:TableCell></asp:TableHeaderRow>
+                        <asp:TableHeaderRow meta:resourcekey="TableHeaderRowResource1" runat="server">
+                            <asp:TableCell ID="TableCell2" runat="server" meta:resourcekey="TableCell2Resource1">
+                            <asp:TreeView ID="TreeView1" runat="server" DataSourceID="SiteMapDataSource1" ExpandDepth="1" AutoGenerateDataBindings="False" ImageSet="Arrows" EnableViewState="False" meta:resourcekey="TreeView1Resource1">
+                                <ParentNodeStyle Font-Bold="False" />
+                                <HoverNodeStyle Font-Underline="True" ForeColor="#5555DD" />
+                                <SelectedNodeStyle Font-Underline="True" ForeColor="#5555DD" HorizontalPadding="0px"
+                                    VerticalPadding="0px" />
+                                <NodeStyle Font-Names="Verdana" Font-Size="8pt" ForeColor="Black" HorizontalPadding="5px"
+                                    NodeSpacing="0px" VerticalPadding="0px" />
+                                <DataBindings>
+                                    <asp:TreeNodeBinding DataMember="SiteMapNode" NavigateUrlField="Url" TextField="Title"
+                                        ToolTipField="Description" meta:resourcekey="TreeNodeBindingResource1" />
+                                </DataBindings>
+                            </asp:TreeView>
+                            </asp:TableCell>
+                        </asp:TableHeaderRow>
+                    </asp:table>
+                    <br />
+                    <asp:Image ID="image" runat="server" ToolTip="" ImageUrl="~/images/netLogo_greyBG.gif" alt="Dot Net &amp; NetTiers Rock" />
+                 </td>
+                <td valign="top">
+                    <asp:SiteMapPath ID="SiteMapPath1" runat="server" BackColor="White" Width="100%" BorderWidth="0px" BorderColor="Black" meta:resourcekey="SiteMapPath1Resource1">
+                    </asp:SiteMapPath>
+                </td>
+                <td width="180" rowspan="2" valign="top">
+                    <asp:AdRotator ID="AdRotator1" runat="server" DataSourceID="XmlDataSource1" BackColor="RoyalBlue" meta:resourcekey="AdRotator1Resource1" />
+                   <asp:XmlDataSource ID="XmlDataSource1" runat="server" DataFile="~/App_Data/Banners.xml"></asp:XmlDataSource>
+ 
+                    <asp:DataList ID="lstProd" runat="server" Width="100%" CellPadding="1" CellSpacing="1"
+                        BorderWidth="1px" BorderColor="#FFCC00" meta:resourcekey="lstProdResource1">
+                        <HeaderTemplate>
+                            My List
+                        </HeaderTemplate>
+                        <ItemTemplate>
+			                Name
+                        </ItemTemplate>
+                        <HeaderStyle Font-Bold="True" HorizontalAlign="Center" ForeColor="White" BackColor="#507CD1" />
+                    </asp:DataList>                        
+                </td>
+            </tr>
+            <tr valign="top" height="400px">               
+                <td width="90%">
+<%--               	<atlas:UpdateProgress runat="server" ID="up1">
+			        <ProgressTemplate>
+				        <div id="loadinfo" style="visibility:visible;position:absolute;right:10px;top:10px;">
+					        <asp:Image runat="server" ID="imgLoading" ImageUrl="~/images/loading.gif" />
+				        </div>
+			        </ProgressTemplate>
+		         </atlas:UpdateProgress>
+                <atlas:UpdatePanel runat="server" ID="UpdatePanel1" Mode="Conditional">        
+                  <ContentTemplate>
+--%>                     <asp:ContentPlaceHolder ID="ContentPlaceHolder1" runat="server">
+                     </asp:ContentPlaceHolder>
+    <%--              </ContentTemplate>
+                </atlas:UpdatePanel>--%>
+                </td>                
+            </tr>            
+            <tr>
+                <td colspan="3">
+    
+                <div class="footer">
+                  <asp:Label ID="lblFooterMessage" runat="server" Text="The .netTiers Pet Shop is a fictional sample application with real-world enterprise practices" meta:resourcekey="lblFooterMessage1"></asp:Label> 
+                    &nbsp;<br />
+                                <a href="http://www.nettiers.com/">
+                                    <code>http://www.netTiers.com</code></a> | <a href="http://petshopcode.nettiers.com/?file=<%= GetCurrentPage() %>">View This Page</a> | <a href="http://petshopcode.nettiers.com">View All Petshop Project Code</a>.
+                </div>
+                <div class="copyright">
+                 <asp:Label ID="lblCopyright" runat="server" Text="&copy; 2005-2006 NetTiers.com - All rights reserved" meta:resourcekey="lblCopyright1"></asp:Label> 
+                </div>
+                    
+                </td>
+            </tr>
+        </table>
+        <script language="javascript" type="text/javascript">
+        function SubmitSearch()
+        {
+	        var SearchBox = document.getElementById("<%=ProductSeachTextBox.UniqueID%>");
+	        if (SearchBox.value != "")
+	        {
+			        document.location.href = "search.aspx?q=" + escape(SearchBox.value);
+	        }
+	        return false;
+        }
+        </script>
+    </form>
+</body>
+</html>
