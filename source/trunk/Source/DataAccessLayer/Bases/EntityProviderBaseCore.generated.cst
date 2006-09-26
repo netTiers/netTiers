@@ -968,7 +968,12 @@ namespace <%=DALNameSpace%>.Bases
 				&& entity.<%=compositePropertyName%> != null)
 			{
 				DataRepository.<%= GetProviderName(pkClassName) %>.<%= MethodNames.Save %>(transactionManager, entity.<%=compositePropertyName%>);
-				entity.<%= fkPropertyName %> = entity.<%=compositePropertyName%>.<%= pkProperty %>;
+				<% for(int i = 0; i < tableKey.ForeignKeyMemberColumns.Count; i++) { 
+					ColumnSchema col = tableKey.ForeignKeyMemberColumns[i];
+					ColumnSchema col2 = tableKey.PrimaryKeyMemberColumns[i];
+				%>
+				<%=GetObjectPropertyAccessor(col, "entity")%> = <%=GetObjectPropertyAccessor(col2, "entity." + compositePropertyName)%>;
+				<% } %>
 			}
 			#endregion 
 			<%	} //end if in SourceTables
