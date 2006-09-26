@@ -21,6 +21,14 @@ Installing & Getting Started
 You can find detailed getting started information 
 @ http://wiki.nettiers.com/GettingStarted2
 
+System Requirements
+--------------------
+Visual Studio 2005
+Codesmith 2.6+
+Microsoft SQL Server2000+ 
+Microsoft .Net 2.0 
+Enterprise Library 2.0 (Optional, Recommended) 
+nUnit or Visual Studio Team System (Optional)
 
 Installing .netTiers
 --------------------
