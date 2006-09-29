@@ -18,8 +18,37 @@
 
 <%@ Assembly Name="SchemaExplorer" %>
 <%@ Assembly Name="System.Design" %>
+<%@ Import Namespace="System.Collections" %>
 <%
+	bool IncludeDeepLoad = (IncludeRelations && IncludeGetListByFK);
+	bool IncludeDeepSave = (IncludeDeepLoad && IncludeSave);
+	
+	bool HasInsertMethod = (IncludeInsert || IncludeSave || IncludeDeepSave);
+	bool HasUpdateMethod = (IncludeUpdate || IncludeSave || IncludeDeepSave);
+	
 	bool HasComponentLayer = (IncludeComponentLayer != MoM.Templates.ComponentPatternType.None);
+	
+	IList insertMethods = new ArrayList();
+	IList updateMethods = new ArrayList();
+	
+	if ( IncludeInsert )
+	{
+		insertMethods.Add(MethodNames.Insert);
+	}
+	if ( IncludeUpdate )
+	{
+		updateMethods.Add(MethodNames.Update);
+	}
+	if ( IncludeSave )
+	{
+		insertMethods.Add(MethodNames.Save);
+		updateMethods.Add(MethodNames.Save);
+	}
+	if ( IncludeDeepSave )
+	{
+		insertMethods.Add(MethodNames.DeepSave);
+		updateMethods.Add(MethodNames.DeepSave);
+	}
 %>
 #region Using directives
 using System;
@@ -124,6 +153,48 @@ namespace <%= WebNameSpace %>.Data
 			}
 		}
 
+		<% if ( HasInsertMethod ) { %>
+		/// <summary>
+		/// Gets or sets the name of the method or function that
+		/// the ProviderDataSource control invokes to insert data.
+		/// </summary>
+		public ProviderDataSourceInsertMethod InsertMethod
+		{
+			get
+			{
+				ProviderDataSourceInsertMethod insertMethod = ProviderDataSourceInsertMethod.<%= insertMethods[0] %>;
+				Object method = ViewState["InsertMethod"];
+				if ( method != null )
+				{
+					insertMethod = (ProviderDataSourceInsertMethod) method;
+				}
+				return insertMethod;
+			}
+			set { ViewState["InsertMethod"] = value; }
+		}
+
+		<% } // end if ( HasInsertMethod ) { %>
+		<% if ( HasUpdateMethod ) { %>
+		/// <summary>
+		/// Gets or sets the name of the method or function that
+		/// the ProviderDataSource control invokes to update data.
+		/// </summary>
+		public ProviderDataSourceUpdateMethod UpdateMethod
+		{
+			get
+			{
+				ProviderDataSourceUpdateMethod updateMethod = ProviderDataSourceUpdateMethod.<%= updateMethods[0] %>;
+				Object method = ViewState["UpdateMethod"];
+				if ( method != null )
+				{
+					updateMethod = (ProviderDataSourceUpdateMethod) method;
+				}
+				return updateMethod;
+			}
+			set { ViewState["UpdateMethod"] = value; }
+		}
+
+		<% } // end if ( HasUpdateMethod ) { %>
 		#endregion Properties
 
 		#region Methods
@@ -232,7 +303,31 @@ namespace <%= WebNameSpace %>.Data
 		{
 			get { return ProviderOwner.DeepLoadProperties; }
 		}
-
+		
+		<% if ( HasInsertMethod ) { %>
+		/// <summary>
+		/// Gets or sets the name of the method or function that
+		/// the ProviderDataSource control invokes to insert data.
+		/// </summary>
+		internal ProviderDataSourceInsertMethod InsertMethod
+		{
+			get { return ProviderOwner.InsertMethod; }
+			set { ProviderOwner.InsertMethod = value; }
+		}
+		
+		<% } // end if ( HasInsertMethod ) { %>
+		<% if ( HasUpdateMethod ) { %>
+		/// <summary>
+		/// Gets or sets the name of the method or function that
+		/// the ProviderDataSource control invokes to update data.
+		/// </summary>
+		internal ProviderDataSourceUpdateMethod UpdateMethod
+		{
+			get { return ProviderOwner.UpdateMethod; }
+			set { ProviderOwner.UpdateMethod = value; }
+		}
+		
+		<% } // end if ( HasUpdateMethod ) { %>
 		#endregion Properties
 
 		#region DeepLoad Methods
@@ -276,7 +371,7 @@ namespace <%= WebNameSpace %>.Data
 
 		#endregion DeepLoad Methods
 
-		<% if ( IncludeInsert ) { %>
+		<% if ( HasInsertMethod ) { %>
 		#region Insert Methods
 
 		/// <summary>
@@ -286,13 +381,33 @@ namespace <%= WebNameSpace %>.Data
 		/// <returns>Returns true if successful, otherwise false.</returns>
 		protected override bool ExecuteInsert(Entity entity)
 		{
-			return Provider.<%= MethodNames.Insert %>(<% if(!HasComponentLayer){ %>GetTransactionManager(), <% } %>entity);
+			<% if ( IncludeSave ) { %>
+			if ( InsertMethod == ProviderDataSourceInsertMethod.<%= MethodNames.Save %> )
+			{
+				Provider.<%= MethodNames.Save %>(<% if(!HasComponentLayer){ %>GetTransactionManager(), <% } %>entity);
+				return true;
+			}
+			<% } // end if ( IncludeSave ) { %>
+			<% if ( IncludeDeepSave ) { %>
+			if ( InsertMethod == ProviderDataSourceInsertMethod.<%= MethodNames.DeepSave %> )
+			{
+				return Provider.<%= MethodNames.DeepSave %>(<% if(!HasComponentLayer){ %>GetTransactionManager(), <% } %>entity);
+			}
+			<% } // end if ( IncludeDeepSave ) { %>
+			<% if ( IncludeInsert ) { %>
+			if ( InsertMethod == ProviderDataSourceInsertMethod.<%= MethodNames.Insert %> )
+			{
+				return Provider.<%= MethodNames.Insert %>(<% if(!HasComponentLayer){ %>GetTransactionManager(), <% } %>entity);
+			}
+			<% } // end if ( IncludeInsert ) { %>
+			
+			return false;
 		}
 
 		#endregion Insert Methods
 
-		<%	} // end if ( IncludeInsert ) %>
-		<% if ( IncludeUpdate ) { %>
+		<%	} // end if ( HasInsertMethod ) %>
+		<% if ( HasUpdateMethod ) { %>
 		#region Update Methods
 
 		/// <summary>
@@ -302,12 +417,32 @@ namespace <%= WebNameSpace %>.Data
 		/// <returns>Returns true if successful, otherwise false.</returns>
 		protected override bool ExecuteUpdate(Entity entity)
 		{
-			return Provider.<%= MethodNames.Update %>(<% if(!HasComponentLayer){ %>GetTransactionManager(), <% } %>entity);
+			<% if ( IncludeSave ) { %>
+			if ( UpdateMethod == ProviderDataSourceUpdateMethod.<%= MethodNames.Save %> )
+			{
+				Provider.<%= MethodNames.Save %>(<% if(!HasComponentLayer){ %>GetTransactionManager(), <% } %>entity);
+				return true;
+			}
+			<% } // end if ( IncludeSave ) { %>
+			<% if ( IncludeDeepSave ) { %>
+			if ( UpdateMethod == ProviderDataSourceUpdateMethod.<%= MethodNames.DeepSave %> )
+			{
+				return Provider.<%= MethodNames.DeepSave %>(<% if(!HasComponentLayer){ %>GetTransactionManager(), <% } %>entity);
+			}
+			<% } // end if ( IncludeDeepSave ) { %>
+			<% if ( IncludeUpdate ) { %>
+			if ( InsertMethod == ProviderDataSourceInsertMethod.<%= MethodNames.Insert %> )
+			{
+				return Provider.<%= MethodNames.Update %>(<% if(!HasComponentLayer){ %>GetTransactionManager(), <% } %>entity);
+			}
+			<% } // end if ( IncludeUpdate ) { %>
+			
+			return false;
 		}
 
 		#endregion UpdateMethods
 
-		<% } // end if ( IncludeUpdate ) %>
+		<% } // end if ( HasUpdateMethod ) %>
 		<% if ( IncludeDelete ) { %>
 		#region Delete Methods
 
@@ -569,4 +704,42 @@ namespace <%= WebNameSpace %>.Data
 	}
 
 	#endregion ProviderDataSourceDeepLoadEventHandler
+
+	<% if ( HasInsertMethod ) { %>
+	#region ProviderDataSourceInsertMethod
+	
+	/// <summary>
+	/// Enumeration of method names available for the ProviderDataSource.InsertMethod property.
+	/// </summary>
+	public enum ProviderDataSourceInsertMethod
+	{
+		<% for( int j = 0; j < insertMethods.Count; j++ ) { %>
+		/// <summary>
+		/// Represents the <%= insertMethods[j].ToString() %> method.
+		/// </summary>
+		<%= insertMethods[j].ToString() %><% if (j < insertMethods.Count-1) { %>,<% } %>
+		<% } %>
+	}
+	
+	#endregion ProviderDataSourceInsertMethod
+	
+	<% } // end if ( HasInsertMethods ) { %>
+	<% if ( HasUpdateMethod ) { %>
+	#region ProviderDataSourceUpdateMethod
+	
+	/// <summary>
+	/// Enumeration of method names available for the ProviderDataSource.UpdateMethod property.
+	/// </summary>
+	public enum ProviderDataSourceUpdateMethod
+	{
+		<% for( int j = 0; j < updateMethods.Count; j++ ) { %>
+		/// <summary>
+		/// Represents the <%= updateMethods[j].ToString() %> method.
+		/// </summary>
+		<%= updateMethods[j].ToString() %><% if (j < updateMethods.Count-1) { %>,<% } %>
+		<% } %>
+	}
+	
+	#endregion ProviderDataSourceUpdateMethod
+	<% } // end if ( HasUpdateMethods ) { %>
 }
