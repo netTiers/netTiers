@@ -207,9 +207,15 @@ namespace <%=NameSpace%>
 					
 				base.<%= GetPropertyName(cols[x].Name) %> = value;
 				<% if (IncludeGetListByFK && cols[x].IsForeignKeyMember) { 
+					foreach(TableKeySchema tableKey in SourceTable.ForeignKeys)
+					{
+						if (!SourceTables.Contains(tableKey.PrimaryKeyTable)) 
+							continue;
 				%>
 				<%= GetPropertyName(cols[x].Name)%>Source = null;
-				<% } %>
+				<%  }// end foreach
+				} //end if 
+				%>
 			}
 		}
 		<% 	
@@ -237,8 +243,7 @@ namespace <%=NameSpace%>
 		/// Gets or sets the source <see cref="<%=pkClassName%>"/>.
 		/// </summary>
 		/// <value>The source <%=pkClassName%> for <%=fkPropertyName%>.</value>
-		<% if(IsRelationOneToOne(tableKey)) {%>
-        [XmlIgnore()]<% } %>
+        [XmlIgnore()]
 		[Entities.Bindable]
 		public new virtual <%=pkClassName%> <%=compositePropertyName%>
       	{

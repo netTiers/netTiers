@@ -235,8 +235,15 @@ private void WriteRelationshipPropertyString()
 
 public string GetParsedDefaultValue(int x)
 {
-	if (!ParseDbColDefaultVal)
+	if (!ParseDbColDefaultVal 
+		&& SourceTable.NonPrimaryKeyColumns[x].AllowDBNull)
+	{
+		return "null";
+	}
+	else if (!ParseDbColDefaultVal && !SourceTable.NonPrimaryKeyColumns[x].AllowDBNull)
+	{
 		return GetCSDefaultByType(SourceTable.NonPrimaryKeyColumns[x]); 
+	}
 	else
 	{
 		string val = GetCSDefaultByType(SourceTable.NonPrimaryKeyColumns[x]); 
