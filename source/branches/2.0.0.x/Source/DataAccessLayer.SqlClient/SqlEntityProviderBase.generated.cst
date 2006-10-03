@@ -1179,11 +1179,11 @@ namespace <%=DALNameSpace%>.SqlClient
 			DbCommand commandWrapper = database.GetStoredProcCommand("<%=command.Name%>");
 			
 		<% foreach(ParameterSchema col in command.InputParameters)	{%>			
-			database.AddInParameter(commandWrapper, "@<%=GetPropertyName(col.Name)%>", <%=GetDbType(col)%>,  <%=GetPrivateName(col.Name)%> );
+			database.AddInParameter(commandWrapper, "<%=col.Name%>", <%=GetDbType(col)%>,  <%=GetPrivateName(col.Name)%> );
 		<%}%>
 	
 		<% foreach(ParameterSchema col in command.AllOutputParameters)	{ %>
-			database.AddParameter(commandWrapper, "@<%=GetPropertyName(col.Name)%>", DbType.<%=col.DataType.ToString()%>, ParameterDirection.InputOutput, "", DataRowVersion.Current,<%=GetPrivateName(col.Name)%>);
+			database.AddParameter(commandWrapper, "<%=col.Name%>", DbType.<%=col.DataType.ToString()%>, ParameterDirection.InputOutput, "", DataRowVersion.Current,<%=GetPrivateName(col.Name)%>);
 		<%}%>
 			
 			<%			
@@ -1192,7 +1192,7 @@ namespace <%=DALNameSpace%>.SqlClient
 
 			foreach(ParameterSchema outParam in command.AllOutputParameters)
 			{
-				outputValues.AppendFormat("\t\t\t{0} =  Utility.GetParameterValue<{1}>(commandWrapper.Parameters[\"@{2}\"]);\n",GetPrivateName(outParam.Name), GetCSType(outParam), GetPropertyName(outParam.Name)); 
+				outputValues.AppendFormat("\t\t\t{0} =  Utility.GetParameterValue<{1}>(commandWrapper.Parameters[\"{2}\"]);\n",GetPrivateName(outParam.Name), GetCSType(outParam), outParam.Name); 
 			}
 			%>
 			<% if (returnType == "DataSet") { %>

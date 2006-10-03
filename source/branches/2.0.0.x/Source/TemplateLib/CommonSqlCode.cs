@@ -69,7 +69,8 @@ namespace MoM.Templates
 		private string auditDateField = "";
 		private bool cspUseDefaultValForNonNullableTypes = false;
 		private bool parseDbColDefaultVal  = false;
-		
+		private bool changeUnderscoreToPascalCase  = false;
+				
 		private MethodNamesProperty methodNames = null;
 		private Hashtable aliases = null;
 		
@@ -314,6 +315,15 @@ namespace MoM.Templates
 			set { this.parseDbColDefaultVal = value; }
 		}
 		
+		[Category("09. Code style - Advanced")]
+		[Description("If set to true, attempts to treat underscores, '_', as word seperators for Pascal casing.  So, a table called aspnet_users, turns into AspnetUsers.")]
+		public bool ChangeUnderscoreToPascalCase
+		{
+			get { return this.changeUnderscoreToPascalCase; }
+			set { this.changeUnderscoreToPascalCase = value; }
+		}
+		
+		
 		[Editor(typeof(System.Windows.Forms.Design.FileNameEditor), typeof(System.Drawing.Design.UITypeEditor))] 
 		[Category("09. Code style - Advanced")]
 		[CodeTemplateProperty(CodeTemplatePropertyOption.Optional)]
@@ -409,8 +419,18 @@ namespace MoM.Templates
         /// <returns>PascalCased version of the name</returns>
         public string GetPascalCaseName(string name)
         {
-            char[] splitter = { '_', ' ' };
-            string[] splitNames = name.Split(splitter);
+			string[] splitNames;
+			if (ChangeUnderscoreToPascalCase)
+			{
+				char[] splitter =  {' '};
+				splitNames = name.Split(splitter);
+			}	
+			else
+			{
+				char[] splitter = {'_', ' '};
+				splitNames = name.Split(splitter);
+			}
+			
             string pascalName = "";
             foreach (string s in splitNames)
             {
@@ -2514,10 +2534,12 @@ CREATE\s+PROC(?:EDURE)?                               # find the start of the st
 					//this is probably a custom function, lets handle it sane-like
 					if (defaultValue.Contains("()"))
 					{
-						if (defaultValue.ToLower() == "getdate()")
+						if ( defaultValue.ToLower() == "getdate()" )
 							defaultValue = "DateTime.Now";
-						else if (defaultValue.ToLower() == "newid()")
+						else if ( defaultValue.ToLower() == "newid()" )
 							defaultValue = "new Guid()";
+						else if ( defaultValue.ToLower() == "getutcdate()" )
+							defaultValue = "DateTime.UtcNow";
 						else
 							return null;
 					}
@@ -2617,7 +2639,9 @@ CREATE\s+PROC(?:EDURE)?                               # find the start of the st
 						
 							if (defaultValue == "DateTime.Now")
 								return "DateTime.Now";
-							
+							if (defaultValue == "DateTime.UtcNow")
+								return "DateTime.UtcNow";
+
 							dateConvert = DateTime.Parse(defaultValue);
 							if (defaultValue != null )
 								return "new DateTime(\"" + dateConvert.ToString() + "\")";
