@@ -241,30 +241,37 @@ namespace <%=DALNameSpace%>.SqlClient
 			
 			try
 			{
-			if (transactionManager != null)
-			{
-				reader = Utility.ExecuteReader(transactionManager, commandWrapper);
-			}
-			else
-			{
-				reader = Utility.ExecuteReader(database, commandWrapper);
-			}		
-			Fill(reader, rows, start, pageLength);
-			count = -1;
-			if(reader.NextResult())
-			{
-				if(reader.Read())
+				//Provider Data Requesting Command Event
+				OnDataRequesting(new CommandEventArgs(commandWrapper, "GetBy<%=functionname%>", rows)); 
+	
+				if (transactionManager != null)
 				{
-					count = reader.GetInt32(0);
+					reader = Utility.ExecuteReader(transactionManager, commandWrapper);
 				}
-			}
+				else
+				{
+					reader = Utility.ExecuteReader(database, commandWrapper);
+				}		
+				Fill(reader, rows, start, pageLength);
+				count = -1;
+				if(reader.NextResult())
+				{
+					if(reader.Read())
+					{
+						count = reader.GetInt32(0);
+					}
+				}
 					
-			
+				//Provider Data Requested Command Event
+				OnDataRequested(new CommandEventArgs(commandWrapper, "GetBy<%=functionname%>", rows)); 
+
 			}
 			finally 
 			{
 				if (reader != null) 
 					reader.Close();
+					
+				commandWrapper = null;
 			}
 			return rows; 
 		}
@@ -310,6 +317,9 @@ namespace <%=DALNameSpace%>.SqlClient
 			database.AddInParameter(commandWrapper, "@<%=GetPropertyName(RowVersion.Name)%>", DbType.<%= RowVersion.DataType.ToString() %>, <%= GetPrivateName(RowVersion.Name) %>);
 			<% } %>
 			
+			//Provider Data Requesting Command Event
+			OnDataRequesting(new CommandEventArgs(commandWrapper, "<%= MethodNames.Delete %>")); 
+
 			int results = 0;
 			
 			if (transactionManager != null)
@@ -331,6 +341,9 @@ namespace <%=DALNameSpace%>.SqlClient
 				<%}%>
 			}
 			
+			//Provider Data Requested Command Event
+			OnDataRequested(new CommandEventArgs(commandWrapper, "<%= MethodNames.Delete %>")); 
+
 			if (results == 0)
 			{
 				<% if (RowVersion != null){ %>
@@ -340,6 +353,7 @@ namespace <%=DALNameSpace%>.SqlClient
 				return false;
 				<% } %>
 			}
+			commandWrapper = null;
 			
 			return Convert.ToBoolean(results);
 		}//end Delete
@@ -428,6 +442,9 @@ namespace <%=DALNameSpace%>.SqlClient
 				
 			try
 			{
+				//Provider Data Requesting Command Event
+				OnDataRequesting(new CommandEventArgs(commandWrapper, "<%= MethodNames.Find %>", rows)); 
+
 				if (transactionManager != null)
 				{
 					reader = Utility.ExecuteReader(transactionManager, commandWrapper);
@@ -446,11 +463,16 @@ namespace <%=DALNameSpace%>.SqlClient
 						count = reader.GetInt32(0);
 					}
 				}
+				
+				//Provider Data Requested Command Event
+				OnDataRequested(new CommandEventArgs(commandWrapper, "<%= MethodNames.Find %>", rows)); 
 			}
 			finally
 			{
 				if (reader != null) 
-					reader.Close();				
+					reader.Close();	
+					
+				commandWrapper = null;
 			}
 			return rows;
 		}
@@ -490,6 +512,9 @@ namespace <%=DALNameSpace%>.SqlClient
 			
 			try
 			{
+				//Provider Data Requesting Command Event
+				OnDataRequesting(new CommandEventArgs(commandWrapper, "<%= MethodNames.Find %>", rows)); 
+
 				if ( transactionManager != null )
 				{
 					reader = Utility.ExecuteReader(transactionManager, commandWrapper);
@@ -509,11 +534,16 @@ namespace <%=DALNameSpace%>.SqlClient
 						count = reader.GetInt32(0);
 					}
 				}
+				
+				//Provider Data Requested Command Event
+				OnDataRequested(new CommandEventArgs(commandWrapper, "<%= MethodNames.Find %>", rows)); 
 			}
 			finally
 			{
 				if ( reader != null )
 					reader.Close();
+					
+				commandWrapper = null;
 			}
 			
 			return rows;
@@ -556,6 +586,9 @@ namespace <%=DALNameSpace%>.SqlClient
 			
 			try
 			{
+				//Provider Data Requesting Command Event
+				OnDataRequesting(new CommandEventArgs(commandWrapper, "<%= MethodNames.GetAll %>", rows)); 
+
 				if (transactionManager != null)
 				{
 					reader = Utility.ExecuteReader(transactionManager, commandWrapper);
@@ -574,11 +607,16 @@ namespace <%=DALNameSpace%>.SqlClient
 						count = reader.GetInt32(0);
 					}
 				}
+				
+				//Provider Data Requested Command Event
+				OnDataRequested(new CommandEventArgs(commandWrapper, "<%= MethodNames.GetAll %>", rows)); 
 			}
 			finally 
 			{
 				if (reader != null) 
 					reader.Close();
+					
+				commandWrapper = null;	
 			}
 			return rows;
 		}//end getall
@@ -614,6 +652,9 @@ namespace <%=DALNameSpace%>.SqlClient
 			
 			try
 			{
+				//Provider Data Requesting Command Event
+				OnDataRequesting(new CommandEventArgs(commandWrapper, "<%= MethodNames.GetPaged %>", rows)); 
+
 				if (transactionManager != null)
 				{
 					reader = Utility.ExecuteReader(transactionManager, commandWrapper);
@@ -633,6 +674,10 @@ namespace <%=DALNameSpace%>.SqlClient
 						count = reader.GetInt32(0);
 					}
 				}
+				
+				//Provider Data Requested Command Event
+				OnDataRequested(new CommandEventArgs(commandWrapper, "<%= MethodNames.GetPaged %>", rows)); 
+
 			}
 			catch(Exception)
 			{			
@@ -642,6 +687,8 @@ namespace <%=DALNameSpace%>.SqlClient
 			{
 				if (reader != null) 
 					reader.Close();
+				
+				commandWrapper = null;
 			}
 			
 			return rows;
@@ -697,6 +744,9 @@ namespace <%=DALNameSpace%>.SqlClient
 			<%=collectionClassName%> rows = new <%=collectionClassName%>();
 			try
 			{
+				//Provider Data Requesting Command Event
+				OnDataRequesting(new CommandEventArgs(commandWrapper, "GetBy<%=GetKeysName(fkeys[j].ForeignKeyMemberColumns)%>", rows)); 
+
 				if (transactionManager != null)
 				{
 					reader = Utility.ExecuteReader(transactionManager, commandWrapper);
@@ -716,11 +766,16 @@ namespace <%=DALNameSpace%>.SqlClient
 						count = reader.GetInt32(0);
 					}
 				}
+				
+				//Provider Data Requested Command Event
+				OnDataRequested(new CommandEventArgs(commandWrapper, "GetBy<%=GetKeysName(fkeys[j].ForeignKeyMemberColumns)%>", rows)); 
 			}
 			finally
 			{
 				if (reader != null) 
 					reader.Close();
+					
+				commandWrapper = null;
 			}
 			return rows;
 		}	
@@ -796,6 +851,9 @@ namespace <%=DALNameSpace%>.SqlClient
 			<%=collectionClassName%> tmp = new <%=collectionClassName%>();
 			try
 			{
+				//Provider Data Requesting Command Event
+				OnDataRequesting(new CommandEventArgs(commandWrapper, "GetBy<%=GetKeysName(indexes[j].MemberColumns)%>", tmp)); 
+
 				if (transactionManager != null)
 				{
 					reader = Utility.ExecuteReader(transactionManager, commandWrapper);
@@ -815,11 +873,16 @@ namespace <%=DALNameSpace%>.SqlClient
 						count = reader.GetInt32(0);
 					}
 				}
+				
+				//Provider Data Requested Command Event
+				OnDataRequested(new CommandEventArgs(commandWrapper, "GetBy<%=GetKeysName(indexes[j].MemberColumns)%>", tmp));
 			}
 			finally 
 			{
 				if (reader != null) 
 					reader.Close();
+					
+				commandWrapper = null;
 			}
 			
 			<% if (isUnique) { %>
@@ -970,6 +1033,8 @@ namespace <%=DALNameSpace%>.SqlClient
 			
 			int results = 0;
 			
+			//Provider Data Requesting Command Event
+			OnDataRequesting(new CommandEventArgs(commandWrapper, "<%= MethodNames.Insert %>", entity));
 				
 			if (transactionManager != null)
 			{
@@ -1012,6 +1077,9 @@ namespace <%=DALNameSpace%>.SqlClient
 			
 			entity.AcceptChanges();
 	
+			//Provider Data Requested Command Event
+			OnDataRequested(new CommandEventArgs(commandWrapper, "<%= MethodNames.Insert %>", entity));
+
 			return Convert.ToBoolean(results);
 		}	
 		#endregion
@@ -1089,7 +1157,9 @@ namespace <%=DALNameSpace%>.SqlClient
 			
 			int results = 0;
 			
-			
+			//Provider Data Requesting Command Event
+			OnDataRequesting(new CommandEventArgs(commandWrapper, "<%= MethodNames.Update %>", entity));
+
 			if (transactionManager != null)
 			{
 				results = Utility.ExecuteNonQuery(transactionManager, commandWrapper);
@@ -1138,7 +1208,10 @@ namespace <%=DALNameSpace%>.SqlClient
 		}%>
 			
 			entity.AcceptChanges();
-	
+			
+			//Provider Data Requested Command Event
+			OnDataRequested(new CommandEventArgs(commandWrapper, "<%= MethodNames.Update %>", entity));
+
 			return Convert.ToBoolean(results);
 		}
 			
@@ -1182,8 +1255,8 @@ namespace <%=DALNameSpace%>.SqlClient
 			database.AddInParameter(commandWrapper, "<%=col.Name%>", <%=GetDbType(col)%>,  <%=GetPrivateName(col.Name)%> );
 		<%}%>
 	
-		<% foreach(ParameterSchema col in command.AllOutputParameters)	{ %>
-			database.AddParameter(commandWrapper, "<%=col.Name%>", DbType.<%=col.DataType.ToString()%>, ParameterDirection.InputOutput, "", DataRowVersion.Current,<%=GetPrivateName(col.Name)%>);
+		<% foreach(SchemaExplorer.ParameterSchema col in command.AllOutputParameters)	{ %>
+			database.AddParameter(commandWrapper, "<%=col.Name%>", DbType.<%=col.DataType.ToString()%>, <%= col.Size %>, ParameterDirection.InputOutput, <%= col.AllowDBNull.ToString().ToLower() %>, <%= col.Precision %>, <%= col.Scale %>, string.Empty, DataRowVersion.Current, <%=GetPrivateName(col.Name)%>);
 		<%}%>
 			
 			<%			
@@ -1198,6 +1271,9 @@ namespace <%=DALNameSpace%>.SqlClient
 			<% if (returnType == "DataSet") { %>
 			DataSet ds = null;
 			
+			//Provider Data Requesting Command Event
+			OnDataRequesting(new CommandEventArgs(commandWrapper, "<%= methodName %>", entity));
+
 			if (transactionManager != null)
 			{	
 				ds = database.ExecuteDataSet(commandWrapper, transactionManager.TransactionObject);
@@ -1206,6 +1282,10 @@ namespace <%=DALNameSpace%>.SqlClient
 			{
 				ds = database.ExecuteDataSet(commandWrapper);
 			}
+			
+			//Provider Data Requested Command Event
+			OnDataRequested(new CommandEventArgs(commandWrapper, "<%= methodName %>", (IEntity)null));
+
 			
 <%=outputValues.ToString()%>
 			
@@ -1221,6 +1301,9 @@ namespace <%=DALNameSpace%>.SqlClient
 			{
 				dr = Utility.ExecuteReader(database, commandWrapper);
 			}
+			
+			//Provider Data Requested Command Event
+			OnDataRequested(new CommandEventArgs(commandWrapper, "<%= methodName %>", (IEntity)null));
 
 <%=outputValues.ToString()%>
 
@@ -1234,7 +1317,10 @@ namespace <%=DALNameSpace%>.SqlClient
 			{
 				Utility.ExecuteNonQuery(database, commandWrapper);
 			}
-			
+						
+			//Provider Data Requested Command Event
+			OnDataRequested(new CommandEventArgs(commandWrapper, "<%= methodName %>", (IEntity)null));
+
 <%=outputValues.ToString()%>
 				
 				return;
@@ -1262,6 +1348,10 @@ namespace <%=DALNameSpace%>.SqlClient
 					if (reader != null) 
 						reader.Close();
 				}
+				
+				//Provider Data Requested Command Event
+				OnDataRequested(new CommandEventArgs(commandWrapper, "<%= methodName %>", rows));
+
 <%=outputValues.ToString()%>
 				return rows;
 				<%} else if (returnType != "void"){%>

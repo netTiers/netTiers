@@ -1343,8 +1343,174 @@ namespace <%= DALNameSpace %>.Bases
         }
 
 		#endregion Helper Methods
+		
+        #region DataRequesting event definition code
+        /// <summary>
+        ///     This represents the delegate method prototype that
+        ///     event receivers must implement
+        /// </summary>
+        public delegate void DataRequestingEventHandler(object sender, CommandEventArgs e);
+
+        /// <summary>
+        ///     An event which occurs just before a data 
+        ///     request is made in the data provider.
+        /// </summary>
+        public event DataRequestingEventHandler DataRequesting;
+
+        /// <summary>
+        ///     This is the method that is responsible for notifying
+        ///     receivers that the event occurred just before accessing the 
+        ///     data provider.
+        /// </summary>
+        protected virtual void OnDataRequesting(CommandEventArgs e)
+        {
+            if (DataRequesting != null)
+            {
+                DataRequesting(this, e);
+            }
+        }
+
+
+        #endregion //('DataRequesting' event definition code)
+
+        #region DataRequested event definition code
+        /// <summary>
+        ///     This represents the delegate method prototype that
+        ///     event receivers must implement 
+        /// </summary>
+        public delegate void DataRequestedEventHandler(object sender, CommandEventArgs e);
+        
+        /// <summary>
+        ///     An event which occurs just before a data 
+        ///     request is made in the data provider.
+        /// </summary>
+        public event DataRequestedEventHandler DataRequested;
+
+        /// <summary>
+        ///     This is the method that is responsible for notifying
+        ///     receivers that the event occurred just after accessing the 
+        ///     data provider.
+        /// </summary>
+        protected virtual void OnDataRequested(CommandEventArgs e)
+        {
+            if (DataRequested != null)
+            {
+                DataRequested(this, e);
+            }
+        }
+
+
+        #endregion //('DataRequested' event definition code)
 	}
-	
+
+    #region CommandEventArgs
+    /// <summary>
+    /// Event Args used to transfer crucial information just before 
+    /// and after a command is used in the data provider.
+    /// </summary>
+    public class CommandEventArgs
+    {
+        #region Fields
+        private IList currentEntityList = null;
+        private IEntity currentEntity = null;
+        private System.Data.Common.DbCommand command;
+        private string methodName = null;
+        #endregion 
+
+        #region Ctors
+        /// <summary>
+        /// Initializes a new instance of the <see cref="T:CommandEventArgs"/> class.
+        /// </summary>
+        public CommandEventArgs() {}
+
+        /// <summary>
+        /// Initializes a new instance of the <see cref="T:CommandEventArgs"/> class.
+        /// </summary>
+        /// <param name="command">The command.</param>
+        /// <param name="methodName">Name of the method.</param>
+        /// <param name="entity">The entity.</param>
+        /// <param name="list">The list.</param>
+        public CommandEventArgs(System.Data.Common.DbCommand command, string methodName, IEntity entity, IList list)
+        {
+            this.Command = command;
+            this.MethodName = methodName;
+            this.CurrentEntity = entity;
+            this.CurrentEntityList = list;
+        }
+
+        /// <summary>
+        /// Initializes a new instance of the <see cref="T:CommandEventArgs"/> class.
+        /// </summary>
+        /// <param name="command">The command.</param>
+        /// <param name="methodName">Name of the method.</param>
+        /// <param name="list">The list.</param>
+        public CommandEventArgs(System.Data.Common.DbCommand command, string methodName, IList list) : this(command, methodName, null, list)
+        { }
+		
+		/// <summary>
+        /// Initializes a new instance of the <see cref="T:CommandEventArgs"/> class.
+        /// </summary>
+        /// <param name="command">The command.</param>
+        /// <param name="methodName">Name of the method.</param>
+        public CommandEventArgs(System.Data.Common.DbCommand command, string methodName) : this(command, methodName, null, null)
+        { }
+		
+        /// <summary>
+        /// Initializes a new instance of the <see cref="T:CommandEventArgs"/> class.
+        /// </summary>
+        /// <param name="command">The command.</param>
+        /// <param name="methodName">Name of the method.</param>
+        /// <param name="entity">The current entity.</param>
+        public CommandEventArgs(System.Data.Common.DbCommand command, string methodName, IEntity entity) : this(command, methodName, entity, null)
+        { }
+        #endregion 
+
+        #region Properties
+        /// <summary>
+        /// Gets or sets the current command.
+        /// </summary>
+        /// <value>The command.</value>
+        public System.Data.Common.DbCommand Command
+        {
+            get { return command; }
+            set { command = value; }
+        }
+
+        /// <summary>
+        /// Gets or sets the name of the method.
+        /// </summary>
+        /// <value>The name of the method.</value>
+        public string MethodName
+        {
+            get { return methodName; }
+            set { methodName = value; }
+        }
+
+        /// <summary>
+        /// Gets or sets the current entity which the action is 
+        /// being acted on.  If there is no entity, this 
+        /// value will be null.
+        /// </summary>
+        /// <value>The entity.</value>
+        public IEntity CurrentEntity
+        {
+            get { return currentEntity; }
+            set { currentEntity = value; }
+        }
+
+        /// <summary>
+        /// Gets or sets the current .
+        /// </summary>
+        /// <value>The return value.</value>
+        public IList CurrentEntityList
+        {
+            get {   return currentEntityList; }
+            set {   currentEntityList = value; }
+        }
+        #endregion 
+    }
+    #endregion 
+		
 	#region ChildEntityTypesList
 	
 	/// <summary>

@@ -422,12 +422,12 @@ namespace MoM.Templates
 			string[] splitNames;
 			if (ChangeUnderscoreToPascalCase)
 			{
-				char[] splitter =  {' '};
+				char[] splitter = {'_', ' '};
 				splitNames = name.Split(splitter);
 			}	
 			else
 			{
-				char[] splitter = {'_', ' '};
+				char[] splitter =  {' '};
 				splitNames = name.Split(splitter);
 			}
 			
