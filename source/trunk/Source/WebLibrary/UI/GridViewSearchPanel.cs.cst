@@ -1,4 +1,4 @@
-<%@ CodeTemplate Language="C#" TargetLanguage="Text" Description="" Debug="True" ResponseEncoding="UTF-8" %>
+﻿<%@ CodeTemplate Language="C#" TargetLanguage="Text" Description="" Debug="True" ResponseEncoding="UTF-8" %>
 <%@ Property Name="RootNameSpace" Type="System.String" Category="Data" Description="Website Namespace." %>
 <%@ Property Name="BusinessLogicLayerNameSpace" Type="System.String" Category="03. Namespaces - Required" Description="The sub namespace that is added to the root namespace for the entities." Default="Entities" Optional="False" %>
 
@@ -173,7 +173,7 @@ namespace <%=RootNameSpace%>.Web.UI
                         for (int i = 0; i < GridView1.Columns.Count; i++)
                         {
                             // -- check if property is the same what specified in the sortexpression of the column
-                            if (p.Name == GridView1.Columns[i].SortExpression)
+                            if (p.Name.ToLower() == GetCleanName(GridView1.Columns[i].SortExpression))
                             {
                                 ListItem li = new ListItem();
                                 li.Text = GridView1.Columns[i].HeaderText;
@@ -320,6 +320,22 @@ namespace <%=RootNameSpace%>.Web.UI
         #endregion
 
         #region Help Methods
+        /// <summary>
+        /// Transform a name into a name that will be compare against entity property
+        /// </summary>
+        private string GetCleanName(string name)
+        {
+            string newName = string.Empty;
+
+            string[] strips = name.Split(new char[] { '_', '[', ']', ' ' });
+            foreach (string strip in strips)
+            {
+                if (strip == string.Empty) continue;
+                newName += strip;
+            }
+            return newName.ToLower();
+        }
+		
         /// <summary>
         /// Sets DataSourceObject Parameter's WhereClause property
         /// </summary>
