@@ -4,6 +4,8 @@
 <%@ Property Name="ConnectionString" Type="System.String" Category="Data" Description="sql connectionstring." %>
 <%@ Property Name="FactoryType" Type="System.String" Category="Data" Description="The Creational Factory used to create the entities." %>
 <%@ Property Name="WebServiceUrl" Type="System.String" Category="Data" Description="Web service URL." %>
+<%@ Property Name="NetTiersSqlProvider" Type="System.Boolean" Category="Data" Description="Indicates if we use the SqlClient Provider." %>
+<%@ Property Name="ProviderInvariantName" Type="System.String" Category="Data" Description="The DBProviderFactory name." %>
 <?xml version="1.0" encoding="utf-8" ?>
 <configuration>
   <configSections>
@@ -17,9 +19,9 @@
     <add name="netTiersConnectionString" connectionString="<%=ConnectionString%>" />
   </connectionStrings>
 
-  <netTiersService defaultProvider="SqlNetTiersProvider">
+  <netTiersService defaultProvider="<% if (NetTiersSqlProvider) {%> SqlNetTiersProvider<% } else {%>GenericNetTiersProvider<%}%>">
     <providers>
-    
+    <% if (NetTiersSqlProvider) { %>
     <!--
     *** SqlClient Provider ***
     	connectionStringName: sqlclient connection string to the db
@@ -37,6 +39,28 @@
         enableMethodAuthorization="false"
         defaultCommandTimeout="30"
         />
+    <% } else { %>
+        <!--
+    *** GenericClient Provider ***
+    this is the generic DbProviderFactory .netTiers provider
+    	connectionStringName: the connection string to the db
+    	useStoredProcedure: if trueindicates that we use the stored procedures, otherwise, we use parametrized queries that are embedded.
+    	providerInvariantName: indicate the provider you want to use, for the moment only the following list is supported:
+    		- System.Data.SQLite
+    -->
+      <add 
+        name="GenericNetTiersProvider" 
+        type="<%=DALNameSpace%>.GenericClient.GenericNetTiersProvider, <%=DALNameSpace%>.GenericClient"
+        connectionStringName="netTiersConnectionString"
+        useStoredProcedure="false"
+        providerInvariantName="<%=ProviderInvariantName%>"
+		entityFactoryType="<%= FactoryType %>"
+		useEntityFactory="true"
+		enableEntityTracking="false"
+        enableMethodAuthorization="false"
+        defaultCommandTimeout="30"
+        />
+    <% } %>    
       <!-- 
       	*** WebserviceClient Provider ***
       	The url parameter indicates the webservices url (ex: http://localhost/NorthWind/NorthWindServices.aspx)

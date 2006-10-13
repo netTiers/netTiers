@@ -1,11 +1,4 @@
-<%--
-	Description:
-		NetTiers main templates. Internally call sub templates to genereate entities and dal. 	
-	
-	Originally written By Ryan Hurdon
-	ReWritten and maintained by John Roland since Oct. 2004
---%>
-<%@ CodeTemplate Src="TemplateLib/CommonSqlCode.cs" Inherits="MoM.Templates.CommonSqlCode" Language="C#" TargetLanguage="Text" Description="NetTiers main template." Debug="True" ResponseEncoding="UTF-8"%>
+﻿<%@ CodeTemplate Src="TemplateLib/CommonSqlCode.cs" Inherits="MoM.Templates.CommonSqlCode" Language="C#" TargetLanguage="Text" Description="NetTiers main template." Debug="True" ResponseEncoding="UTF-8"%>
 <%@ Assembly Name="SchemaExplorer" %>
 <%@ Assembly Name="System.Design" %>
 <%@ Assembly Name="System.DirectoryServices" %>
@@ -101,6 +94,9 @@
 <%@ Property Name="SelectAllSuffix" Type="System.String" Default="_List" Category="08. Stored procedures - Advanced" Description="Suffix to use for all generated SELECT stored procedures." %>
 <%@ Property Name="FindSuffix" Type="System.String" Default="_Find" Category="08. Stored procedures - Advanced"Description="Suffix to use for all generated selective SELECT stored procedures." %>
 <%@ Property Name="GrantUser" Type="System.String" Category="08. Stored procedures - Advanced" Description="Optional user or role to GRANT EXEC Procedure permissions to" Default="" Optional="True" %>
+
+<%-- 9.0 windows forms Library --%>
+<%@ Property Name="GenerateWinLibrary" Type="System.Boolean" Default="false" Category="09. Winforms Library - Advanced" Description="Indicates if the web library should be generated.  This contains the EntityDataSource and Other Helpful ASP.net utility classes." %>
 
 
 <script runat="template">
@@ -618,6 +614,17 @@
 														"DataAccessLayer.SqlClient\\Views\\SqlEntityViewProviderBase.generated.cst",
 														"DataAccessLayer.SqlClient\\Views\\SqlEntityViewProvider.cst",
 																												
+														// Generic Client
+														"DataAccessLayer.GenericClient\\GenericNetTiersProvider.cst",
+														"DataAccessLayer.GenericClient\\GenericEntityProviderBase.generated.cst",
+														"DataAccessLayer.GenericClient\\GenericEntityProvider.cst",
+														
+														"DataAccessLayer.GenericClient\\DbCommandManager.cst",
+														
+														"DataAccessLayer.GenericClient\\System.Data.SQLite.Procedures.cst",
+														"DataAccessLayer.GenericClient\\System.Data.OleDb.Procedures.cst",
+																												
+																												
 														"DataAccessLayer.WebService\\ServiceLayer.WebService.cst",
 														"DataAccessLayer.WebService\\WebService.cst",
 														"DataAccessLayer.WebService\\WebInfo.cst",
@@ -676,14 +683,23 @@
 														"WebLibrary\\UI\\MultiFormView.cst",
 														"WebLibrary\\UI\\EntityGridView.cs.cst",
 														"WebLibrary\\UI\\GridViewSearchPanel.cs.cst",
-
+														
+														"WebLibrary\\UI\\TableRepeater.cst",
+														"WebLibrary\\UI\\ViewRepeater.cst",
+														
 														"ASP.Net\\Common\\Admin\\Entity.aspx.cst",
 														"ASP.Net\\Common\\Admin\\Entity.aspx.cs.cst",
 														"ASP.Net\\Common\\Admin\\EntityEdit.aspx.cst",
 														"ASP.Net\\Common\\Admin\\EntityEdit.aspx.cs.cst",
 														"ASP.Net\\Common\\Admin\\UserControls\\EntityFields.ascx.cst",
 														"ASP.Net\\Common\\Admin\\Web.Sitemap.cst",
-														"ASP.Net\\Common\\Admin\\site.master.cst"														
+														"ASP.Net\\Common\\Admin\\site.master.cst",
+														
+														"WinformsLibrary\\UI\\TableEditControl.cst",
+														"WinformsLibrary\\UI\\TableEditControlBase.cst",
+														"WinformsLibrary\\UI\\TableGridView.cst",
+														"WinformsLibrary\\UI\\TableGridViewBase.cst",
+														"WinformsLibrary\\Data\\TypedDataSource.cst"														
 														};
 	
 	// Compile and load all them in a collection
@@ -749,11 +765,11 @@ public void SetProperties()
 #endregion
 
 public CodeTemplate CompileTemplate(string templateName)
-{
+{	
 	this._CurrentFileName = templateName;
 	
 	CodeTemplateCompiler compiler = new CodeTemplateCompiler(templateName);
-	compiler.Compile();
+	compiler.Compile();	
 
 	if (compiler.Errors.Count == 0)
 	{
@@ -890,17 +906,47 @@ public void Go()
 
 	DebugWriteLine("ComponentPattern: "+ComponentPattern.ToString());
 	
+	#region NetTiersProvider Detection : based upon the current SchemaExplorer
+	
+	bool _netTiersSqlProvider = true;	
+	string _providerInvariantName = "System.Data.SqlClient";
+	
+	SchemaExplorer.IDbSchemaProvider schemaProvider = SourceDatabase.Provider;
+	if (SourceDatabase.Provider.Name != "SqlSchemaProvider")
+	{
+		_netTiersSqlProvider = false;
+		if (SourceDatabase.Provider.Name == "Sqlite3SchemaProvider")
+		{
+			_providerInvariantName = "System.Data.SQLite";
+		}
+		else if (SourceDatabase.Provider.Name == "ADOXSchemaProvider")
+		{
+			_providerInvariantName = "System.Data.OleDb";
+		}
+		// TODO: add MySql, FireBird and Oracle support
+			
+	}
+	
+	//Debug.WriteLine(_providerInvariantName);
+	//Debug.WriteLine(_netTiersSqlProvider);
+	
+	
+	#endregion
+	
 	// Build Namespaces
 	if (BusinessLogicLayerNameSpace == null) BusinessLogicLayerNameSpace = string.Empty;
 	string BLLNameSpace = NameSpace + (BusinessLogicLayerNameSpace.Length>0 ? "." + GetCleanName(BusinessLogicLayerNameSpace) : string.Empty);
 	string ComponentsNameSpace = NameSpace + (this.ComponentLayerNameSpace.Length> 0 ? "." + GetCleanName(ComponentLayerNameSpace) : string.Empty);
 	string DALNameSpace = NameSpace + "." + (DataAccessLayerNameSpace.Length>0 ? GetCleanName(DataAccessLayerNameSpace) : "DataAccessLayer");
 	string DALSqlNameSpace = DALNameSpace  + ".SqlClient";
+	string DALGenericNameSpace = DALNameSpace  + ".GenericClient";
+	
 	string DALWSNameSpace = DALNameSpace  + ".WebServiceClient";
 	string UTNameSpace = NameSpace + "." + (UnitTestsNameSpace.Length>0 ? GetCleanName2(UnitTestsNameSpace) : "UnitTests");
 	string WSNameSpace = DALNameSpace + ".WebService";
 	string WebLibNameSpace = NameSpace + ".Web";
 	string WebsiteNameSpace = NameSpace + ".Website";
+	string WinLibNameSpace = NameSpace + ".Windows.Forms";
 	string SQLNamespace = NameSpace + "." +  (SQLFolderName.Length > 0 ?  SQLFolderName : "SQL");
 	
 	string factoryType = (ComponentPattern == MoM.Templates.ComponentPatternType.DomainModel ? string.Format("{0}.{1}", ComponentsNameSpace, "ComponentEntityFactory") : string.Format("{0}.{1}", BLLNameSpace, "EntityFactory")); 
@@ -912,8 +958,10 @@ public void Go()
 	string rootPathComponents = OutputDirectory + "\\" +  ComponentsNameSpace;
 	string rootPathDAL = OutputDirectory + "\\" + DALNameSpace;
 	string rootPathDALSql = OutputDirectory + "\\" + DALSqlNameSpace;
+	string rootPathDALGeneric = OutputDirectory + "\\" + DALGenericNameSpace;
 	string rootPathDALWS = OutputDirectory + "\\" + DALWSNameSpace;
 	string rootPathWebLib = OutputDirectory + "\\" + WebLibNameSpace;
+	string rootPathWinLib = OutputDirectory + "\\" + WinLibNameSpace;
 	string rootPathWebsite = OutputDirectory + "\\" + WebsiteNameSpace;
 	string rootPathUT = OutputDirectory + "\\" + UTNameSpace;
 	string rootPathSQL = OutputDirectory + "\\" + SQLNamespace;
@@ -1119,17 +1167,33 @@ public void Go()
 		SafeCreateDirectory(rootPathDAL + "\\Bases\\Views");
 		SafeCreateDirectory(rootPathDAL + "\\Query");
 		
-		// sql implementation
-		SafeCreateDirectory(rootPathDALSql);
-		SafeCreateDirectory(rootPathDALSql + "\\Views");
-				
-		//SafeCreateDirectory(rootPathDAL + "\\SqlClient");
-		//SafeCreateDirectory(rootPathDAL + "\\SqlClient\\Views");
-
 		if ( HasCustomCode )
 		{
 			SafeCreateDirectory(rootPathDAL + "\\" + CustomCodeFolderName);
-			SafeCreateDirectory(rootPathDALSql + "\\" + CustomCodeFolderName);
+		}
+		
+		// sql implementation
+		if (_netTiersSqlProvider)
+		{
+		SafeCreateDirectory(rootPathDALSql);
+		SafeCreateDirectory(rootPathDALSql + "\\Views");
+				
+			if ( HasCustomCode )
+			{
+				SafeCreateDirectory(rootPathDALSql + "\\" + CustomCodeFolderName);
+			}
+		}		
+		// Generic implementation
+		else
+		{
+			SafeCreateDirectory(rootPathDALGeneric);
+			
+			SafeCreateDirectory(rootPathDALGeneric + "\\Views");
+
+			if ( HasCustomCode )
+			{
+				SafeCreateDirectory(rootPathDALGeneric + "\\" + CustomCodeFolderName);
+			}
 		}
 		
 		// ws implementation
@@ -1179,6 +1243,13 @@ public void Go()
 		
 		// TODO check if the virtual directory exists, if not create it.
 	}	
+	
+	if (GenerateWinLibrary)
+	{
+		SafeCreateDirectory(rootPathWinLib);
+		SafeCreateDirectory(rootPathWinLib + "\\Data");
+		SafeCreateDirectory(rootPathWinLib + "\\UI");
+	}
 		
 	if (GenerateWebLibrary)
 	{
@@ -1432,6 +1503,7 @@ public void Go()
 	this.GetTemplate("EntityBaseCore.generated.cst").SetProperty("NameSpace", BLLNameSpace);
 	this.GetTemplate("EntityBaseCore.generated.cst").SetProperty("SourceTables", _sourceTables);
 	this.GetTemplate("EntityBaseCore.generated.cst").SetProperty("SourceViews", _sourceViews);
+	this.GetTemplate("EntityBaseCore.generated.cst").SetProperty("IncludeWCFDataAttributes", IncludeWCFDataAttributes);
 	this.RenderToFile("EntityBaseCore.generated.cst", rootPathBLL + "\\EntityBaseCore.generated.cs", true);
 				
 	
@@ -1592,6 +1664,8 @@ public void Go()
 	//----------------------------------------------------------------------------------------------------------------------------------------------
 	if (GenerateSql)
 	{
+		if (_netTiersSqlProvider)
+		{
 		XmlElement spNode = AddFileNode(commonNode, "StoredProcedures.sql");
 		this.GetTemplate("StoredProceduresXml.cst").SetProperty("SourceViews", _sourceViews);
 		this.GetTemplate("StoredProceduresXml.cst").SetProperty("SourceTables", _sourceTables);
@@ -1655,7 +1729,6 @@ public void Go()
 			}
 		}
 	
-		
 		// Install the stored procedures.
 		if (ExecuteSql)
 		{
@@ -1673,8 +1746,98 @@ public void Go()
 				AddMessageNode(spNode, 2, string.Format("Error while execution Sql file. {0}", ex), true);
 			}			
 		}
+		}
+				
 		
 		//AddExecutionTime(spNode);
+		
+		#region generation Xml procedures files for the Generic client, depending of the DbProviderFactory ProviderInvariantName
+		
+		if (_netTiersSqlProvider == false)
+		{
+			if (_providerInvariantName == "System.Data.SQLite")
+			{		
+				#region SQLite
+		
+		XmlElement sqliteQueriesNode = AddFileNode(commonNode, "System.Data.SQLite.Procedures.xml");
+		this.GetTemplate("System.Data.SQLite.Procedures.cst").SetProperty("SourceViews", _sourceViews);
+		this.GetTemplate("System.Data.SQLite.Procedures.cst").SetProperty("SourceTables", _sourceTables);
+		
+		this.GetTemplate("System.Data.SQLite.Procedures.cst").SetProperty("IncludeDrop", IncludeDrop);
+		this.GetTemplate("System.Data.SQLite.Procedures.cst").SetProperty("IncludeInsert", IncludeInsert);
+		this.GetTemplate("System.Data.SQLite.Procedures.cst").SetProperty("IncludeUpdate", IncludeUpdate);
+		this.GetTemplate("System.Data.SQLite.Procedures.cst").SetProperty("IncludeManyToMany", IncludeManyToMany);
+		this.GetTemplate("System.Data.SQLite.Procedures.cst").SetProperty("IncludeDelete", IncludeDelete);
+		this.GetTemplate("System.Data.SQLite.Procedures.cst").SetProperty("IncludeUpdate", IncludeUpdate);
+		this.GetTemplate("System.Data.SQLite.Procedures.cst").SetProperty("IncludeGetList", IncludeGetList);
+		this.GetTemplate("System.Data.SQLite.Procedures.cst").SetProperty("IncludeGetListByFK", IncludeGetListByFK);
+		this.GetTemplate("System.Data.SQLite.Procedures.cst").SetProperty("IncludeGetListByIX", IncludeGetListByIX);
+		this.GetTemplate("System.Data.SQLite.Procedures.cst").SetProperty("IncludeFind", IncludeFind);
+		this.GetTemplate("System.Data.SQLite.Procedures.cst").SetProperty("IncludeDatabaseFeatures", IncludeDatabaseFeatures);
+		
+		this.GetTemplate("System.Data.SQLite.Procedures.cst").SetProperty("IsolationLevel", IsolationLevel);
+		//this.GetTemplate("System.Data.SQLite.Procedures.cst").SetProperty("ExcludeFields", ExcludeFields);
+		this.GetTemplate("System.Data.SQLite.Procedures.cst").SetProperty("InsertSuffix", InsertSuffix);
+		this.GetTemplate("System.Data.SQLite.Procedures.cst").SetProperty("UpdateSuffix", UpdateSuffix);
+		this.GetTemplate("System.Data.SQLite.Procedures.cst").SetProperty("DeleteSuffix", DeleteSuffix);
+		this.GetTemplate("System.Data.SQLite.Procedures.cst").SetProperty("SelectSuffix", SelectSuffix);
+		this.GetTemplate("System.Data.SQLite.Procedures.cst").SetProperty("SelectAllSuffix", SelectAllSuffix);
+		this.GetTemplate("System.Data.SQLite.Procedures.cst").SetProperty("FindSuffix", FindSuffix);
+		
+		this.GetTemplate("System.Data.SQLite.Procedures.cst").SetProperty("GrantUser", GrantUser);
+				
+		this.GetTemplate("System.Data.SQLite.Procedures.cst").SetProperty("CompanyName", CompanyName);
+		this.GetTemplate("System.Data.SQLite.Procedures.cst").SetProperty("CompanyURL", CompanyURL);
+		
+		this.GetTemplate("System.Data.SQLite.Procedures.cst").SetProperty("ProcedurePrefix", ProcedurePrefix.Replace(" ", ""));
+
+		this.RenderToFile("System.Data.SQLite.Procedures.cst", rootPathDALGeneric + "\\System.Data.SQLite.Procedures.xml", true);
+		
+				#endregion		
+			}
+			else if (_providerInvariantName == "System.Data.OleDb")
+			{
+				#region OleDb
+		
+		XmlElement oledbQueriesNode = AddFileNode(commonNode, "System.Data.OleDb.Procedures.xml");
+		this.GetTemplate("System.Data.OleDb.Procedures.cst").SetProperty("SourceViews", _sourceViews);
+		this.GetTemplate("System.Data.OleDb.Procedures.cst").SetProperty("SourceTables", _sourceTables);
+		
+		this.GetTemplate("System.Data.OleDb.Procedures.cst").SetProperty("IncludeDrop", IncludeDrop);
+		this.GetTemplate("System.Data.OleDb.Procedures.cst").SetProperty("IncludeInsert", IncludeInsert);
+		this.GetTemplate("System.Data.OleDb.Procedures.cst").SetProperty("IncludeUpdate", IncludeUpdate);
+		this.GetTemplate("System.Data.OleDb.Procedures.cst").SetProperty("IncludeManyToMany", IncludeManyToMany);
+		this.GetTemplate("System.Data.OleDb.Procedures.cst").SetProperty("IncludeDelete", IncludeDelete);
+		this.GetTemplate("System.Data.OleDb.Procedures.cst").SetProperty("IncludeUpdate", IncludeUpdate);
+		this.GetTemplate("System.Data.OleDb.Procedures.cst").SetProperty("IncludeGetList", IncludeGetList);
+		this.GetTemplate("System.Data.OleDb.Procedures.cst").SetProperty("IncludeGetListByFK", IncludeGetListByFK);
+		this.GetTemplate("System.Data.OleDb.Procedures.cst").SetProperty("IncludeGetListByIX", IncludeGetListByIX);
+		this.GetTemplate("System.Data.OleDb.Procedures.cst").SetProperty("IncludeFind", IncludeFind);
+		this.GetTemplate("System.Data.OleDb.Procedures.cst").SetProperty("IncludeDatabaseFeatures", IncludeDatabaseFeatures);
+		
+		this.GetTemplate("System.Data.OleDb.Procedures.cst").SetProperty("IsolationLevel", IsolationLevel);
+		//this.GetTemplate("System.Data.OleDb.Procedures.cst").SetProperty("ExcludeFields", ExcludeFields);
+		this.GetTemplate("System.Data.OleDb.Procedures.cst").SetProperty("InsertSuffix", InsertSuffix);
+		this.GetTemplate("System.Data.OleDb.Procedures.cst").SetProperty("UpdateSuffix", UpdateSuffix);
+		this.GetTemplate("System.Data.OleDb.Procedures.cst").SetProperty("DeleteSuffix", DeleteSuffix);
+		this.GetTemplate("System.Data.OleDb.Procedures.cst").SetProperty("SelectSuffix", SelectSuffix);
+		this.GetTemplate("System.Data.OleDb.Procedures.cst").SetProperty("SelectAllSuffix", SelectAllSuffix);
+		this.GetTemplate("System.Data.OleDb.Procedures.cst").SetProperty("FindSuffix", FindSuffix);
+		
+		this.GetTemplate("System.Data.OleDb.Procedures.cst").SetProperty("GrantUser", GrantUser);
+				
+		this.GetTemplate("System.Data.OleDb.Procedures.cst").SetProperty("CompanyName", CompanyName);
+		this.GetTemplate("System.Data.OleDb.Procedures.cst").SetProperty("CompanyURL", CompanyURL);
+		
+		this.GetTemplate("System.Data.OleDb.Procedures.cst").SetProperty("ProcedurePrefix", ProcedurePrefix.Replace(" ", ""));
+
+		this.RenderToFile("System.Data.OleDb.Procedures.cst", rootPathDALGeneric + "\\System.Data.OleDb.Procedures.xml", true);
+		
+			#endregion
+			}
+		}
+		
+		#endregion
 	}
 	//----------------------------------------------------------------------------------------------------------------------------------------------
 	
@@ -1696,6 +1859,8 @@ public void Go()
 			this.GetTemplate(configFile).SetProperty("DALNameSpace", DALNameSpace);
 			this.GetTemplate(configFile).SetProperty("ConnectionString", SourceDatabase.ConnectionString);
 			this.GetTemplate(configFile).SetProperty("FactoryType", factoryType);
+			this.GetTemplate(configFile).SetProperty("NetTiersSqlProvider", _netTiersSqlProvider);			
+			this.GetTemplate(configFile).SetProperty("ProviderInvariantName", _providerInvariantName);
 
 			this.GetTemplate(configFile).SetProperty("WebServiceUrl", WebServiceUrl + "/" + GetClassName(SourceDatabase.Name) + "Services.asmx");
 			
@@ -1716,6 +1881,8 @@ public void Go()
 			this.GetTemplate(configFile).SetProperty("ConnectionString", SourceDatabase.ConnectionString);
 			this.GetTemplate(configFile).SetProperty("FactoryType", factoryType);
 			this.GetTemplate(configFile).SetProperty("WebServiceUrl", WebServiceUrl);
+			this.GetTemplate(configFile).SetProperty("NetTiersSqlProvider", _netTiersSqlProvider);			
+			this.GetTemplate(configFile).SetProperty("ProviderInvariantName", _providerInvariantName);			
 			this.RenderToFile(configFile, rootPathWS + "\\Web.config", true);
 		}
 		
@@ -1728,13 +1895,7 @@ public void Go()
 		this.GetTemplate("Utility.cst").SetProperty("RetrySleepTime", RetrySleepTime);
 		this.GetTemplate("Utility.cst").SetProperty("RetrySleepStyle", RetrySleepStyle);
 		this.RenderToFile("Utility.cst", rootPathDAL + "\\Utility.cs", true);
-		
-		AddFileNode(commonNode, "StoredProcedureProvider.cs");
-		this.GetTemplate("StoredProcedureProvider.cst").SetProperty("BLLNameSpace", BLLNameSpace);
-		this.GetTemplate("StoredProcedureProvider.cst").SetProperty("DALNameSpace", DALNameSpace);
-		this.GetTemplate("StoredProcedureProvider.cst").SetProperty("IncludeDatabaseFeatures", IncludeDatabaseFeatures);
-		this.RenderToFile("StoredProcedureProvider.cst", rootPathDALSql + "\\StoredProcedureProvider.cs", true);
-						
+								
 		AddFileNode(commonNode, "TransactionManager.cs");
 		this.GetTemplate("TransactionManager.cst").SetProperty("DALNameSpace", DALNameSpace);
 		this.RenderToFile("TransactionManager.cst", rootPathDAL + "\\TransactionManager.cs", true);
@@ -1833,12 +1994,36 @@ public void Go()
 		this.GetTemplate("StringTokenizer.cst").SetProperty("DALNameSpace", DALNameSpace);
 		this.RenderToFile("StringTokenizer.cst", rootPathDAL + "\\Query\\StringTokenizer.cs", true);
 		
+		if (_netTiersSqlProvider == true)
+		{			
 		AddFileNode(commonNode, "SqlClient\\SqlNetTiersProvider.cs");
 		this.GetTemplate("SqlNetTiersProvider.cst").SetProperty("NameSpace", BLLNameSpace);
 		this.GetTemplate("SqlNetTiersProvider.cst").SetProperty("DALNameSpace", DALNameSpace);
 		this.GetTemplate("SqlNetTiersProvider.cst").SetProperty("SourceTables", _sourceTables);
 		this.GetTemplate("SqlNetTiersProvider.cst").SetProperty("SourceViews", _sourceViews);
 		this.RenderToFile("SqlNetTiersProvider.cst", rootPathDALSql + "\\SqlNetTiersProvider.cs", true);
+		
+			AddFileNode(commonNode, "StoredProcedureProvider.cs");
+			this.GetTemplate("StoredProcedureProvider.cst").SetProperty("BLLNameSpace", BLLNameSpace);
+			this.GetTemplate("StoredProcedureProvider.cst").SetProperty("DALNameSpace", DALNameSpace);
+			this.GetTemplate("StoredProcedureProvider.cst").SetProperty("IncludeDatabaseFeatures", IncludeDatabaseFeatures);
+			this.RenderToFile("StoredProcedureProvider.cst", rootPathDALSql + "\\StoredProcedureProvider.cs", true);
+		}
+		else
+		{
+			AddFileNode(commonNode, "GenericClient\\GenericNetTiersProvider.cs");
+			this.GetTemplate("GenericNetTiersProvider.cst").SetProperty("NameSpace", BLLNameSpace);
+			this.GetTemplate("GenericNetTiersProvider.cst").SetProperty("DALNameSpace", DALNameSpace);
+			this.GetTemplate("GenericNetTiersProvider.cst").SetProperty("SourceTables", _sourceTables);
+			this.GetTemplate("GenericNetTiersProvider.cst").SetProperty("SourceViews", _sourceViews);
+			this.RenderToFile("GenericNetTiersProvider.cst", rootPathDALGeneric + "\\GenericNetTiersProvider.cs", true);
+			
+			AddFileNode(commonNode, "GenericClient\\DbCommandManager.cs");
+			this.GetTemplate("DbCommandManager.cst").SetProperty("BLLNameSpace", BLLNameSpace);
+			this.GetTemplate("DbCommandManager.cst").SetProperty("DALNameSpace", DALNameSpace);
+			this.GetTemplate("DbCommandManager.cst").SetProperty("IncludeDatabaseFeatures", IncludeDatabaseFeatures);
+			this.RenderToFile("DbCommandManager.cst", rootPathDALGeneric + "\\DbCommandManager.cs", true);
+		}
 		
 		if (GenerateWebservice)
 		{
@@ -2162,7 +2347,38 @@ public void Go()
 		this.GetTemplate("GridViewSearchPanel.cs.cst").SetProperty("RootNameSpace", RootNameSpace);	
 		this.GetTemplate("GridViewSearchPanel.cs.cst").SetProperty("BusinessLogicLayerNameSpace", BusinessLogicLayerNameSpace);			
 		this.RenderToFile("GridViewSearchPanel.cs.cst", rootPathWebLib + "\\UI\\GridViewSearchPanel.cs", true);		
+	
+		// Generated strongly typed repeater
+		if ( GenerateDataAccessLayer )
+		{
+			SetCommonProperties("TableRepeater.cst");
+			this.GetTemplate("TableRepeater.cst").SetProperty("NameSpace", RootNameSpace);
+			this.GetTemplate("TableRepeater.cst").SetProperty("BusinessLogicLayerNameSpace", BLLNameSpace);
+			this.GetTemplate("TableRepeater.cst").SetProperty("DALNameSpace", DALNameSpace);
+			
+			foreach ( TableSchema table in _sourceTables )
+			{
+				AddFileNode(commonNode, GetClassName(table.Name) + "Repeater.cs");
+				this.GetTemplate("TableRepeater.cst").SetProperty("SourceTable", table);
+				this.RenderToFile("TableRepeater.cst", rootPathWebLib + "\\UI\\" + GetClassName(table.Name) + "Repeater.cs", true);
+			}
+			
+			/*
+			this.GetTemplate("ViewRepeater.cst").SetProperty("NameSpace", RootNameSpace);
+			this.GetTemplate("ViewRepeater.cst").SetProperty("BusinessLogicLayerNameSpace", BLLNameSpace);
+			this.GetTemplate("ViewRepeater.cst").SetProperty("DALNameSpace", DALNameSpace);
+						
+			foreach ( ViewSchema view in _sourceViews )
+			{
+				AddFileNode(commonNode, GetClassName(view.Name) + "Repeater.cs");
+				this.GetTemplate("ViewRepeater.cst").SetProperty("SourceView", view);
+				this.RenderToFile("ViewRepeater.cst", rootPathWebLib + "\\UI\\Views\\" + GetClassName(view.Name) + "Repeater.cs", true);
+			}
+			*/
+		}
 	}
+	
+	
 	
 	if ( GenerateWebsite )
 	{
@@ -2178,6 +2394,9 @@ public void Go()
 			this.GetTemplate(webConfigTemplate).SetProperty("WebNameSpace", WebLibNameSpace);
 			this.GetTemplate(webConfigTemplate).SetProperty("FactoryType", factoryType);
 			this.GetTemplate(webConfigTemplate).SetProperty("ConnectionString", SourceDatabase.ConnectionString);
+			this.GetTemplate(webConfigTemplate).SetProperty("NetTiersSqlProvider", _netTiersSqlProvider);
+			this.GetTemplate(webConfigTemplate).SetProperty("ProviderInvariantName", _providerInvariantName);
+			
 			
 			if ( IncludeAtlasLibrary )
 			{
@@ -2304,18 +2523,76 @@ public void Go()
 		// ---------------------------------------------------------------------------------
 	}
 	
+	if (GenerateWinLibrary)
+	{
+		// TypedDataSource
+		this.GetTemplate("TypedDataSource.cst").SetProperty("SourceTables", SourceTables);
+		this.GetTemplate("TypedDataSource.cst").SetProperty("NameSpace", RootNameSpace);
+		this.GetTemplate("TypedDataSource.cst").SetProperty("WinLibNameSpace", WinLibNameSpace);
+		this.GetTemplate("TypedDataSource.cst").SetProperty("BusinessLogicLayerNameSpace", BusinessLogicLayerNameSpace);
+		
+		//this.GetTemplate("TypedDataSource.cst").RenderToFile(rootPathWinLib + "\\Data\\BindingSources.cs", true);							
+		
+		
+		for (int x=0; x < _sourceTables.Count; x++)
+		{
+			TableSchema SourceTable = _sourceTables[x];		
+			
+			if (!File.Exists(rootPathWinLib + "\\UI\\" + GetClassName(SourceTable.Name) + "DataGridView.cs"))
+			{
+				// <Entity>DataGridView
+				this.GetTemplate("TableGridView.cst").SetProperty("SourceTable", SourceTable);
+				this.GetTemplate("TableGridView.cst").SetProperty("NameSpace", RootNameSpace);
+				this.GetTemplate("TableGridView.cst").SetProperty("WinLibNameSpace", WinLibNameSpace);
+				this.GetTemplate("TableGridView.cst").SetProperty("BusinessLogicLayerNameSpace", BusinessLogicLayerNameSpace);
+			
+				this.GetTemplate("TableGridView.cst").RenderToFile(rootPathWinLib + "\\UI\\" + GetClassName(SourceTable.Name) + "DataGridView.cs", false);
+			}
+			
+			// <Entity>DataGridView
+			this.GetTemplate("TableGridViewBase.cst").SetProperty("SourceTable", SourceTable);
+			this.GetTemplate("TableGridViewBase.cst").SetProperty("NameSpace", RootNameSpace);
+			this.GetTemplate("TableGridViewBase.cst").SetProperty("WinLibNameSpace", WinLibNameSpace);
+			this.GetTemplate("TableGridViewBase.cst").SetProperty("BusinessLogicLayerNameSpace", BusinessLogicLayerNameSpace);
+			
+			this.GetTemplate("TableGridViewBase.cst").RenderToFile(rootPathWinLib + "\\UI\\" + GetClassName(SourceTable.Name) + "DataGridViewBase.cs", true);							
+			
+			if (!File.Exists(rootPathWinLib + "\\UI\\" + GetClassName(SourceTable.Name) + "EditControl.cs"))
+			{
+				// <Entity>EditControl
+				this.GetTemplate("TableEditControl.cst").SetProperty("SourceTable", SourceTable);
+				this.GetTemplate("TableEditControl.cst").SetProperty("NameSpace", RootNameSpace);
+				this.GetTemplate("TableEditControl.cst").SetProperty("WinLibNameSpace", WinLibNameSpace);
+				this.GetTemplate("TableEditControl.cst").SetProperty("BusinessLogicLayerNameSpace", BusinessLogicLayerNameSpace);
+			
+				this.GetTemplate("TableEditControl.cst").RenderToFile(rootPathWinLib + "\\UI\\" + GetClassName(SourceTable.Name) + "EditControl.cs", true);
+			}
+			
+			// <Entity>EditControl
+			this.GetTemplate("TableEditControlBase.cst").SetProperty("SourceTable", SourceTable);
+			this.GetTemplate("TableEditControlBase.cst").SetProperty("NameSpace", RootNameSpace);
+			this.GetTemplate("TableEditControlBase.cst").SetProperty("WinLibNameSpace", WinLibNameSpace);
+			this.GetTemplate("TableEditControlBase.cst").SetProperty("BusinessLogicLayerNameSpace", BusinessLogicLayerNameSpace);
+			
+			this.GetTemplate("TableEditControlBase.cst").RenderToFile(rootPathWinLib + "\\UI\\" + GetClassName(SourceTable.Name) + "EditControlBase.cs", true);
+		}
+	}
+	
+	
 	// Hard coded Guid make it easier to maintain solution when regenerating projects
 	// It may be intersting to put those value in global properties
 	string bllGuid = "20E43088-4618-4F4A-B8AD-FC31B50D94CD"; //Guid.NewGuid().ToString();
 	string dalGuid = "041C1BBE-0BFB-4D45-8125-9AB0BBC09A92"; //Guid.NewGuid().ToString();
 	string DALSqlGuid = "8996A7B4-57D3-440B-A545-A701844B8C4A"; //Guid.NewGuid().ToString();
 	string DALWSGuid = "061C1BBE-0BFB-4D45-8125-9AB0BBC09A92"; //Guid.NewGuid().ToString();
+	string DALGenericGuid = "6788B7D9-57D3-440B-A545-A701844B8C4A"; //Guid.NewGuid().ToString();
 	string wsGuid  = "5E3CA58E-216A-4F53-BD23-5A48A6C44924"; //Guid.NewGuid().ToString();
 	string utGuid  = "031D5BAE-0BFB-4D45-8125-9AB0BBC09A92"; //Guid.NewGuid().ToString();
 	string webLibGuid = "47FE3BE8-3E46-47CA-8494-473755867DD0"; //Guid.NewGuid().ToString();
     string websiteGuid = "1DCAB031-308A-4581-AFA8-BD29F45A1357";
     string componentGuid = "794327CE-DC0A-4381-89EE-4C00AFB08D5A"; 
-
+	string winLibGuid = "43FE3BE8-3E46-47CA-8494-473315867DD0"; //Guid.NewGuid().ToString();
+    
 	string projectTemplate = vsnetVersion == VSNetVersion.v2005 ? "vsnet2005.project.cst" : "vsnet2003.project.cst";
 	string solutionTemplate = vsnetVersion == VSNetVersion.v2005 ? "vsnet2005.solution.cst" : "vsnet2003.solution.cst";
 	string vsmdiTemplate = "vsnet2005.vsmdi.cst";
@@ -2333,8 +2610,10 @@ public void Go()
 		this.GetTemplate(solutionTemplate).SetProperty("DALNameSpace", DALNameSpace);
 		this.GetTemplate(solutionTemplate).SetProperty("BLLNameSpace", BLLNameSpace);
 		this.GetTemplate(solutionTemplate).SetProperty("DALSqlNameSpace", DALSqlNameSpace);
+		this.GetTemplate(solutionTemplate).SetProperty("DALGenericNameSpace", DALGenericNameSpace);
 		this.GetTemplate(solutionTemplate).SetProperty("DALWSNameSpace", DALWSNameSpace);
 		this.GetTemplate(solutionTemplate).SetProperty("WebLibNameSpace", WebLibNameSpace);
+		this.GetTemplate(solutionTemplate).SetProperty("WinLibNameSpace", WinLibNameSpace);
 		this.GetTemplate(solutionTemplate).SetProperty("WebsiteNameSpace", WebsiteNameSpace);
 		this.GetTemplate(solutionTemplate).SetProperty("UTNameSpace", UTNameSpace);
 		this.GetTemplate(solutionTemplate).SetProperty("WSNameSpace", WSNameSpace);
@@ -2342,11 +2621,13 @@ public void Go()
 		this.GetTemplate(solutionTemplate).SetProperty("BLLGuid", bllGuid);
 		this.GetTemplate(solutionTemplate).SetProperty("DALGuid", dalGuid);
 		this.GetTemplate(solutionTemplate).SetProperty("DALSqlGuid", DALSqlGuid);
+		this.GetTemplate(solutionTemplate).SetProperty("DALGenericGuid", DALGenericGuid);
 		this.GetTemplate(solutionTemplate).SetProperty("DALWSGuid", DALWSGuid);
 		this.GetTemplate(solutionTemplate).SetProperty("WSGuid", wsGuid);
 		this.GetTemplate(solutionTemplate).SetProperty("UTGuid", utGuid);
 		this.GetTemplate(solutionTemplate).SetProperty("WebLibGuid", webLibGuid);
 		this.GetTemplate(solutionTemplate).SetProperty("WebsiteGuid", websiteGuid);
+		this.GetTemplate(solutionTemplate).SetProperty("WinLibGuid", winLibGuid);
 		
 		this.GetTemplate(solutionTemplate).SetProperty("ComponentsGuid", componentGuid);
 		this.GetTemplate(solutionTemplate).SetProperty("ComponentPattern", IncludeComponentLayer);
@@ -2355,13 +2636,15 @@ public void Go()
 		
 		this.GetTemplate(solutionTemplate).SetProperty("IncludeBll", GenerateBusinessLogicLayer);
 		this.GetTemplate(solutionTemplate).SetProperty("IncludeDALBase", GenerateDataAccessLayer);	
-		this.GetTemplate(solutionTemplate).SetProperty("IncludeSqlClient", GenerateDataAccessLayer);	
+		this.GetTemplate(solutionTemplate).SetProperty("IncludeSqlClient", GenerateDataAccessLayer && _netTiersSqlProvider);	
+		this.GetTemplate(solutionTemplate).SetProperty("IncludeGenericClient", GenerateDataAccessLayer && !_netTiersSqlProvider);	
 		this.GetTemplate(solutionTemplate).SetProperty("IncludeWebservice", GenerateWebservice);
 		this.GetTemplate(solutionTemplate).SetProperty("IncludeWebserviceClient", GenerateWebservice);
 		this.GetTemplate(solutionTemplate).SetProperty("IncludeWebLibrary", GenerateWebLibrary);
 		this.GetTemplate(solutionTemplate).SetProperty("IncludeWebsite", GenerateWebsite);
 		this.GetTemplate(solutionTemplate).SetProperty("IncludeUnitTest", IncludeUnitTest);
 		this.GetTemplate(solutionTemplate).SetProperty("UseWebAppProject", UseWebAppProject);
+		this.GetTemplate(solutionTemplate).SetProperty("IncludeWinLibrary", GenerateWinLibrary);
 				
 		this.GetTemplate(solutionTemplate).SetProperty("WebServiceUrl", WebServiceUrl);
 		this.GetTemplate(solutionTemplate).SetProperty("rootPathWS", rootPathWS);
@@ -2391,10 +2674,12 @@ public void Go()
 	this.GetTemplate(projectTemplate).SetProperty("BLLGuid", bllGuid);
 	this.GetTemplate(projectTemplate).SetProperty("DALGuid", dalGuid);
 	this.GetTemplate(projectTemplate).SetProperty("DALSqlGuid", DALSqlGuid);
+	this.GetTemplate(projectTemplate).SetProperty("DALGenericGuid", DALGenericGuid);
 	this.GetTemplate(projectTemplate).SetProperty("DALWSGuid", DALWSGuid);
 	this.GetTemplate(projectTemplate).SetProperty("UTGuid", utGuid);
 	this.GetTemplate(projectTemplate).SetProperty("WSGuid", wsGuid);
 	this.GetTemplate(projectTemplate).SetProperty("WebLibGuid", webLibGuid);
+	this.GetTemplate(projectTemplate).SetProperty("WinLibGuid", winLibGuid);
 	this.GetTemplate(projectTemplate).SetProperty("WebsiteGuid", websiteGuid);
 	this.GetTemplate(projectTemplate).SetProperty("ComponentsGuid", componentGuid);
 	this.GetTemplate(projectTemplate).SetProperty("ComponentPattern", ComponentPattern);
@@ -2404,8 +2689,10 @@ public void Go()
 	this.GetTemplate(projectTemplate).SetProperty("DALNameSpace", DALNameSpace);
 	this.GetTemplate(projectTemplate).SetProperty("ComponentLayerNameSpace", ComponentsNameSpace);
 	this.GetTemplate(projectTemplate).SetProperty("DALSqlNameSpace", DALSqlNameSpace);
+	this.GetTemplate(projectTemplate).SetProperty("DALGenericNameSpace", DALGenericNameSpace);
 	this.GetTemplate(projectTemplate).SetProperty("DALWSNameSpace", DALWSNameSpace);
 	this.GetTemplate(projectTemplate).SetProperty("WebLibNameSpace", WebLibNameSpace);
+	this.GetTemplate(projectTemplate).SetProperty("WinLibNameSpace", WinLibNameSpace);
 	this.GetTemplate(projectTemplate).SetProperty("WebsiteNameSpace", WebsiteNameSpace);
 	this.GetTemplate(projectTemplate).SetProperty("UTNameSpace", UTNameSpace);
 	this.GetTemplate(projectTemplate).SetProperty("WSNameSpace", WSNameSpace);
@@ -2426,9 +2713,11 @@ public void Go()
 		this.GetTemplate(projectTemplate).SetProperty("IncludeBll", false);
 		this.GetTemplate(projectTemplate).SetProperty("IncludeDALBase", false);	
 		this.GetTemplate(projectTemplate).SetProperty("IncludeSqlClient", false);	
+		this.GetTemplate(projectTemplate).SetProperty("IncludeGenericClient", false);	
 		this.GetTemplate(projectTemplate).SetProperty("IncludeWebservice", false);
 		this.GetTemplate(projectTemplate).SetProperty("IncludeWebserviceClient", false);
 		this.GetTemplate(projectTemplate).SetProperty("IncludeWebLibrary", false);
+		this.GetTemplate(projectTemplate).SetProperty("IncludeWinLibrary", false);
 		this.GetTemplate(projectTemplate).SetProperty("IncludeWebsite", false);
 		this.GetTemplate(projectTemplate).SetProperty("IncludeComponents", true);
 		this.GetTemplate(projectTemplate).SetProperty("IncludeUnitTest", MoM.Templates.UnitTestStyle.None);
@@ -2447,9 +2736,11 @@ public void Go()
 		this.GetTemplate(projectTemplate).SetProperty("IncludeBll", true);
 		this.GetTemplate(projectTemplate).SetProperty("IncludeDALBase", false);	
 		this.GetTemplate(projectTemplate).SetProperty("IncludeSqlClient", false);	
+		this.GetTemplate(projectTemplate).SetProperty("IncludeGenericClient", false);	
 		this.GetTemplate(projectTemplate).SetProperty("IncludeWebservice", false);
 		this.GetTemplate(projectTemplate).SetProperty("IncludeWebserviceClient", false);
 		this.GetTemplate(projectTemplate).SetProperty("IncludeWebLibrary", false);
+		this.GetTemplate(projectTemplate).SetProperty("IncludeWinLibrary", false);
 		this.GetTemplate(projectTemplate).SetProperty("IncludeWebsite", false);
 		this.GetTemplate(projectTemplate).SetProperty("IncludeComponents", false);
 		this.GetTemplate(projectTemplate).SetProperty("IncludeUnitTest", MoM.Templates.UnitTestStyle.None);
@@ -2473,10 +2764,12 @@ public void Go()
 		this.GetTemplate(projectTemplate).SetProperty("IncludeBll", false);
 		this.GetTemplate(projectTemplate).SetProperty("IncludeDALBase", true);	
 		this.GetTemplate(projectTemplate).SetProperty("IncludeSqlClient", false);			
+		this.GetTemplate(projectTemplate).SetProperty("IncludeGenericClient", false);	
 		this.GetTemplate(projectTemplate).SetProperty("IncludeWebservice", false);
 		this.GetTemplate(projectTemplate).SetProperty("IncludeWebserviceClient", false);
 		this.GetTemplate(projectTemplate).SetProperty("IncludeWebLibrary", false);
 		this.GetTemplate(projectTemplate).SetProperty("IncludeWebsite", false);
+		this.GetTemplate(projectTemplate).SetProperty("IncludeWinLibrary", false);
 		this.GetTemplate(projectTemplate).SetProperty("IncludeComponents", false);
 		this.GetTemplate(projectTemplate).SetProperty("IncludeUnitTest", MoM.Templates.UnitTestStyle.None);			
 		this.GetTemplate(projectTemplate).SetProperty("IncludeWCFDataAttributes", false);
@@ -2488,11 +2781,14 @@ public void Go()
 		;
 		
 		// DAL sqlclient
+		if (_netTiersSqlProvider == true)
+		{
 		AddFileNode(commonNode, BLLNameSpace + "."+DataAccessLayerNameSpace+".SqlClient.csproj");
 
 		this.GetTemplate(projectTemplate).SetProperty("IncludeBll", false);
 		this.GetTemplate(projectTemplate).SetProperty("IncludeDALBase", false);	
 		this.GetTemplate(projectTemplate).SetProperty("IncludeSqlClient", true);			
+			this.GetTemplate(projectTemplate).SetProperty("IncludeGenericClient", false);	
 		this.GetTemplate(projectTemplate).SetProperty("IncludeWebservice", false);
 		this.GetTemplate(projectTemplate).SetProperty("IncludeWebserviceClient", false);
 		this.GetTemplate(projectTemplate).SetProperty("IncludeComponents", false);
@@ -2504,6 +2800,30 @@ public void Go()
 
 		//this.GetTemplate(projectTemplate).RenderToFile(rootPathDALSql + "\\" + DALSqlNameSpace + ".csproj", true);
 		this.RenderToFile(projectTemplate, rootPathDALSql + "\\" + DALSqlNameSpace + ".csproj", true);
+		}
+		
+		// DAL Genericclient
+		if (_netTiersSqlProvider == false)
+		{
+			AddFileNode(commonNode, BLLNameSpace + "."+DataAccessLayerNameSpace+".GenericClient.csproj");
+	
+			this.GetTemplate(projectTemplate).SetProperty("IncludeBll", false);
+			this.GetTemplate(projectTemplate).SetProperty("IncludeDALBase", false);	
+			this.GetTemplate(projectTemplate).SetProperty("IncludeSqlClient", false);			
+			this.GetTemplate(projectTemplate).SetProperty("IncludeGenericClient", true);	
+			this.GetTemplate(projectTemplate).SetProperty("IncludeWebservice", false);
+			this.GetTemplate(projectTemplate).SetProperty("IncludeWebserviceClient", false);
+			this.GetTemplate(projectTemplate).SetProperty("IncludeComponents", false);
+			this.GetTemplate(projectTemplate).SetProperty("IncludeWebLibrary", false);
+			this.GetTemplate(projectTemplate).SetProperty("IncludeWebsite", false);
+			this.GetTemplate(projectTemplate).SetProperty("IncludeUnitTest", MoM.Templates.UnitTestStyle.None);			
+			this.GetTemplate(projectTemplate).SetProperty("IncludeWCFDataAttributes", false);
+			this.GetTemplate(projectTemplate).SetProperty("IncludeDesignTimeSupport", false);
+	
+			//this.GetTemplate(projectTemplate).RenderToFile(rootPathDALSql + "\\" + DALSqlNameSpace + ".csproj", true);
+			this.RenderToFile(projectTemplate, rootPathDALGeneric + "\\" + DALGenericNameSpace + ".csproj", true);
+		}
+		
 		
 		/*--------------------
 			WebServiceClient
@@ -2518,6 +2838,7 @@ public void Go()
 				this.GetTemplate(projectTemplate).SetProperty("IncludeBll", false);
 				this.GetTemplate(projectTemplate).SetProperty("IncludeDALBase", false);	
 				this.GetTemplate(projectTemplate).SetProperty("IncludeSqlClient", false);			
+				this.GetTemplate(projectTemplate).SetProperty("IncludeGenericClient", false);	
 				this.GetTemplate(projectTemplate).SetProperty("IncludeWebservice", true);
 				this.GetTemplate(projectTemplate).SetProperty("IncludeWebserviceClient", false);
 				this.GetTemplate(projectTemplate).SetProperty("IncludeComponents", false);
@@ -2537,6 +2858,7 @@ public void Go()
 			this.GetTemplate(projectTemplate).SetProperty("IncludeBll", false);
 			this.GetTemplate(projectTemplate).SetProperty("IncludeDALBase", false);	
 			this.GetTemplate(projectTemplate).SetProperty("IncludeSqlClient", false);			
+			this.GetTemplate(projectTemplate).SetProperty("IncludeGenericClient", false);	
 			this.GetTemplate(projectTemplate).SetProperty("IncludeWebservice", false);
 			this.GetTemplate(projectTemplate).SetProperty("IncludeWebserviceClient", true);
 			this.GetTemplate(projectTemplate).SetProperty("IncludeComponents", false);
@@ -2551,6 +2873,28 @@ public void Go()
 		}
 	}
 	
+	// Win Library project file
+	if (GenerateWinLibrary)
+	{
+		AddFileNode(commonNode, WinLibNameSpace + ".csproj");
+
+		this.GetTemplate(projectTemplate).SetProperty("IncludeBll", false);
+		this.GetTemplate(projectTemplate).SetProperty("IncludeDALBase", false);	
+		this.GetTemplate(projectTemplate).SetProperty("IncludeSqlClient", false);			
+		this.GetTemplate(projectTemplate).SetProperty("IncludeGenericClient", false);	
+		this.GetTemplate(projectTemplate).SetProperty("IncludeWebservice", false);
+		this.GetTemplate(projectTemplate).SetProperty("IncludeWebserviceClient", false);
+		this.GetTemplate(projectTemplate).SetProperty("IncludeComponents", false);
+		this.GetTemplate(projectTemplate).SetProperty("IncludeWebLibrary", false);
+		this.GetTemplate(projectTemplate).SetProperty("IncludeWinLibrary", true);
+		this.GetTemplate(projectTemplate).SetProperty("IncludeWebsite", false);
+		this.GetTemplate(projectTemplate).SetProperty("IncludeUnitTest", MoM.Templates.UnitTestStyle.None);
+		this.GetTemplate(projectTemplate).SetProperty("IncludeWCFDataAttributes", false);
+		this.GetTemplate(projectTemplate).SetProperty("IncludeDesignTimeSupport", false);
+
+		this.RenderToFile(projectTemplate, rootPathWinLib + "\\" + WinLibNameSpace + ".csproj", true);
+	}
+	
 	// Web Library project file
 	if (GenerateWebLibrary)
 	{
@@ -2559,10 +2903,12 @@ public void Go()
 		this.GetTemplate(projectTemplate).SetProperty("IncludeBll", false);
 		this.GetTemplate(projectTemplate).SetProperty("IncludeDALBase", false);	
 		this.GetTemplate(projectTemplate).SetProperty("IncludeSqlClient", false);			
+		this.GetTemplate(projectTemplate).SetProperty("IncludeGenericClient", false);	
 		this.GetTemplate(projectTemplate).SetProperty("IncludeWebservice", false);
 		this.GetTemplate(projectTemplate).SetProperty("IncludeWebserviceClient", false);
 		this.GetTemplate(projectTemplate).SetProperty("IncludeComponents", false);
 		this.GetTemplate(projectTemplate).SetProperty("IncludeWebLibrary", true);
+		this.GetTemplate(projectTemplate).SetProperty("IncludeWinLibrary", false);
 		this.GetTemplate(projectTemplate).SetProperty("IncludeWebsite", false);
 		this.GetTemplate(projectTemplate).SetProperty("IncludeUnitTest", MoM.Templates.UnitTestStyle.None);
 		this.GetTemplate(projectTemplate).SetProperty("IncludeWCFDataAttributes", false);
@@ -2579,10 +2925,12 @@ public void Go()
 		this.GetTemplate(projectTemplate).SetProperty("IncludeBll", false);
 		this.GetTemplate(projectTemplate).SetProperty("IncludeDALBase", false);	
 		this.GetTemplate(projectTemplate).SetProperty("IncludeSqlClient", false);			
+		this.GetTemplate(projectTemplate).SetProperty("IncludeGenericClient", false);	
 		this.GetTemplate(projectTemplate).SetProperty("IncludeWebservice", false);
 		this.GetTemplate(projectTemplate).SetProperty("IncludeWebserviceClient", false);
 		this.GetTemplate(projectTemplate).SetProperty("IncludeComponents", false);
 		this.GetTemplate(projectTemplate).SetProperty("IncludeWebLibrary", false);
+		this.GetTemplate(projectTemplate).SetProperty("IncludeWinLibrary", false);		
 		this.GetTemplate(projectTemplate).SetProperty("IncludeWebsite", true);
 		this.GetTemplate(projectTemplate).SetProperty("IncludeUnitTest", MoM.Templates.UnitTestStyle.None);
 		this.GetTemplate(projectTemplate).SetProperty("IncludeWCFDataAttributes", false);
@@ -2599,14 +2947,19 @@ public void Go()
 		this.GetTemplate(projectTemplate).SetProperty("IncludeBll", false);
 		this.GetTemplate(projectTemplate).SetProperty("IncludeDALBase", false);	
 		this.GetTemplate(projectTemplate).SetProperty("IncludeSqlClient", false);			
+		this.GetTemplate(projectTemplate).SetProperty("IncludeGenericClient", false);	
 		this.GetTemplate(projectTemplate).SetProperty("IncludeWebservice", false);
 		this.GetTemplate(projectTemplate).SetProperty("IncludeWebserviceClient", false);
 		this.GetTemplate(projectTemplate).SetProperty("IncludeWebLibrary", false);
+		this.GetTemplate(projectTemplate).SetProperty("IncludeWinLibrary", false);		
 		this.GetTemplate(projectTemplate).SetProperty("IncludeWebsite", false);
 		this.GetTemplate(projectTemplate).SetProperty("IncludeComponents", false);
 		this.GetTemplate(projectTemplate).SetProperty("IncludeUnitTest", IncludeUnitTest);
 		this.GetTemplate(projectTemplate).SetProperty("IncludeWCFDataAttributes", false);
 		this.GetTemplate(projectTemplate).SetProperty("IncludeDesignTimeSupport", false);
+		this.GetTemplate(projectTemplate).SetProperty("NetTiersSqlProvider", _netTiersSqlProvider);
+		
+		
 
 		//this.GetTemplate(projectTemplate).RenderToFile(rootPathUT + "\\" + UTNameSpace + ".csproj", true);
 		this.RenderToFile(projectTemplate, rootPathUT + "\\" + UTNameSpace + ".csproj", true);
@@ -2641,6 +2994,7 @@ public void Go()
 		
 		this.GetTemplate("nAnt.cst").SetProperty("IncludeBll", GenerateBusinessLogicLayer);
 		this.GetTemplate("nAnt.cst").SetProperty("IncludeSqlClient", GenerateDataAccessLayer);
+		this.GetTemplate("nAnt.cst").SetProperty("IncludeGenericClient", GenerateDataAccessLayer);
 		this.GetTemplate("nAnt.cst").SetProperty("IncludeWebServiceClient", GenerateWebservice);
 		this.GetTemplate("nAnt.cst").SetProperty("IncludeUnitTest", IncludeUnitTest);
 		
@@ -3258,6 +3612,9 @@ public void Go()
 			}
 			//----------------------------------------------------------------------------------------------------------------------------------------------
 
+			#region Sql client dal files
+			if (_netTiersSqlProvider == true)
+			{
 
 			//----------------------------------------------------------------------------------------------------------------------------------------------
 			//	Generating the abstract SqlClient entity Repository class		
@@ -3313,6 +3670,71 @@ public void Go()
 				this.RenderToFile("SqlEntityProvider.cst", rootPathDALSql + "\\Sql" + GetProviderName(SourceTable.Name) + ".cs", false);
 				AddExecutionTime(sqlDalcNode);
 			}
+			}
+			#endregion
+			
+			#region Generic client dal files
+			
+			if (_netTiersSqlProvider == false)
+			{
+			
+				//----------------------------------------------------------------------------------------------------------------------------------------------
+				//	Generating the abstract SqlClient entity Repository class		
+				//----------------------------------------------------------------------------------------------------------------------------------------------
+				XmlElement genericDalcBaseNode = AddFileNode(tableNode, "GenericClient\\Generic"+ GetPartialClassName(GetProviderBaseName(SourceTable.Name)) + ".cs");
+				
+				//Response.WriteLine("Building abstract GenericClient Repository class : GenericClient\\" + GetAbstractRepositoryClassName(SourceTable.Name) );
+				this.GetTemplate("GenericEntityProviderBase.generated.cst").SetProperty("IncludeCustoms", IncludeCustoms);				
+				this.GetTemplate("GenericEntityProviderBase.generated.cst").SetProperty("CustomNonMatchingReturnType", CustomNonMatchingReturnType);				
+				this.GetTemplate("GenericEntityProviderBase.generated.cst").SetProperty("CustomProcedureStartsWith", CustomProcedureStartsWith);			
+				
+				this.GetTemplate("GenericEntityProviderBase.generated.cst").SetProperty("InsertSuffix", InsertSuffix);
+				this.GetTemplate("GenericEntityProviderBase.generated.cst").SetProperty("UpdateSuffix", UpdateSuffix);
+				this.GetTemplate("GenericEntityProviderBase.generated.cst").SetProperty("DeleteSuffix", DeleteSuffix);
+				this.GetTemplate("GenericEntityProviderBase.generated.cst").SetProperty("SelectSuffix", SelectSuffix);
+				this.GetTemplate("GenericEntityProviderBase.generated.cst").SetProperty("SelectAllSuffix", SelectAllSuffix);
+				this.GetTemplate("GenericEntityProviderBase.generated.cst").SetProperty("FindSuffix", FindSuffix);
+				this.GetTemplate("GenericEntityProviderBase.generated.cst").SetProperty("ProcedurePrefix", ProcedurePrefix.Replace(" ", ""));
+				
+				this.GetTemplate("GenericEntityProviderBase.generated.cst").SetProperty("IncludeInsert", IncludeInsert);
+				this.GetTemplate("GenericEntityProviderBase.generated.cst").SetProperty("IncludeUpdate", IncludeUpdate);
+				this.GetTemplate("GenericEntityProviderBase.generated.cst").SetProperty("IncludeSave", IncludeSave);
+				this.GetTemplate("GenericEntityProviderBase.generated.cst").SetProperty("IncludeDelete", IncludeDelete);
+				this.GetTemplate("GenericEntityProviderBase.generated.cst").SetProperty("IncludeManyToMany", IncludeManyToMany);
+				this.GetTemplate("GenericEntityProviderBase.generated.cst").SetProperty("IncludeGetList", IncludeGetList);
+				this.GetTemplate("GenericEntityProviderBase.generated.cst").SetProperty("IncludeGetListByFK", IncludeGetListByFK);
+				this.GetTemplate("GenericEntityProviderBase.generated.cst").SetProperty("IncludeGetListByIX", IncludeGetListByIX);
+				this.GetTemplate("GenericEntityProviderBase.generated.cst").SetProperty("IncludeFind", IncludeFind);
+				this.GetTemplate("GenericEntityProviderBase.generated.cst").SetProperty("IncludeDatabaseFeatures", IncludeDatabaseFeatures);
+				
+				this.GetTemplate("GenericEntityProviderBase.generated.cst").SetProperty("SourceTable", SourceTable);
+				this.GetTemplate("GenericEntityProviderBase.generated.cst").SetProperty("SourceTables", _sourceTables);
+				this.GetTemplate("GenericEntityProviderBase.generated.cst").SetProperty("NameSpace", BLLNameSpace);
+				this.GetTemplate("GenericEntityProviderBase.generated.cst").SetProperty("DALNameSpace", DALNameSpace);
+													
+				this.RenderToFile("GenericEntityProviderBase.generated.cst", rootPathDALGeneric + "\\Generic" + GetPartialClassName(GetProviderBaseName(SourceTable.Name)) + ".cs", true);
+				AddExecutionTime(genericDalcBaseNode);
+				//----------------------------------------------------------------------------------------------------------------------------------------------
+				
+				
+				//----------------------------------------------------------------------------------------------------------------------------------------------
+				//	Generating the SqlClient Repository Implementation, only if not already there
+				//----------------------------------------------------------------------------------------------------------------------------------------------
+				if (!File.Exists(rootPathDALGeneric+ "\\Generic" + GetProviderName(SourceTable.Name) + ".cs"))
+				{
+					XmlElement genericDalcNode = AddFileNode(tableNode, "GenericClient\\"+ GetRepositoryClassName(SourceTable.Name) + ".cs");
+					//Response.WriteLine("Building concrete SqlClient Repository class : SqlClient\\" + GetRepositoryClassName(SourceTable.Name));
+					this.GetTemplate("GenericEntityProvider.cst").SetProperty("NameSpace", BLLNameSpace);
+					this.GetTemplate("GenericEntityProvider.cst").SetProperty("DALNameSpace", DALNameSpace);
+					this.GetTemplate("GenericEntityProvider.cst").SetProperty("ClassName", GetClassName(SourceTable.Name));
+					this.GetTemplate("GenericEntityProvider.cst").SetProperty("ProviderName", "Generic" + GetProviderName(SourceTable.Name));
+					this.GetTemplate("GenericEntityProvider.cst").SetProperty("ProviderBaseName", "Generic" + GetProviderBaseName(SourceTable.Name));
+					
+					this.RenderToFile("GenericEntityProvider.cst", rootPathDALGeneric + "\\Generic" + GetProviderName(SourceTable.Name) + ".cs", false);
+					AddExecutionTime(genericDalcNode);
+				}
+			}
+			#endregion
 
 			
 			//----------------------------------------------------------------------------------------------------------------------------------------------

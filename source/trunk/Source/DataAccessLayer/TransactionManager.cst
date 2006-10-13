@@ -23,12 +23,13 @@ namespace <%=DALNameSpace%>
 	public class TransactionManager : IDisposable
 	{
 		#region Fields
-		private Database database;
+		private Database _database;
 		
-		private DbConnection connection;
-		private DbTransaction transaction;
+		private DbConnection _connection;
+		private DbTransaction _transaction;
 
-		private string connectionString;
+		private string _connectionString;
+		private string _invariantProviderName;
 		private bool _transactionOpen = false;	
 		#endregion
 
@@ -43,12 +44,21 @@ namespace <%=DALNameSpace%>
 		///		Initializes a new instance of the <see cref="TransactionManager"/> class.
 		/// </summary>
 		/// <param name="connectionString">The connection string to the database.</param>
-		public TransactionManager(string connectionString)
+		public TransactionManager(string connectionString) : this(connectionString, "System.Data.SqlClient")
 		{
-            this.connectionString = connectionString;
-            this.database = new SqlDatabase(connectionString);
-			//this.database = DatabaseFactory.CreateDatabase(this.instanceName);
-			this.connection = this.database.CreateConnection();
+    }
+		
+		/// <summary>
+		///		Initializes a new instance of the <see cref="TransactionManager"/> class.
+		/// </summary>
+		/// <param name="connectionString">The connection string to the database.</param>
+		/// <param name="providerInvariantName">Name of the provider invariant.</param>
+		public TransactionManager(string connectionString, string providerInvariantName)
+		{
+    	this._connectionString = connectionString;
+      this._invariantProviderName = providerInvariantName;
+      this._database = new GenericDatabase(this._connectionString, DbProviderFactories.GetFactory(providerInvariantName));
+			this._connection = this._database.CreateConnection();
 		}
 		
 		/// <summary>
@@ -60,15 +70,39 @@ namespace <%=DALNameSpace%>
 		/// </exception>
 		public string ConnectionString
 		{
-			get { return this.connectionString; }
+			get { return this._connectionString; }
 			set
 			{//make sure transaction is open
 				if (this.IsOpen)
 					throw new InvalidOperationException("Database cannot be changed during a transaction");
 
-                this.connectionString = value;
-                this.database = new SqlDatabase(connectionString);
-				this.connection = this.database.CreateConnection();
+        		this._connectionString = value;
+				if (this._connectionString.Length > 0 && this._invariantProviderName.Length > 0)
+				{
+					this._database = new GenericDatabase(_connectionString, DbProviderFactories.GetFactory(this._invariantProviderName));
+					this._connection = this._database.CreateConnection();
+				}
+			}
+		}
+		
+		/// <summary>
+		/// Gets or sets the name of the invariant provider.
+		/// </summary>
+		/// <value>The name of the invariant provider.</value>
+		public string InvariantProviderName
+		{
+			get { return this._invariantProviderName; }
+			set
+			{
+				if (this.IsOpen)
+					throw new InvalidOperationException("Database cannot be changed during a transaction");
+
+				this._invariantProviderName = value;
+				if (this._connectionString.Length > 0 && this._invariantProviderName.Length > 0)
+				{
+					this._database = new GenericDatabase(this._connectionString, DbProviderFactories.GetFactory(this._invariantProviderName));
+					this._connection = this._database.CreateConnection();
+				}
 			}
 		}
 		
@@ -78,7 +112,7 @@ namespace <%=DALNameSpace%>
 		/// <value></value>
 		public Database Database
 		{
-			get {return this.database;}
+			get {return this._database;}
 		}
 
 
@@ -87,7 +121,7 @@ namespace <%=DALNameSpace%>
 		/// </summary>
 		public DbTransaction TransactionObject
 		{
-			get { return this.transaction; }
+			get { return this._transaction; }
 		}
 
 		/// <summary>
@@ -96,7 +130,7 @@ namespace <%=DALNameSpace%>
 		/// <value>Return true if a transaction session is currently open and operating; otherwise false.</value>
 		public bool IsOpen 
 		{
-			get { return _transactionOpen; }
+			get { return this._transactionOpen; }
 		}
 		
 		/// <summary>
@@ -125,15 +159,15 @@ namespace <%=DALNameSpace%>
 			//Open connection
 			try
 			{
-				this.connection.Open();
-				this.transaction = this.connection.BeginTransaction(isolationLevel);
+				this._connection.Open();
+				this._transaction = this._connection.BeginTransaction(isolationLevel);
 				this._transactionOpen = true;
 			}
 			catch ( Exception )
 			{
 				// in the event of an error, close the connection and destroy the transobject.
-                if (this.connection != null) this.connection.Close();
-                if (this.transaction != null) this.transaction.Dispose();
+                if (this._connection != null) this._connection.Close();
+                if (this._transaction != null) this._transaction.Dispose();
 				this._transactionOpen = false;
 				throw;
 			}
@@ -152,13 +186,13 @@ namespace <%=DALNameSpace%>
 			
 			try
 			{
-				this.transaction.Commit(); // SqlClient could throw Exception or InvalidOperationException
+				this._transaction.Commit(); // SqlClient could throw Exception or InvalidOperationException
 			}
 			finally
 			{
 				//assuming the commit was sucessful.
-				this.connection.Close();
-				this.transaction.Dispose();
+				this._connection.Close();
+				this._transaction.Dispose();
 				this._transactionOpen = false;
 			}
 		}
@@ -176,12 +210,12 @@ namespace <%=DALNameSpace%>
 			
 			try
 			{
-				this.transaction.Rollback(); // SqlClient could throw Exception or InvalidOperationException
+				this._transaction.Rollback(); // SqlClient could throw Exception or InvalidOperationException
 			}
 			finally
 			{
-				this.connection.Close();
-				this.transaction.Dispose();
+				this._connection.Close();
+				this._transaction.Dispose();
 				this._transactionOpen = false;
 			}
 		}
