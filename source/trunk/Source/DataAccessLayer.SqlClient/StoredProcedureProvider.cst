@@ -28,6 +28,8 @@ namespace <%=DALNameSpace%>.SqlClient
 	public sealed class StoredProcedureProvider
 	{
 		private ArrayList procedures;
+		private Hashtable shortNameProcedures;
+		private Hashtable longNameProcedures;
 		private static StoredProcedureProvider current = null;
 
 		/// <summary>
@@ -75,6 +77,7 @@ namespace <%=DALNameSpace%>.SqlClient
 			set
 			{
 				procedures = value;
+				InitializeProcedureLookupTables();
 			}
 		}
 
@@ -87,14 +90,17 @@ namespace <%=DALNameSpace%>.SqlClient
 		{
 			get
 			{
-				foreach(Procedure procedure in procedures)
+				if (longNameProcedures == null)
+					InitializeProcedureLookupTables();
+				
+				Procedure result = null;
+				
+				result = longNameProcedures[name] as Procedure;
+				if (result == null)
 				{
-					if(procedure.Name == name || procedure.Owner + "." + procedure.Name == name)
-					{
-						return procedure;
-					}
+					result = shortNameProcedures[name] as Procedure;
 				}
-				return null;
+				return result;
 			}
 		}
 		
@@ -221,6 +227,18 @@ namespace <%=DALNameSpace%>.SqlClient
 		}
 		
 		#endregion
+		
+		private void InitializeProcedureLookupTables()
+		{
+			shortNameProcedures = new Hashtable();
+			longNameProcedures = new Hashtable();
+
+			foreach (Procedure procedure in procedures)
+			{
+				shortNameProcedures[procedure.Name] = procedure;
+				longNameProcedures[procedure.Owner + "." + procedure.Name] = procedure;
+			}
+		}
 	}
 
 	/// <summary>
