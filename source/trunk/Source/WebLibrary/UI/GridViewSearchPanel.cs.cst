@@ -1,4 +1,4 @@
-﻿<%@ CodeTemplate Language="C#" TargetLanguage="Text" Description="" Debug="True" ResponseEncoding="UTF-8" %>
+<%@ CodeTemplate Language="C#" TargetLanguage="Text" Description="" Debug="True" ResponseEncoding="UTF-8" %>
 <%@ Property Name="RootNameSpace" Type="System.String" Category="Data" Description="Website Namespace." %>
 <%@ Property Name="BusinessLogicLayerNameSpace" Type="System.String" Category="03. Namespaces - Required" Description="The sub namespace that is added to the root namespace for the entities." Default="Entities" Optional="False" %>
 
@@ -345,26 +345,41 @@ namespace <%=RootNameSpace%>.Web.UI
             Type t = TypedDataSource.GetType();
             System.Reflection.PropertyInfo prop = t.GetProperty("Parameters");
             ParameterCollection col = (ParameterCollection) prop.GetValue(TypedDataSource, null);
+            CustomParameter p = col["WhereClause"] as CustomParameter;
 
-            foreach (Parameter param in col)
+            // -- check if WhereClause exists in parameter's collection
+            if (p != null)
             {
-                if (param.Name.Equals("WhereClause"))
-                {
-                    Type pType = param.GetType();                      
-                    if (whereClause == string.Empty)
-                    {
-                        pType.GetProperty("Value").SetValue(param, _filter, null);
-                    }
-                    else if (_filter == string.Empty)
-                    {
-                        pType.GetProperty("Value").SetValue(param, whereClause, null);                        
-                    }
-                    else
-                    {
-                        pType.GetProperty("Value").SetValue(param, _filter + " AND " + whereClause, null);                        
-                    }
-                    break;
-                }
+                p.Value = GetWhereClauseStatement(whereClause);
+            }
+            else
+            {
+                p = new CustomParameter();
+                p.Name = "WhereClause";
+                p.ConvertEmptyStringToNull = false;
+                p.Value = GetWhereClauseStatement(whereClause);
+                col.Add(p); 
+            }
+        }
+
+        /// <summary>
+        /// Constructs the statement based on several conditions
+        /// </summary>
+        /// <param name="whereClause"></param>
+        /// <returns></returns>
+        private string GetWhereClauseStatement(string whereClause)
+        {
+            if (whereClause == string.Empty)
+            {
+                return _filter;
+            }
+            else if (_filter == string.Empty)
+            {
+                return whereClause;
+            }
+            else
+            {
+                return string.Format("{0} AND {1}", _filter, whereClause);
             }
         }
         #endregion
