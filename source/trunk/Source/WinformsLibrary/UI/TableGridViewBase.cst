@@ -1,4 +1,4 @@
-﻿<%@ CodeTemplate Language="C#" TargetLanguage="c#" Src="..\..\TemplateLib\CommonSqlCode.cs" Inherits="MoM.Templates.CommonSqlCode" Debug="False" Description="Template description here." %>
+<%@ CodeTemplate Language="C#" TargetLanguage="c#" Src="..\..\TemplateLib\CommonSqlCode.cs" Inherits="MoM.Templates.CommonSqlCode" Debug="False" Description="Template description here." %>
 <%@ Assembly Name="SchemaExplorer" %>
 <%@ Assembly Name="System.Design" %>
 
@@ -21,7 +21,8 @@
 namespace <%=WinLibNameSpace%>
 {
 	[System.ComponentModel.DesignerCategoryAttribute("code")]
-	public class <%=dgvName%>Base : System.Windows.Forms.UserControl
+	//[System.ComponentModel.ToolboxItem(false)]
+	public abstract class <%=dgvName%>Base : System.Windows.Forms.UserControl
 	{	
 		public event System.EventHandler<<%=name%>DataGridViewEventArgs> CurrentEntityChanged;
 		
@@ -48,8 +49,7 @@ namespace <%=WinLibNameSpace%>
 		<% } %>
 		
 		#endregion
-		
-			
+					
 		#region Combo list
 		
 		<% for (int i=0; i<SourceTable.ForeignKeys.Count; i++) { %>
@@ -68,6 +68,19 @@ namespace <%=WinLibNameSpace%>
 				this.ux<%=GetPropertyName(SourceTable.ForeignKeys[i].ForeignKeyMemberColumns[0])%>DataGridViewColumn.DataSource = this._<%=GetPropertyName(SourceTable.ForeignKeys[i].ForeignKeyMemberColumns[0])%>List;
 			}
 		}
+		
+		protected bool _allowNewItemIn<%=GetPropertyName(SourceTable.ForeignKeys[i].ForeignKeyMemberColumns[0])%>List;
+		[System.ComponentModel.Category(".netTiers"), System.ComponentModel.Description("Indicates if end user can add a new item in the combobox. an event will be thrown then.")]
+		public bool AllowNewItemIn<%=GetPropertyName(SourceTable.ForeignKeys[i].ForeignKeyMemberColumns[0])%>List
+		{
+			get { return _allowNewItemIn<%=GetPropertyName(SourceTable.ForeignKeys[i].ForeignKeyMemberColumns[0])%>List;}
+			set
+			{
+				this._allowNewItemIn<%=GetPropertyName(SourceTable.ForeignKeys[i].ForeignKeyMemberColumns[0])%>List = value;
+				this.ux<%=GetPropertyName(SourceTable.ForeignKeys[i].ForeignKeyMemberColumns[0])%>DataGridViewColumn.DisplayStyle = value ? System.Windows.Forms.DataGridViewComboBoxDisplayStyle.ComboBox : System.Windows.Forms.DataGridViewComboBoxDisplayStyle.DropDownButton;
+			}
+		}
+		
 		<% } %>
 		<% } %>
 		#endregion
@@ -95,7 +108,11 @@ namespace <%=WinLibNameSpace%>
 		void On<%=name%>BindingSourceCurrentItemChanged(object sender, System.EventArgs e)
 		{
 			_current<%=name%> = ux<%=name%>BindingSource.Current as <%=entityName%>;
-			_current<%=name%>.Validate();
+			
+			if (_current<%=name%> != null)
+			{
+				_current<%=name%>.Validate();
+			}
 			//_<%=GetClassName(SourceTable)%>.Validate();
 			OnCurrentEntityChanged();
 		}

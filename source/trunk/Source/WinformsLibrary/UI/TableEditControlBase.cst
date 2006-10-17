@@ -20,14 +20,18 @@
 
 namespace <%=WinLibNameSpace%>
 {
+	/// <summary>
+	/// This is the edit form for the <see cref="<%=entityName%>"/> entity.
+	/// </summary>
+	/// <remarks>This class is overwritten by .netTiers at each generation.</remarks>
 	[System.ComponentModel.DesignerCategoryAttribute("code")]
-	public class <%=className%> : System.Windows.Forms.UserControl
+	public abstract class <%=className%> : System.Windows.Forms.UserControl
 	{
 		#region Fields
 		
 		//private System.Windows.Forms.TableLayoutPanel uxTableLayoutPanel;
-		private System.Windows.Forms.ErrorProvider uxErrorProvider;
-		private System.Windows.Forms.BindingSource uxBindingSource;
+		protected System.Windows.Forms.ErrorProvider uxErrorProvider;
+		protected System.Windows.Forms.BindingSource uxBindingSource;
 						
 		<% for (int i=0; i<SourceTable.Columns.Count; i++)
 		{ 
@@ -49,6 +53,10 @@ namespace <%=WinLibNameSpace%>
 		
 		#region Main entity
 		private <%=entityName%> _<%=name%>;
+		/// <summary>
+		/// Gets or sets the <see cref="<%=entityName%>"/> entity to edit with this form.
+		/// </summary>
+		/// <value>The <see cref="<%=entityName%>"/> instance.</value>
 		public <%=entityName%> <%=name%>
 		{
 			get {return this._<%=name%>;}
@@ -221,9 +229,7 @@ namespace <%=WinLibNameSpace%>
 			this.PerformLayout();
 		}
 		#endregion
-		
-
-		
+				
 		#region ComboBox List
 		
 		<% for (int i=0; i<SourceTable.ForeignKeys.Count; i++) { %>
@@ -242,6 +248,19 @@ namespace <%=WinLibNameSpace%>
 				this.ux<%=GetPropertyName(SourceTable.ForeignKeys[i].ForeignKeyMemberColumns[0])%>.DataSource = value;
 			}
 		}
+		
+		protected bool _allowNewItemIn<%=GetPropertyName(SourceTable.ForeignKeys[i].ForeignKeyMemberColumns[0])%>List;
+		[System.ComponentModel.Category(".netTiers"), System.ComponentModel.Description("Indicates if end user can add a new item in the combobox. an event will be thrown then.")]
+		public bool AllowNewItemIn<%=GetPropertyName(SourceTable.ForeignKeys[i].ForeignKeyMemberColumns[0])%>List
+		{
+			get { return _allowNewItemIn<%=GetPropertyName(SourceTable.ForeignKeys[i].ForeignKeyMemberColumns[0])%>List;}
+			set
+			{
+				this._allowNewItemIn<%=GetPropertyName(SourceTable.ForeignKeys[i].ForeignKeyMemberColumns[0])%>List = value;
+				this.ux<%=GetPropertyName(SourceTable.ForeignKeys[i].ForeignKeyMemberColumns[0])%>.DropDownStyle = value ? System.Windows.Forms.ComboBoxStyle.DropDown : System.Windows.Forms.ComboBoxStyle.DropDownList;
+			}
+		}
+		
 		<% } %>
 		<% } %>
 		
