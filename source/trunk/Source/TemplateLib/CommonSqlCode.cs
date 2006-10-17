@@ -440,7 +440,28 @@ namespace MoM.Templates
 
             return pascalName;
         }
-		
+
+        /// <summary>
+        /// Get the Pascal spaced version of a name.  
+        /// </summary>
+        /// <param name="name">Name to be changed</param>
+        /// <returns>PascalSpaced version of the name</returns>
+        public string PascalToSpaced(string name)
+        {
+            Regex regex = new Regex("(?<=[a-z])(?<x>[A-Z])|(?<=.)(?<x>[A-Z])(?=[a-z])");
+            return regex.Replace(name, " ${x}");
+        }
+
+        /// <summary>
+        /// Get the Pascal spaced version of a name.  
+        /// </summary>
+        /// <param name="name">Name to be changed</param>
+        /// <returns>PascalSpaced version of the name</returns>
+        public string GetPascalSpacedName(string name)
+        {
+            return PascalToSpaced(GetClassName(name));
+        }		
+
 		/// <summary>
 		/// Remove any non-word characters from a SchemaObject's name (word characters are a-z, A-Z, 0-9, _)
 		/// so that it may be used in code
