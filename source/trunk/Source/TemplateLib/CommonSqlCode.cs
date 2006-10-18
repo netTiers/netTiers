@@ -1,4 +1,4 @@
-/*
+﻿/*
  * $Id: CommonSqlCode.cs,v 1.15 2006/02/27 22:06:44 bgjohnso Exp $
  * Last modified by $Author: goofsr $
  * Last modified at $Date: 2006-04-24 23:36:21 -0500 (Mon, 24 Apr 2006) $
@@ -70,6 +70,7 @@ namespace MoM.Templates
 		private bool cspUseDefaultValForNonNullableTypes = false;
 		private bool parseDbColDefaultVal  = false;
 		private bool changeUnderscoreToPascalCase  = false;
+		private bool includeCustoms = true;
 				
 		private MethodNamesProperty methodNames = null;
 		private Hashtable aliases = null;
@@ -355,6 +356,14 @@ namespace MoM.Templates
 			get { return this.customProcedureStartsWith; }
 			set { this.customProcedureStartsWith = value; }
 		}
+		
+		[Category("07. CRUD - Advanced")]
+		[Description("If true custom stored procedures will be detected and generated.")]
+		public bool IncludeCustoms
+		{
+			get { return this.includeCustoms; }
+			set { this.includeCustoms = value; }
+		}		
 		
 		[Category("07. CRUD - Advanced")]
 		[Description("By Default, any parameter in the Custom Stored Procedure will be a nullable type if it's a value type.  Setting this flag to true will only allow the param value types that specify NULL, such as (@param1 int=NULL), be nullable i.e. (int? param1).  While the rest of the params, @param2 int, will be regular (int param2).")]
@@ -1447,6 +1456,32 @@ namespace MoM.Templates
 		private string[] userDefinedTypes = null;
 
 		/// <summary>
+		/// Determines if the given schema object has a user defined data type.  
+		/// -- [ab] this is a generic ver of IsUserDefinedType(ColumnSchema column)
+		/// </summary>
+		/// <remarks>
+		/// User defined data types are dynamically loaded from the database where the schema object is from.
+		/// </remarks>
+		public bool IsUserDefinedType<TSchemaType>(TSchemaType schemaItem) where TSchemaType:DataObjectBase
+		{
+			// lazy load the user defined user type list
+			if ( userDefinedTypes == null )
+			{
+				userDefinedTypes = GetUserDefinedTypes(schemaItem.Database);
+			}
+			
+			foreach (string userDefinedType in userDefinedTypes)
+			{
+				// compare the data types case ignoring the case.
+				if ( String.Compare(schemaItem.NativeType, userDefinedType, true) == 0 )
+					return true;
+			}
+			return false;
+		}
+
+
+
+		/// <summary>
 		/// Get the user defined data types from the specified database.
 		/// </summary>
 		protected string[] GetUserDefinedTypes(DatabaseSchema database)
@@ -1875,6 +1910,27 @@ namespace MoM.Templates
 		}
 		
 		/// <summary>
+		/// Get an xml representation for a stored procedure parameter - this is for pre-existing (most likely, custom) Stored Procedures
+		/// </summary>
+		/// <param name="parameter">SP Parameter for which to get the Sql parameter statement</param>
+		/// <returns>the xml Sql Parameter statement</returns>
+		public string GetSqlParameterXmlNode(ParameterSchema parameter)
+		{
+			string formater = "<parameter name=\"@{0}\" type=\"{1}\" direction=\"{2}\" size=\"{3}\" precision=\"{4}\" scale=\"{5}\" param=\"{6}\" nulldefault=\"{7}\"/>";			
+			
+			return string.Format(	formater, 
+									parameter.Name.TrimStart('@'),
+									parameter.NativeType, 
+									parameter.Direction.ToString(), 
+									parameter.Size, 
+									parameter.Precision, 
+									parameter.Scale, 
+									parameter.NativeType.ToLower() == "real" ? String.Empty : GetSqlParameterParam<ParameterSchema>(parameter), 
+									parameter.AllowDBNull? "null":String.Empty );
+		}
+		
+		
+		/// <summary>
 		/// 
 		/// </summary>
 		/// <param name="column"></param>
@@ -1896,6 +1952,7 @@ namespace MoM.Templates
 				case DbType.AnsiStringFixedLength:
 				case DbType.String:
 				case DbType.StringFixedLength:
+				case DbType.Binary:
 				{
 					if (column.NativeType != "text" && column.NativeType != "ntext")
 					{
@@ -1914,6 +1971,52 @@ namespace MoM.Templates
 			}
 			return param;
 		}
+
+		/// <summary>
+		/// 	[ab] This is a somewhat generic :) version of the singly typed GetSqlParameterParam
+		/// </summary>
+		/// <param name="column"></param>
+		/// <remarks>
+		///	
+		/// </remarks>
+		public string GetSqlParameterParam<TSchemaType>(TSchemaType schemaItem) where TSchemaType:DataObjectBase
+		{
+			string param = string.Empty;
+			
+			// user defined data types do not need size components
+			if ( ! IsUserDefinedType<TSchemaType>(schemaItem) )
+			{
+			switch (schemaItem.DataType)
+			{
+				case DbType.Decimal:
+				{
+					param = "(" + schemaItem.Precision + ", " + schemaItem.Scale + ")";
+					break;
+				}
+				case DbType.AnsiString:
+				case DbType.AnsiStringFixedLength:
+				case DbType.String:
+				case DbType.StringFixedLength:
+				case DbType.Binary:				
+				{
+					if (schemaItem.NativeType != "text" && schemaItem.NativeType != "ntext")
+					{
+						if (schemaItem.Size > 0)
+						{
+							param = "(" + schemaItem.Size + ")";
+						}
+						else if (schemaItem.Size == -1)
+						{
+							param = "(MAX)";
+						}
+					}
+					break;
+				}
+			}	
+			}
+			return param;
+		}
+		
 
 		/// <summary>
 		/// Parse the text of a stored procedure to retrieve any comment prior to the CREATE PROC construct

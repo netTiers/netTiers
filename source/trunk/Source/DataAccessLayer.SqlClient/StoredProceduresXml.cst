@@ -765,6 +765,68 @@ SELECT <% for (int i = 0; i < primaryTable.Columns.Count; i++)
 		<% } // end if HasPrimaryKey %>
 		<%} //end if(IncludeFind)
 
+		// -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- 
+		// [ab] NOTE: the following is very MS SQL specific. Also the whole step of reading custom procs from DB
+		//	will eventually be replaced by reading an external xml definition file.
+		if(IncludeCustoms)
+		{
+			System.Collections.IDictionary procs = GetCustomProcedures(SourceTable);
+				
+			foreach(DictionaryEntry item in procs)
+			{  
+				SchemaExplorer.CommandSchema command = (SchemaExplorer.CommandSchema) item.Value;
+				%>
+				
+		<procedure owner="<%=command.Owner %>" name="<%=command.Name %>" <%if (!string.IsNullOrEmpty(GrantUser)) {%>grant="<%=GrantUser%>"<%}%>>
+			<comment><![CDATA[<%
+			
+					// [ab] TODO: note this is specific to MS SQL. To be adjusted for Oracle.
+					Regex rx = new Regex(@"^CREATE\ PROCEDURE\ (.+?\n)*^AS", RegexOptions.Multiline | RegexOptions.IgnoreCase);			
+					
+					Match rxm = rx.Match(command.CommandText);
+					string sp_body = String.Empty;
+					if (rxm.Success)
+					{
+						// get any comments that precede "CREATE PROCEDURE"
+						string comments = command.CommandText.Substring(0, rxm.Index);
+						// TODO: no validation as to whether this is a valid comment block
+						Response.Write(comments);
+						// Remove DDL Statement from the top of the custom sp 
+						sp_body = command.CommandText.Substring(rxm.Index+rxm.Length);
+					}
+					else
+					{
+						throw new ApplicationException(string.Format("Custom sp {0} is not in the expected format.", command.Name ));						
+					}
+			
+			%>]]></comment>
+			<parameters>
+				<% 
+
+				for (int i = 0; i < command.Parameters.Count; i++)
+				{
+					if (! (command.Parameters[i].Name.TrimStart('@').ToUpper() == "RETURN_VALUE"  && 
+						command.Parameters[i].Direction == ParameterDirection.ReturnValue) )
+					{
+						Response.Write("\t\t\t\t" + GetSqlParameterXmlNode(command.Parameters[i]) + Environment.NewLine);
+					}
+				}
+					
+				%>
+			</parameters>
+			<body><![CDATA[
+				
+					<%
+					// Debugger.Break();
+					Response.Write(sp_body);
+					%>
+
+			]]></body>
+					</procedure>
+			<% } // end foreach(DictionaryEntry item in procs)
+
+		  } // end if(IncludeCustoms)
+
 	} // end for each Table
 	// -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- 
 	// -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- 
