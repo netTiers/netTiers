@@ -725,6 +725,16 @@ namespace <%= DALNameSpace %>
 			set { ignoreCase = value; }
 		}
 
+		/// <summary>
+		/// Gets or sets the length of the internal StringBuilder object.
+		/// </summary>
+		/// <value>The length.</value>
+		public virtual int Length
+		{
+			get { return sql.Length; }
+			set { sql.Length = value; }
+		}
+
 		#endregion Properties
 	}
 
@@ -1915,6 +1925,43 @@ namespace <%= DALNameSpace %>
 			}
 		}
 
+		/// <summary>
+		/// Gets the <see cref="System.Type"/> for
+		/// the current entity column enumeration value.
+		/// </summary>
+		public System.Type SystemType
+		{
+			get
+			{
+				System.Type type = typeof(String);
+
+				if ( column != null )
+				{
+					ColumnEnumAttribute attribute = EntityHelper.GetAttribute<ColumnEnumAttribute>(column);
+
+					if ( attribute != null )
+					{
+						type = attribute.SystemType;
+					}
+				}
+
+				return type;
+			}
+		}
+
 		#endregion Properties
+
+		#region Methods
+		
+		/// <summary>
+		/// Gets the current value converted to the appropriate <see cref="System.Type"/>.
+		/// </summary>
+		/// <returns></returns>
+		public object GetValue()
+		{
+			return EntityUtil.ChangeType(Value, SystemType);
+		}
+
+		#endregion Methods
 	}
 }
