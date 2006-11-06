@@ -28,6 +28,7 @@ namespace <%=WorkItemNameSpace%>
     public class <%=WorkItemClassName%> : WorkItem
     {
         private <%=ViewClassName%> _view;
+        private IWorkspace _workspace;
 
         #region State definition
         
@@ -67,13 +68,18 @@ namespace <%=WorkItemNameSpace%>
         /// <param name="workspace">The workspace that will display the smartparts of the workitem</param>
         public void Run(IWorkspace workspace)
         {
+			this._workspace = workspace;
             this._view = this.Items.Get<<%=ViewClassName%>>("<%=ViewClassName%>") ?? this.Items.AddNew<<%=ViewClassName%>>("<%=ViewClassName%>");
 			this._view.Disposed += new EventHandler(OnViewDisposed); 
 			
             //Make the smartpart visible in the workspace.
 			ISmartPartInfo smartPartInfo = new SmartPartInfo("<%=ViewClassName%>", "");
 			RegisterSmartPartInfo(this._view, smartPartInfo);
-			workspace.Show(this._view, smartPartInfo);         
+			workspace.Show(this._view, smartPartInfo);
+			
+			<% if (IsList == false) { %>
+			<%=EntityName%>.ColumnChanged += new <%=EntityName%>EventHandler(On<%=EntityName%>ColumnChanged);
+			<% } %>
         }        
 		
 		/// <summary>
@@ -89,5 +95,40 @@ namespace <%=WorkItemNameSpace%>
                 Terminate();
             }
         }
+		
+		<% if (IsList == false) { %>
+		
+		void On<%=EntityName%>ColumnChanged(object sender, <%=EntityName%>EventArgs e)
+		{
+			UpdateSmartPartTitle();
+		}	
+		
+		internal void UpdateSmartPartTitle()
+		{
+			SmartPartInfo smartPartInfo = GetSmartPartInfo<SmartPartInfo>(this._view);
+			string oldTitle = smartPartInfo.Title;
+			smartPartInfo.Title = <%=EntityName%>.Name + (<%=EntityName%>.IsDirty ? " *" : string.Empty);
+			if (oldTitle != smartPartInfo.Title)
+			{
+				_workspace.Show(this._view, smartPartInfo);
+			}
+		}
+
+		[EventSubscription(Constants.EventTopics.SaveRequested, ThreadOption.UserInterface)]
+		public void SaveRequestedHandler(object sender, EventArgs e)
+		{
+			if (Workspaces["MainWorkspace"].ActiveSmartPart == _view)
+			{
+				_view.Save();
+			}
+		}
+
+		internal void Save<%=EntityName%>()
+		{
+			Data.DataRepository.<%=EntityName%>Provider.Save(<%=EntityName%>);
+			UpdateSmartPartTitle();
+		}
+		
+		<% } %>
     }
 }
