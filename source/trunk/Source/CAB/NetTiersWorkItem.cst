@@ -57,6 +57,16 @@
 		_workItemClassName = "Report" + EntityName + "WorkItem";
 		_isList = false;
 	}
+	else if (MyWorkItemType == WorkItemType.Search)
+	{
+		_workItemFolder = OutputDirectory + "\\Search" + EntityName;
+		
+		_workItemNameSpace = NameSpace + ".Search" + EntityName;
+		_viewClassName = "Search" + EntityName + "View";
+		_presenterClassName = "Search" + EntityName + "Presenter";
+		_workItemClassName = "Search" + EntityName + "WorkItem";
+		_isList = false;
+	}
 	  
   	/// process
   
@@ -69,6 +79,13 @@
    	EntityViewTemplate.SetProperty("ViewClassName", _viewClassName); 
 	EntityViewTemplate.SetProperty("PresenterClassName", _presenterClassName); 
 	EntityViewTemplate.RenderToFile(_workItemFolder + "\\" + _viewClassName + ".cs", true); 
+	
+	EntityViewDesignerTemplate.SetProperty("EntityName", EntityName); 
+	EntityViewDesignerTemplate.SetProperty("EntityNameSpace", EntityNameSpace); 
+	EntityViewDesignerTemplate.SetProperty("WorkItemNameSpace", _workItemNameSpace); 
+   	EntityViewDesignerTemplate.SetProperty("ViewClassName", _viewClassName); 
+	EntityViewDesignerTemplate.SetProperty("PresenterClassName", _presenterClassName); 
+	EntityViewDesignerTemplate.RenderToFile(_workItemFolder + "\\" + _viewClassName + ".Designer.cs", true); 
    	
    	EntityPresenter.SetProperty("IsList", _isList); 
    	EntityPresenter.SetProperty("EntityName", EntityName); 
@@ -96,7 +113,8 @@
 		Edit,
 		List,
 		Context,
-		Report
+		Report,
+		Search
 	}	
 	
 	private string _outputDirectory = String.Empty;
@@ -104,7 +122,7 @@
 	private CodeTemplate _EntityViewTemplate;
 	private CodeTemplate _EntityPresenter;
 	private CodeTemplate _EntitytWorkItem;
-
+	private CodeTemplate _EntityViewDesignerTemplate;
 
 [Browsable(false)]
 public CodeTemplate EntityViewTemplate 
@@ -132,6 +150,33 @@ public CodeTemplate EntityViewTemplate
       return _EntityViewTemplate; 
    } 
 } 
+
+[Browsable(false)]
+public CodeTemplate EntityViewDesignerTemplate 
+{ 
+   get 
+   { 
+      if (_EntityViewDesignerTemplate == null) 
+      { 
+         CodeTemplateCompiler compiler = new CodeTemplateCompiler(this.CodeTemplateInfo.DirectoryName + "EntityWorkItem\\EntityView.Designer.cst"); 
+         compiler.Compile(); 
+         
+         if (compiler.Errors.Count == 0) 
+         { 
+            _EntityViewDesignerTemplate = compiler.CreateInstance(); 
+         } 
+         else 
+         { 
+            for (int i = 0; i < compiler.Errors.Count; i++) 
+            {
+               Response.WriteLine(compiler.Errors[ i].ToString()); 
+            } 
+         } 
+      } 
+      
+      return _EntityViewDesignerTemplate; 
+   } 
+}
 
 [Browsable(false)]
 public CodeTemplate EntityPresenter 

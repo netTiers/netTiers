@@ -124,13 +124,32 @@ namespace <%=WinLibNameSpace%>
 		
 		#endregion
 		
+		/// <summary>
+		/// Gets the currently selected <c cref="<%=entityName%>"/> instance.
+		/// </summary>
 		public <%=entityName%> Selected<%=name%>
 		{
 			get {return this._current<%=name%>;}
 		}
 		
 		#region other properties
-			
+		
+		/// <summary>
+		/// Gets or sets a value indicating whether you have provided your own data-management operations for the DataGridView control.
+		/// </summary>
+		[System.ComponentModel.Category(".netTiers")]
+		public bool VirtualMode
+		{
+			get {return this.ux<%=name%>DataGridView.VirtualMode;}
+			set
+			{
+				this.ux<%=name%>DataGridView.VirtualMode = value;
+			}
+		}
+		
+		/// <summary>
+		/// Gets or sets a value indicating whether the option to add rows is displayed to the user.
+		/// </summary>
 		[System.ComponentModel.Category(".netTiers")]
 		public bool AllowUserToAddRows
 		{
@@ -138,20 +157,28 @@ namespace <%=WinLibNameSpace%>
 			set {this.ux<%=name%>DataGridView.AllowUserToAddRows = value;}
 		}
 		
+		/// <summary>
+		/// Gets or sets a value indicating whether the user is allowed to delete rows from the DataGridView.
+		/// </summary>
 		[System.ComponentModel.Category(".netTiers")]
 		public bool AllowUserToDeleteRows
 		{
 			get {return this.ux<%=name%>DataGridView.AllowUserToDeleteRows;}
 			set {this.ux<%=name%>DataGridView.AllowUserToDeleteRows = value;}
 		}
-				
 		
+		/// <summary>
+		/// Gets the <c cref"DataGridView"/> instance.
+		/// </summary>
 		[System.ComponentModel.Category(".netTiers")]
 		public System.Windows.Forms.DataGridView DataGridView
 		{
 			get {return this.ux<%=name%>DataGridView;}
 		}
 		
+		/// <summary>
+		/// Gets a collection that contains all the columns in the control.
+		/// </summary>
 		[System.ComponentModel.Category(".netTiers")]		
 		[System.ComponentModel.DesignerSerializationVisibilityAttribute(System.ComponentModel.DesignerSerializationVisibility.Visible)]
 		//[System.ComponentModel.EditorAttribute("System.Windows.Forms.Design.DataGridViewColumnCollectionEditor, System.Design", typeof(System.Drawing.Design.UITypeEditor))] 
@@ -242,8 +269,10 @@ namespace <%=WinLibNameSpace%>
 			this.ux<%=name%>DataGridView.Name = "dataGridView1";
 			this.ux<%=name%>DataGridView.Size = new System.Drawing.Size(470, 300);
 			this.ux<%=name%>DataGridView.TabIndex = 0;		
-			this.ux<%=name%>DataGridView.DataError += new System.Windows.Forms.DataGridViewDataErrorEventHandler(ux<%=name%>DataGridView_DataError);
-
+			this.ux<%=name%>DataGridView.DataError += new System.Windows.Forms.DataGridViewDataErrorEventHandler(this.On<%=name%>DataGridViewDataError);
+			this.ux<%=name%>DataGridView.CellValueNeeded += new System.Windows.Forms.DataGridViewCellValueEventHandler(this.On<%=name%>DataGridViewCellValueNeeded);
+			this.ux<%=name%>DataGridView.CellValuePushed += new System.Windows.Forms.DataGridViewCellValueEventHandler(this.On<%=name%>DataGridViewCellValuePushed);
+			
 			<% for (int i=0; i<SourceTable.Columns.Count; i++)
 			{ 
 				ColumnSchema column = SourceTable.Columns[i];
@@ -292,12 +321,7 @@ namespace <%=WinLibNameSpace%>
 			this.ResumeLayout(false);
 		}
 		#endregion
-		
-		protected void ux<%=name%>DataGridView_DataError(object sender, System.Windows.Forms.DataGridViewDataErrorEventArgs e)
-		{
-			System.Diagnostics.Debug.WriteLine(string.Format( "{0}, {1}", e.ColumnIndex, e.RowIndex));
-		}
-		
+				
 		#region events
 		
 		protected void OnCurrentEntityChanged()
@@ -312,6 +336,9 @@ namespace <%=WinLibNameSpace%>
 		
 		#endregion
 		
+		/// <summary>
+		/// Strongly typed event for the 
+		/// </summary>
 		public class <%=name%>DataGridViewEventArgs : System.EventArgs
 		{
 			private <%=entityName%>	_<%=name%>;
@@ -321,6 +348,54 @@ namespace <%=WinLibNameSpace%>
 				get { return _<%=name%>; }
 				set { _<%=name%> = value; }
 			}	
+		}
+		
+		/// <summary>
+		/// Handles the DataError event of the ux<%=name%>DataGridView control.
+		/// </summary>
+		/// <param name="sender">The source of the event.</param>
+		/// <param name="e">The <see cref="T:System.Windows.Forms.DataGridViewDataErrorEventArgs"/> instance containing the event data.</param>
+		protected void On<%=name%>DataGridViewDataError(object sender, System.Windows.Forms.DataGridViewDataErrorEventArgs e)
+		{
+			System.Diagnostics.Debug.WriteLine(string.Format( "{0}, {1}", e.ColumnIndex, e.RowIndex));
+		}
+		
+		/// <summary>
+		/// Handles the CellValueNeeded event of the ux<%=name%>DataGridView control.
+		/// </summary>
+		/// <param name="sender">The source of the event.</param>
+		/// <param name="e">The <see cref="T:System.Windows.Forms.DataGridViewCellValueEventArgs"/> instance containing the event data.</param>
+		protected void On<%=name%>DataGridViewCellValueNeeded(object sender, System.Windows.Forms.DataGridViewCellValueEventArgs e)
+		{
+			switch(ux<%=name%>DataGridView.Columns[e.ColumnIndex].Name)
+			{
+				<% for (int i=0; i<SourceTable.Columns.Count; i++) { %>
+					case "ux<%=GetPropertyName(SourceTable.Columns[i])%>DataGridViewColumn":
+						e.Value = <%=GetClassName(SourceTable)%>List[e.RowIndex].<%=GetPropertyName(SourceTable.Columns[i])%>;
+						break;
+				<% }%>
+				default:
+				break;
+			}
+		}
+		
+		/// <summary>
+		/// Handles the CellValuePushed event of the ux<%=name%>DataGridView control.
+		/// </summary>
+		/// <param name="sender">The source of the event.</param>
+		/// <param name="e">The <see cref="T:System.Windows.Forms.DataGridViewCellValueEventArgs"/> instance containing the event data.</param>
+		protected void On<%=name%>DataGridViewCellValuePushed(object sender, System.Windows.Forms.DataGridViewCellValueEventArgs e)
+		{
+			switch(ux<%=name%>DataGridView.Columns[e.ColumnIndex].Name)
+			{
+				<% for (int i=0; i<SourceTable.Columns.Count; i++) { %>
+					case "ux<%=GetPropertyName(SourceTable.Columns[i])%>DataGridViewColumn":
+						<%=GetClassName(SourceTable)%>List[e.RowIndex].<%=GetPropertyName(SourceTable.Columns[i])%> = (<%=GetCSType(SourceTable.Columns[i])%>)e.Value;
+						break;
+				<% }%>
+				default:
+				break;
+			}
 		}
 	}
 }
