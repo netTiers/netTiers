@@ -1,4 +1,4 @@
-﻿/*
+/*
  * $Id: CommonSqlCode.cs,v 1.15 2006/02/27 22:06:44 bgjohnso Exp $
  * Last modified by $Author: goofsr $
  * Last modified at $Date: 2006-04-24 23:36:21 -0500 (Mon, 24 Apr 2006) $
@@ -1954,7 +1954,7 @@ namespace MoM.Templates
 				case DbType.StringFixedLength:
 				case DbType.Binary:
 				{
-					if (column.NativeType != "text" && column.NativeType != "ntext")
+					if (column.NativeType != "text" && column.NativeType != "ntext" && column.NativeType != "image" && column.NativeType != "timestamp")
 					{
 						if (column.Size > 0)
 						{
