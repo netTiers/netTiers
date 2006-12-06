@@ -24,11 +24,15 @@ using System.Collections.Generic;
 using System.Collections.Specialized;
 using System.Diagnostics;
 using System.Text;
+
 using <%= BLLNameSpace %>;
+using Microsoft.Practices.ObjectBuilder;
 #endregion
 
 namespace <%= DALNameSpace %>.Bases
 {
+	
+	
 	/// <summary>
 	/// Serves as the base class for objects that provide data access functionality.
 	/// Provides a default implementation of the IEntityProvider&lt;Entity, EntityKey&gt; interface.
@@ -803,7 +807,7 @@ namespace <%= DALNameSpace %>.Bases
 			}
 
 			// create a collection of types for easy access
-			ChildEntityTypesList innerList = new ChildEntityTypesList();
+			DeepSession innerList = new DeepSession();
 			for(int i=0; i < childTypes.Length; i++)
 			{
 				if (childTypes[i] == null) continue;
@@ -844,7 +848,7 @@ namespace <%= DALNameSpace %>.Bases
 		/// <param name="deepLoadType">DeepLoadType Enumeration to Include/Exclude object property collections from Load.</param>
 		/// <param name="childTypes">Entity Property Collection Type Array To Include or Exclude from Load.</param>
 		/// <param name="innerList">A collection of child types for easy access.</param>
-		internal abstract void <%= MethodNames.DeepLoad %>(TransactionManager mgr, Entity entity, bool deep, DeepLoadType deepLoadType, System.Type[] childTypes, ChildEntityTypesList innerList);
+		internal abstract void <%= MethodNames.DeepLoad %>(TransactionManager mgr, Entity entity, bool deep, DeepLoadType deepLoadType, System.Type[] childTypes, DeepSession innerList);
 
 		#endregion <%= MethodNames.DeepLoad %> Entity
 
@@ -862,7 +866,7 @@ namespace <%= DALNameSpace %>.Bases
 		/// <param name="deepLoadType">DeepLoadType Enumeration to Include/Exclude object property collections from Load.</param>
 		/// <param name="childTypes">Entity Property Collection Type Array To Include or Exclude from Load.</param>
 		/// <param name="innerList">A collection of child types for easy access.</param>
-		internal void <%= MethodNames.DeepLoad %>(TransactionManager mgr, TList<Entity> entities, bool deep, DeepLoadType deepLoadType, System.Type[] childTypes, ChildEntityTypesList innerList)
+		internal void <%= MethodNames.DeepLoad %>(TransactionManager mgr, TList<Entity> entities, bool deep, DeepLoadType deepLoadType, System.Type[] childTypes, DeepSession innerList)
 		{
 			#region Argument Validation
 			//Argument checks
@@ -890,7 +894,7 @@ namespace <%= DALNameSpace %>.Bases
 			{
 				<%= MethodNames.DeepLoad %>(mgr, entity, deep, deepLoadType, childTypes, innerList);
 				// remove the loaded keys for this entity
-				innerList.Keys.Remove(entity.EntityTrackingKey);
+				//TODO:fix innerList.Keys.Remove(entity.EntityTrackingKey);
 			}
 
 			return;
@@ -1066,7 +1070,7 @@ namespace <%= DALNameSpace %>.Bases
 			}
 
 			// create a collection of types for easy access
-			ChildEntityTypesList innerList = new ChildEntityTypesList();
+			DeepSession innerList = new DeepSession();
 			for(int i=0; i < childTypes.Length; i++)
 			{
 				if (childTypes[i] == null) continue;
@@ -1105,8 +1109,8 @@ namespace <%= DALNameSpace %>.Bases
 		/// <param name="entity">The Entity object to save.</param>
 		/// <param name="deepSaveType">DeepSaveType Enumeration to Include/Exclude object property collections from Save.</param>
 		/// <param name="childTypes">Entity Property Collection Type Array To Include or Exclude from Save.</param>
-		/// <param name="innerList">A <c>ChildEntityTypesList</c> of child types for easy access.</param>
-		internal abstract bool <%= MethodNames.DeepSave %>(TransactionManager mgr, Entity entity, DeepSaveType deepSaveType, Type[] childTypes, ChildEntityTypesList innerList);
+		/// <param name="innerList">A <c>DeepSession</c> of child types for easy access.</param>
+		internal abstract bool <%= MethodNames.DeepSave %>(TransactionManager mgr, Entity entity, DeepSaveType deepSaveType, Type[] childTypes, DeepSession innerList);
 
 		#endregion <%= MethodNames.DeepSave %> Entity
 		
@@ -1162,7 +1166,7 @@ namespace <%= DALNameSpace %>.Bases
 		/// <param name="deepSaveType">DeepSaveType Enumeration to Include/Exclude object property collections from Save.</param>
 		/// <param name="childTypes">Entity Property Collection Type Array To Include or Exclude from Save.</param>
 		/// <param name="innerList">A Hashtable of child types for easy access.</param>
-		internal virtual bool <%= MethodNames.DeepSave %>(TransactionManager mgr, TList<Entity> entities, DeepSaveType deepSaveType, System.Type[] childTypes, ChildEntityTypesList innerList)
+		internal virtual bool <%= MethodNames.DeepSave %>(TransactionManager mgr, TList<Entity> entities, DeepSaveType deepSaveType, System.Type[] childTypes, DeepSession innerList)
 		{
 			#region Argument Validation
 			//Argument checks
@@ -1192,7 +1196,7 @@ namespace <%= DALNameSpace %>.Bases
 			if (innerList == null)
 			{
 				// create a collection of types for easy access
-				innerList = new ChildEntityTypesList();
+				innerList = new DeepSession();
 				for(int i=0; i < childTypes.Length; i++)
 				{
 					if (childTypes[i] == null) continue;
@@ -1201,7 +1205,6 @@ namespace <%= DALNameSpace %>.Bases
 						innerList.Add(childTypes[i].Name);
 					else 
 						innerList.Add(string.Format("List<{0}>" , childTypes[i].GetGenericArguments()[0].Name));
-	
 				}
 			}
 			
@@ -1237,103 +1240,122 @@ namespace <%= DALNameSpace %>.Bases
 		///<summary>
 		/// Enforces the rules set in order to load this property for a given type.
 		///</summary>
-		protected bool CanDeepLoad(IEntity entity, String key, String property, DeepLoadType deepLoadType, ChildEntityTypesList innerList) 
+		/// <param name="entity">The entity.</param>
+        /// <param name="key">The key.</param>
+        /// <param name="deepLoadType">Type of the deep load.</param>
+        /// <param name="innerList">The inner list.</param>
+		protected bool CanDeepLoad(IEntity entity, String key, DeepLoadType deepLoadType, DeepSession innerList) 
         {
-			if ( innerList != null )
+			if ( innerList != null && !innerList.CancelSession)
 			{
-				if ( deepLoadType == DeepLoadType.ExcludeChildren )
+                if ( deepLoadType == DeepLoadType.ExcludeChildren )
 				{
-					if ( !innerList.Contains(key) && !innerList.HasProperty(entity, key, property) )
+                    if (!innerList.ContainsType(key) && !innerList.HasRun(entity, key))
 					{
-						innerList.AddProperty(entity, key, property);
-						return true;
+						//add to list prior to firing event
+                        innerList.AddRun(entity, key);
+						
+						//call deep loading event
+						DeepSessionEventArgs args = GetDeepSessionArgs(innerList, deepLoadType, entity, key);
+						OnDeepLoading( args );
+						
+						if ( args.Skip )
+							return false;
+						
+						if ( args.Cancel )
+						{
+							innerList.CancelSession = true;
+							return false;
+						}
+						
+                        return true;
 					}
 				}
 				else if ( deepLoadType == DeepLoadType.IncludeChildren )
 				{
-					if ( innerList.Contains(key) && !innerList.HasProperty(entity, key, property) )
+					if ( innerList.ContainsType(key) && !innerList.HasRun(entity, key) )
 					{
-						innerList.AddProperty(entity, key, property);
+						//add to list prior to firing event
+						innerList.AddRun(entity, key);
+						
+						//call deep loading event
+						DeepSessionEventArgs args = GetDeepSessionArgs(innerList, deepLoadType, entity, key);
+						OnDeepLoading( args );
+						
+						if ( args.Skip )
+							return false;
+						
+						if ( args.Cancel )
+						{
+							innerList.CancelSession = true;
+							return false;
+						}
+						
 						return true;
 					}
 				}
 			}
-
+		
 			return false;
         }
 		
-		
-		private class DeepSession
+        /// <summary>
+        /// Enforces the rules set in order to save this property for a given type.
+        /// </summary>
+        /// <param name="entity">The entity.</param>
+        /// <param name="key">The key.</param>
+        /// <param name="deepSaveType">Type of the deep save.</param>
+        /// <param name="innerList">The inner list.</param>
+        /// <returns>
+        /// 	<c>true</c> if this instance [can deep save] the specified entity; otherwise, <c>false</c>.
+        /// </returns>
+		protected bool CanDeepSave(Object entity, string key, DeepSaveType deepSaveType, DeepSession innerList) 
         {
-            private List<WeakReference> innerList;
-            public DeepSession()
-            { 
-            }
-
-			/// <summary>
-			/// Adds the specified obj.
-			/// </summary>
-			/// <param name="obj">The obj.</param>
-			public void Add(object obj)
-			{
-				if (obj != null)
-					InnerList.Add(new WeakReference(obj));
-			}
-	
-			/// <summary>
-			/// Determines whether the specified obj has run.
-			/// </summary>
-			/// <param name="obj">The obj.</param>
-			/// <returns>
-			/// 	<c>true</c> if the specified obj has run; otherwise, <c>false</c>.
-			/// </returns>
-			public bool HasRun(object obj)
-			{
-				if (obj == null) return false;
-	
-				if (InnerList.Contains(obj as WeakReference))
-					return true;
-	
-				return false;
-			}
-			
-			/// <summary>
-			/// Gets the inner list.
-			/// </summary>
-			/// <value>The inner list.</value>
-			internal List<WeakReference> InnerList
-			{
-				get 
-				{
-					if (innerList == null)
-					{
-						innerList = new List<WeakReference>();
-					}
-					return innerList; 
-				}
-			}
-        }
-		
-		///<summary>
-		/// Enforces the rules set in order to save this property for a given type.
-		///</summary>
-		protected bool CanDeepSave(IEntity entity, String key, String property, DeepSaveType deepSaveType, ChildEntityTypesList innerList) 
-        {
-			if ( innerList != null )
+			if ( innerList != null && !innerList.CancelSession)
 			{
 				if ( deepSaveType == DeepSaveType.ExcludeChildren )
 				{
-					if ( !innerList.Contains(key) && !innerList.HasProperty(entity, key, property) )
+					if ( !innerList.ContainsType(key) && !innerList.HasRun(entity, key) )
 					{
-						innerList.AddProperty(entity, key, property);
+						//Add to list prior to firing
+						innerList.AddRun( entity, key);
+						
+						//call deep saving event
+						DeepSessionEventArgs args = GetDeepSessionArgs( innerList, deepSaveType,  entity, key );
+						OnDeepSaving( args );
+						
+						if ( args.Skip )
+							return false;
+						
+						if ( args.Cancel )
+						{
+							innerList.CancelSession = true;
+							return false;
+						}
+						
 						return true;
 					}
 				}
 				else if ( deepSaveType == DeepSaveType.IncludeChildren )
 				{
-					if ( innerList.Contains(key) && innerList.HasProperty(entity, key, property) )
+                    if (innerList.ContainsType(key) && !innerList.HasRun(entity, key))
 					{
-						innerList.AddProperty(entity, key, property);
+						//Add to list prior to firing
+						innerList.AddRun( entity , key);
+						
+						//call deep saving event
+						DeepSessionEventArgs args = GetDeepSessionArgs(innerList, deepSaveType, entity, key);
+						OnDeepSaving( args );
+						
+						if ( args.Skip )
+							return false;
+						
+						if ( args.Cancel )
+						{
+							innerList.CancelSession = true;
+							return false;
+						}
+						
 						return true;
 					}
 				}
@@ -1341,7 +1363,30 @@ namespace <%= DALNameSpace %>.Bases
 
 			return false;
         }
-
+		
+		/// <summary>
+        /// Gets the DeepSession Arguments for an event.
+        /// </summary>
+        /// <param name="deepSession">the current DeepSession.</param>
+		/// <param name="deepTypeValue"> The Deep Type Value</param>
+        /// <param name="obj">The current entity or list.</param>
+		/// <param name="key">The key.</param>
+        /// <returns>
+        /// 	<c>DeepSessionEventArgs</c> if the item being run is a valid entity or list.
+        /// </returns>
+        protected DeepSessionEventArgs GetDeepSessionArgs(DeepSession deepSession, Enum deepTypeValue, object obj, string key)
+		{			
+			DeepSessionEventArgs args = null;
+			
+			if (obj is IEntity)
+				args = new DeepSessionEventArgs(deepSession, key, deepTypeValue, (IEntity)obj);
+			else if (obj is IList)
+				args = new DeepSessionEventArgs(deepSession, key, deepTypeValue, (IList)obj);
+			else 
+				args = new DeepSessionEventArgs();
+				
+			return args;
+		}
 		#endregion Helper Methods
 		
         #region DataRequesting event definition code
@@ -1398,10 +1443,201 @@ namespace <%= DALNameSpace %>.Bases
                 DataRequested(this, e);
             }
         }
-
-
         #endregion //('DataRequested' event definition code)
+		
+		#region DeepLoading event definition code
+        /// <summary>
+        ///     This represents the delegate method prototype that
+        ///     event receivers must implement 
+        /// </summary>
+        public delegate void DeepLoadingEventHandler(object sender, DeepSessionEventArgs e);
+        
+        /// <summary>
+        ///     An event which occurs just before a data 
+        ///     request is made in the data provider.
+        /// </summary>
+        public event DeepLoadingEventHandler DeepLoading;
+
+        /// <summary>
+        ///     This is the method that is responsible for notifying
+        ///     receivers that the event occurred just after accessing the 
+        ///     data provider.
+        /// </summary>
+        protected virtual void OnDeepLoading(DeepSessionEventArgs e)
+        {
+            if (DeepLoading != null)
+            {
+                DeepLoading(this, e);
+            }
+        }
+        #endregion //('DeepLoading' event definition code)
+		
+		#region DeepSaving event definition code
+        /// <summary>
+        ///     This represents the delegate method prototype that
+        ///     event receivers must implement 
+        /// </summary>
+        public delegate void DeepSavingEventHandler(object sender, DeepSessionEventArgs e);
+        
+        /// <summary>
+        ///     An event which occurs just before a data 
+        ///     request is made in the data provider.
+        /// </summary>
+        public event DeepSavingEventHandler DeepSaving;
+
+        /// <summary>
+        ///     This is the method that is responsible for notifying
+        ///     receivers that the event occurred just after accessing the 
+        ///     data provider.
+        /// </summary>
+        protected virtual void OnDeepSaving(DeepSessionEventArgs e)
+        {
+            if (DeepSaving != null)
+            {
+                DeepSaving(this, e);
+            }
+        }
+        #endregion //('DeepSaving' event definition code)
 	}
+
+	#region DeepSessionEventArgs
+	/// <summary>
+    /// Event Args used to transfer crucial information just before 
+    /// and after a command is used in the data provider.
+    /// </summary>
+    public class DeepSessionEventArgs
+    {
+        #region Fields
+        private IList currentEntityList = null;
+        private IEntity currentEntity = null;
+        private bool cancel;
+		private bool skip;
+		private string currentTypePropertyKey = null;
+		private DeepSession deepSession = null;
+		private Enum deepTypeValue;
+        #endregion 
+
+        #region Ctors
+        /// <summary>
+        /// Initializes a new instance of the <see cref="T:DeepSessionEventArgs"/> class.
+        /// </summary>
+        public DeepSessionEventArgs() {}
+
+        /// <summary>
+        /// Initializes a new instance of the <see cref="T:DeepSessionEventArgs"/> class.
+        /// </summary>
+        /// <param name="deepSession">The Current Deep Session.</param>
+		/// <param name="currentTypePropertyKey">The Current Key"</param>
+		/// <param name="deepTypeValue">The current Deep Type Value, DeepSaveType/DeepLoadType </param>
+        /// <param name="entity">The entity.</param>
+        /// <param name="list">The list.</param>
+        public DeepSessionEventArgs(DeepSession deepSession, string currentTypePropertyKey, Enum deepTypeValue, IEntity entity, IList list)
+        {
+            this.DeepSession = deepSession;
+            this.CurrentTypePropertyKey = currentTypePropertyKey;
+		    this.CurrentEntity = entity;
+            this.CurrentEntityList = list;	
+			this.DeepTypeValue = deepTypeValue;
+        }
+
+        /// <summary>
+        /// Initializes a new instance of the <see cref="T:CommandEventArgs"/> class.
+        /// </summary>
+        /// <param name="deepSession">The deepSession.</param>
+		/// <param name="currentTypePropertyKey">The Current Key"</param>
+		/// <param name="deepTypeValue">The current Deep Type Value, DeepSaveType/DeepLoadType </param>
+		/// <param name="list">The list.</param>
+        public DeepSessionEventArgs(DeepSession deepSession, string currentTypePropertyKey, Enum deepTypeValue, IList list) : this(deepSession, currentTypePropertyKey, deepTypeValue, null, list)
+        { }
+		
+        /// <summary>
+        /// Initializes a new instance of the <see cref="T:CommandEventArgs"/> class.
+        /// </summary>
+        /// <param name="deepSession">The deepSession.</param>
+		/// <param name="currentTypePropertyKey">The Current Key.</param>
+		/// <param name="deepTypeValue">The current Deep Type Value, DeepSaveType/DeepLoadType </param>
+        /// <param name="entity">The current entity.</param>
+        public DeepSessionEventArgs(DeepSession deepSession, string currentTypePropertyKey, Enum deepTypeValue, IEntity entity) : this(deepSession, currentTypePropertyKey, deepTypeValue, entity, null)
+        { }
+        #endregion 
+
+        #region Properties
+        /// <summary>
+        /// Gets or sets the current DeepSession.
+        /// </summary>
+        /// <value>The DeepSession.</value>
+        public DeepSession DeepSession
+        {
+            get { return deepSession; }
+            set { deepSession = value; }
+        }
+
+        /// <summary>
+        /// Gets or sets the current entity which the action is 
+        /// being acted on.  If there is no entity, this 
+        /// value will be null.
+        /// </summary>
+        /// <value>The entity.</value>
+        public IEntity CurrentEntity
+        {
+            get { return currentEntity; }
+            set { currentEntity = value; }
+        }
+
+        /// <summary>
+        /// Gets or sets the current .
+        /// </summary>
+        /// <value>The return value.</value>
+        public IList CurrentEntityList
+        {
+            get {   return currentEntityList; }
+            set {   currentEntityList = value; }
+        }
+		
+		/// <summary>
+        /// Gets or Sets the name of the current type property key that 
+		/// will be used to determine if the property will be run in the deep session.
+        /// </summary>
+        /// <value>A string value of the type property key.</value>
+		public string CurrentTypePropertyKey
+		{
+			get  {  return 	currentTypePropertyKey;  }
+			set  {  currentTypePropertyKey = value;  }
+		}
+		
+		
+		///<summary>
+		/// The current DeepType Value, Either <c>DeepLoadType</c>, or <c>DeepSaveType</c>.
+		///</summary>
+		public Enum DeepTypeValue
+		{
+			get  {  return 	deepTypeValue;  }
+			set  {  deepTypeValue = value;  }
+		}
+		
+		/// <summary>
+        /// Gets or sets the Cancel property of the event.
+        /// </summary>
+        /// <value>Current Cancel Value.</value>
+        public bool Cancel
+        {
+            get { return cancel; }
+            set { cancel = value; }
+        }
+		
+		/// <summary>
+        /// Gets or sets the current Skip value.  
+		/// Setting this property will skip the current Deep Property.
+        /// </summary>
+        /// <value>The name of the method.</value>
+        public bool Skip
+        {
+            get { return skip; }
+            set { skip = value; }
+        }
+        #endregion 
+    }
+	#endregion 
 
     #region CommandEventArgs
     /// <summary>
@@ -1511,142 +1747,161 @@ namespace <%= DALNameSpace %>.Bases
     }
     #endregion 
 		
-	#region ChildEntityTypesList
+	#region DeepSession
 	
 	/// <summary>
-	/// Represents a collection of child entity types.
+	/// Keeps a weak reference of the entire deep transaction for tracking purposes.
 	/// </summary>
 	[Serializable]
 	[CLSCompliant(true)]
-	public class ChildEntityTypesList : StringCollection
-	{
-		/// <summary>
-		/// Initializes a new instance of the ChildEntityTypeList class.
-		/// </summary>
-		public ChildEntityTypesList()
-		{
-		}
-
-		private Dictionary<string, StringCollection> keys;
-
-		/// <summary>
-		/// Gets a collection of key names.
-		/// </summary>
-		public Dictionary<string, StringCollection> Keys
-		{
-			get
-			{
-				if ( keys == null )
-				{
-					keys = new Dictionary<string, StringCollection>();
-				}
-
-				return keys;
-			}
-		}
-
-		private Dictionary<string, StringCollection> properties;
+	public class DeepSession : List<String>, IDisposable
+    {
+        private WeakRefDictionary<string, object> deepSessionInnerList;
+		private bool cancelSession;
 		
+        /// <summary>
+        /// Initializes a new instance of the <see cref="T:DeepSession"/> class.
+        /// </summary>
+        public DeepSession()
+        { 
+        }
+
+        #region Methods
 		/// <summary>
-		/// Gets a collection of child entity property names.
+		/// Gets the set of current loaded objects.
 		/// </summary>
-		public Dictionary<string, StringCollection> Properties
+		/// <returns>a list of already run objects</returns>
+		public IList<object> GetSessionObjects()
 		{
-			get
+			List<object> list = new List<object>();
+
+            foreach (KeyValuePair<string, object> pair in DeepSessionInnerList)
 			{
-				if ( properties == null )
+				if (pair.Value != null)
+					list.Add(pair.Value);
+			}
+			return list;
+		}
+
+	    /// <summary>
+        /// Adds the specified entity property to the collection of properties.
+        /// </summary>
+        /// <param name="entity"></param>
+        public void AddRun( Object entity, string key )
+        {
+           if ( entity != null && !string.IsNullOrEmpty(key) )
+               DeepSessionInnerList.Add(entity.GetHashCode().ToString() + key, entity);
+			
+			if (DeepSessionInnerList.Count > 6500)
+				CancelSession = true;
+        }
+
+        /// <summary>
+        /// Determines whether the specified obj has run for a specified property type.
+        /// </summary>
+        /// <param name="key">The key.</param>
+        /// <returns>
+        /// 	<c>true</c> if the specified obj has run; otherwise, <c>false</c>.
+        /// </returns>
+        public bool ContainsType(string key)
+        {
+            if (string.IsNullOrEmpty(key))
+                throw new ArgumentException("key"); 
+
+            string lkey = key.Split('|')[0];
+           return this.Exists(delegate(string s)
+           {
+                return s.Split('|')[0] == lkey;
+           });
+        }
+	    
+		/// <summary>
+		/// Determines whether the specified obj has run.
+		/// </summary>
+        /// <param name="entity">The entity.</param>
+        /// <param name="key">The key.</param>
+		/// <returns>
+		/// 	<c>true</c> if the specified obj has run; otherwise, <c>false</c>.
+		/// </returns>
+		public bool HasRun( object entity , string key)
+		{
+			if (entity == null) return false;
+
+            string lkey = entity.GetHashCode().ToString() + key;
+            if (DeepSessionInnerList.ContainsKey(lkey))
+			{
+                object locateEntity = null;
+                if (DeepSessionInnerList.TryGet(lkey, out locateEntity))
+                {
+                    if (locateEntity != null && entity.Equals(locateEntity))
+                        return true;
+                }
+			}
+			    
+			return false;
+		}
+
+        /// <summary>
+        /// Gets the Deep Session nner list.
+        /// </summary>
+        /// <value>The inner list.</value>
+        internal WeakRefDictionary<string, object> DeepSessionInnerList
+		{
+			get 
+			{
+				if (deepSessionInnerList == null)
 				{
-					properties = new Dictionary<string, StringCollection>();
+                    deepSessionInnerList = new WeakRefDictionary<string, object>();
 				}
-				
-				return properties;
+                return deepSessionInnerList; 
 			}
 		}
-
-		/// <summary>
-		/// Gets a collection of key names for the specified entity.
-		/// </summary>
-		/// <param name="entity"></param>
-		/// <returns></returns>
-		public StringCollection GetKeys(IEntity entity)
+		
+		///<summary>
+	    ///If set to true, any further requests for this deep session will be canceled.
+	    ///</summary>
+		public bool CancelSession
 		{
-			if ( entity == null ) return null;
-			string key = entity.EntityTrackingKey;
+			get{  return cancelSession;	 }
+			set{  cancelSession = value; }
+		}
 
-			if ( !Keys.ContainsKey(key) )
+	    ///<summary>
+	    ///Performs application-defined tasks associated with freeing, releasing, or resetting unmanaged resources.
+	    ///</summary>
+	    ///<filterpriority>2</filterpriority>
+	    public void Dispose()
+	    {
+            if (deepSessionInnerList != null) 
 			{
-				Keys[key] = new StringCollection();
+                //deepSessionInnerList.Clear();
+                deepSessionInnerList = null;
 			}
-
-			return Keys[key];
-		}
-
-		/// <summary>
-		/// Gets a collection of property names for the specified entity.
-		/// </summary>
-		/// <param name="entity"></param>
-		/// <returns></returns>
-		public StringCollection GetProperties(IEntity entity)
-		{
-			if ( entity == null ) return null;
-			string key = entity.EntityTrackingKey;
-
-			if ( !Properties.ContainsKey(key) )
-			{
-				Properties[key] = new StringCollection();
-			}
-
-			return Properties[key];
-		}
-
-		/// <summary>
-		/// Gets a value indicating whether the specified entity property
-		/// has been added to the collection of properties.
-		/// </summary>
-		/// <param name="entity"></param>
-		/// <param name="key"></param>
-		/// <param name="property"></param>
-		/// <returns></returns>
-		public bool HasProperty(IEntity entity, String key, String property)
-		{
-			if ( entity == null ) return false;
-			String trackingKey = entity.EntityTrackingKey;
-
-			// loop through collection of loaded keys
-			foreach ( String entityKey in Keys.Keys )
-			{
-				// don't look at the keys loaded for the current entity
-				if ( !String.Equals(trackingKey, entityKey) )
-				{
-					// if the same key has been entered for another entity,
-					// we will return true so that it is not processed
-					if ( Keys[entityKey].Contains(key) )
-					{
-						return true;
-					}
-				}
-			}
-
-			// if the same key has not been entered for another entity,
-			// check if the property has been entered for the current entity
-			return GetProperties(entity).Contains(property);
-		}
-
-		/// <summary>
-		/// Adds the specified entity property to the collection of properties.
-		/// </summary>
-		/// <param name="entity"></param>
-		/// <param name="key"></param>
-		/// <param name="property"></param>
-		public void AddProperty(IEntity entity, String key, String property)
-		{
-			if ( entity == null ) return;
-			GetProperties(entity).Add(property);
-			GetKeys(entity).Add(key);
-		}
-	}
+	    }
+		#endregion Methods
+    }
 	
-	#endregion ChildEntityTypesList
+	
+	#endregion DeepSession
+	
+	#region Deep Load/Save Handle Delegates
+	    internal delegate bool DeepSaveHandle<Entity>(
+            TransactionManager transactionManager,  
+            TList<Entity> entityList, 
+            DeepSaveType saveType, 
+            Type[] childTypes, 
+            DeepSession list) 
+        where Entity : IEntity, new();
+
+    internal delegate void DeepLoadHandle<Entity>(
+        TransactionManager transactionManager,
+        TList<Entity> entityList,
+        bool goDeep,
+        DeepLoadType deepLoadType,
+        Type[] childTypes,
+        DeepSession list)
+    where Entity : IEntity, new();
+	#endregion 
 
 	#region ChildEntityTypeAttribute
 	

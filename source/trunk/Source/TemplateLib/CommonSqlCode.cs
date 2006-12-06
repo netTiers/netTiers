@@ -45,7 +45,7 @@ namespace MoM.Templates
 	[DefaultProperty("ChooseSourceDatabase")]
 	public class CommonSqlCode : CodeTemplate
 	{
-		
+			
 		// [ab 012605] convenience array for checking if a datatype is an integer 
 		private readonly static DbType[] aIntegerDbTypes = new DbType[] {DbType.Int16,DbType.Int32, DbType.Int64 };
 		
@@ -71,7 +71,7 @@ namespace MoM.Templates
 		private bool parseDbColDefaultVal  = false;
 		private bool changeUnderscoreToPascalCase  = false;
 		private bool includeCustoms = true;
-				
+
 		private MethodNamesProperty methodNames = null;
 		private Hashtable aliases = null;
 		
@@ -108,7 +108,7 @@ namespace MoM.Templates
 		/// </summary>
 		/// <param name="n">Number of tabs</param>
 		/// <returns>n tabs</returns>
-		public static string Tab(int n)
+		public string Tab(int n)
 		{
 			return new String('\t', n);
 		}
@@ -858,6 +858,9 @@ namespace MoM.Templates
 		/// </summary>
 		public string GetPropertyName(ColumnSchema column)
 		{
+			if (column == null)
+				return "";
+				
 		   	return GetPropertyName(column.Name);
 		}
 		
@@ -2027,7 +2030,7 @@ namespace MoM.Templates
 		{
 			string comment = "";
 			// Find anything upto the CREATE PROC statement
-			Regex regex = new Regex(@"CREATE[\s]*PROC", RegexOptions.IgnoreCase);	
+			Regex regex = new Regex(@"CREATE\s+PROC(?:EDURE)?", RegexOptions.IgnoreCase);	
 			comment = regex.Split(commandText)[0];
 			//remove comment characters
 			regex = new Regex(@"(-{2,})|(/\*)|(\*/)");
@@ -3899,7 +3902,7 @@ CREATE\s+PROC(?:EDURE)?                               # find the start of the st
 		}
 
 		#endregion
-	
+		
 		#region Children Collections
 		
 		/////////////////////////////////////////////////////////////////////////////////////
@@ -4087,7 +4090,7 @@ CREATE\s+PROC(?:EDURE)?                               # find the start of the st
 			}
 
 			//Add N-N relations
-			foreach(TableKeySchema key in primaryKeyCollection)
+			foreach(SchemaExplorer.TableKeySchema key in primaryKeyCollection)
 			{
 				// Check that the key is related to a junction table and that this key relate a PK in this junction table
 				if ( tables.Contains(key.ForeignKeyTable.Owner, key.ForeignKeyTable.Name) &&  IsJunctionTable(key.ForeignKeyTable) && IsJunctionKey(key))
@@ -4108,7 +4111,11 @@ CREATE\s+PROC(?:EDURE)?                               # find the start of the st
 							collectionInfo.PrimaryTable = GetClassName(table);
 							collectionInfo.SecondaryTable = GetClassName(junctionTableKey.PrimaryKeyTable);
 							collectionInfo.SecondaryTablePkColNames = GetColumnNames(junctionTableKey.PrimaryKeyTable.PrimaryKey.MemberColumns);
+							collectionInfo.JunctionTableSchema = junctionTable;
+							collectionInfo.SecondaryTableSchema = junctionTableKey.PrimaryKeyTable;
+							collectionInfo.PrimaryTableSchema = table;
 							collectionInfo.JunctionTable = GetClassName(junctionTable);
+							collectionInfo.JunctionTablePkColNames = GetColumnNames(junctionTable.PrimaryKey.MemberColumns);
 							collectionInfo.CollectionName = string.Format("{0}_From_{1}", GetCollectionPropertyName( collectionInfo.SecondaryTable), GetClassName(collectionInfo.JunctionTable)); //GetManyToManyName(GetCollectionClassName( collectionInfo.SecondaryTable), collectionInfo.JunctionTable);
 							collectionInfo.CollectionTypeName = GetCollectionClassName( collectionInfo.SecondaryTable);
 							collectionInfo.CollectionRelationshipType = RelationshipType.ManyToMany;
@@ -4187,6 +4194,10 @@ CREATE\s+PROC(?:EDURE)?                               # find the start of the st
 			public string SecondaryTable;
 			public string[] SecondaryTablePkColNames;
 			public string JunctionTable;
+			public string[] JunctionTablePkColNames;
+			public TableSchema JunctionTableSchema;
+			public TableSchema SecondaryTableSchema;
+			public TableSchema PrimaryTableSchema;
 			public string CollectionName = string.Empty;
 			public string CollectionTypeName = string.Empty;
 			public string CallParams = string.Empty;
@@ -4488,11 +4499,28 @@ CREATE\s+PROC(?:EDURE)?                               # find the start of the st
 		{
 			string[] columnNames = new string[ columns.Count ];
 			for (int i = 0; i < columns.Count; i++)
-				columnNames[i] = columns[i].Name;
+				columnNames[i] = GetPropertyName(columns[i].Name);
 			return columnNames;
-
-			
 		}
+
+		///<summary>
+		/// Get's the constraint side of a column from a m:m relationship to it's corresponding 1:m relationship
+		///</summary>
+		public ColumnSchema GetCorrespondingRelationship(TableKeySchemaCollection fkeys, string columnName)
+		{
+			//System.Diagnostics.Debugger.Break();
+			for (int j=0; j < fkeys.Count; j++)
+			{
+				for (int y=0; y < fkeys[j].ForeignKeyMemberColumns.Count; y++)
+				{
+					if (fkeys[j].ForeignKeyMemberColumns[y].Name.ToLower() 
+							== columnName.ToLower())
+						return fkeys[j].PrimaryKeyMemberColumns[y];
+				}
+			}
+			return null;
+		}
+
 
 		private string _currentTable = string.Empty;
 		
@@ -4584,7 +4612,6 @@ CREATE\s+PROC(?:EDURE)?                               # find the start of the st
 			return _tbChild;
 		}
 		#endregion 
-
 	}
 
 	#region Retry

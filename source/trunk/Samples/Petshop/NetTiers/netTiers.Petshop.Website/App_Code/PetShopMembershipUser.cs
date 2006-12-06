@@ -212,7 +212,7 @@ public class PetShopMembershipUser  : System.Web.Security.MembershipUser
     /// Gets or sets the credit card id.
     /// </summary>
     /// <value>The credit card id.</value>
-    public string CreditCardId
+    public Guid? CreditCardId
     {
         get { return m_account.CreditCardId; }
         set { m_account.CreditCardId = value; }
@@ -222,7 +222,7 @@ public class PetShopMembershipUser  : System.Web.Security.MembershipUser
     /// Gets or sets the favorite category id.
     /// </summary>
     /// <value>The favorite category id.</value>
-    public string FavoriteCategoryId
+    public Guid? FavoriteCategoryId
     {
         get { return m_account.FavoriteCategoryId; }
         set { m_account.FavoriteCategoryId = value; }
@@ -232,7 +232,7 @@ public class PetShopMembershipUser  : System.Web.Security.MembershipUser
     /// Gets or sets the id.
     /// </summary>
     /// <value>The id.</value>
-    public string Id
+    public Guid Id
     {
         get { return m_account.Id; }
         set { m_account.Id = value; }
@@ -242,7 +242,7 @@ public class PetShopMembershipUser  : System.Web.Security.MembershipUser
     /// Gets or sets the original id.
     /// </summary>
     /// <value>The original id.</value>
-    public string OriginalId
+    public Guid OriginalId
     {
         get { return m_account.OriginalId; }
         set { m_account.OriginalId = value; }

@@ -183,7 +183,7 @@ namespace <%=NameSpace%>
 		///<summary>
 		/// Creates a new <see cref="<%=abstractClassName%>"/> instance.
 		///</summary>
-		<%=constructorAccessModifier%> <%=abstractClassName%>()
+		<%=constructorAccessModifier%> <%=abstractClassName%>() : base()
 		{
 			this.entityData = new <%=structName%>();
 			this.backupData = null;
@@ -196,7 +196,7 @@ namespace <%=NameSpace%>
 		<% for (int x=0; x < colsUpdatable.Count; x++) { %>
 		///<param name="<%=GetPrivateName(className + GetPropertyName(colsUpdatable[x].Name)) %>"><%=GetColumnXmlComment(colsUpdatable[x],2)%></param>
 		<% } %>
-		<%=constructorAccessModifier%> <%=abstractClassName%>(<% WrapInit(); for (int x=0; x < colsUpdatable.Count; x++) { %><%= GetCSType(colsUpdatable[x]) %> <%= GetPrivateName(className + GetPropertyName(colsUpdatable[x].Name)) %><%WrapIncr(colsUpdatable[x]); if (x < colsUpdatable.Count -1){%>, <% WrapLine(3); } }// end for %>)
+		<%=constructorAccessModifier%> <%=abstractClassName%>(<% WrapInit(); for (int x=0; x < colsUpdatable.Count; x++) { %><%= GetCSType(colsUpdatable[x]) %> <%= GetPrivateName(className + GetPropertyName(colsUpdatable[x].Name)) %><%WrapIncr(colsUpdatable[x]); if (x < colsUpdatable.Count -1){%>, <% WrapLine(3); } }// end for %>) : base()
 		{
 			this.entityData = new <%=structName%>();
 			this.backupData = null;
@@ -956,12 +956,12 @@ WriteRelationshipPropertyString();
 			get
 			{
 				if(entityTrackingKey == null)
-					entityTrackingKey = @"<%= className %>" <%
+					entityTrackingKey = string.Format(@"<%= className %>{0}{1}{0}{2}{0}{3}{0}{4}", "|" <%
 				for (int x=0; x < cols.Count;x++) { 
 					if(cols[x].IsPrimaryKeyMember) {%>
-					+ this.<%=GetPropertyName(cols[x].Name)%>.ToString()<%
+					, this.<%=GetPropertyName(cols[x].Name)%>.ToString()<%
 					}// end if 
-				} //end for each column %>;
+				} //end for each column %>);
 				return entityTrackingKey;
 			}
 			set
@@ -990,7 +990,7 @@ WriteRelationshipPropertyString();
 				this.<%= GetPropertyName(cols[x].Name) %>,
 			<% } // if ( cols[x].AllowDBNull )
 			} // for (int x=0; x < cols.Count; x++) %>
-				Environment.NewLine, 
+				System.Environment.NewLine, 
 				this.GetType());
 		}
 		

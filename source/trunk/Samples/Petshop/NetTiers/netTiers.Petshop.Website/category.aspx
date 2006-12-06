@@ -18,7 +18,8 @@
 
     protected void SetMyFavoriteButton_Click(object sender, EventArgs e)
     {
-        Profile.FavoriteCategoryId = Request["CategoryId"];
+        Guid gd = new Guid(Request["CategoryId"]);
+        Profile.FavoriteCategoryId =  (gd == Guid.Empty ? gd : (Guid?)null);
     }
 </script>
 
@@ -30,10 +31,11 @@
         enablepaging="False" 
         enablesorting="False" 
         enabletransaction="False" 
-        selectmethod="GetById" cacheduration="30" enablecaching="False" ><Parameters>
-<asp:QueryStringParameter Type="String" DefaultValue="7c6cc986-bee6-42ac-948a-bf8f579ac3dc" Name="categoryId" QueryStringField="CategoryId"></asp:QueryStringParameter>
-</Parameters>
-</data:categorydatasource>
+        selectmethod="GetById" cacheduration="30" enablecaching="False" >
+        <Parameters>
+            <asp:QueryStringParameter Type="String" DefaultValue="7c6cc986-bee6-42ac-948a-bf8f579ac3dc" Name="categoryId" QueryStringField="CategoryId"></asp:QueryStringParameter>
+        </Parameters>
+    </data:categorydatasource>
     
     <%--    
         Using Custom Product DataSource with GetByCategoryId Read Param
