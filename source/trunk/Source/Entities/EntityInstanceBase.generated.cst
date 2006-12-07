@@ -183,7 +183,7 @@ namespace <%=NameSpace%>
 		///<summary>
 		/// Creates a new <see cref="<%=abstractClassName%>"/> instance.
 		///</summary>
-		<%=constructorAccessModifier%> <%=abstractClassName%>() : base()
+		<%=constructorAccessModifier%> <%=abstractClassName%>()
 		{
 			this.entityData = new <%=structName%>();
 			this.backupData = null;
@@ -196,7 +196,7 @@ namespace <%=NameSpace%>
 		<% for (int x=0; x < colsUpdatable.Count; x++) { %>
 		///<param name="<%=GetPrivateName(className + GetPropertyName(colsUpdatable[x].Name)) %>"><%=GetColumnXmlComment(colsUpdatable[x],2)%></param>
 		<% } %>
-		<%=constructorAccessModifier%> <%=abstractClassName%>(<% WrapInit(); for (int x=0; x < colsUpdatable.Count; x++) { %><%= GetCSType(colsUpdatable[x]) %> <%= GetPrivateName(className + GetPropertyName(colsUpdatable[x].Name)) %><%WrapIncr(colsUpdatable[x]); if (x < colsUpdatable.Count -1){%>, <% WrapLine(3); } }// end for %>) : base()
+		<%=constructorAccessModifier%> <%=abstractClassName%>(<% WrapInit(); for (int x=0; x < colsUpdatable.Count; x++) { %><%= GetCSType(colsUpdatable[x]) %> <%= GetPrivateName(className + GetPropertyName(colsUpdatable[x].Name)) %><%WrapIncr(colsUpdatable[x]); if (x < colsUpdatable.Count -1){%>, <% WrapLine(3); } }// end for %>)
 		{
 			this.entityData = new <%=structName%>();
 			this.backupData = null;
@@ -349,7 +349,7 @@ namespace <%=NameSpace%>
 		<% if ( IncludeXmlAttributes && cols[x].AllowDBNull ) { %>
 		[XmlElement(IsNullable=true)]
 		<% } %>
-		[<%if (cols[x].IsPrimaryKeyMember && (IsIdentityColumn(cols[x]) || IsComputed(cols[x])) ) {%>ReadOnlyAttribute(false)/*, XmlIgnoreAttribute()*/, <%}%>DescriptionAttribute("<%=GetDescriptionAttributeText(cols[x].Description)%>"), BindableAttribute()]
+		[<%if (cols[x].IsPrimaryKeyMember && (IsIdentityColumn(cols[x]) || IsComputed(cols[x])) ) {%>ReadOnlyAttribute(false)/*, XmlIgnoreAttribute()*/, <%}%>DescriptionAttribute("<%=GetDescriptionAttributeText(cols[x].Description)%>"), System.ComponentModel.Bindable( System.ComponentModel.BindableSupport.Yes)]
 		[DataObjectField(<%= dataObjectFieldParams  %>)<%= defaultValue %>]
 		public <%if (commonColumns.IndexOf(cols[x].Name) != -1) Response.Write ("override "); else Response.Write ("virtual ");%><%= GetCSType(cols[x])%> <%= GetPropertyName(cols[x]) %>
 		{
@@ -445,7 +445,7 @@ namespace <%=NameSpace%>
 		/// </summary>
 		/// <value>The source <%=pkClassName%> for <%=fkPropertyName%>.</value>
         [XmlIgnore()]
-		[Browsable(false), BindableAttribute()]
+		[Browsable(false), System.ComponentModel.Bindable(System.ComponentModel.BindableSupport.Yes)]
 		public virtual <%=pkClassName%> <%=fkPropertyName%>Source
       	{
             get { return this.<%=memberVarName%>; }
@@ -956,12 +956,12 @@ WriteRelationshipPropertyString();
 			get
 			{
 				if(entityTrackingKey == null)
-					entityTrackingKey = string.Format(@"<%= className %>{0}{1}{0}{2}{0}{3}{0}{4}", "|" <%
+					entityTrackingKey = @"<%= className %>" <%
 				for (int x=0; x < cols.Count;x++) { 
 					if(cols[x].IsPrimaryKeyMember) {%>
-					, this.<%=GetPropertyName(cols[x].Name)%>.ToString()<%
+					+ this.<%=GetPropertyName(cols[x].Name)%>.ToString()<%
 					}// end if 
-				} //end for each column %>);
+				} //end for each column %>;
 				return entityTrackingKey;
 			}
 			set
@@ -990,7 +990,7 @@ WriteRelationshipPropertyString();
 				this.<%= GetPropertyName(cols[x].Name) %>,
 			<% } // if ( cols[x].AllowDBNull )
 			} // for (int x=0; x < cols.Count; x++) %>
-				System.Environment.NewLine, 
+				Environment.NewLine, 
 				this.GetType());
 		}
 		
@@ -1330,7 +1330,7 @@ protected static string MANY_TO_MANY = @"
 		///	Holds a collection of {3} objects
 		///	which are related to this object through the junction table {2}
 		/// </summary>	
-		[BindableAttribute(){4}]
+		[System.ComponentModel.Bindable(System.ComponentModel.BindableSupport.Yes){4}]
 		public {1} {0}
 		{{
 			get {{ return entityData.{0}; }}
@@ -1346,7 +1346,7 @@ protected static string ONE_TO_ONE = @"
 		///	Holds a {0} object
 		///	which is related to this object through the relation {1}
 		/// </summary>
-		[BindableAttribute(){2}]
+		[System.ComponentModel.Bindable(System.ComponentModel.BindableSupport.Yes){2}]
 		public {0} {0}
 		{{
 			get {{ return entityData.{0}; }}
@@ -1362,7 +1362,7 @@ protected static string ONE_TO_MANY = @"
 		///	Holds a collection of {2} objects
 		///	which are related to this object through the relation {1}
 		/// </summary>	
-		[BindableAttribute(){4}]
+		[System.ComponentModel.Bindable(System.ComponentModel.BindableSupport.Yes){4}]
 		public {0} {3}
 		{{
 			get {{ return entityData.{3}; }}
