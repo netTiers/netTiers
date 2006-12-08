@@ -214,15 +214,18 @@ namespace <%=NameSpace %>
 			}
 			else if (Operator.ToUpper() == "LIKE")
 			{
-				//recherche des ?toiles
-				int LastStrar = UserValue.LastIndexOf("*");
-				int UserValueLenght = UserValue.Length ;
-				string SearchedText = UserValue.Replace("*", "");
-				int TextPosition = ObjectPropertyValue.IndexOf(SearchedText);
-				if (TextPosition != -1)
+				string SearchedText = UserValue.Replace("*", "").ToLower();
+				if (!UserValue.StartsWith("*"))
+					Rt = ObjectPropertyValue.ToLower().StartsWith(SearchedText);
+				else if (!UserValue.EndsWith("*"))
+					Rt = ObjectPropertyValue.ToLower().EndsWith(SearchedText);
+				else
 				{
-				{Rt = true;}
-				}
+					int LastStrar = UserValue.LastIndexOf("*");
+					int UserValueLenght = UserValue.Length;
+					int TextPosition = ObjectPropertyValue.ToLower().IndexOf(SearchedText);
+					Rt = TextPosition > -1;
+				} 
 			}
 			else
 			{
@@ -536,6 +539,25 @@ namespace <%=NameSpace %>
 		}
 		
 		/// <summary>
+		/// Determines whether the specified object property value is ok.
+		/// </summary>
+		/// <param name="ObjectPropertyValue">The object property value.</param>
+		/// <param name="Operator">The operator.</param>
+		/// <param name="UserValue">array of the user value.</param>
+		/// <returns>
+		/// 	<c>true</c> if the specified object property value is ok; otherwise, <c>false</c>.
+		/// </returns>
+		private bool IsOk(object ObjectPropertyValue, string Operator, object[] UserValue)
+		{
+			foreach (object item in UserValue)
+			{
+				if (item.Equals(ObjectPropertyValue))
+					return true;
+			}
+			return false;
+		}
+
+		/// <summary>
 		/// Determines whether the specified operator is ok.
 		/// </summary>
 		/// <param name="Operator">The operator.</param>
@@ -597,8 +619,35 @@ namespace <%=NameSpace %>
 			
 			Type TypeOfValue = ObjectPropertyValue.GetType();
 			Object FilterValue  = CorrectUserValue(UserValue) ;
-			
-			if (TypeOfValue ==typeof(string))
+
+			if (Operator.ToUpper().Equals("IN"))
+			{
+				try
+				{ 
+					string[] fvalue = FilterValue.ToString().Substring(1, FilterValue.ToString().Length-2).Split(',');
+					object[] values = new object[fvalue.Length];
+					if (TypeOfValue == typeof(int))
+					{
+						for (int i=0; i<fvalue.Length; i++) values[i] = int.Parse(fvalue[i]);
+					}
+					else if (TypeOfValue == typeof(string))
+					{
+						for (int i=0; i< fvalue.Length; i++) values[i] = fvalue[i];
+					}
+					else if (TypeOfValue == typeof(long))
+					{
+						for (int i=0; i<fvalue.Length; i++) values[i] = long.Parse(fvalue[i]); 
+					}
+					if (values.Length > 0)
+						Rt = IsOk(ObjectPropertyValue, Operator, values);
+					else
+					{
+						throw new NotSupportedException("IN operator Filtering is not possible on the type " + TypeOfValue.ToString() + ". Please use integer or long values."); 
+					}
+				}
+				catch (Exception ex) { throw new InvalidFilterCriteriaException("Invalid IN Filter value", ex); }
+			} 
+			else if (TypeOfValue ==typeof(string))
 			{
 				Rt = IsOk((string)ObjectPropertyValue, Operator, (string) FilterValue);
 			}
@@ -643,7 +692,9 @@ namespace <%=NameSpace %>
 				Rt = IsOk((System.Int16)ObjectPropertyValue, Operator, (System.Int16)Convert.ToInt16(FilterValue)); 
 			}
 			else
-			{throw new Exception("Filtering is not possible on the type " + TypeOfValue.ToString());}
+			{
+				throw new Exception("Filtering is not possible on the type " + TypeOfValue.ToString());
+			}
 			return Rt;
 		}
 		#endregion 

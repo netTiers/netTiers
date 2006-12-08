@@ -184,7 +184,16 @@ namespace <%=NameSpace%>
       {
          get
          {
-            return IsNewCount > 0 || IsDeletedCount > 0 || IsDirtyCount > 0;
+			if (DeletedItems.Count > 0)
+			   return true;
+
+			foreach (T item in this)
+			{
+				if (item.EntityState != EntityState.Unchanged)
+					return true;
+			}
+			
+			return false;
          }
       }
 
@@ -199,7 +208,6 @@ namespace <%=NameSpace%>
             int count = 0;
             foreach (T item in this)
             {
-               //if(item.IsNew)
                if (item.EntityState == EntityState.Added)
                   count += 1;
             }
@@ -215,16 +223,6 @@ namespace <%=NameSpace%>
       {
          get
          {
-            /*
-            int count = 0;
-            foreach(T item in this)
-            {
-                //if(item.IsDeleted)
-                if(item.EntityState == EntityState.Deleted)
-                    count += 1;
-            }
-            return count;
-            */
             return DeletedItems.Count;
          }
       }
@@ -240,8 +238,7 @@ namespace <%=NameSpace%>
             int count = 0;
             foreach (T item in this)
             {
-               //if(item.IsDirty)
-               if (item.EntityState == EntityState.Changed)
+               if (item.EntityState != EntityState.Unchanged)
                   count += 1;
             }
             return count;
