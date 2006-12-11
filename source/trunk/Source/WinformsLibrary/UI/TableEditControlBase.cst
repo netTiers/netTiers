@@ -91,15 +91,18 @@ namespace <%=WinLibNameSpace%>
 				ColumnSchema column = SourceTable.Columns[i];
 				string dgvColumnName = "ux" + GetPropertyName(column);
 			%>
-			this.<%=dgvColumnName%>.DataBindings.Clear();
 			<% if (SourceTable.ForeignKeyColumns.Contains(column)) { %>
+			this.<%=dgvColumnName%>.DataBindings.Clear();
 			this.<%=dgvColumnName%>.DataBindings.Add("SelectedValue", this.uxBindingSource, "<%=GetPropertyName(column)%>", true, System.Windows.Forms.DataSourceUpdateMode.OnPropertyChanged);
 			<% } else if (column.SystemType == typeof(System.Boolean)){ %>
+			this.<%=dgvColumnName%>.DataBindings.Clear();
 			this.<%=dgvColumnName%>.DataBindings.Add("Checked", this.uxBindingSource, "<%=GetPropertyName(column)%>", true, System.Windows.Forms.DataSourceUpdateMode.OnPropertyChanged);
 			<% } else if (column.SystemType == typeof(System.DateTime)){ %>
+			this.<%=dgvColumnName%>.DataBindings.Clear();
 			this.<%=dgvColumnName%>.DataBindings.Add("Value", this.uxBindingSource, "<%=GetPropertyName(column)%>", true, System.Windows.Forms.DataSourceUpdateMode.OnPropertyChanged);
 			<% } else if (column.NativeType == "image" || column.NativeType == "timestamp"){ %>
 			<% } else { %>
+			this.<%=dgvColumnName%>.DataBindings.Clear();
 			this.<%=dgvColumnName%>.DataBindings.Add("Text", this.uxBindingSource, "<%=GetPropertyName(column)%>", true, System.Windows.Forms.DataSourceUpdateMode.OnPropertyChanged);
 			<% } %>		
 			<% } %>
@@ -184,7 +187,9 @@ namespace <%=WinLibNameSpace%>
 				int left = 3;
 				int heightIncrement = 26;
 				int leftInput = 160;
-				%>
+				
+				if (column.NativeType != "image" && column.NativeType != "timestamp")
+				{ %>
 			//
 			// <%=dgvColumnName%>Label
 			//
@@ -211,7 +216,7 @@ namespace <%=WinLibNameSpace%>
 			//this.uxTableLayoutPanel.Controls.Add(this.<%=dgvColumnName%>);
 			this.<%=dgvColumnName%>.Location = new System.Drawing.Point(<%=leftInput%>, <%=i * heightIncrement%>);
 			this.Controls.Add(this.<%=dgvColumnName%>);
-			<% } %>	
+			<% } } %>	
 			<% for (int i=0; i<SourceTable.ForeignKeys.Count; i++)
 			{ 
 				ColumnSchema column = SourceTable.ForeignKeys[i].ForeignKeyMemberColumns[0];
