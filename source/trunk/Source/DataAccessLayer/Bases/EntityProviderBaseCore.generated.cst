@@ -710,7 +710,12 @@ namespace <%=DALNameSpace%>.Bases
 					c = new <%= className %>();
 				}
 				
-				if (!DataRepository.Provider.EnableEntityTracking || c.EntityState == EntityState.Added)
+				if (!DataRepository.Provider.EnableEntityTracking || 
+					c.EntityState == EntityState.Added ||
+					(DataRepository.Provider.EnableEntityTracking && 
+						((DataRepository.Provider.CurrentLoadPolicy == LoadPolicy.PreserveChanges && c.EntityState == EntityState.Unchanged) ||
+						 (DataRepository.Provider.CurrentLoadPolicy == LoadPolicy.DiscardChanges && (c.EntityState == EntityState.Unchanged || 
+																							 c.EntityState == EntityState.Changed)))))
                 {
 					c.SuppressEntityEvents = true;
 				<%for (int x=0; x < cols.Count;x++) { %>
