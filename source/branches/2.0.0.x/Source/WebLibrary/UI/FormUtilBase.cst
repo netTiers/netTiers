@@ -393,7 +393,92 @@ namespace <%= WebNameSpace %>.UI
 			RedirectAfterUpdate(formView, url, dataSource);
 			RedirectAfterCancel(formView, url, dataSource);
 		}
+		
+		/// <summary>
+      /// Sets the default value of the control with the specified id parameter when
+      /// the <see cref="FormView"/> is in Insert mode.
+      /// </summary>
+      /// <param name="formView">The form view.</param>
+      /// <param name="controlID">The control ID.</param>
+      /// <param name="value">The value.</param>
+      public static void SetDefaultValue(FormView formView, String controlID, String value)
+      {
+         if (formView != null && formView.CurrentMode == FormViewMode.Insert)
+         {
+            Control control = formView.FindControl(controlID);
 
+            if (control != null)
+            {
+               SetValue(control, value);
+            }
+         }
+      }
+      /// <summary>
+      /// Binds a property's value to a <see cref="FormView" /> child control when the <see cref="FormView"/> is updating.
+      /// </summary>
+      /// <param name="formView">A <see cref="FormView"/> object.</param>
+      /// <param name="propertyName">The name of the property to bind the value to.</param>
+      /// <param name="controlId">The id of child control that contains the desired value.</param>
+      public static void BindOnUpdating(FormView formView, string propertyName, string controlId)
+      {
+         if (formView != null)
+         {
+            formView.ItemUpdating += new FormViewUpdateEventHandler(
+            delegate(object sender, FormViewUpdateEventArgs e)
+            {
+               BindControl(formView, e.NewValues, propertyName, controlId);
+            }
+         );
+         }
+      }
+
+      /// <summary>
+      /// Binds a property's value to a <see cref="FormView" /> child control when the <see cref="FormView"/> is inserting.
+      /// </summary>
+      /// <param name="formView">A <see cref="FormView"/> object.</param>
+      /// <param name="propertyName">The name of the property to bind the value to.</param>
+      /// <param name="controlId">The id of child control that contains the desired value.</param>
+      public static void BindOnInserting(FormView formView, string propertyName, string controlId)
+      {
+         if (formView != null)
+         {
+            formView.ItemInserting += new FormViewInsertEventHandler(
+            delegate(object sender, FormViewInsertEventArgs e)
+            {
+               BindControl(formView, e.Values, propertyName, controlId);
+            }
+         );
+         }
+      }
+
+      /// <summary>
+      /// Binds a property's value to a <see cref="FormView" /> child control when the <see cref="FormView"/> is inserting or updating.
+      /// </summary>
+      /// <param name="formView">A <see cref="FormView"/> object.</param>
+      /// <param name="propertyName">The name of the property to bind the value to.</param>
+      /// <param name="controlId">The id of child control that contains the desired value.</param>
+      public static void BindOnInsertingUpdating(FormView formView, string propertyName, string controlId)
+      {
+         BindOnInserting(formView, propertyName, controlId);
+         BindOnUpdating(formView, propertyName, controlId);
+      }
+
+      /// <summary>
+      /// Binds a controls value to a property of an entity.
+      /// </summary>
+      /// <param name="formView">A <see cref="FormView"/> object.</param>
+      /// <param name="list">The <see cref="IOrderedDictionary"/> containing the values.</param>
+      /// <param name="propertyName">The name of the property to bind the value to.</param>
+      /// <param name="controlId">The id of the control to get the value from.</param>
+      public static void BindControl(FormView formView, IOrderedDictionary list, string propertyName, string controlId)
+      {
+         if (formView != null)
+         {
+            Control control = formView.FindControl(controlId);
+            BindControl(control, list, propertyName);
+         }
+      }
+		
 		#endregion
 
 		#region DetailsView Methods
@@ -887,6 +972,25 @@ namespace <%= WebNameSpace %>.UI
 		#endregion
 
 		#region Control Methods
+		
+		/// <summary>
+      /// Binds a controls value to a property of an entity.
+      /// </summary>
+      /// <param name="control">The control to get the value from.</param>
+      /// <param name="list">The <see cref="IOrderedDictionary"/> containing the values.</param>
+      /// <param name="propertyName">The name of the property to bind the value to.</param>
+      public static void BindControl(Control control, IOrderedDictionary list, String propertyName)
+      {
+         if (control != null)
+         {
+            if (list.Contains(propertyName))
+            {
+               list.Remove(propertyName);
+            }
+
+            list.Add(propertyName, GetValue(control));
+         }
+      }
 
 		/// <summary>
 		/// Loads an instance of an IBindableTemplate from the specified path.

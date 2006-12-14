@@ -565,13 +565,13 @@
 		if(IncludeManyToMany)
 		{
 			TableSchema primaryTable = SourceTable;
-		
 			foreach(TableKeySchema key in SourceTable.PrimaryKeys)
 			{
 				// Check that the key is related to a junction table
 				if ( IsJunctionTable(key.ForeignKeyTable) )
 				{
 					TableSchema junctionTable = key.ForeignKeyTable;
+					string junctionOwner = GetOwner(junctionTable);
 					
 					// Search for the other(s) key(s) of the junction table' primary key
 					foreach(TableKeySchema junctionTableKey in junctionTable.ForeignKeys)
@@ -601,10 +601,10 @@ SELECT <% for (int i = 0; i < primaryTable.Columns.Count; i++)
           } // for %>
   FROM <%=owner%>[<%=primaryTable.Name%>]
  WHERE EXISTS (SELECT 1
-                 FROM <%=owner%>[<%=junctionTable.Name%>] 
+                 FROM <%= junctionOwner %>[<%=junctionTable.Name%>] 
                 WHERE <% 
 				for (int i = 0; i < junctionTableKey.ForeignKeyMemberColumns.Count; i++) {
-					%><%=owner%>[<%=junctionTable.Name%>].[<%=junctionTableKey.ForeignKeyMemberColumns[i].Name%>] = @<%=GetPropertyName(junctionTableKey.ForeignKeyMemberColumns[i].Name)%>
+					%><%=junctionOwner%>[<%=junctionTable.Name%>].[<%=junctionTableKey.ForeignKeyMemberColumns[i].Name%>] = @<%=GetPropertyName(junctionTableKey.ForeignKeyMemberColumns[i].Name)%>
                   <%if(i < junctionTableKey.ForeignKeyMemberColumns.Count-1) {%>AND <%}
 				} // for
 				// find the ForeignKey that points to the current table
@@ -614,7 +614,7 @@ SELECT <% for (int i = 0; i < primaryTable.Columns.Count; i++)
 					{
 						%>AND <%
 						for (int i = 0; i < primaryTableKey.ForeignKeyMemberColumns.Count; i++) {
-							%><%=owner%>[<%=primaryTableKey.ForeignKeyTable.Name%>].[<%=primaryTableKey.ForeignKeyMemberColumns[i].Name%>] = <%=owner%>[<%=primaryTableKey.PrimaryKeyTable.Name %>].[<%=primaryTableKey.PrimaryKeyMemberColumns[i].Name%>]
+							%><%=junctionOwner%>[<%=primaryTableKey.ForeignKeyTable.Name%>].[<%=primaryTableKey.ForeignKeyMemberColumns[i].Name%>] = <%=owner%>[<%=primaryTableKey.PrimaryKeyTable.Name %>].[<%=primaryTableKey.PrimaryKeyMemberColumns[i].Name%>]
                   <%if(i < primaryTableKey.ForeignKeyMemberColumns.Count-1) {%>AND <%}
 						} // for
 					} // if
@@ -764,6 +764,66 @@ SELECT <% for (int i = 0; i < primaryTable.Columns.Count; i++)
 		
 		<% } // end if HasPrimaryKey %>
 		<%} //end if(IncludeFind)
+
+		// -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- 
+		// [ab] NOTE: the following is very MS SQL specific. Also the whole step of reading custom procs from DB
+		//	will eventually be replaced by reading an external xml definition file.
+		if(IncludeCustoms)
+		{
+			System.Collections.IDictionary procs = GetCustomProcedures(SourceTable);
+				
+			foreach(DictionaryEntry item in procs)
+			{  
+				SchemaExplorer.CommandSchema command = (SchemaExplorer.CommandSchema) item.Value;
+				%>
+				
+		<procedure owner="<%=command.Owner %>" name="<%=command.Name %>" <%if (!string.IsNullOrEmpty(GrantUser)) {%>grant="<%=GrantUser%>"<%}%>>
+			<comment><![CDATA[<%
+					Regex rx = new Regex(@"^CREATE\s+PROC(?:EDURE)?(.+?\n)*^AS", RegexOptions.Multiline | RegexOptions.IgnoreCase);
+					
+					Match rxm = rx.Match(command.CommandText);
+					string sp_body = String.Empty;
+					if (rxm.Success)
+					{
+						// get any comments that precede "CREATE PROCEDURE"
+						string comments = command.CommandText.Substring(0, rxm.Index);
+						// TODO: no validation as to whether this is a valid comment block
+						Response.Write(comments);
+						// Remove DDL Statement from the top of the custom sp 
+						sp_body = command.CommandText.Substring(rxm.Index+rxm.Length);
+					}
+					else
+					{
+						throw new ApplicationException(string.Format("Custom sp {0} is not in the expected format.", command.Name ));						
+					}
+			
+			%>]]></comment>
+			<parameters>
+				<% 
+
+				for (int i = 0; i < command.Parameters.Count; i++)
+				{
+					if (! (command.Parameters[i].Name.TrimStart('@').ToUpper() == "RETURN_VALUE"  && 
+						command.Parameters[i].Direction == ParameterDirection.ReturnValue) )
+					{
+						Response.Write("\t\t\t\t" + GetSqlParameterXmlNode(command.Parameters[i]) + Environment.NewLine);
+					}
+				}
+					
+				%>
+			</parameters>
+			<body><![CDATA[
+				
+					<%
+					// Debugger.Break();
+					Response.Write(sp_body);
+					%>
+
+			]]></body>
+					</procedure>
+			<% } // end foreach(DictionaryEntry item in procs)
+
+		  } // end if(IncludeCustoms)
 
 	} // end for each Table
 	// -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- 

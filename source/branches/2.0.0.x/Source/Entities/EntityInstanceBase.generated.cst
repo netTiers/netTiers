@@ -1,17 +1,5 @@
 ﻿<%--
- * $Id: EntityInstanceBase.generated.cst,v 1.11 2006/03/03 03:09:36 bgjohnso Exp $
- * Last modified by $Author: goofsr $
- * Last modified at $Date: 2006-04-09 14:39:46 -0500 (Sun, 09 Apr 2006) $
- * $Revision: 119 $
-
-	Written By:
-		Ryan Hurdon
-	Description:
-		This script will create data access layer classes. It requires stored procedures
-		created from the procedure script. So for this code to work properly you need to run
-		the procedure template, the rowobject template, and the rowcollection template on
-		the same table. You can also optionally use the main script which will run them all
-		for you.
+	Template for the table entity base class.
 --%>
 <%@ CodeTemplate Src="..\TemplateLib\CommonSqlCode.cs" Debug="True" Inherits="MoM.Templates.CommonSqlCode" Language="C#" TargetLanguage="C#" Description="Business object base class"  ResponseEncoding="UTF-8"%>
 <%@ Assembly Name="SchemaExplorer" %>
@@ -144,23 +132,22 @@ namespace <%=NameSpace%>
 	<% } %>
 	[Serializable, DataObject]
 	[CLSCompliant(true)]
-	//[ToolboxItem(typeof(<%=className%>))]
 	public abstract partial class <%=abstractClassName%> : EntityBase, IEntityId<<%= keyClassName %>>, System.IComparable, System.ICloneable, IEditableObject, IComponent, INotifyPropertyChanged
 	{		
 		#region Variable Declarations
 		
 		/// <summary>
-		/// 	Old the inner data of the entity.
+		///  Hold the inner data of the entity.
 		/// </summary>
 		private <%=structName%> entityData;
 		
-		// <summary>
-		// 	Old the original data of the entity.
-		// </summary>
-		//<%=structName%> originalData;
+		/// <summary>
+		/// 	Hold the original data of the entity, as loaded from the repository.
+		/// </summary>
+		private <%=structName%> _originalData;
 		
 		/// <summary>
-		/// 	Old a backup of the inner data of the entity.
+		/// 	Hold a backup of the inner data of the entity.
 		/// </summary>
 		private <%=structName%> backupData; 
 		
@@ -169,24 +156,28 @@ namespace <%=NameSpace%>
 		/// </summary>
 		private string entityTrackingKey;
 		
+		/// <summary>
+		/// 	Hold the parent TList&lt;entity&gt; in which this entity maybe contained.
+		/// </summary>
+		/// <remark>Mostly used for databinding</remark>
 		[NonSerialized]
 		private TList<<%=className%>> parentCollection;
+		
 		private bool inTxn = false;
-
 		
 		/// <summary>
 		/// Occurs when a value is being changed for the specified column.
 		/// </summary>	
 		[field:NonSerialized]
-		public event <%=className%>EventHandler ColumnChanging;
-		
+		public event <%=className%>EventHandler ColumnChanging;		
 		
 		/// <summary>
 		/// Occurs after a value has been changed for the specified column.
 		/// </summary>
 		[field:NonSerialized]
-		public event <%=className%>EventHandler ColumnChanged;		
-		#endregion "Variable Declarations"
+		public event <%=className%>EventHandler ColumnChanged;
+		
+		#endregion Variable Declarations
 		
 		#region Constructors
 		///<summary>
@@ -295,7 +286,7 @@ namespace <%=NameSpace%>
 		/// <param name="value">The changed value.</param>
 		public void OnColumnChanging(<%=className%>Column column, object value)
 		{
-			if(IsEntityTracked && EntityState != EntityState.Added)
+			if(IsEntityTracked && EntityState != EntityState.Added && !EntityManager.TrackChangedEntities)
 				EntityManager.StopTracking(EntityTrackingKey);
 				
 			if (!SuppressEntityEvents)
@@ -358,7 +349,7 @@ namespace <%=NameSpace%>
 		<% if ( IncludeXmlAttributes && cols[x].AllowDBNull ) { %>
 		[XmlElement(IsNullable=true)]
 		<% } %>
-		[<%if (cols[x].IsPrimaryKeyMember && (IsIdentityColumn(cols[x]) || IsComputed(cols[x])) ) {%>ReadOnlyAttribute(false)/*, XmlIgnoreAttribute()*/, <%}%>DescriptionAttribute("<%=GetDescriptionAttributeText(cols[x].Description)%>"), BindableAttribute()]
+		[<%if (cols[x].IsPrimaryKeyMember && (IsIdentityColumn(cols[x]) || IsComputed(cols[x])) ) {%>ReadOnlyAttribute(false)/*, XmlIgnoreAttribute()*/, <%}%>DescriptionAttribute("<%=GetDescriptionAttributeText(cols[x].Description)%>"), System.ComponentModel.Bindable( System.ComponentModel.BindableSupport.Yes)]
 		[DataObjectField(<%= dataObjectFieldParams  %>)<%= defaultValue %>]
 		public <%if (commonColumns.IndexOf(cols[x].Name) != -1) Response.Write ("override "); else Response.Write ("virtual ");%><%= GetCSType(cols[x])%> <%= GetPropertyName(cols[x]) %>
 		{
@@ -454,7 +445,7 @@ namespace <%=NameSpace%>
 		/// </summary>
 		/// <value>The source <%=pkClassName%> for <%=fkPropertyName%>.</value>
         [XmlIgnore()]
-		[Browsable(false), BindableAttribute()]
+		[Browsable(false), System.ComponentModel.Bindable(System.ComponentModel.BindableSupport.Yes)]
 		public virtual <%=pkClassName%> <%=fkPropertyName%>Source
       	{
             get { return this.<%=memberVarName%>; }
@@ -470,7 +461,7 @@ namespace <%=NameSpace%>
 		///		The name of the underlying database table.
 		/// </summary>
 		[BrowsableAttribute(false), XmlIgnoreAttribute()]
-		public override string TableName
+		public override string EntityTableName
 		{
 			get { return "<%=SourceTable.Name%>"; }
 		}
@@ -630,13 +621,70 @@ WriteRelationshipPropertyString();
 			
 		///<summary>
 		///  Revert all changes and restore original values.
-		///  Currently not supported.
 		///</summary>
 		public override void CancelChanges()
 		{
 			IEditableObject obj = (IEditableObject) this;
 			obj.CancelEdit();
+
+			this.entityData = null;
+			this.entityData = this._originalData.Clone() as <%=structName%>;
 		}	
+		
+		/// <summary>
+		/// Accepts the changes made to this object.
+		/// </summary>
+		/// <remarks>
+		/// After calling this method, properties: IsDirty, IsNew are false. IsDeleted flag remains unchanged as it is handled by the parent List.
+		/// </remarks>
+		public override void AcceptChanges()
+		{
+			base.AcceptChanges();
+
+			// we keep of the original version of the data
+			this._originalData = null;
+			this._originalData = this.entityData.Clone() as <%=structName%>;
+		}
+		
+		#region Comparision with original data
+		
+		/// <summary>
+		/// Determines whether the property value has changed from the original data.
+		/// </summary>
+		/// <param name="column">The column.</param>
+		/// <returns>
+		/// 	<c>true</c> if the property value has changed; otherwise, <c>false</c>.
+		/// </returns>
+		public bool IsPropertyChanged(<%=className%>Column column)
+		{
+			switch(column)
+			{
+				<% for (int x=0; x < cols.Count; x++) { %>
+					case <%=className%>Column.<%=GetPropertyName(cols[x])%>:
+					return entityData.<%=GetPropertyName(cols[x])%> != _originalData.<%=GetPropertyName(cols[x])%>;
+				<% } %>
+			
+				default:
+					return false;
+			}
+		}
+		
+		/// <summary>
+		/// Determines whether the data has changed from original.
+		/// </summary>
+		/// <returns>
+		/// 	<c>true</c> if [has data changed]; otherwise, <c>false</c>.
+		/// </returns>
+		public bool HasDataChanged()
+		{
+			bool result = false;
+			<% for (int x=0; x < cols.Count; x++) { %>
+			result = result || entityData.<%=GetPropertyName(cols[x])%> != _originalData.<%=GetPropertyName(cols[x])%>;
+			<% } %>
+			return result;
+}	
+		
+		#endregion
 		
 		#region ICloneable Members
 		///<summary>
@@ -1282,7 +1330,7 @@ protected static string MANY_TO_MANY = @"
 		///	Holds a collection of {3} objects
 		///	which are related to this object through the junction table {2}
 		/// </summary>	
-		[BindableAttribute(){4}]
+		[System.ComponentModel.Bindable(System.ComponentModel.BindableSupport.Yes){4}]
 		public {1} {0}
 		{{
 			get {{ return entityData.{0}; }}
@@ -1298,7 +1346,7 @@ protected static string ONE_TO_ONE = @"
 		///	Holds a {0} object
 		///	which is related to this object through the relation {1}
 		/// </summary>
-		[BindableAttribute(){2}]
+		[System.ComponentModel.Bindable(System.ComponentModel.BindableSupport.Yes){2}]
 		public {0} {0}
 		{{
 			get {{ return entityData.{0}; }}
@@ -1314,7 +1362,7 @@ protected static string ONE_TO_MANY = @"
 		///	Holds a collection of {2} objects
 		///	which are related to this object through the relation {1}
 		/// </summary>	
-		[BindableAttribute(){4}]
+		[System.ComponentModel.Bindable(System.ComponentModel.BindableSupport.Yes){4}]
 		public {0} {3}
 		{{
 			get {{ return entityData.{3}; }}

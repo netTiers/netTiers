@@ -85,7 +85,7 @@
 								continue;
 %>							
 			<tr>
-				<td class="literal"><%=propertyName%>:</td>
+				<td class="literal"><%=GetPascalSpacedName(propertyName)%>:</td>
 				<td>
 					<%= editorControl %>
 				</td>
@@ -123,7 +123,7 @@
 						}
 %>
 			<tr>
-				<td valign="top" class="literal"><%= GetClassName(secondaryTable.Name)%></td>
+				<td valign="top" class="literal"><%= GetPascalSpacedName(secondaryTable.Name)%></td>
 				<td>
 					<asp:CheckBoxList ID="<%=GetClassName(secondaryTable.Name)%>List" runat="server"
 						DataSourceID="<%=GetClassName(secondaryTable.Name)%>DataSource"
@@ -265,13 +265,13 @@ public string GetEditorControl(ColumnSchema column, string prefix, TableKeySchem
 			case DbType.String:
 			case DbType.StringFixedLength:
 				//Return a textbox control
-				if ( column.Size > 255 )
+				if ( column.Size > 255 || column.Size == -1 )
 				{
 					controlDecl = String.Format("<asp:TextBox runat=\"server\" ID=\"{0}\" Text='<%# Bind(\"{1}\") %>'  TextMode=\"MultiLine\"  Width=\"250px\" Rows=\"5\"></asp:TextBox>",controlID, propertyName);
 				}
 				else
 				{
-					controlDecl = String.Format("<asp:TextBox runat=\"server\" ID=\"{0}\" Text='<%# Bind(\"{1}\") %>' MaxLength=\"{2}\"></asp:TextBox>",controlID, propertyName,column.Size);
+					controlDecl = String.Format("<asp:TextBox runat=\"server\" ID=\"{0}\" Text='<%# Bind(\"{1}\") %>' {2}></asp:TextBox>",controlID, propertyName, WriteOutMaxLength(column));
 				}
 				
 				if ( ! column.AllowDBNull )
@@ -388,5 +388,17 @@ public string GetEditorControl(ColumnSchema column, string prefix, TableKeySchem
 	}
 	
 	return controlDecl;
-}
+}	
+	
+	public string WriteOutMaxLength(ColumnSchema column) 
+	{
+		if (column.Size == -1) {
+			return string.Empty;	
+		}
+		else 
+		{
+			return string.Format("MaxLength=\"{0}\"", column.Size);
+		}
+	}
+		
 </script>

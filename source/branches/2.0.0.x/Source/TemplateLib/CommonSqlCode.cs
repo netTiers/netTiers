@@ -45,7 +45,7 @@ namespace MoM.Templates
 	[DefaultProperty("ChooseSourceDatabase")]
 	public class CommonSqlCode : CodeTemplate
 	{
-		
+			
 		// [ab 012605] convenience array for checking if a datatype is an integer 
 		private readonly static DbType[] aIntegerDbTypes = new DbType[] {DbType.Int16,DbType.Int32, DbType.Int64 };
 		
@@ -70,7 +70,8 @@ namespace MoM.Templates
 		private bool cspUseDefaultValForNonNullableTypes = false;
 		private bool parseDbColDefaultVal  = false;
 		private bool changeUnderscoreToPascalCase  = false;
-				
+		private bool includeCustoms = true;
+
 		private MethodNamesProperty methodNames = null;
 		private Hashtable aliases = null;
 		
@@ -107,7 +108,7 @@ namespace MoM.Templates
 		/// </summary>
 		/// <param name="n">Number of tabs</param>
 		/// <returns>n tabs</returns>
-		public static string Tab(int n)
+		public string Tab(int n)
 		{
 			return new String('\t', n);
 		}
@@ -357,6 +358,14 @@ namespace MoM.Templates
 		}
 		
 		[Category("07. CRUD - Advanced")]
+		[Description("If true custom stored procedures will be detected and generated.")]
+		public bool IncludeCustoms
+		{
+			get { return this.includeCustoms; }
+			set { this.includeCustoms = value; }
+		}		
+		
+		[Category("07. CRUD - Advanced")]
 		[Description("By Default, any parameter in the Custom Stored Procedure will be a nullable type if it's a value type.  Setting this flag to true will only allow the param value types that specify NULL, such as (@param1 int=NULL), be nullable i.e. (int? param1).  While the rest of the params, @param2 int, will be regular (int param2).")]
 		public bool CSPUseDefaultValForNonNullableTypes
 		{
@@ -422,12 +431,12 @@ namespace MoM.Templates
 			string[] splitNames;
 			if (ChangeUnderscoreToPascalCase)
 			{
-				char[] splitter =  {' '};
+				char[] splitter = {'_', ' '};
 				splitNames = name.Split(splitter);
 			}	
 			else
 			{
-				char[] splitter = {'_', ' '};
+				char[] splitter =  {' '};
 				splitNames = name.Split(splitter);
 			}
 			
@@ -440,7 +449,28 @@ namespace MoM.Templates
 
             return pascalName;
         }
-		
+
+        /// <summary>
+        /// Get the Pascal spaced version of a name.  
+        /// </summary>
+        /// <param name="name">Name to be changed</param>
+        /// <returns>PascalSpaced version of the name</returns>
+        public string PascalToSpaced(string name)
+        {
+            Regex regex = new Regex("(?<=[a-z])(?<x>[A-Z])|(?<=.)(?<x>[A-Z])(?=[a-z])");
+            return regex.Replace(name, " ${x}");
+        }
+
+        /// <summary>
+        /// Get the Pascal spaced version of a name.  
+        /// </summary>
+        /// <param name="name">Name to be changed</param>
+        /// <returns>PascalSpaced version of the name</returns>
+        public string GetPascalSpacedName(string name)
+        {
+            return PascalToSpaced(GetClassName(name));
+        }		
+
 		/// <summary>
 		/// Remove any non-word characters from a SchemaObject's name (word characters are a-z, A-Z, 0-9, _)
 		/// so that it may be used in code
@@ -828,6 +858,9 @@ namespace MoM.Templates
 		/// </summary>
 		public string GetPropertyName(ColumnSchema column)
 		{
+			if (column == null)
+				return "";
+				
 		   	return GetPropertyName(column.Name);
 		}
 		
@@ -1426,6 +1459,32 @@ namespace MoM.Templates
 		private string[] userDefinedTypes = null;
 
 		/// <summary>
+		/// Determines if the given schema object has a user defined data type.  
+		/// -- [ab] this is a generic ver of IsUserDefinedType(ColumnSchema column)
+		/// </summary>
+		/// <remarks>
+		/// User defined data types are dynamically loaded from the database where the schema object is from.
+		/// </remarks>
+		public bool IsUserDefinedType<TSchemaType>(TSchemaType schemaItem) where TSchemaType:DataObjectBase
+		{
+			// lazy load the user defined user type list
+			if ( userDefinedTypes == null )
+			{
+				userDefinedTypes = GetUserDefinedTypes(schemaItem.Database);
+			}
+			
+			foreach (string userDefinedType in userDefinedTypes)
+			{
+				// compare the data types case ignoring the case.
+				if ( String.Compare(schemaItem.NativeType, userDefinedType, true) == 0 )
+					return true;
+			}
+			return false;
+		}
+
+
+
+		/// <summary>
 		/// Get the user defined data types from the specified database.
 		/// </summary>
 		protected string[] GetUserDefinedTypes(DatabaseSchema database)
@@ -1854,6 +1913,27 @@ namespace MoM.Templates
 		}
 		
 		/// <summary>
+		/// Get an xml representation for a stored procedure parameter - this is for pre-existing (most likely, custom) Stored Procedures
+		/// </summary>
+		/// <param name="parameter">SP Parameter for which to get the Sql parameter statement</param>
+		/// <returns>the xml Sql Parameter statement</returns>
+		public string GetSqlParameterXmlNode(ParameterSchema parameter)
+		{
+			string formater = "<parameter name=\"@{0}\" type=\"{1}\" direction=\"{2}\" size=\"{3}\" precision=\"{4}\" scale=\"{5}\" param=\"{6}\" nulldefault=\"{7}\"/>";			
+			
+			return string.Format(	formater, 
+									parameter.Name.TrimStart('@'),
+									parameter.NativeType, 
+									parameter.Direction.ToString(), 
+									parameter.Size, 
+									parameter.Precision, 
+									parameter.Scale, 
+									parameter.NativeType.ToLower() == "real" ? String.Empty : GetSqlParameterParam<ParameterSchema>(parameter), 
+									parameter.AllowDBNull? "null":String.Empty );
+		}
+		
+		
+		/// <summary>
 		/// 
 		/// </summary>
 		/// <param name="column"></param>
@@ -1875,8 +1955,9 @@ namespace MoM.Templates
 				case DbType.AnsiStringFixedLength:
 				case DbType.String:
 				case DbType.StringFixedLength:
+				case DbType.Binary:
 				{
-					if (column.NativeType != "text" && column.NativeType != "ntext")
+					if (column.NativeType != "text" && column.NativeType != "ntext" && column.NativeType != "image" && column.NativeType != "timestamp")
 					{
 						if (column.Size > 0)
 						{
@@ -1895,6 +1976,52 @@ namespace MoM.Templates
 		}
 
 		/// <summary>
+		/// 	[ab] This is a somewhat generic :) version of the singly typed GetSqlParameterParam
+		/// </summary>
+		/// <param name="column"></param>
+		/// <remarks>
+		///	
+		/// </remarks>
+		public string GetSqlParameterParam<TSchemaType>(TSchemaType schemaItem) where TSchemaType:DataObjectBase
+		{
+			string param = string.Empty;
+			
+			// user defined data types do not need size components
+			if ( ! IsUserDefinedType<TSchemaType>(schemaItem) )
+			{
+			switch (schemaItem.DataType)
+			{
+				case DbType.Decimal:
+				{
+					param = "(" + schemaItem.Precision + ", " + schemaItem.Scale + ")";
+					break;
+				}
+				case DbType.AnsiString:
+				case DbType.AnsiStringFixedLength:
+				case DbType.String:
+				case DbType.StringFixedLength:
+				case DbType.Binary:				
+				{
+					if (schemaItem.NativeType != "text" && schemaItem.NativeType != "ntext")
+					{
+						if (schemaItem.Size > 0)
+						{
+							param = "(" + schemaItem.Size + ")";
+						}
+						else if (schemaItem.Size == -1)
+						{
+							param = "(MAX)";
+						}
+					}
+					break;
+				}
+			}	
+			}
+			return param;
+		}
+		
+
+		/// <summary>
 		/// Parse the text of a stored procedure to retrieve any comment prior to the CREATE PROC construct
 		/// </summary>
 		/// <param name="commandText">Command Text of the procedure</param>
@@ -1903,7 +2030,7 @@ namespace MoM.Templates
 		{
 			string comment = "";
 			// Find anything upto the CREATE PROC statement
-			Regex regex = new Regex(@"CREATE[\s]*PROC", RegexOptions.IgnoreCase);	
+			Regex regex = new Regex(@"CREATE\s+PROC(?:EDURE)?", RegexOptions.IgnoreCase);	
 			comment = regex.Split(commandText)[0];
 			//remove comment characters
 			regex = new Regex(@"(-{2,})|(/\*)|(\*/)");
@@ -2158,10 +2285,29 @@ namespace MoM.Templates
 		/// <param name="columns">The columns to transform.</param>
 		public string GetFunctionCallParameters(ColumnSchemaCollection columns)
 		{
+			return GetFunctionCallParameters(columns, string.Empty, null);
+		}
+		
+		public delegate bool AppendIf(ColumnSchema col);
+		
+		/// <summary>
+		/// Returns a string that reprenst the given columns formated as method parameters call. (ex: param1, param2)
+		/// </summary>
+		/// <param name="columns">The columns to transform.</param>
+		public string GetFunctionCallParameters(ColumnSchemaCollection columns, string appendString, AppendIf condition)
+		{			
 			StringBuilder output = new StringBuilder();
 			for (int i = 0; i < columns.Count; i++)
-			{
+			{		
 				output.Append(GetPrivateName(columns[i].Name));
+				if (condition != null)
+				{
+					if (condition(columns[i]))
+					{
+						output.Append(appendString);
+					}
+				}
+					
 				if (i < columns.Count - 1)
 				{
 					output.Append(", ");
@@ -3775,7 +3921,7 @@ CREATE\s+PROC(?:EDURE)?                               # find the start of the st
 		}
 
 		#endregion
-	
+		
 		#region Children Collections
 		
 		/////////////////////////////////////////////////////////////////////////////////////
@@ -3963,7 +4109,7 @@ CREATE\s+PROC(?:EDURE)?                               # find the start of the st
 			}
 
 			//Add N-N relations
-			foreach(TableKeySchema key in primaryKeyCollection)
+			foreach(SchemaExplorer.TableKeySchema key in primaryKeyCollection)
 			{
 				// Check that the key is related to a junction table and that this key relate a PK in this junction table
 				if ( tables.Contains(key.ForeignKeyTable.Owner, key.ForeignKeyTable.Name) &&  IsJunctionTable(key.ForeignKeyTable) && IsJunctionKey(key))
@@ -3984,7 +4130,11 @@ CREATE\s+PROC(?:EDURE)?                               # find the start of the st
 							collectionInfo.PrimaryTable = GetClassName(table);
 							collectionInfo.SecondaryTable = GetClassName(junctionTableKey.PrimaryKeyTable);
 							collectionInfo.SecondaryTablePkColNames = GetColumnNames(junctionTableKey.PrimaryKeyTable.PrimaryKey.MemberColumns);
+							collectionInfo.JunctionTableSchema = junctionTable;
+							collectionInfo.SecondaryTableSchema = junctionTableKey.PrimaryKeyTable;
+							collectionInfo.PrimaryTableSchema = table;
 							collectionInfo.JunctionTable = GetClassName(junctionTable);
+							collectionInfo.JunctionTablePkColNames = GetColumnNames(junctionTable.PrimaryKey.MemberColumns);
 							collectionInfo.CollectionName = string.Format("{0}_From_{1}", GetCollectionPropertyName( collectionInfo.SecondaryTable), GetClassName(collectionInfo.JunctionTable)); //GetManyToManyName(GetCollectionClassName( collectionInfo.SecondaryTable), collectionInfo.JunctionTable);
 							collectionInfo.CollectionTypeName = GetCollectionClassName( collectionInfo.SecondaryTable);
 							collectionInfo.CollectionRelationshipType = RelationshipType.ManyToMany;
@@ -4063,6 +4213,10 @@ CREATE\s+PROC(?:EDURE)?                               # find the start of the st
 			public string SecondaryTable;
 			public string[] SecondaryTablePkColNames;
 			public string JunctionTable;
+			public string[] JunctionTablePkColNames;
+			public TableSchema JunctionTableSchema;
+			public TableSchema SecondaryTableSchema;
+			public TableSchema PrimaryTableSchema;
 			public string CollectionName = string.Empty;
 			public string CollectionTypeName = string.Empty;
 			public string CallParams = string.Empty;
@@ -4364,11 +4518,28 @@ CREATE\s+PROC(?:EDURE)?                               # find the start of the st
 		{
 			string[] columnNames = new string[ columns.Count ];
 			for (int i = 0; i < columns.Count; i++)
-				columnNames[i] = columns[i].Name;
+				columnNames[i] = GetPropertyName(columns[i].Name);
 			return columnNames;
-
-			
 		}
+
+		///<summary>
+		/// Get's the constraint side of a column from a m:m relationship to it's corresponding 1:m relationship
+		///</summary>
+		public ColumnSchema GetCorrespondingRelationship(TableKeySchemaCollection fkeys, string columnName)
+		{
+			//System.Diagnostics.Debugger.Break();
+			for (int j=0; j < fkeys.Count; j++)
+			{
+				for (int y=0; y < fkeys[j].ForeignKeyMemberColumns.Count; y++)
+				{
+					if (fkeys[j].ForeignKeyMemberColumns[y].Name.ToLower() 
+							== columnName.ToLower())
+						return fkeys[j].PrimaryKeyMemberColumns[y];
+				}
+			}
+			return null;
+		}
+
 
 		private string _currentTable = string.Empty;
 		
@@ -4460,7 +4631,6 @@ CREATE\s+PROC(?:EDURE)?                               # find the start of the st
 			return _tbChild;
 		}
 		#endregion 
-
 	}
 
 	#region Retry

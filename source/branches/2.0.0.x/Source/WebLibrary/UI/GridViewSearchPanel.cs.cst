@@ -26,13 +26,12 @@ namespace <%=RootNameSpace%>.Web.UI
     /// </summary>
     [
         Designer(typeof(System.Web.UI.Design.WebControls.CompositeControlDesigner)),
-        ToolboxData("<{0}:GridViewSearchPanel runat=\"server\" GridViewControl=\"GridView1\" BusinessEntityType=\"\" />")
-    ]    
-    public class GridViewSearchPanel: CompositeControl
+        ToolboxData("<{0}:GridViewSearchPanel runat=\"server\" GridViewControl=\"GridView1\" Filter=\"\" />")
+    ]
+    public class GridViewSearchPanel : CompositeControl
     {
         private string _gridViewControlID = string.Empty;
         private string _businessEntityType = string.Empty;
-        private string _filter = string.Empty;
         private GridView GridView1;
         private DataSourceControl TypedDataSource;
 
@@ -40,7 +39,7 @@ namespace <%=RootNameSpace%>.Web.UI
         /// SearchButtonClicked event raised whenever the Search Button Clicked
         /// </summary>
         public event EventHandler SearchButtonClicked;
-        
+
         /// <summary>
         /// ResetButtonClicked event raised whenever the Reset Button Clicked
         /// </summary>
@@ -49,9 +48,9 @@ namespace <%=RootNameSpace%>.Web.UI
         #region Constructors
         /// <summary>
         /// Initializes a new instance of the GridViewSearchPanel class.
-		/// </summary>
+        /// </summary>
         public GridViewSearchPanel()
-	{
+        {
 
         }
         #endregion
@@ -94,26 +93,6 @@ namespace <%=RootNameSpace%>.Web.UI
             }
         }
 
-        /// <summary>
-        /// Set / Gets the BusinessEntityType
-        /// </summary>
-        [
-        Browsable(true),
-        Description("Set / Gets the BusinessEntityType"),
-        Category("Misc"),
-        DefaultValue(""),
-        ]
-        public string BusinessEntityType
-        {
-            get
-            {
-                return _businessEntityType;
-            }
-            set
-            {
-                _businessEntityType = value;
-            }
-        }
 
         ///<summary>
         /// Set / Gets the Filter criteria
@@ -126,9 +105,22 @@ namespace <%=RootNameSpace%>.Web.UI
         ]
         public string Filter
         {
-            get { return _filter; }
-            set { _filter = value; }
-        }        
+            get
+            {
+                if (ViewState["_filter"] != null)
+                {
+                    return (string)ViewState["_filter"];
+                }
+                else
+                {
+                    return string.Empty;
+                }
+            }
+            set
+            {
+                ViewState["_filter"] = value;
+            }
+        }
         #endregion
 
         /// <summary>
@@ -136,11 +128,11 @@ namespace <%=RootNameSpace%>.Web.UI
         /// before the control is rendered
         /// </summary>
         /// <param name="writer"></param>
-        protected override void Render(HtmlTextWriter writer) 
-        { 
+        protected override void Render(HtmlTextWriter writer)
+        {
             base.EnsureChildControls();
-            base.Render(writer);         
-        } 
+            base.Render(writer);
+        }
 
         /// <summary>
         /// Called by the ASP.NET page framework to notify server controls that 
@@ -155,13 +147,16 @@ namespace <%=RootNameSpace%>.Web.UI
             DropDownList cboFieldName = new DropDownList();
             cboFieldName.ID = "cboFieldName";
             cboFieldName.SkinID = "cboFieldName";
-            
+
             if (!base.DesignMode)
             {
                 GridView1 = (GridView)this.Parent.FindControl(this.GridViewControlID);
                 TypedDataSource = (DataSourceControl)this.Parent.FindControl(GridView1.DataSourceID);
 
                 SetWhereClause(whereClause);
+
+                Type[] typeArguments = TypedDataSource.GetType().BaseType.GetGenericArguments();
+                _businessEntityType = typeArguments[0].FullName;
 
                 Type t = EntityUtil.GetType(_businessEntityType);
                 System.Reflection.PropertyInfo[] pinfo = t.GetProperties();
@@ -173,7 +168,7 @@ namespace <%=RootNameSpace%>.Web.UI
                         for (int i = 0; i < GridView1.Columns.Count; i++)
                         {
                             // -- check if property is the same what specified in the sortexpression of the column
-                            if (p.Name == GridView1.Columns[i].SortExpression)
+                            if (p.Name.ToLower() == GetCleanName(GridView1.Columns[i].SortExpression))
                             {
                                 ListItem li = new ListItem();
                                 li.Text = GridView1.Columns[i].HeaderText;
@@ -209,7 +204,7 @@ namespace <%=RootNameSpace%>.Web.UI
             Label lblWhich = new Label();
             lblWhich.ID = "lblWhich";
             lblWhich.SkinID = "lblWhich";
-            lblWhich.Text = "which";
+            lblWhich.Text = "Which:";
 
             Button cmdSearch = new Button();
             cmdSearch.ID = "cmdSearch";
@@ -282,7 +277,7 @@ namespace <%=RootNameSpace%>.Web.UI
             whereClause = string.Empty;
             SetWhereClause(string.Empty);
             GridView1.DataBind();
-            
+
             if (ResetButtonClicked != null) ResetButtonClicked(sender, e);
         }
 
@@ -321,6 +316,22 @@ namespace <%=RootNameSpace%>.Web.UI
 
         #region Help Methods
         /// <summary>
+        /// Transform a name into a name that will be compare against entity property
+        /// </summary>
+        private string GetCleanName(string name)
+        {
+            string newName = string.Empty;
+
+            string[] strips = name.Split(new char[] { '_', '[', ']', ' ' });
+            foreach (string strip in strips)
+            {
+                if (strip == string.Empty) continue;
+                newName += strip;
+            }
+            return newName.ToLower();
+        }
+
+        /// <summary>
         /// Sets DataSourceObject Parameter's WhereClause property
         /// </summary>
         /// <param name="whereClause"></param>
@@ -328,30 +339,47 @@ namespace <%=RootNameSpace%>.Web.UI
         {
             Type t = TypedDataSource.GetType();
             System.Reflection.PropertyInfo prop = t.GetProperty("Parameters");
-            ParameterCollection col = (ParameterCollection) prop.GetValue(TypedDataSource, null);
+            ParameterCollection col = (ParameterCollection)prop.GetValue(TypedDataSource, null);
+            CustomParameter p = col["WhereClause"] as CustomParameter;
 
-            foreach (Parameter param in col)
+            // -- check if WhereClause exists in parameter's collection
+            if (p != null)
             {
-                if (param.Name.Equals("WhereClause"))
-                {
-                    Type pType = param.GetType();                      
-                    if (whereClause == string.Empty)
-                    {
-                        pType.GetProperty("Value").SetValue(param, _filter, null);
-                    }
-                    else if (_filter == string.Empty)
-                    {
-                        pType.GetProperty("Value").SetValue(param, whereClause, null);                        
-                    }
-                    else
-                    {
-                        pType.GetProperty("Value").SetValue(param, _filter + " AND " + whereClause, null);                        
-                    }
-                    break;
-                }
+                p.Value = GetWhereClauseStatement(whereClause);
+            }
+            else
+            {
+                p = new CustomParameter();
+                p.Name = "WhereClause";
+                p.ConvertEmptyStringToNull = false;
+                p.Value = GetWhereClauseStatement(whereClause);
+                col.Add(p);
+            }
+        }
+
+        /// <summary>
+        /// Constructs the statement based on several conditions
+        /// </summary>
+        /// <param name="whereClause"></param>
+        /// <returns></returns>
+        private string GetWhereClauseStatement(string whereClause)
+        {
+            if (whereClause == string.Empty)
+            {
+                return Filter;
+            }
+            else if (Filter == string.Empty)
+            {
+                return whereClause;
+            }
+            else
+            {
+                return string.Format("{0} AND {1}", Filter, whereClause);
             }
         }
         #endregion
     }
 }
+
+
 

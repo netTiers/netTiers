@@ -21,13 +21,39 @@ namespace <%=NameSpace%>
 	/// Entity Manager provides the management of entity location and creation.
 	/// This is responsible for providing the health and validity of entities as a whole.
 	/// </summary>
-    public static class EntityManager
+    public static partial class EntityManager
     {
         #region Fields
         private static object syncObject = new object();
         private static Dictionary<string, IEntityFactory> entityFactoryList = new Dictionary<string, IEntityFactory>();
         private static EntityLocator entityLocator = new EntityLocator();
+		private static TrackingPolicy trackingPolicy = TrackingPolicy.TrackingUnchanged | TrackingPolicy.TrackingChanged;
         #endregion
+		
+		#region Properties
+		
+	    /// <summary>
+	    /// Get or set whether an entity should stop being tracked if it is modified or not.
+	    /// If true entities are tracked until saved even if modified. If false entities are
+	    /// stopped being tracked when they are modified.
+	    /// </summary>
+		public static bool TrackChangedEntities
+		{
+			get { return (trackingPolicy & TrackingPolicy.TrackingChanged) == TrackingPolicy.TrackingChanged; }
+		    set
+		    {
+		        if (value)
+		        {
+		            trackingPolicy |= TrackingPolicy.TrackingChanged;
+		        }
+		        else
+		        {
+		            trackingPolicy = TrackingPolicy.TrackingUnchanged;
+		        }
+		    }
+		}
+		
+		#endregion
 
         #region LocateOrCreate<Entity>
         /// <summary>
@@ -399,4 +425,23 @@ namespace <%=NameSpace%>
 		}
 	}
 	#endregion 
+	
+	/// <summary>
+	/// Determines what entities are tracked with respect to Entity.EntityState.
+	/// </summary>
+	/// <remarks>TrackingPolicy is marked with Flags to allow future extensions, for example tracking of inserted items.</remarks>
+	[Flags]
+	public enum TrackingPolicy
+	{ 
+		/// <summary>
+		/// Track unchanged entities (default). 
+		/// </summary>
+		TrackingUnchanged = 1,
+		
+		/// <summary>
+		/// Track changed entities. 
+		/// </summary>
+		/// <remarks>Normally an entity stops being tracked when it is modified unless TrackingChanged is specified.</remarks>
+		TrackingChanged = 2,
+	}
 }

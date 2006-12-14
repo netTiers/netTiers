@@ -18,6 +18,9 @@
 <%@ Assembly Name="SchemaExplorer" %>
 <%@ Assembly Name="System.Design" %>
 <%
+	bool IncludeDeepLoad = (IncludeRelations && IncludeGetListByFK);
+	bool IncludeDeepSave = (IncludeDeepLoad && IncludeSave);
+	
 	bool HasComponentLayer = (IncludeComponentLayer != MoM.Templates.ComponentPatternType.None);
 %>
 #region Using directives
@@ -114,6 +117,28 @@ namespace <%= DALNameSpace %>
 		bool <%= MethodNames.Delete %>(<% if(!HasComponentLayer){ %>TransactionManager mgr, <% } %>Entity entity);
 
 		<% } // end if ( IncludeDelete ) %>
+		<% if ( IncludeSave ) { %>
+		/// <summary>
+		/// Saves row changes in the DataSource (insert, update ,delete).
+		/// </summary>
+		<% if (!HasComponentLayer) { %>
+		/// <param name="mgr">A <see cref="TransactionManager"/> object.</param>
+		<% } %>
+		/// <param name="entity">The Entity object to save.</param>
+		Entity <%= MethodNames.Save %>(<% if(!HasComponentLayer){ %>TransactionManager mgr, <% } %>Entity entity);
+
+		<% } // end if ( IncludeSave ) { %>
+		<% if ( IncludeDeepSave ) { %>
+		/// <summary>
+		/// Deep Save the Entity object with all of the child property collections only 1 level deep.
+		/// </summary>
+		<% if (!HasComponentLayer) { %>
+		/// <param name="mgr">A <see cref="TransactionManager"/> object.</param>
+		<% } %>
+		/// <param name="entity">The Entity object to save.</param>
+		bool <%= MethodNames.DeepSave %>(<% if(!HasComponentLayer){ %>TransactionManager mgr, <% } %>Entity entity);
+		
+		<% } // end if ( IncludeDeepSave ) { %>
 		#region Full Implementation
 		/*
 		#region Get Methods

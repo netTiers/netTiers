@@ -73,7 +73,7 @@
 %>
 <%%@ Page Language="C#" Theme="Default" MasterPageFile="~/site.master" AutoEventWireup="true"  CodeFile="<%=entityName%>Edit.aspx.cs" Inherits="<%=entityName%>Edit" Title="<%=entityName%> Edit" %%>
 
-<asp:Content ID="Content2" ContentPlaceHolderID="ContentPlaceHolder2" Runat="Server"><%=entityName%> - Add/Edit</asp:Content>
+<asp:Content ID="Content2" ContentPlaceHolderID="ContentPlaceHolder2" Runat="Server"><%=GetPascalSpacedName(entityName)%> - Add/Edit</asp:Content>
 <asp:Content ID="Content1" ContentPlaceHolderID="ContentPlaceHolder1" Runat="Server">
 		<data:MultiFormView ID="FormView1" DataKeyNames="<%=GetDataKeyNames(keys)%>" runat="server" DataSourceID="<%=entityName%>DataSource">
 		
@@ -111,7 +111,7 @@
 	string ae = string.Empty;
 	
 	// -- check for junction table
-	if (!IsJunctionTable(SourceTable)) 
+	if (keys.Count == 1) 
 	{
 		TableSchemaCollection tablesRelated = GetTablesCollectionByFk(SourceTable.PrimaryKey.MemberColumns[0], sourceTables);
 		for (int x = 0; x < tablesRelated.Count; x++)
@@ -130,7 +130,7 @@
 		<asp:Panel ID="<%=entityRelated%>Panel2" runat="server" CssClass="collapsePanelHeader"> 
 			<div style="padding:5px; cursor: pointer; vertical-align: middle;">
 				<div style="float: left; vertical-align: middle;"><asp:Image ID="<%=entityRelated%>Image" runat="server" ImageUrl="~/images/expand_blue.jpg"/></div>
-				<div style="float: left; padding-left: 5px;"><%=entityRelated%> Details</div>
+				<div style="float: left; padding-left: 5px;"><%=GetPascalSpacedName(entityRelated)%> Details</div>
 				<div style="float: left; margin-left: 20px;"><asp:Label ID="<%=entityRelated%>Label" runat="server" /></div>
 			</div>
 		</asp:Panel>	
@@ -146,9 +146,7 @@
 			AllowMultiColumnSorting="false"
 			DefaultSortColumnName="" 
 			DefaultSortDirection="Ascending"	
-			ExcelExportFileName="Export_<%=entityRelated%>.xls"  
-			AllowSorting="true"
-			AllowPaging="true"			
+			ExcelExportFileName="Export_<%=entityRelated%>.xls"  		
 			Visible='<%%# (FormView1.DefaultMode == FormViewMode.Insert) ? false : true %%>'	
 			>
 			<Columns>
@@ -161,31 +159,29 @@
 				if (!tCol.IsForeignKeyMember && !tCol.IsPrimaryKeyMember && !tCol.NativeType.ToLower().Equals("xml")) 
 				{
 %>
-				<asp:BoundField DataField="<%=propertyName%>" HeaderText="<%=propertyName%>" SortExpression="<%=propertyName%>" />				
+				<asp:BoundField DataField="<%=propertyName%>" HeaderText="<%=GetPascalSpacedName(propertyName)%>" SortExpression="<%=tCol.Name%>" />				
 <%    
 				}				
         	}
 %>
 			</Columns>
 			<EmptyDataTemplate>
-				<b>No <%=GetClassName(tablesRelated[x].Name)%> Found! </b>
+				<b>No <%=GetPascalSpacedName(tablesRelated[x].Name)%> Found! </b>
 				<asp:HyperLink runat="server" ID="hyp<%=GetClassName(tablesRelated[x].Name)%>" NavigateUrl="~/admin/<%=GetClassName(tablesRelated[x].Name)%>Edit.aspx">Add New</asp:HyperLink>
 			</EmptyDataTemplate>
 		</data:EntityGridView>					
-
-		<data:<%=entityRelated%>DataSource ID="<%=entityRelated%>DataSource" runat="server"
-			SelectMethod="<%= MethodNames.GetPaged %>"
-			EnablePaging="True"
-			EnableSorting="True"
-		>
-			<Parameters>
-				<asp:ControlParameter Name="WhereClause" ControlID="__Page" PropertyName="WhereClause" />
-				<data:CustomParameter Name="OrderByClause" Value="" ConvertEmptyStringToNull="false" />
-				<asp:ControlParameter Name="PageIndex" ControlID="GridView<%=entityRelated%>" PropertyName="PageIndex" Type="Int32" />
-				<asp:ControlParameter Name="PageSize" ControlID="GridView<%=entityRelated%>" PropertyName="PageSize" Type="Int32" />
-				<data:CustomParameter Name="RecordCount" Value="0" Type="Int32" />
-			</Parameters>
-		</data:<%=entityRelated%>DataSource>
+		
+		<data:<%=entityRelated%>DataSource ID="<%=entityRelated%>DataSource" runat="server" SelectMethod="<%= MethodNames.Find %>">
+		    <Parameters>
+				<data:SqlParameter Name="Parameters">
+					<Filters>
+						<data:<%=entityRelated%>Filter  Column="<%=GetKeysName(keys)%>" ControlID="__Page" PropertyName="<%=GetKeysName(keys)%>" /> 
+					</Filters>
+				</data:SqlParameter>
+				<data:CustomParameter Name="OrderByClause" Value="" ConvertEmptyStringToNull="false" /> 
+		    </Parameters>
+		</data:<%=entityRelated%>DataSource>		
+		
 		<br />
 <%
 			if (IncludeAtlasToolkit && IncludeAtlasLibrary)

@@ -64,7 +64,7 @@
 	
 %><%%@ Page Language="C#" Theme="Default" MasterPageFile="~/site.master" AutoEventWireup="true"  CodeFile="<%=entityName%>.aspx.cs" Inherits="<%=entityName%>" Title="<%=entityName%> List" %%>
 
-<asp:Content ID="Content2" ContentPlaceHolderID="ContentPlaceHolder2" Runat="Server"><%=entityName%> List</asp:Content>
+<asp:Content ID="Content2" ContentPlaceHolderID="ContentPlaceHolder2" Runat="Server"><%=GetPascalSpacedName(entityName)%> List</asp:Content>
 <asp:Content ID="Content1" ContentPlaceHolderID="ContentPlaceHolder1" Runat="Server">
 		
 		<data:EntityGridView ID="GridView1" runat="server"			
@@ -75,9 +75,7 @@
 			AllowMultiColumnSorting="false"
 			DefaultSortColumnName="" 
 			DefaultSortDirection="Ascending"	
-			ExcelExportFileName="Export_<%=entityName%>.xls"  
-			AllowSorting="true"
-			AllowPaging="true"			
+			ExcelExportFileName="Export_<%=entityName%>.xls"  		
 			>
 			<Columns>
 				<asp:CommandField ShowSelectButton="True" ShowEditButton="True" />				
@@ -187,10 +185,10 @@ public string WriteTemplateField(ColumnSchema column, int tabs, out string entit
 			break;						
 		}
 	}
-	if (fkPropertyName == string.Empty)
+	if (fkPropertyName == string.Empty || pkPropertyName == string.Empty)
 		return s;
 		
-	s += Tab(4) + "<asp:TemplateField HeaderText=\"" + fkPropertyName + "\">\r\n";
+	s += Tab(4) + "<asp:TemplateField HeaderText=\"" + GetPascalSpacedName(fkPropertyName) + "\">\r\n";
 	s += Tab(4) + "<ItemTemplate>\r\n";
 	s += Tab(4) + "		<asp:Repeater ID=\"" + pkPropertyName + suffix.ToString() + "\" runat=\"server\" DataSourceID=\"" + objectDataSource + "Filter" + suffix.ToString() + "\">\r\n";
 	s += Tab(4) + "			<ItemTemplate>\r\n";
@@ -218,11 +216,11 @@ public string WriteBoundField(ColumnSchema column, int tabs) {
 	
 	if (column.NativeType != "text" && column.NativeType != "ntext") 
 	{
-		return string.Format("{1}<asp:BoundField DataField=\"{0}\" HeaderText=\"{0}\" SortExpression=\"{2}\" {3} />", propertyName, Tab(tabs), column.Name, (column.IsPrimaryKeyMember)?"ReadOnly":"");								
+		return string.Format("{1}<asp:BoundField DataField=\"{0}\" HeaderText=\"{4}\" SortExpression=\"{2}\" {3} />", propertyName, Tab(tabs), column.Name, (column.IsPrimaryKeyMember)?"ReadOnly":"", GetPascalSpacedName(propertyName));								
 	}
 	else 
 	{
-		return string.Format("{1}<asp:BoundField DataField=\"{0}\" HeaderText=\"{0}\" SortExpression=\"\" {3} />", propertyName, Tab(tabs), column.Name, (column.IsPrimaryKeyMember)?"ReadOnly":"");
+		return string.Format("{1}<asp:BoundField DataField=\"{0}\" HeaderText=\"{4}\" SortExpression=\"\" {3} />", propertyName, Tab(tabs), column.Name, (column.IsPrimaryKeyMember)?"ReadOnly":"", GetPascalSpacedName(propertyName));
 	}
 }
 </script>

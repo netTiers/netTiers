@@ -70,6 +70,8 @@
 	{
 		sourceTables.Add(SourceDatabase.Tables[i]);
 	}
+	
+	int iRelatedCounter = 0;
 %>
 #region Imports...
 using System;
@@ -99,7 +101,8 @@ public partial class <%=entityName%>Edit : System.Web.UI.Page
 		FormUtil.SetDefaultMode(FormView1, "<%=GetPropertyName(keys[0].Name)%>");
 	}
 <%
-	if (!IsJunctionTable(SourceTable))
+	// -- check if table is not Junction table
+	if (keys.Count == 1)
 	{
 		TableSchemaCollection tablesRelated1 = GetTablesCollectionByFk(SourceTable.PrimaryKey.MemberColumns[0], sourceTables);
 		for (int x = 0; x < tablesRelated1.Count; x++)
@@ -111,6 +114,7 @@ public partial class <%=entityName%>Edit : System.Web.UI.Page
 			string entityRelated = GetClassName(tablesRelated1[x].Name);
 			ColumnSchemaCollection keysRelatedCol = tablesRelated1[x].PrimaryKey.MemberColumns;
 			string keysRelated = GetKeysName(keysRelatedCol);
+			iRelatedCounter++;
 %>
 	protected void GridView<%=entityRelated%>_SelectedIndexChanged(object sender, EventArgs e)
 	{
@@ -119,19 +123,25 @@ public partial class <%=entityName%>Edit : System.Web.UI.Page
 	}	
 <%							
     }	
+	
+		// -- output Filter Property only if there is related entity 
+		if (iRelatedCounter > 0) 
+		{
 %>	
-    public String WhereClause
-    {
-       get 
-       {
-           if (<%=getUrlCondition(keys)%>)
-           {
-               return string.Format(<%=getUrl(keys)%>);
-           }
-           return string.Empty;
-       }
-    }
+	public String <%=GetKeysName(keys)%>
+	{
+		get 
+		{
+			String q = Request.QueryString["<%=GetKeysName(keys)%>"];
+			if (q != null)
+			{
+				return q.ToString();
+			}
+			return string.Empty;
+		}
+	}
 <%
+		}
 	}
 %>
 

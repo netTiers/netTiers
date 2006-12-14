@@ -7,6 +7,7 @@
 <%@ Property Name="SourceTables" Type="SchemaExplorer.TableSchemaCollection" Category="Context" Description="Tables that the stored procedures should be based on." %>
 <%@ Property Name="SourceViews" Type="SchemaExplorer.ViewSchemaCollection" Category="Context" Description="Tables that the stored procedures should be based on." %>
 <%@ Property Name="IncludeWCFDataAttributes" Type="System.Boolean" Default="False" Category="02. Framework Generation - Optional" Description="Indicates if the WCF attributes, [DataContract] and [DataMember], should be included on the entity classes." %>
+<%@ Property Name="SerializeEntityState" Type="System.Boolean" Default="False" Category="02. Framework Generation - Optional" Description="Indicates if the EntityState property should be included in serialization." %>
 
 <%@ Assembly Name="SchemaExplorer" %>
 <%
@@ -45,6 +46,7 @@ namespace <%=NameSpace%>
 		/// </summary>
 		protected EntityBaseCore()
 		{
+			entityHashCode = entityInstanceCreationDate.ToString() + entityHashcodeIdentity.ToString();
 		}
 		
       	#endregion
@@ -69,11 +71,26 @@ namespace <%=NameSpace%>
 		/// Indicates that we are in the middle of an IBinding insert transaction.
 		/// </summary>
 		protected bool bindingIsNew = true;
-				
+		
+		///<summary>
+		///  The actual DateTime of the entities creation date.
+		///</summary>
+		protected DateTime entityInstanceCreationDate = DateTime.UtcNow;
+		
+		///<summary>
+		///  Unique Guid for the entity.
+		///</summary>
+		protected System.Guid entityHashcodeIdentity = Guid.NewGuid();
+
+		///<summary>
+		///  The actual DateTime of the entities creation date.
+		///</summary>
+		private string entityHashCode;
+		
 		/// <summary>
 		///	The name of the underlying database table.
 		/// </summary>
-		public abstract string TableName { get;}
+		public abstract string EntityTableName { get;}
 		
 		/// <summary>
 		///		The name of the underlying database table's columns.
@@ -85,12 +102,12 @@ namespace <%=NameSpace%>
 		/// <summary>
 		/// 	True if object has been <see cref="MarkToDelete"/>. ReadOnly.
 		/// </summary>
-		[BrowsableAttribute(false), XmlIgnoreAttribute()]
+		[BrowsableAttribute(false)<%= (SerializeEntityState ? ", XmlIgnoreAttribute()" : "") %>]
 		public bool IsDeleted
 		{
 			get { return this.currentEntityState == EntityState.Deleted; }
 		}		
-		
+	
 		//private bool _isDirty = false;
 		/// <summary>
 		///		Indicates if the object has been modified from its original state.
@@ -263,6 +280,14 @@ namespace <%=NameSpace%>
 		[XmlIgnoreAttribute(), BrowsableAttribute(false)]
 		public abstract string EntityTrackingKey {	get; set; }
 		
+		///<summary>
+		/// Provides a unique HashCode throughout the lifetime of the entity.
+		///</summary>
+		public override int GetHashCode()
+		{
+			return entityHashCode.GetHashCode(); 
+		}
+		
 		#region INotifyPropertyChanged Members
 		
 		/// <summary>
@@ -405,6 +430,34 @@ namespace <%=NameSpace%>
 			}
 		}
 	
+		/// <summary>
+		/// Adds a rule to the list of validated rules.
+		/// </summary>
+		/// <param name="handler">The method that implements the rule.</param>
+		/// <param name="propertyName">
+		/// The name of the property on the target object where the rule implementation can retrieve
+		/// the value to be validated.
+		/// </param>
+		public void AddValidationRuleHandler(Validation.ValidationRuleHandler handler, String propertyName)
+		{
+		    ValidationRules.AddRule(handler, propertyName);
+		}
+
+		/// <summary>
+		/// Adds a rule to the list of validated rules.
+		/// </summary>
+		/// <remarks>
+		/// </remarks>
+		/// <param name="handler">The method that implements the rule.</param>
+		/// <param name="args">
+		/// A <see cref="Validation.ValidationRuleArgs"/> object specifying the property name and other arguments
+		/// passed to the rule method
+		/// </param>
+		public void AddValidationRuleHandler(Validation.ValidationRuleHandler handler, Validation.ValidationRuleArgs args)
+		{
+		    ValidationRules.AddRule(handler, args);
+		}
+
 		/// <summary>
 		/// Force this object to validate itself using the assigned business rules.
 		/// </summary>

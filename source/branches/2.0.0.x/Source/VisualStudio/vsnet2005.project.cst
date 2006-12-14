@@ -1,4 +1,4 @@
-<%@ CodeTemplate Src="../TemplateLib/CommonSqlCode.cs" Inherits="MoM.Templates.CommonSqlCode" Language="C#" TargetLanguage="Text" Description="Template description here." Debug="True"%>
+<%@ CodeTemplate Src="../TemplateLib/CommonSqlCode.cs" Inherits="MoM.Templates.CommonSqlCode" Language="C#" TargetLanguage="Xml" Description="Template description here." Debug="True"%>
 
 <%@ Property Name="SourceDatabase" Type="SchemaExplorer.DatabaseSchema" Optional="True" Category="Context" Description="Database that the stored procedures should be based on." %>
 <%@ Property Name="SourceTables" Type="SchemaExplorer.TableSchemaCollection" Category="Context" Description="Tables that the stored procedures should be based on." %>
@@ -9,6 +9,7 @@
 <%@ Property Name="BLLGuid" Type="System.String" Category="Style" Description="BLL Project Guid" %>
 <%@ Property Name="DALGuid" Type="System.String" Category="Style" Description="DAL Project Guid" %>
 <%@ Property Name="DALSqlGuid" Type="System.String" Category="Style" Description="DAL Project Guid" %>
+<%@ Property Name="DALGenericGuid" Type="System.String" Category="Style" Description="DAL Project Guid" %>
 <%@ Property Name="DALWSGuid" Type="System.String" Category="Style" Description="DAL Project Guid" %>
 <%@ Property Name="UTGuid" Type="System.String" Category="Context" Description="Unit tests Project Guid" %>
 <%@ Property Name="WSGuid" Type="System.String" Category="Context" Description="WebService Project Guid" %>
@@ -22,6 +23,7 @@
 <%@ Property Name="BLLNameSpace" Type="System.String" Category="Data" Description="Entities Namespace." %>
 <%@ Property Name="DALNameSpace" Type="System.String" Category="Data" Description="DAL Namespace." %>
 <%@ Property Name="DALSqlNameSpace" Type="System.String" Category="Data" Description="DAL sql Namespace." %>
+<%@ Property Name="DALGenericNameSpace" Type="System.String" Category="Data" Description="DAL sql Namespace." %>
 <%@ Property Name="DALWSNameSpace" Type="System.String" Category="Data" Description="DAL ws Namespace." %>
 <%@ Property Name="UTNameSpace" Type="System.String" Category="Data" Description="UT Namespace." %>
 <%@ Property Name="WSNameSpace" Type="System.String" Category="Data" Description="WebService Namespace." %>
@@ -32,8 +34,14 @@
 
 <%@ Property Name="IncludeBll" Type="System.Boolean" Category="Option" Description="" %>
 
+<%@ Property Name="NetTiersSqlProvider" Type="System.Boolean" Category="Data" Description="Indicates if we use the SqlClient Provider." %>
+<%@ Property Name="WinLibGuid" Type="System.String" Category="Context" Description="Win Library Project Guid" %>
+<%@ Property Name="WinLibNameSpace" Type="System.String" Category="Data" Description="Win Library Namespace." %>
+<%@ Property Name="IncludeWinLibrary" Type="System.Boolean" Category="Option" Description="" default="false" %>
+
 <%@ Property Name="IncludeDALBase" Type="System.Boolean" Category="Option" Description="" %>
 <%@ Property Name="IncludeSqlClient" Type="System.Boolean" Category="Option" Description="" %>
+<%@ Property Name="IncludeGenericClient" Type="System.Boolean" Category="Option" Description="" %>
 <%@ Property Name="IncludeWebLibrary" Type="System.Boolean" Category="Option" Description="" %>
 <%@ Property Name="IncludeWebsite" Type="System.Boolean" Category="Option" Description="" %>
 <%@ Property Name="IncludeWebservice" Type="System.Boolean" Category="Option" Description="" %>
@@ -78,6 +86,10 @@
 	{
 		fileName = DALSqlNameSpace; 
 	}
+	else if (IncludeGenericClient)
+	{
+		fileName = DALGenericNameSpace; 
+	} 
 	else if (IncludeUnitTest != MoM.Templates.UnitTestStyle.None)
 	{
 		fileName = UTNameSpace;
@@ -93,6 +105,10 @@
 	else if (IncludeWebLibrary)
 	{
 		fileName = WebLibNameSpace;
+	}
+	else if (IncludeWinLibrary)
+	{
+		fileName = WinLibNameSpace;
 	}
 	else if (IncludeWebsite)
 	{
@@ -110,10 +126,12 @@
 	string BLLSubFolder = string.Empty;
 	string DALSubFolder = string.Empty;
 	string SqlClientSubFolder = string.Empty;
+	string GenericClientSubFolder = string.Empty;
 	string WSClientSubFolder = string.Empty;
 	string ComponentsSubFolder = string.Empty;
 	string UTSubFolder = string.Empty;
 	string WebLibSubFolder = string.Empty;
+	string WinLibSubFolder = string.Empty;
 %>
 <Project DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <PropertyGroup>
@@ -121,15 +139,17 @@
     <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
     <ProductVersion>8.0.50727</ProductVersion>
     <SchemaVersion>2.0</SchemaVersion>
-    <ProjectGuid>{<% if (IncludeBll) Response.Write(BLLGuid); else if (IncludeComponents) Response.Write(ComponentsGuid); else if (IncludeDALBase) Response.Write(DALGuid); else if (IncludeSqlClient) Response.Write(DALSqlGuid); else if (IncludeUnitTest != MoM.Templates.UnitTestStyle.None) Response.Write(UTGuid); else if (IncludeWebservice) Response.Write(WSGuid);else if (IncludeWebserviceClient) Response.Write(DALWSGuid); else if (IncludeWebLibrary) Response.Write(WebLibGuid); else if (IncludeWebsite) Response.Write(WebsiteGuid);  %>}</ProjectGuid>
+    <ProjectGuid>{<% if (IncludeBll) Response.Write(BLLGuid); else if (IncludeComponents) Response.Write(ComponentsGuid); else if (IncludeDALBase) Response.Write(DALGuid); else if (IncludeSqlClient) Response.Write(DALSqlGuid); else if (IncludeGenericClient) Response.Write(DALGenericGuid); else if (IncludeUnitTest != MoM.Templates.UnitTestStyle.None) Response.Write(UTGuid); else if (IncludeWebservice) Response.Write(WSGuid);else if (IncludeWebserviceClient) Response.Write(DALWSGuid); else if (IncludeWebLibrary) Response.Write(WebLibGuid); else if (IncludeWinLibrary) Response.Write(WinLibGuid); else if (IncludeWebsite) Response.Write(WebsiteGuid);  %>}</ProjectGuid>
 	<% if ( IncludeWebsite ) { %>
     <ProjectTypeGuids>{349c5851-65df-11da-9384-00065b846f21};{fae04ec0-301f-11d3-bf4b-00c04f79efbc}</ProjectTypeGuids>
 	<% } else { %>
     <ProjectType><%if (IncludeWebservice) Response.Write("Web"); else Response.Write("Local"); %></ProjectType>
 	<% } %>
     <OutputType>Library</OutputType>
-    <ApplicationIcon></ApplicationIcon>
-    <AssemblyKeyContainerName></AssemblyKeyContainerName>
+    <ApplicationIcon>
+	</ApplicationIcon>
+    <AssemblyKeyContainerName>
+	</AssemblyKeyContainerName>
     <AssemblyName><%=fileName%></AssemblyName>
     <AssemblyOriginatorKeyFile>..\<%=NameSpace%>.snk</AssemblyOriginatorKeyFile>
 	<SignAssembly><%=SignAssembly.ToString().ToLower()%></SignAssembly>
@@ -226,6 +246,11 @@
     <Reference Include="EnvDTE, Version=8.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a" />
     <Reference Include="EnvDTE80, Version=8.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a" />
 	<% } %>
+	<%
+	if (IncludeWinLibrary) {
+	%>
+	<Reference Include="System.Windows.Forms" />
+	<% } %>
     <% 
 	if (IncludeBll || IncludeComponents || IncludeWebsite)
 	{
@@ -273,7 +298,7 @@
 	</Reference>
 	<%}%>
 	<%	}  // END If IncludeBLL || IncludeComponents 
-	else if (IncludeDALBase || IncludeSqlClient || IncludeWebserviceClient) {%>    
+	else if (IncludeDALBase || IncludeSqlClient || IncludeGenericClient || IncludeWebserviceClient) {%>    
     <Reference Include="Microsoft.Practices.EnterpriseLibrary.Common">
       <SpecificVersion>False</SpecificVersion>
       <HintPath>..\References\Microsoft.Practices.EnterpriseLibrary.Common.dll</HintPath>
@@ -312,7 +337,7 @@
     </ProjectReference>
 	<%}%>
 	
-	<% if (IncludeSqlClient || IncludeWebserviceClient || IncludeWebLibrary) { %>
+	<% if (IncludeSqlClient || IncludeGenericClient || IncludeWebserviceClient || IncludeWebLibrary) { %>
     <ProjectReference Include="..\<%=DALNameSpace%>\<%=DALNameSpace%>.csproj">
         <Name><%=DALNameSpace%></Name>
         <Project>{<%=DALGuid%>}</Project>
@@ -369,12 +394,19 @@
         <Project>{<%=DALGuid%>}</Project>
         <Package>{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}"</Package>
     </ProjectReference>
+    <% if (NetTiersSqlProvider) { %>
 	<ProjectReference Include="..\<%=DALNameSpace + ".SqlClient" %>\<%=DALNameSpace + ".SqlClient" %>.csproj">
         <Name><%=DALNameSpace + ".SqlClient" %></Name>
         <Project>{<%=DALSqlGuid%>}</Project>
         <Package>{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}</Package>
     </ProjectReference>
-
+	<% } else { %>
+		<ProjectReference Include="..\<%=DALNameSpace + ".GenericClient" %>\<%=DALNameSpace + ".GenericClient" %>.csproj">
+        <Name><%=DALNameSpace + ".GenericClient" %></Name>
+        <Project>{<%=DALGenericGuid%>}</Project>
+        <Package>{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}</Package>
+    </ProjectReference>
+	<% } %>
 	<% if ( ComponentPattern != MoM.Templates.ComponentPatternType.None ) { %>
 	<ProjectReference Include="..\<%=ComponentLayerNameSpace%>\<%=ComponentLayerNameSpace%>.csproj">
         <Name><%=ComponentLayerNameSpace%></Name>
@@ -546,11 +578,23 @@
 		  <DependentUpon><%=GetServiceClassName(SourceTables[i].Name)%>.cs</DependentUpon>
 		  <SubType>Code</SubType>
 		</Compile>	
-		<%
-		}
-		
-		if (IncludeDALBase)
-		{%>
+		<% } else if (IncludeWinLibrary) { %>
+		<Compile Include="UI\<%=GetClassName(SourceTables[i].Name)%>DataGridView.cs">
+		  <SubType>designer</SubType>
+		</Compile>
+		<Compile Include="UI\<%=GetClassName(SourceTables[i].Name)%>DataGridViewBase.cs">
+		   <DependentUpon><%=GetClassName(SourceTables[i].Name)%>DataGridView.cs</DependentUpon>
+		  <SubType>Code</SubType>
+		</Compile>		
+		<Compile Include="UI\<%=GetClassName(SourceTables[i].Name)%>EditControl.cs">
+		  <SubType>designer</SubType>
+		</Compile>
+		<Compile Include="UI\<%=GetClassName(SourceTables[i].Name)%>EditControlBase.cs">
+		   <DependentUpon><%=GetClassName(SourceTables[i].Name)%>EditControl.cs</DependentUpon>
+		  <SubType>Code</SubType>
+		</Compile>
+		<% } 
+		if (IncludeDALBase) {%>
 			<Compile Include="<%=DALSubFolder%>Bases\<%=GetProviderBaseName(SourceTables[i].Name)%>.cs">
 			  <SubType>Code</SubType>
 			</Compile>
@@ -571,8 +615,20 @@
 			  <DependentUpon>Sql<%=GetProviderName(SourceTables[i].Name)%>.cs</DependentUpon>
 			  <SubType>Code</SubType>
 			</Compile>
+		<%}
 					
-		<%} // endif includeSqlClient
+		if (IncludeGenericClient)
+		{%>
+		
+			<Compile Include="<%=GenericClientSubFolder%>Generic<%=GetProviderName(SourceTables[i].Name)%>.cs">
+			  <SubType>Code</SubType>
+			</Compile>
+			
+			<Compile Include="<%=GenericClientSubFolder%>Generic<%=GetPartialClassName(GetProviderBaseName(SourceTables[i].Name))%>.cs">
+			  <DependentUpon>Generic<%=GetProviderName(SourceTables[i].Name)%>.cs</DependentUpon>
+			  <SubType>Code</SubType>
+			</Compile>					
+		<%}
 		
 		if ((IncludeUnitTest != MoM.Templates.UnitTestStyle.None) && !IsJunctionTable(SourceTables[i])) { %>
 			<Compile Include="<%=UTSubFolder%><%=GetRepositoryTestClassName(SourceTables[i].Name)%>.cs">
@@ -869,6 +925,20 @@
 			</Compile>			
 		<%}%>
 		
+		<% if (IncludeGenericClient) {%>
+			<Compile Include="<%=GenericClientSubFolder%>GenericNetTiersProvider.cs">
+			  <SubType>Code</SubType>
+			</Compile>
+			
+			<Compile Include="<%=GenericClientSubFolder%>DbCommandManager.cs">
+			  <SubType>Code</SubType>
+			</Compile>
+			
+			<EmbeddedResource Include="<%=GenericClientSubFolder%>System.Data.SQLite.Procedures.xml">
+		      <SubType>EmbeddedResource</SubType>
+		    </EmbeddedResource>
+		<%}%>
+		
 		<% if (IncludeWebLibrary) { %>
 			<Compile Include="<%=WebLibSubFolder%>Data\BaseDataSource.cs">
 			  <SubType>Code</SubType>
@@ -937,9 +1007,15 @@
 			<Compile Include="<%= WebLibSubFolder %>DataSourceControls\<%= GetClassName(table.Name) %>DataSource.cs">
 			  <SubType>Code</SubType>
 			</Compile>
+			<Compile Include="<%= WebLibSubFolder %>UI\RepeaterControls\<%= GetClassName(table.Name) %>Repeater.cs">
+			  <SubType>Code</SubType>
+			</Compile>
 			<% } %>
 			<% foreach ( ViewSchema view in SourceViews ) { %>
 			<Compile Include="<%= WebLibSubFolder %>DataSourceControls\Views\<%= GetClassName(view.Name) %>DataSource.cs">
+			  <SubType>Code</SubType>
+			</Compile>
+			<Compile Include="<%= WebLibSubFolder %>UI\RepeaterControls\Views\<%= GetClassName(view.Name) %>Repeater.cs">
 			  <SubType>Code</SubType>
 			</Compile>
 			<% } %>
@@ -962,6 +1038,12 @@
 			<Compile Include="<%=WebLibSubFolder%>UI\GridViewSearchPanel.cs">
 			  <SubType>Code</SubType>
 			</Compile>			
+		<% } %>
+		
+		<% if (IncludeWinLibrary) { %>
+			<!--<Compile Include="Data\BindingSources.cs">
+			  <SubType>Code</SubType>
+			</Compile>-->
 		<% } %>
 		
 		<%  if (IncludeWebservice) {%>
