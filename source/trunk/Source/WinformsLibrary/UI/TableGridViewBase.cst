@@ -20,18 +20,38 @@
 
 namespace <%=WinLibNameSpace%>
 {
+	/// <summary>
+	/// abstract <%=name%> typed datagridview
+	/// </summary>
 	[System.ComponentModel.DesignerCategoryAttribute("code")]
-	//[System.ComponentModel.ToolboxItem(false)]
 	public abstract class <%=dgvName%>Base : System.Windows.Forms.UserControl
 	{	
+		/// <summary> 
+		/// Thrown when the current Entity changed.
+		/// </summary>
 		public event System.EventHandler<<%=name%>DataGridViewEventArgs> CurrentEntityChanged;
 		
 		#region Fields
 				
-		protected <%=entityName%> _current<%=name%> = null;
+		/// <summary> 
+		/// the current entity.
+		/// </summary>
+		private <%=entityName%> _current<%=name%> = null;
 		//private Dictionary<string, string> _columnsHeaders = new Dictionary<string, string>();
+		
+		/// <summary> 
+		/// the datagridview instance
+		/// </summary>
 		protected System.Windows.Forms.DataGridView ux<%=name%>DataGridView;
+		
+		/// <summary> 
+		/// the errorprovider
+		/// </summary>
 		protected System.Windows.Forms.ErrorProvider ux<%=GetClassName(SourceTable)%>ErrorProvider;
+		
+		/// <summary> 
+		/// the bindingsource
+		/// </summary>
 		protected System.Windows.Forms.BindingSource ux<%=GetClassName(SourceTable)%>BindingSource;
 		
 		<% for (int i=0; i<SourceTable.Columns.Count; i++)
@@ -40,10 +60,21 @@ namespace <%=WinLibNameSpace%>
 			string dgvColumnName = "ux" + GetPropertyName(column) + "DataGridViewColumn";
 			if (SourceTable.ForeignKeyColumns.Contains(column))
 			{%>
+		/// <summary> 
+		/// the DGV column associated with the <%=GetPropertyName(column)%> property
+		/// </summary>
 		protected System.Windows.Forms.DataGridViewComboBoxColumn <%=dgvColumnName%>;
 			<% } else if (column.SystemType == typeof(System.Boolean)){ %>
+		
+		/// <summary> 
+		/// the DGV column associated with the <%=GetPropertyName(column)%> property
+		/// </summary>
 		protected System.Windows.Forms.DataGridViewCheckBoxColumn <%=dgvColumnName%>;
 			<% } else { %>
+		
+		/// <summary> 
+		/// the DGV column associated with the <%=GetPropertyName(column)%> property
+		/// </summary>
 		protected System.Windows.Forms.DataGridViewTextBoxColumn <%=dgvColumnName%>;
 			<% } %>
 		<% } %>
@@ -55,8 +86,11 @@ namespace <%=WinLibNameSpace%>
 		<% for (int i=0; i<SourceTable.ForeignKeys.Count; i++) { %>
 		<% if (SourceTable.ForeignKeys[i].ForeignKeyMemberColumns.Count == 1) { %>
 				
-		protected <%=BusinessLogicLayerNameSpace%>.TList<<%=BusinessLogicLayerNameSpace%>.<%=GetClassName(SourceTable.ForeignKeys[i].PrimaryKeyTable)%>> _<%=GetPropertyName(SourceTable.ForeignKeys[i].ForeignKeyMemberColumns[0])%>List;
+		private <%=BusinessLogicLayerNameSpace%>.TList<<%=BusinessLogicLayerNameSpace%>.<%=GetClassName(SourceTable.ForeignKeys[i].PrimaryKeyTable)%>> _<%=GetPropertyName(SourceTable.ForeignKeys[i].ForeignKeyMemberColumns[0])%>List;
 		
+		/// <summary> 
+		/// The list of selectable <%=GetClassName(SourceTable.ForeignKeys[i].PrimaryKeyTable)%>
+		/// </summary>
 		[System.ComponentModel.Category("DropDownList BindingSources")]
 		public <%=BusinessLogicLayerNameSpace%>.TList<<%=BusinessLogicLayerNameSpace%>.<%=GetClassName(SourceTable.ForeignKeys[i].PrimaryKeyTable)%>> <%=GetPropertyName(SourceTable.ForeignKeys[i].ForeignKeyMemberColumns[0])%>List
 		{
@@ -69,7 +103,11 @@ namespace <%=WinLibNameSpace%>
 			}
 		}
 		
-		protected bool _allowNewItemIn<%=GetPropertyName(SourceTable.ForeignKeys[i].ForeignKeyMemberColumns[0])%>List;
+		private bool _allowNewItemIn<%=GetPropertyName(SourceTable.ForeignKeys[i].ForeignKeyMemberColumns[0])%>List;
+		
+		/// <summary> 
+		/// Indicates if user can add an item in the list of <%=GetClassName(SourceTable.ForeignKeys[i].PrimaryKeyTable)%>
+		/// </summary>
 		[System.ComponentModel.Category(".netTiers"), System.ComponentModel.Description("Indicates if end user can add a new item in the combobox. an event will be thrown then.")]
 		public bool AllowNewItemIn<%=GetPropertyName(SourceTable.ForeignKeys[i].ForeignKeyMemberColumns[0])%>List
 		{
@@ -87,8 +125,11 @@ namespace <%=WinLibNameSpace%>
 		
 		#region Main Datasource
 		
-		protected <%=BusinessLogicLayerNameSpace%>.TList<<%=BusinessLogicLayerNameSpace%>.<%=GetClassName(SourceTable)%>> _<%=GetClassName(SourceTable)%>List;
-		
+		private <%=BusinessLogicLayerNameSpace%>.TList<<%=BusinessLogicLayerNameSpace%>.<%=GetClassName(SourceTable)%>> _<%=GetClassName(SourceTable)%>List;
+				
+		/// <summary> 
+		/// The list of <%=GetClassName(SourceTable)%> to be displayed in the DGV.
+		/// </summary>
 		[System.ComponentModel.Category("Data")]
 		public <%=BusinessLogicLayerNameSpace%>.TList<<%=BusinessLogicLayerNameSpace%>.<%=GetClassName(SourceTable)%>> <%=GetClassName(SourceTable)%>List
 		{
@@ -105,7 +146,7 @@ namespace <%=WinLibNameSpace%>
 			}
 		}
 		
-		void On<%=name%>BindingSourceCurrentItemChanged(object sender, System.EventArgs e)
+		private void On<%=name%>BindingSourceCurrentItemChanged(object sender, System.EventArgs e)
 		{
 			_current<%=name%> = ux<%=name%>BindingSource.Current as <%=entityName%>;
 			
@@ -168,7 +209,7 @@ namespace <%=WinLibNameSpace%>
 		}
 		
 		/// <summary>
-		/// Gets the <c cref"DataGridView"/> instance.
+		/// Gets the <c cref="DataGridView"/> instance.
 		/// </summary>
 		[System.ComponentModel.Category(".netTiers")]
 		public System.Windows.Forms.DataGridView DataGridView
@@ -306,7 +347,7 @@ namespace <%=WinLibNameSpace%>
 				
 		<%  } %>
 			
-			/// ux
+			// this
 			this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
 			this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
 			this.Controls.Add(this.ux<%=name%>DataGridView);
@@ -326,6 +367,9 @@ namespace <%=WinLibNameSpace%>
 				
 		#region events
 		
+		/// <summary>
+		/// Raised the CurrentEntityChanged event.
+		/// </summary>
 		protected void OnCurrentEntityChanged()
 		{
 			if (CurrentEntityChanged != null)
@@ -339,12 +383,15 @@ namespace <%=WinLibNameSpace%>
 		#endregion
 		
 		/// <summary>
-		/// Strongly typed event for the 
+		/// Strongly typed event 
 		/// </summary>
 		public class <%=name%>DataGridViewEventArgs : System.EventArgs
 		{
 			private <%=entityName%>	_<%=name%>;
 	
+			/// <summary>
+			/// the  <%=entityName%> instance.
+			/// </summary>
 			public <%=entityName%> <%=name%>
 			{
 				get { return _<%=name%>; }
