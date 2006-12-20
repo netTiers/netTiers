@@ -839,6 +839,15 @@ namespace <%=DALNameSpace%>.Bases
 					entity.<%=compositePropertyName%> = tmpEntity;
 				else
 					entity.<%=compositePropertyName%> = DataRepository.<%= GetProviderName(pkClassName) %>.GetBy<%= pkProperty %>(transactionManager, <%= callParams %>);		
+				
+				
+				if (deep && entity.<%=compositePropertyName%> != null)
+				{
+					innerList.SkipChildren = true;
+					DataRepository.<%=GetProviderClassName(pkClassName)%>.DeepLoad(transactionManager, entity.<%=compositePropertyName%>, deep, deepLoadType, childTypes, innerList);
+					innerList.SkipChildren = false;
+				}
+					
 			}
 			#endregion <%=compositePropertyName%>
 				<%	} //end if in SourceTables
@@ -854,7 +863,7 @@ namespace <%=DALNameSpace%>.Bases
 		 %>
 			
 			//used to hold DeepLoad method delegates and fire after all the local children have been loaded.
-			Dictionary<Delegate, object> deepHandles = new Dictionary<Delegate, object>();
+			Dictionary<string, KeyValuePair<Delegate, object>> deepHandles = new Dictionary<string, KeyValuePair<Delegate, object>>();
 			<% 
 			int ctr = 0;
 			
@@ -873,10 +882,18 @@ namespace <%=DALNameSpace%>.Bases
 			if (CanDeepLoad(entity, "List<<%=GetClassName(item.SecondaryTable).Trim()%>>|<%= item.PropertyNameUnique %>", deepLoadType, innerList))
 			{
 				entity.<%=item.PropertyNameUnique %> = DataRepository.<%=GetProviderClassName(item.SecondaryTable)%>.GetBy<%=item.GetByKeysName%>(transactionManager, <%=item.CallParams%>);			 
-		
+
 				#if NETTIERS_DEBUG
 				Debug.WriteLine("- property '<%=item.PropertyNameUnique%>' loaded. key " + entity.EntityTrackingKey);
 				#endif 
+				
+				if (deep && entity.<%=item.PropertyNameUnique%> != null)
+				{
+					deepHandles.Add("<%=item.PropertyNameUnique%>",
+						new KeyValuePair<Delegate, object>((DeepLoadHandle< <%= GetClassName(item.SecondaryTable).Trim() %> >) DataRepository.<%=GetProviderClassName(item.SecondaryTable)%>.<%= MethodNames.DeepLoad %>,
+						new object[] { transactionManager, entity.<%=item.PropertyNameUnique %>, deep, deepLoadType, childTypes, innerList }
+					));
+				}
 			}
 			#endregion
 			
@@ -893,10 +910,10 @@ namespace <%=DALNameSpace%>.Bases
 
 				if (deep && entity.<%=item.PropertyNameUnique%> != null)
 				{
-					deepHandles.Add(
-						(DeepLoadSingleHandle< <%= GetClassName(item.SecondaryTable).Trim() %> >) DataRepository.<%=GetProviderClassName(item.SecondaryTable)%>.<%= MethodNames.DeepLoad %>,
+					deepHandles.Add("<%=item.PropertyNameUnique%>",
+						new KeyValuePair<Delegate, object>((DeepLoadSingleHandle< <%= GetClassName(item.SecondaryTable).Trim() %> >) DataRepository.<%=GetProviderClassName(item.SecondaryTable)%>.<%= MethodNames.DeepLoad %>,
 						new object[] { transactionManager, entity.<%=item.PropertyNameUnique %>, deep, deepLoadType, childTypes, innerList }
-					);
+					));
 				}
 			}
 			#endregion 
@@ -906,7 +923,7 @@ namespace <%=DALNameSpace%>.Bases
 			
 			#region <%=item.PropertyNameUnique%>
 			//Relationship Type One : Many
-			if (CanDeepLoad(entity, "<%= listTypeName.Trim() %>|<%=item.CollectionName%>", deepLoadType, innerList)) 
+			if (CanDeepLoad(entity, "<%= listTypeName.Trim() %>|<%=item.PropertyNameUnique%>", deepLoadType, innerList)) 
 			{
 				#if NETTIERS_DEBUG
 				Debug.WriteLine("- property '<%=item.PropertyNameUnique%>' loaded. key " + entity.EntityTrackingKey);
@@ -916,10 +933,10 @@ namespace <%=DALNameSpace%>.Bases
 
 				if (deep && entity.<%=item.PropertyNameUnique%>.Count > 0)
 				{
-					deepHandles.Add(
-						(DeepLoadHandle< <%= GetClassName(item.SecondaryTable).Trim() %> >) DataRepository.<%=GetProviderClassName(item.SecondaryTable)%>.<%= MethodNames.DeepLoad %>,
+					deepHandles.Add("<%=item.PropertyNameUnique%>",
+						new KeyValuePair<Delegate, object>((DeepLoadHandle< <%= GetClassName(item.SecondaryTable).Trim() %> >) DataRepository.<%=GetProviderClassName(item.SecondaryTable)%>.<%= MethodNames.DeepLoad %>,
 						new object[] { transactionManager, entity.<%=item.PropertyNameUnique %>, deep, deepLoadType, childTypes, innerList }
-					);
+					));
 				}
 			}		
 			#endregion 
@@ -928,7 +945,7 @@ namespace <%=DALNameSpace%>.Bases
 		    <% }//end foreach CollectionInfo%>
 			
 			//Fire all DeepLoad Items
-			foreach(KeyValuePair<Delegate, object> pair in deepHandles)
+			foreach(KeyValuePair<Delegate, object> pair in deepHandles.Values)
 		    {
                 pair.Key.DynamicInvoke((object[])pair.Value);
 		    }
