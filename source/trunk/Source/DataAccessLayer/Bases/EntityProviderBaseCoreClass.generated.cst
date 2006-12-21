@@ -1250,49 +1250,67 @@ namespace <%= DALNameSpace %>.Bases
 			{
                 if ( deepLoadType == DeepLoadType.ExcludeChildren )
 				{
-                    if (!innerList.ContainsType(key) && !innerList.HasRun(entity, key))
-					{
-						//add to list prior to firing event
-                        innerList.AddRun(entity, key);
-						
-						//call deep loading event
-						DeepSessionEventArgs args = GetDeepSessionArgs(innerList, deepLoadType, entity, key);
-						OnDeepLoading( args );
-						
-						if ( args.Skip )
-							return false;
-						
-						if ( args.Cancel )
-						{
-							innerList.CancelSession = true;
-							return false;
-						}
-						
-                        return true;
-					}
+                    if (!innerList.ContainsTypeExcluded(key))
+                    {
+                        if (!innerList.HasRun(entity, key))
+                        {
+                            //add to list prior to firing event
+                            innerList.AddRun(entity, key);
+
+                            //call deep loading event
+                            DeepSessionEventArgs args = GetDeepSessionArgs(innerList, deepLoadType, entity, key);
+                            OnDeepLoading(args);
+
+                            if (args.Skip)
+                                return false;
+
+                            if (args.Cancel)
+                            {
+                                innerList.CancelSession = true;
+                                return false;
+                            }
+
+                            return true;
+                        }
+                        else
+                        {
+                            object refEntity = innerList.GetReference(entity, key);
+ 							if (refEntity != null && refEntity != entity)
+								EntityUtil.SetPropertyValue(entity, key.Split('|')[1], EntityUtil.GetPropertyValue(refEntity, key.Split('|')[1]));
+                        }
+                    }
 				}
 				else if ( deepLoadType == DeepLoadType.IncludeChildren )
 				{
-					if ( innerList.ContainsType(key) && !innerList.HasRun(entity, key) )
-					{
-						//add to list prior to firing event
-						innerList.AddRun(entity, key);
-						
-						//call deep loading event
-						DeepSessionEventArgs args = GetDeepSessionArgs(innerList, deepLoadType, entity, key);
-						OnDeepLoading( args );
-						
-						if ( args.Skip )
-							return false;
-						
-						if ( args.Cancel )
-						{
-							innerList.CancelSession = true;
-							return false;
-						}
-						
-						return true;
-					}
+                    if (innerList.ContainsType(key))
+                    {
+                        if (!innerList.HasRun(entity, key))
+                        {
+                            //add to list prior to firing event
+                            innerList.AddRun(entity, key);
+
+                            //call deep loading event
+                            DeepSessionEventArgs args = GetDeepSessionArgs(innerList, deepLoadType, entity, key);
+                            OnDeepLoading(args);
+
+                            if (args.Skip)
+                                return false;
+
+                            if (args.Cancel)
+                            {
+                                innerList.CancelSession = true;
+                                return false;
+                            }
+
+                            return true;
+                        }
+                        else
+                        {
+                            object refEntity = innerList.GetReference(entity, key);
+							if (refEntity != null && refEntity != entity)
+                            	EntityUtil.SetPropertyValue(entity, key.Split('|')[1], EntityUtil.GetPropertyValue(refEntity, key.Split('|')[1]));
+                        }
+                    }
 				}
 			}
 		
@@ -1758,6 +1776,7 @@ namespace <%= DALNameSpace %>.Bases
     {
         private WeakRefDictionary<string, object> deepSessionInnerList;
 		private bool cancelSession;
+		private bool skipChildren;
 		
         /// <summary>
         /// Initializes a new instance of the <see cref="T:DeepSession"/> class.
@@ -1810,6 +1829,31 @@ namespace <%= DALNameSpace %>.Bases
                 throw new ArgumentException("key"); 
 
             string lkey = key.Split('|')[0];
+		   if (SkipChildren && lkey.StartsWith("List<"))
+				return false;
+           
+		   return this.Exists(delegate(string s)
+           {
+                return s.Split('|')[0] == lkey;
+           });
+        }
+	    
+		/// <summary>
+        /// Determines whether the specified obj has run for a specified property type.
+        /// </summary>
+        /// <param name="key">The key.</param>
+        /// <returns>
+        /// 	<c>true</c> if the specified obj has run; otherwise, <c>false</c>.
+        /// </returns>
+        public bool ContainsTypeExcluded(string key)
+        {
+            if (string.IsNullOrEmpty(key))
+                throw new ArgumentException("key"); 
+
+           string lkey = key.Split('|')[0];
+		   if (SkipChildren && lkey.StartsWith("List<"))
+				return true;
+           
            return this.Exists(delegate(string s)
            {
                 return s.Split('|')[0] == lkey;
@@ -1841,6 +1885,32 @@ namespace <%= DALNameSpace %>.Bases
 			    
 			return false;
 		}
+		
+		/// <summary>
+        /// Get's the reference of the object that has run
+        /// </summary>
+        /// <param name="entity">The entity.</param>
+        /// <param name="key">The key.</param>
+        /// <returns>
+        /// 	object of the run reference
+        /// </returns>
+        public object GetReference(object entity, string key)
+        {
+            if (entity == null) return false;
+
+            string lkey = entity.GetHashCode().ToString() + key;
+            if (DeepSessionInnerList.ContainsKey(lkey))
+            {
+                object locateEntity = null;
+                if (DeepSessionInnerList.TryGet(lkey, out locateEntity))
+                {
+                    if (locateEntity != null && entity.Equals(locateEntity))
+                        return locateEntity;
+                }
+            }
+
+            return null;
+        }
 
         /// <summary>
         /// Gets the Deep Session nner list.
@@ -1868,6 +1938,15 @@ namespace <%= DALNameSpace %>.Bases
 		}
 
 	    ///<summary>
+        ///If set to true, any further requests for this deep session requesting to Load a child collection will be skipped.
+        ///</summary>
+        internal bool SkipChildren
+        {
+            get { return skipChildren; }
+            set { skipChildren = value; }
+        }
+		
+	    ///<summary>
 	    ///Performs application-defined tasks associated with freeing, releasing, or resetting unmanaged resources.
 	    ///</summary>
 	    ///<filterpriority>2</filterpriority>
@@ -1894,14 +1973,31 @@ namespace <%= DALNameSpace %>.Bases
             DeepSession list) 
         where Entity : IEntity, new();
 
-    internal delegate void DeepLoadHandle<Entity>(
-        TransactionManager transactionManager,
-        TList<Entity> entityList,
-        bool goDeep,
-        DeepLoadType deepLoadType,
-        Type[] childTypes,
-        DeepSession list)
-    where Entity : IEntity, new();
+	    internal delegate bool DeepSaveSingleHandle<Entity>(
+            TransactionManager transactionManager,  
+            Entity entity, 
+            DeepSaveType saveType, 
+            Type[] childTypes, 
+            DeepSession list) 
+        where Entity : IEntity, new();
+		
+    	internal delegate void DeepLoadHandle<Entity>(
+			TransactionManager transactionManager,
+			TList<Entity> entityList,
+			bool goDeep,
+			DeepLoadType deepLoadType,
+			Type[] childTypes,
+			DeepSession list)
+		where Entity : IEntity, new();
+		
+		internal delegate void DeepLoadSingleHandle<Entity>(
+			TransactionManager transactionManager,
+			Entity entity,
+			bool goDeep,
+			DeepLoadType deepLoadType,
+			Type[] childTypes,
+			DeepSession list)
+		where Entity : IEntity, new();
 	#endregion 
 
 	#region ChildEntityTypeAttribute

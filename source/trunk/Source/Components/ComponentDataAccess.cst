@@ -21,6 +21,7 @@
 <%@ Property Name="UsePartialClass" Type="System.Boolean" Default="true" Category="General" Description="Indicates if partial class should be generated." %>
 <%@ Property Name="RenderOverload" Type="System.Boolean" Default="False" Category="Options" Description="If true the overloaded methods will be generated." %>
 <%@ Property Name="RenderImplementation" Type="System.Boolean" Default="False" Category="Options" Description="If true the implementation methods will be generated." %>
+
 <%
 
 	#region Template Logic
@@ -166,7 +167,7 @@
 		///		<%=fkeys[j].Name%> Description: <%=fkeys[j].Description%>
 		/// </summary>
 		<% for (int i = 0; i < fkeys[j].ForeignKeyMemberColumns.Count; i++) { %>
-		/// <param name="<%= GetPrivateName(fkeys[j].ForeignKeyMemberColumns[i].Name)%>"><%=fkeys[j].ForeignKeyMemberColumns[i].Description%></param>
+		/// <param name="<%= GetPrivateName(fkeys[j].ForeignKeyMemberColumns[i])%>"><%=fkeys[j].ForeignKeyMemberColumns[i].Description%></param>
 		<% } %>
 		/// <returns>Returns a generic collection of <%=className%> objects.</returns>
 		[DataObjectMethod(DataObjectMethodType.Select)]
@@ -181,7 +182,7 @@
 		///		<%=fkeys[j].Name%> Description: <%=fkeys[j].Description%>
 		/// </summary>
 		<% for (int i = 0; i < fkeys[j].ForeignKeyMemberColumns.Count; i++) { %>
-		/// <param name="<%= GetPrivateName(fkeys[j].ForeignKeyMemberColumns[i].Name)%>"><%=fkeys[j].ForeignKeyMemberColumns[i].Description%></param>
+		/// <param name="<%= GetPrivateName(fkeys[j].ForeignKeyMemberColumns[i])%>"><%=fkeys[j].ForeignKeyMemberColumns[i].Description%></param>
 		<% } %>
 		/// <param name="start">Row number at which to start reading.</param>
 		/// <param name="pageLength">Page length of records you would like to retrieve</param>
@@ -292,7 +293,7 @@
 		///  method that Gets rows in a <see cref="<%=collectionClassNameComment %>" /> from the datasource based on the primary key <%=indexes[j].Name%> index.
 		/// </summary>
 		<% for (int i = 0; i < indexes[j].MemberColumns.Count; i++) { %>
-		/// <param name="<%= GetPrivateName(indexes[j].MemberColumns[i].Name)%>"><%= indexes[j].MemberColumns[i].Description%></param>
+		/// <param name="<%= GetPrivateName(indexes[j].MemberColumns[i])%>"><%= indexes[j].MemberColumns[i].Description%></param>
 		<% } %>
 		/// <returns>Returns an instance of the <see cref="<%= returnTypeForComment %>"/> class.</returns>
 		[DataObjectMethod(DataObjectMethodType.Select)]
@@ -306,7 +307,7 @@
 		///  Method that Gets rows in a <see cref="<%=collectionClassNameComment %>" /> from the datasource based on the primary key <%=indexes[j].Name%> index.
 		/// </summary>
 		<% for (int i = 0; i < indexes[j].MemberColumns.Count; i++) { %>
-		/// <param name="<%= GetPrivateName(indexes[j].MemberColumns[i].Name)%>"><%= indexes[j].MemberColumns[i].Description%></param>
+		/// <param name="<%= GetPrivateName(indexes[j].MemberColumns[i])%>"><%= indexes[j].MemberColumns[i].Description%></param>
 		<% } %>
 		/// <param name="start">Row number at which to start reading.</param>
 		/// <param name="pageLength">Page length of records you would like to retrieve</param>
@@ -835,7 +836,7 @@
 		/// <returns>Returns true if operation suceeded.</returns>
 		public bool <%= MethodNames.Delete %>(<%= keyClassName %> key)
 		{
-			return <%= MethodNames.Delete %>(<%= GetFunctionObjectParameters(keys, "key") %> <% if(RowVersion != null) {Response.Write(String.Format(", ((key.Entity != null) ? key.Entity.{0} : new byte[0])", GetPropertyName(RowVersion.Name)));}%>);
+			return <%= MethodNames.Delete %>(<%= GetFunctionObjectParameters(keys, "key") %> <% if(RowVersion != null) {Response.Write(String.Format(", ((key.Entity != null) ? key.Entity.{0} : new byte[0])", GetPropertyName(RowVersion)));}%>);
 		}
 		<% } %>
 		
@@ -846,12 +847,12 @@
 		/// <param name="<%= item.Trim() %>"><%=className%> pk id.</param>
 		<% } %>
 		<% if (RowVersion != null){ %>
-		/// <param name="<%=GetPrivateName(RowVersion.Name)%>">The timestamp field used for concurrency check.</param>
+		/// <param name="<%=GetPrivateName(RowVersion)%>">The timestamp field used for concurrency check.</param>
 		<% }  %>
 		/// <remarks>Deletes based on primary key(s).</remarks>
 		/// <returns>Returns true if operation suceeded.</returns>
 		[DataObjectMethod(DataObjectMethodType.Delete)]
-		<%= constructorAccessModifierOnMembers %> bool <%=partialClassInternalPrefix%><%= MethodNames.Delete %>(<%= GetFunctionHeaderParameters(keys) %><% if(RowVersion != null) {Response.Write(", byte[] " + GetPrivateName(RowVersion.Name));}%>)
+		<%= constructorAccessModifierOnMembers %> bool <%=partialClassInternalPrefix%><%= MethodNames.Delete %>(<%= GetFunctionHeaderParameters(keys) %><% if(RowVersion != null) {Response.Write(", byte[] " + GetPrivateName(RowVersion));}%>)
 		{
 			// throws security exception if not authorized
 			SecurityContext.IsAuthorized("<%= MethodNames.Delete %>");
@@ -867,7 +868,7 @@
 				NetTiersProvider dataProvider = ConnectionScope.Current.DataProvider;
                 
 				//Delete
-				result = dataProvider.<%= GetProviderName(className) %>.<%= MethodNames.Delete %>(transactionManager, <%= GetFunctionCallParameters(keys) %><% if(RowVersion != null) {Response.Write(", " + GetPrivateName(RowVersion.Name));}%>);
+				result = dataProvider.<%= GetProviderName(className) %>.<%= MethodNames.Delete %>(transactionManager, <%= GetFunctionCallParameters(keys) %><% if(RowVersion != null) {Response.Write(", " + GetPrivateName(RowVersion));}%>);
 	        
 				//If success, Commit
 				if(!isBorrowedTransaction && transactionManager != null && transactionManager.IsOpen)
@@ -918,7 +919,7 @@
 		///		through the (M:N) relationship defined in the <%=junctionTable.Name%> table.
 		/// </summary>
 		<% for (int i = 0; i < junctionTableKey.ForeignKeyMemberColumns.Count; i++) { %>
-		/// <param name="<%= GetPrivateName(junctionTableKey.ForeignKeyMemberColumns[i].Name)%>"><%=junctionTableKey.ForeignKeyMemberColumns[i].Description%></param>
+		/// <param name="<%= GetPrivateName(junctionTableKey.ForeignKeyMemberColumns[i])%>"><%=junctionTableKey.ForeignKeyMemberColumns[i].Description%></param>
 		<% } %>	
 		/// <returns>Returns a typed collection of <%=GetClassName(primaryTable.Name)%> objects.</returns>
 		[DataObjectMethod(DataObjectMethodType.Select)]
@@ -934,7 +935,7 @@
 		///		through the (M:N) relationship defined in the <%=junctionTable.Name%> table.
 		/// </summary>
 		<% for (int i = 0; i < junctionTableKey.ForeignKeyMemberColumns.Count; i++) { %>
-		/// <param name="<%= GetPrivateName(junctionTableKey.ForeignKeyMemberColumns[i].Name)%>"><%=junctionTableKey.ForeignKeyMemberColumns[i].Description%></param>
+		/// <param name="<%= GetPrivateName(junctionTableKey.ForeignKeyMemberColumns[i])%>"><%=junctionTableKey.ForeignKeyMemberColumns[i].Description%></param>
 		<% } %>
 		/// <param name="start">Row number at which to start reading.</param>
 		/// <param name="pageLength">Number of rows to return.</param>
@@ -1121,7 +1122,7 @@
 		/// property collections only N Levels Deep based on the <see cref="DeepLoadType"/>.
 		/// </summary>
 	<% for (int i = 0; i < indexes[j].MemberColumns.Count; i++) { %>
-		/// <param name="<%= GetPrivateName(indexes[j].MemberColumns[i].Name)%>"><%=GetColumnXmlComment(indexes[j].MemberColumns[i],2)%></param>
+		/// <param name="<%= GetPrivateName(indexes[j].MemberColumns[i])%>"><%=GetColumnXmlComment(indexes[j].MemberColumns[i],2)%></param>
 	<% } %>
 		/// <param name="deep">Boolean. A flag that indicates whether to recursively save all Property Collection that are descendants of this instance. If True, saves the complete object graph below this object. If False, saves this object only. </param>
 		/// <param name="deepLoadType">DeepLoadType Enumeration to Include/Exclude object property collections from Load.</param>

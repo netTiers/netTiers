@@ -144,13 +144,13 @@ namespace <%=NameSpace%>
 		/// A simple factory method to create a new <see cref="<%=className%>"/> instance.
 		///</summary>
 		<% for (int x=0; x < colsUpdaView.Count; x++) { %>
-		///<param name="<%=GetPrivateName(colsUpdaView[x].Name) %>"><%=colsUpdaView[x].Description%></param>
+		///<param name="<%=GetPrivateName(colsUpdaView[x]) %>"><%=colsUpdaView[x].Description%></param>
 		<% } %>
-		public static <%=className%> Create<%=className%>(<% for (int x=0; x < colsUpdaView.Count; x++) { %><%= GetCSType(colsUpdaView[x]) %> <%= GetPrivateName(colsUpdaView[x].Name) %><%if (x < colsUpdaView.Count -1){%>, <%} }// end for %>)
+		public static <%=className%> Create<%=className%>(<% for (int x=0; x < colsUpdaView.Count; x++) { %><%= GetCSType(colsUpdaView[x]) %> <%= GetPrivateName(colsUpdaView[x]) %><%if (x < colsUpdaView.Count -1){%>, <%} }// end for %>)
 		{
 			<%=className%> newEntity<%=className%> = new <%=className%>();
 			<% for (int x=0; x < colsUpdaView.Count; x++) { %>
-			<%= GetObjectPropertyAccessor(colsUpdaView[x], "newEntity" + className) %>  = <%= GetPrivateName(colsUpdaView[x].Name) %>;
+			<%= GetObjectPropertyAccessor(colsUpdaView[x], "newEntity" + className) %>  = <%= GetPrivateName(colsUpdaView[x]) %>;
 			<% }// end for %>
 			return newEntity<%=className%>;
 		}
@@ -159,22 +159,7 @@ namespace <%=NameSpace%>
 		// If the chosen pattern to implement is a domain pattern, go ahead 
 		// and fill all data repository wrapper access here.
 		
-		CodeTemplateCompiler compiler = new CodeTemplateCompiler(this.CodeTemplateInfo.DirectoryName + "\\ComponentDataAccess.cst");
-		compiler.Compile();
-		CodeTemplate template = null;
-		
-		if (compiler.Errors.Count == 0)
-		{
-			template =  compiler.CreateInstance();
-		}
-		else
-		{
-			for (int i = 0; i < compiler.Errors.Count; i++)
-			{
-				Response.WriteLine(compiler.Errors[i].ToString());
-			}
-		}
-		
+		CodeTemplate template = CodeTemplates["ComponentDataAccess.cst"];
 		this.CopyPropertiesTo(template);
 		template.SetProperty("RenderOverload", false);
 		template.SetProperty("RenderImplementation", true);

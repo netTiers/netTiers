@@ -1,4 +1,4 @@
-﻿<%--
+<%--
  * $Id: SqlEntityProviderBase.generated.cst,v 1.3 2006/02/27 22:06:45 bgjohnso Exp $
  * Last modified by $Author: rockmaster1 $
  * Last modified at $Date: 2006-04-28 17:19:22 -0500 (Fri, 28 Apr 2006) $
@@ -220,7 +220,7 @@ namespace <%=DALNameSpace%>.SqlClient
 		/// </summary>
 		/// <param name="transactionManager"><see cref="TransactionManager"/> object</param>
 	<% for (int i = 0; i < junctionTableKey.ForeignKeyMemberColumns.Count; i++) { %>
-		/// <param name="<%= GetPrivateName(junctionTableKey.ForeignKeyMemberColumns[i].Name)%>"><%=GetColumnXmlComment(junctionTableKey.ForeignKeyMemberColumns[i],2)%></param>
+		/// <param name="<%= GetPrivateName(junctionTableKey.ForeignKeyMemberColumns[i])%>"><%=GetColumnXmlComment(junctionTableKey.ForeignKeyMemberColumns[i],2)%></param>
 	<% } %>
 		/// <param name="start">Row number at which to start reading.</param>
 		/// <param name="pageLength">Number of rows to return.</param>
@@ -232,7 +232,7 @@ namespace <%=DALNameSpace%>.SqlClient
 			DbCommand commandWrapper = StoredProcedureProvider.GetCommandWrapper(database, "<%=owner + ProcedurePrefix + commandStem + SelectSuffix + "By" + functionname%>", _useStoredProcedure);
 			
 			<% foreach(ColumnSchema col in junctionTableKey.ForeignKeyMemberColumns) { %>
-			database.AddInParameter(commandWrapper, "@<%=GetPropertyName(col.Name)%>", DbType.<%=col.DataType.ToString()%>, <%=GetPrivateName(col.Name)%>);
+			database.AddInParameter(commandWrapper, "@<%=GetPropertyName(col)%>", DbType.<%=col.DataType.ToString()%>, <%=GetPrivateName(col)%>);
 			<% } %>
 			
 			IDataReader reader = null;
@@ -292,10 +292,10 @@ namespace <%=DALNameSpace%>.SqlClient
 		/// 	Deletes a row from the DataSource.
 		/// </summary>
 		<% for (int i = 0; i < SourceTable.PrimaryKey.MemberColumns.Count; i++) { %>
-		/// <param name="<%= GetPrivateName(SourceTable.PrimaryKey.MemberColumns[i].Name)%>"><%=GetColumnXmlComment(SourceTable.PrimaryKey.MemberColumns[i],2)%>. Primary Key.</param>	
+		/// <param name="<%= GetPrivateName(SourceTable.PrimaryKey.MemberColumns[i])%>"><%=GetColumnXmlComment(SourceTable.PrimaryKey.MemberColumns[i],2)%>. Primary Key.</param>	
 		<% } %>
 		/// <param name="transactionManager"><see cref="TransactionManager"/> object</param><% if (RowVersion != null){ %>
-		/// <param name="<%=GetPrivateName(RowVersion.Name)%>">The timestamp field used for concurrency check.</param><% } %>
+		/// <param name="<%=GetPrivateName(RowVersion)%>">The timestamp field used for concurrency check.</param><% } %>
 		/// <remarks>Deletes based on primary key(s).</remarks>
 		/// <returns>Returns true if operation suceeded.</returns>
         /// <exception cref="System.Exception">The command could not be executed.</exception>
@@ -304,17 +304,17 @@ namespace <%=DALNameSpace%>.SqlClient
 		<% if (RowVersion != null){ %>
         /// <exception cref="DBConcurrencyException">The record has been modified by an other user. Please reload the instance before deleting.</exception>
 		<%}%>
-		public override bool <%= MethodNames.Delete %>(TransactionManager transactionManager, <%= GetFunctionHeaderParameters(SourceTable.PrimaryKey.MemberColumns) %><% if(RowVersion != null) {Response.Write(", byte[] " + GetPrivateName(RowVersion.Name));}%>)
+		public override bool <%= MethodNames.Delete %>(TransactionManager transactionManager, <%= GetFunctionHeaderParameters(SourceTable.PrimaryKey.MemberColumns) %><% if(RowVersion != null) {Response.Write(", byte[] " + GetPrivateName(RowVersion));}%>)
 		{
 			SqlDatabase database = new SqlDatabase(this._connectionString);
 			DbCommand commandWrapper = StoredProcedureProvider.GetCommandWrapper(database, "<%=owner + ProcedurePrefix + commandStem + DeleteSuffix%>", _useStoredProcedure);
 			<% for(int i = 0; i < SourceTable.PrimaryKey.MemberColumns.Count; i++) { 
 				ColumnSchema col = SourceTable.PrimaryKey.MemberColumns[i];
 			%>
-			database.AddInParameter(commandWrapper, "@<%=GetPropertyName(col.Name)%>", DbType.<%=col.DataType%>, <%=GetPrivateName(col.Name)%>);
+			database.AddInParameter(commandWrapper, "@<%=GetPropertyName(col)%>", DbType.<%=col.DataType%>, <%=GetPrivateName(col)%>);
 			<% } %>
 			<% if (RowVersion != null){ %>
-			database.AddInParameter(commandWrapper, "@<%=GetPropertyName(RowVersion.Name)%>", DbType.<%= RowVersion.DataType.ToString() %>, <%= GetPrivateName(RowVersion.Name) %>);
+			database.AddInParameter(commandWrapper, "@<%=GetPropertyName(RowVersion)%>", DbType.<%= RowVersion.DataType.ToString() %>, <%= GetPrivateName(RowVersion) %>);
 			<% } %>
 			
 			//Provider Data Requesting Command Event
@@ -336,7 +336,7 @@ namespace <%=DALNameSpace%>.SqlClient
 			{
 				<% if (SourceTable.PrimaryKey.MemberColumns.Count > 0) { %>
 				string entityKey = EntityLocator.ConstructKeyFromPkItems(typeof(<%= entityClassName %>)
-					<% foreach (ColumnSchema col in SourceTable.PrimaryKey.MemberColumns){%>,<%=GetPrivateName(col.Name)%><%}%>);
+					<% foreach (ColumnSchema col in SourceTable.PrimaryKey.MemberColumns){%>,<%=GetPrivateName(col)%><%}%>);
 				EntityManager.StopTracking(entityKey);
 				<%}%>
 			}
@@ -395,7 +395,7 @@ namespace <%=DALNameSpace%>.SqlClient
 		database.AddInParameter(commandWrapper, "@SearchUsingOR", DbType.Boolean, searchUsingOR);
 		
 	<% foreach(ColumnSchema column in SourceTable.Columns) {%>
-		database.AddInParameter(commandWrapper, "@<%=GetPropertyName(column.Name)%>", DbType.<%=column.DataType%>, DBNull.Value);
+		database.AddInParameter(commandWrapper, "@<%=GetPropertyName(column)%>", DbType.<%=column.DataType%>, DBNull.Value);
 	<% } %>
 	
 			// replace all instances of 'AND' and 'OR' because we already set searchUsingOR
@@ -723,7 +723,7 @@ namespace <%=DALNameSpace%>.SqlClient
 		/// <param name="pageLength">Number of rows to return.</param>
 		/// <param name="transactionManager"><see cref="TransactionManager"/> object</param>
 		<% for (int i = 0; i < fkeys[j].ForeignKeyMemberColumns.Count; i++) { %>
-		/// <param name="<%= GetPrivateName(fkeys[j].ForeignKeyMemberColumns[i].Name)%>"><%=GetColumnXmlComment(fkeys[j].ForeignKeyMemberColumns[i],2)%></param>
+		/// <param name="<%= GetPrivateName(fkeys[j].ForeignKeyMemberColumns[i])%>"><%=GetColumnXmlComment(fkeys[j].ForeignKeyMemberColumns[i],2)%></param>
 		<% } %>
 		/// <param name="count">out parameter to get total records for query</param>
 		/// <remarks></remarks>
@@ -737,7 +737,7 @@ namespace <%=DALNameSpace%>.SqlClient
 			DbCommand commandWrapper = StoredProcedureProvider.GetCommandWrapper(database, "<%=owner + ProcedurePrefix + commandStem + SelectSuffix + "By" + GetKeysName(fkeys[j].ForeignKeyMemberColumns)%>", _useStoredProcedure);
 			
 			<% foreach(ColumnSchema col in fkeys[j].ForeignKeyMemberColumns) { %>
-				database.AddInParameter(commandWrapper, "@<%=GetPropertyName(col.Name)%>", DbType.<%=col.DataType%>, <%=GetPrivateName(col.Name)%>);
+				database.AddInParameter(commandWrapper, "@<%=GetPropertyName(col)%>", DbType.<%=col.DataType%>, <%=GetPrivateName(col)%>);
 			<% } %>
 			
 			IDataReader reader = null;
@@ -828,7 +828,7 @@ namespace <%=DALNameSpace%>.SqlClient
 		/// </summary>
 		/// <param name="transactionManager"><see cref="TransactionManager"/> object</param>
 	<% for (int i = 0; i < indexes[j].MemberColumns.Count; i++) { %>
-		/// <param name="<%= GetPrivateName(indexes[j].MemberColumns[i].Name)%>"><%= indexes[j].MemberColumns[i].Description%></param>
+		/// <param name="<%= GetPrivateName(indexes[j].MemberColumns[i])%>"><%= indexes[j].MemberColumns[i].Description%></param>
 	<% } %>
 		/// <param name="start">Row number at which to start reading.</param>
 		/// <param name="pageLength">Number of rows to return.</param>
@@ -844,7 +844,7 @@ namespace <%=DALNameSpace%>.SqlClient
 			DbCommand commandWrapper = StoredProcedureProvider.GetCommandWrapper(database, "<%=owner + ProcedurePrefix + commandStem + SelectSuffix + "By" + GetKeysName(indexes[j].MemberColumns)%>", _useStoredProcedure);
 			
 			<% foreach(ColumnSchema col in indexes[j].MemberColumns) { %>
-				database.AddInParameter(commandWrapper, "@<%=GetPropertyName(col.Name)%>", DbType.<%=col.DataType%>, <%=GetPrivateName(col.Name)%>);
+				database.AddInParameter(commandWrapper, "@<%=GetPropertyName(col)%>", DbType.<%=col.DataType%>, <%=GetPrivateName(col)%>);
 			<% } %>
 			
 			IDataReader reader = null;
@@ -970,9 +970,9 @@ namespace <%=DALNameSpace%>.SqlClient
 				<% for (int i = 0; i < cols.Count; i++) { %>
 				
 				<% if (cols[i].AllowDBNull && !IsCSReferenceDataType(cols[i])  ){ %>
-					row["<%=cols[i].Name %>"] = entity.<%=GetPropertyName(cols[i].Name)%>.HasValue ? (object) entity.<%=GetPropertyName(cols[i].Name)%>  : System.DBNull.Value;
+					row["<%=cols[i].Name %>"] = entity.<%=GetPropertyName(cols[i])%>.HasValue ? (object) entity.<%=GetPropertyName(cols[i])%>  : System.DBNull.Value;
 				<% } else { %>
-					row["<%=cols[i].Name %>"] = entity.<%= GetPropertyName(cols[i].Name) %>;
+					row["<%=cols[i].Name %>"] = entity.<%= GetPropertyName(cols[i]) %>;
 				<% } // end if %>		
 							
 				<% } // end for %>
@@ -1015,16 +1015,16 @@ namespace <%=DALNameSpace%>.SqlClient
 			for (int i = 0; i < cols.Count; i++)		
 			{ 	
 				if (RowVersion != null && cols[i] == RowVersion) { %>
-			database.AddOutParameter(commandWrapper, "@<%=GetPropertyName(RowVersion.Name)%>", DbType.<%= RowVersion.DataType.ToString() %>, 8);
+			database.AddOutParameter(commandWrapper, "@<%=GetPropertyName(RowVersion)%>", DbType.<%= RowVersion.DataType.ToString() %>, 8);
 				<% } else if ( IsComputed(cols[i]) || IsIdentityColumn(cols[i]) ) { %>
-			database.AddOutParameter(commandWrapper, "@<%=GetPropertyName(cols[i].Name)%>", DbType.<%= cols[i].DataType.ToString() %>, <%= cols[i].Size.ToString() %>);
+			database.AddOutParameter(commandWrapper, "@<%=GetPropertyName(cols[i])%>", DbType.<%= cols[i].DataType.ToString() %>, <%= cols[i].Size.ToString() %>);
 				<%} else {
 					if (cols[i].AllowDBNull && !IsCSReferenceDataType(cols[i])  )
 					{ 
 			// String types are nullable, but all other types are value types %>
-			database.AddInParameter(commandWrapper, "@<%=GetPropertyName(cols[i].Name)%>", DbType.<%= cols[i].DataType.ToString() %>, (entity.<%=GetPropertyName(cols[i].Name)%>.HasValue ? (object) entity.<%=GetPropertyName(cols[i].Name)%>  : System.DBNull.Value));
+			database.AddInParameter(commandWrapper, "@<%=GetPropertyName(cols[i])%>", DbType.<%= cols[i].DataType.ToString() %>, (entity.<%=GetPropertyName(cols[i])%>.HasValue ? (object) entity.<%=GetPropertyName(cols[i])%>  : System.DBNull.Value));
 					<% } else {%>
-			database.AddInParameter(commandWrapper, "@<%=GetPropertyName(cols[i].Name)%>", <%= GetDbType(cols[i]) %>, entity.<%=GetPropertyName(cols[i].Name)%> );
+			database.AddInParameter(commandWrapper, "@<%=GetPropertyName(cols[i])%>", <%= GetDbType(cols[i]) %>, entity.<%=GetPropertyName(cols[i])%> );
 				<% }
 				}		
 			} // end for 
@@ -1058,7 +1058,7 @@ namespace <%=DALNameSpace%>.SqlClient
 					else
 						castTo = cols[i].SystemType.ToString();	%>
 
-			entity.<%=GetPropertyName(cols[i].Name)%> = (<%=castTo%>) database.GetParameterValue(commandWrapper, "@<%=GetPropertyName(cols[i].Name)%>");						
+			entity.<%=GetPropertyName(cols[i])%> = (<%=castTo%>) database.GetParameterValue(commandWrapper, "@<%=GetPropertyName(cols[i])%>");						
 				<%}
 			}
 			%>
@@ -1069,7 +1069,7 @@ namespace <%=DALNameSpace%>.SqlClient
 			{
 				if( !IsComputed(SourceTable.PrimaryKey.MemberColumns[i]) && !IsIdentityColumn(SourceTable.PrimaryKey.MemberColumns[i]) )
 				{%>
-			entity.Original<%=GetPropertyName(SourceTable.PrimaryKey.MemberColumns[i].Name)%> = entity.<%=GetPropertyName(SourceTable.PrimaryKey.MemberColumns[i].Name)%>;
+			entity.Original<%=GetPropertyName(SourceTable.PrimaryKey.MemberColumns[i])%> = entity.<%=GetPropertyName(SourceTable.PrimaryKey.MemberColumns[i])%>;
 				<%}
 			}
 			
@@ -1123,12 +1123,12 @@ namespace <%=DALNameSpace%>.SqlClient
 				{
 					if (cols[i].NativeType == "numeric" )
 					{%>
-			database.AddParameter(commandWrapper, "@<%=GetPropertyName(cols[i].Name)%>", SqlDbType.<%= cols[i].DataType.ToString() %>, <%= cols[i].Size.ToString() %>, ParameterDirection.Output, true, <%= cols[i].Precision.ToString() %>, <%= cols[i].Scale.ToString() %>, null, DataRowVersion.Default, null);
+			database.AddParameter(commandWrapper, "@<%=GetPropertyName(cols[i])%>", SqlDbType.<%= cols[i].DataType.ToString() %>, <%= cols[i].Size.ToString() %>, ParameterDirection.Output, true, <%= cols[i].Precision.ToString() %>, <%= cols[i].Scale.ToString() %>, null, DataRowVersion.Default, null);
 			<%
 					}
 					else
 					{%>
-			database.AddOutParameter(commandWrapper, "@<%=GetPropertyName(cols[i].Name)%>", DbType.<%= cols[i].DataType.ToString() %>, <%= cols[i].Size.ToString() %>);
+			database.AddOutParameter(commandWrapper, "@<%=GetPropertyName(cols[i])%>", DbType.<%= cols[i].DataType.ToString() %>, <%= cols[i].Size.ToString() %>);
 			
 				<%	}
 				}
@@ -1137,22 +1137,22 @@ namespace <%=DALNameSpace%>.SqlClient
 					if (cols[i].AllowDBNull && !IsCSReferenceDataType(cols[i])  )
 					{ 
 						// String types are nullable, but all other types are value types%>
-			database.AddInParameter(commandWrapper, "@<%=GetPropertyName(cols[i].Name)%>", DbType.<%= cols[i].DataType.ToString() %>, (entity.<%=GetPropertyName(cols[i].Name)%>.HasValue ? (object) entity.<%=GetPropertyName(cols[i].Name)%> : System.DBNull.Value) );
+			database.AddInParameter(commandWrapper, "@<%=GetPropertyName(cols[i])%>", DbType.<%= cols[i].DataType.ToString() %>, (entity.<%=GetPropertyName(cols[i])%>.HasValue ? (object) entity.<%=GetPropertyName(cols[i])%> : System.DBNull.Value) );
 					<%}
 					else				
 				{%>
-			database.AddInParameter(commandWrapper, "@<%=GetPropertyName(cols[i].Name)%>", <%=GetDbType(cols[i]) %>, entity.<%=GetPropertyName(cols[i].Name)%> );
+			database.AddInParameter(commandWrapper, "@<%=GetPropertyName(cols[i])%>", <%=GetDbType(cols[i]) %>, entity.<%=GetPropertyName(cols[i])%> );
 				<%}
 				}
 				if (cols[i].IsPrimaryKeyMember && !IsComputed(cols[i]) && !IsIdentityColumn(cols[i]) && cols[i] != RowVersion)
 				{%>
-			database.AddInParameter(commandWrapper, "@Original<%=GetPropertyName(cols[i].Name)%>", DbType.<%= cols[i].DataType.ToString() %>, entity.Original<%=GetPropertyName(cols[i].Name)%>);
+			database.AddInParameter(commandWrapper, "@Original<%=GetPropertyName(cols[i])%>", DbType.<%= cols[i].DataType.ToString() %>, entity.Original<%=GetPropertyName(cols[i])%>);
 				<%}
 			}
 			
 			if (RowVersion != null)
 			{%>
-			database.AddOutParameter(commandWrapper, "@Returned<%=GetPropertyName(RowVersion.Name)%>", DbType.<%= RowVersion.DataType.ToString() %>, 8);
+			database.AddOutParameter(commandWrapper, "@Returned<%=GetPropertyName(RowVersion)%>", DbType.<%= RowVersion.DataType.ToString() %>, 8);
 			<%}%>
 			
 			int results = 0;
@@ -1181,7 +1181,7 @@ namespace <%=DALNameSpace%>.SqlClient
 				throw new DBConcurrencyException("Concurrency exception");
 			}
 		
-			entity.<%=GetPropertyName(RowVersion.Name)%> = (<%=RowVersion.SystemType.ToString()%>)database.GetParameterValue(commandWrapper, "@Returned<%=GetPropertyName(RowVersion.Name)%>");
+			entity.<%=GetPropertyName(RowVersion)%> = (<%=RowVersion.SystemType.ToString()%>)database.GetParameterValue(commandWrapper, "@Returned<%=GetPropertyName(RowVersion)%>");
 		<%}
 			
 		// Update identity or computed columns
@@ -1196,13 +1196,13 @@ namespace <%=DALNameSpace%>.SqlClient
 					else
 						castTo = cols[i].SystemType.ToString();				
 				%>
-			entity.<%=GetPropertyName(cols[i].Name)%> = (<%=castTo%>)database.GetParameterValue(commandWrapper, "@<%=GetPropertyName(cols[i].Name)%>");
+			entity.<%=GetPropertyName(cols[i])%> = (<%=castTo%>)database.GetParameterValue(commandWrapper, "@<%=GetPropertyName(cols[i])%>");
 			<%}
 		
 			// if in the PK, update the original
 			if (cols[i].IsPrimaryKeyMember && !IsComputed(cols[i]) && !IsIdentityColumn(cols[i]) && cols[i] != RowVersion)
 			{%>
-			entity.Original<%=GetPropertyName(cols[i].Name)%> = entity.<%=GetPropertyName(cols[i].Name)%>;
+			entity.Original<%=GetPropertyName(cols[i])%> = entity.<%=GetPropertyName(cols[i])%>;
 			<%}
 			
 		}%>
@@ -1252,11 +1252,11 @@ namespace <%=DALNameSpace%>.SqlClient
 			DbCommand commandWrapper = database.GetStoredProcCommand("<%= GetOwner(command) %><%=GetSafeName(command.Name)%>");
 			
 		<% foreach(ParameterSchema col in command.InputParameters)	{%>			
-			database.AddInParameter(commandWrapper, "<%=col.Name%>", <%=GetDbType(col)%>,  <%=GetPrivateName(col.Name)%> );
+			database.AddInParameter(commandWrapper, "<%=col.Name%>", <%=GetDbType(col)%>,  <%=GetPrivateName(col)%> );
 		<%}%>
 	
 		<% foreach(SchemaExplorer.ParameterSchema col in command.AllOutputParameters)	{ %>
-			database.AddParameter(commandWrapper, "<%=col.Name%>", DbType.<%=col.DataType.ToString()%>, <%= col.Size %>, ParameterDirection.InputOutput, <%= col.AllowDBNull.ToString().ToLower() %>, <%= col.Precision %>, <%= col.Scale %>, string.Empty, DataRowVersion.Current, <%=GetPrivateName(col.Name)%>);
+			database.AddParameter(commandWrapper, "<%=col.Name%>", DbType.<%=col.DataType.ToString()%>, <%= col.Size %>, ParameterDirection.InputOutput, <%= col.AllowDBNull.ToString().ToLower() %>, <%= col.Precision %>, <%= col.Scale %>, string.Empty, DataRowVersion.Current, <%=GetPrivateName(col)%>);
 		<%}%>
 			
 			<%			
@@ -1265,7 +1265,7 @@ namespace <%=DALNameSpace%>.SqlClient
 
 			foreach(ParameterSchema outParam in command.AllOutputParameters)
 			{
-				outputValues.AppendFormat("\t\t\t{0} =  Utility.GetParameterValue<{1}>(commandWrapper.Parameters[\"{2}\"]);\n",GetPrivateName(outParam.Name), GetCSType(outParam), outParam.Name); 
+				outputValues.AppendFormat("\t\t\t{0} =  Utility.GetParameterValue<{1}>(commandWrapper.Parameters[\"{2}\"]);\n",GetPrivateName(outParam), GetCSType(outParam), outParam); 
 			}
 			%>
 			<% if (returnType == "DataSet") { %>

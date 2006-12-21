@@ -46,20 +46,19 @@ namespace <%=NameSpace%>
 		/// </summary>
 		protected EntityBaseCore()
 		{
+			entityHashcodeIdentity =  Guid.NewGuid();
+			entityInstanceCreationDate = DateTime.UtcNow;
 			entityHashCode = entityInstanceCreationDate.ToString() + entityHashcodeIdentity.ToString();
 		}
 		
       	#endregion
 		
-		/// <summary>
-		/// The EntityState of the entity
-		/// </summary>
-		private EntityState currentEntityState = EntityState.Added ;
 	    /// <summary>
 	    /// Determines whether the entity is being tracked by the Locator.
 	    /// </summary>
 		private bool isEntityTracked = false;
-	    /// <summary>
+
+		/// <summary>
 		/// Suppresses Entity Events from Firing, 
 		/// useful when loading the entities from the database.
 		/// </summary>
@@ -73,15 +72,15 @@ namespace <%=NameSpace%>
 		protected bool bindingIsNew = true;
 		
 		///<summary>
-		///  The actual DateTime of the entities creation date.
-		///</summary>
-		protected DateTime entityInstanceCreationDate = DateTime.UtcNow;
-		
-		///<summary>
 		///  Unique Guid for the entity.
 		///</summary>
-		protected System.Guid entityHashcodeIdentity = Guid.NewGuid();
+		protected System.Guid entityHashcodeIdentity;
 
+		///<summary>
+		///  Unique Instance Creation Time for the entity.
+		///</summary>
+		protected System.DateTime entityInstanceCreationDate;
+		
 		///<summary>
 		///  The actual DateTime of the entities creation date.
 		///</summary>
@@ -105,7 +104,7 @@ namespace <%=NameSpace%>
 		[BrowsableAttribute(false)<%= (SerializeEntityState ? ", XmlIgnoreAttribute()" : "") %>]
 		public bool IsDeleted
 		{
-			get { return this.currentEntityState == EntityState.Deleted; }
+			get { return this.EntityState == EntityState.Deleted; }
 		}		
 	
 		//private bool _isDirty = false;
@@ -116,7 +115,7 @@ namespace <%=NameSpace%>
 		[BrowsableAttribute(false), XmlIgnoreAttribute()]
 		public bool IsDirty
 		{
-			get { return this.currentEntityState != EntityState.Unchanged; }
+			get { return this.EntityState != EntityState.Unchanged; }
 		}
 		
 		
@@ -128,8 +127,8 @@ namespace <%=NameSpace%>
 		[BrowsableAttribute(false), XmlIgnoreAttribute()]
 		public bool IsNew
 		{
-			get { return this.currentEntityState == EntityState.Added; }
-			set { this.currentEntityState = EntityState.Added; }
+			get { return this.EntityState == EntityState.Added; }
+			set { this.EntityState = EntityState.Added; }
 		}
 		
 
@@ -139,12 +138,8 @@ namespace <%=NameSpace%>
 		///		Indicates state of object
 		/// </summary>
 		/// <remarks>0=Unchanged, 1=Added, 2=Changed</remarks>
-		[BrowsableAttribute(false), XmlIgnoreAttribute()]
-		public virtual EntityState EntityState
-		{
-			get { return this.currentEntityState; }
-			set { this.currentEntityState = value; }
-		}
+		[BrowsableAttribute(false), <%= (SerializeEntityState ? ", XmlIgnoreAttribute()" : "") %>]
+		public abstract EntityState EntityState { get; set; }
 		
 		/// <summary>
 		/// Accepts the changes made to this object.
@@ -155,7 +150,7 @@ namespace <%=NameSpace%>
 		public virtual void AcceptChanges()
 		{			
 			this.bindingIsNew = false;
-			this.currentEntityState = EntityState.Unchanged;
+			EntityState = EntityState.Unchanged;
 			OnPropertyChanged(string.Empty);
 		}
 		
@@ -174,8 +169,8 @@ namespace <%=NameSpace%>
 		public virtual void MarkToDelete()
 		{
 			
-			if (this.currentEntityState != EntityState.Added)
-				this.currentEntityState = EntityState.Deleted ;
+			if (this.EntityState != EntityState.Added)
+				this.EntityState = EntityState.Deleted ;
 		}
 		
 		///<summary>
@@ -183,9 +178,9 @@ namespace <%=NameSpace%>
 		///</summary>
 		public virtual void RemoveDeleteMark()
 		{
-			if (this.currentEntityState != EntityState.Added) 
+			if (this.EntityState != EntityState.Added) 
 			{				
-				this.currentEntityState = EntityState.Changed ;
+				this.EntityState = EntityState.Changed ;
 			}
 		}
 				 
@@ -304,8 +299,8 @@ namespace <%=NameSpace%>
 		{ 
 			if (!suppressEntityEvents)
 			{
-			OnPropertyChanged(new PropertyChangedEventArgs(propertyName));
-		}
+				OnPropertyChanged(new PropertyChangedEventArgs(propertyName));
+			}
 		}
 		
 		/// <summary>
@@ -316,14 +311,14 @@ namespace <%=NameSpace%>
 		{
 			if (!suppressEntityEvents)
 			{
-			//Validate the property
-         ValidationRules.ValidateRules(e.PropertyName);
+				//Validate the property
+         		ValidationRules.ValidateRules(e.PropertyName);
 
-			if (null != PropertyChanged)
-			{
-				PropertyChanged(this, e);
+				if (null != PropertyChanged)
+				{
+					PropertyChanged(this, e);
+				}
 			}
-		}
 		}
 		
 		#endregion
@@ -365,7 +360,7 @@ namespace <%=NameSpace%>
 			}
 		}
 
-      #endregion
+      	#endregion
 
       	#region Validation
 
@@ -440,7 +435,7 @@ namespace <%=NameSpace%>
 		/// </param>
 		public void AddValidationRuleHandler(Validation.ValidationRuleHandler handler, String propertyName)
 		{
-		    ValidationRules.AddRule(handler, propertyName);
+		   ValidationRules.AddRule(handler, propertyName);
 		}
 
 		/// <summary>
@@ -492,14 +487,13 @@ namespace <%=NameSpace%>
 		/// Runs when the entire object graph has been deserialized.
 		/// </summary>
 		/// <param name="sender">The object that initiated the callback. The functionality for this parameter is not currently implemented.</param>
-		
 		public void OnDeserialization(object sender)
 		{
 			if(!suppressEntityEvents)
 			{
-			ValidationRules.Target = this;
-			AddValidationRules();
-		}
+				ValidationRules.Target = this;
+				AddValidationRules();
+			}
 		}
 
       #endregion

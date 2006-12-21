@@ -8,6 +8,7 @@
 
 <%@ Property Name="SourceTable" Type="SchemaExplorer.TableSchema" Category="Connection" Description="Table Object should be based on." %>
 <%@ Property Name="SourceTables" Type="SchemaExplorer.TableSchemaCollection" Category="Connection" Description="Tables of the sytem." %>
+<%@ Property Name="SerializeEntityState" Type="System.Boolean" Default="False" Category="02. Framework Generation - Optional" Description="Indicates if the EntityState property should be included in serialization." %>
 
 <%@ Property Name="IncludeRelations" Type="System.Boolean" Default="False" Category="Options" Description="Include Collections for Related Entities."%>
 <%@ Property Name="IncludeManyToMany" Type="System.Boolean" Default="False" Category="Options" Description="Include Collections for Related Entities."%>
@@ -22,7 +23,7 @@
 <%
 	//if (SourceTables == null) SourceTables = new SchemaExplorer.TableSchemaCollection();
 	string name;
-		
+	
 	// Name of the Abstract Class
 	string className = GetClassName(SourceTable.Name);
 	string collectionClassName = GetCollectionClassName(SourceTable.Name);
@@ -71,59 +72,6 @@ using System.Runtime.Serialization;
 
 namespace <%=NameSpace%>
 {
-	#region <%=className%>EventArgs class
-	/// <summary>
-	/// Provides data for the ColumnChanging and ColumnChanged events.
-	/// </summary>
-	/// <remarks>
-	/// The ColumnChanging and ColumnChanged events occur when a change is made to the value 
-	/// of a property of a <see cref="<%=className%>"/> object.
-	/// </remarks>
-	public class <%=className%>EventArgs : System.EventArgs
-	{
-		private <%=className%>Column column;
-		private object value;
-		
-		
-		///<summary>
-		/// Initalizes a new Instance of the <%=className%>EventArgs class.
-		///</summary>
-		public <%=className%>EventArgs(<%=className%>Column column)
-		{
-			this.column = column;
-		}
-		
-		///<summary>
-		/// Initalizes a new Instance of the <%=className%>EventArgs class.
-		///</summary>
-		public <%=className%>EventArgs(<%=className%>Column column, object value)
-		{
-			this.column = column;
-			this.value = value;
-		}
-		
-		
-		///<summary>
-		/// The <%=className%>Column that was modified, which has raised the event.
-		///</summary>
-		///<value cref="<%=className%>Column" />
-		public <%=className%>Column Column { get { return this.column; } }
-		
-		/// <summary>
-        /// Gets the current value of the column.
-        /// </summary>
-        /// <value>The current value of the column.</value>
-		public object Value{ get { return this.value; } }
-
-	}
-	#endregion
-	
-	
-	///<summary>
-	/// Define a delegate for all <%=className%> related events.
-	///</summary>
-	public delegate void <%=className%>EventHandler(object sender, <%=className%>EventArgs e);
-	
 	///<summary>
 	/// <% if(SourceTable.Description.Length == 0 ) {%>An object representation of the '<%=SourceTable.Name%>' table. [No description found the database]<%} else {Response.Write(GetColumnXmlComment(SourceTable,1));}%>	
 	///</summary>
@@ -132,7 +80,7 @@ namespace <%=NameSpace%>
 	<% } %>
 	[Serializable, DataObject]
 	[CLSCompliant(true)]
-	public abstract partial class <%=abstractClassName%> : EntityBase, IEntityId<<%= keyClassName %>>, System.IComparable, System.ICloneable, IEditableObject, IComponent, INotifyPropertyChanged
+	public abstract partial class <%=abstractClassName%> : EntityBase, <%=NameSpace%>.I<%= className %>, IEntityId<<%= keyClassName %>>, System.IComparable, System.ICloneable, IEditableObject, IComponent, INotifyPropertyChanged
 	{		
 		#region Variable Declarations
 		
@@ -169,13 +117,13 @@ namespace <%=NameSpace%>
 		/// Occurs when a value is being changed for the specified column.
 		/// </summary>	
 		[field:NonSerialized]
-		public event <%=className%>EventHandler ColumnChanging;		
+		public event <%= GetClassEventHandlerName(className) %> ColumnChanging;		
 		
 		/// <summary>
 		/// Occurs after a value has been changed for the specified column.
 		/// </summary>
 		[field:NonSerialized]
-		public event <%=className%>EventHandler ColumnChanged;
+		public event <%= GetClassEventHandlerName(className) %> ColumnChanged;
 		
 		#endregion Variable Declarations
 		
@@ -194,15 +142,15 @@ namespace <%=NameSpace%>
 		/// Creates a new <see cref="<%=abstractClassName%>"/> instance.
 		///</summary>
 		<% for (int x=0; x < colsUpdatable.Count; x++) { %>
-		///<param name="<%=GetPrivateName(className + GetPropertyName(colsUpdatable[x].Name)) %>"><%=GetColumnXmlComment(colsUpdatable[x],2)%></param>
+		///<param name="<%=GetCamelCaseName(className) + GetPropertyName(colsUpdatable[x]) %>"><%=GetColumnXmlComment(colsUpdatable[x],2)%></param>
 		<% } %>
-		<%=constructorAccessModifier%> <%=abstractClassName%>(<% WrapInit(); for (int x=0; x < colsUpdatable.Count; x++) { %><%= GetCSType(colsUpdatable[x]) %> <%= GetPrivateName(className + GetPropertyName(colsUpdatable[x].Name)) %><%WrapIncr(colsUpdatable[x]); if (x < colsUpdatable.Count -1){%>, <% WrapLine(3); } }// end for %>)
+		<%=constructorAccessModifier%> <%=abstractClassName%>(<% WrapInit(); for (int x=0; x < colsUpdatable.Count; x++) { %><%= GetCSType(colsUpdatable[x]) %> <%= GetCamelCaseName(className + GetPropertyName(colsUpdatable[x])) %><%WrapIncr(colsUpdatable[x]); if (x < colsUpdatable.Count -1){%>, <% WrapLine(3); } }// end for %>)
 		{
 			this.entityData = new <%=structName%>();
 			this.backupData = null;
 
 			<% for (int x=0; x < colsUpdatable.Count; x++) { %>
-			this.<%= GetPropertyName(colsUpdatable[x]) %> = <%= GetPrivateName(className + GetPropertyName(colsUpdatable[x].Name)) %>;
+			this.<%= GetPropertyName(colsUpdatable[x]) %> = <%= GetCamelCaseName(className + GetPropertyName(colsUpdatable[x])) %>;
 			<% }// end for %>
 		}
 		<% } %>
@@ -211,115 +159,19 @@ namespace <%=NameSpace%>
 		/// A simple factory method to create a new <see cref="<%=className%>"/> instance.
 		///</summary>
 		<% for (int x=0; x < colsUpdatable.Count; x++) { %>
-		///<param name="<%=GetPrivateName(className + GetPropertyName(colsUpdatable[x].Name)) %>"><%=GetColumnXmlComment(colsUpdatable[x],2)%></param>
+		///<param name="<%= GetCamelCaseName(className) + GetPropertyName(colsUpdatable[x]) %>"><%=GetColumnXmlComment(colsUpdatable[x],2)%></param>
 		<% } %>
-		public static <%=className%> Create<%=className%>(<% WrapInit(); for (int x=0; x < colsUpdatable.Count; x++) { %><%= GetCSType(colsUpdatable[x]) %> <%= GetPrivateName(className + GetPropertyName(colsUpdatable[x].Name)) %><% WrapIncr(colsUpdatable[x]); if (x < colsUpdatable.Count -1){%>, <%  WrapLine(3); } }// end for %>)
+		public static <%=className%> Create<%=className%>(<% WrapInit(); for (int x=0; x < colsUpdatable.Count; x++) { %><%= GetCSType(colsUpdatable[x]) %> <%= GetCamelCaseName(className) + GetPropertyName(colsUpdatable[x]) %><% WrapIncr(colsUpdatable[x]); if (x < colsUpdatable.Count -1){%>, <%  WrapLine(3); } }// end for %>)
 		{
 			<%=className%> new<%=className%> = new <%=className%>();
 			<% for (int x=0; x < colsUpdatable.Count; x++) { %>
-			new<%=className%>.<%=GetPropertyName( colsUpdatable[x].Name) %> = <%= GetPrivateName(className + GetPropertyName(colsUpdatable[x].Name)) %>;
+			new<%=className%>.<%=GetPropertyName(colsUpdatable[x]) %> = <%= GetCamelCaseName(className + GetPropertyName(colsUpdatable[x])) %>;
 			<% }// end for %>
 			return new<%=className%>;
 		}
 				
 		#endregion Constructors
-		
-		<% if (IncludeWCFDataAttributes ) { %>
-		
-		#region DataContract serialization
-		
-		bool _deserializing = false;
-		
-		/// <summary>
-		/// Called before deserializing the type.
-		/// </summary>
-		[OnDeserializingAttribute]
-		private void Initialize_BeforeDeserializing(StreamingContext context)
-		{
-			this._deserializing = true;
-		
-			this.entityData = new <%=structName%>();
-			this.backupData = null;
 			
-			AddValidationRules();
-		}
-		
-		/// <summary>
-		/// Called after deserializing the type.
-		/// </summary>
-		[OnDeserializedAttribute ]
-		private void Initialize_Deserialized(StreamingContext context)
-		{
-			this._deserializing = false;
-		}
-				
-		#endregion
-		
-		<% } %>
-		
-		#region Events trigger
-		/// <summary>
-		/// Raises the <see cref="ColumnChanging" /> event.
-		/// </summary>
-		/// <param name="column">The <see cref="<%=className%>Column"/> which has raised the event.</param>
-		public void OnColumnChanging(<%=className%>Column column)
-		{
-			OnColumnChanging(column, null);
-			return;
-		}
-		
-		/// <summary>
-		/// Raises the <see cref="ColumnChanged" /> event.
-		/// </summary>
-		/// <param name="column">The <see cref="<%=className%>Column"/> which has raised the event.</param>
-		public void OnColumnChanged(<%=className%>Column column)
-		{
-			OnColumnChanged(column, null);
-			return;
-		} 
-		
-		
-		/// <summary>
-		/// Raises the <see cref="ColumnChanging" /> event.
-		/// </summary>
-		/// <param name="column">The <see cref="<%=className%>Column"/> which has raised the event.</param>
-		/// <param name="value">The changed value.</param>
-		public void OnColumnChanging(<%=className%>Column column, object value)
-		{
-			if(IsEntityTracked && EntityState != EntityState.Added && !EntityManager.TrackChangedEntities)
-				EntityManager.StopTracking(EntityTrackingKey);
-				
-			if (!SuppressEntityEvents)
-			{
-				<%=className%>EventHandler handler = ColumnChanging;
-				if(handler != null)
-				{
-					handler(this, new <%=className%>EventArgs(column, value));
-				}
-			}
-		}
-		
-		/// <summary>
-		/// Raises the <see cref="ColumnChanged" /> event.
-		/// </summary>
-		/// <param name="column">The <see cref="<%=className%>Column"/> which has raised the event.</param>
-		/// <param name="value">The changed value.</param>
-		public void OnColumnChanged(<%=className%>Column column, object value)
-		{
-			if (!SuppressEntityEvents)
-			{
-				<%=className%>EventHandler handler = ColumnChanged;
-				if(handler != null)
-				{
-					handler(this, new <%=className%>EventArgs(column, value));
-				}
-			
-				// warn the parent list that i have changed
-				OnEntityChanged();
-			}
-		} 
-		#endregion
-				
 		#region Properties	
 				
 		<% for (int x=0; x < cols.Count; x++) {
@@ -331,14 +183,14 @@ namespace <%=NameSpace%>
 
 		%>
 		/// <summary>
-		/// 	Gets or sets the <%= GetPropertyName(cols[x].Name) %> property. 
+		/// 	Gets or sets the <%= GetPropertyName(cols[x]) %> property. 
 		///		<%=GetColumnXmlComment(cols[x],2)%>
 		/// </summary>
 		/// <value>This type is <%=cols[x].NativeType%>.</value>
 		/// <remarks>
 		/// This property can<%if (!cols[x].AllowDBNull) {%> not<%}%> be set to null. <%if (cols[x].AllowDBNull && !IsCSReferenceDataType(cols[x])) {%>
 		/// If this column is null, this property will return <%=GetCSDefaultByType(cols[x])%>. It is up to the developer
-		/// to check the value of Is<%=GetPropertyName(cols[x].Name)%>Null() and perform business logic appropriately.<%}%>
+		/// to check the value of Is<%=GetPropertyName(cols[x])%>Null() and perform business logic appropriately.<%}%>
 		/// </remarks>
 		<%if (! cols[x].AllowDBNull && IsCSReferenceDataType(cols[x]) ) {%>
 		/// <exception cref="ArgumentNullException">If you attempt to set to null.</exception>
@@ -363,7 +215,7 @@ namespace <%=NameSpace%>
 				<% // skip
 				if (false && ! cols[x].AllowDBNull && IsCSReferenceDataType(cols[x])) {%>
 				//if ( value == null )
-				//	throw new ArgumentNullException("value", "<%= GetPropertyName(cols[x].Name) %> does not allow null values.");
+				//	throw new ArgumentNullException("value", "<%= GetPropertyName(cols[x]) %> does not allow null values.");
 				<%}
 				if (false && cols[x].AllowDBNull && !IsCSReferenceDataType(cols[x]) ) {%>
 				if (this.entityData.<%= GetPropertyName(cols[x]) %> == value && this.entityData.<%= GetPropertyName(cols[x]) %> != null )
@@ -381,7 +233,7 @@ namespace <%=NameSpace%>
 				//}
 				<% } %>
 					
-				OnColumnChanging(<%=className%>Column.<%=GetPropertyName(cols[x]) %>, this.entityData.<%= GetPropertyName(cols[x]) %>);
+				OnColumnChanging(<%= GetColumnEnumName(className) %>.<%=GetPropertyName(cols[x]) %>, this.entityData.<%= GetPropertyName(cols[x]) %>);
 				this.entityData.<%= GetPropertyName(cols[x]) %> = value;
 				<% if ( cols[x].IsPrimaryKeyMember ) { %>
 				this.EntityId.<%= GetPropertyName(cols[x]) %> = value;
@@ -390,7 +242,7 @@ namespace <%=NameSpace%>
 				{
 					this.EntityState = EntityState.Changed;
 				}
-				OnColumnChanged(<%=className%>Column.<%=GetPropertyName(cols[x]) %>, this.entityData.<%= GetPropertyName(cols[x]) %>);
+				OnColumnChanged(<%= GetColumnEnumName(className) %>.<%=GetPropertyName(cols[x]) %>, this.entityData.<%= GetPropertyName(cols[x]) %>);
 				OnPropertyChanged("<%=GetPropertyName(cols[x]) %>");
 			}
 		}
@@ -408,7 +260,7 @@ namespace <%=NameSpace%>
 		[XmlElement(IsNullable=true)]
 		<% } %>
 		[BrowsableAttribute(false)/*, XmlIgnoreAttribute()*/<% if ( IncludeWCFDataAttributes ) { %>, DataMember	<% } %>]
-		public  virtual <%= GetCSType(cols[x])%> Original<%= GetPropertyName(cols[x].Name) %>
+		public  virtual <%= GetCSType(cols[x])%> Original<%= GetPropertyName(cols[x]) %>
 		{
 			get { return this.entityData.<%= GetOriginalPropertyName(cols[x]) %>; }
 			set { this.entityData.<%= GetOriginalPropertyName(cols[x]) %> = value; }
@@ -489,6 +341,36 @@ WriteRelationshipPropertyString();
 %>
 		
 		#endregion
+		
+		#region Validation
+		
+		/// <summary>
+		/// Assigns validation rules to this object based on model definition.
+		/// </summary>
+		/// <remarks>This method overrides the base class to add schema related validation.</remarks>
+		protected override void AddValidationRules()
+		{
+			//Validation rules based on database schema.
+		<% 
+		for (int x=0; x < cols.Count; x++) 
+		{
+			string propertyName = GetPropertyName(cols[x]);
+			
+			if (! cols[x].AllowDBNull && IsCSReferenceDataType(cols[x])) 
+			{%>
+			ValidationRules.AddRule(Validation.CommonRules.NotNull,"<%=propertyName%>");
+			<%
+			}
+			
+			if (CanCheckLength(cols[x]))
+			{%>
+			ValidationRules.AddRule(Validation.CommonRules.StringMaxLength,new Validation.CommonRules.MaxLengthRuleArgs("<%=propertyName%>",<%=cols[x].Size%>));
+			<%
+			}
+		}
+		%>		
+		}
+   		#endregion
 		
 		#region IEditableObject
 		
@@ -586,7 +468,7 @@ WriteRelationshipPropertyString();
 	    }
 	    
 	    /// <summary>
-        /// Gets or sets the parent collection.
+        /// Gets or sets the parent collection of this current entity, if available.
         /// </summary>
         /// <value>The parent collection.</value>
 	    [XmlIgnore]
@@ -595,7 +477,7 @@ WriteRelationshipPropertyString();
 	    {
 	        get 
 	        {
-	            return (object)this.parentCollection;
+	            return this.parentCollection;
 	        }
 	        set 
 	        {
@@ -655,12 +537,12 @@ WriteRelationshipPropertyString();
 		/// <returns>
 		/// 	<c>true</c> if the property value has changed; otherwise, <c>false</c>.
 		/// </returns>
-		public bool IsPropertyChanged(<%=className%>Column column)
+		public bool IsPropertyChanged(<%= GetColumnEnumName(className) %> column)
 		{
 			switch(column)
 			{
 				<% for (int x=0; x < cols.Count; x++) { %>
-					case <%=className%>Column.<%=GetPropertyName(cols[x])%>:
+					case <%= GetColumnEnumName(className) %>.<%=GetPropertyName(cols[x])%>:
 					return entityData.<%=GetPropertyName(cols[x])%> != _originalData.<%=GetPropertyName(cols[x])%>;
 				<% } %>
 			
@@ -695,26 +577,25 @@ WriteRelationshipPropertyString();
 			//shallow copy entity
 			<%=className%> copy = new <%=className%>();
 			<% for (int x=0; x < cols.Count; x++) { %>
-			copy.<%= GetPropertyName(cols[x].Name) %> = this.<%= GetPropertyName(cols[x].Name) %>;
+			copy.<%= GetPropertyName(cols[x]) %> = this.<%= GetPropertyName(cols[x]) %>;
 			<% if( cols[x].IsPrimaryKeyMember && !IsIdentityColumn(cols[x]) && !IsComputed(cols[x]) ) { %>
-			copy.<%= GetOriginalPropertyName(cols[x].Name) %> = this.<%= GetOriginalPropertyName(cols[x].Name) %>;
+			copy.<%= GetOriginalPropertyName(cols[x]) %> = this.<%= GetOriginalPropertyName(cols[x]) %>;
 			<% } %>
 			<% } %>
 					
 		<% 
-		/* commented till GetChildrenCollections will work 
 		if (IncludeRelations){
 		int ctr = 0;
-		foreach(CollectionInfo item in GetChildrenCollections(SourceTable)) { 
+		foreach(CollectionInfo item in GetChildrenCollections(SourceTable, SourceTables).Values) { 
 			if (ctr == 0)
 				Response.Write("\t\t\t//deep copy nested objects" + Environment.NewLine);
 			ctr++;
 		%>
-			copy.<%=GetCollectionClassName(item.CleanName)%> = (<%=GetCollectionClassName(item.CleanName)%>)MakeCopyOf(this.<%=GetCollectionClassName(item.CleanName)%>); 
+			copy.<%= item.PropertyNameUnique %> = (<%= item.CollectionTypeName %>) MakeCopyOf(this.<%=item.PropertyNameUnique %>); 
 			<% }//end foreach CollectionInfo
 		}//end if IncludeRelations
-		//ChildCollections.Clear();
-		*/
+
+	
 		%>
 			copy.AcceptChanges();
 			return (<%=className%>)copy;
@@ -784,18 +665,18 @@ WriteRelationshipPropertyString();
 		<% for (int x=0; x < cols.Count; x++) {
 			    if ( cols[x].AllowDBNull )
 				{ %>
-			if ( Object1.<%= GetPropertyName(cols[x].Name) %> != null && Object2.<%= GetPropertyName(cols[x].Name) %> != null )
+			if ( Object1.<%= GetPropertyName(cols[x]) %> != null && Object2.<%= GetPropertyName(cols[x]) %> != null )
 			{
-				if (Object1.<%= GetPropertyName(cols[x].Name) %> != Object2.<%= GetPropertyName(cols[x].Name) %>)
+				if (Object1.<%= GetPropertyName(cols[x]) %> != Object2.<%= GetPropertyName(cols[x]) %>)
 					equal = false;
 			}
-			else if (Object1.<%=GetPropertyName(cols[x].Name)%> == null ^ Object2.<%=GetPropertyName(cols[x].Name)%> == null )
+			else if (Object1.<%=GetPropertyName(cols[x])%> == null ^ Object2.<%=GetPropertyName(cols[x])%> == null )
 			{
 				equal = false;
 			}
 		      <%}
 				else { %>
-			if (Object1.<%= GetPropertyName(cols[x].Name) %> != Object2.<%= GetPropertyName(cols[x].Name) %>)
+			if (Object1.<%= GetPropertyName(cols[x]) %> != Object2.<%= GetPropertyName(cols[x]) %>)
 				equal = false;
 			<% } // if ( cols[x].AllowDBNull ) %>
 		<% }// end for %>	
@@ -814,14 +695,14 @@ WriteRelationshipPropertyString();
 		{
 			throw new NotImplementedException();
 			// TODO -> generate a strongly typed IComparer in the concrete class
-			//return this. GetPropertyName(SourceTable.PrimaryKey.MemberColumns[0].Name) .CompareTo(((<%=abstractClassName%>)obj).GetPropertyName(SourceTable.PrimaryKey.MemberColumns[0].Name));
+			//return this. GetPropertyName(SourceTable.PrimaryKey.MemberColumns[0]) .CompareTo(((<%=abstractClassName%>)obj).GetPropertyName(SourceTable.PrimaryKey.MemberColumns[0]));
 		}
 		
 		/*
 		// static method to get a Comparer object
-        public static <%=className%>Comparer GetComparer()
+        public static <%= GetComparerClassName(className) %> GetComparer()
         {
-            return new <%=className%>Comparer();
+            return new <%= GetComparerClassName(className) %>();
         }
         */
 
@@ -837,7 +718,7 @@ WriteRelationshipPropertyString();
 
 /*
         // Special implementation to be called by custom comparer
-        public int CompareTo(<%=className%> rhs, <%=className%>Column which)
+        public int CompareTo(<%=className%> rhs, <%= GetColumnEnumName(className) %> which)
         {
             switch (which)
             {
@@ -845,11 +726,11 @@ WriteRelationshipPropertyString();
             	
             	<% if (column.DataType != DbType.Binary) { %>
             	
-            	case <%=className%>Column.<%=GetPropertyName(column.Name)%>:
+            	case <%= GetColumnEnumName(className) %>.<%=GetPropertyName(column)%>:
             		<% if (column.AllowDBNull && !IsCSReferenceDataType(column)) {%>
-            		return this.<%=GetPropertyName(column.Name)%>.Value.CompareTo(rhs.<%=GetPropertyName(column.Name)%>.Value);
+            		return this.<%=GetPropertyName(column)%>.Value.CompareTo(rhs.<%=GetPropertyName(column)%>.Value);
             		<% } else { %>
-            		return this.<%=GetPropertyName(column.Name)%>.CompareTo(rhs.<%=GetPropertyName(column.Name)%>);
+            		return this.<%=GetPropertyName(column)%>.CompareTo(rhs.<%=GetPropertyName(column)%>);
             		<% } %>  
             		
             	<% } %>
@@ -891,7 +772,7 @@ WriteRelationshipPropertyString();
 		/// <summary>
 		/// Clean up. Nothing here though.
 		/// </summary>
-		public void Dispose()
+		public virtual void Dispose()
 		{
 			this.parentCollection = null;
 			this.Dispose(true);
@@ -922,7 +803,7 @@ WriteRelationshipPropertyString();
 		/// Gets or sets the EntityId property.
 		/// </summary>
 		[XmlIgnore]
-		public <%= keyClassName %> EntityId
+		public virtual <%= keyClassName %> EntityId
 		{
 			get
 			{
@@ -946,6 +827,19 @@ WriteRelationshipPropertyString();
 		
 		#endregion
 		
+		#region EntityState
+		/// <summary>
+		///		Indicates state of object
+		/// </summary>
+		/// <remarks>0=Unchanged, 1=Added, 2=Changed</remarks>
+		[BrowsableAttribute(false), <%= (SerializeEntityState ? ", XmlIgnoreAttribute()" : "") %>]
+		public override EntityState EntityState 
+		{ 
+			get{ return entityData.EntityState;	 } 
+			set{ entityData.EntityState = value; } 
+		}
+		#endregion 
+		
 		#region EntityTrackingKey
 		///<summary>
 		/// Provides the tracking key for the <see cref="EntityLocator"/>
@@ -956,12 +850,12 @@ WriteRelationshipPropertyString();
 			get
 			{
 				if(entityTrackingKey == null)
-					entityTrackingKey = @"<%= className %>" <%
+					entityTrackingKey = new System.Text.StringBuilder("<%= className %>")<%
 				for (int x=0; x < cols.Count;x++) { 
 					if(cols[x].IsPrimaryKeyMember) {%>
-					+ this.<%=GetPropertyName(cols[x].Name)%>.ToString()<%
+					.Append("|").Append( this.<%=GetPropertyName(cols[x])%>.ToString())<%
 					}// end if 
-				} //end for each column %>;
+				} //end for each column %>.ToString();
 				return entityTrackingKey;
 			}
 			set
@@ -980,14 +874,14 @@ WriteRelationshipPropertyString();
 		public override string ToString()
 		{
 			return string.Format(System.Globalization.CultureInfo.InvariantCulture,
-				"{<%=cols.Count+1%>}{<%=cols.Count%>}<% for (int x=0; x < cols.Count; x++) { Response.Write("- " + GetPropertyName(cols[x].Name) + ": {" + x + "}{" + cols.Count + "}" ); } %>", 
+				"{<%=cols.Count+1%>}{<%=cols.Count%>}<% for (int x=0; x < cols.Count; x++) { Response.Write("- " + GetPropertyName(cols[x]) + ": {" + x + "}{" + cols.Count + "}" ); } %>", 
 			<%for (int x=0; x < cols.Count; x++)
 			  {
 			    if ( cols[x].AllowDBNull )
 				{%>
-				(this.<%=GetPropertyName(cols[x].Name)%> == null) ? string.Empty : this.<%=GetPropertyName(cols[x].Name)%>.ToString(),
+				(this.<%=GetPropertyName(cols[x])%> == null) ? string.Empty : this.<%=GetPropertyName(cols[x])%>.ToString(),
 				<%} else { %>
-				this.<%= GetPropertyName(cols[x].Name) %>,
+				this.<%= GetPropertyName(cols[x]) %>,
 			<% } // if ( cols[x].AllowDBNull )
 			} // for (int x=0; x < cols.Count; x++) %>
 				Environment.NewLine, 
@@ -998,92 +892,179 @@ WriteRelationshipPropertyString();
 		
 		#region Inner data class
 		<%
-			CodeTemplateCompiler compiler = new CodeTemplateCompiler(this.CodeTemplateInfo.DirectoryName + "\\EntityData.cst");
-			compiler.Compile();
-			CodeTemplate template = null;
-			
-			if (compiler.Errors.Count == 0)
-			{
-				template =  compiler.CreateInstance();
-			}
-			else
-			{
-				for (int i = 0; i < compiler.Errors.Count; i++)
-				{
-					Response.WriteLine(compiler.Errors[i].ToString());
-				}
-			}
+			CodeTemplate template = CodeTemplates["EntityData.cst"];
 			this.CopyPropertiesTo(template);
 			template.SetProperty("SourceTables", _sourceTables);
+			template.SetProperty("Prefix", Prefix);
+			template.SetProperty("SerializeEntityState", SerializeEntityState);
 			
-			/*
-			template.SetProperty("SourceTable", SourceTable);
-			template.SetProperty("SourceTables", _sourceTables);
-			template.SetProperty("NameSpace", NameSpace);
-			template.SetProperty("IncludeRelations", IncludeRelations);
-			template.SetProperty("IncludeManyToMany", IncludeManyToMany);
-			template.SetProperty("StrippedTablePrefixes", StrippedTablePrefixes);
-			template.SetProperty("AliasFilePath", AliasFilePath);
-			
-			template.SetProperty("EntityFormat", EntityFormat);
-			template.SetProperty("CollectionFormat", CollectionFormat);
-			template.SetProperty("ProviderFormat", ProviderFormat);
-			template.SetProperty("InterfaceFormat", InterfaceFormat);
-			template.SetProperty("BaseClassFormat", BaseClassFormat);
-			template.SetProperty("EnumFormat", EnumFormat);
-			template.SetProperty("ManyToManyFormat", ManyToManyFormat);
-			template.SetProperty("AliasFilePath", AliasFilePath);
-			template.SetProperty("StrippedTablePrefixes", StrippedTablePrefixes);
-			*/
 			Response.Write(template.RenderToString());
 		%>
 		#endregion
 		
-		#region Validation
+				
+		<% if (IncludeWCFDataAttributes ) { %>
+		
+		#region DataContract serialization
+		
+		bool _deserializing = false;
 		
 		/// <summary>
-		/// Assigns validation rules to this object based on model definition.
+		/// Called before deserializing the type.
 		/// </summary>
-		/// <remarks>This method overrides the base class to add schema related validation.</remarks>
-		protected override void AddValidationRules()
+		[OnDeserializingAttribute]
+		private void Initialize_BeforeDeserializing(StreamingContext context)
 		{
-			//Validation rules based on database schema.
-		<% 
-		for (int x=0; x < cols.Count; x++) 
+			this._deserializing = true;
+		
+			this.entityData = new <%=structName%>();
+			this.backupData = null;
+			
+			AddValidationRules();
+		}
+		
+		/// <summary>
+		/// Called after deserializing the type.
+		/// </summary>
+		[OnDeserializedAttribute ]
+		private void Initialize_Deserialized(StreamingContext context)
 		{
-			string propertyName = GetPropertyName(cols[x].Name);
-			
-			if (! cols[x].AllowDBNull && IsCSReferenceDataType(cols[x])) 
-			{%>
-			ValidationRules.AddRule(Validation.CommonRules.NotNull,"<%=propertyName%>");
-			<%
-			}
-			
-			if (CanCheckLength(cols[x]))
-			{%>
-			ValidationRules.AddRule(Validation.CommonRules.StringMaxLength,new Validation.CommonRules.MaxLengthRuleArgs("<%=propertyName%>",<%=cols[x].Size%>));
-			<%
+			this._deserializing = false;
+		}
+				
+		#endregion
+		
+		<% } %>
+		
+		#region Events trigger
+		/// <summary>
+		/// Raises the <see cref="ColumnChanging" /> event.
+		/// </summary>
+		/// <param name="column">The <see cref="<%= GetColumnEnumName(className) %>"/> which has raised the event.</param>
+		public void OnColumnChanging(<%= GetColumnEnumName(className) %> column)
+		{
+			OnColumnChanging(column, null);
+			return;
+		}
+		
+		/// <summary>
+		/// Raises the <see cref="ColumnChanged" /> event.
+		/// </summary>
+		/// <param name="column">The <see cref="<%= GetColumnEnumName(className) %>"/> which has raised the event.</param>
+		public void OnColumnChanged(<%= GetColumnEnumName(className) %> column)
+		{
+			OnColumnChanged(column, null);
+			return;
+		} 
+		
+		
+		/// <summary>
+		/// Raises the <see cref="ColumnChanging" /> event.
+		/// </summary>
+		/// <param name="column">The <see cref="<%= GetColumnEnumName(className) %>"/> which has raised the event.</param>
+		/// <param name="value">The changed value.</param>
+		public void OnColumnChanging(<%= GetColumnEnumName(className) %> column, object value)
+		{
+			if(IsEntityTracked && EntityState != EntityState.Added && !EntityManager.TrackChangedEntities)
+				EntityManager.StopTracking(entityTrackingKey);
+				
+			if (!SuppressEntityEvents)
+			{
+				<%= GetClassEventHandlerName(className) %> handler = ColumnChanging;
+				if(handler != null)
+				{
+					handler(this, new <%= GetClassEventArgsName(className) %>(column, value));
+				}
 			}
 		}
-		%>		
-		}
-   		#endregion
-	
+		
+		/// <summary>
+		/// Raises the <see cref="ColumnChanged" /> event.
+		/// </summary>
+		/// <param name="column">The <see cref="<%= GetColumnEnumName(className) %>"/> which has raised the event.</param>
+		/// <param name="value">The changed value.</param>
+		public void OnColumnChanged(<%= GetColumnEnumName(className) %> column, object value)
+		{
+			if (!SuppressEntityEvents)
+			{
+				<%= GetClassEventHandlerName(className) %> handler = ColumnChanged;
+				if(handler != null)
+				{
+					handler(this, new <%= GetClassEventArgsName(className) %>(column, value));
+				}
+			
+				// warn the parent list that i have changed
+				OnEntityChanged();
+			}
+		} 
+		#endregion
+			
 	} // End Class
 	
-	#region <%=className%>Comparer
+	
+	#region <%= GetClassEventArgsName(className) %> class
+	/// <summary>
+	/// Provides data for the ColumnChanging and ColumnChanged events.
+	/// </summary>
+	/// <remarks>
+	/// The ColumnChanging and ColumnChanged events occur when a change is made to the value 
+	/// of a property of a <see cref="<%=className%>"/> object.
+	/// </remarks>
+	public class <%= GetClassEventArgsName(className) %> : System.EventArgs
+	{
+		private <%= GetColumnEnumName(className) %> column;
+		private object value;
+		
+		///<summary>
+		/// Initalizes a new Instance of the <%= GetClassEventArgsName(className) %> class.
+		///</summary>
+		public <%= GetClassEventArgsName(className) %>(<%= GetColumnEnumName(className) %> column)
+		{
+			this.column = column;
+		}
+		
+		///<summary>
+		/// Initalizes a new Instance of the <%= GetClassEventArgsName(className) %> class.
+		///</summary>
+		public <%= GetClassEventArgsName(className) %>(<%= GetColumnEnumName(className) %> column, object value)
+		{
+			this.column = column;
+			this.value = value;
+		}
+		
+		///<summary>
+		/// The <%= GetColumnEnumName(className) %> that was modified, which has raised the event.
+		///</summary>
+		///<value cref="<%= GetColumnEnumName(className) %>" />
+		public <%= GetColumnEnumName(className) %> Column { get { return this.column; } }
+		
+		/// <summary>
+        /// Gets the current value of the column.
+        /// </summary>
+        /// <value>The current value of the column.</value>
+		public object Value{ get { return this.value; } }
+
+	}
+	#endregion
+	
+	///<summary>
+	/// Define a delegate for all <%=className%> related events.
+	///</summary>
+	public delegate void <%= GetClassEventHandlerName(className) %>(object sender, <%= GetClassEventArgsName(className) %> e);
+	
+	#region <%= GetComparerClassName(className) %>
 		
 	/// <summary>
 	///	Strongly Typed IComparer
 	/// </summary>
-	public class <%=className%>Comparer : System.Collections.Generic.IComparer<<%=className%>>
+	public class <%= GetComparerClassName(className) %> : System.Collections.Generic.IComparer<<%=className%>>
 	{
-		<%=className%>Column whichComparison;
+		<%= GetColumnEnumName(className) %> whichComparison;
 		
 		/// <summary>
-        /// Initializes a new instance of the <see cref="T:<%=className%>Comparer"/> class.
+        /// Initializes a new instance of the <see cref="T:<%= GetComparerClassName(className) %>"/> class.
         /// </summary>
-		public <%=className%>Comparer()
+		public <%= GetComparerClassName(className) %>()
         {            
         }               
         
@@ -1091,7 +1072,7 @@ WriteRelationshipPropertyString();
         /// Initializes a new instance of the <see cref="T:%=className%>Comparer"/> class.
         /// </summary>
         /// <param name="column">The column to sort on.</param>
-        public <%=className%>Comparer(<%=className%>Column column)
+        public <%= GetComparerClassName(className) %>(<%= GetColumnEnumName(className) %> column)
         {
             this.whichComparison = column;
         }
@@ -1133,7 +1114,7 @@ WriteRelationshipPropertyString();
         /// Gets or sets the column that will be used for comparison.
         /// </summary>
         /// <value>The comparison column.</value>
-        public <%=className%>Column WhichComparison
+        public <%= GetColumnEnumName(className) %> WhichComparison
         {
             get { return this.whichComparison; }
             set { this.whichComparison = value; }
@@ -1172,7 +1153,7 @@ WriteRelationshipPropertyString();
 			if ( entity != null )
 			{
 				<% foreach ( ColumnSchema column in pkCols ) { %>
-				this.<%= GetPrivateName(column.Name) %> = entity.<%= GetPropertyName(column.Name) %>;
+				this.<%= GetPrivateName(column) %> = entity.<%= GetPropertyName(column) %>;
 				<% } %>
 			}
 
@@ -1187,7 +1168,7 @@ WriteRelationshipPropertyString();
 			#region Init Properties
 
 			<% foreach ( ColumnSchema column in pkCols ) { %>
-			this.<%= GetPrivateName(column.Name) %> = <%= GetPrivateName(column.Name) %>;
+			this.<%= GetPrivateName(column) %> = <%= GetPrivateName(column) %>;
 			<% } %>
 
 			#endregion
@@ -1210,23 +1191,23 @@ WriteRelationshipPropertyString();
 		}
 		
 		<% foreach ( ColumnSchema column in pkCols ) { %>
-		// member variable for the <%= GetPropertyName(column.Name) %> property
-		private <%= GetCSType(column) %> <%= GetPrivateName(column.Name) %>;
+		// member variable for the <%= GetPropertyName(column) %> property
+		private <%= GetCSType(column) %> <%= GetPrivateName(column) %>;
 		
 		/// <summary>
-		/// Gets or sets the <%= GetPropertyName(column.Name) %> property.
+		/// Gets or sets the <%= GetPropertyName(column) %> property.
 		/// </summary>
-		public <%= GetCSType(column) %> <%= GetPropertyName(column.Name) %>
+		public <%= GetCSType(column) %> <%= GetPropertyName(column) %>
 		{
-			get { return <%= GetPrivateName(column.Name) %>; }
+			get { return <%= GetPrivateName(column) %>; }
 			set
 			{
 				if ( Entity != null )
 				{
-					Entity.<%= GetPropertyName(column.Name) %> = value;
+					Entity.<%= GetPropertyName(column) %> = value;
 				}
 				
-				<%= GetPrivateName(column.Name) %> = value;
+				<%= GetPrivateName(column) %> = value;
 			}
 		}
 		
@@ -1249,9 +1230,9 @@ WriteRelationshipPropertyString();
 			{
 			<% foreach ( ColumnSchema column in pkCols ) { %>
 				<% if ( column.AllowDBNull ) { %>
-				<%= GetPropertyName(column.Name) %> = (<%= GetCSType(column) %>) EntityUtil.ChangeType(values["<%= GetPropertyName(column.Name) %>"], typeof(<%= GetCSType(column) %>));
+				<%= GetPropertyName(column) %> = (<%= GetCSType(column) %>) EntityUtil.ChangeType(values["<%= GetPropertyName(column) %>"], typeof(<%= GetCSType(column) %>));
 				<% } else { %>
-				<%= GetPropertyName(column.Name) %> = ( values["<%= GetPropertyName(column.Name) %>"] != null ) ? (<%= GetCSType(column) %>) EntityUtil.ChangeType(values["<%= GetPropertyName(column.Name) %>"], typeof(<%= GetCSType(column) %>)) : <%= GetCSDefaultByType(column) %>;
+				<%= GetPropertyName(column) %> = ( values["<%= GetPropertyName(column) %>"] != null ) ? (<%= GetCSType(column) %>) EntityUtil.ChangeType(values["<%= GetPropertyName(column) %>"], typeof(<%= GetCSType(column) %>)) : <%= GetCSDefaultByType(column) %>;
 				<% } %>
 			<% } %>
 			}
@@ -1271,7 +1252,7 @@ WriteRelationshipPropertyString();
 			#region Init Dictionary
 
 			<% foreach ( ColumnSchema column in pkCols ) { %>
-			values.Add("<%= GetPropertyName(column.Name) %>", <%= GetPropertyName(column.Name) %>);
+			values.Add("<%= GetPropertyName(column) %>", <%= GetPropertyName(column) %>);
 			<% } %>
 
 			#endregion Init Dictionary
@@ -1284,12 +1265,12 @@ WriteRelationshipPropertyString();
 		///</summary>
 		public override string ToString()
 		{
-			return String.Format("<% for ( int i=0; i<pkCols.Count; i++ ) { %><%= GetPropertyName(pkCols[i].Name) %>: {<%= i %>}{<%= pkCols.Count %>}<% } %>",
+			return String.Format("<% for ( int i=0; i<pkCols.Count; i++ ) { %><%= GetPropertyName(pkCols[i]) %>: {<%= i %>}{<%= pkCols.Count %>}<% } %>",
 						<% foreach ( ColumnSchema column in pkCols ) { %>
 							<% if ( column.AllowDBNull ) { %>
-								(<%= GetPropertyName(column.Name) %> ?? String.Empty),
+								(<%= GetPropertyName(column) %> ?? String.Empty),
 							<% } else { %>
-								<%= GetPropertyName(column.Name) %>,
+								<%= GetPropertyName(column) %>,
 							<% } %>
 						<% } %>
 								Environment.NewLine);
@@ -1300,25 +1281,25 @@ WriteRelationshipPropertyString();
 	
 	#endregion	
 
-	#region <%=className%>Column Enum
+	#region <%= GetColumnEnumName(className) %> Enum
 	
 	/// <summary>
 	/// Enumerate the <%=className%> columns.
 	/// </summary>
 	[Serializable]
-	public enum <%=className%>Column : int
+	public enum <%= GetColumnEnumName(className) %> : int
 	{
 		<% for (int x=0; x < cols.Count; x++) { %>
 		/// <summary>
-		/// <%=GetPropertyName(cols[x].Name)%> : <%=GetColumnXmlComment(cols[x],2)%>
+		/// <%=GetPropertyName(cols[x])%> : <%=GetColumnXmlComment(cols[x],2)%>
 		/// </summary>
 		[EnumTextValue("<%= cols[x].Name %>")]
 		[ColumnEnum(<%= GetColumnEnumAttributeParams(cols[x]) %>)]
-		<%=GetPropertyName(cols[x].Name)%> = <%= (x+1) %><%if(x < cols.Count -1) {%>,<%}%>
+		<%=GetPropertyName(cols[x])%> = <%= (x+1) %><%if(x < cols.Count -1) {%>,<%}%>
 		<% }// end for %>	
 	}//End enum
 
-	#endregion <%=className%>Column Enum
+	#endregion <%= GetColumnEnumName(className) %> Enum
 
 } // end namespace
 <script runat="template">

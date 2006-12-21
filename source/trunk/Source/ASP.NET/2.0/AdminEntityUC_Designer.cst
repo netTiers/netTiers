@@ -117,7 +117,7 @@
 		<%
 		foreach(ColumnSchema column in keys)
 		{
-			string propertyName = GetPropertyName(column.Name);
+			string propertyName = GetPropertyName(column);
 		%>
 		<asp:ControlParameter ControlID="gvList" Name="<%=propertyName%>" PropertyName="SelectedDataKey.Values['<%=propertyName%>']" Type="<%=GetParameterTypeCode(column)%>" />
 		<%
@@ -129,7 +129,7 @@
 		foreach(ColumnSchema column in keys)
 		{
 		%>
-		<asp:Parameter Name="<%=GetPropertyName(column.Name)%>" Type="<%=GetParameterTypeCode(column)%>" />
+		<asp:Parameter Name="<%=GetPropertyName(column)%>" Type="<%=GetParameterTypeCode(column)%>" />
 		<%
 		}
 		%>
@@ -138,7 +138,7 @@
 		<%
 		foreach( ColumnSchema column in colsUpdatable)
 		{
-		string name = GetPropertyName(column.Name);
+		string name = GetPropertyName(column);
 		string type = GetParameterTypeCode(column);
 		
 		if ( ! column.IsForeignKeyMember && type=="DateTime" )
@@ -158,7 +158,7 @@
 foreach ( TableKeySchema tableKey in fKeysSingle)
 {
 	string pKeyClassName = GetClassName(tableKey.PrimaryKeyTable.Name);
-	string fKeyPropertyName = GetPropertyName(tableKey.ForeignKeyMemberColumns[0].Name);
+	string fKeyPropertyName = GetPropertyName(tableKey.ForeignKeyMemberColumns[0]);
 	string eventHandlers = String.Empty;
 	
 	eventHandlers += String.Format(" OnObjectCreating=\"objDs{0}_ObjectCreating\"",fKeyPropertyName);
@@ -193,7 +193,7 @@ foreach ( TableKeySchema tableKey in fKeysSingle)
 							{
 								//if ( ! column.IsForeignKeyMember )
 								{
-									string propertyName = GetPropertyName(column.Name);
+									string propertyName = GetPropertyName(column);
 							%>
 							<asp:ListItem Value="<%=column.Name%>" Text="<%=propertyName%>"></asp:ListItem>
 							<%
@@ -283,7 +283,7 @@ foreach ( TableKeySchema tableKey in fKeysSingle)
 								{
 									
 									
-									if ( GetPropertyName(tableKey.ForeignKeyMemberColumns[0].Name) == propertyName )
+									if ( GetPropertyName(tableKey.ForeignKeyMemberColumns[0]) == propertyName )
 									{
 										evalProperty = GetKeysName(tableKey.ForeignKeyMemberColumns) + "Source.";
 										
@@ -539,7 +539,7 @@ function ShowFilter(containerName)
 				<%
 				foreach(TableKeySchema tableKey in fKeysSingle)
 				{
-					string propertyName = GetPropertyName(tableKey.ForeignKeyMemberColumns[0].Name);
+					string propertyName = GetPropertyName(tableKey.ForeignKeyMemberColumns[0]);
 					%>
 				case "<%=propertyName%>":
 					HideAll(containerName);
@@ -572,7 +572,7 @@ function HideAll(containerName)
 	<%
 		foreach(TableKeySchema tableKey in fKeysSingle)
 		{
-			string propertyName = GetPropertyName(tableKey.ForeignKeyMemberColumns[0].Name);
+			string propertyName = GetPropertyName(tableKey.ForeignKeyMemberColumns[0]);
 			%>
 	HideElement(containerName + "_ddlFilter<%=propertyName%>");
 		<%
@@ -611,7 +611,7 @@ function ShowElement(elementId)
 
 public string GetEditorControl(ColumnSchema column, string prefix, TableKeySchemaCollection fkeys)
 {
-	string propertyName = GetPropertyName(column.Name);
+	string propertyName = GetPropertyName(column);
 	string controlID = String.Format("data{0}{1}",prefix, propertyName);
 	string validatorID = String.Format("Val_{0}",controlID);
 	string controlDecl = String.Empty;
@@ -628,7 +628,7 @@ public string GetEditorControl(ColumnSchema column, string prefix, TableKeySchem
 			ColumnSchema fKeyColumn = tableKey.ForeignKeyMemberColumns[0];
 			if ( GetPropertyName(fKeyColumn) == propertyName )
 			{
-				pkPropertyName = GetPropertyName(tableKey.PrimaryKeyMemberColumns[0].Name);
+				pkPropertyName = GetPropertyName(tableKey.PrimaryKeyMemberColumns[0]);
 				
 				if (tableKey.ForeignKeyMemberColumns[0].AllowDBNull)
 				{
@@ -645,7 +645,7 @@ public string GetEditorControl(ColumnSchema column, string prefix, TableKeySchem
 				{
 					if ( ! pkColumn.IsForeignKeyMember && ! pkColumn.IsPrimaryKeyMember )
 					{
-						pkDisplayField = GetPropertyName(pkColumn.Name);
+						pkDisplayField = GetPropertyName(pkColumn);
 						break;
 					}
 				}
@@ -812,20 +812,20 @@ public string GetFilterLists(TableKeySchemaCollection fkeys)
 		if ( tableKey.ForeignKeyMemberColumns.Count == 1 )
 		{
 			ColumnSchema column = tableKey.ForeignKeyMemberColumns[0];
-			string propertyName = GetPropertyName(column.Name);
+			string propertyName = GetPropertyName(column);
 			string controlID = String.Format("ddlFilter{0}", propertyName);
 			
 			string pkPropertyName = String.Empty;
 			string pkDisplayField = String.Empty;
 			
-			pkPropertyName = GetPropertyName(tableKey.PrimaryKeyMemberColumns[0].Name);
+			pkPropertyName = GetPropertyName(tableKey.PrimaryKeyMemberColumns[0]);
 
 			//Find the first non-key column for display
 			foreach(ColumnSchema pkColumn in tableKey.PrimaryKeyTable.Columns)
 			{
 				if ( ! pkColumn.IsForeignKeyMember && ! pkColumn.IsPrimaryKeyMember )
 				{
-					pkDisplayField = GetPropertyName(pkColumn.Name);
+					pkDisplayField = GetPropertyName(pkColumn);
 					break;
 				}
 			}
@@ -848,7 +848,7 @@ public string GetParameterTypeCode(ColumnSchema column)
 {
 		Type colType = Type.GetType(GetCSTypeWithoutNullable((DataObjectBase)column));
 		TypeCode colTypeCode = Type.GetTypeCode(colType);
-		return Enum.GetName(typeof(TypeCode), colTypeCode);
+		return System.Enum.GetName(typeof(TypeCode), colTypeCode);
 }
 
 

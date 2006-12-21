@@ -163,13 +163,13 @@ namespace <%=NameSpace%>
 		/// A simple factory method to create a new <see cref="<%=className%>"/> instance.
 		///</summary>
 		<% for (int x=0; x < colsUpdatable.Count; x++) { %>
-		///<param name="<%=GetPrivateName(colsUpdatable[x].Name) %>"><%=colsUpdatable[x].Description%></param>
+		///<param name="<%=GetPrivateName(colsUpdatable[x]) %>"><%=colsUpdatable[x].Description%></param>
 		<% } %>
-		public static new <%=className%> Create<%=className%>(<% for (int x=0; x < colsUpdatable.Count; x++) { %><%= GetCSType(colsUpdatable[x]) %> <%= GetPrivateName(colsUpdatable[x].Name) %><%if (x < colsUpdatable.Count -1){%>, <%} }// end for %>)
+		public static new <%=className%> Create<%=className%>(<% for (int x=0; x < colsUpdatable.Count; x++) { %><%= GetCSType(colsUpdatable[x]) %> <%= GetPrivateName(colsUpdatable[x]) %><%if (x < colsUpdatable.Count -1){%>, <%} }// end for %>)
 		{
 			<%=className%> newComponent<%=className%> = new <%=className%>();//ComponentEntityFactory.Create(typeof(<%=className%>)) as <%=className%>;
 			<% for (int x=0; x < colsUpdatable.Count; x++) { %>
-			<%= GetObjectPropertyAccessor(colsUpdatable[x], "newComponent" + className) %>  = <%= GetPrivateName(colsUpdatable[x].Name) %>;
+			<%= GetObjectPropertyAccessor(colsUpdatable[x], "newComponent" + className) %>  = <%= GetPrivateName(colsUpdatable[x]) %>;
 			<% }// end for %>
 			return newComponent<%=className%>;
 		}
@@ -188,31 +188,31 @@ namespace <%=NameSpace%>
 
 		%>
 		/// <summary>
-		/// 	Gets or Sets the <%= GetPropertyName(cols[x].Name) %> property.
+		/// 	Gets or Sets the <%= GetPropertyName(cols[x]) %> property.
 		///		<%=cols[x].Description%>
 		/// </summary>
 		/// <value>This type is <%=cols[x].NativeType%></value>
-		[Entities.Bindable, 
+		[System.ComponentModel.Bindable(System.ComponentModel.BindableSupport.Yes)]
 		DataObjectField(<%= dataObjectFieldParams  %>)<%= defaultValue %>]
-		public override <%= GetCSType(cols[x])%> <%= GetPropertyName(cols[x].Name) %>
+		public override <%= GetCSType(cols[x])%> <%= GetPropertyName(cols[x]) %>
 		{
 			get 
 			{
-				return base.<%= GetPropertyName(cols[x].Name) %>; 
+				return base.<%= GetPropertyName(cols[x]) %>; 
 			}
 			set
 			{
-				if (base.<%= GetPropertyName(cols[x].Name) %> == value)
+				if (base.<%= GetPropertyName(cols[x]) %> == value)
 					return;
 					
-				base.<%= GetPropertyName(cols[x].Name) %> = value;
+				base.<%= GetPropertyName(cols[x]) %> = value;
 				<% if (IncludeGetListByFK && cols[x].IsForeignKeyMember) { 
 					foreach(TableKeySchema tableKey in SourceTable.ForeignKeys)
 					{
 						if (!SourceTables.Contains(tableKey.PrimaryKeyTable)) 
 							continue;
 				%>
-				<%= GetPropertyName(cols[x].Name)%>Source = null;
+				<%= GetPropertyName(cols[x])%>Source = null;
 				<%  }// end foreach
 				} //end if 
 				%>
@@ -244,7 +244,7 @@ namespace <%=NameSpace%>
 		/// </summary>
 		/// <value>The source <%=pkClassName%> for <%=fkPropertyName%>.</value>
         [XmlIgnore()]
-		[Entities.Bindable]
+		[System.ComponentModel.Bindable(System.ComponentModel.BindableSupport.Yes)]
 		public new virtual <%=pkClassName%> <%=compositePropertyName%>
       	{
             get { 
@@ -267,23 +267,8 @@ namespace <%=NameSpace%>
 		// If the chosen pattern to implement is a domain pattern, go ahead 
 		// and fill all data repository wrapper access here.
 		
-		CodeTemplateCompiler compiler = new CodeTemplateCompiler(this.CodeTemplateInfo.DirectoryName + "\\ComponentDataAccess.cst");
-		compiler.Compile();
-		CodeTemplate template = null;
-		
-		if (compiler.Errors.Count == 0)
-		{
-			template =  compiler.CreateInstance();
-		}
-		else
-		{
-			for (int i = 0; i < compiler.Errors.Count; i++)
-			{
-				Response.WriteLine(compiler.Errors[i].ToString());
-			}
-		}
-		
-		this.CopyPropertiesTo(template);
+		CodeTemplate template = CodeTemplates["ComponentDataAccess.cst"];
+		template.CopyPropertiesTo(template);
 		template.SetProperty("RenderOverload", true);
 		template.SetProperty("RenderImplementation", true);
 		template.SetProperty("ComponentPattern", MoM.Templates.ComponentPatternType.DomainModel);

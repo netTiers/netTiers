@@ -1,4 +1,4 @@
-﻿<%@ CodeTemplate Language="C#" TargetLanguage="C#" Src="..\..\TemplateLib\CommonSqlCode.cs" Inherits="MoM.Templates.CommonSqlCode" Debug="True" Description="Template description here." ResponseEncoding="UTF-8"%>
+<%@ CodeTemplate Language="C#" TargetLanguage="C#" Src="..\..\TemplateLib\CommonSqlCode.cs" Inherits="MoM.Templates.CommonSqlCode" Debug="True" Description="Template description here." ResponseEncoding="UTF-8"%>
 <%@ Property Name="BLLNameSpace" Optional="False" Type="System.String" Category="Style" Description="Object Namespace." %>
 <%@ Property Name="DALNameSpace" Optional="False" Type="System.String" Category="Style" Description="DAL Namespace." %>
 <%@ Property Name="WebNameSpace" Optional="False" Type="System.String" Category="Style" Description="Web Namespace." %>
@@ -424,8 +424,8 @@ namespace <%= WebNameSpace %>.Data
 			// make sure primary key column(s) have been set
 			<% foreach ( ColumnSchema column in SourceTable.PrimaryKey.MemberColumns ) { %>
 			<% if ( IsGuidColumn(column) ) { %>
-			if ( entity.<%= GetPropertyName(column.Name) %> == Guid.Empty )
-				entity.<%= GetPropertyName(column.Name) %> = Guid.NewGuid();
+			if ( entity.<%= GetPropertyName(column) %> == Guid.Empty )
+				entity.<%= GetPropertyName(column) %> = Guid.NewGuid();
 			<% } %>
 			<% } %>
 		}
@@ -776,7 +776,7 @@ private string WriteCustomSelectStatements(string tableName, IList methods, bool
 			foreach ( ParameterSchema param in command.AllOutputParameters )
 			{
 				sb.AppendFormat("\t\t\t\t\tcustomOutput.Add(\"{0}\", {1});{2}",
-								GetPropertyName(param.Name),
+								GetPropertyName(param),
 								GetCustomVariableName(param.Name, command),
 								Environment.NewLine);
 			}
@@ -838,7 +838,7 @@ private string WriteParameterStatements(ParameterSchemaCollection parameters, st
 		{
 			sb.AppendFormat("\t\t\t\t\t{0} = ({2}) EntityUtil.ChangeType(values[\"{1}\"], typeof({2}));{3}",
 							GetCustomVariableName(param.Name, param.Command),
-							GetPropertyName(param.Name),
+							GetPropertyName(param),
 							GetCSType(param),
 							Environment.NewLine);
 		}
@@ -846,7 +846,7 @@ private string WriteParameterStatements(ParameterSchemaCollection parameters, st
 		{
 			sb.AppendFormat("\t\t\t\t\t{0} = ( values[\"{1}\"] != null ) ? ({2}) EntityUtil.ChangeType(values[\"{1}\"], typeof({2})) : {3};{4}",
 							GetCustomVariableName(param.Name , param.Command),
-							GetPropertyName(param.Name),
+							GetPropertyName(param),
 							GetCSType(param),
 							GetCSDefaultByType(param),
 							Environment.NewLine);
