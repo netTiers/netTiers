@@ -639,7 +639,7 @@ private string WriteUniqueIndexSelectStatements(string tableName, ColumnSchemaCo
 						TransactionManager,
 						GetProviderName(tableName),
 						GetKeysName(columns),
-						GetFunctionCallParameters(columns),
+						GetFunctionCallParameters(columns, "_nullable", AppendIf),
 						Environment.NewLine);
 	}
 					
@@ -811,7 +811,7 @@ private string WriteParameterStatements(ColumnSchemaCollection memberColumns, st
 		if ( column.AllowDBNull )
 		{
 			sb.AppendFormat("\t\t\t\t\t{0} = ({2}) EntityUtil.ChangeType(values[\"{1}\"], typeof({2}));{3}",
-							GetPrivateName(column),
+							GetPrivateName(column) + "_nullable",
 							GetPropertyName(column),
 							GetCSType(column),
 							Environment.NewLine);
@@ -865,7 +865,7 @@ private string WriteTotalRowCountStatement(ColumnSchemaCollection memberColumns,
 	sb.AppendFormat("\t\t\t\t\tcount = {0}.GetBy{1}({2}).Count;{3}",
 					GetProviderName(tableName),
 					functionName == null ? GetKeysName(memberColumns) : functionName,
-					GetFunctionCallParameters(memberColumns),
+					GetFunctionCallParameters(memberColumns, "_nullable", AppendIf),
 					Environment.NewLine);
 	return sb.ToString();
 }
@@ -881,9 +881,14 @@ private string WriteGetByStatement(ColumnSchemaCollection memberColumns, string 
 					TransactionManager,
 					GetProviderName(tableName),
 					functionName == null ? GetKeysName(memberColumns) : functionName,
-					GetFunctionCallParameters(memberColumns),
+					GetFunctionCallParameters(memberColumns, "_nullable", AppendIf),
 					Environment.NewLine);
 	return sb.ToString();
+}
+
+public bool AppendIf(ColumnSchema col)
+{
+	return col.AllowDBNull;
 }
 
 private string WriteBreakStatement()
@@ -902,9 +907,10 @@ private string WriteParameterDeclarations(IndexSchemaCollection indexes, TableKe
 	{
 		foreach ( ColumnSchema column in index.MemberColumns )
 		{
-			if( !columns.Contains(column.Name) )
+			string unique = column.AllowDBNull ? column.Name + "_nullable" : column.Name;
+			if( !columns.Contains(unique) )
 			{
-				columns.Add(column.Name);
+				columns.Add(unique);
 				WriteParameterDeclaration(column, sb);
 			}
 		}
@@ -913,9 +919,10 @@ private string WriteParameterDeclarations(IndexSchemaCollection indexes, TableKe
 	{
 		foreach ( ColumnSchema column in tableKey.ForeignKeyMemberColumns )
 		{
-			if( !columns.Contains(column.Name) )
+			string unique = column.AllowDBNull ? column.Name + "_nullable" : column.Name;
+			if( !columns.Contains(unique) )
 			{
-				columns.Add(column.Name);
+				columns.Add(unique);	
 				WriteParameterDeclaration(column, sb);
 			}
 		}
@@ -934,9 +941,11 @@ private string WriteParameterDeclarations(IndexSchemaCollection indexes, TableKe
 				{
 					foreach( ColumnSchema column in junctionTableKey.ForeignKeyMemberColumns )
 					{
-						if( !columns.Contains(column.Name) )
+						string unique = column.AllowDBNull ? column.Name + "_nullable" : column.Name;
+						if( !columns.Contains(unique) )
 						{
-							columns.Add(column.Name);
+							columns.Add(unique);
+								
 							WriteParameterDeclaration(column, sb);
 						}
 					}
@@ -978,7 +987,7 @@ private string WriteParameterDeclarations(IndexSchemaCollection indexes, TableKe
 private void WriteParameterDeclaration(ColumnSchema column, StringBuilder sb)
 {
 	sb.AppendFormat("\t\t\t{1} {0};{2}",
-					GetPrivateName(column),
+					GetPrivateName(column) + (column.AllowDBNull ?  "_nullable" : "" ),					
 					GetCSType(column),
 					Environment.NewLine);
 }

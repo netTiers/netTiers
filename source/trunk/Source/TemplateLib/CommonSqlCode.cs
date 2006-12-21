@@ -1387,6 +1387,13 @@ namespace MoM.Templates
 				name = GetAliasName(owner, obj, name, ReturnFields.FieldName);
 			}
 			
+			foreach(string keyword in csharpKeywords)
+			{
+				if (keyword == name)
+				{
+					name = "@" + name;
+				}
+			}	
 			return name;
 		}
 
@@ -2550,10 +2557,29 @@ namespace MoM.Templates
 		/// <param name="columns">The columns to transform.</param>
 		public string GetFunctionCallParameters(ColumnSchemaCollection columns)
 		{
+			return GetFunctionCallParameters(columns, string.Empty, null);
+		}
+		
+		public delegate bool AppendIf(ColumnSchema col);
+		
+		/// <summary>
+		/// Returns a string that reprenst the given columns formated as method parameters call. (ex: param1, param2)
+		/// </summary>
+		/// <param name="columns">The columns to transform.</param>
+		public string GetFunctionCallParameters(ColumnSchemaCollection columns, string appendString, AppendIf condition)
+		{			
 			StringBuilder output = new StringBuilder();
 			for (int i = 0; i < columns.Count; i++)
 			{
 				output.Append(GetPrivateName(columns[i]));
+				if (condition != null)
+				{
+					if (condition(columns[i]))
+					{
+						output.Append(appendString);
+					}
+				}
+					
 				if (i < columns.Count - 1)
 				{
 					output.Append(", ");
@@ -4434,7 +4460,7 @@ CREATE\s+PROC(?:EDURE)?                               # find the start of the st
 							collectionInfo.JunctionTable = GetClassName(junctionTable);
 							collectionInfo.JunctionTablePkColNames = GetColumnNames(junctionTable.PrimaryKey.MemberColumns);
 							collectionInfo.CollectionName = string.Format("{0}_From_{1}", GetCollectionPropertyName( collectionInfo.SecondaryTable), GetClassName(collectionInfo.JunctionTable)); //GetManyToManyName(GetCollectionClassName( collectionInfo.SecondaryTable), collectionInfo.JunctionTable);
-							collectionInfo.CollectionTypeName = GetCollectionClassName( collectionInfo.SecondaryTable);
+							collectionInfo.CollectionTypeName = GetCollectionClassName(collectionInfo.SecondaryTable);
 							collectionInfo.CollectionRelationshipType = RelationshipType.ManyToMany;
 							collectionInfo.FkColNames = GetColumnNames(secondaryTable.PrimaryKey.MemberColumns);
 							collectionInfo.TableKey = key;		
@@ -4492,9 +4518,9 @@ CREATE\s+PROC(?:EDURE)?                               # find the start of the st
 				}
 				
 				//Check if there's an alias, if there is, substitute.
-				collectionInfo.PropertyName = GetAliasName(collectionInfo.PrimaryTableSchema.Owner, collectionInfo.PrimaryTable, collectionInfo.PropertyName, ReturnFields.PropertyName);
-				collectionInfo.PropertyNameUnique = GetAliasName(collectionInfo.PrimaryTableSchema.Owner, collectionInfo.PrimaryTable, collectionInfo.PropertyNameUnique, ReturnFields.PropertyName);
-				collectionInfo.TypeName = GetAliasName(collectionInfo.PrimaryTableSchema.Owner, collectionInfo.PrimaryTable, collectionInfo.PropertyNameUnique, ReturnFields.CSType);
+				//collectionInfo.PropertyName = GetAliasName(collectionInfo.PrimaryTableSchema.Owner, collectionInfo.PrimaryTable, collectionInfo.PropertyName, ReturnFields.PropertyName);
+				//collectionInfo.PropertyNameUnique = GetAliasName(collectionInfo.PrimaryTableSchema.Owner, collectionInfo.PrimaryTable, collectionInfo.PropertyNameUnique, ReturnFields.PropertyName);
+				//collectionInfo.TypeName = GetAliasName(collectionInfo.PrimaryTableSchema.Owner, collectionInfo.PrimaryTable, collectionInfo.PropertyNameUnique, ReturnFields.CSType);
 				
 				_collections[collectionInfo.PropertyName] = collectionInfo;
 			}

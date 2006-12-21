@@ -19,7 +19,11 @@
 <%@ Property Name="NameSpace" Optional="True" Type="System.String" Category="Style" Description="Object Namespace." %>
 	
 <%@ Property Name="UsePartialClass" Type="System.Boolean" Default="true" Category="General" Description="Indicates if partial class should be generated." %>
-	
+
+<%-- When debugging, you must include this template 
+<%@ Register Name="EntityData" Template="EntityData.cst" MergeProperties="False" ExcludeProperties="" %>
+--%>
+
 <%
 	//if (SourceTables == null) SourceTables = new SchemaExplorer.TableSchemaCollection();
 	string name;
@@ -144,13 +148,13 @@ namespace <%=NameSpace%>
 		<% for (int x=0; x < colsUpdatable.Count; x++) { %>
 		///<param name="<%=GetCamelCaseName(className) + GetPropertyName(colsUpdatable[x]) %>"><%=GetColumnXmlComment(colsUpdatable[x],2)%></param>
 		<% } %>
-		<%=constructorAccessModifier%> <%=abstractClassName%>(<% WrapInit(); for (int x=0; x < colsUpdatable.Count; x++) { %><%= GetCSType(colsUpdatable[x]) %> <%= GetCamelCaseName(className + GetPropertyName(colsUpdatable[x])) %><%WrapIncr(colsUpdatable[x]); if (x < colsUpdatable.Count -1){%>, <% WrapLine(3); } }// end for %>)
+		<%=constructorAccessModifier%> <%=abstractClassName%>(<% WrapInit(); for (int x=0; x < colsUpdatable.Count; x++) { %><%= GetCSType(colsUpdatable[x]) %> <%= GetCamelCaseName(className) + GetPropertyName(colsUpdatable[x]) %><%WrapIncr(colsUpdatable[x]); if (x < colsUpdatable.Count -1){%>, <% WrapLine(3); } }// end for %>)
 		{
 			this.entityData = new <%=structName%>();
 			this.backupData = null;
 
 			<% for (int x=0; x < colsUpdatable.Count; x++) { %>
-			this.<%= GetPropertyName(colsUpdatable[x]) %> = <%= GetCamelCaseName(className + GetPropertyName(colsUpdatable[x])) %>;
+			this.<%= GetPropertyName(colsUpdatable[x]) %> = <%= GetCamelCaseName(className) + GetPropertyName(colsUpdatable[x]) %>;
 			<% }// end for %>
 		}
 		<% } %>
@@ -165,7 +169,7 @@ namespace <%=NameSpace%>
 		{
 			<%=className%> new<%=className%> = new <%=className%>();
 			<% for (int x=0; x < colsUpdatable.Count; x++) { %>
-			new<%=className%>.<%=GetPropertyName(colsUpdatable[x]) %> = <%= GetCamelCaseName(className + GetPropertyName(colsUpdatable[x])) %>;
+			new<%=className%>.<%=GetPropertyName(colsUpdatable[x]) %> = <%= GetCamelCaseName(className) + GetPropertyName(colsUpdatable[x]) %>;
 			<% }// end for %>
 			return new<%=className%>;
 		}
@@ -590,8 +594,14 @@ WriteRelationshipPropertyString();
 			if (ctr == 0)
 				Response.Write("\t\t\t//deep copy nested objects" + Environment.NewLine);
 			ctr++;
+			
+			string typeName = "";
+			if (item.CollectionRelationshipType == MoM.Templates.CommonSqlCode.RelationshipType.OneToOne)
+				typeName = item.TypeName;
+			else
+				typeName = item.CollectionTypeName;
 		%>
-			copy.<%= item.PropertyNameUnique %> = (<%= item.CollectionTypeName %>) MakeCopyOf(this.<%=item.PropertyNameUnique %>); 
+			copy.<%= item.PropertyNameUnique %> = (<%= typeName %>) MakeCopyOf(this.<%=item.PropertyNameUnique %>); 
 			<% }//end foreach CollectionInfo
 		}//end if IncludeRelations
 
@@ -892,7 +902,12 @@ WriteRelationshipPropertyString();
 		
 		#region Inner data class
 		<%
-			CodeTemplate template = CodeTemplates["EntityData.cst"];
+			CodeTemplate template;
+			if (CodeTemplates.ContainsKey("EntityData.cst"))
+				template = CodeTemplates["EntityData.cst"];
+			else
+				template = base.CreateTemplate<EntityData>();
+				
 			this.CopyPropertiesTo(template);
 			template.SetProperty("SourceTables", _sourceTables);
 			template.SetProperty("Prefix", Prefix);
