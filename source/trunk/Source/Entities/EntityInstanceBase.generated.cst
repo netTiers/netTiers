@@ -177,7 +177,8 @@ namespace <%=NameSpace%>
 		#endregion Constructors
 			
 		#region Properties	
-				
+		
+		#region Data Properties		
 		<% for (int x=0; x < cols.Count; x++) {
 		
 		string dataObjectFieldParams = GetDataObjectFieldCallParams(cols[x]);
@@ -236,16 +237,13 @@ namespace <%=NameSpace%>
     			//	throw new ArgumentOutOfRangeException("<%= GetPropertyName(cols[x]) %>", "<%= GetPropertyName(cols[x]) %> maximum length is <%=cols[x].Size%>.");
 				//}
 				<% } %>
-					
 				OnColumnChanging(<%= GetColumnEnumName(className) %>.<%=GetPropertyName(cols[x]) %>, this.entityData.<%= GetPropertyName(cols[x]) %>);
 				this.entityData.<%= GetPropertyName(cols[x]) %> = value;
 				<% if ( cols[x].IsPrimaryKeyMember ) { %>
 				this.EntityId.<%= GetPropertyName(cols[x]) %> = value;
 				<% } %>
 				if (<% if (IncludeWCFDataAttributes ) { %> !this._deserializing && <% } %>this.EntityState == EntityState.Unchanged)
-				{
 					this.EntityState = EntityState.Changed;
-				}
 				OnColumnChanged(<%= GetColumnEnumName(className) %>.<%=GetPropertyName(cols[x]) %>, this.entityData.<%= GetPropertyName(cols[x]) %>);
 				OnPropertyChanged("<%=GetPropertyName(cols[x]) %>");
 			}
@@ -274,6 +272,7 @@ namespace <%=NameSpace%>
 		
 		} // end for each columns 
 		%>
+		#endregion Data Properties		
 
 		<% if (IncludeGetListByFK) { %>
 		#region Source Foreign Key Property
@@ -293,9 +292,7 @@ namespace <%=NameSpace%>
 			
 			string pkClassName = GetClassName(tableKey.PrimaryKeyTable.Name);
 			string memberVarName = "_" + GetCamelCaseName(fkPropertyName) + "Source";
-		%>
-		private <%=pkClassName%> <%=memberVarName%> = null;
-		
+		%>		
 		/// <summary>
 		/// Gets or sets the source <see cref="<%=pkClassName%>"/>.
 		/// </summary>
@@ -304,45 +301,21 @@ namespace <%=NameSpace%>
 		[Browsable(false), System.ComponentModel.Bindable(System.ComponentModel.BindableSupport.Yes)]
 		public virtual <%=pkClassName%> <%=fkPropertyName%>Source
       	{
-            get { return this.<%=memberVarName%>; }
-            set { this.<%=memberVarName%> = value; }
+            get { return entityData.<%=fkPropertyName%>Source; }
+            set { entityData.<%=fkPropertyName%>Source = value; }
       	}
 		<%	} //end if in SourceTables
 		 } //end for each FK%>
 		#endregion
 		<%}// IncludeGetListByFK%>	
-			
-		#region Table Meta Data
-		/// <summary>
-		///		The name of the underlying database table.
-		/// </summary>
-		[BrowsableAttribute(false), XmlIgnoreAttribute()]
-		public override string TableName
-		{
-			get { return "<%=SourceTable.Name%>"; }
-		}
 		
-		/// <summary>
-		///		The name of the underlying database table's columns.
-		/// </summary>
-		[BrowsableAttribute(false), XmlIgnoreAttribute()]
-		public override string[] TableColumns
-		{
-			get
-			{
-				return new string[] {<%for (int i=0; i< SourceTable.Columns.Count; i++) {
-					if (i>0) Response.Write(", ");
-					Response.Write("\""+ SourceTable.Columns[i].Name + "\"");
-					} %>};
-			}
-		}
-		#endregion 
-		
+		#region Children Collections
 <% 
 if(IncludeRelations) {
 WriteRelationshipPropertyString();
 }
 %>
+		#endregion Children Collections
 		
 		#endregion
 		
@@ -375,6 +348,32 @@ WriteRelationshipPropertyString();
 		%>		
 		}
    		#endregion
+		
+		#region Table Meta Data
+		/// <summary>
+		///		The name of the underlying database table.
+		/// </summary>
+		[BrowsableAttribute(false), XmlIgnoreAttribute()]
+		public override string TableName
+		{
+			get { return "<%=SourceTable.Name%>"; }
+		}
+		
+		/// <summary>
+		///		The name of the underlying database table's columns.
+		/// </summary>
+		[BrowsableAttribute(false), XmlIgnoreAttribute()]
+		public override string[] TableColumns
+		{
+			get
+			{
+				return new string[] {<%for (int i=0; i< SourceTable.Columns.Count; i++) {
+					if (i>0) Response.Write(", ");
+					Response.Write("\""+ SourceTable.Columns[i].Name + "\"");
+					} %>};
+			}
+		}
+		#endregion 
 		
 		#region IEditableObject
 		
@@ -503,6 +502,99 @@ WriteRelationshipPropertyString();
 
 		#endregion
 		
+		#region ICloneable Members
+		///<summary>
+		///  Returns a Typed <%=className%> Entity 
+		///</summary>
+		public virtual <%=className%> Copy()
+		{
+			//shallow copy entity
+			<%=className%> copy = new <%=className%>();
+			<% for (int x=0; x < cols.Count; x++) { %>
+			copy.<%= GetPropertyName(cols[x]) %> = this.<%= GetPropertyName(cols[x]) %>;
+			<% if( cols[x].IsPrimaryKeyMember && !IsIdentityColumn(cols[x]) && !IsComputed(cols[x]) ) { %>
+			copy.<%= GetOriginalPropertyName(cols[x]) %> = this.<%= GetOriginalPropertyName(cols[x]) %>;
+			<% } %>
+			<% } %>
+			
+			<% if (IncludeGetListByFK) { %>
+			<%	//Generate a Source property for each foreign key relation
+			System.Collections.ArrayList filled = new System.Collections.ArrayList();
+			foreach(TableKeySchema tableKey in SourceTable.ForeignKeys)
+			{	
+				// related table must be in the selection
+				if (SourceTables.Contains(tableKey.PrimaryKeyTable)) {
+				string fkPropertyName = GetKeysName(tableKey.ForeignKeyMemberColumns);
+				
+				if(filled.Contains(fkPropertyName))
+					continue;
+					
+				filled.Add(fkPropertyName);
+				
+				string pkClassName = GetClassName(tableKey.PrimaryKeyTable.Name);
+			%>
+			copy.<%=fkPropertyName%>Source = MakeCopyOf(this.<%=fkPropertyName%>Source) as <%= pkClassName %>;
+			<%	} //end if in SourceTables
+			} //end for each FK
+		  }// IncludeGetListByFK%>	
+		
+		<% 
+		if (IncludeRelations){
+		int ctr = 0;
+		foreach(CollectionInfo item in GetChildrenCollections(SourceTable, SourceTables).Values) { 
+			if (ctr == 0)
+				Response.Write("\t\t\t//deep copy nested objects" + Environment.NewLine);
+			ctr++;
+			
+			string typeName = "";
+			if (item.CollectionRelationshipType == MoM.Templates.CommonSqlCode.RelationshipType.OneToOne)
+				typeName = item.TypeName;
+			else
+				typeName = item.CollectionTypeName;
+		%>
+			copy.<%= item.PropertyNameUnique %> = (<%= typeName %>) MakeCopyOf(this.<%=item.PropertyNameUnique %>); 
+			<% }//end foreach CollectionInfo
+		}//end if IncludeRelations
+		%>
+			copy.EntityState = this.EntityState;
+			
+			return (<%=className%>)copy;
+		}
+		
+		///<summary>
+		/// ICloneable.Clone() Member, returns the Shallow Copy of this entity.
+		///</summary>
+		public object Clone()
+		{
+			return this.Copy();
+		}
+		
+		///<summary>
+		/// Returns a deep copy of the child collection object passed in.
+		///</summary>
+		public static object MakeCopyOf(object x)
+		{
+			if (x == null)
+				return null;
+				
+			if (x is ICloneable)
+			{
+				// Return a deep copy of the object
+				return ((ICloneable)x).Clone();
+			}
+			else
+				throw new System.NotSupportedException("Object Does Not Implement the ICloneable Interface.");
+		}
+		
+		///<summary>
+		///  Returns a Typed <%=className%> Entity which is a deep copy of the current entity.
+		///</summary>
+		public virtual <%=className%> DeepCopy()
+		{
+			return EntityHelper.Clone<<%=className%>>(this as <%=className%>);	
+		}
+		#endregion
+		
 		#region Methods	
 			
 		///<summary>
@@ -572,76 +664,6 @@ WriteRelationshipPropertyString();
 		
 		#endregion
 		
-		#region ICloneable Members
-		///<summary>
-		///  Returns a Typed <%=className%> Entity 
-		///</summary>
-		public virtual <%=className%> Copy()
-		{
-			//shallow copy entity
-			<%=className%> copy = new <%=className%>();
-			<% for (int x=0; x < cols.Count; x++) { %>
-			copy.<%= GetPropertyName(cols[x]) %> = this.<%= GetPropertyName(cols[x]) %>;
-			<% if( cols[x].IsPrimaryKeyMember && !IsIdentityColumn(cols[x]) && !IsComputed(cols[x]) ) { %>
-			copy.<%= GetOriginalPropertyName(cols[x]) %> = this.<%= GetOriginalPropertyName(cols[x]) %>;
-			<% } %>
-			<% } %>
-					
-		<% 
-		if (IncludeRelations){
-		int ctr = 0;
-		foreach(CollectionInfo item in GetChildrenCollections(SourceTable, SourceTables).Values) { 
-			if (ctr == 0)
-				Response.Write("\t\t\t//deep copy nested objects" + Environment.NewLine);
-			ctr++;
-			
-			string typeName = "";
-			if (item.CollectionRelationshipType == MoM.Templates.CommonSqlCode.RelationshipType.OneToOne)
-				typeName = item.TypeName;
-			else
-				typeName = item.CollectionTypeName;
-		%>
-			copy.<%= item.PropertyNameUnique %> = (<%= typeName %>) MakeCopyOf(this.<%=item.PropertyNameUnique %>); 
-			<% }//end foreach CollectionInfo
-		}//end if IncludeRelations
-
-	
-		%>
-			copy.AcceptChanges();
-			return (<%=className%>)copy;
-		}
-		
-		///<summary>
-		/// ICloneable.Clone() Member, returns the Shallow Copy of this entity.
-		///</summary>
-		public object Clone()
-		{
-			return this.Copy();
-		}
-		
-		///<summary>
-		/// Returns a deep copy of the child collection object passed in.
-		///</summary>
-		public static object MakeCopyOf(object x)
-		{
-			if (x is ICloneable)
-			{
-				// Return a deep copy of the object
-				return ((ICloneable)x).Clone();
-			}
-			else
-				throw new System.NotSupportedException("Object Does Not Implement the ICloneable Interface.");
-		}
-		
-		///<summary>
-		///  Returns a Typed <%=className%> Entity which is a deep copy of the current entity.
-		///</summary>
-		public virtual <%=className%> DeepCopy()
-		{
-			return EntityHelper.Clone<<%=className%>>(this as <%=className%>);	
-		}
-		#endregion
-		
 		///<summary>
 		/// Returns a value indicating whether this instance is equal to a specified object.
 		///</summary>
@@ -690,6 +712,7 @@ WriteRelationshipPropertyString();
 				equal = false;
 			<% } // if ( cols[x].AllowDBNull ) %>
 		<% }// end for %>	
+					
 			return equal;
 		}
 		
@@ -842,7 +865,7 @@ WriteRelationshipPropertyString();
 		///		Indicates state of object
 		/// </summary>
 		/// <remarks>0=Unchanged, 1=Added, 2=Changed</remarks>
-		[BrowsableAttribute(false), <%= (SerializeEntityState ? ", XmlIgnoreAttribute()" : "") %>]
+		[BrowsableAttribute(false) <%= (!SerializeEntityState ? ", XmlIgnoreAttribute()" : "") %>]
 		public override EntityState EntityState 
 		{ 
 			get{ return entityData.EntityState;	 } 

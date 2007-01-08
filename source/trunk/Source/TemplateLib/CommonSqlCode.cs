@@ -43,6 +43,7 @@ namespace MoM.Templates
 		private string enumFormat 			= "{0}List";
 		private string manyToManyFormat		= "{0}From{1}";
 		private string strippedTablePrefixes		= "tbl;tbl_";
+		private string serviceClassNameFormat = "{0}Service";
 		private string customProcedureStartsWith = "_{0}_";
 		private string aliasFilePath 		= "";
 		private string procedurePrefix = "";
@@ -335,6 +336,21 @@ namespace MoM.Templates
 				this.manyToManyFormat = value;
 			}
 		}
+
+		[Category("09. Code style - Advanced")]
+		[Description("The format for many to many methods. Parameter {0} is replaced by the secondary class name.")]
+		public string ServiceClassNameFormat
+		{
+			get {return this.serviceClassNameFormat;}
+			set
+			{
+				if (value.IndexOf("{0}") == -1) 
+				{
+					throw new ArgumentException("This parameter must contains the pattern {0} to be valid.", "ManyToManyFormat");
+				}
+				this.serviceClassNameFormat = value;
+			}
+		}
 				
 		[Category("07. CRUD - Advanced")]
 		[Description("If set to true, attempts to parse the Default Value of your column and set it for the default value of the property on initialization.")]
@@ -460,6 +476,7 @@ namespace MoM.Templates
         public string GetPascalCaseName(string name)
         {
 			string[] splitNames;
+			name = name.Trim();
 			if (ChangeUnderscoreToPascalCase)
 			{
 				char[] splitter = {'_', ' '};
@@ -590,7 +607,7 @@ namespace MoM.Templates
 		/// <param name="className">The normal class name.</param>
 		public string GetServiceClassName(string className)
 		{
-			return string.Format("{0}Service", GetClassName(className));
+			return string.Format(ServiceClassNameFormat, GetClassName(className));
 		}
 
 		/// <summary>
@@ -599,7 +616,7 @@ namespace MoM.Templates
 		/// <param name="className">The normal class name.</param>
 		public string GetAbstractServiceClassName(string className)
 		{
-			return string.Format("{0}ServiceBase", GetClassName(className));
+			return string.Format(ServiceClassNameFormat + "Base", GetClassName(className));
 		}
 		
 		/// <summary>
@@ -1577,6 +1594,8 @@ namespace MoM.Templates
 		private string GetColumnXmlComment(string description, int indentLevel)
 		{
 			string linePrefix = new string('\t', indentLevel) + "/// ";
+			
+			description = description.Replace("\r\n", string.Format("\r\n{0}", linePrefix));
 			return description.Replace(Environment.NewLine, Environment.NewLine + linePrefix);
 		}
 		#endregion GetColumnXmlComment
@@ -2351,7 +2370,7 @@ namespace MoM.Templates
 				if ((i>0) || startWithComa)
 					temp.Append(", ");
 
-				temp.AppendFormat("{0} {1}", GetCSType(inputParameters[i]), GetPrivateName(inputParameters[i]).Substring(1));
+				temp.AppendFormat("{0} {1}", GetCSType(inputParameters[i]), GetPrivateName(inputParameters[i]));
 			}
 			
 			return temp.ToString();
@@ -2364,12 +2383,12 @@ namespace MoM.Templates
 			for(int i=0; i<command.InputParameters.Count; i++)
 			{
 				temp += (temp.Length > 0) || startWithComa ? ", " : "";
-				temp += GetCSType(command.InputParameters[i]) + " " + GetPrivateName(command.InputParameters[i]).Substring(1);
+				temp += GetCSType(command.InputParameters[i]) + " " + GetPrivateName(command.InputParameters[i]);
 			}
 			for(int j=0; j < command.InputOutputParameters.Count; j++)
 			{
 				temp += (temp.Length > 0) || (startWithComa)  ? ", out " : " out ";
-				temp += GetCSType(command.InputOutputParameters[j]) + " " + GetPrivateName(command.InputOutputParameters[j]).Substring(1);
+				temp += GetCSType(command.InputOutputParameters[j]) + " " + GetPrivateName(command.InputOutputParameters[j]);
 			}
 			
 			return temp;
@@ -2408,7 +2427,7 @@ namespace MoM.Templates
 				}
 				else
 				{
-					temp.Append( GetPrivateName(inputParameters[i]).Substring(1) );
+					temp.Append( GetPrivateName(inputParameters[i]));
 				}
 			}
 			
@@ -2423,7 +2442,7 @@ namespace MoM.Templates
 			StringBuilder temp = new StringBuilder();
 			for(int i=0; i<inputParameters.Count; i++)
 			{
-				temp.AppendFormat("{2}\t\t/// <param name=\"{0}\"> A <c>{1}</c> instance.</param>", GetPrivateName(inputParameters[i]).Substring(1).Replace("@", ""), GetCSType(inputParameters[i]).Replace("<", "&lt;").Replace(">", "&gt;"), "\r\n");
+				temp.AppendFormat("{2}\t\t/// <param name=\"{0}\"> A <c>{1}</c> instance.</param>", GetPrivateName(inputParameters[i]).Replace("@", ""), GetCSType(inputParameters[i]).Replace("<", "&lt;").Replace(">", "&gt;"), "\r\n");
 			}
 			
 			return temp.ToString();
@@ -2437,11 +2456,11 @@ namespace MoM.Templates
 			string temp = string.Empty;
 			for(int i=0; i<command.InputParameters.Count; i++)
 			{
-				temp += string.Format("{2}\t\t\t/// <param name=\"{0}\"> A <c>{1}</c> instance.</param>", GetPrivateName(command.InputParameters[i]).Substring(1), GetCSType(command.InputParameters[i]), "\r\n");
+				temp += string.Format("{2}\t\t\t/// <param name=\"{0}\"> A <c>{1}</c> instance.</param>", GetPrivateName(command.InputParameters[i]), GetCSType(command.InputParameters[i]), "\r\n");
 			}
 			for(int i=0; i<command.InputOutputParameters.Count; i++)
 			{
-				temp += string.Format("{2}\t\t\t/// <param name=\"{0}\"> An output  <c>{1}</c> instance.</param>", GetPrivateName(command.InputOutputParameters[i]).Substring(1).Replace("@", ""), GetCSType(command.InputOutputParameters[i]), Environment.NewLine);
+				temp += string.Format("{2}\t\t\t/// <param name=\"{0}\"> An output  <c>{1}</c> instance.</param>", GetPrivateName(command.InputOutputParameters[i]).Replace("@", ""), GetCSType(command.InputOutputParameters[i]), Environment.NewLine);
 			}
 			
 			return temp;
@@ -4477,7 +4496,7 @@ CREATE\s+PROC(?:EDURE)?                               # find the start of the st
 							collectionInfo.PropertyNameUnique = string.Format("{0}_From_{1}", GetCollectionPropertyName( collectionInfo.SecondaryTable), GetClassName(collectionInfo.JunctionTable)); 
 
 							// Field Variable String
-							collectionInfo.FieldName = GetManyToManyName(key, GetCleanName(junctionTable.Name)).Substring(5);
+							collectionInfo.FieldName = GetCamelCaseName(collectionInfo.PropertyNameUnique);
 							
 							// Property/Field Type Name
 							collectionInfo.TypeName = GetCollectionClassName(collectionInfo.SecondaryTable);
@@ -4506,15 +4525,18 @@ CREATE\s+PROC(?:EDURE)?                               # find the start of the st
 			else
 			{
 				CollectionInfo tmp = (CollectionInfo)_collections[collectionInfo.PropertyName];
-				tmp.PropertyNameUnique = collectionInfo.PropertyName + tmp.GetByKeysName.Substring(3);
+				tmp.PropertyNameUnique = collectionInfo.PropertyName + tmp.GetByKeysName;
+				tmp.FieldName = collectionInfo.FieldName + tmp.GetByKeysName;
 
-				collectionInfo.PropertyName += collectionInfo.GetByKeysName.Substring(3);
-				collectionInfo.PropertyNameUnique += collectionInfo.GetByKeysName.Substring(3);
+				collectionInfo.PropertyName += collectionInfo.GetByKeysName;
+				collectionInfo.PropertyNameUnique += collectionInfo.GetByKeysName;
+				collectionInfo.FieldName += collectionInfo.GetByKeysName;
 
 				if (_collections[collectionInfo.PropertyNameUnique] != null)
 				{
 					collectionInfo.PropertyName += "From" + GetPascalCaseName(GetCleanName(collectionInfo.PkIdxName));
 					collectionInfo.PropertyNameUnique += "From" + GetPascalCaseName(GetCleanName(collectionInfo.PkIdxName));
+					collectionInfo.FieldName += "From" + GetPascalCaseName(GetCleanName(collectionInfo.PkIdxName));
 				}
 				
 				//Check if there's an alias, if there is, substitute.

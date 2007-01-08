@@ -56,33 +56,38 @@ namespace <%=NameSpace%>
 	    /// <summary>
 	    /// Determines whether the entity is being tracked by the Locator.
 	    /// </summary>
+		[NonSerialized]
 		private bool isEntityTracked = false;
 
 		/// <summary>
 		/// Suppresses Entity Events from Firing, 
 		/// useful when loading the entities from the database.
 		/// </summary>
-	    private bool suppressEntityEvents = false;
+	    [NonSerialized] 
+		private bool suppressEntityEvents = false;
 		
 		
 		/// <summary>
 		///  Used by in place editing of databinding features for new inserted row.
 		/// Indicates that we are in the middle of an IBinding insert transaction.
 		/// </summary>
+		[NonSerialized]
 		protected bool bindingIsNew = true;
 		
 		///<summary>
 		///  Unique Guid for the entity.
 		///</summary>
+		[NonSerialized]
 		protected System.Guid entityHashcodeIdentity;
 
 		///<summary>
 		///  Unique Instance Creation Time for the entity.
 		///</summary>
+		[NonSerialized]
 		protected System.DateTime entityInstanceCreationDate;
 		
 		///<summary>
-		///  The actual DateTime of the entities creation date.
+		///  The actual hashcode of the entity.
 		///</summary>
 		private string entityHashCode;
 		
@@ -101,8 +106,8 @@ namespace <%=NameSpace%>
 		/// <summary>
 		/// 	True if object has been <see cref="MarkToDelete"/>. ReadOnly.
 		/// </summary>
-		[BrowsableAttribute(false)<%= (SerializeEntityState ? ", XmlIgnoreAttribute()" : "") %>]
-		public bool IsDeleted
+		[BrowsableAttribute(false)<%= (!SerializeEntityState ? ", XmlIgnoreAttribute()" : "") %>]
+		public virtual bool IsDeleted
 		{
 			get { return this.EntityState == EntityState.Deleted; }
 		}		
@@ -113,7 +118,7 @@ namespace <%=NameSpace%>
 		/// </summary>
 		/// <remarks>True if object has been modified from its original state; otherwise False;</remarks>
 		[BrowsableAttribute(false), XmlIgnoreAttribute()]
-		public bool IsDirty
+		public virtual bool IsDirty
 		{
 			get { return this.EntityState != EntityState.Unchanged; }
 		}
@@ -125,20 +130,18 @@ namespace <%=NameSpace%>
 		/// </summary>
 		/// <remarks>True if objectis new; otherwise False;</remarks>
 		[BrowsableAttribute(false), XmlIgnoreAttribute()]
-		public bool IsNew
+		public virtual bool IsNew
 		{
 			get { return this.EntityState == EntityState.Added; }
 			set { this.EntityState = EntityState.Added; }
 		}
-		
-
 		
 		//private EntityState state = EntityState.Unchanged ;
 		/// <summary>
 		///		Indicates state of object
 		/// </summary>
 		/// <remarks>0=Unchanged, 1=Added, 2=Changed</remarks>
-		[BrowsableAttribute(false), <%= (SerializeEntityState ? ", XmlIgnoreAttribute()" : "") %>]
+		[BrowsableAttribute(false)<%= (!SerializeEntityState ? ", XmlIgnoreAttribute()" : "") %>]
 		public abstract EntityState EntityState { get; set; }
 		
 		/// <summary>
@@ -156,10 +159,8 @@ namespace <%=NameSpace%>
 		
 		
 		///<summary>
-		///  TODO: Revert all changes and restore original values.
-		///  Currently not supported.
+		///  Revert all changes and restore original values.  To be implemented in concrete class.
 		///</summary>
-		/// <exception cref="NotSupportedException">This method is not currently supported and always throws this exception.</exception>
 		public abstract void CancelChanges();
 		
 		
@@ -481,22 +482,22 @@ namespace <%=NameSpace%>
 		}
       	#endregion
 
-      #region IDeserializationCallback Members
-
-		/// <summary>
-		/// Runs when the entire object graph has been deserialized.
-		/// </summary>
-		/// <param name="sender">The object that initiated the callback. The functionality for this parameter is not currently implemented.</param>
-		public void OnDeserialization(object sender)
-		{
-			if(!suppressEntityEvents)
+		#region IDeserializationCallback Members
+	
+			/// <summary>
+			/// Runs when the entire object graph has been deserialized.
+			/// </summary>
+			/// <param name="sender">The object that initiated the callback. The functionality for this parameter is not currently implemented.</param>
+			public void OnDeserialization(object sender)
 			{
-				ValidationRules.Target = this;
-				AddValidationRules();
+				if(!suppressEntityEvents)
+				{
+					ValidationRules.Target = this;
+					AddValidationRules();
+				}
 			}
-		}
-
-      #endregion
+	
+		#endregion
 		
 	}
 }

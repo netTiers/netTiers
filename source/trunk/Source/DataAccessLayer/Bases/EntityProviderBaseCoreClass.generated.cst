@@ -1250,66 +1250,49 @@ namespace <%= DALNameSpace %>.Bases
 			{
                 if ( deepLoadType == DeepLoadType.ExcludeChildren )
 				{
-                    if (!innerList.ContainsTypeExcluded(key))
+                	if (!innerList.ContainsTypeExcluded(key) 
+						&& !innerList.HasRun(entity, key))
                     {
-                        if (!innerList.HasRun(entity, key))
+                        //add to list prior to firing event
+                        innerList.AddRun(entity, key);
+
+                        //call deep loading event
+                        DeepSessionEventArgs args = GetDeepSessionArgs(innerList, deepLoadType, entity, key);
+                        OnDeepLoading(args);
+
+                        if (args.Skip)
+                            return false;
+
+                        if (args.Cancel)
                         {
-                            //add to list prior to firing event
-                            innerList.AddRun(entity, key);
-
-                            //call deep loading event
-                            DeepSessionEventArgs args = GetDeepSessionArgs(innerList, deepLoadType, entity, key);
-                            OnDeepLoading(args);
-
-                            if (args.Skip)
-                                return false;
-
-                            if (args.Cancel)
-                            {
-                                innerList.CancelSession = true;
-                                return false;
-                            }
-
-                            return true;
+                            innerList.CancelSession = true;
+                            return false;
                         }
-                        else
-                        {
-                            object refEntity = innerList.GetReference(entity, key);
- 							if (refEntity != null && refEntity != entity)
-								EntityUtil.SetPropertyValue(entity, key.Split('|')[1], EntityUtil.GetPropertyValue(refEntity, key.Split('|')[1]));
-                        }
+
+                        return true;
                     }
 				}
 				else if ( deepLoadType == DeepLoadType.IncludeChildren )
 				{
-                    if (innerList.ContainsType(key))
+                    if (innerList.ContainsType(key) && !innerList.HasRun(entity, key))
                     {
-                        if (!innerList.HasRun(entity, key))
+                        //add to list prior to firing event
+                        innerList.AddRun(entity, key);
+
+                        //call deep loading event
+                        DeepSessionEventArgs args = GetDeepSessionArgs(innerList, deepLoadType, entity, key);
+                        OnDeepLoading(args);
+
+                        if (args.Skip)
+                            return false;
+
+                        if (args.Cancel)
                         {
-                            //add to list prior to firing event
-                            innerList.AddRun(entity, key);
-
-                            //call deep loading event
-                            DeepSessionEventArgs args = GetDeepSessionArgs(innerList, deepLoadType, entity, key);
-                            OnDeepLoading(args);
-
-                            if (args.Skip)
-                                return false;
-
-                            if (args.Cancel)
-                            {
-                                innerList.CancelSession = true;
-                                return false;
-                            }
-
-                            return true;
+                            innerList.CancelSession = true;
+                            return false;
                         }
-                        else
-                        {
-                            object refEntity = innerList.GetReference(entity, key);
-							if (refEntity != null && refEntity != entity)
-                            	EntityUtil.SetPropertyValue(entity, key.Split('|')[1], EntityUtil.GetPropertyValue(refEntity, key.Split('|')[1]));
-                        }
+
+                        return true;
                     }
 				}
 			}
@@ -1809,10 +1792,18 @@ namespace <%= DALNameSpace %>.Bases
         /// <param name="key"></param>
         public void AddRun( Object entity, string key )
         {
-           if ( entity != null && !string.IsNullOrEmpty(key) )
-               DeepSessionInnerList.Add(entity.GetHashCode().ToString() + key, entity);
+            if (entity != null && !string.IsNullOrEmpty(key))
+            {
+                string lkey;
+                if (entity is IEntity)
+                    lkey = ((IEntity)entity).EntityTrackingKey + key;
+                else 
+                    lkey = entity.GetHashCode().ToString()+ key;
+
+                DeepSessionInnerList.Add(lkey, entity);
+            }
 			
-			if (DeepSessionInnerList.Count > 6500)
+			if (DeepSessionInnerList.Count > 300)
 				CancelSession = true;
         }
 
@@ -1872,16 +1863,14 @@ namespace <%= DALNameSpace %>.Bases
 		{
 			if (entity == null) return false;
 
-            string lkey = entity.GetHashCode().ToString() + key;
+            string lkey;
+            if (entity is IEntity)
+                lkey = ((IEntity)entity).EntityTrackingKey + key;
+            else 
+                lkey = entity.GetHashCode().ToString()+ key;
+				
             if (DeepSessionInnerList.ContainsKey(lkey))
-			{
-                object locateEntity = null;
-                if (DeepSessionInnerList.TryGet(lkey, out locateEntity))
-                {
-                    if (locateEntity != null && entity.Equals(locateEntity))
-                        return true;
-                }
-			}
+                return true;
 			    
 			return false;
 		}
@@ -1898,14 +1887,13 @@ namespace <%= DALNameSpace %>.Bases
         {
             if (entity == null) return false;
 
-            string lkey = entity.GetHashCode().ToString() + key;
+            string lkey = ((IEntity)entity).EntityTrackingKey + key;
             if (DeepSessionInnerList.ContainsKey(lkey))
             {
                 object locateEntity = null;
                 if (DeepSessionInnerList.TryGet(lkey, out locateEntity))
                 {
-                    if (locateEntity != null && entity.Equals(locateEntity))
-                        return locateEntity;
+                    return locateEntity;
                 }
             }
 
