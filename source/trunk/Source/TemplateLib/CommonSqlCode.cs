@@ -49,7 +49,6 @@ namespace MoM.Templates
 		private string procedurePrefix = "";
 		private string auditUserField = "";
 		private string auditDateField = "";
-		private string prefix = "";
 		private bool cspUseDefaultValForNonNullableTypes = false;
 		private bool parseDbColDefaultVal  = false;
 		private bool changeUnderscoreToPascalCase  = false;
@@ -182,14 +181,6 @@ namespace MoM.Templates
 		{
 			get { return MethodNames.ToStringList(); }
 			set { MethodNames = new MethodNamesProperty(value); }
-		}
-		
-		[Category("09. Code style - Advanced")]
-		[Description("The Framework prefix to add to any exposed .netTiers framework property or constant.  This will resolve any name collisions with columns or fields, ex. IsDeleted.")]
-		public string Prefix
-		{
-			get {return this.prefix;}
-			set	{this.prefix = value;}
 		}
 		
 		[Category("09. Code style - Advanced")]
@@ -556,7 +547,7 @@ namespace MoM.Templates
 		/// </summary>
 		public string GetKeyClassName(string tableName)
 		{
-			return String.Format("{1}{0}Key", GetClassName(tableName), Prefix);
+			return String.Format("{0}Key", GetClassName(tableName));
 		}
 
 		/// <summary>
@@ -564,7 +555,7 @@ namespace MoM.Templates
 		/// </summary>
 		public string GetColumnEnumName(string tableName)
 		{
-			return String.Format("{1}{0}Column", GetClassName(tableName), Prefix);
+			return String.Format("{0}Column", GetClassName(tableName));
 		}
 		
 		/// <summary>
@@ -572,7 +563,7 @@ namespace MoM.Templates
 		/// </summary>
 		public string GetComparerClassName(string tableName)
 		{
-			return String.Format("{1}{0}Comparer", GetClassName(tableName), Prefix);
+			return String.Format("{0}Comparer", GetClassName(tableName));
 		}
 		
 		/// <summary>
@@ -580,7 +571,7 @@ namespace MoM.Templates
 		/// </summary>
 		public string GetClassEventArgsName(string tableName)
 		{
-			return String.Format("{1}{0}EventArgs", GetClassName(tableName), Prefix);
+			return String.Format("{0}EventArgs", GetClassName(tableName));
 		}
 
 		/// <summary>
@@ -588,7 +579,7 @@ namespace MoM.Templates
 		/// </summary>
 		public string GetClassEventHandlerName(string tableName)
 		{
-			return String.Format("{1}{0}EventHandler", GetClassName(tableName), Prefix);
+			return String.Format("{0}EventHandler", GetClassName(tableName));
 		}
 				
 		/// <summary>
@@ -1176,6 +1167,20 @@ namespace MoM.Templates
 				name = GetAliasName(owner, obj, name, ReturnFields.PropertyName);
 			}
 			
+			return name;
+		}
+		
+		/// <summary>
+		/// Transform the name of a column into a clean column name.
+		/// </summary>
+		public string GetDBColumnName(SchemaExplorer.SchemaObjectBase column)
+		{
+			if (column == null)
+				return "";
+				
+		   	string name = Regex.Replace(column.Name, @"[\W]", "");
+		    name = GetPascalCaseName(name);
+					
 			return name;
 		}
 		
@@ -2423,7 +2428,7 @@ namespace MoM.Templates
 
 				if ( useCustomPrefix )
 				{
-					temp.Append( GetCustomVariableName(inputParameters[i].Name.Substring(1) , inputParameters[i].Command) );
+					temp.Append( GetCustomVariableName(inputParameters[i].Name , inputParameters[i].Command) );
 				}
 				else
 				{
@@ -2489,7 +2494,7 @@ namespace MoM.Templates
 				if ((i>0) || startWithComa)
 					temp.Append(", ");
 
-				temp.AppendFormat("ref {0} {1}", GetCSType(outputParameters[i]), GetPrivateName(outputParameters[i]).Substring(1));
+				temp.AppendFormat("ref {0} {1}", GetCSType(outputParameters[i]), GetPrivateName(outputParameters[i]));
 			}
 			
 			return temp.ToString();
@@ -2524,11 +2529,11 @@ namespace MoM.Templates
 
 				if ( useCustomPrefix )
 				{
-					temp.AppendFormat("ref {0}", GetCustomVariableName(outputParameters[i].Name.Substring(1), outputParameters[i].Command) );
+					temp.AppendFormat("ref {0}", GetCustomVariableName(outputParameters[i].Name, outputParameters[i].Command) );
 				}
 				else
 				{
-					temp.AppendFormat("ref {0}", GetPrivateName(outputParameters[i]).Substring(1));
+					temp.AppendFormat("ref {0}", GetPrivateName(outputParameters[i]));
 				}
 			}
 			
@@ -2543,7 +2548,7 @@ namespace MoM.Templates
 			StringBuilder temp = new StringBuilder();
 			for(int i=0; i<outputParameters.Count; i++)
 			{
-				temp.AppendFormat("{2}\t\t\t/// <param name=\"{0}\"> A <c>{1}</c> instance.</param>", GetPrivateName(outputParameters[i]).Substring(1).Replace("@", ""), GetCSType(outputParameters[i]).Replace("<", "&lt;").Replace(">", "&gt;"), Environment.NewLine);
+				temp.AppendFormat("{2}\t\t\t/// <param name=\"{0}\"> A <c>{1}</c> instance.</param>", GetPrivateName(outputParameters[i]).Replace("@", ""), GetCSType(outputParameters[i]).Replace("<", "&lt;").Replace(">", "&gt;"), Environment.NewLine);
 			}
 			
 			return temp.ToString();
@@ -3809,7 +3814,7 @@ CREATE\s+PROC(?:EDURE)?                               # find the start of the st
 			}	
 			catch(Exception exc)
 			{
-				System.Diagnostics.Debug.WriteLine("Procedure Threw Exception: " + command.Name);
+				System.Diagnostics.Debug.WriteLine(string.Format("!!ERROR!! - Procedure Threw Exception: {0} [{1}]", command.Name, exc.Message));
 				return false;	
 			}
 		}
@@ -3852,7 +3857,7 @@ CREATE\s+PROC(?:EDURE)?                               # find the start of the st
 			}	
 			catch(Exception exc)
 			{
-				System.Diagnostics.Debug.WriteLine("!!ERROR!! - Procedure Threw Exception: " + command.Name);
+				System.Diagnostics.Debug.WriteLine(string.Format("!!ERROR!! - Procedure Threw Exception: {0} [{1}]", command.Name, exc.Message));
 				return false;	
 			}
 		}

@@ -144,7 +144,7 @@ namespace <%=UTNameSpace%>
 		/// <summary>
 		/// Selects all <%=className%> objects of the database.
 		/// </summary>
-		private void Step_02_Select_Generated()
+		private void Step_02_SelectAll_Generated()
 		{
 			//Find
 			int count = 0;
@@ -377,6 +377,7 @@ namespace <%=UTNameSpace%>
 		///</summary>
 		static public <%=className%> CreateMockInstance()
 		{		
+			int count = 0;
 			<%=className%> mock = new <%=className%>();
 						
 			<% for (int x=0; x < cols.Count; x++)
@@ -388,16 +389,42 @@ namespace <%=UTNameSpace%>
 			<% } %>
 			
 			<% if (IncludeGetList) { %>
-			<% for (int x=0; x < fkeys.Count; x++){ if (SourceTables.Contains(fkeys[x].PrimaryKeyTable)) { %>
-			<%=GetCollectionClassName(fkeys[x].PrimaryKeyTable.Name) %> _collection<%=x%> = DataRepository.<%=GetProviderClassName(fkeys[x].PrimaryKeyTable.Name)%>.<%= MethodNames.GetAll %>(transactionManager, 0, 10);
-			//_collection<%=x%>.Shuffle();
-			if (_collection<%=x%>.Count > 0)
-			{
-				<% for (int y=0;y<fkeys[x].ForeignKeyMemberColumns.Count; y++) { %>
-				mock.<%= GetPropertyName(fkeys[x].ForeignKeyMemberColumns[y]) %> = _collection<%=x%>[0].<%=GetPropertyName(fkeys[x].PrimaryKeyMemberColumns[y])%>;
-				<% } %>
-			}
-			<% } //end if 
+			<% for (int x=0; x < fkeys.Count; x++){ 
+				if (SourceTables.Contains(fkeys[x].PrimaryKeyTable)) { 
+					bool OneToOneRelationship = true;
+					if(pkeys.Count>0 && fkeys[x].ForeignKeyMemberColumns.Count == pkeys[0].PrimaryKeyMemberColumns.Count)
+					{
+						for(int keyIndex=0;keyIndex<fkeys[x].ForeignKeyMemberColumns.Count;keyIndex++)
+						{
+							if(keyIndex>pkeys[0].PrimaryKeyMemberColumns.Count || fkeys[x].ForeignKeyMemberColumns[keyIndex].Name != pkeys[0].PrimaryKeyMemberColumns[keyIndex].Name)
+							{
+								OneToOneRelationship = false;
+								break;
+							}
+						}
+					}
+					if(OneToOneRelationship)
+					{%>
+					//OneToOneRelationship
+					<% for (int y=0;y<fkeys[x].ForeignKeyMemberColumns.Count; y++) { %>
+					
+					<%= GetClassName(fkeys[x].PrimaryKeyTable.Name)%> mock<%= GetClassName(fkeys[x].PrimaryKeyTable.Name)%>By<%= GetPropertyName(fkeys[x].ForeignKeyMemberColumns[y])%> = <%= GetRepositoryTestClassName(fkeys[x].PrimaryKeyTable.Name)%>.CreateMockInstance();
+					DataRepository.<%=GetProviderClassName(fkeys[x].PrimaryKeyTable.Name)%>.<%= MethodNames.Insert %>(transactionManager, mock<%= GetClassName(fkeys[x].PrimaryKeyTable.Name)%>By<%= GetPropertyName(fkeys[x].ForeignKeyMemberColumns[y])%>);
+					mock.<%= GetPropertyName(fkeys[x].ForeignKeyMemberColumns[y])%> = mock<%= GetClassName(fkeys[x].PrimaryKeyTable.Name)%>By<%= GetPropertyName(fkeys[x].ForeignKeyMemberColumns[y])%>.<%=GetPropertyName(fkeys[x].PrimaryKeyMemberColumns[y])%>;
+					<% }
+					} 
+					else
+					{%>
+					<%=GetCollectionClassName(fkeys[x].PrimaryKeyTable.Name) %> _collection<%=x%> = DataRepository.<%=GetProviderClassName(fkeys[x].PrimaryKeyTable.Name)%>.<%= MethodNames.GetPaged %>(transactionManager, 0, 10, out count);
+					//_collection<%=x%>.Shuffle();
+					if (_collection<%=x%>.Count > 0)
+					{
+						<% for (int y=0;y<fkeys[x].ForeignKeyMemberColumns.Count; y++) { %>
+						mock.<%= GetPropertyName(fkeys[x].ForeignKeyMemberColumns[y]) %> = _collection<%=x%>[0].<%=GetPropertyName(fkeys[x].PrimaryKeyMemberColumns[y])%>;
+						<% } %>
+					}
+					<% } //OneToOneRelationship
+				} //end if 
 			} // end for fkeys
 			} // end if ( IncludeGetList ) %>
 		
@@ -416,6 +443,7 @@ namespace <%=UTNameSpace%>
 		///</summary>
 		static public void UpdateMockInstance(<%=className%> mock)
 		{
+			int count = 0;
 			<% for (int x=0; x < cols.Count; x++)
 			{ %>
 			<% if ( !cols[x].IsForeignKeyMember && !IsIdentityColumn(cols[x]) && !IsComputed(cols[x]) )
@@ -425,18 +453,47 @@ namespace <%=UTNameSpace%>
 			<% } %>
 			
 			<% if (IncludeGetList) { %>
-			<% for (int x=0; x < fkeys.Count; x++){ if (SourceTables.Contains(fkeys[x].PrimaryKeyTable)) { %>
-			<%=GetCollectionClassName(fkeys[x].PrimaryKeyTable.Name) %> _collection<%=x%> = DataRepository.<%=GetProviderClassName(fkeys[x].PrimaryKeyTable.Name)%>.<%= MethodNames.GetAll %>(transactionManager, 0, 10);
-			//_collection<%=x%>.Shuffle();
-			if (_collection<%=x%>.Count > 0)
-			{
-				<% for (int y=0;y<fkeys[x].ForeignKeyMemberColumns.Count; y++) { %>
-				mock.<%= GetPropertyName(fkeys[x].ForeignKeyMemberColumns[y]) %> = _collection<%=x%>[0].<%=GetPropertyName(fkeys[x].PrimaryKeyMemberColumns[y])%>;
-				<% } %>
-			}
-			<% } // end if in tables
+			<% for (int x=0; x < fkeys.Count; x++){ 
+				if (SourceTables.Contains(fkeys[x].PrimaryKeyTable)) 
+				{ 
+					bool OneToOneRelationship = true;
+					if(pkeys.Count>0 && fkeys[x].ForeignKeyMemberColumns.Count == pkeys[0].PrimaryKeyMemberColumns.Count)
+					{
+						for(int keyIndex=0;keyIndex<fkeys[x].ForeignKeyMemberColumns.Count;keyIndex++)
+						{
+							if(fkeys[x].ForeignKeyMemberColumns[keyIndex].Name != pkeys[0].PrimaryKeyMemberColumns[keyIndex].Name)
+							{
+								OneToOneRelationship = false;
+								break;
+							}
+						}
+					}
+					if(OneToOneRelationship)
+					{%>
+					//OneToOneRelationship
+					<% for (int y=0;y<fkeys[x].ForeignKeyMemberColumns.Count; y++) 
+					{ %>
+					<%= GetClassName(fkeys[x].PrimaryKeyTable.Name)%> mock<%= GetClassName(fkeys[x].PrimaryKeyTable.Name)%>By<%= GetPropertyName(fkeys[x].ForeignKeyMemberColumns[y])%> = <%= GetRepositoryTestClassName(fkeys[x].PrimaryKeyTable.Name)%>.CreateMockInstance();
+					DataRepository.<%=GetProviderClassName(fkeys[x].PrimaryKeyTable.Name)%>.<%= MethodNames.Insert %>(transactionManager, mock<%= GetClassName(fkeys[x].PrimaryKeyTable.Name)%>By<%= GetPropertyName(fkeys[x].ForeignKeyMemberColumns[y])%>);
+					mock.<%= GetPropertyName(fkeys[x].ForeignKeyMemberColumns[y])%> = mock<%= GetClassName(fkeys[x].PrimaryKeyTable.Name)%>By<%= GetPropertyName(fkeys[x].ForeignKeyMemberColumns[y])%>.<%=GetPropertyName(fkeys[x].PrimaryKeyMemberColumns[y])%>;
+					<% }
+					}
+					else
+					{%>
+					
+					<%=GetCollectionClassName(fkeys[x].PrimaryKeyTable.Name) %> _collection<%=x%> = DataRepository.<%=GetProviderClassName(fkeys[x].PrimaryKeyTable.Name)%>.<%= MethodNames.GetPaged %>(transactionManager, 0, 10, out count);
+					//_collection<%=x%>.Shuffle();
+					if (_collection<%=x%>.Count > 0)
+					{
+						<% for (int y=0;y<fkeys[x].ForeignKeyMemberColumns.Count; y++) { %>
+						mock.<%= GetPropertyName(fkeys[x].ForeignKeyMemberColumns[y]) %> = _collection<%=x%>[0].<%=GetPropertyName(fkeys[x].PrimaryKeyMemberColumns[y])%>;
+						<% } %>
+					}
+			<% 	} //OneToOneRelationship
+			  } // end if in tables
 			} // end for
-			} // end if ( IncludeGetList ) %>
+			} // end if ( IncludeGetList ) 
+		%>
 		}
 
 		#endregion

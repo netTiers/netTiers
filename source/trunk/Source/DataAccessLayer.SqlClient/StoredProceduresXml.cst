@@ -178,6 +178,7 @@
 				BEGIN
 					SET @SQL = @SQL + ' AND RowIndex <= ' + convert(nvarchar, @PageUpperBound)
 				END
+				SET @SQL = @SQL + ' ORDER BY ' + @OrderBy
 				exec sp_executesql @SQL
 				
 <% } else { %>
@@ -279,13 +280,13 @@
 					)
 				VALUES
 					(
-					<% for (int i = 0; i < colsUpdatable.Count; i++) { %>@<%= GetPropertyName(colsUpdatable[i]) %><% if (i < colsUpdatable.Count - 1) { %>
+					<% for (int i = 0; i < colsUpdatable.Count; i++) { %>@<%= GetDBColumnName(colsUpdatable[i]) %><% if (i < colsUpdatable.Count - 1) { %>
 					,<% } } %>
 					)
 				
 				<% for (int i = 0; i < cols.Count; i++) { if (IsIdentityColumn(cols[i])) { %>
 				-- Get the identity value
-				SET @<%= GetPropertyName(cols[i]) %> = SCOPE_IDENTITY()
+				SET @<%= GetDBColumnName(cols[i]) %> = SCOPE_IDENTITY()
 				<% } } %>
 									
 				<% if (countComputedColumns > 0) {%>
@@ -297,7 +298,7 @@
 					{
 						if (IsComputed(cols[i]))
 						{
-							tempParams += string.Format(", @{0} = [{1}]{2}", GetPropertyName(cols[i]), cols[i].Name, Environment.NewLine) ;
+							tempParams += string.Format(", @{0} = [{1}]{2}", GetDBColumnName(cols[i]), cols[i].Name, Environment.NewLine) ;
 						}
 					}
 					Response.Write(tempParams.TrimStart(','));
@@ -311,7 +312,7 @@
 					{
 						//if (IsIdentityColumn(SourceTable.PrimaryKey.MemberColumns[i]) || IsComputed(SourceTable.PrimaryKey.MemberColumns[i]))
 						//{
-							tempParams += string.Format("AND [{1}] = @{0} {2}", GetPropertyName(SourceTable.PrimaryKey.MemberColumns[i]), SourceTable.PrimaryKey.MemberColumns[i].Name, Environment.NewLine) ;
+							tempParams += string.Format("AND [{1}] = @{0} {2}", GetDBColumnName(SourceTable.PrimaryKey.MemberColumns[i]), SourceTable.PrimaryKey.MemberColumns[i].Name, Environment.NewLine) ;
 						//}
 					}
 					if(tempParams.Length > 4)
@@ -340,7 +341,7 @@
 					
 					if (cols[i].IsPrimaryKeyMember && !IsComputed(cols[i]) && !IsIdentityColumn(cols[i]) && cols[i] != RowVersion)
 					{
-						Response.Write("\t\t\t\t" + GetSqlParameterXmlNode(cols[i], "Original" + GetPropertyName(cols[i]), false) + Environment.NewLine);
+						Response.Write("\t\t\t\t" + GetSqlParameterXmlNode(cols[i], "Original" + GetDBColumnName(cols[i]), false) + Environment.NewLine);
 					}
 		
 					if (IsComputed(cols[i]))
@@ -349,7 +350,7 @@
 				}
 				if (RowVersion != null)
 				{
-					Response.Write("\t\t\t\t" + GetSqlParameterXmlNode(RowVersion, "Returned" + GetPropertyName(RowVersion), true) + Environment.NewLine);
+					Response.Write("\t\t\t\t" + GetSqlParameterXmlNode(RowVersion, "Returned" + GetDBColumnName(RowVersion), true) + Environment.NewLine);
 				}
 				%>
 			</parameters>
@@ -360,7 +361,7 @@
 				UPDATE
 					<%=owner + "[" + SourceTable.Name %>]
 				SET
-					<% for (int i = 0; i < colsUpdatable.Count; i++) { %>[<%= colsUpdatable[i].Name %>] = @<%= GetPropertyName(colsUpdatable[i]) %><% if (i < colsUpdatable.Count - 1) { %>
+					<% for (int i = 0; i < colsUpdatable.Count; i++) { %>[<%= colsUpdatable[i].Name %>] = @<%= GetDBColumnName(colsUpdatable[i]) %><% if (i < colsUpdatable.Count - 1) { %>
 					,<% } } %>
 				WHERE
 				<%
@@ -372,7 +373,7 @@
 						if (!IsComputed(SourceTable.PrimaryKey.MemberColumns[i]) && !IsIdentityColumn(SourceTable.PrimaryKey.MemberColumns[i]) && SourceTable.PrimaryKey.MemberColumns[i] != RowVersion)
 							prefix = "Original";
 						
-						tempParams += string.Format("AND [{1}] = @{0} {2}", prefix + GetPropertyName(SourceTable.PrimaryKey.MemberColumns[i]), SourceTable.PrimaryKey.MemberColumns[i].Name, Environment.NewLine) ;
+						tempParams += string.Format("AND [{1}] = @{0} {2}", prefix + GetDBColumnName(SourceTable.PrimaryKey.MemberColumns[i]), SourceTable.PrimaryKey.MemberColumns[i].Name, Environment.NewLine) ;
 					}
 					if(tempParams.Length > 4)
 					{
@@ -380,7 +381,7 @@
 					}
 					if (RowVersion != null)
 					{
-						Response.Write("AND [" + RowVersion.Name + "] = @" + GetPropertyName(RowVersion) );
+						Response.Write("AND [" + RowVersion.Name + "] = @" + GetDBColumnName(RowVersion) );
 					} 
 				%>
 				
@@ -394,13 +395,13 @@
 					{
 						if (IsComputed(cols[i]) && cols[i] != RowVersion)
 						{
-							tempParams += string.Format(", @{0} = [{1}]{2}", GetPropertyName(cols[i]), cols[i].Name, Environment.NewLine) ;
+							tempParams += string.Format(", @{0} = [{1}]{2}", GetDBColumnName(cols[i]), cols[i].Name, Environment.NewLine) ;
 						}
 					}
 					if (RowVersion != null)
 					{
 						tempParams += string.Format(", @Returned{0} = [{1}]{2}", 
-						(RowVersion), RowVersion, Environment.NewLine) ;		
+						GetDBColumnName(RowVersion), GetDBColumnName(RowVersion), Environment.NewLine) ;
 					} 
 					
 					Response.Write(tempParams.TrimStart(','));
@@ -413,7 +414,7 @@
 					tempParams = string.Empty;
 					for (int i = 0; i < SourceTable.PrimaryKey.MemberColumns.Count; i++)
 					{
-						tempParams += string.Format("AND [{1}] = @{0} {2}", GetPropertyName(SourceTable.PrimaryKey.MemberColumns[i]), SourceTable.PrimaryKey.MemberColumns[i].Name, Environment.NewLine) ;
+						tempParams += string.Format("AND [{1}] = @{0} {2}", GetDBColumnName(SourceTable.PrimaryKey.MemberColumns[i]), SourceTable.PrimaryKey.MemberColumns[i].Name, Environment.NewLine) ;
 					}
 					if(tempParams.Length > 4)
 					{
@@ -448,11 +449,11 @@
 				DELETE FROM <%=owner%>[<%= SourceTable.Name %>] WITH (ROWLOCK) 
 				WHERE
 					<% for (int i = 0; i < SourceTable.PrimaryKey.MemberColumns.Count; i++) { %>			
-					<% if (i > 0) { %>AND <% } %>[<%= SourceTable.PrimaryKey.MemberColumns[i].Name %>] = @<%= GetPropertyName(SourceTable.PrimaryKey.MemberColumns[i]) %>
+					<% if (i > 0) { %>AND <% } %>[<%= SourceTable.PrimaryKey.MemberColumns[i].Name %>] = @<%= GetDBColumnName(SourceTable.PrimaryKey.MemberColumns[i]) %>
 					<% } 
 					if (RowVersion != null)
 					{
-						Response.Write("\tAND [" + RowVersion.Name + "] = @" + GetPropertyName(RowVersion) );
+						Response.Write("\tAND [" + RowVersion.Name + "] = @" + GetDBColumnName(RowVersion) );
 					} %>
 					
 			]]></body>
@@ -498,7 +499,7 @@
 					<%= owner %>[<%= SourceTable.Name %>]
 				WHERE
 					<% for (int i = 0; i < fkeys[j].ForeignKeyMemberColumns.Count; i++) { %>
-					<% if (i > 0) { %>AND <% } %>[<%= fkeys[j].ForeignKeyMemberColumns[i].Name %>] = @<%= GetPropertyName(fkeys[j].ForeignKeyMemberColumns[i]) %>
+					<% if (i > 0) { %>AND <% } %>[<%= fkeys[j].ForeignKeyMemberColumns[i].Name %>] = @<%= GetDBColumnName(fkeys[j].ForeignKeyMemberColumns[i]) %>
 					<% } %>
 				
 				Select @@ROWCOUNT
@@ -545,7 +546,7 @@
 					<%= owner %>[<%= SourceTable.Name %>]
 				WHERE
 					<% for (int i = 0; i < indexes[j].MemberColumns.Count; i++) { %>
-					<% if (i > 0) { %>AND <% } %>[<%= indexes[j].MemberColumns[i].Name %>] = @<%= GetPropertyName(indexes[j].MemberColumns[i]) %>
+					<% if (i > 0) { %>AND <% } %>[<%= indexes[j].MemberColumns[i].Name %>] = @<%= GetDBColumnName(indexes[j].MemberColumns[i]) %>
 					<% } %>
 			Select @@ROWCOUNT
 					
@@ -605,7 +606,7 @@ SELECT <% for (int i = 0; i < primaryTable.Columns.Count; i++)
                  FROM <%= junctionOwner %>[<%=junctionTable.Name%>] 
                 WHERE <% 
 				for (int i = 0; i < junctionTableKey.ForeignKeyMemberColumns.Count; i++) {
-					%><%=junctionOwner%>[<%=junctionTable.Name%>].[<%=junctionTableKey.ForeignKeyMemberColumns[i].Name%>] = @<%=GetPropertyName(junctionTableKey.ForeignKeyMemberColumns[i])%>
+					%><%=junctionOwner%>[<%=junctionTable.Name%>].[<%=junctionTableKey.ForeignKeyMemberColumns[i].Name%>] = @<%=GetDBColumnName(junctionTableKey.ForeignKeyMemberColumns[i])%>
                   <%if(i < junctionTableKey.ForeignKeyMemberColumns.Count-1) {%>AND <%}
 				} // for
 				// find the ForeignKey that points to the current table
@@ -665,7 +666,7 @@ SELECT <% for (int i = 0; i < primaryTable.Columns.Count; i++)
 					{
 						if (IsColumnFindable(cols[i]))
 						{ 
-						tmpWhere  += string.Format("\tAND ([{0}] = @{2} OR @{2} is null){1}", cols[i].Name, Environment.NewLine, GetPropertyName(cols[i])) ;
+						tmpWhere  += string.Format("\tAND ([{0}] = @{2} OR @{2} is null){1}", cols[i].Name, Environment.NewLine, GetDBColumnName(cols[i])) ;
 						}
 					}
 					if (tmpWhere.Length > 5)
@@ -689,7 +690,7 @@ SELECT <% for (int i = 0; i < primaryTable.Columns.Count; i++)
 					{
 						if (IsColumnFindable(cols[i]))
 						{ 
-						tmpWhere  += string.Format("\tOR ([{0}] = @{2} AND @{2} is not null){1}", cols[i].Name, Environment.NewLine, GetPropertyName(cols[i])) ;
+						tmpWhere  += string.Format("\tOR ([{0}] = @{2} AND @{2} is not null){1}", cols[i].Name, Environment.NewLine, GetDBColumnName(cols[i])) ;
 						}
 					}
 					if (tmpWhere.Length > 4)
@@ -736,7 +737,7 @@ SELECT <% for (int i = 0; i < primaryTable.Columns.Count; i++)
 				)
 				
 				-- Insert into the temp table
-				INSERT INTO #PageIndex ( <% for(int i=0; i<SourceTable.PrimaryKey.MemberColumns.Count; i++) { Response.Write(GetPropertyName(SourceTable.PrimaryKey.MemberColumns[i])); if (i < SourceTable.PrimaryKey.MemberColumns.Count-1) {Response.Write(", ");} } %> )
+				INSERT INTO #PageIndex ( <% for(int i=0; i<SourceTable.PrimaryKey.MemberColumns.Count; i++) { Response.Write(GetDBColumnName(SourceTable.PrimaryKey.MemberColumns[i])); if (i < SourceTable.PrimaryKey.MemberColumns.Count-1) {Response.Write(", ");} } %> )
 				SELECT TOP {3} <% for(int i=0; i<SourceTable.PrimaryKey.MemberColumns.Count; i++) { Response.Write("[" + SourceTable.PrimaryKey.MemberColumns[i].Name + "]"); if (i < SourceTable.PrimaryKey.MemberColumns.Count-1) {Response.Write(", ");} } %>
 				FROM <%= owner %>[<%= SourceTable.Name %>] {0}
 				ORDER BY {1}

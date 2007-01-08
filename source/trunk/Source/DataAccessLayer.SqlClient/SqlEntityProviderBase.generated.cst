@@ -1331,21 +1331,22 @@ namespace <%=DALNameSpace%>.SqlClient
 				return;
 			<% } else if 	(collectionClassName.Contains(returnType)) { %>
 			IDataReader reader = null;
-			//Provider Data Requesting Command Event
-			OnDataRequesting(new CommandEventArgs(commandWrapper, "<%= methodName %>", (IEntity)null));
-
-			if (transactionManager != null)
-			{	
-				reader = Utility.ExecuteReader(transactionManager, commandWrapper);
-			}
-			else
-			{
-				reader = Utility.ExecuteReader(database, commandWrapper);
-			}			
 			
 			//Create Collection
 			<% if (collectionClassName.Contains(returnType)) {%>
 				<%=collectionClassName%> rows = new <%=collectionClassName%>();
+				//Provider Data Requesting Command Event
+				OnDataRequesting(new CommandEventArgs(commandWrapper, "<%= methodName %>", rows));
+	
+				if (transactionManager != null)
+				{	
+					reader = Utility.ExecuteReader(transactionManager, commandWrapper);
+				}
+				else
+				{
+					reader = Utility.ExecuteReader(database, commandWrapper);
+				}	
+				
 				try
 				{    
 					Fill(reader, rows, start, pageLength);
@@ -1362,10 +1363,20 @@ namespace <%=DALNameSpace%>.SqlClient
 <%=outputValues.ToString()%>
 				return rows;
 				<%} else if (returnType != "void"){%>
-				//Provider Data Requesting Command Event
-				OnDataRequesting(new CommandEventArgs(commandWrapper, "<%= methodName %>", (IEntity)null));
-
 				<%=returnType%> tmp = null;
+				
+				//Provider Data Requesting Command Event
+				OnDataRequesting(new CommandEventArgs(commandWrapper, "<%= methodName %>", tmp));
+				
+				if (transactionManager != null)
+				{	
+					reader = Utility.ExecuteReader(transactionManager, commandWrapper);
+				}
+				else
+				{
+					reader = Utility.ExecuteReader(database, commandWrapper);
+				}	
+				
 				try
 				{
 					reader.Read();
