@@ -66,7 +66,9 @@
 
 <asp:Content ID="Content2" ContentPlaceHolderID="ContentPlaceHolder2" Runat="Server"><%=GetPascalSpacedName(entityName)%> List</asp:Content>
 <asp:Content ID="Content1" ContentPlaceHolderID="ContentPlaceHolder1" Runat="Server">
-		
+<%
+		RenderGridViewSearchAdapter();
+%>
 		<data:EntityGridView ID="GridView1" runat="server"			
 			AutoGenerateColumns="False"					
 			OnSelectedIndexChanged="GridView_SelectedIndexChanged"
@@ -133,6 +135,20 @@
 
 
 <script runat="template">
+public void RenderGridViewSearchAdapter() {
+	
+	string visible = "false";
+	
+	foreach (ColumnSchema column in SourceTable.Columns)
+	{						
+		if (column.DataType == DbType.String) {
+			visible = "true";	
+			break;
+		}			
+	}	
+	Response.Write (Tab(2) + "<data:GridViewSearchPanel ID=\"GridViewSearchPanel1\" runat=\"server\" GridViewControlID=\"GridView1\" Visible=\"" + visible + "\" />\n" + Tab(2) + "<br />\n");
+}
+
 public string WriteTemplateField(ColumnSchema column, int tabs, out string entityDSO, int suffix) {
 	string propertyName = GetPropertyName(column);
 	string s = string.Empty;
