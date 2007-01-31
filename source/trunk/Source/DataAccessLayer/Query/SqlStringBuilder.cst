@@ -25,6 +25,7 @@ namespace <%= DALNameSpace %>
 		#region Declarations
 
 		private StringBuilder sql = new StringBuilder();
+		private int _groupCount = 0;
 
 		#endregion Declarations
 
@@ -640,6 +641,7 @@ namespace <%= DALNameSpace %>
 		public virtual void Clear()
 		{
 			sql.Length = 0;
+			_groupCount = 0;
 		}
 
 		/// <summary>
@@ -658,7 +660,7 @@ namespace <%= DALNameSpace %>
 		{
 			if( sql.Length > 0 )
 			{
-				return new StringBuilder(" ").Append(junction).Append(" ").Append(sql.ToString().Trim()).ToString();
+				return new StringBuilder(" ").Append(junction).Append(" ").Append(ToString()).ToString();
 			}
 			
 			return String.Empty;
@@ -692,6 +694,47 @@ namespace <%= DALNameSpace %>
 
 			return values;
 		}
+		
+		/// <summary>
+      /// Begins a new group of parameters by adding an open parenthesis "("
+      /// </summary>
+      public virtual void BeginGroup()
+      {
+         BeginGroup(Junction);
+      }
+
+      /// <summary>
+      /// Begins a new groups of parameters using the specified junction operator
+      /// </summary>
+      /// <param name="junction">The junction operator to be used</param>
+      public virtual void BeginGroup(string junction)
+      {
+         sql.AppendFormat("{0} (", junction);
+         _groupCount++;
+      }
+
+      /// <summary>
+      /// Ends a group of parameters by add a closing parenthesis ")"
+      /// </summary>
+      public virtual void EndGroup()
+      {
+         if (_groupCount > 0)
+         {
+            sql.Append(")");
+            _groupCount--;
+         }
+      }
+
+      /// <summary>
+      /// Makes sure that all groups have been ended (each call to BeginGroup has a corresponding EndGroup)
+      /// </summary>
+      internal virtual void EnsureGroups()
+      {
+         while (_groupCount > 0)
+         {
+            EndGroup();
+         }
+      }
 
 		#endregion Methods
 
@@ -1729,6 +1772,7 @@ namespace <%= DALNameSpace %>
 		/// <returns></returns>
 		public virtual SqlFilterParameterCollection GetParameters()
 		{
+			EnsureGroups();
 			Parameters.FilterExpression = this.ToString();
 			return Parameters;
 		}
