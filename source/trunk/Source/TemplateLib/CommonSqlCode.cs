@@ -56,6 +56,7 @@ namespace MoM.Templates
 		private NetTiers.NetTiersMap netTiersMap;
 		private MethodNamesProperty methodNames = null;
 		private Hashtable aliases = null;
+		private bool includeGeneratedDate = false;
 		
 		#region CSharpKeywords
 		
@@ -140,6 +141,17 @@ namespace MoM.Templates
 		}
 		#endregion
 		
+		#region "02. Framework Generation - Optional" Properties
+		
+		[Category("02. Framework Generation - Optional")]
+		[Description("Indicates if the date the files were generated should be added to each generated file in the header comments.")]
+		public bool IncludeGeneratedDate
+		{
+			get {return this.includeGeneratedDate;}
+			set	{this.includeGeneratedDate = value;}
+		}
+		
+		#endregion 
 		
 		#region "9. Code Style public properties"
 		
