@@ -32,17 +32,10 @@ namespace <%=RootNameSpace%>.Web.UI
         private string _exportToExcelText = "Excel";
         private string _exportToolTip = string.Empty;
         private bool _allowExportToExcel = true;
+        private int _pageSelectorPageSizeInterval = 10;
         private TableRow _gridPagerRow = null;
         #endregion
 
-        /// <summary>
-        /// ctor
-        /// </summary>
-        public EntityGridView()
-        {
-            PageSelectorPageSizeInterval = 10;
-        }
-        
         #region Properties
         /// <summary>
         /// Set / Gets the Export File Name
@@ -78,24 +71,14 @@ namespace <%=RootNameSpace%>.Web.UI
         [
         Description("Gets / Sets Page Selector PageSize Interval"),
         Category("Misc"),
-        DefaultValue(""),
+        DefaultValue("10"),
         ]
         public int PageSelectorPageSizeInterval
         {
-            get
-            {
-                EnsureChildControls();
-                object o = ViewState["_pageSelectorPageSizeInterval"];
-                
-                return Int32.Parse(o.ToString());
-            }
-            set
-            {
-                EnsureChildControls();
-                ViewState["_pageSelectorPageSizeInterval"] = value;
-            }
+            get { return _pageSelectorPageSizeInterval; }
+            set { _pageSelectorPageSizeInterval = value; }
         }
-        
+
         /// <summary>
         /// Get / Sest the Export to excel text
         /// </summary>
@@ -263,13 +246,10 @@ namespace <%=RootNameSpace%>.Web.UI
 
             DataSourceControl dsc = (DataSourceControl)this.Parent.FindControl(string.Format("{0}", this.DataSourceID));
 
-            if (dsc != null)
-            {
-		System.Reflection.EventInfo eventInfo = dsc.GetType().GetEvent("Selected");
-            	Delegate d = Delegate.CreateDelegate(eventInfo.EventHandlerType, this, "dsc_Selected");
-	
-		eventInfo.AddEventHandler(dsc, d);
-            }
+            System.Reflection.EventInfo eventInfo = dsc.GetType().GetEvent("Selected");
+            Delegate d = Delegate.CreateDelegate(eventInfo.EventHandlerType, this, "dsc_Selected");
+
+            eventInfo.AddEventHandler(dsc, d);
 
         }
 
@@ -352,7 +332,6 @@ namespace <%=RootNameSpace%>.Web.UI
 
         private void DisplayPageSizeSelector(GridViewRow dgItem)
         {
-            EnsureChildControls();
             TableCell pagerCell;
             TableRow pagerRow;
 
@@ -362,12 +341,12 @@ namespace <%=RootNameSpace%>.Web.UI
 
             ((DropDownList)(cboPageSize)).SelectedIndexChanged += new EventHandler(this.cboPageSize_SelectedIndexChanged);
 
-            // -- we don't want to allow to page more then 250 records at a time
-            j = this.RecordsCount + PageSelectorPageSizeInterval;
-            for (int i = PageSelectorPageSizeInterval; i <= ((j > 250) ? 250 : j); )
+            // -- we don't want to allow to page more then 500 records at a time
+            j = this.RecordsCount + _pageSelectorPageSizeInterval;
+            for (int i = _pageSelectorPageSizeInterval; i <= ((j > 250) ? 250 : j); )
             {
                 cboPageSize.Items.Add(i.ToString());
-                i += PageSelectorPageSizeInterval;
+                i += _pageSelectorPageSizeInterval;
             }
 
             if (cboPageSize.Items.FindByText(this.PageSize.ToString()) != null)
@@ -460,7 +439,7 @@ namespace <%=RootNameSpace%>.Web.UI
         /// </summary> 
         private void cboPageSize_SelectedIndexChanged(object sender, System.EventArgs e)
         {
-            // -- reset current page index to 0, that is nessessary so that there won't be a situation when gridview current page index is off causing an exception
+            // -- reset current page index to 0, that is nessessary so that there won't be a situation when datagrid current page index is off causing an exception
             this.PageIndex = 0;
             DropDownList cboPageSize = (DropDownList)sender;
             this.PageSize = int.Parse(cboPageSize.SelectedValue);
@@ -618,7 +597,7 @@ namespace <%=RootNameSpace%>.Web.UI
 
 
         /// <summary>
-        /// Exports the gridview to an Excel file with the name of the datasheet provided by the passed in parameter
+        /// Exports the datagrid to an Excel file with the name of the datasheet provided by the passed in parameter
         /// </summary>
         public virtual void Export(string reportName, Page CurrentPage, Control NtGridView)
         {
