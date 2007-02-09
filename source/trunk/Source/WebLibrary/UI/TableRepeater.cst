@@ -1,4 +1,4 @@
-<%@ CodeTemplate Language="C#" TargetLanguage="Text" Description="" Debug="True" ResponseEncoding="UTF-8" %>
+﻿<%@ CodeTemplate Language="C#" TargetLanguage="Text" Description="" Debug="True" ResponseEncoding="UTF-8" %>
 <%@ CodeTemplate Language="C#" TargetLanguage="Text" Src="..\..\TemplateLib\CommonSqlCode.cs" Inherits="MoM.Templates.CommonSqlCode" Debug="False" Description="Template description here." %>
 <%@ Assembly Name="SchemaExplorer" %>
 <%@ Assembly Name="System.Design" %>
@@ -216,11 +216,17 @@ namespace <%=NameSpace%>.Web.UI
 			if (m_currentView == null)
 			{
 				<%=entityDataSource%> datasource = null;
-				Control ctl = this.Page.FindControl(DataSourceID);
-				if (ctl == null)
-				{
-					throw new System.Web.HttpException("Datasource does not exists");
-				}
+				//First look in the naming container
+            Control ctl = this.NamingContainer.FindControl(DataSourceID);
+            if (ctl == null)
+            {
+               //if not found, look at the page level
+               ctl = this.Page.FindControl(DataSourceID);
+               if (ctl == null)
+               {
+                  throw new System.Web.HttpException("Datasource does not exists");
+               }
+            }
 				datasource = ctl as <%=entityDataSource%>;
 				if (datasource == null)
 				{
