@@ -136,9 +136,9 @@
 																	
 			CodeTemplates.Add("WsNetTiersProvider.cst", base.CreateTemplate<WsNetTiersProvider>()); this.PerformStep();
 			CodeTemplates.Add("WsEntityProvider.cst", base.CreateTemplate<WsEntityProvider>()); this.PerformStep();
-			CodeTemplates.Add("WsEntityProvider.generated.cst", base.CreateTemplate<WsEntityProviderGenerated>()); this.PerformStep();
+			CodeTemplates.Add("WsEntityProviderBase.generated.cst", base.CreateTemplate<WsEntityProviderBaseGenerated>()); this.PerformStep();
 			CodeTemplates.Add("WsEntityViewProvider.cst", base.CreateTemplate<WsEntityViewProvider>()); this.PerformStep();
-			CodeTemplates.Add("WsEntityViewProvider.generated.cst", base.CreateTemplate<WsEntityViewProviderGenerated>()); this.PerformStep();
+			CodeTemplates.Add("WsEntityViewProviderBase.generated.cst", base.CreateTemplate<WsEntityViewProviderBaseGenerated>()); this.PerformStep();
 																	
 																															
 			CodeTemplates.Add("EntityRepositoryTest.cst", base.CreateTemplate<EntityRepositoryTest>()); this.PerformStep();
