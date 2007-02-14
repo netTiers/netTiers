@@ -246,11 +246,18 @@ namespace <%=DALNameSpace%>
 				EnvDTE.ProjectItem item = dte.Solution.FindProjectItem("web.config");
 				if ( item != null )
 				{
-					System.IO.FileInfo info = new System.IO.FileInfo(item.ContainingProject.FullName);
-					path = String.Format("{0}\\{1}", info.Directory.FullName, item.Name);
-					configMap = new ExeConfigurationFileMap();
-					configMap.ExeConfigFilename = path;
-				}
+					if (!item.ContainingProject.FullName.ToLower().StartsWith("http:"))
+               {
+                  System.IO.FileInfo info = new System.IO.FileInfo(item.ContainingProject.FullName);
+                  path = String.Format("{0}\\{1}", info.Directory.FullName, item.Name);
+                  configMap = new ExeConfigurationFileMap();
+                  configMap.ExeConfigFilename = path;
+               }
+               else
+               {
+                  configMap = new ExeConfigurationFileMap();
+                  configMap.ExeConfigFilename = item.get_FileNames(0);
+               }}
 
 				/*
 				Array projects = (Array) dte2.ActiveSolutionProjects;
