@@ -47,7 +47,7 @@ GO
 </xsl:template>
 
 <xsl:template match="parameter">
-	<xsl:value-of select="@name"/> <xsl:value-of select="@type"/> <xsl:value-of select="@param"/> <xsl:if test="@nulldefault = 'null'"> = null</xsl:if> <xsl:if test="@direction = 'Output'"> OUTPUT</xsl:if><xsl:if test="last()!=position()">,</xsl:if>
+	<xsl:value-of select="@name"/> <xsl:value-of select="@type"/> <xsl:value-of select="@param"/> <xsl:if test="@nulldefault = 'null'"> = null</xsl:if> <xsl:if test="@direction = 'InputOutput'"> OUTPUT</xsl:if><xsl:if test="last()!=position()">,</xsl:if>
 </xsl:template>
 
 <msxsl:script implements-prefix="sc" language="Javascript">
