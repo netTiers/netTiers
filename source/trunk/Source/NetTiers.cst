@@ -1,4 +1,4 @@
-﻿<%@ CodeTemplate Src="TemplateLib/CommonSqlCode.cs" Inherits="MoM.Templates.CommonSqlCode" Language="C#" TargetLanguage="Text" Description="NetTiers main template." Debug="True" ResponseEncoding="UTF-8"%>
+<%@ CodeTemplate Src="TemplateLib/CommonSqlCode.cs" Inherits="MoM.Templates.CommonSqlCode" Language="C#" TargetLanguage="Text" Description="NetTiers main template." Debug="True" ResponseEncoding="UTF-8"%>
 <%@ Assembly Name="SchemaExplorer" %>
 <%@ Assembly Name="System.Design" %>
 <%@ Assembly Name="System.DirectoryServices" %>
@@ -60,7 +60,6 @@
 <%@ Property Name="IncludeAtlasLibrary" Type="System.Boolean" Default="false" Category="06b. Website - Advanced" Description="Indicates whether to include a reference to the Atlas component library." %>
 <%@ Property Name="IncludeAtlasToolkit" Type="System.Boolean" Default="false" Category="06b. Website - Advanced" Description="Indicates whether to include a reference to the Atlas Control Toolkit. This property is only taken into account when IncludeAtlasLibrary is true." %>
 <%@ Property Name="GenerateWebsiteAdmin" Type="System.Boolean" Default="true" Category="06b. Website - Advanced" Description="Indicates if the web admin  should be generated." %>
-<%@ Property Name="WebAdminSiteName" Type="System.String" Default="Application Name" Category="06b. Website - Advanced" Description="Indicates the web admin sie name." %>
 
 <%-- 7.0 Retry of SQL statements --%>
 <%@ Property Name="RetryEnabled" Optional="False" Type="System.Boolean" Category="07. CRUD - Advanced" Default="false" Description="Enabling Retry will add code retry the queries that failed with data exceptions. Useful to if your database becomes temporarily unavailable." %>
@@ -110,6 +109,7 @@
 	private string templateMappingFile = string.Empty;
 	private string _WebServiceOutputPath = String.Empty; 
 	private string _WebServiceUrl = String.Empty; 
+	private string _ApplicationName = String.Empty;
 	
 	private TableSchemaCollection templateSourceTables;
 	private ViewSchemaCollection templateSourceViews;
@@ -371,6 +371,26 @@
 			_WebServiceUrl = value;
 		} 
 	}
+
+	[CodeTemplateProperty(CodeTemplatePropertyOption.Optional)]
+	[Category("06b. Website - Advanced")]
+	[Description("Indicates the web admin sie name.")]
+	[DefaultValue("Application Name")]
+	public string WebAdminSiteName
+	{ 
+		get
+		{
+			if (_ApplicationName.Length == 0)
+			{
+				return GetClassName(ChooseSourceDatabase.Name) + " Application";
+			}
+			return _ApplicationName;
+		}
+		set
+		{
+			_ApplicationName = value;
+		} 
+	}
 	
 	#region OnPropertyChanged
 	#if CodeSmith40
@@ -384,6 +404,7 @@
 			RootNameSpace = "";
 			WebServiceOutputPath = "";
 			WebServiceUrl = "";
+			WebAdminSiteName = "";
 		}
 		
 		base.OnPropertyChanged(propertyName);
@@ -2060,6 +2081,10 @@ public void Go()
 		this.GetTemplate("BoundEntityDropDownField.cs.cst").SetProperty("RootNameSpace", RootNameSpace);	
 		this.RenderToFile("BoundEntityDropDownField.cs.cst", rootPathWebLib + "\\UI\\BoundEntityDropDownField.cs", true);
 
+		AddFileNode(commonNode, "BoundRadioButtonField.cs");
+		this.GetTemplate("BoundRadioButtonField.cs.cst").SetProperty("RootNameSpace", RootNameSpace);	
+		this.RenderToFile("BoundRadioButtonField.cs.cst", rootPathWebLib + "\\UI\\BoundRadioButtonField.cs", true);
+		
 		AddFileNode(commonNode, "GridViewSearchPanel.cs");
 		this.GetTemplate("GridViewSearchPanel.cs.cst").SetProperty("RootNameSpace", RootNameSpace);	
 		this.GetTemplate("GridViewSearchPanel.cs.cst").SetProperty("BusinessLogicLayerNameSpace", BusinessLogicLayerNameSpace);			
@@ -3933,7 +3958,7 @@ private void SetCommonProperties(String template)
 	this.GetTemplate(template).SetProperty("IncludeGetListByFK", IncludeGetListByFK);
 	this.GetTemplate(template).SetProperty("IncludeGetListByIX", IncludeGetListByIX);
 	this.GetTemplate(template).SetProperty("IncludeManyToMany", IncludeManyToMany);
-	this.GetTemplate(template).SetProperty("IncludeRelations", IncludeRelations);
+	this.GetTemplate(template).SetProperty("IncludeRelations", IncludeRelations);	
 }
 
 private NetTiers.NetTiersMap GetMapping()
