@@ -237,6 +237,7 @@ accountsService.DeepSave(myAccountEntity, <font color="blue">false</font>, DeepS
 			<xsl:apply-templates select="initialization" />
 			<xsl:apply-templates select="common" />
 			<xsl:apply-templates select="Table" />
+         <xsl:apply-templates select="customStoredProcedures[@includeCustoms='true']" />
 		</ul>
 	</xsl:template>
 	
@@ -297,5 +298,25 @@ accountsService.DeepSave(myAccountEntity, <font color="blue">false</font>, DeepS
 			</xsl:if>-->
 		</li>
 	</xsl:template>
+
+   <xsl:template match="customStoredProcedures">
+      <li>
+         <h3>
+            Custom Stored Procedures
+         </h3>
+         <ul>
+            <xsl:apply-templates />
+         </ul>
+      </li>
+   </xsl:template>
+   
+   <xsl:template match="customStoredProcedure">
+      <li>
+         <span class="file">
+            <xsl:value-of select="@name" /> (applies to <xsl:value-of select="@relatedEntityType"/>: <xsl:value-of select="@relatedEntity"/>)
+         </span>
+      </li>
+      <br/>
+   </xsl:template>
 
 </xsl:stylesheet>

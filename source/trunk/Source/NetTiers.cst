@@ -1,4 +1,4 @@
-<%@ CodeTemplate Src="TemplateLib/CommonSqlCode.cs" Inherits="MoM.Templates.CommonSqlCode" Language="C#" TargetLanguage="Text" Description="NetTiers main template." Debug="True" ResponseEncoding="UTF-8"%>
+﻿<%@ CodeTemplate Src="TemplateLib/CommonSqlCode.cs" Inherits="MoM.Templates.CommonSqlCode" Language="C#" TargetLanguage="Text" Description="NetTiers main template." Debug="True" ResponseEncoding="UTF-8"%>
 <%@ Assembly Name="SchemaExplorer" %>
 <%@ Assembly Name="System.Design" %>
 <%@ Assembly Name="System.DirectoryServices" %>
@@ -718,6 +718,12 @@ public void Go()
 	XmlElement initNode = docOutput.CreateElement("initialization");
 	initNode.Attributes.Append(att);
 	docOutput.DocumentElement.AppendChild(initNode);
+	
+	XmlElement customProcsNode = docOutput.CreateElement("customStoredProcedures");
+	XmlAttribute attIncludeCustoms = docOutput.CreateAttribute("includeCustoms");
+	attIncludeCustoms.Value = IncludeCustoms.ToString().ToLower();
+	customProcsNode.Attributes.Append(attIncludeCustoms);
+	docOutput.DocumentElement.AppendChild(customProcsNode);
 		
 
 	if (IncludeSave)
@@ -2807,6 +2813,16 @@ public void Go()
 		XmlElement tableNode = AddTableNode(SourceView.Name);
 		
 		//----------------------------------------------------------------------------------------------------------------------------------------------
+		//-- Discovering Customer Procedures
+		//----------------------------------------------------------------------------------------------------------------------------------------------
+		if (IncludeCustoms)
+		{
+			IDictionary customProcs = GetCustomProcedures(SourceView);
+			LogCustomProcedures(customProcs, SourceView.Name, "view", customProcsNode);
+		}
+		
+		
+		//----------------------------------------------------------------------------------------------------------------------------------------------
 		//-- Abstract Business Object
 		//----------------------------------------------------------------------------------------------------------------------------------------------
 		XmlElement boBaseNode = AddFileNode(tableNode, GetPartialClassName(GetAbstractClassName(SourceView.Name)) + ".cs");
@@ -3134,7 +3150,15 @@ public void Go()
 		TableSchema SourceTable = templateSourceTables[x];
 		_CurrentPhase = string.Format("Generating {0} files", SourceTable.Name);
 		XmlElement tableNode = AddTableNode(SourceTable);
-				
+		
+		//----------------------------------------------------------------------------------------------------------------------------------------------
+		//-- Discovering Customer Procedures
+		//----------------------------------------------------------------------------------------------------------------------------------------------
+		if (IncludeCustoms)
+		{
+			IDictionary customProcs = GetCustomProcedures(SourceTable);
+			LogCustomProcedures(customProcs, SourceTable.Name, "table", customProcsNode);
+		}	
 	
 		if (GenerateBusinessLogicLayer)
 		{
@@ -3645,7 +3669,7 @@ public void Go()
 		AddExecutionTime(tableNode);
 		_CurrentObjectIndex++;
 	}
-
+	
 	try 
 	{
 		XmlElement summaryElement = docOutput.CreateElement("summary");
@@ -4072,6 +4096,30 @@ private string IncrementBuildVersion(string assemblyInfoFilename)
 		}
 	}
 	return "1.0.0.0";
+}
+
+private void LogCustomProcedures(IDictionary customProcs, string entityName, string entityType, XmlElement customProcsNode)
+{
+	foreach(DictionaryEntry item in customProcs)
+	{
+		XmlElement customProcNode = docOutput.CreateElement("customStoredProcedure");
+	
+		SchemaExplorer.CommandSchema command = (SchemaExplorer.CommandSchema) item.Value;
+		
+		XmlAttribute nameAtt = docOutput.CreateAttribute("name");
+		nameAtt.Value = command.Name;			
+		customProcNode.Attributes.Append(nameAtt);
+		
+		XmlAttribute entityAtt = docOutput.CreateAttribute("relatedEntity");
+		entityAtt.Value = entityName;			
+		customProcNode.Attributes.Append(entityAtt);
+		
+		XmlAttribute entityTypeAtt = docOutput.CreateAttribute("relatedEntityType");
+		entityTypeAtt.Value = entityType;			
+		customProcNode.Attributes.Append(entityTypeAtt);
+		
+		customProcsNode.AppendChild(customProcNode);
+	}
 }
 </script>
 <%
