@@ -1596,6 +1596,15 @@ namespace MoM.Templates
 		{
 			return GetColumnXmlComment(view.Description, indentLevel);
 		}
+		
+		
+		/// <summary>
+		/// Gets the column's description as a well formatted string for C# XML comments.
+		/// </summary>
+		public string GetColumnXmlComment(ViewColumnSchema column, int indentLevel)
+		{
+			return GetColumnXmlComment(column.Description, indentLevel);
+		}
 
 		/// <summary>
 		/// Gets the table key's description as a well formatted string for C# XML comments.
