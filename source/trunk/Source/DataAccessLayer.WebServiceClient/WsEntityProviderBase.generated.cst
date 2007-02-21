@@ -188,19 +188,22 @@ namespace <%=DALNameSpace%>.WebServiceClient
 		/// </summary>
 		public static <%=className%> Convert(<%=className%> outItem , <%=WebReferenceName+"."+GetClassName(SourceTable.Name)%> item)
 		{	
-			<% for(int i=0; i<SourceTable.Columns.Count; i++) { %>
-			outItem.<%= GetPropertyName(SourceTable.Columns[i]) %> = item.<%= GetPropertyName(SourceTable.Columns[i]) %>;
-			<% } %>
-			
-			<% for (int i=0; i < SourceTable.PrimaryKey.MemberColumns.Count; i++)
+			if (item != null && outItem != null)
 			{
-				if( !IsComputed(SourceTable.PrimaryKey.MemberColumns[i]) && !IsIdentityColumn(SourceTable.PrimaryKey.MemberColumns[i]) )
-				{%>
-			outItem.Original<%=GetPropertyName(SourceTable.PrimaryKey.MemberColumns[i])%> = item.<%=GetPropertyName(SourceTable.PrimaryKey.MemberColumns[i])%>;
-				<%}
-			} %>
+			<% for(int i=0; i<SourceTable.Columns.Count; i++) { %>
+				outItem.<%= GetPropertyName(SourceTable.Columns[i]) %> = item.<%= GetPropertyName(SourceTable.Columns[i]) %>;
+				<% } %>
+				
+				<% for (int i=0; i < SourceTable.PrimaryKey.MemberColumns.Count; i++)
+				{
+					if( !IsComputed(SourceTable.PrimaryKey.MemberColumns[i]) && !IsIdentityColumn(SourceTable.PrimaryKey.MemberColumns[i]) )
+					{%>
+				outItem.Original<%=GetPropertyName(SourceTable.PrimaryKey.MemberColumns[i])%> = item.<%=GetPropertyName(SourceTable.PrimaryKey.MemberColumns[i])%>;
+					<%}
+				} %>
+				outItem.AcceptChanges();			
+			}
 							
-			outItem.AcceptChanges();			
 			return outItem;
 		}
 		
