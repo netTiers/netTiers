@@ -17,7 +17,7 @@
 			CodeTemplates.Add("EntityBaseCore.generated.cst", base.CreateTemplate<EntityBaseCoreGenerated>()); this.PerformStep();
 			CodeTemplates.Add("EntityKeyBase.cst", base.CreateTemplate<EntityKeyBase>()); this.PerformStep();
 			CodeTemplates.Add("EntityKeyBaseCore.generated.cst", base.CreateTemplate<EntityKeyBaseCoreGenerated>()); this.PerformStep();
-			CodeTemplates.Add("Filter.cst", base.CreateTemplate<Filter>()); this.PerformStep();
+			CodeTemplates.Add("EntityFilter.cst", base.CreateTemplate<EntityFilter>()); this.PerformStep();
 			CodeTemplates.Add("EntityHelper.cst", base.CreateTemplate<EntityHelper>()); this.PerformStep();	
 			CodeTemplates.Add("EntityUtil.cst", base.CreateTemplate<EntityUtil>()); this.PerformStep();	
 			CodeTemplates.Add("EntityPropertyComparer.cst", base.CreateTemplate<EntityPropertyComparer>()); this.PerformStep(); 
