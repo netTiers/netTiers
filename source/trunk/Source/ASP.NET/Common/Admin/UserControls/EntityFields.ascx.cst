@@ -190,12 +190,13 @@ public string GetEditorControl(ColumnSchema column, string prefix, TableKeySchem
 	string controlDecl = String.Empty;
 	//Return the text representation of the editor control for a column
 		if ( column.IsForeignKeyMember )
-		{
+		{ 
 			string pkPropertyName = String.Empty;
 			string pkDisplayField = String.Empty;
 			string bindSignature = String.Empty;
 			string objectDataSource = String.Empty;
 			string pkCSType = String.Empty;
+			bool isAllowDbNull = column.AllowDBNull;
 			
 			foreach ( TableKeySchema tableKey in fkeys)
 			{
@@ -209,7 +210,7 @@ public string GetEditorControl(ColumnSchema column, string prefix, TableKeySchem
 				{
 					pkPropertyName = GetPropertyName(tableKey.PrimaryKeyMemberColumns[0]);	
 					pkCSType = GetCSType(tableKey.PrimaryKeyMemberColumns[0]);
-					bindSignature = string.Format("Bind(\"{0}\")", propertyName);	
+					bindSignature = string.Format("Bind(\"{0}\")", propertyName);						
 										
 					//Find the first non-key column for display
 					foreach(ColumnSchema pkColumn in tableKey.PrimaryKeyTable.Columns)
@@ -233,16 +234,17 @@ public string GetEditorControl(ColumnSchema column, string prefix, TableKeySchem
 					break;	
 				}
 			}
-			//ColumnSchema c = null;
 			
 			if (pkPropertyName != string.Empty)
 			{
-				controlDecl = String.Format("<data:EntityDropDownList runat=\"server\" ID=\"{0}\" DataSourceID=\"{3}{5}DataSource\" DataTextField=\"{2}\" DataValueField=\"{1}\" SelectedValue='<%# {4} %>' AppendNullItem=\"true\" Required=\"true\" NullItemText=\"< Please Choose ...>\"></data:EntityDropDownList>", controlID, pkPropertyName, pkDisplayField, propertyName, bindSignature, objectDataSource);				
+				if (isAllowDbNull)
+					controlDecl = String.Format("<data:EntityDropDownList runat=\"server\" ID=\"{0}\" DataSourceID=\"{3}{5}DataSource\" DataTextField=\"{2}\" DataValueField=\"{1}\" SelectedValue='<%# {4} %>' AppendNullItem=\"true\" Required=\"false\" NullItemText=\"< Please Choose ...>\" />", controlID, pkPropertyName, pkDisplayField, propertyName, bindSignature, objectDataSource);				
+				else
+					controlDecl = String.Format("<data:EntityDropDownList runat=\"server\" ID=\"{0}\" DataSourceID=\"{3}{5}DataSource\" DataTextField=\"{2}\" DataValueField=\"{1}\" SelectedValue='<%# {4} %>' AppendNullItem=\"true\" Required=\"true\" NullItemText=\"< Please Choose ...>\" ErrorText=\"Required\" />", controlID, pkPropertyName, pkDisplayField, propertyName, bindSignature, objectDataSource);				
 				controlDecl += "\n";
-				controlDecl += Tab(5) + "<data:" + objectDataSource + "DataSource ID=\"" + propertyName + objectDataSource + "DataSource\" runat=\"server\"\n ";
-				controlDecl += Tab(6) +"SelectMethod=\"" + MethodNames.GetAll + "\"\n ";
-				controlDecl += Tab(5) +">\n";
-				controlDecl += Tab(5) +"</data:" + objectDataSource + "DataSource>";
+				controlDecl += Tab(5) + "<data:" + objectDataSource + "DataSource ID=\"" + propertyName + objectDataSource + "DataSource\" runat=\"server\" ";
+				controlDecl += "SelectMethod=\"" + MethodNames.GetAll + "\" ";
+				controlDecl += " />";				
 			}
 		}
 	else
