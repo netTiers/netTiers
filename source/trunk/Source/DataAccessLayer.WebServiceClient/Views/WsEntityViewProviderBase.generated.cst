@@ -271,6 +271,29 @@ namespace <%=DALNameSpace%>.WebServiceClient
 			returnType = "DataSet"; 
 			
 		string returnTypeForComment = returnType.Replace("<", "&lt;").Replace(">", "&gt;");		
+		
+		string returnCommand;
+		
+		switch(returnType)
+		{
+			case "DataSet":
+				returnCommand = "return {0};";
+				break;
+			case "void":
+				returnCommand = "{0};";
+				break;
+			default:
+				returnCommand = "return Convert({0});";
+				break;
+		}
+		
+		
+		string executeCommand = string.Format("proxy.{0}_{1}(start, pageLength{2})",
+			providerName, //0
+			methodName, //1
+			TransformStoredProcedureInputsToDataAccess(true, command.InputParameters)//2
+			);
+		
 			
 %>
 	#region <%=command.Name%>
@@ -288,12 +311,8 @@ namespace <%=DALNameSpace%>.WebServiceClient
 		<%=WebReferenceName%>.<%=ProxyClassName%> proxy = new <%=WebReferenceName%>.<%=ProxyClassName%>();
 		proxy.Url = this.url;
 		
-		<% if (returnType == "DataSet") { %>
-		return proxy.<%=providerName%>_<%=methodName%>(start, pageLength<%=TransformStoredProcedureInputsToDataAccess(true, command.InputParameters)%>);
-		<% } else {%>
-		<%=WebReferenceName%>.<%=GetClassName(SourceView.Name)%>[] items = proxy.<%=providerName%>_<%=methodName%>(start, pageLength<%=TransformStoredProcedureInputsToDataAccess(true, command.InputParameters)%>);
-		return Convert(items); 
-		<% } %>
+		
+		<%=string.Format(returnCommand,executeCommand)%>
 	}	
 	
 	#endregion	
