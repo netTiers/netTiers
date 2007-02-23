@@ -40,7 +40,8 @@ namespace <%=RootNameSpace%>.Web.UI
         private DropDownList cboFieldName;
         private DropDownList cboOperator;
         private TextBox txtKeyword;
-        #endregion
+        private FieldCollection _fields;
+        #endregion        
 
         /// <summary>
         /// SearchButtonClicked event raised whenever the Search Button Clicked
@@ -210,6 +211,28 @@ namespace <%=RootNameSpace%>.Web.UI
                 txtKeyword.Text = value;
             }
         }
+
+        /// <summary>
+        /// Gets / sets the Fields To Exclude Fields Collection
+        /// </summary>
+        [
+        Browsable(true), 
+        Description("Set / Gets the Fields To Exclude Fields Collection"),
+        Category("Misc"),
+        DefaultValue(""),
+        ]
+        [PersistenceMode(PersistenceMode.InnerProperty)]
+        public FieldCollection FieldsToExclude
+        {
+            get
+            {
+                if (_fields == null)
+                {
+                    _fields = new FieldCollection();
+                }
+                return _fields;
+            }
+        }
         #endregion
 
         /// <summary>
@@ -226,8 +249,9 @@ namespace <%=RootNameSpace%>.Web.UI
                 if ( !string.IsNullOrEmpty( txtKeyword.Text ) && 
                         !string.IsNullOrEmpty( cboFieldName.SelectedValue ) )
                 {
-                    BuildSearch();
+                    BuildSearch();                    
                 }
+                ExcludeFields();
             }
         }
 
@@ -268,7 +292,7 @@ namespace <%=RootNameSpace%>.Web.UI
 
                 #region Set up the fields drop down list using the list of table columns
                 Type enumType = EntityUtil.GetType( _businessEntityType + "Column" );
-                string[] columnNames = Enum.GetNames( enumType  );
+                
                 Array c = Enum.GetValues( enumType );
                 for ( int i = 0; i < c.Length; i++ )
                 {
@@ -298,7 +322,7 @@ namespace <%=RootNameSpace%>.Web.UI
                         case System.Data.DbType.UInt64:
                         case System.Data.DbType.VarNumeric:
                         case System.Data.DbType.Xml:
-                            #region
+                            #region Add fields to the dropdown collection
                             ListItem li = new ListItem();
                             li.Text = EntityHelper.GetPascalSpacedName(cea.Name);
                             li.Value = cea.Name;
@@ -454,22 +478,6 @@ namespace <%=RootNameSpace%>.Web.UI
 
         #region Help Methods
         /// <summary>
-        /// Transform a name into a name that will be compare against entity property
-        /// </summary>
-        private string GetCleanName(string name)
-        {
-            string newName = string.Empty;
-
-            string[] strips = name.Split(new char[] { '_', '[', ']', ' ' });
-            foreach (string strip in strips)
-            {
-                if (strip == string.Empty) continue;
-                newName += strip;
-            }
-            return newName.ToLower();
-        }
-
-        /// <summary>
         /// Sets DataSourceObject Parameter's WhereClause property
         /// </summary>
         /// <param name="whereClause"></param>
@@ -515,9 +523,60 @@ namespace <%=RootNameSpace%>.Web.UI
                 return string.Format("{0} AND {1}", Filter, whereClause);
             }
         }
+
+        /// <summary>
+        /// Excluding fields from the list of the fields collection
+        /// </summary>
+        private void ExcludeFields()
+        {
+            foreach (Field f in FieldsToExclude)
+            {
+                ListItem li = cboFieldName.Items.FindByValue(f.Value);
+                if (li != null)
+                {                    
+                    cboFieldName.Items.Remove(li);
+                }
+            }
+        } 
         #endregion
     }
-    
+
+    #region classes: Field, FieldCollection
+    /// <summary>
+    /// Field
+    /// </summary>
+    public class Field
+    {
+        private string _value;
+
+        /// <summary>
+        /// Field value that corresponds to the list ValueField
+        /// </summary>
+        [DefaultValue("")]
+        public string Value
+        {
+            get
+            {
+                if (_value == null)
+                {
+                    return String.Empty;
+                }
+                return _value;
+            }
+            set
+            {
+                _value = value;
+            }
+        }
+    }
+
+    /// <summary>
+    /// Collection of custom fields that has its' own string property
+    /// </summary>
+    public class FieldCollection : List<Field>{}
+
+    #endregion
+
     /// <summary>
     /// Enum for the search panel search operator
     /// </summary>
@@ -533,7 +592,6 @@ namespace <%=RootNameSpace%>.Web.UI
         EndsWith = 3
     }
 }
-
 
 
 
