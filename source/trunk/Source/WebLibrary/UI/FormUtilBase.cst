@@ -25,6 +25,9 @@ using System.Web.UI;
 using System.Web.UI.WebControls;
 using System.Web.UI.WebControls.WebParts;
 using System.Web.UI.HtmlControls;
+using System.IO;
+using System.Text;
+using System.Xml.Serialization;
 using <%= BLLNameSpace %>;
 using <%= WebNameSpace %>.Data;
 #endregion
@@ -38,7 +41,7 @@ namespace <%= WebNameSpace %>.UI
 	public partial class FormUtilBase
 	{
 		private static readonly String ControlCacheKey = "ControlCache";
-
+		
 		#region Request Methods
 
 		#endregion
@@ -1408,5 +1411,240 @@ namespace <%= WebNameSpace %>.UI
 		}
 
 		#endregion
+		
+        #region Handles the GridViewSearchPanel State
+        /// <summary>
+        /// Handles the state of the GridViewSearchPanel
+        /// </summary>
+        /// <param name="searchPanel">The search panel.</param>
+        public static void HandleGridViewSearchPanelState( GridViewSearchPanel searchPanel )
+        {
+			HandleGridViewSearchPanelState( searchPanel, PersistenceMethod.Session );
+		}
+		
+		/// <summary>
+        /// Handles the state of the GridViewSearchPanel
+        /// </summary>
+        /// <param name="searchPanel">The search panel.</param>
+        /// <param name="persistentCookieExpiryDateTime">The date and time the persistent cookie expires.</param>
+        public static void HandleGridViewSearchPanelState( GridViewSearchPanel searchPanel, DateTime persistentCookieExpiryDateTime )
+        {
+			HandleGridViewSearchPanelState( searchPanel, null, PersistenceMethod.PersistentCookie, persistentCookieExpiryDateTime );
+		}
+		
+		/// <summary>
+        /// Handles the state of the GridViewSearchPanel
+        /// </summary>
+        /// <param name="searchPanel">The search panel.</param>
+        /// <param name="persistenceMethod">The persistence method.</param>
+        public static void HandleGridViewSearchPanelState( GridViewSearchPanel searchPanel, PersistenceMethod persistenceMethod )
+        {
+			HandleGridViewSearchPanelState( searchPanel, null, persistenceMethod, null );
+		}
+		
+        /// <summary>
+        /// Handles the state of the GridViewSearchPanel
+        /// </summary>
+        /// <param name="searchPanel">The search panel.</param>
+        /// <param name="gridView">The grid view.</param>
+        /// <param name="persistenceMethod">The persistence method</param>
+        /// <param name="persistentCookieExpiryDateTime">The expiry datetime of a persistent cookie</param>
+        public static void HandleGridViewSearchPanelState( GridViewSearchPanel searchPanel, GridView gridView, 
+															PersistenceMethod persistenceMethod, DateTime? persistentCookieExpiryDateTime )
+        {
+			if ( gridView == null )
+			{
+				// try and find the GridView control if it hasn't been explicitly supplied
+	            gridView = FindControl( searchPanel.NamingContainer, searchPanel.GridViewControlID ) as GridView;
+			}
+			
+            if ( gridView != null )
+            {
+                // restore any previously saved state
+                gridView.Page.Load += new EventHandler(
+                    delegate( object sender, EventArgs e )
+                    {
+                        if ( !gridView.Page.IsPostBack )
+                        {
+                            GridViewSearchPanelState controlState = GetGridViewSearchPanelState( GetUniqueGridViewName( gridView ), persistenceMethod );
+                            if ( controlState != null )
+                            {
+                                controlState.RestoreState( ref gridView, ref searchPanel );
+                            }
+                        }
+                    }
+                );
+
+                // save state when page index changes
+                gridView.PageIndexChanged += new EventHandler(
+                    delegate( object sender, EventArgs e )
+                    {
+                        GridViewSearchPanelState controlState = new GridViewSearchPanelState( gridView, searchPanel );
+                        SaveGridViewSearchPanelState( controlState, GetUniqueGridViewName( gridView ), 
+														persistenceMethod, persistentCookieExpiryDateTime );
+                    }
+                );
+
+                // save state when grid is sorted
+                gridView.Sorted += new EventHandler(
+                    delegate( object sender, EventArgs e )
+                    {
+                        GridViewSearchPanelState controlState = new GridViewSearchPanelState( gridView, searchPanel );
+                        SaveGridViewSearchPanelState( controlState, GetUniqueGridViewName( gridView ), 
+														persistenceMethod, persistentCookieExpiryDateTime );
+                    }
+                );
+
+                // save state when search id done
+                searchPanel.SearchButtonClicked += new EventHandler(
+                    delegate( object sender, EventArgs e )
+                    {
+                        GridViewSearchPanelState controlState = new GridViewSearchPanelState( gridView, searchPanel );
+                        SaveGridViewSearchPanelState( controlState, GetUniqueGridViewName( gridView ), 
+														persistenceMethod, persistentCookieExpiryDateTime );
+                    }
+                );
+
+                // save state when reset is done
+                searchPanel.ResetButtonClicked += new EventHandler(
+                    delegate( object sender, EventArgs e )
+                    {
+                        GridViewSearchPanelState controlState = new GridViewSearchPanelState( gridView, searchPanel );
+                        SaveGridViewSearchPanelState( controlState, GetUniqueGridViewName( gridView ), 
+														persistenceMethod, persistentCookieExpiryDateTime );
+                    }
+                );
+            }
+        }
+
+        /// <summary>
+        /// Gets the unique name of the grid view.
+        /// </summary>
+        /// <param name="gridView">The grid view.</param>
+        /// <returns></returns>
+        private static string GetUniqueGridViewName( GridView gridView )
+        {
+            return gridView.Page.Request.Url.AbsoluteUri + gridView.UniqueID;
+        }
+
+        /// <summary>
+        /// Saves the GridViewSearchPanel State.
+        /// </summary>
+        /// <param name="controlState">State of the control.</param>
+        /// <param name="controlStateName">Name of the control state.</param>
+        public static void SaveGridViewSearchPanelState( GridViewSearchPanelState controlState, string controlStateName, 
+															PersistenceMethod persistenceMethod, DateTime? persistentCookieExpiryDateTime )
+        {
+			switch ( persistenceMethod )
+			{
+				case PersistenceMethod.Session :
+					#region Uses Session state
+					HttpContext.Current.Session[ controlStateName ] = controlState;
+					#endregion
+					break;
+				case PersistenceMethod.Cookie :
+				case PersistenceMethod.PersistentCookie :
+					#region Uses a client cookie
+		            string serializedString = SerializeGridViewSearchPanelState( controlState );
+			        HttpCookie cookie = new HttpCookie( controlStateName, HttpContext.Current.Server.UrlEncode( serializedString ) );
+			        // Determine if this should be persisted longer than just the current session
+			        if ( persistentCookieExpiryDateTime != null )
+			        {
+						cookie.Expires = persistentCookieExpiryDateTime.Value;
+			        }
+					HttpContext.Current.Response.Cookies.Add( cookie );
+
+					#endregion
+					break;
+			}
+        }
+
+        /// <summary>
+        /// Gets the GridViewSearchPanel State from the cookie
+        /// </summary>
+        /// <param name="controlStateName">Name of the control state.</param>
+        /// <returns></returns>
+        public static GridViewSearchPanelState GetGridViewSearchPanelState( string controlStateName, PersistenceMethod persistenceMethod )
+        {
+			GridViewSearchPanelState controlState = null;
+			
+			switch ( persistenceMethod )
+			{
+				case PersistenceMethod.Session :
+					#region Uses Session state
+					if ( HttpContext.Current.Session[ controlStateName ] != null )
+					{ 
+						controlState = HttpContext.Current.Session[ controlStateName ] as GridViewSearchPanelState;
+					}
+					#endregion
+					break;
+					
+				case PersistenceMethod.Cookie :
+				case PersistenceMethod.PersistentCookie :
+					#region Uses a client session cookie
+					HttpCookie cookie = HttpContext.Current.Request.Cookies[ controlStateName ];
+
+					if ( cookie != null )
+					{
+						controlState = DeserializeGridViewSearchPanelState( HttpContext.Current.Server.UrlDecode( cookie.Value ) );
+					}
+					#endregion
+
+					break;
+			}
+			
+            return controlState;
+        }
+        
+		/// <summary>
+        /// Serializes the grid view search panel state.
+        /// </summary>
+        /// <param name="controlState">The control state.</param>
+        /// <returns></returns>
+        private static string SerializeGridViewSearchPanelState( GridViewSearchPanelState controlState)
+        {
+            string serializedString = string.Empty;
+
+            using ( StringWriter stringWriter = new StringWriter() )
+            {
+                XmlSerializer serializer = new XmlSerializer( typeof( GridViewSearchPanelState ) );
+                serializer.Serialize( stringWriter, controlState );
+                serializedString = stringWriter.ToString();
+            }
+
+            return serializedString;
+        }
+
+        /// <summary>
+        /// Deserializes the grid view search panel state.
+        /// </summary>
+        /// <param name="serializedString">The serialized string.</param>
+        /// <returns></returns>
+        private static GridViewSearchPanelState DeserializeGridViewSearchPanelState( string serializedString )
+        {
+            GridViewSearchPanelState controlState = null;
+            XmlSerializer serializer = new XmlSerializer( typeof( GridViewSearchPanelState ) );
+            controlState = (GridViewSearchPanelState)serializer.Deserialize( new StringReader( serializedString ) );
+
+            return controlState;
+        }
+        
+        #endregion
+
 	}
+	
+	#region Enums
+	/// <summary>
+	/// used to determine the persistence method
+	/// </summary>
+	public enum PersistenceMethod
+	{
+		/// session state will be used
+		Session = 0,
+		/// client cookie will be used
+		Cookie = 1,
+		/// a persistent client cookie will be used
+		PersistentCookie = 2,
+	}
+	#endregion
 }
