@@ -202,7 +202,7 @@
 			CodeTemplates.Add("EntityEdit.aspx.cs.cst", base.CreateTemplate<EntityEditAspxCs>()); this.PerformStep();
 			CodeTemplates.Add("EntityFields.ascx.cst", base.CreateTemplate<EntityFieldsAscx>()); this.PerformStep();
 			CodeTemplates.Add("Web.Sitemap.cst", base.CreateTemplate<WebSitemap>()); this.PerformStep();
-			CodeTemplates.Add("site.master.cst", base.CreateTemplate<SiteMaster>()); this.PerformStep();
+			CodeTemplates.Add("admin.master.cst", base.CreateTemplate<SiteMaster>()); this.PerformStep();
 																	
 			CodeTemplates.Add("TableEditControl.cst", base.CreateTemplate<TableEditControl>()); this.PerformStep();
 			CodeTemplates.Add("TableEditControlBase.cst", base.CreateTemplate<TableEditControlBase>()); this.PerformStep();
