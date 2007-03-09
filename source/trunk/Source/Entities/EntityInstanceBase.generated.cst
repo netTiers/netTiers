@@ -671,6 +671,43 @@ WriteRelationshipPropertyString();
 }	
 		
 		#endregion
+
+        ///<summary>
+        /// Returns a value indicating whether this instance is equal to a specified object.
+        ///</summary>
+        ///<param name="Object1">An object to compare to this instance.</param>
+        ///<returns>true if Object1 is a <see cref="<%=abstractClassName%>"/> and has the same value as this instance; otherwise, false.</returns>
+        public override bool Equals(object Object1)
+        {
+            return Equals(this, (<%=abstractClassName%>)Object1);
+        }
+
+        /// <summary>
+		/// Serves as a hash function for a particular type, suitable for use in hashing algorithms and data structures like a hash table.
+        /// Provides a hash function that is appropriate for <see cref="<%=abstractClassName%>"/> class 
+        /// and that ensures a better distribution in the hash table
+        /// </summary>
+        /// <returns>number (hash code) that corresponds to the value of an object</returns>
+        public override int GetHashCode()
+        {
+			return <%
+				for (int i=0; i < cols.Count; i++) 
+				{
+					if (i>0) 
+					{
+						Response.Write(" ^ \n\t\t\t\t\t");
+					}
+					if (cols[i].AllowDBNull) 
+					{
+						Response.Write("((this."+ GetPropertyName(cols[i]) + " == null) ? string.Empty : this."+ GetPropertyName(cols[i]) + ".ToString()).GetHashCode()");
+					}
+					else
+					{
+						Response.Write("this."+ GetPropertyName(cols[i]) + ".GetHashCode()");
+					}
+				} 
+				%>;
+        }
 		
 		///<summary>
 		/// Returns a value indicating whether this instance is equal to a specified object.
