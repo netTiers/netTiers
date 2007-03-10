@@ -672,7 +672,8 @@ namespace MoM.Templates
 			PropertyName,
 			FieldName,
 			Id,
-			CSType
+			CSType,
+			FriendlyName
 		}
 		
 		/// <summary>
@@ -1153,11 +1154,19 @@ namespace MoM.Templates
 		{
 			return Regex.Replace(name, @"[^A-Za-z0-9_\.]", "");
 		}
-		
+
 		/// <summary>
 		/// Transform the name of a column into a public class property name.
 		/// </summary>
 		public string GetPropertyName(SchemaExplorer.SchemaObjectBase column)
+		{
+			return GetPropertyName(column, false);
+		}
+
+		/// <summary>
+		/// Transform the name of a column into a public class property name.
+		/// </summary>
+		public string GetPropertyName(SchemaExplorer.SchemaObjectBase column, bool getFriendlyText)
 		{
 			if (column == null)
 				return "";
@@ -1176,7 +1185,10 @@ namespace MoM.Templates
 			{
 				owner = ((ColumnSchema)column).Table.Owner;
 				obj = ((ColumnSchema)column).Table.Name;
-				name = GetAliasName(owner, obj, name, ReturnFields.PropertyName);
+				if (!getFriendlyText)
+					name = GetAliasName(owner, obj, name, ReturnFields.PropertyName);
+				else
+					name = GetAliasName(owner, obj, name, ReturnFields.FriendlyName);
 			}
 			
 			return name;
@@ -3280,7 +3292,9 @@ CREATE\s+PROC(?:EDURE)?                               # find the start of the st
 			{
 				case DbType.AnsiString: 
 				case DbType.AnsiStringFixedLength: 
-				case DbType.String: 
+				case DbType.String:
+					return (column.Size != -1);
+					break;
 				case DbType.StringFixedLength: 
 					return 
 					(
@@ -3288,7 +3302,7 @@ CREATE\s+PROC(?:EDURE)?                               # find the start of the st
 						column.NativeType != "ntext" && 
 						column.Size > 0
 					);
-					
+					break;
 				default: 
 						return false;
 			}
@@ -4786,8 +4800,6 @@ CREATE\s+PROC(?:EDURE)?                               # find the start of the st
 			
 			return result;
 		}
-		
-		
 
 		
 		public bool IsForeignKeyCoveredByIndex(TableKeySchema fKey)

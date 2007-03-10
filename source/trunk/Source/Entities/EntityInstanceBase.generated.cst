@@ -339,18 +339,49 @@ WriteRelationshipPropertyString();
 		for (int x=0; x < cols.Count; x++) 
 		{
 			string propertyName = GetPropertyName(cols[x]);
+			string friendlyName = GetAliasName(SourceTable.Owner, SourceTable.Name, cols[x].Name, ReturnFields.FriendlyName);
 			
 			if (! cols[x].AllowDBNull && IsCSReferenceDataType(cols[x])) 
 			{%>
-			ValidationRules.AddRule(Validation.CommonRules.NotNull,"<%=propertyName%>");
+			ValidationRules.AddRule(
+				Validation.CommonRules.NotNull,
+				new Validation.ValidationRuleArgs("<%=propertyName%>", "<%=friendlyName%>"));
 			<%
 			}
 			
 			if (CanCheckLength(cols[x]))
 			{%>
-			ValidationRules.AddRule(Validation.CommonRules.StringMaxLength,new Validation.CommonRules.MaxLengthRuleArgs("<%=propertyName%>",<%=cols[x].Size%>));
+			ValidationRules.AddRule(
+				Validation.CommonRules.StringMaxLength, 
+				new Validation.CommonRules.MaxLengthRuleArgs("<%=propertyName%>", "<%=friendlyName%>", <%=cols[x].Size%>));
 			<%
 			}
+			
+			if (cols[x].IsForeignKeyMember && !cols[x].AllowDBNull)
+			{
+				switch(cols[x].DataType) 
+				{
+					case DbType.AnsiString:
+					case DbType.AnsiStringFixedLength:
+					case DbType.String:
+				%>
+			ValidationRules.AddRule(
+				Validation.CommonRules.StringRequired, 
+				new Validation.ValidationRuleArgs("<%=propertyName%>", "<%=friendlyName%>"));
+				<%					
+						break;
+					case DbType.Int16:
+					case DbType.Int32:
+					case DbType.Int64:
+				%>
+			ValidationRules.AddRule(
+				Validation.CommonRules.ForeignKeyValueRequired,
+				new Validation.ValidationRuleArgs("<%=propertyName%>", "<%=friendlyName%>"));
+				<%
+						break;
+				}
+			}
+			
 		}
 		%>		
 		}
@@ -1375,7 +1406,7 @@ WriteRelationshipPropertyString();
 		/// <summary>
 		/// <%=GetPropertyName(cols[x])%> : <%=GetColumnXmlComment(cols[x],2)%>
 		/// </summary>
-		[EnumTextValue("<%= cols[x].Name %>")]
+		[EnumTextValue("<%= GetAliasName(SourceTable.Owner, SourceTable.Name, cols[x].Name, ReturnFields.FriendlyName) %>")]
 		[ColumnEnum(<%= GetColumnEnumAttributeParams(cols[x]) %>)]
 		<%=GetPropertyName(cols[x])%> = <%= (x+1) %><%if(x < cols.Count -1) {%>,<%}%>
 		<% }// end for %>	
