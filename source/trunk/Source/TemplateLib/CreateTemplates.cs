@@ -192,6 +192,7 @@
 			CodeTemplates.Add("BoundRadioButtonField.cs.cst", base.CreateTemplate<BoundRadioButtonField>()); this.PerformStep();			
 			CodeTemplates.Add("GridViewSearchPanel.cs.cst", base.CreateTemplate<GridViewSearchPanel>()); this.PerformStep();
 			CodeTemplates.Add("GridViewSearchPanelState.cs.cst", base.CreateTemplate<GridViewSearchPanelState>()); this.PerformStep();
+			CodeTemplates.Add("EntityLabel.cs.cst", base.CreateTemplate<EntityLabel>()); this.PerformStep();
 																	
 			CodeTemplates.Add("TableRepeater.cst", base.CreateTemplate<TableRepeater>()); this.PerformStep();
 			CodeTemplates.Add("ViewRepeater.cst", base.CreateTemplate<ViewRepeater>()); this.PerformStep();
