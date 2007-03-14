@@ -287,11 +287,8 @@ public string GetEditorControl(ColumnSchema column, string prefix, TableKeySchem
 			case DbType.Int32:
 			case DbType.Int64: 
 			case DbType.Byte:
-				//Return a textbox control
-				if (column.DataType == DbType.Currency)
-					controlDecl = String.Format("<asp:TextBox runat=\"server\" ID=\"{0}\" Text='<%# Bind(\"{1}\", \"{{0:n2}}\") %>'></asp:TextBox>",controlID, propertyName);
-				else
-					controlDecl = String.Format("<asp:TextBox runat=\"server\" ID=\"{0}\" Text='<%# Bind(\"{1}\") %>'></asp:TextBox>",controlID, propertyName);
+				//Return a textbox control								
+				controlDecl = String.Format("<asp:TextBox runat=\"server\" ID=\"{0}\" Text='<%# Bind(\"{1}\") %>'></asp:TextBox>",controlID, propertyName);
 				
 				if ( ! column.AllowDBNull )
 				{
@@ -348,7 +345,14 @@ public string GetEditorControl(ColumnSchema column, string prefix, TableKeySchem
 						break;
 				}
 				
-				controlDecl += String.Format("<asp:RangeValidator ID=\"Range{0}\" runat=\"server\" Display=\"Dynamic\" ControlToValidate=\"{1}\" ErrorMessage=\"Invalid value\" MaximumValue=\"{2}\" MinimumValue=\"{3}\" Type=\"{4}\"></asp:RangeValidator>",validatorID, controlID, maxValue.ToString(), minValue.ToString(),valType);
+				if (column.DataType == DbType.Currency)
+				{
+					controlDecl += String.Format("<asp:RegularExpressionValidator ID=\"RegEx{0}\"  runat=\"server\" ControlToValidate=\"{1}\" Display=\"Dynamic\" ValidationExpression=\"^\\d{{1,9}}[,.]\\d{{1,4}}$\" ErrorMessage=\"Invalid Value\" />", validatorID, controlID);
+				}
+				else
+				{
+					controlDecl += String.Format("<asp:RangeValidator ID=\"Range{0}\" runat=\"server\" Display=\"Dynamic\" ControlToValidate=\"{1}\" ErrorMessage=\"Invalid value\" MaximumValue=\"{2}\" MinimumValue=\"{3}\" Type=\"{4}\"></asp:RangeValidator>",validatorID, controlID, maxValue.ToString(), minValue.ToString(),valType);
+				}
 				
 				break;
 				
