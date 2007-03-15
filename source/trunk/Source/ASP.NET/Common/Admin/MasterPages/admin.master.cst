@@ -1,8 +1,39 @@
 <%@ CodeTemplate Language="C#" TargetLanguage="Text" Description="" Debug="True" ResponseEncoding="UTF-8" %>
 <%@ Property Name="WebsiteNameSpace" Type="System.String" Category="Data" Description="Website Namespace." %>
-<%@ Property Name="WebAdminSiteName" Type="System.String" Default="Company Name" Category="06b. Website - Advanced" Description="Indicates the web admin sie name." %>
+<%@ Property Name="WebAdminSiteName" Type="System.String" Default="Application Admin" Category="06b. Website - Advanced" Description="Indicates the web admin site name." %>
 <%@ Property Name="IncludeAtlasLibrary" Type="System.Boolean" Default="false" Category="06b. Website - Advanced" Description="Indicates whether to include a reference to the Atlas component library." %>
+<%@ Property Name="CompanyName" Optional="True" Type="System.String" Category="04. General - Advanced" Description="The name of your company. This is only for documenation." %>
+<%@ Property Name="CompanyURL" Optional="True" Type="System.String" Category="04. General - Advanced" Description="The URL of your company. This is only for documenation." %>
 
+<script runat="template">
+	private string _companyName1 = "CompanyName";
+	private string _companyURL1 = "~/";	
+	
+	private string CompanyName1 {
+		get {
+			if (string.IsNullOrEmpty(CompanyName))
+				return _companyName1;
+			else
+				return CompanyName;
+		}
+	}
+	
+	private string CompanyURL1 {
+		get {
+			if (string.IsNullOrEmpty(CompanyURL)) {
+				return _companyURL1;
+			}
+			else {
+				if (CompanyURL.Trim().IndexOf("http://") >= 0)
+					return CompanyURL;		
+				else
+					return string.Format("http://{0}", CompanyURL);
+			}
+		}
+	}
+	
+
+</script>	
 <%%@ Master Language="C#" %%>
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
 <!-- layout by 404 creative studios. http://www.404creative.com -->
@@ -28,27 +59,25 @@
 		<table border="0" cellpadding="5" cellspacing="0" summary="Page Content">
 			<tr>
 			<td valign="top" class="leftColumn">
-                        <div id="navcontainer">
-                            <ul id="navlist">                                    
-                                <asp:Repeater ID="Repeater1" DataSourceID="SiteMapDataSource1" EnableViewState="false" runat="server">
-                                    <ItemTemplate>
-                                        <li>
-                                            <a href='<%%#Eval("url") %%>'><%%#Eval("Title") %%></a>
-                                            
-                                            <ul>
-                                                <asp:Repeater ID="bar" DataSource='<%%#Eval("ChildNodes")%%>' runat="server">
-                                                    <ItemTemplate>
-                                                        <li><a href='<%%#Eval("url") %%>'><%%#Eval("Title") %%></a></li>
-                                                    </ItemTemplate>
-                                                </asp:Repeater>
-                                            </ul>
-                                            
-                                        </li>
-                                    </ItemTemplate>
-                                </asp:Repeater>
-                            </ul>
-                        </div>
-                        <asp:SiteMapDataSource ID="SiteMapDataSource1" ShowStartingNode="false" runat="server" />
+				<div id="navcontainer">
+					<ul id="navlist">                                    
+						<asp:Repeater ID="Repeater1" DataSourceID="SiteMapDataSource1" EnableViewState="false" runat="server">
+							<ItemTemplate>
+								<li>
+									<a href='<%%#Eval("url") %%>'><%%#Eval("Title") %%></a>                                            
+									<asp:Repeater ID="Repeater2" DataSource='<%%#Eval("ChildNodes")%%>' Visible='<%%#Eval("HasChildNodes")%>' runat="server">
+										<HeaderTemplate><ul></HeaderTemplate>
+										<ItemTemplate>
+											<li><a href='<%%#Eval("url") %%>'><%%#Eval("Title") %%></a></li>
+										</ItemTemplate>
+										<FooterTemplate></ul></FooterTemplate>
+									</asp:Repeater>
+								</li>
+							</ItemTemplate>
+						</asp:Repeater>
+					</ul>
+				</div>
+				<asp:SiteMapDataSource ID="SiteMapDataSource1" ShowStartingNode="false" runat="server" />
 			</td>
 			<td valign="top" class="rightColumn">
 				<h2>
@@ -65,7 +94,7 @@
 		</table>
 	</div>
 	<div id="divBaseLinks">
-	    &copy 2007 Copyright - <asp:HyperLink runat="server" ID="Hyperlink1" NavigateUrl="~/" Text="CompanyName"></asp:HyperLink>
+	    &copy <%=DateTime.Now.Year%> Copyright - <asp:HyperLink runat="server" ID="Hyperlink1" NavigateUrl="<%=CompanyURL1%>" Text="<%=CompanyName1%>"></asp:HyperLink>
 	 </div>
 	<!-- begin bottom rounded corner styles -->
 	<b class="rbottom"><b class="r4"></b> <b class="r3"></b> <b class="r2"></b> <b class="r1"></b></b>
