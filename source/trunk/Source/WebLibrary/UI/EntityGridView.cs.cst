@@ -9,15 +9,16 @@ using System.Text;
 using System.Web.UI;
 using System.IO;
 using System.Web.UI.WebControls;
+using System.Data;
 using <%=RootNameSpace%>;
+using <%=RootNameSpace%>.Entities;
 
 #endregion
 
 namespace <%=RootNameSpace%>.Web.UI
 {
     /// <summary>
-    /// Inherits all features of instinct GridView Control. EntityGridView allows 
-    /// multi-sort, control of page size, export data to excel.
+    /// Inherits all features of instinct GridView Control, also provides multi-sort, control of page size, export data to excel, etc.
     /// </summary>
     /// <remarks>
     /// Multi-sort technic is used from here: http://aspalliance.com/666
@@ -167,6 +168,70 @@ namespace <%=RootNameSpace%>.Web.UI
                 ViewState["EnableMultiColumnSorting"] = value;
             }
         }
+
+        /// <summary>
+        /// Gets/Sets Show Page Text
+        /// </summary>
+        [
+        Description("Gets / Sets Show Page Text"),
+        Category("Misc"),
+        DefaultValue("Show Page"),
+        ]
+        public string ShowPageText
+        {
+            get
+            {
+                object o = ViewState["ShowPageText"];
+                return (o != null ? (string)o : "Show Page");
+            }
+            set
+            {
+                ViewState["ShowPageText"] = value;
+            }
+        }
+
+        /// <summary>
+        /// Gest/Sets Total Records
+        /// </summary>
+        [
+        Description("Gets / Sets Total Records Text"),
+        Category("Misc"),
+        DefaultValue("Total Records"),
+        ]
+        public string TotalRecordsText
+        {
+            get
+            {
+                object o = ViewState["TotalRecordsText"];
+                return (o != null ? (string)o : "Total Records");
+            }
+            set
+            {
+                ViewState["TotalRecordsText"] = value;
+            }
+        }
+
+        /// <summary>
+        /// Gets/Sets Records Per Page
+        /// </summary>
+        [
+        Description("Gets / Sets Records Per Page Text"),
+        Category("Misc"),
+        DefaultValue("Records Per Page"),
+        ]
+        public string RecordsPerPageText
+        {
+            get
+            {
+                object o = ViewState["RecordsPerPageText"];
+                return (o != null ? (string)o : "Records Per Page");
+            }
+            set
+            {
+                ViewState["RecordsPerPageText"] = value;
+            }
+        }
+
         /// <summary>
         /// Get or Set Image location to be used to display Ascending Sort order.
         /// </summary>
@@ -253,13 +318,42 @@ namespace <%=RootNameSpace%>.Web.UI
 
         }
 
+        /// <summary>
+        /// Retrieves data from the underlying data storage by calling the method that is identified by the 
+        /// SelectMethod property with the parameters in the SelectParameters collection.        
+        /// </summary>
+        /// <remarks>
+        /// Occurs when a Select operation has completed.
+        /// </remarks>
         void dsc_Selected(object sender, SqlDataSourceStatusEventArgs e)
         {
             RecordsCount = e.AffectedRows;
         }
 
+        /// <summary>
+        /// Retrieves data from the underlying data storage by calling the method that is identified by the 
+        /// SelectMethod property with the parameters in the SelectParameters collection.       
+        /// </summary>
+        /// <remarks>
+        /// Occurs when a Select operation has completed.
+        /// </remarks>
         void dsc_Selected(object sender, ObjectDataSourceStatusEventArgs e)
-        {
+        {            
+            if (e.AffectedRows == 0)
+            {
+                // check if gridview bound to typed object data source 
+                if (sender is Web.Data.IListDataSource)
+                {
+                    // get the types of the generic type arguments
+                    Type[] typeArguments = ((DataSourceControl)sender).GetType().BaseType.GetGenericArguments();
+
+                    // create empty business object
+                    object entity = EntityUtil.GetNewEntity(EntityUtil.GetType(typeArguments[0].FullName));
+                    
+                    // add empty object to the collection
+                    EntityUtil.Add(e.ReturnValue as System.Collections.IList, entity);
+                }
+            }
             RecordsCount = e.AffectedRows;
         }
 
@@ -288,6 +382,11 @@ namespace <%=RootNameSpace%>.Web.UI
                 if (SortExpression != String.Empty)
                     DisplaySortOrderImages(SortExpression, e.Row);
             }
+            else if (e.Row.RowType == DataControlRowType.EmptyDataRow)
+            {
+                e.Row.Cells[0].Attributes.Add("style", "text-align:center;height:40px;");
+
+            }
             else if (e.Row.RowType == DataControlRowType.Pager)
             {
                 DisplayPageSizeSelector(e.Row);
@@ -305,7 +404,9 @@ namespace <%=RootNameSpace%>.Web.UI
             base.OnPreRender(e);
 
             if (this.RecordsCount > 0 && this.AllowPaging)
+            {
                 _gridPagerRow.Visible = true;
+            }
         }
         #endregion
 
@@ -358,13 +459,13 @@ namespace <%=RootNameSpace%>.Web.UI
             pagerCell = ((TableCell)(pagerRow.Controls[0]));
             TableRow pagerTableRow = ((Table)pagerCell.Controls[0]).Rows[0];
             TableCell cell = new TableCell();
-            cell.Text = "Show page: ";
+            cell.Text = string.Format("{0}: ", ShowPageText );
             cell.Wrap = false;
             cell.ApplyStyle(this.PagerStyle);
             pagerTableRow.Cells.AddAt(0, cell);
 
             cell = new TableCell();
-            cell.Text = string.Format("&nbsp; (Total Records: {0})", RecordsCount);
+            cell.Text = string.Format("&nbsp; ({1}: {0})", RecordsCount, TotalRecordsText);
             cell.Wrap = false;
             cell.ApplyStyle(this.PagerStyle);
             pagerTableRow.Cells.Add(cell);
@@ -384,7 +485,7 @@ namespace <%=RootNameSpace%>.Web.UI
             }
 
             cell = new TableCell();
-            cell.Text = "Records Per Page: ";
+            cell.Text = string.Format("{0}: ", RecordsPerPageText );
             cell.Wrap = false;
             cell.ApplyStyle(this.PagerStyle);
             cell.HorizontalAlign = HorizontalAlign.Right;
