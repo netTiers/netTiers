@@ -42,7 +42,7 @@ namespace <%=RootNameSpace%>.Web.UI
             return false;
         }
 
-        
+
         /// <summary>
         /// This method is called by the ExtractRowValues methods of 
         /// GridView and DetailsView. Retrieve the current value of the 
@@ -58,34 +58,35 @@ namespace <%=RootNameSpace%>.Web.UI
             // in its Controls collection.
             if (cell.Controls.Count > 0)
             {
-                RadioButtonList radio = cell.Controls[0] as RadioButtonList;
+                object radio = cell.Controls[0];
 
                 object checkedValue = null;
-                if (null == radio)
+                if (radio is RadioButton || radio is RadioButtonList)
                 {
-                    // A RadioButton is expected, but a null is encountered.
-                    // Add error handling.
-                    throw new InvalidOperationException
-                        ("RadioButtonField could not extract control.");
+                    if (rowState == DataControlRowState.Normal)
+                        checkedValue = ((RadioButton)radio).Checked;
+                    else
+                        checkedValue = ((RadioButtonList)radio).SelectedValue;
                 }
                 else
                 {
-                    checkedValue = radio.SelectedValue;
+                    // A RadioButton is expected, but a null is encountered.
+                    throw new InvalidOperationException("RadioButtonField could not extract control.");
                 }
 
-                
+
                 // Add the value of the Checked attribute of the
                 // RadioButton to the dictionary.
                 if (dictionary.Contains(DataField))
                 {
-                    dictionary[DataField] = checkedValue;                    
+                    dictionary[DataField] = checkedValue;
                 }
                 else
                 {
                     dictionary.Add(DataField, checkedValue);
                 }
             }
-        }           
+        }
 
         /// <summary>
         /// This method adds a RadioButton or RadioButtonList controls and any other 
@@ -93,7 +94,7 @@ namespace <%=RootNameSpace%>.Web.UI
         /// </summary>
         /// <param name="cell"></param>
         /// <param name="rowState"></param>
-        protected override void InitializeDataCell (DataControlFieldCell cell, DataControlRowState rowState)
+        protected override void InitializeDataCell(DataControlFieldCell cell, DataControlRowState rowState)
         {
             RadioButtonList radioList = new RadioButtonList();
             radioList.RepeatDirection = RepeatDirection.Horizontal;
@@ -101,8 +102,8 @@ namespace <%=RootNameSpace%>.Web.UI
             RadioButton radio = new RadioButton();
 
             radioList.Items.Add("True");
-            radioList.Items.Add("False");                
-            
+            radioList.Items.Add("False");
+
 
             // If the RadioButton is bound to a DataField, add
             // the OnDataBindingField method event handler to the
@@ -111,12 +112,12 @@ namespace <%=RootNameSpace%>.Web.UI
             {
                 radio.DataBinding += new EventHandler(this.OnDataBindField);
             }
-            
+
 
             // Because the RadioButtonField is a BoundField, it only
             // displays data. Therefore, unless the row is in edit mode,
             // the RadioButton is displayed as disabled.
-            
+
             // If the row is in edit mode, enable the button.
             if ((rowState & DataControlRowState.Edit) != 0 || (rowState & DataControlRowState.Insert) != 0)
             {
@@ -125,7 +126,7 @@ namespace <%=RootNameSpace%>.Web.UI
                 cell.Controls.Add(radioList);
             }
             else
-            {                
+            {
                 radio.Text = this.Text;
                 radio.Enabled = false;
                 radioList.Visible = false;
