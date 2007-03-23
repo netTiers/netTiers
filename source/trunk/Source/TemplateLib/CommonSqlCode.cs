@@ -1190,7 +1190,15 @@ namespace MoM.Templates
 				else
 					name = GetAliasName(owner, obj, name, ReturnFields.FriendlyName);
 			}
-			
+			else if (column is ViewColumnSchema)
+			{
+				owner = ((ViewColumnSchema)column).View.Owner;
+				obj = ((ViewColumnSchema)column).View.Name;
+				if (!getFriendlyText)
+					name = GetAliasName(owner, obj, name, ReturnFields.PropertyName);
+				else
+					name = GetAliasName(owner, obj, name, ReturnFields.FriendlyName);
+			}
 			return name;
 		}
 		
@@ -2725,6 +2733,26 @@ namespace MoM.Templates
 				/*2*/ column.AllowDBNull.ToString().ToLower(),
 				/*3*/ (CanCheckLength(column) ? ", " + column.Size.ToString() : ""));
 		}
+
+		/// <summary>
+		/// Gets the <see cref="System.ComponentModel.DataObjectField" /> Ctor Params
+		/// based on the schema information on a column.
+		/// The 4 params are 
+		///	1. indicates whether the field is the primary key 
+		/// 2. whether the field is a database identity field
+		/// 3. whether the field can be null
+		/// 4. sets the length of the field
+		/// </summary>
+		/// <param name="column">Column</param>
+		/// <returns>The ctor params for the <see cref="System.ComponentModel.DataObjectField" /></returns>
+		public string GetDataObjectFieldCallParams(ViewColumnSchema column)
+		{
+			return string.Format("{0}, {1}, {2}{3}",
+				/*0*/ "false",
+				/*1*/ "false",
+				/*2*/ column.AllowDBNull.ToString().ToLower(),
+				/*3*/ (CanCheckLength(column) ? ", " + column.Size.ToString() : ""));
+		}
 		
 		/// <summary>
 		/// Gets the parameters needed for the ColumnEnumAttribute class
@@ -2732,6 +2760,20 @@ namespace MoM.Templates
 		/// </summary>
 		/// <param name="column"></param>
 		public string GetColumnEnumAttributeParams(ColumnSchema column)
+		{
+			return string.Format("\"{0}\", typeof({1}), System.Data.{2}, ",
+				column.Name,
+				GetCSTypeWithoutNullable(column),
+				GetDbType(column)
+			) + GetDataObjectFieldCallParams(column);
+		}
+
+		/// <summary>
+		/// Gets the parameters needed for the ColumnEnumAttribute class
+		/// for the specified column.
+		/// </summary>
+		/// <param name="column"></param>
+		public string GetColumnEnumAttributeParams(ViewColumnSchema column)
 		{
 			return string.Format("\"{0}\", typeof({1}), System.Data.{2}, ",
 				column.Name,
@@ -2849,7 +2891,21 @@ CREATE\s+PROC(?:EDURE)?                               # find the start of the st
 					#endif
 				}
 			}
-			
+			else if(field is ViewColumnSchema)
+			{
+				ViewColumnSchema currentColumn = (ViewColumnSchema)field;
+				string colName = GetPropertyName(currentColumn);
+				string aliasColumn = GetAliasName(currentColumn.View.Owner, GetClassName(currentColumn.View.Name), colName, ReturnFields.CSType);
+				if (!string.IsNullOrEmpty(aliasColumn) && aliasColumn.CompareTo(colName) != 0)
+				{
+					#if CodeSmith40
+					CSharpTypes.ReturnKeyWhenNotFound = true;
+					return CSharpTypes[aliasColumn];
+					#else
+					return aliasColumn;
+					#endif
+				}
+			}
 			if (field.NativeType.ToLower() == "real")
 				return "System.Single";
 			else if (field.NativeType.ToLower() == "xml")
