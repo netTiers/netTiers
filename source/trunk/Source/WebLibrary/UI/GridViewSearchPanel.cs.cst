@@ -27,7 +27,7 @@ namespace <%=RootNameSpace%>.Web.UI
     /// </summary>
     [
         Designer(typeof(System.Web.UI.Design.WebControls.CompositeControlDesigner)),
-        ToolboxData("<{0}:GridViewSearchPanel runat=\"server\" GridViewControl=\"GridView1\" Filter=\"\" />")
+        ToolboxData("<{0}:GridViewSearchPanel runat=\"server\" GridViewControl=\"GridView1\" PersistenceMethod=\"None\" Filter=\"\" />")
     ]
     public class GridViewSearchPanel : CompositeControl
     {
@@ -101,6 +101,46 @@ namespace <%=RootNameSpace%>.Web.UI
             }
         }
 
+        /// <summary>
+        /// Gets or sets the persistence method
+        /// </summary>
+        public PersistenceMethod PersistenceMethod
+        {
+            get
+            {
+                PersistenceMethod persistenceMethod = PersistenceMethod.Session;
+                Object method = ViewState["_persistenceMethod"];
+                if (method != null)
+                {
+                    persistenceMethod = (PersistenceMethod)method;
+                }
+                return persistenceMethod;
+            }
+            set { ViewState["_persistenceMethod"] = value; }
+        }
+
+        /// <summary>
+        /// Gets or sets the persistent cookie expiry datetime
+        /// </summary>
+        public DateTime PersistentCookieExpiryDateTime
+        {
+            get
+            {
+                Object expiryDateTime = ViewState["_persistentCookieExpiryDateTime"];
+                if (expiryDateTime != null)
+                {
+                    return (DateTime)ViewState["_persistentCookieExpiryDateTime"];
+                }
+                else
+                {
+                    return DateTime.Today.AddDays(1);
+                }
+            }
+            set
+            {
+                ViewState["_persistentCookieExpiryDateTime"] = value;
+            }
+        }
 
         ///<summary>
         /// Set / Gets the Filter criteria
@@ -235,6 +275,35 @@ namespace <%=RootNameSpace%>.Web.UI
         }
         #endregion
 
+
+        /// <summary>
+        /// Raises the <see cref="E:System.Web.UI.Control.Init"></see> event.
+        /// </summary>
+        /// <param name="e">The <see cref="T:System.EventArgs"></see> object that contains the event data.</param>
+        /// <remarks>
+        /// Page is responsible to maintain GridViewSearchPanel state, therefor subscribing to the 
+        /// Page Init (to handle control's state) that occures after the GridViewSearchPanel Init
+        /// </remarks>
+        protected override void OnInit(EventArgs e)
+        {
+            this.Page.Init += new EventHandler(
+                    delegate(object sender, EventArgs ea)
+                    {
+                        switch (this.PersistenceMethod)
+                        {
+                            case PersistenceMethod.Cookie:
+                            case PersistenceMethod.PersistentCookie:
+                                FormUtil.HandleGridViewSearchPanelState(this, PersistentCookieExpiryDateTime);
+                                break;
+                            case PersistenceMethod.Session:
+                                FormUtil.HandleGridViewSearchPanelState(this, this.PersistenceMethod);
+                                break;
+                            case PersistenceMethod.None:
+                                break;
+                        }
+                    });
+            base.OnInit(e);
+        }
         /// <summary>
         /// Raises the <see cref="E:System.Web.UI.Control.Load"></see> event.
         /// </summary>

@@ -37,6 +37,12 @@ namespace <%=RootNameSpace%>.Web.UI
         private TableRow _gridPagerRow = null;
         #endregion
 
+        /// <summary>
+        /// PageSizeChanged event raised whenever the Page Size Changes
+        /// </summary>
+        public event EventHandler PageSizeChanged;
+        
+
         #region Properties
         /// <summary>
         /// Set / Gets the Export File Name
@@ -410,9 +416,9 @@ namespace <%=RootNameSpace%>.Web.UI
         }
         #endregion
 
-        #region Help Methonds
+        #region Help Methods
         /// <summary>
-        /// Determining the first column in the column collection that has SortExpression value set, and using this column as a default sort column
+        /// Determine the first column in the column collection that has SortExpression value set, and using this column as a default sort column
         /// </summary>
         /// <returns></returns>
         protected string GetDefaultSortColumn()
@@ -442,7 +448,7 @@ namespace <%=RootNameSpace%>.Web.UI
 
             ((DropDownList)(cboPageSize)).SelectedIndexChanged += new EventHandler(this.cboPageSize_SelectedIndexChanged);
 
-            // -- we don't want to allow to page more then 500 records at a time
+            // -- limit the max page size to a 250 records
             j = this.RecordsCount + _pageSelectorPageSizeInterval;
             for (int i = _pageSelectorPageSizeInterval; i <= ((j > 250) ? 250 : j); )
             {
@@ -479,13 +485,13 @@ namespace <%=RootNameSpace%>.Web.UI
             {
             	cell = new TableCell();
             	cell.Controls.Add(ExcelButton());
-               cell.Wrap = false;
-               cell.ApplyStyle(this.PagerStyle);
+                cell.Wrap = false;
+                cell.ApplyStyle(this.PagerStyle);
             	pagerTableRow.Cells.Add(cell);
             }
 
             cell = new TableCell();
-            cell.Text = string.Format("{0}: ", RecordsPerPageText );
+            cell.Text = string.Format("{0}: ", RecordsPerPageText);
             cell.Wrap = false;
             cell.ApplyStyle(this.PagerStyle);
             cell.HorizontalAlign = HorizontalAlign.Right;
@@ -540,10 +546,12 @@ namespace <%=RootNameSpace%>.Web.UI
         /// </summary> 
         private void cboPageSize_SelectedIndexChanged(object sender, System.EventArgs e)
         {
-            // -- reset current page index to 0, that is nessessary so that there won't be a situation when datagrid current page index is off causing an exception
+            // -- reset current page index to 0, that is nessessary so that there won't be a situation when gridview's current page index is off causing an exception
             this.PageIndex = 0;
             DropDownList cboPageSize = (DropDownList)sender;
             this.PageSize = int.Parse(cboPageSize.SelectedValue);
+            
+            if (PageSizeChanged != null) PageSizeChanged(sender, e);
         }
         #endregion
 
