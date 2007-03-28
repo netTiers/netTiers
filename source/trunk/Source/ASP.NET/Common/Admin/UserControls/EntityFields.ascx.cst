@@ -113,18 +113,25 @@
 						{
 							if (!column.IsForeignKeyMember	&& !column.IsPrimaryKeyMember)
 							{
-									secondaryTextValue = column.Name;
+									secondaryTextValue = GetPropertyName(column.Name);
 									break;
 							}
 						}
+						
+						string primaryPk, secondaryPk, junctionPk, junctionFk;
+						primaryPk = GetPropertyName(keys[0]);
+						secondaryPk = GetPropertyName(secondaryTable.PrimaryKey.MemberColumns[0]);
+						junctionPk = GetPKPropertyName(keys[0].Name, junctionTable.ForeignKeys);
+						junctionFk = GetPKPropertyName(secondaryTable.PrimaryKey.MemberColumns[0].Name, junctionTable.ForeignKeys);
+												
 %>
 			<tr>
-				<td valign="top" class="literal"><%= GetPascalSpacedName(secondaryTable.Name)%></td>
+				<td valign="top" class="literal"><%= GetPascalSpacedName(secondaryTable.Name)%>:</td>
 				<td>
 					<asp:CheckBoxList ID="<%=GetClassName(secondaryTable.Name)%>List" runat="server"
 						DataSourceID="<%=GetClassName(secondaryTable.Name)%>DataSource"
 						DataTextField="<%=secondaryTextValue%>"
-						DataValueField="<%=junctionTableKey.ForeignKeyMemberColumns[0].Name%>"
+						DataValueField="<%=secondaryPk%>"
 						RepeatColumns="4"
 					/>				
 					<data:<%=GetClassName(secondaryTable.Name)%>DataSource ID="<%=GetClassName(secondaryTable.Name)%>DataSource" runat="server"
@@ -132,26 +139,27 @@
 					/>
 					
 					<data:<%=GetClassName(GetCleanName(junctionTableKey.ForeignKeyTable.Name))%>DataSource ID="<%=GetClassName(GetCleanName(junctionTableKey.ForeignKeyTable.Name))%>DataSource" runat="server"
-						SelectMethod="GetBy<%=GetKeysName(keys)%>"
+						SelectMethod="GetBy<%=junctionPk%>"
 					>
 						<Parameters>							
-							<%=getParameters(keys)%>
+							<asp:QueryStringParameter Name="<%=junctionPk%>" QueryStringField="<%=primaryPk%>" Type="String" />
 						</Parameters>
 					</data:<%=GetClassName(GetCleanName(junctionTableKey.ForeignKeyTable.Name))%>DataSource>	
+					
 					<data:ManyToManyListRelationship ID="<%=GetClassName(GetCleanName(junctionTableKey.ForeignKeyTable.Name))%>Relationship" runat="server">
 						<PrimaryMember runat="server"
 							DataSourceID="<%=entityName%>DataSource"
-							EntityKeyName="<%=GetKeysName(keys)%>"
+							EntityKeyName="<%=primaryPk%>"
 						/>
 						<LinkMember runat="server"
 							DataSourceID="<%=GetClassName(GetCleanName(junctionTableKey.ForeignKeyTable.Name))%>DataSource"
-							EntityKeyName="<%=GetKeysName(keys)%>"
-							ForeignKeyName="<%=junctionTableKey.ForeignKeyMemberColumns[0].Name%>"
+							EntityKeyName="<%=junctionPk%>"
+							ForeignKeyName="<%=junctionFk%>"
 						/>
 						<ReferenceMember runat="server"
 							DataSourceID="<%=GetClassName(secondaryTable.Name)%>DataSource"
 							ListControlID="<%=GetClassName(secondaryTable.Name)%>List"
-							EntityKeyName="<%=junctionTableKey.ForeignKeyMemberColumns[0].Name%>"
+							EntityKeyName="<%=secondaryPk%>"
 						/>
 					</data:ManyToManyListRelationship>					
 				</td>
@@ -176,7 +184,7 @@ private string getParameters(ColumnSchemaCollection keys)
 	
     for (int x = 0; x < keys.Count; x++)
     {
-		s += string.Format("<asp:QueryStringParameter Name=\"{0}\" QueryStringField=\"{0}\" Type=\"String\" />\n", GetPropertyName(keys[x]));
+		s += string.Format("<asp:QueryStringParameter Name=\"{0}\" QueryStringField=\"{0}\" Type=\"String\" />", GetPropertyName(keys[x]));
 
     }
     return s;

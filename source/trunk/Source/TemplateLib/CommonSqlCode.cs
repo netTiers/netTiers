@@ -1742,6 +1742,21 @@ namespace MoM.Templates
 			}
 			return "//TODO: UNKNOWN, COULD NOT FIND FK COLUMN PROPERTY NAME\t ";
 		}
+
+		public string GetPKPropertyName(string pk, TableKeySchemaCollection fkeys)
+		{
+			foreach (TableKeySchema key in fkeys)
+			{
+				foreach (ColumnSchema col in key.PrimaryKeyMemberColumns)
+				{
+					if (col.Name == pk)
+					{
+						return GetPropertyName(key.ForeignKeyMemberColumns[0]);
+					}
+				}
+			}
+			return "//TODO: UNKNOWN, COULD NOT FIND FK COLUMN PROPERTY NAME\t ";
+		}
 		#endregion 
 
 /*
