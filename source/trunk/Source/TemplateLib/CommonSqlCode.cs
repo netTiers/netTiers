@@ -571,6 +571,23 @@ namespace MoM.Templates
 		}
 		
 		/// <summary>
+		/// Indicate if the datatable contains data that are compliant with a bitfield
+		/// </summary>
+		public bool IsBitFields(DataTable dataTable)
+		{
+			DataRow[] rows = dataTable.Select(string.Empty, dataTable.Columns[0].ColumnName + " ASC");
+			for(int i=0; i<rows.Length; i++)
+			{
+				int val = Convert.ToInt32(rows[i][0]);
+				if (Math.Pow(2, i) != val)
+				{
+					return false;
+				}
+			}
+			return true;
+		}
+		
+		/// <summary>
 		/// Get the name of the inner comparer class name to compare columns
 		/// </summary>
 		public string GetComparerClassName(string tableName)
