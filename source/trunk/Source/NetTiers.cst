@@ -21,6 +21,7 @@
 <%@ Property Name="ExecuteSql" Type="System.Boolean" Default="False" Category="02. Framework Generation - Optional" Description="If true the stored procedures are installed on the sql server. (The SQL file is generated in all case)" %>
 <%@ Property Name="SQLFolderName" Type="System.String" Category="02. Framework Generation - Optional" Description="The sub folder to output the SQL scripts" Default="SQL" Optional="False"%>
 <%@ Property Name="ViewReport" Type="System.Boolean" Default="True" Category="02. Framework Generation - Optional" Description="Indicates if the html report should launched at the end of the generation." %>
+<%@ Property Name="AutoIncrementBuildVersion" Type="System.Boolean" Default="True" Category="02. Framework Generation - Optional" Description="Indicates if assembley build version should be auto incremented." %>
 <%@ Property Name="LaunchVisualStudio" Type="System.Boolean" Default="False" Category="02. Framework Generation - Optional" Description="Attempts to launch visual studio with the generated solution only if there are no instances already open." %>
 <%@ Property Name="IncludeUnitTest" Type="MoM.Templates.UnitTestStyle" Default="None" Category="02. Framework Generation - Optional" Description="Indicates type of Unit tests to be generated." %>
 <%@ Property Name="IncludeComponentLayer" Type="MoM.Templates.ComponentPatternType" Category="02. Framework Generation - Optional" Description="The pattern type to implement in the Component Layer." Default="None" %>
@@ -4100,8 +4101,12 @@ private string IncrementBuildVersion(string assemblyInfoFilename)
 				string minor= match.Result("$2");
 				string build = match.Result("$3");
 				string revision = match.Result("$4");
+				int buildVer = Convert.ToInt32(build);
 				
-				return string.Format("{0}.{1}.{2}.{3}", major, minor, Convert.ToInt32(build) + 1, revision);
+				if (AutoIncrementBuildVersion) 
+					buildVer += 1;
+				
+				return string.Format("{0}.{1}.{2}.{3}", major, minor, buildVer, revision);
 				break;
 			}
 			line = reader.ReadLine();
