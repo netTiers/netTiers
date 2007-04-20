@@ -1246,24 +1246,26 @@ namespace MoM.Templates
 		{
 			if ( column.AllowDBNull )
 			{
-				return string.Format("{2} = ({1}.IsDBNull({1}.GetOrdinal(\"{0}\")))?null:({3}){1}[\"{0}\"]",
-						/*0*/column.Name,
-						/*1*/containerName,
-						/*2*/GetObjectPropertyAccessor(column,objectName),
-						/*3*/GetCSType(column));
+				return string.Format("{2} = ({1}.IsDBNull(((int){4}Column.{0} - 1)))?null:({3}){1}[\"{0}\"]",
+				/*0*/GetPropertyName(column),
+				/*1*/containerName,
+				/*2*/GetObjectPropertyAccessor(column,objectName),
+				/*3*/GetCSType(column),
+				/*4*/GetClassName(column.Table));
 			}
 			else
 			{
 				// regular NOT NULL data types, set to default value for type if null
-				return string.Format("{2} = ({3}){1}[\"{0}\"]",
-					/*0*/column.Name,
-					/*1*/containerName,
-					/*2*/GetObjectPropertyAccessor(column,objectName),
-					/*3*/GetCSType(column),
-					/*4*/GetCSDefaultByType(column));
+				return string.Format("{2} = ({3}){1}[((int){5}Column.{0} - 1)]",
+				/*0*/GetPropertyName(column),
+				/*1*/containerName,
+				/*2*/GetObjectPropertyAccessor(column,objectName),
+				/*3*/GetCSType(column),
+				/*4*/GetCSDefaultByType(column),
+				/*5*/GetClassName(column.Table));
 			}
 		}
-		
+				
 		/// <summary>
 		/// Gets the expression used to set the property value in an entity.  Specificly used to handle nullable columns.
 		/// </summary>
@@ -3391,6 +3393,29 @@ CREATE\s+PROC(?:EDURE)?                               # find the start of the st
 						column.Size > 0
 					);
 					break;
+				default: 
+						return false;
+			}
+		}
+		
+		/// <summary>
+		/// Determines whether base DataObjectBase is a string type, and not a blob column of text or ntext
+		/// </summary>
+		public bool IsBlobField(SchemaExplorer.DataObjectBase column)
+		{
+			switch (column.DataType)
+			{
+				case DbType.AnsiString: 
+				case DbType.AnsiStringFixedLength: 
+				case DbType.String: 
+				case DbType.StringFixedLength: 
+					return 
+					(
+						column.NativeType == "text" ||
+						column.NativeType == "ntext" ||
+						(column.Size > 1000 || column.Size == -1)
+					);
+					
 				default: 
 						return false;
 			}
@@ -5889,4 +5914,5 @@ public class ColumnMetaDataCollection : System.Collections.Generic.List<ColumnMe
 public class ChildCollectionMetaDataCollection : System.Collections.Generic.List<ChildCollectionMetaData> {
 }
 #endregion 
+
 }

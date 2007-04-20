@@ -12,6 +12,8 @@
 <%@ Property Name="BLLNameSpace" Type="System.String" Category="Data" Description="BLL Namespace." %>
 <%@ Property Name="IncludeAtlasLibrary" Type="System.Boolean" Default="false" Category="06b. Website - Advanced" Description="Indicates whether to include a reference to the Atlas component library." %>
 <%@ Property Name="IncludeAtlasToolkit" Type="System.Boolean" Default="false" Category="06b. Website - Advanced" Description="Indicates whether to include a reference to the Atlas Control Toolkit. This property is only taken into account when IncludeAtlasLibrary is true." %>
+<%@ Property Name="IncludeGetListByFK" Type="System.Boolean" Default="True" Category="Options" Description="If true get functions will be generated." %>
+<%@ Property Name="IncludeRelations" Type="System.Boolean" Default="True" Category="Options" Description="If true DeepSave/Load will have a collection to fill.  There's still a requirement for IncludeByFk && IncludeSave" %>
 
 <%
 
@@ -66,7 +68,10 @@
 
 <asp:Content ID="Content2" ContentPlaceHolderID="ContentPlaceHolder2" Runat="Server"><%=GetPascalSpacedName(entityName)%> List</asp:Content>
 <asp:Content ID="Content1" ContentPlaceHolderID="ContentPlaceHolder1" Runat="Server">
-<%
+<% if (IncludeAtlasLibrary) { %>
+	<asp:UpdatePanel ID="UpdatePanel1" runat="server">
+	<ContentTemplate>
+<% }
 		RenderGridViewSearchPanel();
 %>
 		<data:EntityGridView ID="GridView1" runat="server"			
@@ -94,6 +99,15 @@
 							entityDSO+=tempDSO;
 							suffix++;
 						}
+							else if (IsBlobField(column) 
+								&& SourceTable.PrimaryKey.MemberColumns.Count == 1
+								&& IncludeAtlasToolkit)
+							{
+								string tempDSO = string.Empty;
+								Response.Write(WriteBlobTemplateField(column) + "\r\n");
+								entityDSO+=tempDSO;
+								suffix++;
+							}
 						else 
 						{
 							Response.Write(WriteBoundField(column, 4) + "\r\n");
@@ -106,8 +120,27 @@
 			</EmptyDataTemplate>
 		</data:EntityGridView>
 		<br />
-		<asp:Button runat="server" ID="btn<%=entityName%>" OnClientClick="javascript:location.href='<%=entityName%>Edit.aspx'; return false;" Text="Add New"></asp:Button>
-			
+		<asp:Button runat="server" ID="btn<%=entityName%>" OnClientClick="javascript:location.href='/<%=NameSpace%>.website/admin/<%=entityName%>Edit.aspx'; return false;" Text="Add New"></asp:Button>
+<% if (IncludeAtlasLibrary) { %>
+	</ContentTemplate>
+	</asp:UpdatePanel>	
+	<% if (IncludeAtlasToolkit && SourceTable.PrimaryKey.MemberColumns.Count == 1) {
+		
+		foreach (ColumnSchema col in SourceTable.Columns)
+		{
+			if (!IsBlobField(col))
+				continue;
+	%>
+	<asp:Panel ID="Panel1" runat="server" CssClass="popup" >
+	    <h2>Content Preview <asp:Button ID="Button1" runat="server"  Text="Close Preview"/></h2><hr /> 
+	    <asp:Label ID='lblPreview' runat="server" ></asp:Label>
+	</asp:Panel>
+	<%   
+		break;
+	} 
+	%>
+	<% } %>
+<% } %>
 <%
 	// -- write out the data source object for each templatefield
 	if (entityDSO != string.Empty) Response.Write(entityDSO);
@@ -116,7 +149,68 @@
 			SelectMethod="<%= MethodNames.GetPaged %>"
 			EnablePaging="True"
 			EnableSorting="True"
-		>
+			<% 
+			Hashtable children = GetChildrenCollections(SourceTable, SourceTables);
+			if (SourceTable.ForeignKeys.Count > 0) {%>
+			EnableDeepLoad="True"
+			>
+			<DeepLoadProperties Method="IncludeChildren" Recursive="False">
+	            <Types>
+			<% if ( IncludeRelations && IncludeGetListByFK ) 
+			{ 
+			//Generate enum for each child type foreign key relation		
+					System.Collections.ArrayList addedList = new System.Collections.ArrayList();
+					bool showOnce = false;			
+					foreach(TableKeySchema tableKey in SourceTable.ForeignKeys)
+					{
+						// related table must be in the selection
+						if (SourceTables.Contains(tableKey.PrimaryKeyTable)) 
+						{
+							string pkClassName = GetClassName(tableKey.PrimaryKeyTable.Name);
+							string pkProperty = GetKeysName(tableKey.PrimaryKeyMemberColumns);
+							string fkPropertyName = GetKeysName(tableKey.ForeignKeyMemberColumns);
+							string compositePropertyName =  fkPropertyName + "Source";
+						
+						if (addedList.Contains(pkClassName))
+							continue;
+											
+						addedList.Add(pkClassName); 	
+				%>						
+					<data:<%= entityName %>Property Name="<%= pkClassName %>"/> 
+				<%
+				} // end if
+			} // end foreach
+			%>
+			<%
+			foreach(CollectionInfo item in GetChildrenCollections(SourceTable, SourceTables).Values)
+			{	
+				if (item.CollectionRelationshipType != RelationshipType.OneToOne)
+				{
+					if (addedList.Contains(item.CollectionName))
+						continue;
+					
+			%>
+					<%%--<data:<%= entityName %>Property Name="<%= item.PropertyNameUnique %>" />--%>
+			<% 
+			//addedList.Add(item.CollectionName);
+			}
+			else
+			{
+				if (addedList.Contains(item.CleanName))
+					continue;
+			%>
+					<%%--<data:<%= entityName %>Property Name="<%= item.PropertyNameUnique %>" />--%>
+			<%	
+			}
+		  }
+		}
+		%>  
+				</Types>
+			</DeepLoadProperties>
+			<% }
+			else
+				Response.Write(">");
+			%>
 			<Parameters>
 				<data:CustomParameter Name="WhereClause" Value="" ConvertEmptyStringToNull="false" />
 				<data:CustomParameter Name="OrderByClause" Value="" ConvertEmptyStringToNull="false" />
@@ -149,6 +243,7 @@ public string WriteTemplateField(ColumnSchema column, int tabs, out string entit
 	string pkDisplayField = String.Empty;	
 	string objectDataSource = String.Empty;
 	string pkCSType = String.Empty;
+	TableSchema fkTable = null;
 
 	foreach (TableKeySchema tableKey in column.Table.ForeignKeys)
 	{
@@ -156,6 +251,7 @@ public string WriteTemplateField(ColumnSchema column, int tabs, out string entit
 		if (!SourceTables.Contains(tableKey.ForeignKeyTable) || !SourceTables.Contains(tableKey.PrimaryKeyTable))
 			continue;
 			
+		fkTable = tableKey.PrimaryKeyTable;
 		ColumnSchema fKeyColumn = tableKey.ForeignKeyMemberColumns[0];
 		fkPropertyName = GetPropertyName(fKeyColumn);
 		fkColumnName = fKeyColumn.Name;
@@ -177,7 +273,6 @@ public string WriteTemplateField(ColumnSchema column, int tabs, out string entit
 				}
 			}
 			
-			
 			if (objectDataSource == String.Empty )
 			{
 				objectDataSource = GetClassName(tableKey.PrimaryKeyTable.Name);
@@ -192,6 +287,16 @@ public string WriteTemplateField(ColumnSchema column, int tabs, out string entit
 	if (fkPropertyName == string.Empty || pkPropertyName == string.Empty)
 		return s;		
 	
+	return string.Format(_templateField, 
+		/*0*/ fkPropertyName, 
+		/*1*/ GetPascalSpacedName(fkPropertyName), 
+		/*2*/ pkPropertyName, 
+		/*3*/ GetClassName(fkTable.Name), 
+		/*4*/ fkColumnName, 
+		/*5*/ pkDisplayField, 
+		/*6*/ string.Concat(objectDataSource, "DataSource", suffix.ToString()));
+	
+	/*
 	s += Tab(4) + "<data:BoundEntityDropDownField DataField=\"" + fkPropertyName + "\" HeaderText=\"" + GetPascalSpacedName(fkPropertyName) + "\" SortExpression=\"[" + fkColumnName + "]\"\r\n";
 	s += Tab(4) + "		DataSourceID=\"" + objectDataSource + "DataSource" + suffix.ToString() + "\"\r\n";
 	s += Tab(4) + "		DataTextField=\"" + pkDisplayField + "\"\r\n";
@@ -202,7 +307,14 @@ public string WriteTemplateField(ColumnSchema column, int tabs, out string entit
 	entityDSO = Tab(2) + "<data:" + objectDataSource + "DataSource ID=\"" + objectDataSource + "DataSource" + suffix.ToString() + "\" runat=\"server\"\r\n";
 	entityDSO += Tab(3) + "SelectMethod=\"" + MethodNames.GetAll + "\"\r\n";
 	entityDSO += Tab(2) + "/>\r\n\r\n";
+	*/
 	return s;
+}
+
+public string WriteBlobTemplateField(ColumnSchema column) 
+{
+	string propertyName = GetPropertyName(column);
+	return string.Format(_blobTemplate, GetPascalSpacedName(propertyName), propertyName, GetPropertyName(SourceTable.PrimaryKey.MemberColumns[0]));
 }
 
 public string WriteBoundField(ColumnSchema column, int tabs) {
@@ -211,16 +323,62 @@ public string WriteBoundField(ColumnSchema column, int tabs) {
 	// -- exclude DbType.Xml from report
 	if (column.NativeType.ToLower().Equals("xml")) return string.Empty;
 
-	if (column.NativeType == "bit") {
+	if (column.DataType == DbType.Date || column.DataType == DbType.DateTime)
+	{
+		return string.Format("{1}<asp:BoundField DataField=\"{0}\" DataFormatString=\"{{0:d}}\" HtmlEncode=\"False\" HeaderText=\"{4}\" SortExpression=\"{2}\" {3} />", propertyName, Tab(tabs), column.Name, (column.IsPrimaryKeyMember)?"ReadOnly":"", GetPascalSpacedName(propertyName));
+	}
+	else if (column.NativeType == "bit") {
 		return string.Format("{1}<data:BoundRadioButtonField DataField=\"{0}\" HeaderText=\"{4}\" SortExpression=\"[{2}]\" {3} />", propertyName, Tab(tabs), column.Name, (column.IsPrimaryKeyMember)?"ReadOnly":"", GetPascalSpacedName(propertyName));
 	}	
 	else if (column.NativeType != "text" && column.NativeType != "ntext") 
 	{
-		return string.Format("{1}<asp:BoundField DataField=\"{0}\" HeaderText=\"{4}\" SortExpression=\"[{2}]\" {3} />", propertyName, Tab(tabs), column.Name, (column.IsPrimaryKeyMember)?"ReadOnly":"", GetPascalSpacedName(propertyName));
+		return string.Format("{1}<asp:BoundField DataField=\"{0}\" HeaderText=\"{4}\" SortExpression=\"{2}\" {3} />", propertyName, Tab(tabs), column.Name, (column.IsPrimaryKeyMember)?"ReadOnly":"", GetPascalSpacedName(propertyName));
 	}
+	else 
+		return "";
+	/*
 	else 
 	{
 		return string.Format("{1}<asp:BoundField DataField=\"{0}\" HeaderText=\"{4}\" SortExpression=\"\" {3} />", propertyName, Tab(tabs), column.Name, (column.IsPrimaryKeyMember)?"ReadOnly":"", GetPascalSpacedName(propertyName));
 	}
+	*/
 }
+	
+	
+const string _templateField = @"
+				<asp:TemplateField HeaderText=""{1}"">
+					<ItemTemplate>
+						<a href='{3}Edit.aspx?{2}=<%# Eval(""{0}"")%>'  ><%# Eval(""{0}Source.{5}"") %></a>
+					</ItemTemplate>
+					<EditItemTemplate>
+						<a href='{3}Edit.aspx?{2}=<%# Eval(""{0}"")%>'  ><%# Eval(""{0}Source.{5}"") %></a>
+					</EditItemTemplate>
+				</asp:TemplateField>";
+				
+	//<data:BoundEntityDropDownField DataField=""{0}"" HeaderText=""{1}"" SortExpression=""[{4}]""
+	//						DataSourceID=""{3}DataSource"" 
+	//						DataTextField=""{5}""
+	//						DataValueField=""{2}""
+	//						AppendNullItem=""true""
+	//						/>
+	
+	//<data:EntityDataSourceFilter ID=""{3}Filter1"" runat=""server""
+	//				DataSourceID=""{2}DataSource""
+	//				Filter='<%# String.Format(""{0} = {{0}}"", Eval(""{0}"")) %>'/>
+	
+const string _blobTemplate = @"
+				<asp:templatefield headertext='{0} Preview'>
+				<itemtemplate>
+					<ajaxToolkit:ModalPopupExtender id='ModalPopupExtender' runat='server'
+						TargetControlID='LinkButton' 
+						PopupControlID='Panel1' 
+						OkControlID='Button1'
+						BackgroundCssClass='ModalBackground' 
+						DynamicControlID='lblPreview'
+						DynamicContextKey='<%# DataBinder.Eval(Container.DataItem, ""{2}"") %>'
+						DynamicServiceMethod='Get{1}Content' />
+					<asp:LinkButton ID='LinkButton' runat='server' Text='Preview' />
+				</itemtemplate>
+				</asp:templatefield>
+	";
 </script>

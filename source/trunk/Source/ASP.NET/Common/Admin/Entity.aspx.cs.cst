@@ -9,6 +9,7 @@
 <%@ Property Name="WebProjectNameSpace" Type="System.String" Category="Style" Description="ASP 2.0 Namespace" %>
 <%@ Property Name="NameSpace" Type="System.String" Category="Style" Description="ASP 2.0 Namespace" %>
 <%@ Property Name="BLLNameSpace" Type="System.String" Category="Data" Description="BLL Namespace." %>
+<%@ Property Name="DALNameSpace" Type="System.String" Category="Data" Description="BLL Namespace." %>
 <%@ Property Name="IncludeAtlasLibrary" Type="System.Boolean" Default="false" Category="06b. Website - Advanced" Description="Indicates whether to include a reference to the Atlas component library." %>
 <%@ Property Name="IncludeAtlasToolkit" Type="System.Boolean" Default="false" Category="06b. Website - Advanced" Description="Indicates whether to include a reference to the Atlas Control Toolkit. This property is only taken into account when IncludeAtlasLibrary is true." %>
 
@@ -88,6 +89,39 @@ public partial class <%=entityName%> : System.Web.UI.Page
 		string urlParams = string.Format(<%=getUrl(keys)%>);
 		Response.Redirect("<%=entityName%>Edit.aspx?" + urlParams, true);
 	}
+	
+	<%
+	if (SourceTable.PrimaryKey.MemberColumns.Count == 1)
+	{
+		foreach (ColumnSchema col in SourceTable.Columns)
+		{
+			if (!IsBlobField(col))
+				continue;
+			string keyType = GetCSType(SourceTable.PrimaryKey.MemberColumns[0]);	
+			string propertyName = GetPropertyName(col);
+			string parse = "TryParse";
+			
+			if (propertyName.ToLower().Contains("guid"))
+				parse = string.Format("{0}.{1}.EntityUtil.GuidTryParse", WebProjectNameSpace, BLLNameSpace);
+	%>
+	
+	[System.Web.Script.Services.ScriptMethod]
+    [System.Web.Services.WebMethod]
+    public static string Get<%=  propertyName %>Content(string contextKey)
+    {
+        <%= keyType %> key;
+		<%= keyType %>.<%= parse %>(contextKey, out key);
+        
+        <%=WebProjectNameSpace%>.<%=BLLNameSpace%>.<%=entityName%> content 
+			= <%=WebProjectNameSpace%>.<%=DALNameSpace%>.DataRepository.<%=entityName%>Provider.GetBy<%= GetKeysName(SourceTable.PrimaryKey.MemberColumns) %>(key);
+        
+        if (content == null)
+            return "No Content Found!";
+
+        return string.Format("<div id='previewContent'>{0}</div>", content.<%= propertyName %>);
+    }
+	<%	} 	
+	}%>
 }
 
 
