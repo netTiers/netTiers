@@ -95,22 +95,29 @@ public partial class <%=entityName%> : System.Web.UI.Page
 	{
 		foreach (ColumnSchema col in SourceTable.Columns)
 		{
-			if (!IsBlobField(col))
+			bool isBlobField = (IsBlobField(col) 
+							&& SourceTable.PrimaryKey.MemberColumns.Count == 1
+							&& IncludeAtlasToolkit);
+			if (!isBlobField)
 				continue;
 			string keyType = GetCSType(SourceTable.PrimaryKey.MemberColumns[0]);	
 			string propertyName = GetPropertyName(col);
 			string parse = "TryParse";
 			
-			if (propertyName.ToLower().Contains("guid"))
+			if (keyType.ToLower().Contains("guid"))
 				parse = string.Format("{0}.{1}.EntityUtil.GuidTryParse", WebProjectNameSpace, BLLNameSpace);
 	%>
 	
 	[System.Web.Script.Services.ScriptMethod]
-    [System.Web.Services.WebMethod]
-    public static string Get<%=  propertyName %>Content(string contextKey)
-    {
-        <%= keyType %> key;
+	[System.Web.Services.WebMethod]
+	public static string Get<%=  propertyName %>Content(string contextKey)
+	{        
+		<% if (keyType.ToLower().Contains("string")) {%>
+		<%= keyType %> key = contextKey;
+		<% }else { %>
+		<%= keyType %> key;
 		<%= keyType %>.<%= parse %>(contextKey, out key);
+		<% } %>
         
         <%=WebProjectNameSpace%>.<%=BLLNameSpace%>.<%=entityName%> content 
 			= <%=WebProjectNameSpace%>.<%=DALNameSpace%>.DataRepository.<%=entityName%>Provider.GetBy<%= GetKeysName(SourceTable.PrimaryKey.MemberColumns) %>(key);
@@ -119,7 +126,7 @@ public partial class <%=entityName%> : System.Web.UI.Page
             return "No Content Found!";
 
         return string.Format("<div id='previewContent'>{0}</div>", content.<%= propertyName %>);
-    }
+	}
 	<%	} 	
 	}%>
 }
