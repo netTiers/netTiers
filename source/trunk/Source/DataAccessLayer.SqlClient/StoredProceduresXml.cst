@@ -6,7 +6,7 @@
 
 <%@ Property Name="SourceViews" Type="SchemaExplorer.ViewSchemaCollection" Optional="True" Category="Context" Description="Views that the stored procedures should be based on." %>
 <%@ Property Name="SourceTables" Type="SchemaExplorer.TableSchemaCollection" Category="Context" Description="Tables that the stored procedures should be based on." %>
-<%@ Property Name="IncludeDrop" Type="System.Boolean" Default="True" Category="Options" Description="If true drop statements will be generated to drop existing stored procedures." %>
+<%@ Property Name="IncludeDrop" Type="DropTypeEnum" Default="Entity" Category="Options" Description="If Entity then drop statements will be generated to drop existing stored procedures for procedures being generated. If All then all existing netTiers procedures that match the ProcedurePrefix (one must be specified) and do not match the CustomProceduresStartsWith will be droppped. None means no procedures will be droppped" %>
 <%@ Property Name="IncludeInsert" Type="System.Boolean" Default="True" Category="Options" Description="If true insert procedures will be generated." %>
 <%@ Property Name="IncludeUpdate" Type="System.Boolean" Default="True" Category="Options" Description="If true update procedures will be generated." %>
 <%@ Property Name="IncludeDelete" Type="System.Boolean" Default="True" Category="Options" Description="If true delete procedures will be generated." %>
@@ -39,9 +39,41 @@
 <?xml version="1.0" encoding="utf-8" ?>
 <?xml-stylesheet type='text/xsl' href="scriptsql.xsl"?>
 <root xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
-<database includeDrop="<%=this.IncludeDrop.ToString().ToLower()%>"><%=(SourceTables.Count > 0 ? SourceTables[0].Database.Name : SourceViews[0].Database.Name)%></database>
+<database includeDrop="<%=(this.IncludeDrop == DropTypeEnum.Entity).ToString().ToLower()%>"><%=(SourceTables.Count > 0 ? SourceTables[0].Database.Name : SourceViews[0].Database.Name)%></database>
 <procedures>
 <%
+if ( IncludeDrop == DropTypeEnum.All &&
+		!string.IsNullOrEmpty( ProcedurePrefix ) )
+{
+%>
+<procedure owner="dbo" name="<%=ProcedurePrefix%>DropAllProcedures" <%if (GrantUser != "") {%>grant="<%=GrantUser%>"<%}%>>
+<comment>-- Drops all existing netTiers stored procedures</comment>
+<parameters/>
+
+<body><![CDATA[
+BEGIN
+DECLARE @procedureName SYSNAME
+DECLARE c CURSOR FOR
+SELECT name FROM sysobjects WHERE type = 'P' AND objectproperty(id, 'IsMSShipped') = 0 
+AND name LIKE '<%=ProcedurePrefix%>%' AND name NOT LIKE '<%=CustomProcedureStartsWith%>%'
+OPEN c
+FETCH NEXT FROM c INTO @procedureName
+WHILE @@FETCH_STATUS = 0
+BEGIN
+EXEC('DROP PROC ' + @procedureName)
+FETCH NEXT FROM c INTO @procedureName
+END
+CLOSE c
+DEALLOCATE c
+END
+GO
+
+EXEC dbo.<%=ProcedurePrefix%>DropAllProcedures
+GO
+]]></body>
+</procedure>
+<%
+}
 	for (int st = 0; st < SourceTables.Count; st++)
 	{
 		TableSchema SourceTable = SourceTables[st];
@@ -1012,6 +1044,14 @@ public enum TransactionIsolationLevelEnum
 	RepeatableRead,
 	Serializable
 }
+
+public enum DropTypeEnum
+{
+	Entity,
+	All,
+	None
+}
+	
 public string GetSetTransactionIsolationLevelStatement()
 {
 	switch (IsolationLevel)
