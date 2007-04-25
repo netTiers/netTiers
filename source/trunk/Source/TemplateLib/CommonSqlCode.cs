@@ -3383,15 +3383,11 @@ CREATE\s+PROC(?:EDURE)?                               # find the start of the st
 				case DbType.AnsiString: 
 				case DbType.AnsiStringFixedLength: 
 				case DbType.String:
-					return (column.Size != -1);
-					break;
 				case DbType.StringFixedLength: 
-					return 
-					(
-						column.NativeType != "text" && 
-						column.NativeType != "ntext" && 
-						column.Size > 0
-					);
+					if (column.Size == 16 && column.NativeType.ToLower().EndsWith("text"))
+						return false;
+					else 
+						return (column.Size != -1);
 					break;
 				default: 
 						return false;
