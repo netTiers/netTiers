@@ -31,6 +31,7 @@ namespace MoM.Templates
 		private readonly static DbType[] aIntegerDbTypes = new DbType[] {DbType.Int16,DbType.Int32, DbType.Int64 };
 		
 		private string entityFormat 		= "{0}";
+		private string entityKeyFormat 		= "{0}Key";
 		private string componentServiceFormat = "{0}Service";
 		private string entityDataFormat 	= "{0}EntityData";
 		private string collectionFormat 	= "{0}Collection";
@@ -215,6 +216,21 @@ namespace MoM.Templates
 					throw new ArgumentException("This parameter must contains the pattern {0} to be valid.", "EntityFormat");
 				}
 				this.entityFormat = value;
+			}
+		}
+		
+		[Category("09. Code style - Advanced")]
+		[Description("The format for entity key class name. Parameter {0} is replaced by the trimed table name, in Pascal case.")]
+		public string EntityKeyFormat
+		{
+			get {return this.entityKeyFormat;}
+			set
+			{
+				if (value.IndexOf("{0}") == -1) 
+				{
+					throw new ArgumentException("This parameter must contains the pattern {0} to be valid.", "EntityKeyFormat");
+				}
+				this.entityKeyFormat = value;
 			}
 		}
 		
@@ -559,7 +575,7 @@ namespace MoM.Templates
 		/// </summary>
 		public string GetKeyClassName(string tableName)
 		{
-			return String.Format("{0}Key", GetClassName(tableName));
+			return String.Format(entityKeyFormat, GetClassName(tableName));
 		}
 
 		/// <summary>
