@@ -6,7 +6,8 @@
 
 <%@ Property Name="SourceViews" Type="SchemaExplorer.ViewSchemaCollection" Optional="True" Category="Context" Description="Views that the stored procedures should be based on." %>
 <%@ Property Name="SourceTables" Type="SchemaExplorer.TableSchemaCollection" Category="Context" Description="Tables that the stored procedures should be based on." %>
-<%@ Property Name="IncludeDrop" Type="DropTypeEnum" Default="Entity" Category="Options" Description="If Entity then drop statements will be generated to drop existing stored procedures for procedures being generated. If All then all existing netTiers procedures that match the ProcedurePrefix (one must be specified) and do not match the CustomProceduresStartsWith will be droppped. None means no procedures will be droppped" %>
+<%@ Property Name="IncludeDrop" Type="System.Boolean" Default="True" Category="07. CRUD - Advanced" Description="If True then drop statements will be generated in accordance with the DropStyle. If False then no procedures will be droppped" %>
+<%@ Property Name="DropStyle" Type="DropStyleEnum" Default="Entity" Category="07. CRUD - Advanced" Description="If Entity then drop statements will be generated to drop existing stored procedures for procedures being generated. If All then all existing netTiers procedures that match the ProcedurePrefix (one must be specified) and do not match the CustomProceduresStartsWith will be droppped." %>
 <%@ Property Name="IncludeInsert" Type="System.Boolean" Default="True" Category="Options" Description="If true insert procedures will be generated." %>
 <%@ Property Name="IncludeUpdate" Type="System.Boolean" Default="True" Category="Options" Description="If true update procedures will be generated." %>
 <%@ Property Name="IncludeDelete" Type="System.Boolean" Default="True" Category="Options" Description="If true delete procedures will be generated." %>
@@ -39,10 +40,11 @@
 <?xml version="1.0" encoding="utf-8" ?>
 <?xml-stylesheet type='text/xsl' href="scriptsql.xsl"?>
 <root xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
-<database includeDrop="<%=(this.IncludeDrop == DropTypeEnum.Entity).ToString().ToLower()%>"><%=(SourceTables.Count > 0 ? SourceTables[0].Database.Name : SourceViews[0].Database.Name)%></database>
+<database includeDrop="<%=this.IncludeDrop.ToString().ToLower()%>"><%=(SourceTables.Count > 0 ? SourceTables[0].Database.Name : SourceViews[0].Database.Name)%></database>
 <procedures>
 <%
-if ( IncludeDrop == DropTypeEnum.All &&
+if ( IncludeDrop &&
+		DropStyle == DropStyleEnum.All &&
 		!string.IsNullOrEmpty( ProcedurePrefix ) )
 {
 %>
@@ -1045,11 +1047,11 @@ public enum TransactionIsolationLevelEnum
 	Serializable
 }
 
-public enum DropTypeEnum
+// Used to determine the style of drop statement to be used (if any)
+public enum DropStyleEnum
 {
 	Entity,
-	All,
-	None
+	All
 }
 	
 public string GetSetTransactionIsolationLevelStatement()
