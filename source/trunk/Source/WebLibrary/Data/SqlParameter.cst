@@ -138,11 +138,142 @@ namespace <%= WebNameSpace %>.Data
 		}
 
 		#endregion Evaluate
-	}
-	
-	#region SqlFilter<EntityColumn>
+    }
 
-	/// <summary>
+
+    #region SqlExpressionBuilder<EntityColumn>
+    /// <summary>
+	/// Provides SQL filter expressions for the <see cref="SqlParameter"/> class.
+	/// </summary>
+	/// <typeparam name="EntityColumn">An enumeration of entity column names.</typeparam>
+    [CLSCompliant(true)]
+    public abstract class SqlExpressionBuilder<EntityColumn> : SqlFilter<EntityColumn>
+    {
+        #region props
+
+        /// <summary>
+        /// The ComparisionType member variable.
+        /// </summary>
+        [DesignerSerializationVisibility( DesignerSerializationVisibility.Hidden)]
+        public override SqlComparisonType ComparisionType
+        {
+            get
+            {
+                return base.ComparisionType;
+            }
+            set
+            {
+                base.ComparisionType = value;
+            }
+        }
+        /// <summary>
+        /// Occurs when the filter expression is to be created.
+        /// </summary>
+        public override event SqlFilterEventHandler<EntityColumn> ApplyFilter;
+
+        /// <summary>
+        /// The BuilderExpression member variable.
+        /// </summary>
+        private StringBuilderExpression builderExpression;
+
+        /// <summary>
+        /// The Junction member variable.
+        /// </summary>
+        private String junction = string.Empty;
+
+        /// <summary>
+        /// The IgnoreCase member variable.
+        /// </summary>
+        private bool ignoreCase;
+
+        /// <summary>
+        /// The Format member variable.
+        /// </summary>
+        private String format = "{0}";
+
+        /// <summary>
+        /// Gets or sets the BuilderExpression property.
+        /// </summary>
+        public StringBuilderExpression BuilderExpression
+        {
+            get { return builderExpression; }
+            set { builderExpression = value; }
+        }
+
+        /// <summary>
+        /// The Junction member variable.
+        /// </summary>
+        public String Junction
+        {
+            get { return junction; }
+            set { junction = value; }
+        }
+
+        /// <summary>
+        /// The IgnoreCase member variable.
+        /// </summary>
+        [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
+        public virtual bool IgnoreCase
+        {
+            get { return ignoreCase; }
+            set { ignoreCase = value; }
+        }
+
+        /// <summary>
+        /// The Format member variable.
+        /// </summary>
+        public String Format
+        {
+            get { return format; }
+            set { format = value; }
+        }
+        #endregion
+
+        /// <summary>
+        /// Applies the filters to the specified <see cref="SqlFilterBuilder&lt;EntityColumn&gt;"/> object.
+        /// </summary>
+        /// <param name="sql">The <see cref="SqlFilterBuilder&lt;EntityColumn&gt;"/> object.</param>
+        /// <param name="control">The <see cref="System.Web.UI.Control"/> that the parameter is bound to.</param>
+        /// <param name="filters">A collection of <see cref="ISqlFilter"/> objects.</param>
+        /// <param name="isCallback">Indicates whether this is a callback request.</param>
+        protected override void ApplyFilters(SqlFilterBuilder<EntityColumn> sql, Control control, IList filters, bool isCallback)
+        {
+            String value;
+            object[] e;
+
+            foreach (SqlExpressionBuilder<EntityColumn> filter in filters)
+            {
+                value = filter.GetFilterValue(control, isCallback);
+
+                if (filter.ApplyFilter != null)
+                {
+                    SqlFilterEventArgs<EntityColumn> args = new SqlFilterEventArgs<EntityColumn>(sql, filter.Column, value);
+                    filter.ApplyFilter(this, args);
+                }
+                else
+                {
+                    switch (filter.BuilderExpression)
+                    {
+                        case StringBuilderExpression.Append:
+                            e = new object[] { filter.Column, string.Format(filter.Format, value) };
+                            break;
+                        case StringBuilderExpression.AppendIsNotNull:
+                        case StringBuilderExpression.AppendIsNull:
+                            e = new object[] { filter.Junction, filter.Column, value };
+                            break;
+                        default:
+                            e = new object[] { filter.Junction, filter.Column, string.Format(filter.Format, value) };
+                            break;
+                    }
+                    EntityUtil.InvokeMethod(sql, filter.BuilderExpression.ToString(), e);
+                }
+            }
+        }
+    }
+    #endregion SqlExpressionBuilder<EntityColumn>
+
+    #region SqlFilter<EntityColumn>
+    /// <summary>
 	/// Provides SQL filter expressions for the <see cref="SqlParameter"/> class.
 	/// </summary>
 	/// <typeparam name="EntityColumn">An enumeration of entity column names.</typeparam>
@@ -179,33 +310,61 @@ namespace <%= WebNameSpace %>.Data
 			set { controlID = value; }
 		}
 
-		/// <summary>
-		/// The PropertyName member variable.
-		/// </summary>
-		private String propertyName;
+        /// <summary>
+        /// The QueryStringField member variable.
+        /// </summary>
+        private String queryStringField;
+
+        /// <summary>
+        /// The SessionField member variable.
+        /// </summary>
+        private String sessionField;
+
+        /// <summary>
+        /// The ComparisionType member variable.
+        /// </summary>
+        private SqlComparisonType comparisonType;
+
+        /// <summary>
+        /// The PropertyName member variable.
+        /// </summary>
+        private String propertyName;
+
+        /// <summary>
+        /// The QueryStringField member variable.
+        /// </summary>
+        public virtual String QueryStringField
+        {
+            get { return queryStringField; }
+            set { queryStringField = value; }
+        }
+
+        /// <summary>
+        /// The SessionField member variable.
+        /// </summary>
+        public virtual String SessionField
+        {
+            get { return sessionField; }
+            set { sessionField = value; }
+        }       
 
 		/// <summary>
 		/// Gets or sets the PropertyName property.
 		/// </summary>
-		public String PropertyName
+        public virtual String PropertyName
 		{
 			get { return propertyName; }
 			set { propertyName = value; }
 		}
 
-		/// <summary>
-		/// The ComparisionType member variable.
-		/// </summary>
-		private SqlComparisonType comparisonType;
-
-		/// <summary>
-		/// Gets or sets the ComparisionType property.
-		/// </summary>
-		public SqlComparisonType ComparisionType
-		{
-			get { return comparisonType; }
-			set { comparisonType = value; }
-		}
+        /// <summary>
+        /// Gets or sets the ComparisionType property.
+        /// </summary>
+        public virtual SqlComparisonType ComparisionType
+        {
+            get { return comparisonType; }
+            set { comparisonType = value; }
+        }
 
 		#endregion Properties
 
@@ -218,46 +377,44 @@ namespace <%= WebNameSpace %>.Data
 		/// <param name="isCallback">Indicates whether this is a callback request.</param>
 		protected virtual String GetFilterValue(Control control, bool isCallback)
 		{
-			Control input = FormUtil.FindControl(control, ControlID);
-			Object value = null;
+            Object value = null;
 
-			if ( input == null )
-			{
-				// if the ControlID was not found using the supplied control, we will
-				// search the entire conrol tree for the current page
-				IList<Control> controls = FormUtil.GetControls(control.Page, ControlID);
+            if (!string.IsNullOrEmpty(QueryStringField))
+            {
+                value = HttpContext.Current.Request.QueryString[QueryStringField];
+            }
+            else if (!string.IsNullOrEmpty(SessionField))
+            {
+                value = HttpContext.Current.Session[SessionField];
+            }
+            else
+            {
+                Control input = FormUtil.FindControl(control, ControlID);                
 
-				if ( controls != null && controls.Count > 0 )
-				{
-					input = controls[0];
-				}
-			}
-			if ( input != null )
-			{
-				if ( isCallback )
-				{
-					value = HttpContext.Current.Request[input.UniqueID];
-				}
-				else
-				{
-					value = FormUtil.GetValue(input, PropertyName);
-				}
-			}
+                if (input == null)
+                {
+                    // if the ControlID was not found using the supplied control, we will
+                    // search the entire conrol tree for the current page
+                    IList<Control> controls = FormUtil.GetControls(control.Page, ControlID);
 
+                    if (controls != null && controls.Count > 0)
+                    {
+                        input = controls[0];
+                    }
+                }
+                if (input != null)
+                {
+                    if (isCallback)
+                    {
+                        value = HttpContext.Current.Request[input.UniqueID];
+                    }
+                    else
+                    {
+                        value = FormUtil.GetValue(input, PropertyName);
+                    }
+                }
+            }
 			String format = "{0}";
-
-			if ( ComparisionType == SqlComparisonType.Contains )
-			{
-				format = "%{0}%";
-			}
-			else if ( ComparisionType == SqlComparisonType.StartsWith )
-			{
-				format = "{0}%";
-			}
-			else if ( ComparisionType == SqlComparisonType.EndsWith )
-			{
-				format = "%{0}";
-			}
 
 			return String.Format(format, value);
 		}
@@ -272,6 +429,7 @@ namespace <%= WebNameSpace %>.Data
 		protected virtual void ApplyFilters(SqlFilterBuilder<EntityColumn> sql, Control control, IList filters, bool isCallback)
 		{
 			String value;
+            String format;
 
 			foreach ( SqlFilter<EntityColumn> filter in filters )
 			{
@@ -284,7 +442,20 @@ namespace <%= WebNameSpace %>.Data
 				}
 				else
 				{
-					sql.Append(filter.Column, value);
+                    format = "{0}";
+                    if (filter.ComparisionType == SqlComparisonType.Contains)
+                    {
+                        format = "%{0}%";
+                    }
+                    else if (filter.ComparisionType == SqlComparisonType.StartsWith)
+                    {
+                        format = "{0}%";
+                    }
+                    else if (filter.ComparisionType == SqlComparisonType.EndsWith)
+                    {
+                        format = "%{0}";
+                    }                  
+					sql.Append(filter.Column, string.Format(format, value));
 				}
 			}
 		}
@@ -308,7 +479,7 @@ namespace <%= WebNameSpace %>.Data
 		/// <summary>
 		/// Occurs when the filter expression is to be created.
 		/// </summary>
-		public event SqlFilterEventHandler<EntityColumn> ApplyFilter;
+		public virtual event SqlFilterEventHandler<EntityColumn> ApplyFilter;
 
 		#endregion Events
 
@@ -455,3 +626,4 @@ namespace <%= WebNameSpace %>.Data
 
 	#endregion ISqlFilter
 }
+
