@@ -512,7 +512,7 @@ GO
 					
 				getbyKeys.Add(GetKeysName(fkeys[j].ForeignKeyMemberColumns));
 %>
-		<procedure owner="<%=SourceTable.Owner%>" name="<%= ProcedurePrefix + commandStem + SelectSuffix + "By" + GetKeysName(fkeys[j].ForeignKeyMemberColumns) %>" <%if (GrantUser != "") {%>grant="<%=GrantUser%>"<%}%>>
+		<procedure owner="<%=SourceTable.Owner%>" name="<%= GetProcNameForGetByIX(ProcedurePrefix + commandStem + SelectSuffix + "By", fkeys[j].ForeignKeyMemberColumns) %>" <%if (GrantUser != "") {%>grant="<%=GrantUser%>"<%}%>>
 			<comment><![CDATA[<%= GetProcSqlComment(string.Format("Select records from the {0} table through a foreign key", SourceTable.Name), "") %>]]></comment>
 			<parameters>
 			<% 
@@ -561,7 +561,7 @@ GO
 					getbyKeys.Add(GetKeysName(indexes[j].MemberColumns));
 				}
 %>
-		<procedure owner="<%=SourceTable.Owner%>" name="<%= ProcedurePrefix + commandStem + SelectSuffix + "By" + GetKeysName(indexes[j].MemberColumns) %>" <%if (GrantUser != "") {%>grant="<%=GrantUser%>"<%}%>>
+		<procedure owner="<%=SourceTable.Owner%>" name="<%= GetProcNameForGetByIX(ProcedurePrefix + commandStem + SelectSuffix + "By", indexes[j].MemberColumns) %>" <%if (GrantUser != "") {%>grant="<%=GrantUser%>"<%}%>>
 			<comment><![CDATA[<%= GetProcSqlComment(string.Format("Select records from the {0} table through an index", SourceTable.Name), "") %>]]></comment>
 			<parameters>
 			<% 
@@ -681,7 +681,7 @@ SELECT <% for (int i = 0; i < primaryTable.Columns.Count; i++)
 				<% 
 				for (int i = 0; i < cols.Count; i++)
 				{
-					Response.Write("\t\t\t\t" + GetSqlParameterXmlNode(cols[i], cols[i].Name, false, true) + Environment.NewLine);
+					Response.Write("\t\t\t\t" + GetSqlParameterXmlNode(cols[i], false, true) + Environment.NewLine);
 				}%>
 			</parameters>
 			<body><![CDATA[
@@ -771,7 +771,7 @@ SELECT <% for (int i = 0; i < primaryTable.Columns.Count; i++)
 				)
 				
 				-- Insert into the temp table
-				INSERT INTO #PageIndex ( <% for(int i=0; i<SourceTable.PrimaryKey.MemberColumns.Count; i++) { Response.Write(GetDBColumnName(SourceTable.PrimaryKey.MemberColumns[i])); if (i < SourceTable.PrimaryKey.MemberColumns.Count-1) {Response.Write(", ");} } %> )
+				INSERT INTO #PageIndex ( <% for(int i=0; i<SourceTable.PrimaryKey.MemberColumns.Count; i++) { Response.Write(SourceTable.PrimaryKey.MemberColumns[i].Name); if (i < SourceTable.PrimaryKey.MemberColumns.Count-1) {Response.Write(", ");} } %> )
 				SELECT TOP {3} <% for(int i=0; i<SourceTable.PrimaryKey.MemberColumns.Count; i++) { Response.Write("[" + SourceTable.PrimaryKey.MemberColumns[i].Name + "]"); if (i < SourceTable.PrimaryKey.MemberColumns.Count-1) {Response.Write(", ");} } %>
 				FROM <%= owner %>[<%= SourceTable.Name %>] {0}
 				ORDER BY {1}

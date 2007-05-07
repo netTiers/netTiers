@@ -28,6 +28,7 @@
 <%@ Property Name="IncludeDatabaseFeatures" Type="MoM.Templates.DatabaseType" Category="02. Framework Generation - Optional" Description="Indicates which database specific features to generate." Default="None" %>
 <%@ Property Name="IncludeWCFDataAttributes" Type="System.Boolean" Default="False" Category="02. Framework Generation - Optional" Description="Indicates if the WCF attributes, [DataContract] and [DataMember], should be included on the entity classes." %>
 <%@ Property Name="SerializeEntityState" Type="System.Boolean" Default="False" Category="02. Framework Generation - Optional" Description="Indicates if the EntityState property should be included during serialization.  Useful if needing to know what state the entity is in over webservices." %>
+<%@ Property Name="EntLibVersion" Type="MoM.Templates.EntLibVersion" Default="2" Category="02. Framework Generation - Optional" Description="Indicates the Enterprise Library version to use." %>
 
 <%@ Property Name="IncludeXmlAttributes" Type="System.Boolean" Default="False" Category="02. Framework Generation - Optional" Description="Indicates if the Xml attributes, [XmlElement(IsNullable=true)], should be included on the entity classes." %>
 <%@ Property Name="CustomCodeFolderName" Type="System.String" Category="02. Framework Generation - Optional" Description="If specified, indicates the name of a folder that can contains custom classes to dynamically add to each project." Default="App_Code" %>
@@ -679,7 +680,7 @@ public void Go()
 	string DALGenericNameSpace = DALNameSpace  + ".GenericClient";
 	
 	string DALWSNameSpace = DALNameSpace  + ".WebServiceClient";
-	string UTNameSpace = NameSpace + "." + (UnitTestsNameSpace.Length>0 ? GetCleanName2(UnitTestsNameSpace) : "UnitTests");
+	string UTNameSpace = NameSpace + "." + (UnitTestsNameSpace.Length>0 ? GetCleanName(UnitTestsNameSpace) : "UnitTests");
 	string WSNameSpace = DALNameSpace + ".WebService";
 	string WebLibNameSpace = NameSpace + ".Web";
 	string WebsiteNameSpace = NameSpace + ".Website";
@@ -813,7 +814,7 @@ public void Go()
 			
 			//throwing a NullReferenceException on the following line, changed to use HasPrimaryKey property
 			//if (_tmp[i].PrimaryKey == null || _tmp[i].PrimaryKey.MemberColumns.Count == 0)
-			if (!HasPrimaryKey(_tmp[i]))
+			if (!_tmp[i].HasPrimaryKey)
 			{
 				AddMessageNode(initNode, 1, "Table " + _tmp[i].Name + " does not have a primary key, it will not be generated.", true);
 				templateSourceTables.Remove(_tmp[i]);
@@ -847,6 +848,7 @@ public void Go()
 		SafeCreateDirectory(Path.GetDirectoryName(this.MappingFile));
 	
 	map.SourceTables = templateSourceTables;
+	map.SourceViews = templateSourceViews;
 	
 	NetTiers.NetTiersMap netTiersMap = map.GetMapping(this.MappingFile);
 	if (netTiersMap == null && !string.IsNullOrEmpty(MappingFile))
@@ -1089,17 +1091,19 @@ public void Go()
 	//----------------------------------------------------------------------------------------------------------------------------------------------
 	
 	//Copy References
-		SafeCopyFile(this.CodeTemplateInfo.DirectoryName + "\\References\\Microsoft.Practices.EnterpriseLibrary.Common.dll", OutputDirectory + "\\References\\Microsoft.Practices.EnterpriseLibrary.Common.dll");
-		SafeCopyFile(this.CodeTemplateInfo.DirectoryName + "\\References\\Microsoft.Practices.EnterpriseLibrary.Data.dll", OutputDirectory + "\\References\\Microsoft.Practices.EnterpriseLibrary.Data.dll");
-		SafeCopyFile(this.CodeTemplateInfo.DirectoryName + "\\References\\Microsoft.Practices.ObjectBuilder.dll", OutputDirectory + "\\References\\Microsoft.Practices.ObjectBuilder.dll");
-		SafeCopyFile(this.CodeTemplateInfo.DirectoryName + "\\References\\Microsoft.Practices.EnterpriseLibrary.Caching.dll", OutputDirectory + "\\References\\Microsoft.Practices.EnterpriseLibrary.Caching.dll");
-		SafeCopyFile(this.CodeTemplateInfo.DirectoryName + "\\References\\Microsoft.Practices.EnterpriseLibrary.Caching.Cryptography.dll", OutputDirectory + "\\References\\Microsoft.Practices.EnterpriseLibrary.Caching.Cryptography.dll");
-		SafeCopyFile(this.CodeTemplateInfo.DirectoryName + "\\References\\Microsoft.Practices.EnterpriseLibrary.Logging.dll", OutputDirectory + "\\References\\Microsoft.Practices.EnterpriseLibrary.Logging.dll");
-		SafeCopyFile(this.CodeTemplateInfo.DirectoryName + "\\References\\Microsoft.Practices.EnterpriseLibrary.Logging.Database.dll", OutputDirectory + "\\References\\Microsoft.Practices.EnterpriseLibrary.Logging.Database.dll");
-		SafeCopyFile(this.CodeTemplateInfo.DirectoryName + "\\References\\Microsoft.Practices.EnterpriseLibrary.Security.dll", OutputDirectory + "\\References\\Microsoft.Practices.EnterpriseLibrary.Security.dll");
-		SafeCopyFile(this.CodeTemplateInfo.DirectoryName + "\\References\\Microsoft.Practices.EnterpriseLibrary.Security.Cryptography.dll", OutputDirectory + "\\References\\Microsoft.Practices.EnterpriseLibrary.Security.Cryptography.dll");
-		SafeCopyFile(this.CodeTemplateInfo.DirectoryName + "\\References\\Microsoft.Practices.EnterpriseLibrary.ExceptionHandling.dll", OutputDirectory + "\\References\\Microsoft.Practices.EnterpriseLibrary.ExceptionHandling.dll");
-		SafeCopyFile(this.CodeTemplateInfo.DirectoryName + "\\References\\Microsoft.Practices.EnterpriseLibrary.ExceptionHandling.Logging.dll", OutputDirectory + "\\References\\Microsoft.Practices.EnterpriseLibrary.ExceptionHandling.Logging.dll");
+		string entLibSubDir = string.Format("EntLib{0}", EntLibVersion.ToString());
+		SafeCopyFile(this.CodeTemplateInfo.DirectoryName + "\\References\\" + entLibSubDir + "\\Microsoft.Practices.EnterpriseLibrary.Common.dll", OutputDirectory + "\\References\\Microsoft.Practices.EnterpriseLibrary.Common.dll");
+		SafeCopyFile(this.CodeTemplateInfo.DirectoryName + "\\References\\" + entLibSubDir + "\\Microsoft.Practices.EnterpriseLibrary.Data.dll", OutputDirectory + "\\References\\Microsoft.Practices.EnterpriseLibrary.Data.dll");
+		SafeCopyFile(this.CodeTemplateInfo.DirectoryName + "\\References\\" + entLibSubDir + "\\Microsoft.Practices.ObjectBuilder.dll", OutputDirectory + "\\References\\Microsoft.Practices.ObjectBuilder.dll");
+		SafeCopyFile(this.CodeTemplateInfo.DirectoryName + "\\References\\" + entLibSubDir + "\\Microsoft.Practices.EnterpriseLibrary.Caching.dll", OutputDirectory + "\\References\\Microsoft.Practices.EnterpriseLibrary.Caching.dll");
+		SafeCopyFile(this.CodeTemplateInfo.DirectoryName + "\\References\\" + entLibSubDir + "\\Microsoft.Practices.EnterpriseLibrary.Caching.Cryptography.dll", OutputDirectory + "\\References\\Microsoft.Practices.EnterpriseLibrary.Caching.Cryptography.dll");
+		SafeCopyFile(this.CodeTemplateInfo.DirectoryName + "\\References\\" + entLibSubDir + "\\Microsoft.Practices.EnterpriseLibrary.Logging.dll", OutputDirectory + "\\References\\Microsoft.Practices.EnterpriseLibrary.Logging.dll");
+		SafeCopyFile(this.CodeTemplateInfo.DirectoryName + "\\References\\" + entLibSubDir + "\\Microsoft.Practices.EnterpriseLibrary.Logging.Database.dll", OutputDirectory + "\\References\\Microsoft.Practices.EnterpriseLibrary.Logging.Database.dll");
+		SafeCopyFile(this.CodeTemplateInfo.DirectoryName + "\\References\\" + entLibSubDir + "\\Microsoft.Practices.EnterpriseLibrary.Security.dll", OutputDirectory + "\\References\\Microsoft.Practices.EnterpriseLibrary.Security.dll");
+		SafeCopyFile(this.CodeTemplateInfo.DirectoryName + "\\References\\" + entLibSubDir + "\\Microsoft.Practices.EnterpriseLibrary.Security.Cryptography.dll", OutputDirectory + "\\References\\Microsoft.Practices.EnterpriseLibrary.Security.Cryptography.dll");
+		SafeCopyFile(this.CodeTemplateInfo.DirectoryName + "\\References\\" + entLibSubDir + "\\Microsoft.Practices.EnterpriseLibrary.ExceptionHandling.dll", OutputDirectory + "\\References\\Microsoft.Practices.EnterpriseLibrary.ExceptionHandling.dll");
+		SafeCopyFile(this.CodeTemplateInfo.DirectoryName + "\\References\\" + entLibSubDir + "\\Microsoft.Practices.EnterpriseLibrary.ExceptionHandling.Logging.dll", OutputDirectory + "\\References\\Microsoft.Practices.EnterpriseLibrary.ExceptionHandling.Logging.dll");
+		// NUnit file
 		SafeCopyFile(this.CodeTemplateInfo.DirectoryName + "\\References\\nunit.framework.dll", OutputDirectory + "\\References\\nunit.framework.dll");
 	
 
@@ -1620,11 +1624,15 @@ public void Go()
 			
 			this.RenderToFile(configFile, specialPath + "\\" + NameSpace + (vsnetIntegration == VSNetIntegration.SeparatedProjects && (IncludeUnitTest != MoM.Templates.UnitTestStyle.None) ? "." + UnitTestsNameSpace : string.Empty) + ".dll.config", true);
 			
-			AddFileNode(commonNode, "entlib unit test configuration files");
-			this.GetTemplate("entlib.config.cst").SetProperty("NameSpace", NameSpace);
-			this.GetTemplate("entlib.config.cst").SetProperty("BLLNameSpace", BLLNameSpace);
-
-			this.RenderToFile("entlib.config.cst", specialPath + "\\entlib.config", true);
+			// these config files are very similar today,
+			// but may not be in the future, so here's a way
+			// for them to live side-by-side going forward.
+			string ver = EntLibVersion.ToString().Substring(EntLibVersion.ToString().LastIndexOf(".") + 1);
+			string entLibConfigTemplateName = string.Format("entlib.{0}.config.cst", ver);
+			AddFileNode(commonNode, string.Format("Enterprise Library {0} unit test configuration files", ver));
+			this.GetTemplate(entLibConfigTemplateName).SetProperty("NameSpace", NameSpace);
+			this.GetTemplate(entLibConfigTemplateName).SetProperty("BLLNameSpace", BLLNameSpace);
+			this.RenderToFile(entLibConfigTemplateName, specialPath + "\\entlib.config", true);
 		}	
 		
 		// Configuration files for the webservice
@@ -2180,11 +2188,13 @@ public void Go()
 			this.RenderToFile(webConfigTemplate, rootPathWebsite + "\\Web.config", true);
 			
 			//generate entlib
-			AddFileNode(commonNode, "entlib website configuration files");
-			this.GetTemplate("entlib.config.cst").SetProperty("NameSpace", NameSpace);
-			this.GetTemplate("entlib.config.cst").SetProperty("BLLNameSpace", BLLNameSpace);
+			string ver = EntLibVersion.ToString().Substring(EntLibVersion.ToString().LastIndexOf(".") + 1);
+			string entLibConfigTemplateName = string.Format("entlib.{0}.config.cst", ver);
+			AddFileNode(commonNode, string.Format("Enterprise Library {0} website configuration files", ver));
+			this.GetTemplate(entLibConfigTemplateName).SetProperty("NameSpace", NameSpace);
+			this.GetTemplate(entLibConfigTemplateName).SetProperty("BLLNameSpace", BLLNameSpace);
 
-			this.RenderToFile("entlib.config.cst", rootPathWebsite + "\\entlib.config", true);
+			this.RenderToFile(entLibConfigTemplateName, rootPathWebsite + "\\entlib.config", true);
 		}
 
 		// Default.aspx(.cs)
@@ -4126,7 +4136,6 @@ private string IncrementBuildVersion(string assemblyInfoFilename)
 					buildVer += 1;
 				
 				return string.Format("{0}.{1}.{2}.{3}", major, minor, buildVer, revision);
-				break;
 			}
 			line = reader.ReadLine();
 		}

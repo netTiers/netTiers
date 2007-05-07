@@ -7,7 +7,8 @@
 			CodeTemplates.Add("vsnet2005.localtestrun.testrunconfig.cst", base.CreateTemplate<vsnet2005LocaltestrunTestrunconfig>()); this.PerformStep();
 			CodeTemplates.Add("nAnt.cst", base.CreateTemplate<nAnt>()); this.PerformStep();
 			CodeTemplates.Add("AssemblyInfo.cst", base.CreateTemplate<AssemblyInfo>()); this.PerformStep(); 
-			CodeTemplates.Add("entlib.config.cst", base.CreateTemplate<entlibConfig>()); this.PerformStep();																												
+			CodeTemplates.Add("entlib.v2.config.cst", base.CreateTemplate<entlibv2config>()); this.PerformStep();																												
+			CodeTemplates.Add("entlib.v3.config.cst", base.CreateTemplate<entlibv3config>()); this.PerformStep();																												
 			CodeTemplates.Add("App.config.2005.cst", base.CreateTemplate<AppConfig>()); this.PerformStep();													
 			CodeTemplates.Add("Enum.cst", base.CreateTemplate<Enum>()); this.PerformStep();
 			CodeTemplates.Add("IEntity.cst", base.CreateTemplate<IEntity>()); this.PerformStep();
