@@ -227,6 +227,29 @@ namespace <%= WebNameSpace %>.Data
             get { return format; }
             set { format = value; }
         }
+
+        /// <summary>
+        /// The Parameters member variable.
+        /// </summary>
+        private ParameterCollection parameters;
+
+        /// <summary>
+        /// Collections of parameter objects where each object specifies the value of 
+        /// a specified parameter 
+        /// </summary>
+        [PersistenceMode(PersistenceMode.InnerProperty)]
+        public ParameterCollection Parameters
+        {
+            get
+            {
+                if (parameters == null)
+                {
+                    parameters = new ParameterCollection();
+                }
+
+                return parameters;
+            }
+        }
         #endregion
 
         /// <summary>
@@ -242,11 +265,12 @@ namespace <%= WebNameSpace %>.Data
             object[] e;
 
             foreach (SqlExpressionBuilder<EntityColumn> filter in filters)
-            {
-                value = filter.GetFilterValue(control, isCallback);
+            {                
 
                 if (filter.ApplyFilter != null)
                 {
+                    //TODO: pass idictionary collection when multiple parameters are used to define expression (aka AppendRange)
+                    value = filter.GetFilterValue(control, isCallback);
                     SqlFilterEventArgs<EntityColumn> args = new SqlFilterEventArgs<EntityColumn>(sql, filter.Column, value);
                     filter.ApplyFilter(this, args);
                 }
@@ -254,15 +278,46 @@ namespace <%= WebNameSpace %>.Data
                 {
                     switch (filter.BuilderExpression)
                     {
+                        case StringBuilderExpression.AppendRange:
+                            IOrderedDictionary prms = filter.Parameters.GetValues(HttpContext.Current, control);
+                            
+                            if (filter.Junction == string.Empty)
+                                e = new object[] { filter.Column, prms["From"], prms["To"] };
+                            else
+                                e = new object[] { filter.Junction, filter.Column, prms["From"], prms["To"] };
+
+                            if (prms["From"] == null && prms["To"] == null)
+                            {
+                                throw new ArgumentException("The AppendRange expression requires \"From\" and \"To\" parameters. ");
+                            }
+                            break;
                         case StringBuilderExpression.Append:
+                            value = filter.GetFilterValue(control, isCallback);
                             e = new object[] { filter.Column, string.Format(filter.Format, value) };
                             break;
                         case StringBuilderExpression.AppendIsNotNull:
                         case StringBuilderExpression.AppendIsNull:
-                            e = new object[] { filter.Junction, filter.Column, value };
+                        case StringBuilderExpression.AppendGreaterThan:
+                        case StringBuilderExpression.AppendGreaterThanOrEqual:
+                        case StringBuilderExpression.AppendLessThan:
+                        case StringBuilderExpression.AppendLessThanOrEqual:
+                        case StringBuilderExpression.AppendEquals:
+                        case StringBuilderExpression.AppendNotEquals:
+                        case StringBuilderExpression.AppendIn:
+                        case StringBuilderExpression.AppendInQuery:
+                        case StringBuilderExpression.AppendNotInQuery:
+                            value = filter.GetFilterValue(control, isCallback);
+                            if (filter.Junction == string.Empty)
+                                e = new object[] { filter.Column, value };
+                            else
+                                e = new object[] { filter.Junction, filter.Column, value };
                             break;
                         default:
-                            e = new object[] { filter.Junction, filter.Column, string.Format(filter.Format, value) };
+                            value = filter.GetFilterValue(control, isCallback);
+                            if (filter.Junction == string.Empty)
+                                e = new object[] { filter.Column, value };
+                            else
+                                e = new object[] { filter.Junction, filter.Column, value };
                             break;
                     }
                     EntityUtil.InvokeMethod(sql, filter.BuilderExpression.ToString(), e);
@@ -626,4 +681,3 @@ namespace <%= WebNameSpace %>.Data
 
 	#endregion ISqlFilter
 }
-
