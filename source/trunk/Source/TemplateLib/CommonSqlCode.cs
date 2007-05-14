@@ -485,35 +485,82 @@ namespace MoM.Templates
             return pascalName.Substring(0, 1).ToLower() + pascalName.Substring(1);
         }
 
-        /// <summary>
-        /// Get the Pascal cased version of a name.  
+       /// <summary>
+        /// Gets the pascal case name of a string.
         /// </summary>
-        /// <param name="name">Name to be changed</param>
-        /// <returns>PascalCased version of the name</returns>
-        public string GetPascalCaseName(string name)
+        /// <param name="name">The name.</param>
+        /// <returns></returns>
+        private string GetPascalCaseName(string name)
         {
-			string[] splitNames;
-			char[] splitter;
-			
-			name = name.Trim();
-			
-			if (ChangeUnderscoreToPascalCase)
-				splitter = new char[] {'_', ' '};
-			else
-				splitter = new char[] {' '};
-			
-				splitNames = name.Split(splitter);
-			
-			if (splitNames.Length > 1)
-			{
-            	string pascalName = "";
-            	foreach (string s in splitNames)
-                	if (s.Length > 0)
-						pascalName += s.Substring(0, 1).ToUpper() + s.Substring(1).ToLower();
-            	return pascalName;
-        	}
-			return name;
+            string notStartingAlpha = Regex.Replace( name, "^[^a-zA-Z]+", string.Empty );
+            string workingString = ToLowerExceptCamelCase( notStartingAlpha );
+            workingString = RemoveSeparatorAndCapNext( workingString );
+
+            return workingString;
         }
+
+        /// <summary>
+        /// Toes the lower except camel case.
+        /// </summary>
+        /// <param name="input">The input.</param>
+        /// <returns></returns>
+        private string ToLowerExceptCamelCase( string input )
+        {
+            char[] chars = input.ToCharArray();
+            for (int i = 0; i < chars.Length; i++)
+            {
+                int left = (i > 0 ? i - 1 : i);
+                int right = (i < chars.Length - 1 ? i + 1 : i);
+
+                if (i != left && i != right)
+                {
+                    if (Char.IsUpper(chars[i]) && Char.IsLetter(chars[left]) && Char.IsUpper(chars[left]))
+                    {
+                        chars[i] = Char.ToLower(chars[i], CultureInfo.InvariantCulture);
+                    }
+                    else if (Char.IsUpper(chars[i]) && Char.IsLetter(chars[right]) && Char.IsUpper(chars[right]))
+                    {
+                        chars[i] = Char.ToLower(chars[i], CultureInfo.InvariantCulture);
+                    }
+                    else if (Char.IsUpper(chars[i]) && !Char.IsLetter(chars[right]))
+                    {
+                        chars[i] = Char.ToLower(chars[i], CultureInfo.InvariantCulture);
+                    }
+                }
+            }
+
+            chars[chars.Length - 1] = Char.ToLower(chars[chars.Length - 1], CultureInfo.InvariantCulture);
+
+            return new string(chars);
+        }
+
+        /// <summary>
+        /// Removes the separator and capitalises next character.
+        /// </summary>
+        /// <param name="input">The input.</param>
+        /// <returns></returns>
+        private string RemoveSeparatorAndCapNext(string input)
+        {
+            char[] splitter = new char[] { '-', '_', ' ' }; // potential chars to split on
+            string workingString = input;
+            char[] chars = workingString.ToCharArray();
+            int under = workingString.IndexOfAny( splitter );
+
+            while ( under > -1 )
+            {
+                chars[ under + 1 ] = Char.ToUpper( chars[under + 1], CultureInfo.InvariantCulture );
+                workingString = new String( chars );
+                under = workingString.IndexOfAny( splitter, under + 1 );
+            }
+
+            chars[0] = Char.ToUpper(chars[0], CultureInfo.InvariantCulture);
+            workingString = new string( chars );
+
+            string regexReplacer = "[" + new string( ChangeUnderscoreToPascalCase ? new char[] { '-', '_', ' ' } : new char[] { ' ' } ) + "]";
+
+            return Regex.Replace( workingString, regexReplacer, string.Empty );
+        }
+
 
 
         /// <summary>
