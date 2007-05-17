@@ -1841,6 +1841,21 @@ namespace MoM.Templates
 			}
 			return "//TODO: UNKNOWN, COULD NOT FIND FK COLUMN PROPERTY NAME\t ";
 		}
+
+		public string GetPKPropertyName(SchemaExplorer.ColumnSchema pk, TableKeySchemaCollection fkeys)
+		{
+			foreach (TableKeySchema key in fkeys)
+			{
+				foreach (ColumnSchema col in key.PrimaryKeyMemberColumns)
+				{
+					if (col.Name == pk.Name && col.Table.FullName == pk.Table.FullName)
+					{
+						return GetPropertyName(key.ForeignKeyMemberColumns[0]);
+					}
+				}
+			}
+			return "//TODO: UNKNOWN, COULD NOT FIND FK COLUMN PROPERTY NAME\t ";
+		}
 		#endregion 
 
 		/// <summary>
