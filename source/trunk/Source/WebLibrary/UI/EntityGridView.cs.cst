@@ -42,9 +42,36 @@ namespace <%=RootNameSpace%>.Web.UI
         /// PageSizeChanged event raised whenever the Page Size Changes
         /// </summary>
         public event EventHandler PageSizeChanged;
-        
+
+        /// <summary>
+        /// ExcelBeforeFormat event raised before control format
+        /// </summary>
+        public event ExcelFormatEventHandler ExcelBeforeFormat;
+
+        /// <summary>
+        /// ExcelAfterFormat event raised after the control is formated
+        /// </summary>
+        public event ExcelFormatEventHandler ExcelAfterFormat;
 
         #region Properties
+        /// <summary>
+        /// Collection of data control fields where each data control field represents
+        /// a table column to be displayed when Excel report is generated
+        /// </summary>
+        [DefaultValueAttribute("")]
+        [MergablePropertyAttribute(false)]
+        [PersistenceModeAttribute(PersistenceMode.InnerProperty)]
+        public virtual DataControlFieldCollection ExcelColumns
+        {
+            get 
+            { 
+                if (ViewState["_dataControlFieldCollection"] != null)
+                    return (DataControlFieldCollection)ViewState["_dataControlFieldCollection"];
+                return null;
+            }
+            set { ViewState["_dataControlFieldCollection"] = value; }
+        }
+
         /// <summary>
         /// Set / Gets the Export File Name
         /// </summary>
@@ -508,6 +535,7 @@ namespace <%=RootNameSpace%>.Web.UI
         private LinkButton ExcelButton()
         {
             LinkButton lnkExport = new LinkButton();
+            lnkExport.ID = "lnkExport";
             lnkExport.ToolTip = _exportToolTip;
             lnkExport.Text = _exportToExcelText;
             lnkExport.Click += new EventHandler(lnkExport_Click);
@@ -524,6 +552,14 @@ namespace <%=RootNameSpace%>.Web.UI
         /// <param name="e"></param>
         void lnkExport_Click(object sender, EventArgs e)
         {
+            if (ExcelColumns != null)
+            {
+                foreach (DataControlField field in ExcelColumns)
+                {
+                    this.Columns.Add(field);
+                }
+            }
+
             this.AllowMultiColumnSorting = false;
             this.AllowPaging = false;
             this.AllowSorting = false;
@@ -536,10 +572,30 @@ namespace <%=RootNameSpace%>.Web.UI
             this.DataBind();
 
             GridViewExcelExporter exp = new GridViewExcelExporter();
+            exp.BeforeFormat += new ExcelFormatEventHandler(exp_BeforeFormat);
+            exp.AfterFormat += new ExcelFormatEventHandler(exp_AfterFormat);
             exp.Export(_excelExportFileName, this.Page, this);
         }
-        
 
+        /// <summary>
+        /// Occures after control is formatted
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
+        void exp_AfterFormat(object sender, ExcelFormatEventArgs e)
+        {
+            if (ExcelAfterFormat != null) ExcelAfterFormat(sender, e);
+        }
+
+        /// <summary>
+        /// Occures before control is formatted
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
+        void exp_BeforeFormat(object sender, ExcelFormatEventArgs e)
+        {
+            if (ExcelBeforeFormat != null) ExcelBeforeFormat(sender, e);
+        }
 
         #region cboPageSize_SelectedIndexChanged
         /// <summary> 
@@ -689,6 +745,106 @@ namespace <%=RootNameSpace%>.Web.UI
 
     #region Excel Export Implementation
 
+    /// <summary>
+    /// Represents the method that will handle the BeforeFormat and AfterFormat events of the Control class
+    /// </summary>
+    /// <param name="sender"></param>
+    /// <param name="e"></param>
+    public delegate void ExcelFormatEventHandler(Object sender, ExcelFormatEventArgs e);
+
+    /// <summary>
+    /// Provides data for the BeforeFormat and AfterFormat events.
+    /// </summary>
+    public class ExcelFormatEventArgs : EventArgs
+    {
+        private Control control;
+
+        private bool cancel;
+
+        private bool formatted;
+
+        private string columnName;
+
+        /// <summary>
+        /// Ctro
+        /// </summary>
+        /// <param name="control"></param>
+        /// <param name="cancel"></param>
+        /// <param name="formatted"></param>
+        /// <param name="columnName"></param>
+        public ExcelFormatEventArgs(Control control, bool cancel, bool formatted, string columnName)
+        {
+            this.control = control;
+            this.cancel = cancel;
+            this.columnName = columnName;
+            this.formatted = formatted;
+        }
+
+        /// <summary>
+        /// Ctor
+        /// </summary>
+        public ExcelFormatEventArgs() { }
+
+        /// <summary>
+        /// The display control
+        /// </summary>
+        public Control Control
+        {
+            get
+            {
+                return control;
+            }
+            set
+            {
+                control = value;
+            }
+        }
+
+        /// <summary>
+        /// Cancel
+        /// </summary>
+        public bool Cancel
+        {
+            get
+            {
+                return cancel;
+            }
+            set
+            {
+                cancel = value;
+            }
+        }
+
+        /// <summary>
+        /// Formatted
+        /// </summary>
+        public bool Formatted
+        {
+            get
+            {
+                return formatted;
+            }
+            set
+            {
+                formatted = value;
+            }
+        }
+
+        /// <summary>
+        /// The ColumnName of the control
+        /// </summary>
+        public string ColumnName
+        {
+            get
+            {
+                return columnName;
+            }
+            set
+            {
+                columnName = value;
+            }
+        }
+    }
 
     /// <summary>
     /// Exports a gridview to a excel file. 
@@ -698,6 +854,40 @@ namespace <%=RootNameSpace%>.Web.UI
     /// </requirements>
     public class GridViewExcelExporter
     {
+        /// <summary>
+        /// Event to indicate that a property has changed.
+        /// </summary>
+        public event ExcelFormatEventHandler BeforeFormat;
+
+        /// <summary>
+        /// Event to indicate that a property has changed.
+        /// </summary>
+        public event ExcelFormatEventHandler AfterFormat;
+
+        /// <summary>
+        /// Called when a control is in the scope to be formated
+        /// </summary>
+        /// <param name="ExcelFormatEventArgs">The name of the control to format.</param>
+        protected virtual void OnBeforeFormat(ExcelFormatEventArgs e)
+        {
+            if (null != BeforeFormat)
+            {
+                BeforeFormat(this, e);
+            }
+        }
+
+        /// <summary>
+        /// Called when a control is in the scope to be formated
+        /// </summary>
+        /// <param name="ExcelFormatEventArgs">The name of the control to format.</param>
+        protected virtual void OnAfterFormat(ExcelFormatEventArgs e)
+        {
+            if (null != AfterFormat)
+            {
+                AfterFormat(this, e);
+            }
+        }
+
         /// <summary>
         /// Ctor of the GridViewExcelExporter class
         /// </summary>
@@ -709,22 +899,22 @@ namespace <%=RootNameSpace%>.Web.UI
         /// <summary>
         /// Exports the datagrid to an Excel file with the name of the datasheet provided by the passed in parameter
         /// </summary>
-        public virtual void Export(string reportName, Page CurrentPage, Control NtGridView)
+        public virtual void Export(string reportName, Page currentPage, Control gridView)
         {
             System.Web.UI.HtmlControls.HtmlForm htmlForm = new System.Web.UI.HtmlControls.HtmlForm();
-            CurrentPage.Controls.Add(htmlForm);
-            htmlForm.Controls.Add(NtGridView);
+            currentPage.Controls.Add(htmlForm);
+            htmlForm.Controls.Add(gridView);
 
-            ClearChildControls((GridView)NtGridView);
+            ClearChildControls((GridView)gridView);
 
-            CurrentPage.Response.Clear();
-            CurrentPage.Response.Buffer = true;
+            currentPage.Response.Clear();
+            currentPage.Response.Buffer = true;
 
-            CurrentPage.Response.AddHeader("Content-Disposition", "attachment; filename=" + reportName);
-            CurrentPage.Response.ContentType = "application/vnd.ms-excel";
-            CurrentPage.Response.ContentEncoding = System.Text.Encoding.UTF8;
-            CurrentPage.Response.Charset = "";
-            CurrentPage.EnableViewState = false;
+            currentPage.Response.AddHeader("Content-Disposition", "attachment; filename=" + reportName);
+            currentPage.Response.ContentType = "application/vnd.ms-excel";
+            currentPage.Response.ContentEncoding = System.Text.Encoding.UTF8;
+            currentPage.Response.Charset = "";
+            currentPage.EnableViewState = false;
 
             using (StringWriter stringWriter = new StringWriter())
             {
@@ -732,8 +922,8 @@ namespace <%=RootNameSpace%>.Web.UI
                 htmlForm.RenderControl(htmlWriter);
                 htmlWriter.Flush();
 
-                CurrentPage.Response.Write(stringWriter.ToString());
-                CurrentPage.Response.End();
+                currentPage.Response.Write(stringWriter.ToString());
+                currentPage.Response.End();
             }
         }
 
@@ -747,11 +937,27 @@ namespace <%=RootNameSpace%>.Web.UI
         /// <param name="control">The control to be cleared and verified</param>
         private void RecursiveClear(Control control)
         {
+
             //Clears children controls
             for (int i = control.Controls.Count - 1; i >= 0; i--)
             {
                 RecursiveClear(control.Controls[i]);
             }
+
+            string columnName = string.Empty;
+            Object controlTemp = (object)control;
+
+            if (control.Parent is DataControlFieldCell)
+            {
+                columnName = ((DataControlFieldCell)control.Parent).ContainingField.HeaderText;
+            }
+            ExcelFormatEventArgs args = new ExcelFormatEventArgs();
+            args.ColumnName = columnName;
+            args.Control = control;
+
+            if (args.Cancel) return;
+
+            OnBeforeFormat(args);
 
             if (control is Repeater)
             {
@@ -771,7 +977,7 @@ namespace <%=RootNameSpace%>.Web.UI
             {
                 control.Parent.Controls.Remove(control);
             }
-
+            // Replace image with 'o' char
             else if (control is Image)
             {
                 if (((Image)control).Visible)
@@ -793,31 +999,41 @@ namespace <%=RootNameSpace%>.Web.UI
                 {
                 }
                 control.Parent.Controls.Remove(control);
-
+            }
+            //If it is a Hyperlink, convert it to a LiteralControl
+            else if (control is HyperLink)
+            {
+                LiteralControl literal = new LiteralControl();
+                control.Parent.Controls.Add(literal);
+                literal.Text = ((HyperLink)control).Text;
+                control.Parent.Controls.Remove(control);
             }
             //You may add more conditions when necessary
 
+            Object controlTemp1 = (object)control;
+            args.Formatted = controlTemp.Equals(controlTemp1);
+            OnAfterFormat(args);
             return;
         }
 
         /// <summary>
         /// Clears the child controls of a EntityGridView to make sure all controls are LiteralControls
         /// </summary>
-        /// <param name="dg">Datagrid to be cleared and verified</param>
-        protected void ClearChildControls(System.Web.UI.WebControls.GridView dg)
+        /// <param name="gridView">Datagrid to be cleared and verified</param>
+        protected void ClearChildControls(System.Web.UI.WebControls.GridView gridView)
         {
 
-            for (int i = dg.Columns.Count - 1; i >= 0; i--)
+            for (int i = gridView.Columns.Count - 1; i >= 0; i--)
             {
-                if (dg.Columns[i].GetType().Name == "ButtonColumn" 
-                    || dg.Columns[i].GetType().Name == "CheckBoxField"
-                    || dg.Columns[i].GetType().Name == "CommandField")
+                if (gridView.Columns[i].GetType().Name == "ButtonColumn"
+                    || gridView.Columns[i].GetType().Name == "CheckBoxField"
+                    || gridView.Columns[i].GetType().Name == "CommandField")
                 {
-                    dg.Columns[i].Visible = false;
+                    gridView.Columns[i].Visible = false;
                 }
             }
 
-            this.RecursiveClear(dg);
+            this.RecursiveClear(gridView);
         }
     }
 
