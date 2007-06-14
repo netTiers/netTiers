@@ -59,9 +59,9 @@
 			RowVersion = column;
 	}
 
-	string entityName = GetClassName(SourceTable.Name);
-	string className = NameSpace + "." + GetClassName(SourceTable.Name);
-	string providerName = GetProviderName(SourceTable.Name);
+	string entityName = GetClassName(SourceTable);
+	string className = NameSpace + "." + entityName;
+	string providerName = GetClassName(SourceTable, ClassNameFormat.Provider);
 	
 
 	TableSchemaCollection sourceTables = new TableSchemaCollection();
@@ -73,7 +73,7 @@
 %>
 <%%@ Page Language="C#" Theme="Default" MasterPageFile="~/MasterPages/admin.master" AutoEventWireup="true"  CodeFile="<%=entityName%>Edit.aspx.cs" Inherits="<%=entityName%>Edit" Title="<%=entityName%> Edit" %%>
 
-<asp:Content ID="Content2" ContentPlaceHolderID="ContentPlaceHolder2" Runat="Server"><%=GetPascalSpacedName(entityName)%> - Add/Edit</asp:Content>
+<asp:Content ID="Content2" ContentPlaceHolderID="ContentPlaceHolder2" Runat="Server"><%=GetFriendlyName(SourceTable)%> - Add/Edit</asp:Content>
 <asp:Content ID="Content1" ContentPlaceHolderID="ContentPlaceHolder1" Runat="Server">
 		<data:MultiFormView ID="FormView1" DataKeyNames="<%=GetDataKeyNames(keys)%>" runat="server" DataSourceID="<%=entityName%>DataSource">
 		
@@ -120,7 +120,7 @@
 			if (!SourceTables.Contains(tablesRelated[x]))
 				continue;
 
-			string entityRelated = GetClassName(tablesRelated[x].Name);
+			string entityRelated = GetClassName(tablesRelated[x]);
 			ColumnSchemaCollection keysRelatedCol = tablesRelated[x].PrimaryKey.MemberColumns;
 			ColumnSchemaCollection foreignKeyCols = GetRelationshipColumnByFk(keys, tablesRelated[x]);
 			
@@ -132,7 +132,7 @@
 		<asp:Panel ID="<%=entityRelated%>Panel2" runat="server" CssClass="collapsePanelHeader"> 
 			<div style="padding:5px; cursor: pointer; vertical-align: middle;">
 				<div style="float: left; vertical-align: middle;"><asp:Image ID="<%=entityRelated%>Image" runat="server" ImageUrl="~/images/expand_blue.jpg"/></div>
-				<div style="float: left; padding-left: 5px;"><%=GetPascalSpacedName(entityRelated)%> Details</div>
+				<div style="float: left; padding-left: 5px;"><%=GetFriendlyName(tablesRelated[x])%> Details</div>
 				<div style="float: left; margin-left: 20px;"><asp:Label ID="<%=entityRelated%>Label" runat="server" /></div>
 			</div>
 		</asp:Panel>	
@@ -161,15 +161,15 @@
 				if (!tCol.IsForeignKeyMember && !tCol.IsPrimaryKeyMember && !tCol.NativeType.ToLower().Equals("xml")) 
 				{
 %>
-				<asp:BoundField DataField="<%=propertyName%>" HeaderText="<%=GetPascalSpacedName(propertyName)%>" SortExpression="<%=tCol.Name%>" />				
+				<asp:BoundField DataField="<%=propertyName%>" HeaderText="<%=GetFriendlyName(tCol)%>" SortExpression="<%=tCol.Name%>" />				
 <%    
 				}				
         	}
 %>
 			</Columns>
 			<EmptyDataTemplate>
-				<b>No <%=GetPascalSpacedName(tablesRelated[x].Name)%> Found! </b>
-				<asp:HyperLink runat="server" ID="hyp<%=GetClassName(tablesRelated[x].Name)%>" NavigateUrl="~/admin/<%=GetClassName(tablesRelated[x].Name)%>Edit.aspx">Add New</asp:HyperLink>
+				<b>No <%=GetFriendlyName(tablesRelated[x])%> Found! </b>
+				<asp:HyperLink runat="server" ID="hyp<%=GetClassName(tablesRelated[x])%>" NavigateUrl="~/admin/<%=GetClassName(tablesRelated[x])%>Edit.aspx">Add New</asp:HyperLink>
 			</EmptyDataTemplate>
 		</data:EntityGridView>					
 		

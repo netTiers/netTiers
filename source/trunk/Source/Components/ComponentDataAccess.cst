@@ -26,12 +26,12 @@
 
 	#region Template Logic
 	// Name of the Abstract Class
-	string className = GetClassName(SourceTable.Name);
-	string collectionClassName = GetCollectionClassName(SourceTable.Name);
-	string collectionClassNameComment = GetCollectionClassName(SourceTable.Name).Replace("<", "{").Replace(">","}");
-	string keyClassName = GetKeyClassName(className);
-	string entitiesCollectionClassName = GetCollectionClassName(SourceTable.Name).Replace("<", "<Entities.");
-	string abstractClassName = GetAbstractClassName(SourceTable.Name);
+	string className = GetClassName(SourceTable);
+	string collectionClassName = GetClassName(SourceTable, ClassNameFormat.Collection);
+	string collectionClassNameComment = GetClassName(SourceTable, ClassNameFormat.Collection).Replace("<", "{").Replace(">","}");
+	string keyClassName = GetClassName(SourceTable, ClassNameFormat.Key);
+	string entitiesCollectionClassName = GetClassName(SourceTable, ClassNameFormat.Collection).Replace("<", "<Entities.");
+	string abstractClassName = GetClassName(SourceTable, ClassNameFormat.Abstract);
 	string partialClassInternalPrefix = UsePartialClass ? "" : "";
 	string constructorAccessModifier = ""; 
 	string constructorAccessModifierOnMembers = "";
@@ -166,7 +166,7 @@
 		///		<%=fkeys[j].Name%> Description: <%=GetColumnXmlComment(fkeys[j],2)%>
 		/// </summary>
 		<% for (int i = 0; i < fkeys[j].ForeignKeyMemberColumns.Count; i++) { %>
-		/// <param name="<%= GetPrivateName(fkeys[j].ForeignKeyMemberColumns[i])%>"><%=GetColumnXmlComment(fkeys[j].ForeignKeyMemberColumns[i],2)%></param>
+		/// <param name="<%= GetFieldName(fkeys[j].ForeignKeyMemberColumns[i])%>"><%=GetColumnXmlComment(fkeys[j].ForeignKeyMemberColumns[i],2)%></param>
 		<% } %>
 		/// <returns>Returns a generic collection of <%=className%> objects.</returns>
 		[DataObjectMethod(DataObjectMethodType.Select)]
@@ -181,7 +181,7 @@
 		///		<%=fkeys[j].Name%> Description: <%=GetColumnXmlComment(fkeys[j],2)%>
 		/// </summary>
 		<% for (int i = 0; i < fkeys[j].ForeignKeyMemberColumns.Count; i++) { %>
-		/// <param name="<%= GetPrivateName(fkeys[j].ForeignKeyMemberColumns[i])%>"><%=GetColumnXmlComment(fkeys[j].ForeignKeyMemberColumns[i],2)%></param>
+		/// <param name="<%= GetFieldName(fkeys[j].ForeignKeyMemberColumns[i])%>"><%=GetColumnXmlComment(fkeys[j].ForeignKeyMemberColumns[i],2)%></param>
 		<% } %>
 		/// <param name="start">Row number at which to start reading.</param>
 		/// <param name="pageLength">Page length of records you would like to retrieve</param>
@@ -205,7 +205,7 @@
 				NetTiersProvider dataProvider = ConnectionScope.Current.DataProvider;
 				
 				//Access repository
-				list = new <%=collectionClassName%>(dataProvider.<%= GetProviderName(className) %>.GetBy<%=GetKeysName(fkeys[j].ForeignKeyMemberColumns)%>(transactionManager, <%= GetFunctionCallParameters(fkeys[j].ForeignKeyMemberColumns) %>, start, pageLength, out totalCount));
+				list = new <%=collectionClassName%>(dataProvider.<%= GetClassName(SourceTable, ClassNameFormat.Provider) %>.GetBy<%=GetKeysName(fkeys[j].ForeignKeyMemberColumns)%>(transactionManager, <%= GetFunctionCallParameters(fkeys[j].ForeignKeyMemberColumns) %>, start, pageLength, out totalCount));
 				
 				//intentionally leave transaction open on a read operation.
 				
@@ -273,7 +273,6 @@
 					newCollection = string.Format("new {0}(", collectionClassName);
 					newCollectionEnd = ")";
 				}
-				bool isUnique = false;
 				
 				//if (IsPrimaryKey(indexes[j]))
 				if (indexes[j].IsUnique || indexes[j].IsPrimaryKey)
@@ -282,7 +281,6 @@
 					returnType = className;
 					newCollection = "";
 					newCollectionEnd = " as " + returnType;
-					isUnique = true;
 				}
 				
 				string returnTypeForComment = returnType.Replace("<", "{").Replace(">", "}");
@@ -292,7 +290,7 @@
 		///  method that Gets rows in a <see cref="<%=collectionClassNameComment %>" /> from the datasource based on the primary key <%=indexes[j].Name%> index.
 		/// </summary>
 		<% for (int i = 0; i < indexes[j].MemberColumns.Count; i++) { %>
-		/// <param name="<%= GetPrivateName(indexes[j].MemberColumns[i])%>"><%=GetColumnXmlComment( indexes[j].MemberColumns[i],2)%></param>
+		/// <param name="<%= GetFieldName(indexes[j].MemberColumns[i])%>"><%=GetColumnXmlComment( indexes[j].MemberColumns[i],2)%></param>
 		<% } %>
 		/// <returns>Returns an instance of the <see cref="<%= returnTypeForComment %>"/> class.</returns>
 		[DataObjectMethod(DataObjectMethodType.Select)]
@@ -306,7 +304,7 @@
 		///  Method that Gets rows in a <see cref="<%=collectionClassNameComment %>" /> from the datasource based on the primary key <%=indexes[j].Name%> index.
 		/// </summary>
 		<% for (int i = 0; i < indexes[j].MemberColumns.Count; i++) { %>
-		/// <param name="<%= GetPrivateName(indexes[j].MemberColumns[i])%>"><%= GetColumnXmlComment(indexes[j].MemberColumns[i],2)%></param>
+		/// <param name="<%= GetFieldName(indexes[j].MemberColumns[i])%>"><%= GetColumnXmlComment(indexes[j].MemberColumns[i],2)%></param>
 		<% } %>
 		/// <param name="start">Row number at which to start reading.</param>
 		/// <param name="pageLength">Page length of records you would like to retrieve</param>
@@ -329,7 +327,7 @@
 				NetTiersProvider dataProvider = ConnectionScope.Current.DataProvider;					
 				
 				//Access Repository
-				<%= returnTypeVar %> = <%=newCollection%>dataProvider.<%= GetProviderName(className) %>.GetBy<%=GetKeysName(indexes[j].MemberColumns)%>(transactionManager, <%= GetFunctionCallParameters(indexes[j].MemberColumns) %>, start, pageLength, out totalCount)  <%=newCollectionEnd%>;
+				<%= returnTypeVar %> = <%=newCollection%>dataProvider.<%= GetClassName(SourceTable, ClassNameFormat.Provider) %>.GetBy<%=GetKeysName(indexes[j].MemberColumns)%>(transactionManager, <%= GetFunctionCallParameters(indexes[j].MemberColumns) %>, start, pageLength, out totalCount)  <%=newCollectionEnd%>;
 			
 				//if borrowed tran, leave open for next call
 				
@@ -387,7 +385,7 @@
 				NetTiersProvider dataProvider = ConnectionScope.Current.DataProvider;					
 
 				//Access repository
-				list = <%=newCollectionClassName%>dataProvider.<%= GetProviderName(className) %>.<%= MethodNames.GetAll %>(transactionManager, start, pageLength, out totalCount)<%=newCollectionClassNameEnd%>;	
+				list = <%=newCollectionClassName%>dataProvider.<%= GetClassName(SourceTable, ClassNameFormat.Provider) %>.<%= MethodNames.GetAll %>(transactionManager, start, pageLength, out totalCount)<%=newCollectionClassNameEnd%>;	
 			}
             catch (Exception exc)
             {
@@ -455,7 +453,7 @@
 				NetTiersProvider dataProvider = ConnectionScope.Current.DataProvider;
 					
 				//Access repository
-				list = <%=newCollectionClassName%>dataProvider.<%= GetProviderName(className) %>.<%= MethodNames.GetPaged %>(transactionManager, whereClause, orderBy, start, pageLength, out totalCount)<%=newCollectionClassNameEnd%>;
+				list = <%=newCollectionClassName%>dataProvider.<%= GetClassName(SourceTable, ClassNameFormat.Provider) %>.<%= MethodNames.GetPaged %>(transactionManager, whereClause, orderBy, start, pageLength, out totalCount)<%=newCollectionClassNameEnd%>;
 				
 				//if borrowed tran, leave open for next call
 			}
@@ -533,7 +531,7 @@
 				NetTiersProvider dataProvider = ConnectionScope.Current.DataProvider;
 					
 				//Access repository
-				list = <%=newCollectionClassName%>dataProvider.<%= GetProviderName(className) %>.<%= MethodNames.Find %>(transactionManager, whereClause, start, pageLength, out totalCount)<%=newCollectionClassNameEnd%>;
+				list = <%=newCollectionClassName%>dataProvider.<%= GetClassName(SourceTable, ClassNameFormat.Provider) %>.<%= MethodNames.Find %>(transactionManager, whereClause, start, pageLength, out totalCount)<%=newCollectionClassNameEnd%>;
 				
 				//if borrowed tran, leave open for next call
 			}
@@ -602,7 +600,7 @@
 				NetTiersProvider dataProvider = ConnectionScope.Current.DataProvider;
 					
 				//Access repository
-				list = <%=newCollectionClassName%>dataProvider.<%= GetProviderName(className) %>.<%= MethodNames.Find %>(transactionManager, parameters, orderBy, start, pageLength, out count)<%=newCollectionClassNameEnd%>;
+				list = <%=newCollectionClassName%>dataProvider.<%= GetClassName(SourceTable, ClassNameFormat.Provider) %>.<%= MethodNames.Find %>(transactionManager, parameters, orderBy, start, pageLength, out count)<%=newCollectionClassNameEnd%>;
 			}
             catch (Exception exc)
             {
@@ -669,7 +667,7 @@
 		/// <%= className %> entity = new <%= className %>();
 		<% }
 		else {%>
-		///	<%= className %> entity = <%= (IsServiceLayer ? GetServiceClassName(className) : className) %>.GetByPrimaryKeyColumn(1234);
+		///	<%= className %> entity = <%= (IsServiceLayer ? GetClassName(SourceTable, ClassNameFormat.Service) : className) %>.GetByPrimaryKeyColumn(1234);
 		<%  }%>
 		/// entity.StringProperty = "foo";
 		/// entity.IntProperty = 12;
@@ -680,8 +678,8 @@
 		/// 	tm = ConnectionContext.CreateTransaction();
 		<%if (IsServiceLayer)  {%>
 		///		//<%= action %> Child entity, Then Parent Entity
-		/// 	<%= GetServiceClassName("ChildObjectType") %>.<%= action %>(entity.ChildObjectSource);
-		///		<%= GetServiceClassName(className) %>.<%= action %>(entity);
+		/// 	<%= GetChildObjectTypeServiceName() %>.<%= action %>(entity.ChildObjectSource);
+		///		<%= GetClassName(SourceTable, ClassNameFormat.Service) %>.<%= action %>(entity);
 		<% } %>
 		<% else if (IsDomainModel){%>
 		///		//<%= action %> Child entity, Then Parent Entity
@@ -719,7 +717,7 @@
 				NetTiersProvider dataProvider = ConnectionScope.Current.DataProvider;
 					
 				//Persist Entity
-				<% if (action != MethodNames.Save) { %>result = <% } %>dataProvider.<%= GetProviderName(className) %>.<%= action %>(transactionManager, <%= memberMethodEntityCall %>); 
+				<% if (action != MethodNames.Save) { %>result = <% } %>dataProvider.<%= GetClassName(SourceTable, ClassNameFormat.Provider) %>.<%= action %>(transactionManager, <%= memberMethodEntityCall %>); 
 				
 				//if persisted and tran not borrowed, commit
 				if(!isBorrowedTransaction && transactionManager != null && transactionManager.IsOpen)
@@ -767,7 +765,7 @@
 		/// list.Add(entity);
 		/// list.Add(entity2);
 		<%if (IsServiceLayer)  {%>
-		///	<%= GetServiceClassName(className) %>.<%= action %>(list);
+		///	<%= GetClassName(SourceTable, ClassNameFormat.Service) %>.<%= action %>(list);
 		<% } %>
 		<% else if (IsDomainModel){%>
 		///	<%= className %>.<%= action %>(list);
@@ -800,7 +798,7 @@
 				NetTiersProvider dataProvider = ConnectionScope.Current.DataProvider;
                 
 				//Persist <%= action %>
-				dataProvider.<%= GetProviderName(className) %>.<%= action %>(transactionManager, <%= newEntityCollectionClassName %>entityCollection<%= newEntityCollectionClassNameEnd %>); 
+				dataProvider.<%= GetClassName(SourceTable, ClassNameFormat.Provider) %>.<%= action %>(transactionManager, <%= newEntityCollectionClassName %>entityCollection<%= newEntityCollectionClassNameEnd %>); 
                 
 				//If success, Commit
 				if(!isBorrowedTransaction && transactionManager != null && transactionManager.IsOpen)
@@ -846,12 +844,12 @@
 		/// <param name="<%= item.Trim() %>"><%=className%> pk id.</param>
 		<% } %>
 		<% if (RowVersion != null){ %>
-		/// <param name="<%=GetPrivateName(RowVersion)%>">The timestamp field used for concurrency check.</param>
+		/// <param name="<%=GetFieldName(RowVersion)%>">The timestamp field used for concurrency check.</param>
 		<% }  %>
 		/// <remarks>Deletes based on primary key(s).</remarks>
 		/// <returns>Returns true if operation suceeded.</returns>
 		[DataObjectMethod(DataObjectMethodType.Delete)]
-		<%= constructorAccessModifierOnMembers %> bool <%=partialClassInternalPrefix%><%= MethodNames.Delete %>(<%= GetFunctionHeaderParameters(keys) %><% if(RowVersion != null) {Response.Write(", byte[] " + GetPrivateName(RowVersion));}%>)
+		<%= constructorAccessModifierOnMembers %> bool <%=partialClassInternalPrefix%><%= MethodNames.Delete %>(<%= GetFunctionHeaderParameters(keys) %><% if(RowVersion != null) {Response.Write(", byte[] " + GetFieldName(RowVersion));}%>)
 		{
 			// throws security exception if not authorized
 			SecurityContext.IsAuthorized("<%= MethodNames.Delete %>");
@@ -867,7 +865,7 @@
 				NetTiersProvider dataProvider = ConnectionScope.Current.DataProvider;
                 
 				//Delete
-				result = dataProvider.<%= GetProviderName(className) %>.<%= MethodNames.Delete %>(transactionManager, <%= GetFunctionCallParameters(keys) %><% if(RowVersion != null) {Response.Write(", " + GetPrivateName(RowVersion));}%>);
+				result = dataProvider.<%= GetClassName(SourceTable, ClassNameFormat.Provider) %>.<%= MethodNames.Delete %>(transactionManager, <%= GetFunctionCallParameters(keys) %><% if(RowVersion != null) {Response.Write(", " + GetFieldName(RowVersion));}%>);
 	        
 				//If success, Commit
 				if(!isBorrowedTransaction && transactionManager != null && transactionManager.IsOpen)
@@ -909,7 +907,7 @@
 					if ( IsJunctionKey(junctionTableKey) && junctionTableKey.Name != key.Name )
 					{
 						TableSchema secondaryTable = junctionTableKey.PrimaryKeyTable;
-						string functionname = GetManyToManyName(junctionTableKey, GetCleanName(junctionTable.Name));
+						string functionname = GetManyToManyName(junctionTableKey, junctionTable);
 		%>
 		#region GetBy<%=functionname%>
 		/// <summary>
@@ -918,11 +916,11 @@
 		///		through the (M:N) relationship defined in the <%=junctionTable.Name%> table.
 		/// </summary>
 		<% for (int i = 0; i < junctionTableKey.ForeignKeyMemberColumns.Count; i++) { %>
-		/// <param name="<%= GetPrivateName(junctionTableKey.ForeignKeyMemberColumns[i])%>"><%=GetColumnXmlComment(junctionTableKey.ForeignKeyMemberColumns[i],2)%></param>
+		/// <param name="<%= GetFieldName(junctionTableKey.ForeignKeyMemberColumns[i])%>"><%=GetColumnXmlComment(junctionTableKey.ForeignKeyMemberColumns[i],2)%></param>
 		<% } %>	
-		/// <returns>Returns a typed collection of <%=GetClassName(primaryTable.Name)%> objects.</returns>
+		/// <returns>Returns a typed collection of <%=GetClassName(primaryTable)%> objects.</returns>
 		[DataObjectMethod(DataObjectMethodType.Select)]
-		<%= constructorAccessModifier %> <%=GetCollectionClassName(primaryTable.Name)%> <%=partialClassInternalPrefix%>GetBy<%=functionname%>(<%=GetFunctionHeaderParameters(junctionTableKey.ForeignKeyMemberColumns)%>)
+		<%= constructorAccessModifier %> <%=GetClassName(primaryTable, ClassNameFormat.Collection)%> <%=partialClassInternalPrefix%>GetBy<%=functionname%>(<%=GetFunctionHeaderParameters(junctionTableKey.ForeignKeyMemberColumns)%>)
 		{
 			int totalRecords = -1;
 			return <%=partialClassInternalPrefix%>GetBy<%=functionname%>(<%=GetFunctionCallParameters(junctionTableKey.ForeignKeyMemberColumns)%>, 0, defaultMaxRecords, out totalRecords);
@@ -934,19 +932,19 @@
 		///		through the (M:N) relationship defined in the <%=junctionTable.Name%> table.
 		/// </summary>
 		<% for (int i = 0; i < junctionTableKey.ForeignKeyMemberColumns.Count; i++) { %>
-		/// <param name="<%= GetPrivateName(junctionTableKey.ForeignKeyMemberColumns[i])%>"><%=GetColumnXmlComment(junctionTableKey.ForeignKeyMemberColumns[i],2)%></param>
+		/// <param name="<%= GetFieldName(junctionTableKey.ForeignKeyMemberColumns[i])%>"><%=GetColumnXmlComment(junctionTableKey.ForeignKeyMemberColumns[i],2)%></param>
 		<% } %>
 		/// <param name="start">Row number at which to start reading.</param>
 		/// <param name="pageLength">Number of rows to return.</param>
 		/// <param name="totalCount">Out param: Total Number of results returned.</param>
 		/// <remarks></remarks>
-		/// <returns>Returns a typed collection of <%=GetClassName(primaryTable.Name)%> objects.</returns>
+		/// <returns>Returns a typed collection of <%=GetClassName(primaryTable)%> objects.</returns>
 		[DataObjectMethod(DataObjectMethodType.Select)]
-		<%= constructorAccessModifier %> <%=GetCollectionClassName(primaryTable.Name)%> <%=partialClassInternalPrefix%>GetBy<%=functionname%>(<%=GetFunctionHeaderParameters(junctionTableKey.ForeignKeyMemberColumns)%>, int start, int pageLength, out int totalCount)
+		<%= constructorAccessModifier %> <%=GetClassName(primaryTable, ClassNameFormat.Collection)%> <%=partialClassInternalPrefix%>GetBy<%=functionname%>(<%=GetFunctionHeaderParameters(junctionTableKey.ForeignKeyMemberColumns)%>, int start, int pageLength, out int totalCount)
 		{
 			// throws security exception if not authorized
 			SecurityContext.IsAuthorized("GetBy<%=functionname%>");
-			<%=GetCollectionClassName(primaryTable.Name)%> list = null;
+			<%=GetClassName(primaryTable, ClassNameFormat.Collection)%> list = null;
 			TransactionManager transactionManager = null; 
 			totalCount = -1;
 			try
@@ -956,7 +954,7 @@
 				NetTiersProvider dataProvider = ConnectionScope.Current.DataProvider;
                 
 				//call data provider
-				list = <%= newCollectionClassName %>dataProvider.<%= GetProviderName(className) %>.GetBy<%=functionname%>(transactionManager, <%=GetFunctionCallParameters(junctionTableKey.ForeignKeyMemberColumns)%>, start,  pageLength, out totalCount)<%=newCollectionClassNameEnd%>;
+				list = <%= newCollectionClassName %>dataProvider.<%= GetClassName(SourceTable, ClassNameFormat.Provider) %>.GetBy<%=functionname%>(transactionManager, <%=GetFunctionCallParameters(junctionTableKey.ForeignKeyMemberColumns)%>, start,  pageLength, out totalCount)<%=newCollectionClassNameEnd%>;
 	        
 				//This is read only transaction, let tran go if open 
             	
@@ -1051,7 +1049,7 @@
 				NetTiersProvider dataProvider = ConnectionScope.Current.DataProvider;
                 
 				//Call Custom Procedure from Repository
-				<%= returnType != "void" ? "result = " : ""  %><%= newCollection %>dataProvider.<%= GetProviderName(className) %>.<%=methodName%>(transactionManager, start, pageLength <%=TransformStoredProcedureInputsToDataAccess(true, command.InputParameters) + TransformStoredProcedureOutputsToDataAccess(true, command.AllOutputParameters)%>)<%= newCollectionEnd %>;
+				<%= returnType != "void" ? "result = " : ""  %><%= newCollection %>dataProvider.<%= GetClassName(SourceTable, ClassNameFormat.Provider) %>.<%=methodName%>(transactionManager, start, pageLength <%=TransformStoredProcedureInputsToDataAccess(true, command.InputParameters) + TransformStoredProcedureOutputsToDataAccess(true, command.AllOutputParameters)%>)<%= newCollectionEnd %>;
 	        
 				<% if (returnType == "void") { %>
 				//If success, Commit
@@ -1103,14 +1101,12 @@
 				}
 				string returnTypeVar = "list";
 				string returnType = collectionClassName;
-				bool isUnique = false;
 				
 				//if (IsPrimaryKey(indexes[j]))
 				if (indexes[j].IsUnique || indexes[j].IsPrimaryKey)
 				{
 					returnTypeVar = "entity";
 					returnType = className;
-					isUnique = true;
 				}
 				
 				String returnTypeForComment = returnType.Replace("<", "&lt;").Replace(">", "&gt;");
@@ -1121,7 +1117,7 @@
 		/// property collections only N Levels Deep based on the <see cref="DeepLoadType"/>.
 		/// </summary>
 	<% for (int i = 0; i < indexes[j].MemberColumns.Count; i++) { %>
-		/// <param name="<%= GetPrivateName(indexes[j].MemberColumns[i])%>"><%=GetColumnXmlComment(indexes[j].MemberColumns[i],2)%></param>
+		/// <param name="<%= GetFieldName(indexes[j].MemberColumns[i])%>"><%=GetColumnXmlComment(indexes[j].MemberColumns[i],2)%></param>
 	<% } %>
 		/// <param name="deep">Boolean. A flag that indicates whether to recursively save all Property Collection that are descendants of this instance. If True, saves the complete object graph below this object. If False, saves this object only. </param>
 		/// <param name="deepLoadType">DeepLoadType Enumeration to Include/Exclude object property collections from Load.</param>
@@ -1204,7 +1200,7 @@
 				NetTiersProvider dataProvider = ConnectionScope.Current.DataProvider;
 				
 				//Call Deep Load from the Repository
-				dataProvider.<%= GetProviderName(className) %>.<%= MethodNames.DeepLoad %>(transactionManager, entity, deep, deepLoadType, childTypes);
+				dataProvider.<%= GetClassName(SourceTable, ClassNameFormat.Provider) %>.<%= MethodNames.DeepLoad %>(transactionManager, entity, deep, deepLoadType, childTypes);
 	        
 				//leave tran open if used
             	
@@ -1279,7 +1275,7 @@
 				NetTiersProvider dataProvider = ConnectionScope.Current.DataProvider;
 				
 				//Call Deep Load from the Repository
-				dataProvider.<%= GetProviderName(className) %>.<%= MethodNames.DeepLoad %>(transactionManager, <%=newEntityCollectionClassName%>entityCollection<%=newEntityCollectionClassNameEnd%>, deep, deepLoadType, childTypes);
+				dataProvider.<%= GetClassName(SourceTable, ClassNameFormat.Provider) %>.<%= MethodNames.DeepLoad %>(transactionManager, <%=newEntityCollectionClassName%>entityCollection<%=newEntityCollectionClassNameEnd%>, deep, deepLoadType, childTypes);
 	        
 				//leave transaction open if used, this read is part of a larger transaction
 			}
@@ -1345,7 +1341,7 @@
 				NetTiersProvider dataProvider = ConnectionScope.Current.DataProvider;
 				
 				//Save
-				result = dataProvider.<%= GetProviderName(className) %>.<%= MethodNames.DeepSave %>(transactionManager, entity, deepSaveType, childTypes);
+				result = dataProvider.<%= GetClassName(SourceTable, ClassNameFormat.Provider) %>.<%= MethodNames.DeepSave %>(transactionManager, entity, deepSaveType, childTypes);
 				
 				//If success, Commit
 				if (!isBorrowedTransaction && transactionManager != null && transactionManager.IsOpen)
@@ -1407,7 +1403,7 @@
 				//since this is a read operation, don't create a tran by default, only use tran if provided to us for custom isolation level
 				transactionManager = ConnectionScope.ValidateOrCreateTransaction();
 				NetTiersProvider dataProvider = ConnectionScope.Current.DataProvider;
-				result = dataProvider.<%= GetProviderName(className) %>.<%= MethodNames.DeepSave %>(transactionManager, <%= newEntityCollectionClassName %>entityCollection<%= newEntityCollectionClassNameEnd %>,  deepSaveType, childTypes);
+				result = dataProvider.<%= GetClassName(SourceTable, ClassNameFormat.Provider) %>.<%= MethodNames.DeepSave %>(transactionManager, <%= newEntityCollectionClassName %>entityCollection<%= newEntityCollectionClassNameEnd %>,  deepSaveType, childTypes);
 				
 				//If success and not borrowed, Commit
 				if (!isBorrowedTransaction && transactionManager != null && transactionManager.IsOpen)

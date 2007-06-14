@@ -59,10 +59,10 @@
 			fKeysSingle.Add(tableKey);
 	}
 
-	string entityName = GetClassName(SourceTable.Name);
-	string className = NameSpace + "." + GetClassName(SourceTable.Name);
-	string collectionName = GetCollectionClassName(SourceTable.Name);
-	string providerName = GetProviderName(SourceTable.Name);
+	string entityName = GetClassName(SourceTable);
+	string className = NameSpace + "." + GetClassName(SourceTable);
+	string collectionName = GetClassName(SourceTable, ClassNameFormat.Collection);
+	string providerName = GetClassName(SourceTable, ClassNameFormat.Provider);
 %>
 #region Using directives
 using System;
@@ -266,7 +266,7 @@ public partial class <%=entityName%>UC : System.Web.UI.UserControl
 					<%
 						if ( column.DataType == System.Data.DbType.DateTime)
 						{
-							string privateName = GetPrivateName(column);
+							string privateName = GetFieldName(column);
 						%>
 						DateTime <%=privateName%>;
 
@@ -533,8 +533,8 @@ public partial class <%=entityName%>UC : System.Web.UI.UserControl
 					foreach( TableKeySchema tableKey in fkeys)
 					{
 						string pKeyTableName = tableKey.PrimaryKeyTable.Name;
-						string pKeyClassName = GetClassName(pKeyTableName);
-						string pKeyProviderName = GetProviderName(pKeyTableName);
+						string pKeyClassName = GetClassName(tableKey.PrimaryKeyTable);
+						string pKeyProviderName = GetClassName(tableKey.PrimaryKeyTable, ClassNameFormat.Provider);
 						string pKeyKeysNames = GetKeysName(tableKey.PrimaryKeyMemberColumns);
 						string fkPropertyName = GetKeysName(tableKey.ForeignKeyMemberColumns);
 						
@@ -878,10 +878,10 @@ public partial class <%=entityName%>UC : System.Web.UI.UserControl
 	//For each foreign key, create a datasource control for binding a list
 	foreach ( TableKeySchema tableKey in fKeysSingle)
 	{
-		string pKeyClassName = GetClassName(tableKey.PrimaryKeyTable.Name);
+		string pKeyClassName = GetClassName(tableKey.PrimaryKeyTable);
 		bool fKeyAllowDBNull = tableKey.ForeignKeyMemberColumns[0].AllowDBNull;
 		string fKeyPropertyName = GetPropertyName(tableKey.ForeignKeyMemberColumns[0]);
-		string pKeyCollectionName = GetCollectionClassName(tableKey.PrimaryKeyTable.Name);
+		string pKeyCollectionName = GetClassName(tableKey.PrimaryKeyTable, ClassNameFormat.Collection);
 	%>
 	#region objDs<%=fKeyPropertyName%> Methods
 	

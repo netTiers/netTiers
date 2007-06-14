@@ -60,9 +60,9 @@
 			RowVersion = column;
 	}
 
-	string entityName = GetClassName(SourceTable.Name);
-	string className = NameSpace + "." + GetClassName(SourceTable.Name);
-	string providerName = GetProviderName(SourceTable.Name);
+	string entityName = GetClassName(SourceTable);
+	string className = NameSpace + "." + entityName;
+	string providerName = GetClassName(SourceTable, ClassNameFormat.Provider);
 	
 
 	TableSchemaCollection sourceTables = SourceTables;
@@ -82,7 +82,7 @@
 							continue;
 %>							
 			<tr>
-				<td class="literal"><%=GetPascalSpacedName(propertyName)%>:</td>
+				<td class="literal"><%=GetFriendlyName(column)%>:</td>
 				<td>
 					<%= editorControl %>
 				</td>
@@ -106,7 +106,7 @@
 					if ( IsJunctionKey(junctionTableKey) && junctionTableKey.Name != key.Name  && junctionTable.Columns.Count == 2)
 					{
 						TableSchema secondaryTable = junctionTableKey.PrimaryKeyTable;
-						string functionname = GetManyToManyName(junctionTableKey, GetCleanName(junctionTable.Name));
+						string functionname = GetManyToManyName(junctionTableKey, junctionTable);
 						
 						string secondaryTextValue = string.Empty;
 						foreach (ColumnSchema column in secondaryTable.Columns)
@@ -128,39 +128,39 @@
 												
 %>
 			<tr>
-				<td valign="top" class="literal"><%= GetPascalSpacedName(secondaryTable.Name)%>:</td>
+				<td valign="top" class="literal"><%= GetFriendlyName(secondaryTable)%>:</td>
 				<td>
-					<asp:CheckBoxList ID="<%=GetClassName(secondaryTable.Name)%>List" runat="server"
-						DataSourceID="<%=GetClassName(secondaryTable.Name)%>DataSource"
+					<asp:CheckBoxList ID="<%=GetClassName(secondaryTable)%>List" runat="server"
+						DataSourceID="<%=GetClassName(secondaryTable)%>DataSource"
 						DataTextField="<%=secondaryTextValue%>"
 						DataValueField="<%=secondaryPk%>"
 						RepeatColumns="4"
 					/>				
-					<data:<%=GetClassName(secondaryTable.Name)%>DataSource ID="<%=GetClassName(secondaryTable.Name)%>DataSource" runat="server"
+					<data:<%=GetClassName(secondaryTable)%>DataSource ID="<%=GetClassName(secondaryTable)%>DataSource" runat="server"
 						SelectMethod="<%= MethodNames.GetAll %>"
 					/>
 					
-					<data:<%=GetClassName(GetCleanName(junctionTableKey.ForeignKeyTable.Name))%>DataSource ID="<%=GetClassName(GetCleanName(junctionTableKey.ForeignKeyTable.Name))%>DataSource" runat="server"
+					<data:<%=GetClassName(junctionTableKey.ForeignKeyTable)%>DataSource ID="<%=GetClassName(junctionTableKey.ForeignKeyTable)%>DataSource" runat="server"
 						SelectMethod="GetBy<%=junctionPk%>"
 					>
 						<Parameters>							
 							<asp:QueryStringParameter Name="<%=junctionPk%>" QueryStringField="<%=primaryPk%>" Type="String" />
 						</Parameters>
-					</data:<%=GetClassName(GetCleanName(junctionTableKey.ForeignKeyTable.Name))%>DataSource>	
+					</data:<%=GetClassName(junctionTableKey.ForeignKeyTable)%>DataSource>	
 					
-					<data:ManyToManyListRelationship ID="<%=GetClassName(GetCleanName(junctionTableKey.ForeignKeyTable.Name))%>Relationship" runat="server">
+					<data:ManyToManyListRelationship ID="<%=GetClassName(junctionTableKey.ForeignKeyTable)%>Relationship" runat="server">
 						<PrimaryMember runat="server"
 							DataSourceID="<%=entityName%>DataSource"
 							EntityKeyName="<%=primaryPk%>"
 						/>
 						<LinkMember runat="server"
-							DataSourceID="<%=GetClassName(GetCleanName(junctionTableKey.ForeignKeyTable.Name))%>DataSource"
+							DataSourceID="<%=GetClassName(junctionTableKey.ForeignKeyTable)%>DataSource"
 							EntityKeyName="<%=junctionPk%>"
 							ForeignKeyName="<%=junctionFk%>"
 						/>
 						<ReferenceMember runat="server"
-							DataSourceID="<%=GetClassName(secondaryTable.Name)%>DataSource"
-							ListControlID="<%=GetClassName(secondaryTable.Name)%>List"
+							DataSourceID="<%=GetClassName(secondaryTable)%>DataSource"
+							ListControlID="<%=GetClassName(secondaryTable)%>List"
 							EntityKeyName="<%=secondaryPk%>"
 						/>
 					</data:ManyToManyListRelationship>					
@@ -234,7 +234,7 @@ public string GetEditorControl(ColumnSchema column, string prefix, TableKeySchem
 					
 					if ( objectDataSource == String.Empty )
 					{
-						objectDataSource = GetClassName(tableKey.PrimaryKeyTable.Name);
+						objectDataSource = GetClassName(tableKey.PrimaryKeyTable);
 					}
 					
 					if ( pkDisplayField == String.Empty )

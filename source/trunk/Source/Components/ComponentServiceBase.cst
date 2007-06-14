@@ -42,29 +42,18 @@
 	
 <%@ Property Name="UsePartialClass" Type="System.Boolean" Default="true" Category="General" Description="Indicates if partial class should be generated." %>
 <%
-	string className = GetClassName(SourceTable.Name);
-	string collectionClassName = GetCollectionClassName(SourceTable.Name);
-	string keyClassName = GetKeyClassName(SourceTable.Name);
-	string entitiesCollectionClassName = GetCollectionClassName(SourceTable.Name).Replace("<", "<Entities.");
+	string className = GetClassName(SourceTable);
+	string collectionClassName = GetClassName(SourceTable, ClassNameFormat.Collection);
+	string keyClassName = GetClassName(SourceTable, ClassNameFormat.Key);
+	string entitiesCollectionClassName = GetClassName(SourceTable, ClassNameFormat.Collection).Replace("<", "<Entities.");
 	
-	string structName = GetStructName(SourceTable.Name);
-	string abstractClassName = GetAbstractServiceClassName(SourceTable.Name);
+	string structName = GetClassName(SourceTable, ClassNameFormat.Struct);
+	string abstractClassName = GetClassName(SourceTable, ClassNameFormat.AbstractService);
 	string partialClassInternalPrefix = UsePartialClass ? "" : "";
-	string constructorAccessModifier = ""; 
 	string newCollectionClassName = "";
-	string newCollectionClassNameEnd = "";
 	
 	if (ComponentPattern == MoM.Templates.ComponentPatternType.DomainModel)
-	{		
-		constructorAccessModifier =  "public static";
 		newCollectionClassName = string.Format("new {0} (", collectionClassName);
-		newCollectionClassNameEnd = ")";
-	}
-	else if (ComponentPattern == MoM.Templates.ComponentPatternType.ServiceLayer)
-	{
-		constructorAccessModifier = "public";
-	}
-
 
 	// Collection of all columns in the table.
 	ColumnSchemaCollection cols = SourceTable.Columns;
@@ -168,13 +157,13 @@ namespace <%=NameSpace%>
 		/// A simple factory method to create a new <see cref="<%=className%>"/> instance.
 		///</summary>
 		<% for (int x=0; x < colsUpdatable.Count; x++) { %>
-		///<param name="<%=GetPrivateName(colsUpdatable[x]) %>"><%= GetColumnXmlComment(colsUpdatable[x],2)%></param>
+		///<param name="<%=GetFieldName(colsUpdatable[x]) %>"><%= GetColumnXmlComment(colsUpdatable[x],2)%></param>
 		<% } %>
-		public static <%=className%> Create<%=className%>(<% for (int x=0; x < colsUpdatable.Count; x++) { %><%= GetCSType(colsUpdatable[x]) %> <%= GetPrivateName(colsUpdatable[x]) %><%if (x < colsUpdatable.Count -1){%>, <%} }// end for %>)
+		public static <%=className%> Create<%=className%>(<% for (int x=0; x < colsUpdatable.Count; x++) { %><%= GetCSType(colsUpdatable[x]) %> <%= GetFieldName(colsUpdatable[x]) %><%if (x < colsUpdatable.Count -1){%>, <%} }// end for %>)
 		{
 			<%=className%> newEntity<%=className%> = new <%=className%>();
 			<% for (int x=0; x < colsUpdatable.Count; x++) { %>
-			<%= GetObjectPropertyAccessor(colsUpdatable[x], "newEntity" + className) %>  = <%= GetPrivateName(colsUpdatable[x]) %>;
+			<%= GetObjectPropertyAccessor(colsUpdatable[x], "newEntity" + className) %>  = <%= GetFieldName(colsUpdatable[x]) %>;
 			<% }// end for %>
 			return newEntity<%=className%>;
 		}
@@ -192,6 +181,7 @@ namespace <%=NameSpace%>
 	
 	}//End Class
 } // end namespace
+
 
 
 

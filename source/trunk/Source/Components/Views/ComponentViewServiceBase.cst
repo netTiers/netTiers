@@ -27,31 +27,19 @@
 
 <%@ Property Name="ComponentPattern" Optional="False" Type="MoM.Templates.ComponentPatternType" Category="Pattern" Description="Component Pattern Type." %>
 <%@ Property Name="CustomNonMatchingReturnType" Type="CustomNonMatchingReturnType" Default="DataSet" Category="Options" Description="When using custom stored procedures, if the returned rows do not match the fields in an entity, a DataSet or IDataReader will be returned. Choose One.  This is useful if you've returned more than one resultset in a custom procedure; you can use a ConvertToDataSet(IDataReader) method in the Utility class to convert that to a DataSet." %>
-<%
-	string name;
-		
-	string className = GetClassName(SourceView.Name);
-	string collectionClassName = GetCollectionClassName(SourceView.Name);
-	string keyClassName = GetKeyClassName(SourceView.Name);
-	string entitiesCollectionClassName = GetCollectionClassName(SourceView.Name).Replace("<", "<Entities.");
+<%		
+	string className = GetClassName(SourceView);
+	string collectionClassName = GetClassName(SourceView, ClassNameFormat.Collection);
+	string keyClassName = GetClassName(SourceView, ClassNameFormat.Key);
+	string entitiesCollectionClassName = GetClassName(SourceView, ClassNameFormat.Collection).Replace("<", "<Entities.");
 	
-	string structName = GetStructName(SourceView.Name);
-	string abstractClassName = GetAbstractServiceClassName(SourceView.Name);
+	string structName = GetClassName(SourceView, ClassNameFormat.Struct);
+	string abstractClassName = GetClassName(SourceView, ClassNameFormat.AbstractService);
 	string partialClassInternalPrefix = UsePartialClass ? "" : "";
-	string constructorAccessModifier = ""; 
 	string newCollectionClassName = "";
-	string newCollectionClassNameEnd = "";
 	
 	if (ComponentPattern == MoM.Templates.ComponentPatternType.DomainModel)
-	{		
-		constructorAccessModifier =  "public static";
 		newCollectionClassName = string.Format("new {0} (", collectionClassName);
-		newCollectionClassNameEnd = ")";
-	}
-	else if (ComponentPattern == MoM.Templates.ComponentPatternType.ServiceLayer)
-	{
-		constructorAccessModifier = "public";
-	}
 
 
 	// Collection of all columns in the View.
@@ -134,13 +122,13 @@ namespace <%=NameSpace%>
 		/// A simple factory method to create a new <see cref="<%=className%>"/> instance.
 		///</summary>
 		<% for (int x=0; x < colsUpdaView.Count; x++) { %>
-		///<param name="<%=GetPrivateName(colsUpdaView[x]) %>"><%=GetColumnXmlComment(colsUpdaView[x],2)%></param>
+		///<param name="<%=GetFieldName(colsUpdaView[x]) %>"><%=GetColumnXmlComment(colsUpdaView[x],2)%></param>
 		<% } %>
-		public static <%=className%> Create<%=className%>(<% for (int x=0; x < colsUpdaView.Count; x++) { %><%= GetCSType(colsUpdaView[x]) %> <%= GetPrivateName(colsUpdaView[x]) %><%if (x < colsUpdaView.Count -1){%>, <%} }// end for %>)
+		public static <%=className%> Create<%=className%>(<% for (int x=0; x < colsUpdaView.Count; x++) { %><%= GetCSType(colsUpdaView[x]) %> <%= GetFieldName(colsUpdaView[x]) %><%if (x < colsUpdaView.Count -1){%>, <%} }// end for %>)
 		{
 			<%=className%> newEntity<%=className%> = new <%=className%>();
 			<% for (int x=0; x < colsUpdaView.Count; x++) { %>
-			<%= GetObjectPropertyAccessor(colsUpdaView[x], "newEntity" + className) %>  = <%= GetPrivateName(colsUpdaView[x]) %>;
+			<%= GetObjectPropertyAccessor(colsUpdaView[x], "newEntity" + className) %>  = <%= GetFieldName(colsUpdaView[x]) %>;
 			<% }// end for %>
 			return newEntity<%=className%>;
 		}
@@ -158,5 +146,6 @@ namespace <%=NameSpace%>
 	
 	}//End Class
 } // end namespace
+
 
 

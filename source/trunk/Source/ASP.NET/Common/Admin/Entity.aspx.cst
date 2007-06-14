@@ -60,13 +60,13 @@
 			RowVersion = column;
 	}
 
-	string entityName = GetClassName(SourceTable.Name);
-	string className = NameSpace + "." + GetClassName(SourceTable.Name);
-	string providerName = GetProviderName(SourceTable.Name);
+	string entityName = GetClassName(SourceTable);
+	string className = NameSpace + "." + entityName;
+	string providerName = GetClassName(SourceTable, ClassNameFormat.Provider);
 	
 %><%%@ Page Language="C#" Theme="Default" MasterPageFile="~/MasterPages/admin.master" AutoEventWireup="true"  CodeFile="<%=entityName%>.aspx.cs" Inherits="<%=entityName%>" Title="<%=entityName%> List" %%>
 
-<asp:Content ID="Content2" ContentPlaceHolderID="ContentPlaceHolder2" Runat="Server"><%=GetPascalSpacedName(entityName)%> List</asp:Content>
+<asp:Content ID="Content2" ContentPlaceHolderID="ContentPlaceHolder2" Runat="Server"><%=GetFriendlyName(SourceTable)%> List</asp:Content>
 <asp:Content ID="Content1" ContentPlaceHolderID="ContentPlaceHolder1" Runat="Server">
 <% if (IncludeAtlasLibrary) { %>
 	<asp:UpdatePanel ID="UpdatePanel1" runat="server">
@@ -160,13 +160,12 @@
 			{ 
 			//Generate enum for each child type foreign key relation		
 					System.Collections.ArrayList addedList = new System.Collections.ArrayList();
-					bool showOnce = false;			
 					foreach(TableKeySchema tableKey in SourceTable.ForeignKeys)
 					{
 						// related table must be in the selection
 						if (SourceTables.Contains(tableKey.PrimaryKeyTable)) 
 						{
-							string pkClassName = GetClassName(tableKey.PrimaryKeyTable.Name);
+							string pkClassName = GetClassName(tableKey.PrimaryKeyTable);
 							string pkProperty = GetKeysName(tableKey.PrimaryKeyMemberColumns);
 							string fkPropertyName = GetKeysName(tableKey.ForeignKeyMemberColumns);
 							string compositePropertyName =  fkPropertyName + "Source";
@@ -239,6 +238,7 @@ public string WriteTemplateField(ColumnSchema column, int tabs, out string entit
 	string pkPropertyName = String.Empty;
 	string pkColumnName = String.Empty;
 	string fkPropertyName = String.Empty;
+	string fkFriendlyName = String.Empty;
 	string fkColumnName = String.Empty;
 	string pkDisplayField = String.Empty;	
 	string objectDataSource = String.Empty;
@@ -254,6 +254,7 @@ public string WriteTemplateField(ColumnSchema column, int tabs, out string entit
 		fkTable = tableKey.PrimaryKeyTable;
 		ColumnSchema fKeyColumn = tableKey.ForeignKeyMemberColumns[0];
 		fkPropertyName = GetPropertyName(fKeyColumn);
+		fkFriendlyName = GetFriendlyName(fKeyColumn);
 		fkColumnName = fKeyColumn.Name;
 		
 		if ( GetPropertyName(fKeyColumn) == propertyName )
@@ -265,22 +266,18 @@ public string WriteTemplateField(ColumnSchema column, int tabs, out string entit
 			
 			//Find the first non-key column for display
 			foreach(ColumnSchema pkColumn in tableKey.PrimaryKeyTable.Columns)
-			{
 				if ( !pkColumn.IsForeignKeyMember && !pkColumn.IsPrimaryKeyMember )
 				{							
 					pkDisplayField = GetPropertyName(pkColumn);
 					break;
 				}
-			}
 			
 			if (objectDataSource == String.Empty )
-			{
-				objectDataSource = GetClassName(tableKey.PrimaryKeyTable.Name);
-			}			
+				objectDataSource = GetClassName(tableKey.PrimaryKeyTable);
+
 			if (pkDisplayField == String.Empty )
-			{
 				pkDisplayField = pkPropertyName;
-			}
+
 			break;						
 		}
 	}
@@ -289,9 +286,9 @@ public string WriteTemplateField(ColumnSchema column, int tabs, out string entit
 	
 	return string.Format(_templateField, 
 		/*0*/ fkPropertyName, 
-		/*1*/ GetPascalSpacedName(fkPropertyName), 
+		/*1*/ fkFriendlyName, 
 		/*2*/ pkPropertyName, 
-		/*3*/ GetClassName(fkTable.Name), 
+		/*3*/ GetClassName(fkTable), 
 		/*4*/ fkColumnName, 
 		/*5*/ pkDisplayField, 
 		/*6*/ string.Concat(objectDataSource, "DataSource", suffix.ToString()));
@@ -307,14 +304,14 @@ public string WriteTemplateField(ColumnSchema column, int tabs, out string entit
 	entityDSO = Tab(2) + "<data:" + objectDataSource + "DataSource ID=\"" + objectDataSource + "DataSource" + suffix.ToString() + "\" runat=\"server\"\r\n";
 	entityDSO += Tab(3) + "SelectMethod=\"" + MethodNames.GetAll + "\"\r\n";
 	entityDSO += Tab(2) + "/>\r\n\r\n";
-	*/
 	return s;
+	*/
 }
 
 public string WriteBlobTemplateField(ColumnSchema column) 
 {
 	string propertyName = GetPropertyName(column);
-	return string.Format(_blobTemplate, GetPascalSpacedName(propertyName), propertyName, GetPropertyName(SourceTable.PrimaryKey.MemberColumns[0]));
+	return string.Format(_blobTemplate, GetFriendlyName(column), propertyName, GetPropertyName(SourceTable.PrimaryKey.MemberColumns[0]));
 }
 
 public string WriteBoundField(ColumnSchema column, int tabs) {
@@ -325,14 +322,14 @@ public string WriteBoundField(ColumnSchema column, int tabs) {
 
 	if (column.DataType == DbType.Date || column.DataType == DbType.DateTime)
 	{
-		return string.Format("{1}<asp:BoundField DataField=\"{0}\" DataFormatString=\"{{0:d}}\" HtmlEncode=\"False\" HeaderText=\"{4}\" SortExpression=\"{2}\" {3} />", propertyName, Tab(tabs), column.Name, (column.IsPrimaryKeyMember)?"ReadOnly":"", GetPascalSpacedName(propertyName));
+		return string.Format("{1}<asp:BoundField DataField=\"{0}\" DataFormatString=\"{{0:d}}\" HtmlEncode=\"False\" HeaderText=\"{4}\" SortExpression=\"{2}\" {3} />", propertyName, Tab(tabs), column.Name, (column.IsPrimaryKeyMember)?"ReadOnly":"", GetFriendlyName(column));
 	}
 	else if (column.NativeType == "bit") {
-		return string.Format("{1}<data:BoundRadioButtonField DataField=\"{0}\" HeaderText=\"{4}\" SortExpression=\"[{2}]\" {3} />", propertyName, Tab(tabs), column.Name, (column.IsPrimaryKeyMember)?"ReadOnly":"", GetPascalSpacedName(propertyName));
+		return string.Format("{1}<data:BoundRadioButtonField DataField=\"{0}\" HeaderText=\"{4}\" SortExpression=\"[{2}]\" {3} />", propertyName, Tab(tabs), column.Name, (column.IsPrimaryKeyMember)?"ReadOnly":"", GetFriendlyName(column));
 	}	
 	else if (column.NativeType != "text" && column.NativeType != "ntext") 
 	{
-		return string.Format("{1}<asp:BoundField DataField=\"{0}\" HeaderText=\"{4}\" SortExpression=\"{2}\" {3} />", propertyName, Tab(tabs), column.Name, (column.IsPrimaryKeyMember)?"ReadOnly":"", GetPascalSpacedName(propertyName));
+		return string.Format("{1}<asp:BoundField DataField=\"{0}\" HeaderText=\"{4}\" SortExpression=\"{2}\" {3} />", propertyName, Tab(tabs), column.Name, (column.IsPrimaryKeyMember)?"ReadOnly":"", GetFriendlyName(column));
 	}
 	/*
 	else 
@@ -340,7 +337,7 @@ public string WriteBoundField(ColumnSchema column, int tabs) {
 	*/
 	else 
 	{
-		return string.Format("{1}<asp:BoundField DataField=\"{0}\" HeaderText=\"{4}\" SortExpression=\"\" {3} />", propertyName, Tab(tabs), column.Name, (column.IsPrimaryKeyMember)?"ReadOnly":"", GetPascalSpacedName(propertyName));
+		return string.Format("{1}<asp:BoundField DataField=\"{0}\" HeaderText=\"{4}\" SortExpression=\"\" {3} />", propertyName, Tab(tabs), column.Name, (column.IsPrimaryKeyMember)?"ReadOnly":"", GetFriendlyName(column));
 	}
 	
 }

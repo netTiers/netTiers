@@ -68,9 +68,9 @@
 			RowVersion = column;
 	}
 
-	string entityName = GetClassName(SourceTable.Name);
-	string className = NameSpace + "." + GetClassName(SourceTable.Name);
-	string providerName = GetProviderBaseName(SourceTable.Name);
+	string entityName = GetClassName(SourceTable);
+	string className = NameSpace + "." + GetClassName(SourceTable);
+	string providerName = GetClassName(SourceTable, ClassNameFormat.Provider);
 %>
 <%%@ Control Language="C#" AutoEventWireup="true" CodeFile="<%=entityName%>UC.ascx.cs" Inherits="<%=entityName%>UC" EnableTheming="true"%%>
 <asp:ObjectDataSource 
@@ -157,7 +157,7 @@
 //For each foreign key, create a datasource control for binding a list
 foreach ( TableKeySchema tableKey in fKeysSingle)
 {
-	string pKeyClassName = GetClassName(tableKey.PrimaryKeyTable.Name);
+	string pKeyClassName = GetClassName(tableKey.PrimaryKeyTable);
 	string fKeyPropertyName = GetPropertyName(tableKey.ForeignKeyMemberColumns[0]);
 	string eventHandlers = String.Empty;
 	
@@ -169,7 +169,7 @@ foreach ( TableKeySchema tableKey in fKeysSingle)
 		eventHandlers += String.Format(" OnSelected=\"objDs{0}_Selected\"",fKeyPropertyName);	
 	}
 %>
-<asp:ObjectDataSource ID="objDs<%=fKeyPropertyName%>" runat="server" SelectMethod="GetAll" TypeName="<%=DALNameSpace%>.Bases.<%=GetProviderBaseName(tableKey.PrimaryKeyTable.Name)%>" DataObjectTypeName="<%=NameSpace%>.<%=GetClassName(tableKey.PrimaryKeyTable.Name)%>" <%=eventHandlers%>>
+<asp:ObjectDataSource ID="objDs<%=fKeyPropertyName%>" runat="server" SelectMethod="GetAll" TypeName="<%=DALNameSpace%>.Bases.<%=GetClassName(tableKey.PrimaryKeyTable, ClassNameFormat.ProviderBase)%>" DataObjectTypeName="<%=NameSpace%>.<%=GetClassName(tableKey.PrimaryKeyTable)%>" <%=eventHandlers%>>
 </asp:ObjectDataSource>
 
 <%
@@ -179,7 +179,7 @@ foreach ( TableKeySchema tableKey in fKeysSingle)
 <asp:Table runat="server" ID="tblFilter" SkinID="FilterTable">
 	<asp:TableRow runat="server">
 		<asp:TableCell runat="server" SkinID="TitleCell">
-			<asp:label id="lblTitle" runat="server" SkinID="TitleLabel" ><%=GetClassName(SourceTable.Name)%></asp:label>
+			<asp:label id="lblTitle" runat="server" SkinID="TitleLabel" ><%=GetClassName(SourceTable)%></asp:label>
 		</asp:TableCell>
 	</asp:TableRow>
 	<asp:TableRow runat="server">
@@ -846,7 +846,7 @@ public string GetFilterLists(TableKeySchemaCollection fkeys)
 
 public string GetParameterTypeCode(ColumnSchema column)
 {
-		Type colType = Type.GetType(GetCSTypeWithoutNullable((DataObjectBase)column));
+		Type colType = Type.GetType(GetCSType((DataObjectBase)column), false);
 		TypeCode colTypeCode = Type.GetTypeCode(colType);
 		return System.Enum.GetName(typeof(TypeCode), colTypeCode);
 }

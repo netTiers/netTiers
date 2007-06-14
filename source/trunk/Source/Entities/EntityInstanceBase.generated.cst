@@ -26,14 +26,13 @@
 
 <%
 	//if (SourceTables == null) SourceTables = new SchemaExplorer.TableSchemaCollection();
-	string name;
 	
 	// Name of the Abstract Class
-	string className = GetClassName(SourceTable.Name);
-	string collectionClassName = GetCollectionClassName(SourceTable.Name);
-	string structName = GetStructName(SourceTable.Name);
-	string abstractClassName = GetAbstractClassName(SourceTable.Name);
-	string keyClassName = GetKeyClassName(SourceTable.Name);
+	string className = GetClassName(SourceTable);
+	string collectionClassName = GetClassName(SourceTable, ClassNameFormat.Collection);
+	string structName = GetClassName(SourceTable, ClassNameFormat.Struct);
+	string abstractClassName = GetClassName(SourceTable, ClassNameFormat.Abstract);
+	string keyClassName = GetClassName(SourceTable, ClassNameFormat.Key);
 
 	string constructorAccessModifier = UsePartialClass ? "public" : "protected";
 	
@@ -128,13 +127,13 @@ namespace <%=NameSpace%>
 		/// Occurs when a value is being changed for the specified column.
 		/// </summary>	
 		[field:NonSerialized]
-		public event <%= GetClassEventHandlerName(className) %> ColumnChanging;		
+		public event <%= GetClassName(SourceTable, ClassNameFormat.EventHandler) %> ColumnChanging;		
 		
 		/// <summary>
 		/// Occurs after a value has been changed for the specified column.
 		/// </summary>
 		[field:NonSerialized]
-		public event <%= GetClassEventHandlerName(className) %> ColumnChanged;
+		public event <%= GetClassName(SourceTable, ClassNameFormat.EventHandler) %> ColumnChanged;
 		
 		#endregion Variable Declarations
 		
@@ -238,14 +237,14 @@ namespace <%=NameSpace%>
 				<%}%>
 					return;
 					
-				OnColumnChanging(<%= GetColumnEnumName(className) %>.<%=GetPropertyName(cols[x]) %>, this.entityData.<%= GetPropertyName(cols[x]) %>);
+				OnColumnChanging(<%= GetClassName(SourceTable, ClassNameFormat.Column) %>.<%=GetPropertyName(cols[x]) %>, this.entityData.<%= GetPropertyName(cols[x]) %>);
 				this.entityData.<%= GetPropertyName(cols[x]) %> = value;
 				<% if ( cols[x].IsPrimaryKeyMember ) { %>
 				this.EntityId.<%= GetPropertyName(cols[x]) %> = value;
 				<% } %>
 				if (<% if (IncludeWCFDataAttributes ) { %> !this._deserializing && <% } %>this.EntityState == EntityState.Unchanged)
 					this.EntityState = EntityState.Changed;
-				OnColumnChanged(<%= GetColumnEnumName(className) %>.<%=GetPropertyName(cols[x]) %>, this.entityData.<%= GetPropertyName(cols[x]) %>);
+				OnColumnChanged(<%= GetClassName(SourceTable, ClassNameFormat.Column) %>.<%=GetPropertyName(cols[x]) %>, this.entityData.<%= GetPropertyName(cols[x]) %>);
 				OnPropertyChanged("<%=GetPropertyName(cols[x]) %>");
 			}
 		}
@@ -263,7 +262,7 @@ namespace <%=NameSpace%>
 		[XmlElement(IsNullable=true)]
 		<% } %>
 		[BrowsableAttribute(false)/*, XmlIgnoreAttribute()*/<% if ( IncludeWCFDataAttributes ) { %>, DataMember	<% } %>]
-		public  virtual <%= GetCSType(cols[x])%> Original<%= GetPropertyName(cols[x]) %>
+		public  virtual <%= GetCSType(cols[x])%> <%= GetOriginalPropertyName(cols[x]) %>
 		{
 			get { return this.entityData.<%= GetOriginalPropertyName(cols[x]) %>; }
 			set { this.entityData.<%= GetOriginalPropertyName(cols[x]) %> = value; }
@@ -291,7 +290,7 @@ namespace <%=NameSpace%>
 				
 			filled.Add(fkPropertyName);
 			
-			string pkClassName = GetClassName(tableKey.PrimaryKeyTable.Name);
+			string pkClassName = GetClassName(tableKey.PrimaryKeyTable);
 			string memberVarName = "_" + GetCamelCaseName(fkPropertyName) + "Source";
 		%>		
 		/// <summary>
@@ -539,7 +538,7 @@ WriteRelationshipPropertyString();
 					
 				filled.Add(fkPropertyName);
 				
-				string pkClassName = GetClassName(tableKey.PrimaryKeyTable.Name);
+				string pkClassName = GetClassName(tableKey.PrimaryKeyTable);
 			%>
 			copy.<%=fkPropertyName%>Source = MakeCopyOf(this.<%=fkPropertyName%>Source) as <%= pkClassName %>;
 			<%	} //end if in SourceTables
@@ -641,12 +640,12 @@ WriteRelationshipPropertyString();
 		/// <returns>
 		/// 	<c>true</c> if the property value has changed; otherwise, <c>false</c>.
 		/// </returns>
-		public bool IsPropertyChanged(<%= GetColumnEnumName(className) %> column)
+		public bool IsPropertyChanged(<%= GetClassName(SourceTable, ClassNameFormat.Column) %> column)
 		{
 			switch(column)
 			{
 				<% for (int x=0; x < cols.Count; x++) { %>
-					case <%= GetColumnEnumName(className) %>.<%=GetPropertyName(cols[x])%>:
+					case <%= GetClassName(SourceTable, ClassNameFormat.Column) %>.<%=GetPropertyName(cols[x])%>:
 					return entityData.<%=GetPropertyName(cols[x])%> != _originalData.<%=GetPropertyName(cols[x])%>;
 				<% } %>
 			
@@ -781,9 +780,9 @@ WriteRelationshipPropertyString();
 		
 		/*
 		// static method to get a Comparer object
-        public static <%= GetComparerClassName(className) %> GetComparer()
+        public static <%= GetClassName(SourceTable, ClassNameFormat.Comparer) %> GetComparer()
         {
-            return new <%= GetComparerClassName(className) %>();
+            return new <%= GetClassName(SourceTable, ClassNameFormat.Comparer) %>();
         }
         */
 
@@ -799,7 +798,7 @@ WriteRelationshipPropertyString();
 
 /*
         // Special implementation to be called by custom comparer
-        public int CompareTo(<%=className%> rhs, <%= GetColumnEnumName(className) %> which)
+        public int CompareTo(<%=className%> rhs, <%= GetClassName(SourceTable, ClassNameFormat.Column) %> which)
         {
             switch (which)
             {
@@ -807,7 +806,7 @@ WriteRelationshipPropertyString();
             	
             	<% if (column.DataType != DbType.Binary) { %>
             	
-            	case <%= GetColumnEnumName(className) %>.<%=GetPropertyName(column)%>:
+            	case <%= GetClassName(SourceTable, ClassNameFormat.Column) %>.<%=GetPropertyName(column)%>:
             		<% if (column.AllowDBNull && !IsCSReferenceDataType(column)) {%>
             		return this.<%=GetPropertyName(column)%>.Value.CompareTo(rhs.<%=GetPropertyName(column)%>.Value);
             		<% } else { %>
@@ -1025,8 +1024,8 @@ WriteRelationshipPropertyString();
 		/// <summary>
 		/// Raises the <see cref="ColumnChanging" /> event.
 		/// </summary>
-		/// <param name="column">The <see cref="<%= GetColumnEnumName(className) %>"/> which has raised the event.</param>
-		public void OnColumnChanging(<%= GetColumnEnumName(className) %> column)
+		/// <param name="column">The <see cref="<%= GetClassName(SourceTable, ClassNameFormat.Column) %>"/> which has raised the event.</param>
+		public void OnColumnChanging(<%= GetClassName(SourceTable, ClassNameFormat.Column) %> column)
 		{
 			OnColumnChanging(column, null);
 			return;
@@ -1035,8 +1034,8 @@ WriteRelationshipPropertyString();
 		/// <summary>
 		/// Raises the <see cref="ColumnChanged" /> event.
 		/// </summary>
-		/// <param name="column">The <see cref="<%= GetColumnEnumName(className) %>"/> which has raised the event.</param>
-		public void OnColumnChanged(<%= GetColumnEnumName(className) %> column)
+		/// <param name="column">The <see cref="<%= GetClassName(SourceTable, ClassNameFormat.Column) %>"/> which has raised the event.</param>
+		public void OnColumnChanged(<%= GetClassName(SourceTable, ClassNameFormat.Column) %> column)
 		{
 			OnColumnChanged(column, null);
 			return;
@@ -1046,19 +1045,19 @@ WriteRelationshipPropertyString();
 		/// <summary>
 		/// Raises the <see cref="ColumnChanging" /> event.
 		/// </summary>
-		/// <param name="column">The <see cref="<%= GetColumnEnumName(className) %>"/> which has raised the event.</param>
+		/// <param name="column">The <see cref="<%= GetClassName(SourceTable, ClassNameFormat.Column) %>"/> which has raised the event.</param>
 		/// <param name="value">The changed value.</param>
-		public void OnColumnChanging(<%= GetColumnEnumName(className) %> column, object value)
+		public void OnColumnChanging(<%= GetClassName(SourceTable, ClassNameFormat.Column) %> column, object value)
 		{
 			if(IsEntityTracked && EntityState != EntityState.Added && !EntityManager.TrackChangedEntities)
 				EntityManager.StopTracking(entityTrackingKey);
 				
 			if (!SuppressEntityEvents)
 			{
-				<%= GetClassEventHandlerName(className) %> handler = ColumnChanging;
+				<%= GetClassName(SourceTable, ClassNameFormat.EventHandler) %> handler = ColumnChanging;
 				if(handler != null)
 				{
-					handler(this, new <%= GetClassEventArgsName(className) %>(column, value));
+					handler(this, new <%= GetClassName(SourceTable, ClassNameFormat.EventArgs) %>(column, value));
 				}
 			}
 		}
@@ -1066,16 +1065,16 @@ WriteRelationshipPropertyString();
 		/// <summary>
 		/// Raises the <see cref="ColumnChanged" /> event.
 		/// </summary>
-		/// <param name="column">The <see cref="<%= GetColumnEnumName(className) %>"/> which has raised the event.</param>
+		/// <param name="column">The <see cref="<%= GetClassName(SourceTable, ClassNameFormat.Column) %>"/> which has raised the event.</param>
 		/// <param name="value">The changed value.</param>
-		public void OnColumnChanged(<%= GetColumnEnumName(className) %> column, object value)
+		public void OnColumnChanged(<%= GetClassName(SourceTable, ClassNameFormat.Column) %> column, object value)
 		{
 			if (!SuppressEntityEvents)
 			{
-				<%= GetClassEventHandlerName(className) %> handler = ColumnChanged;
+				<%= GetClassName(SourceTable, ClassNameFormat.EventHandler) %> handler = ColumnChanged;
 				if(handler != null)
 				{
-					handler(this, new <%= GetClassEventArgsName(className) %>(column, value));
+					handler(this, new <%= GetClassName(SourceTable, ClassNameFormat.EventArgs) %>(column, value));
 				}
 			
 				// warn the parent list that i have changed
@@ -1087,7 +1086,7 @@ WriteRelationshipPropertyString();
 	} // End Class
 	
 	
-	#region <%= GetClassEventArgsName(className) %> class
+	#region <%= GetClassName(SourceTable, ClassNameFormat.EventArgs) %> class
 	/// <summary>
 	/// Provides data for the ColumnChanging and ColumnChanged events.
 	/// </summary>
@@ -1095,33 +1094,33 @@ WriteRelationshipPropertyString();
 	/// The ColumnChanging and ColumnChanged events occur when a change is made to the value 
 	/// of a property of a <see cref="<%=className%>"/> object.
 	/// </remarks>
-	public class <%= GetClassEventArgsName(className) %> : System.EventArgs
+	public class <%= GetClassName(SourceTable, ClassNameFormat.EventArgs) %> : System.EventArgs
 	{
-		private <%= GetColumnEnumName(className) %> column;
+		private <%= GetClassName(SourceTable, ClassNameFormat.Column) %> column;
 		private object value;
 		
 		///<summary>
-		/// Initalizes a new Instance of the <%= GetClassEventArgsName(className) %> class.
+		/// Initalizes a new Instance of the <%= GetClassName(SourceTable, ClassNameFormat.EventArgs) %> class.
 		///</summary>
-		public <%= GetClassEventArgsName(className) %>(<%= GetColumnEnumName(className) %> column)
+		public <%= GetClassName(SourceTable, ClassNameFormat.EventArgs) %>(<%= GetClassName(SourceTable, ClassNameFormat.Column) %> column)
 		{
 			this.column = column;
 		}
 		
 		///<summary>
-		/// Initalizes a new Instance of the <%= GetClassEventArgsName(className) %> class.
+		/// Initalizes a new Instance of the <%= GetClassName(SourceTable, ClassNameFormat.EventArgs) %> class.
 		///</summary>
-		public <%= GetClassEventArgsName(className) %>(<%= GetColumnEnumName(className) %> column, object value)
+		public <%= GetClassName(SourceTable, ClassNameFormat.EventArgs) %>(<%= GetClassName(SourceTable, ClassNameFormat.Column) %> column, object value)
 		{
 			this.column = column;
 			this.value = value;
 		}
 		
 		///<summary>
-		/// The <%= GetColumnEnumName(className) %> that was modified, which has raised the event.
+		/// The <%= GetClassName(SourceTable, ClassNameFormat.Column) %> that was modified, which has raised the event.
 		///</summary>
-		///<value cref="<%= GetColumnEnumName(className) %>" />
-		public <%= GetColumnEnumName(className) %> Column { get { return this.column; } }
+		///<value cref="<%= GetClassName(SourceTable, ClassNameFormat.Column) %>" />
+		public <%= GetClassName(SourceTable, ClassNameFormat.Column) %> Column { get { return this.column; } }
 		
 		/// <summary>
         /// Gets the current value of the column.
@@ -1135,29 +1134,29 @@ WriteRelationshipPropertyString();
 	///<summary>
 	/// Define a delegate for all <%=className%> related events.
 	///</summary>
-	public delegate void <%= GetClassEventHandlerName(className) %>(object sender, <%= GetClassEventArgsName(className) %> e);
+	public delegate void <%= GetClassName(SourceTable, ClassNameFormat.EventHandler) %>(object sender, <%= GetClassName(SourceTable, ClassNameFormat.EventArgs) %> e);
 	
-	#region <%= GetComparerClassName(className) %>
+	#region <%= GetClassName(SourceTable, ClassNameFormat.Comparer) %>
 		
 	/// <summary>
 	///	Strongly Typed IComparer
 	/// </summary>
-	public class <%= GetComparerClassName(className) %> : System.Collections.Generic.IComparer<<%=className%>>
+	public class <%= GetClassName(SourceTable, ClassNameFormat.Comparer) %> : System.Collections.Generic.IComparer<<%=className%>>
 	{
-		<%= GetColumnEnumName(className) %> whichComparison;
+		<%= GetClassName(SourceTable, ClassNameFormat.Column) %> whichComparison;
 		
 		/// <summary>
-        /// Initializes a new instance of the <see cref="T:<%= GetComparerClassName(className) %>"/> class.
+        /// Initializes a new instance of the <see cref="T:<%= GetClassName(SourceTable, ClassNameFormat.Comparer) %>"/> class.
         /// </summary>
-		public <%= GetComparerClassName(className) %>()
+		public <%= GetClassName(SourceTable, ClassNameFormat.Comparer) %>()
         {            
         }               
         
         /// <summary>
-        /// Initializes a new instance of the <see cref="T:%=className%>Comparer"/> class.
+        /// Initializes a new instance of the <see cref="T:<%= GetClassName(SourceTable, ClassNameFormat.Comparer) %>"/> class.
         /// </summary>
         /// <param name="column">The column to sort on.</param>
-        public <%= GetComparerClassName(className) %>(<%= GetColumnEnumName(className) %> column)
+        public <%= GetClassName(SourceTable, ClassNameFormat.Comparer) %>(<%= GetClassName(SourceTable, ClassNameFormat.Column) %> column)
         {
             this.whichComparison = column;
         }
@@ -1199,7 +1198,7 @@ WriteRelationshipPropertyString();
         /// Gets or sets the column that will be used for comparison.
         /// </summary>
         /// <value>The comparison column.</value>
-        public <%= GetColumnEnumName(className) %> WhichComparison
+        public <%= GetClassName(SourceTable, ClassNameFormat.Column) %> WhichComparison
         {
             get { return this.whichComparison; }
             set { this.whichComparison = value; }
@@ -1231,14 +1230,14 @@ WriteRelationshipPropertyString();
 		/// </summary>
 		public <%= keyClassName %>(<%= abstractClassName %> entity)
 		{
-			Entity = entity;
+			this.Entity = entity;
 
 			#region Init Properties
 
 			if ( entity != null )
 			{
 				<% foreach ( ColumnSchema column in pkCols ) { %>
-				this.<%= GetPrivateName(column) %> = entity.<%= GetPropertyName(column) %>;
+				this.<%= GetPropertyName(column) %> = entity.<%= GetPropertyName(column) %>;
 				<% } %>
 			}
 
@@ -1253,7 +1252,7 @@ WriteRelationshipPropertyString();
 			#region Init Properties
 
 			<% foreach ( ColumnSchema column in pkCols ) { %>
-			this.<%= GetPrivateName(column) %> = <%= GetPrivateName(column) %>;
+			this.<%= GetPropertyName(column) %> = <%= GetFieldName(column) %>;
 			<% } %>
 
 			#endregion
@@ -1277,22 +1276,20 @@ WriteRelationshipPropertyString();
 		
 		<% foreach ( ColumnSchema column in pkCols ) { %>
 		// member variable for the <%= GetPropertyName(column) %> property
-		private <%= GetCSType(column) %> <%= GetPrivateName(column) %>;
+		private <%= GetCSType(column) %> <%= GetVariableName(column) %>;
 		
 		/// <summary>
 		/// Gets or sets the <%= GetPropertyName(column) %> property.
 		/// </summary>
 		public <%= GetCSType(column) %> <%= GetPropertyName(column) %>
 		{
-			get { return <%= GetPrivateName(column) %>; }
+			get { return <%= GetVariableName(column) %>; }
 			set
 			{
-				if ( Entity != null )
-				{
-					Entity.<%= GetPropertyName(column) %> = value;
-				}
+				if ( this.Entity != null )
+					this.Entity.<%= GetPropertyName(column) %> = value;
 				
-				<%= GetPrivateName(column) %> = value;
+				<%= GetVariableName(column) %> = value;
 			}
 		}
 		
@@ -1366,13 +1363,13 @@ WriteRelationshipPropertyString();
 	
 	#endregion	
 
-	#region <%= GetColumnEnumName(className) %> Enum
+	#region <%= GetClassName(SourceTable, ClassNameFormat.Column) %> Enum
 	
 	/// <summary>
 	/// Enumerate the <%=className%> columns.
 	/// </summary>
 	[Serializable]
-	public enum <%= GetColumnEnumName(className) %> : int
+	public enum <%= GetClassName(SourceTable, ClassNameFormat.Column) %> : int
 	{
 		<% for (int x=0; x < cols.Count; x++) { %>
 		/// <summary>
@@ -1384,7 +1381,7 @@ WriteRelationshipPropertyString();
 		<% }// end for %>	
 	}//End enum
 
-	#endregion <%= GetColumnEnumName(className) %> Enum
+	#endregion <%= GetClassName(SourceTable, ClassNameFormat.Column) %> Enum
 
 } // end namespace
 <script runat="template">

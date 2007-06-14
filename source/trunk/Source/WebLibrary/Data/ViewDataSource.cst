@@ -1,4 +1,4 @@
-<%@ CodeTemplate Language="C#" TargetLanguage="C#" Src="..\..\TemplateLib\CommonSqlCode.cs" Inherits="MoM.Templates.CommonSqlCode" Debug="False" Description="Generates a data source control for each view." ResponseEncoding="UTF-8"%>
+﻿<%@ CodeTemplate Language="C#" TargetLanguage="C#" Src="..\..\TemplateLib\CommonSqlCode.cs" Inherits="MoM.Templates.CommonSqlCode" Debug="False" Description="Generates a data source control for each view." ResponseEncoding="UTF-8"%>
 <%@ Property Name="BLLNameSpace" Optional="False" Type="System.String" Category="Style" Description="Object Namespace." %>
 <%@ Property Name="DALNameSpace" Optional="False" Type="System.String" Category="Style" Description="DAL Namespace." %>
 <%@ Property Name="WebNameSpace" Optional="False" Type="System.String" Category="Style" Description="Web Namespace." %>
@@ -30,14 +30,14 @@
 	}
 	
 	string viewName = SourceView.Name;
-	string className = GetClassName(viewName);
-	string providerName = GetProviderName(viewName);
-	string providerBaseName = GetProviderBaseName(viewName);
+	string className = GetClassName(SourceView);
+	string providerName = GetClassName(SourceView, ClassNameFormat.Provider);
+	string providerBaseName = GetClassName(SourceView, ClassNameFormat.ProviderBase);
 	string providerObject = "DataRepository." + providerName;
 	
 	if ( IsServiceLayer )
 	{
-		providerBaseName = GetServiceClassName(viewName);
+		providerBaseName = GetClassName(SourceView, ClassNameFormat.Service);
 		providerObject = String.Format("new {0}()", providerBaseName);
 	}
 	
@@ -267,7 +267,7 @@ namespace <%= WebNameSpace %>.Data
 				if ( IncludeCustoms )
 				{
 					Response.Write("\t\t\t\t// Custom" + Environment.NewLine);
-					Response.Write(WriteCustomSelectStatements(viewName, methods, IsServiceLayer));
+					Response.Write(WriteCustomSelectStatements(SourceView, methods, IsServiceLayer));
 				}
 				%>
 				default:
@@ -471,7 +471,7 @@ private void WriteParameterDeclaration(ParameterSchema param, StringBuilder sb, 
 					Environment.NewLine);
 }
 
-private string WriteCustomSelectStatements(string tableName, IList methods, bool isServiceLayer)
+private string WriteCustomSelectStatements(ViewSchema view, IList methods, bool isServiceLayer)
 {
 	IDictionary procs = GetCustomProcedures(SourceView);
 	StringBuilder sb = new StringBuilder();
@@ -492,10 +492,10 @@ private string WriteCustomSelectStatements(string tableName, IList methods, bool
 //			methodParams = TransformStoredProcedureInputsToDataAccess(!isServiceLayer, command.InputParameters, true) + TransformStoredProcedureOutputsToDataAccess(command.InputParameters.Count > 0, command.AllOutputParameters, true);
 			methodParams = TransformStoredProcedureInputsToDataAccess(!isServiceLayer, command.InputParameters, true);
 			methods.Add(methodName);
-			sb.Append(WriteCaseStatement(tableName, methodName, false));
-			sb.Append(WriteParameterStatements(command.InputParameters, tableName));
+			sb.Append(WriteCaseStatement(view, methodName, false));
+			sb.Append(WriteParameterStatements(command.InputParameters, view.Name));
 			sb.AppendFormat("\t\t\t\t\tresults = {0}.{1}({2}{3}{4}{5});{6}",
-							GetProviderName(tableName),
+							GetClassName(view, ClassNameFormat.Provider),
 							methodName,
 							TransactionManager,
 							(isServiceLayer ? methodParams : pagingParams),
@@ -536,16 +536,16 @@ private string WriteParameterStatements(ParameterSchemaCollection parameters, st
 	return sb.ToString();
 }
 
-private string WriteCaseStatement(string tableName, string methodName)
+private string WriteCaseStatement(ViewSchema view, string methodName)
 {
-	return WriteCaseStatement(tableName, methodName, true);
+	return WriteCaseStatement(view, methodName, true);
 }
 
-private string WriteCaseStatement(string tableName, string methodName, bool includeGetBy)
+private string WriteCaseStatement(ViewSchema view, string methodName, bool includeGetBy)
 {
 	StringBuilder sb = new StringBuilder();
 	sb.AppendFormat("\t\t\t\tcase {0}SelectMethod.{1}{2}:{3}",
-					GetClassName(tableName),
+					GetClassName(view),
 					(includeGetBy ? "GetBy" : ""),
 					methodName,
 					Environment.NewLine);

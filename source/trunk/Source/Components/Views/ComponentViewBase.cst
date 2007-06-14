@@ -42,29 +42,18 @@
 	
 <%@ Property Name="UsePartialClass" Type="System.Boolean" Default="true" Category="General" Description="Indicates if partial class should be generated." %>
 <%
-	string className = GetClassName(SourceView.Name);
-	string collectionClassName = GetCollectionClassName(SourceView.Name);
-	string keyClassName = GetKeyClassName(SourceView.Name);
-	string entitiesCollectionClassName = GetViewCollectionClassName(SourceView.Name).Replace("<", "<Entities.");
+	string className = GetClassName(SourceView);
+	string collectionClassName = GetClassName(SourceView, ClassNameFormat.Collection);
+	string keyClassName = GetClassName(SourceView, ClassNameFormat.Key);
+	string entitiesCollectionClassName = GetClassName(SourceView, ClassNameFormat.ViewCollection).Replace("<", "<Entities.");
 	
-	string structName = GetStructName(SourceView.Name);
-	string abstractClassName = GetAbstractClassName(SourceView.Name);
+	string structName = GetClassName(SourceView, ClassNameFormat.Struct);
+	string abstractClassName = GetClassName(SourceView, ClassNameFormat.Abstract);
 	string partialClassInternalPrefix = UsePartialClass ? "" : "";
-	string constructorAccessModifier = ""; 
 	string newCollectionClassName = "";
-	string newCollectionClassNameEnd = "";
 	
 	if (ComponentPattern == MoM.Templates.ComponentPatternType.DomainModel)
-	{		
-		constructorAccessModifier =  "public static";
 		newCollectionClassName = string.Format("new {0} (", collectionClassName);
-		newCollectionClassNameEnd = ")";
-	}
-	else if (ComponentPattern == MoM.Templates.ComponentPatternType.ServiceLayer)
-	{
-		constructorAccessModifier = "public";
-	}
-
 
 	// Collection of all columns in the View.
 	ViewColumnSchemaCollection cols = SourceView.Columns;
@@ -146,13 +135,13 @@ namespace <%=NameSpace%>
 		/// A simple factory method to create a new <see cref="<%=className%>"/> instance.
 		///</summary>
 		<% for (int x=0; x < colsUpdaView.Count; x++) { %>
-		///<param name="<%=GetPrivateName(colsUpdaView[x]) %>"><%=GetColumnXmlComment(colsUpdaView[x],2)%></param>
+		///<param name="<%=GetFieldName(colsUpdaView[x]) %>"><%=GetColumnXmlComment(colsUpdaView[x],2)%></param>
 		<% } %>
-		public static new <%=className%> Create<%=className%>(<% for (int x=0; x < colsUpdaView.Count; x++) { %><%= GetCSType(colsUpdaView[x]) %> <%= GetPrivateName(colsUpdaView[x]) %><%if (x < colsUpdaView.Count -1){%>, <%} }// end for %>)
+		public static new <%=className%> Create<%=className%>(<% for (int x=0; x < colsUpdaView.Count; x++) { %><%= GetCSType(colsUpdaView[x]) %> <%= GetFieldName(colsUpdaView[x]) %><%if (x < colsUpdaView.Count -1){%>, <%} }// end for %>)
 		{
 			<%=className%> newEntity<%=className%> = new <%=className%>();
 			<% for (int x=0; x < colsUpdaView.Count; x++) { %>
-			<%= GetObjectPropertyAccessor(colsUpdaView[x], "newEntity" + className) %>  = <%= GetPrivateName(colsUpdaView[x]) %>;
+			<%= GetObjectPropertyAccessor(colsUpdaView[x], "newEntity" + className) %>  = <%= GetFieldName(colsUpdaView[x]) %>;
 			<% }// end for %>
 			return newEntity<%=className%>;
 		}
@@ -171,6 +160,7 @@ namespace <%=NameSpace%>
 	
 	}//End Class
 } // end namespace
+
 
 
 

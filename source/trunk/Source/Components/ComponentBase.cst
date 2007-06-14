@@ -44,28 +44,18 @@
 	
 <%		
 	// Name of the Abstract Class
-	string className = GetClassName(SourceTable.Name);
-	string collectionClassName = GetCollectionClassName(SourceTable.Name);
+	string className = GetClassName(SourceTable);
+	string collectionClassName = GetClassName(SourceTable, ClassNameFormat.Collection);
 
-	string entitiesCollectionClassName = GetCollectionClassName(SourceTable.Name).Replace("<", "<Entities.");
+	string entitiesCollectionClassName = GetClassName(SourceTable, ClassNameFormat.Collection).Replace("<", "<Entities.");
 	
-	string structName = GetStructName(SourceTable.Name);
-	string abstractClassName = GetAbstractClassName(SourceTable.Name);
+	string structName = GetClassName(SourceTable, ClassNameFormat.Struct);
+	string abstractClassName = GetClassName(SourceTable, ClassNameFormat.Abstract);
 	string partialClassInternalPrefix = UsePartialClass ? "" : "";
-	string constructorAccessModifier = ""; 
 	string newCollectionClassName = "";
-	string newCollectionClassNameEnd = "";
 	
 	if (ComponentPattern == MoM.Templates.ComponentPatternType.DomainModel)
-	{		
-		constructorAccessModifier =  "public static";
 		newCollectionClassName = string.Format("new {0} (", collectionClassName);
-		newCollectionClassNameEnd = ")";
-	}
-	else if (ComponentPattern == MoM.Templates.ComponentPatternType.ServiceLayer)
-	{
-		constructorAccessModifier = "public";
-	}
 
 	// Collection of all columns in the table.
 	ColumnSchemaCollection cols = SourceTable.Columns;
@@ -170,13 +160,13 @@ namespace <%=NameSpace%>
 		/// A simple factory method to create a new <see cref="<%=className%>"/> instance.
 		///</summary>
 		<% for (int x=0; x < colsUpdatable.Count; x++) { %>
-		///<param name="<%=GetPrivateName(colsUpdatable[x]) %>"><%=GetColumnXmlComment(colsUpdatable[x],2)%></param>
+		///<param name="<%=GetFieldName(colsUpdatable[x]) %>"><%=GetColumnXmlComment(colsUpdatable[x],2)%></param>
 		<% } %>
-		public static new <%=className%> Create<%=className%>(<% for (int x=0; x < colsUpdatable.Count; x++) { %><%= GetCSType(colsUpdatable[x]) %> <%= GetPrivateName(colsUpdatable[x]) %><%if (x < colsUpdatable.Count -1){%>, <%} }// end for %>)
+		public static new <%=className%> Create<%=className%>(<% for (int x=0; x < colsUpdatable.Count; x++) { %><%= GetCSType(colsUpdatable[x]) %> <%= GetFieldName(colsUpdatable[x]) %><%if (x < colsUpdatable.Count -1){%>, <%} }// end for %>)
 		{
 			<%=className%> newComponent<%=className%> = new <%=className%>();//ComponentEntityFactory.Create(typeof(<%=className%>)) as <%=className%>;
 			<% for (int x=0; x < colsUpdatable.Count; x++) { %>
-			<%= GetObjectPropertyAccessor(colsUpdatable[x], "newComponent" + className) %>  = <%= GetPrivateName(colsUpdatable[x]) %>;
+			<%= GetObjectPropertyAccessor(colsUpdatable[x], "newComponent" + className) %>  = <%= GetFieldName(colsUpdatable[x]) %>;
 			<% }// end for %>
 			return newComponent<%=className%>;
 		}
@@ -238,7 +228,7 @@ namespace <%=NameSpace%>
 			// related table must be in the selection
 			if (SourceTables.Contains(tableKey.PrimaryKeyTable)) {
 			
-			string pkClassName = GetClassName(tableKey.PrimaryKeyTable.Name);
+			string pkClassName = GetClassName(tableKey.PrimaryKeyTable);
 			string pkProperty = GetKeysName(tableKey.PrimaryKeyMemberColumns);
 			string fkPropertyName = GetKeysName(tableKey.ForeignKeyMemberColumns);
 			string compositePropertyName = fkPropertyName + "Source";
@@ -257,7 +247,7 @@ namespace <%=NameSpace%>
             get { 
 					if (base.<%=compositePropertyName%> == null)
 					{
-						base.<%=compositePropertyName%>= DataRepository.<%= GetProviderName(pkClassName) %>.GetBy<%= pkProperty %>(<%= callParams %>); 
+						base.<%=compositePropertyName%>= DataRepository.<%= GetClassName(tableKey.PrimaryKeyTable, ClassNameFormat.Provider) %>.GetBy<%= pkProperty %>(<%= callParams %>); 
 					}
 					return base.<%=compositePropertyName%> as <%=pkClassName%>; 
 				}
@@ -287,5 +277,6 @@ namespace <%=NameSpace%>
 
 	}//End Class
 } // end namespace
+
 
 

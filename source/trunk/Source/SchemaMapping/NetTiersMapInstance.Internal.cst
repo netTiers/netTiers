@@ -18,42 +18,29 @@
 <%
 
 foreach ( TableSchema table in GetSortedTables(SourceTables, "FullName") )
-{
-%>
-	<Table Id="<%=table.Name%>" EntityName="<%=GetClassName(table.Name)%>" Owner="<%=GetClassName(table.Owner)%>" FriendlyName="<%= PascalToSpaced(GetClassName(table.Name)) %>" IncludeInOutput="true">
+{%>
+	<Table Id="<%= table.Name %>" EntityName="<%=GetClassName(table)%>" Owner="<%=GetOwnerName(table)%>" PropertyName="<%= GetPropertyName(table) %>" FieldName="<%= GetFieldName(table) %>" FriendlyName="<%= GetFriendlyName(table) %>" IncludeInOutput="true">
 	<%
-	foreach ( ColumnSchema column in table.Columns )
-	{
-		string propertyName = GetPropertyName(column);
-		string privateName = GetPrivateName(column);
-	%>
-		<Column Id="<%= column.Name %>" CSType="<%= GetCSType(column) %>" PropertyName="<%= propertyName %>" FieldName="<%= privateName %>" FriendlyName="<%= PascalToSpaced(propertyName) %>" IncludeInOutput="true" />
-	<%
-	}
+	foreach ( ColumnSchema column in table.Columns ){%>
+		<Column Id="<%= column.Name %>" CSType="<%= GetCSType(column) %>" PropertyName="<%= GetPropertyName(column) %>" FieldName="<%= GetFieldName(column) %>" FriendlyName="<%= GetFriendlyName(column) %>" IncludeInOutput="true" />
+	<%}
 	foreach ( CollectionInfo item in GetChildrenCollections(table, SourceTables).Values )
-	{
-	%>		
-		<ChildCollection Id="<%= item.PropertyNameUnique %>" PropertyName="<%= item.PropertyNameUnique %>" FieldName="<%= item.FieldName %>" FriendlyName="<%= PascalToSpaced(item.PropertyNameUnique) %>" CSType="<%= item.CollectionTypeName.Replace("<", "&lt;").Replace(">", "&gt;") %>" RelationshipType="<%= item.CollectionRelationshipType %>" ForeignKeyName="<%= item.TableKey.Name %>" IncludeInOutput="true"/>
-	<%}%>
+	{%>		
+		<ChildCollection Id="<%= item.PropertyNameUnique %>" PropertyName="<%= item.PropertyNameUnique %>" FieldName="<%= item.FieldName %>" FriendlyName="<%= item.PropertyNameUnique %>" CSType="<%= item.CollectionTypeName.Replace("<", "&lt;").Replace(">", "&gt;") %>" RelationshipType="<%= item.CollectionRelationshipType %>" ForeignKeyName="<%= item.TableKey.Name %>" IncludeInOutput="true"/>
+	<% } %>
 	</Table>
-<%
-}
+<%}
+
 foreach ( ViewSchema view in GetSortedViews(SourceViews, "FullName") )
-{
-%>
-	<View Id="<%=view.Name%>" EntityName="<%=GetClassName(view.Name)%>" Owner="<%=GetClassName(view.Owner)%>" FriendlyName="<%= PascalToSpaced(GetClassName(view.Name)) %>" IncludeInOutput="true">
+{%>
+	<View Id="<%=view.Name%>" EntityName="<%=GetClassName(view)%>" Owner="<%=GetOwnerName(view)%>" PropertyName="<%= GetPropertyName(view) %>" FieldName="<%= GetFieldName(view) %>" FriendlyName="<%= GetFriendlyName(view) %>" IncludeInOutput="true">
 	<%
 	foreach ( ViewColumnSchema column in view.Columns )
-	{
-		string propertyName = GetPropertyName(column);
-		string privateName = GetPrivateName(column);
-	%>
-		<Column Id="<%= column.Name %>" CSType="<%= GetCSType(column) %>" PropertyName="<%= propertyName %>" FieldName="<%= privateName %>" FriendlyName="<%= PascalToSpaced(propertyName) %>" IncludeInOutput="true" />
-<%	}%>
+	{%>
+		<Column Id="<%= column.Name %>" CSType="<%= GetCSType(column) %>" PropertyName="<%= GetPropertyName(column) %>" FieldName="<%= GetFieldName(column) %>" FriendlyName="<%= GetFriendlyName(column) %>" IncludeInOutput="true" />
+	<% } %>
 	</View>
-<%
-}
-%>
+<% } %>
 </NetTiersMap>
 <script runat="template">	
 	public override void Render(TextWriter writer)

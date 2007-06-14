@@ -29,10 +29,10 @@
 <%@ Property Name="IncludeUnitTest" Type="MoM.Templates.UnitTestStyle" Default="NUnit" Category="General" Description="Indicates type of Unit tests to be generated." %>
 
 <%
-	string className = GetClassName(SourceTable.Name);
-	string collectionClassName = GetCollectionClassName(SourceTable.Name);
-	string providerName = GetProviderClassName(SourceTable.Name);
-	string unitTestClassName = GetRepositoryTestClassName(SourceTable.Name);
+	string className = GetClassName(SourceTable);
+	string collectionClassName = GetClassName(SourceTable, ClassNameFormat.Collection);
+	string providerName = GetClassName(SourceTable, ClassNameFormat.Provider);
+	string unitTestClassName = GetClassName(SourceTable, ClassNameFormat.UnitTest);
 	string TestAssemblyNameSpace = (IncludeUnitTest == MoM.Templates.UnitTestStyle.NUnit) ? "NUnit.Framework" : "Microsoft.VisualStudio.TestTools.UnitTesting";
 %>
 
@@ -269,7 +269,7 @@ namespace <%=UTNameSpace%>
 		/// </summary>
 		private void Step_08_SerializeCollection_Generated()
 		{
-			string fileName = "temp_<%=GetCollectionPropertyName(SourceTable.Name)%>.xml";
+			string fileName = "temp_<%=GetClassName(SourceTable, ClassNameFormat.CollectionProperty)%>.xml";
 		
 			<%=collectionClassName%> mockCollection = new <%=collectionClassName%>();
 			mockCollection.Add(mock);
@@ -288,7 +288,7 @@ namespace <%=UTNameSpace%>
 		/// </summary>
 		private void Step_09_DeserializeCollection_Generated()
 		{
-			string fileName = "temp_<%=GetCollectionPropertyName(SourceTable.Name)%>.xml";
+			string fileName = "temp_<%=GetClassName(SourceTable, ClassNameFormat.CollectionProperty)%>.xml";
 		
 			XmlSerializer mySerializer = new XmlSerializer(typeof(<%=collectionClassName%>)); 
 			FileStream myFileStream = new FileStream(fileName,  FileMode.Open); 
@@ -412,15 +412,15 @@ namespace <%=UTNameSpace%>
 					{%>
 					//OneToOneRelationship
 					<% for (int y=0;y<fkeys[x].ForeignKeyMemberColumns.Count; y++) { %>
-					<%= GetClassName(fkeys[x].PrimaryKeyTable.Name)%> mock<%= GetClassName(fkeys[x].PrimaryKeyTable.Name)%>By<%= GetPropertyName(fkeys[x].ForeignKeyMemberColumns[y])%> = <%= GetRepositoryTestClassName(fkeys[x].PrimaryKeyTable.Name)%>.CreateMockInstance();
-					DataRepository.<%=GetProviderClassName(fkeys[x].PrimaryKeyTable.Name)%>.<%= MethodNames.Insert %>(transactionManager, mock<%= GetClassName(fkeys[x].PrimaryKeyTable.Name)%>By<%= GetPropertyName(fkeys[x].ForeignKeyMemberColumns[y])%>);
-					mock.<%= GetPropertyName(fkeys[x].ForeignKeyMemberColumns[y])%> = mock<%= GetClassName(fkeys[x].PrimaryKeyTable.Name)%>By<%= GetPropertyName(fkeys[x].ForeignKeyMemberColumns[y])%>.<%=GetPropertyName(fkeys[x].PrimaryKeyMemberColumns[y])%>;
+					<%= GetClassName(fkeys[x].PrimaryKeyTable)%> mock<%= GetClassName(fkeys[x].PrimaryKeyTable)%>By<%= GetPropertyName(fkeys[x].ForeignKeyMemberColumns[y])%> = <%= GetClassName(fkeys[x].PrimaryKeyTable, ClassNameFormat.UnitTest)%>.CreateMockInstance();
+					DataRepository.<%=GetClassName(fkeys[x].PrimaryKeyTable, ClassNameFormat.Provider)%>.<%= MethodNames.Insert %>(transactionManager, mock<%= GetClassName(fkeys[x].PrimaryKeyTable)%>By<%= GetPropertyName(fkeys[x].ForeignKeyMemberColumns[y])%>);
+					mock.<%= GetPropertyName(fkeys[x].ForeignKeyMemberColumns[y])%> = mock<%= GetClassName(fkeys[x].PrimaryKeyTable)%>By<%= GetPropertyName(fkeys[x].ForeignKeyMemberColumns[y])%>.<%=GetPropertyName(fkeys[x].PrimaryKeyMemberColumns[y])%>;
 					
 					<% }
 					} 
 					else
 					{%>
-					<%=GetCollectionClassName(fkeys[x].PrimaryKeyTable.Name) %> _collection<%=x%> = DataRepository.<%=GetProviderClassName(fkeys[x].PrimaryKeyTable.Name)%>.<%= MethodNames.GetPaged %>(transactionManager, 0, 10, out count);
+					<%=GetClassName(fkeys[x].PrimaryKeyTable, ClassNameFormat.Collection) %> _collection<%=x%> = DataRepository.<%=GetClassName(fkeys[x].PrimaryKeyTable, ClassNameFormat.Provider)%>.<%= MethodNames.GetPaged %>(transactionManager, 0, 10, out count);
 					//_collection<%=x%>.Shuffle();
 					if (_collection<%=x%>.Count > 0)
 					{
@@ -478,15 +478,15 @@ namespace <%=UTNameSpace%>
 					//OneToOneRelationship
 					<% for (int y=0;y<fkeys[x].ForeignKeyMemberColumns.Count; y++) 
 					{ %>
-					<%= GetClassName(fkeys[x].PrimaryKeyTable.Name)%> mock<%= GetClassName(fkeys[x].PrimaryKeyTable.Name)%>By<%= GetPropertyName(fkeys[x].ForeignKeyMemberColumns[y])%> = <%= GetRepositoryTestClassName(fkeys[x].PrimaryKeyTable.Name)%>.CreateMockInstance();
-					DataRepository.<%=GetProviderClassName(fkeys[x].PrimaryKeyTable.Name)%>.<%= MethodNames.Insert %>(transactionManager, mock<%= GetClassName(fkeys[x].PrimaryKeyTable.Name)%>By<%= GetPropertyName(fkeys[x].ForeignKeyMemberColumns[y])%>);
-					mock.<%= GetPropertyName(fkeys[x].ForeignKeyMemberColumns[y])%> = mock<%= GetClassName(fkeys[x].PrimaryKeyTable.Name)%>By<%= GetPropertyName(fkeys[x].ForeignKeyMemberColumns[y])%>.<%=GetPropertyName(fkeys[x].PrimaryKeyMemberColumns[y])%>;
+					<%= GetClassName(fkeys[x].PrimaryKeyTable)%> mock<%= GetClassName(fkeys[x].PrimaryKeyTable)%>By<%= GetPropertyName(fkeys[x].ForeignKeyMemberColumns[y])%> = <%= GetClassName(fkeys[x].PrimaryKeyTable, ClassNameFormat.UnitTest)%>.CreateMockInstance();
+					DataRepository.<%=GetClassName(fkeys[x].PrimaryKeyTable, ClassNameFormat.Provider)%>.<%= MethodNames.Insert %>(transactionManager, mock<%= GetClassName(fkeys[x].PrimaryKeyTable)%>By<%= GetPropertyName(fkeys[x].ForeignKeyMemberColumns[y])%>);
+					mock.<%= GetPropertyName(fkeys[x].ForeignKeyMemberColumns[y])%> = mock<%= GetClassName(fkeys[x].PrimaryKeyTable)%>By<%= GetPropertyName(fkeys[x].ForeignKeyMemberColumns[y])%>.<%=GetPropertyName(fkeys[x].PrimaryKeyMemberColumns[y])%>;
 					<% }
 					}
 					else
 					{%>
 					
-					<%=GetCollectionClassName(fkeys[x].PrimaryKeyTable.Name) %> _collection<%=x%> = DataRepository.<%=GetProviderClassName(fkeys[x].PrimaryKeyTable.Name)%>.<%= MethodNames.GetPaged %>(transactionManager, 0, 10, out count);
+					<%=GetClassName(fkeys[x].PrimaryKeyTable, ClassNameFormat.Collection) %> _collection<%=x%> = DataRepository.<%=GetClassName(fkeys[x].PrimaryKeyTable, ClassNameFormat.Provider)%>.<%= MethodNames.GetPaged %>(transactionManager, 0, 10, out count);
 					//_collection<%=x%>.Shuffle();
 					if (_collection<%=x%>.Count > 0)
 					{

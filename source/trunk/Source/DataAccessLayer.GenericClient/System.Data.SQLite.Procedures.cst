@@ -1,4 +1,4 @@
-<%@ CodeTemplate Src="..\TemplateLib\CommonSqlCode.cs" Debug="true" Inherits="MoM.Templates.CommonSqlCode" Language="C#" TargetLanguage="T-SQL"
+﻿<%@ CodeTemplate Src="..\TemplateLib\CommonSqlCode.cs" Debug="true" Inherits="MoM.Templates.CommonSqlCode" Language="C#" TargetLanguage="T-SQL"
 	Description="Generates SELECT/INSERT/UPDATE/DELETE stored procedures based on one or more selected tables, or an entire database schema." ResponseEncoding="UTF-8"%>
 
 <%@ Property Name="CompanyName" Optional="True" Type="System.String" Category="General" Description="The name of your company." %>
@@ -46,7 +46,7 @@
 	{
 		TableSchema SourceTable = SourceTables[st];
 		//Set table properties
-		string owner = GetOwner(SourceTable);
+		string owner = GetOwnerName(SourceTable, true);
 		string name = GetSafeName(SourceTable);
 		string commandStem = GetCleanName(SourceTable);
 		string tableComment = SourceTable.Description;
@@ -226,7 +226,7 @@
 			<comment><![CDATA[<%= GetProcSqlComment(string.Format("Updates a record in the {0} table", name), tableComment) %>]]></comment>
 			<parameters>
 				<% 
-				int countComputedColumns = 0;
+				//int countComputedColumns = 0;
 				for (int i = 0; i < cols.Count; i++)
 				{
 					Response.Write("\t\t\t\t" + GetSqlParameterXmlNode(cols[i], false));
@@ -433,7 +433,7 @@
 						{
 							TableSchema secondaryTable = junctionTableKey.PrimaryKeyTable;
 																			
-							string functionname = GetManyToManyName(junctionTableKey, GetCleanName(junctionTable.Name));
+							string functionname = GetManyToManyName(junctionTableKey, junctionTable);
 													
 							// here query
 %>
@@ -630,7 +630,7 @@ SELECT <% for (int i = 0; i < primaryTable.Columns.Count; i++)
 		ViewSchema SourceView = SourceViews[vi];
 		ViewColumnSchemaCollection cols = SourceView.Columns;
 		
-		string owner = GetOwner(SourceView);
+		string owner = GetOwnerName(SourceView);
 		string name = GetSafeName(SourceView);
 		string commandStem = GetCleanName(SourceView);
 		string tableComment = SourceView.Description;

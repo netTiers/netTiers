@@ -4,7 +4,6 @@
 	<xsl:template match="/NetTiersReport">		
 		<html>
 			<head>
-				<title> <xsl:value-of select="title" /> </title>
                 <link href="http://nettiers.com/common/styles.css" rel="stylesheet" type="text/css"/>
                 <style>
 				      span.executionTime {font-style: italic; color: #55AEED;}
@@ -208,7 +207,7 @@ accountsService.DeepSave(myAccountEntity, <font color="blue">false</font>, DeepS
 	
 	<xsl:template name="copyrightinfo">
 		<div align="center">
-			.netTiersOpen Source Group, 2006
+			.netTiersOpen Source Group, 2007
 		</div>
 	</xsl:template>
 	

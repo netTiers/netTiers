@@ -46,7 +46,7 @@
 	string name = SourceTable.Name;
 	
 	//Get the owner of the table
-	string owner = GetOwner(SourceTable);
+	string owner = GetOwnerName(SourceTable, true);
 	
 	// Collection of all columns in the table.
 	ColumnSchemaCollection cols = SourceTable.Columns;
@@ -78,13 +78,13 @@
 	}
 	
 	
-	string className = NameSpace + "." + GetClassName(SourceTable.Name);
-	string entityClassName = GetClassName(SourceTable.Name);
-	string abstractRepositoryClassName = "Generic" + GetProviderBaseName(SourceTable.Name);
+	string className = NameSpace + "." + GetClassName(SourceTable);
+	string entityClassName = GetClassName(SourceTable);
+	string abstractRepositoryClassName = "Generic" + GetClassName(SourceTable, ClassNameFormat.ProviderBase);
 	//string repositoryClassName = DALNameSpace + "." +GetRepositoryClassName(SourceTable.Name);
-	string providerBaseName = GetProviderBaseName(SourceTable.Name);
-	string providerName = "Generic" + GetProviderName(SourceTable.Name);
-	string collectionClassName = NameSpace + "." + GetCollectionClassName(SourceTable.Name);
+	string providerBaseName = GetClassName(SourceTable, ClassNameFormat.ProviderBase);
+	string providerName = "Generic" + GetClassName(SourceTable, ClassNameFormat.Provider);
+	string collectionClassName = NameSpace + "." + GetClassName(SourceTable, ClassNameFormat.Collection);
 	
 	string commandStem = GetCleanName(SourceTable);
 		
@@ -126,7 +126,7 @@ using <%=DALNameSpace%>.Bases;
 namespace <%=DALNameSpace%>.GenericClient
 {
 	///<summary>
-	/// This class is the SqlClient Data Access Logic Component implementation for the <see cref="<%=GetClassName(SourceTable.Name)%>"/> entity.
+	/// This class is the SqlClient Data Access Logic Component implementation for the <see cref="<%=GetClassName(SourceTable)%>"/> entity.
 	///</summary>
 	public abstract partial class <%=abstractRepositoryClassName%> : <%=providerBaseName%>
 	{
@@ -215,30 +215,30 @@ namespace <%=DALNameSpace%>.GenericClient
 					if ( IsJunctionKey(junctionTableKey) && junctionTableKey.Name != key.Name )
 					{
 						TableSchema secondaryTable = junctionTableKey.PrimaryKeyTable;
-						string functionname = GetManyToManyName(junctionTableKey, GetCleanName(junctionTable.Name));
+						string functionname = GetManyToManyName(junctionTableKey, junctionTable);
 %>
 	
 		#region GetBy<%=functionname%>
 		/// <summary>
-		///		Gets <%=GetClassName(primaryTable.Name)%> objects from the datasource by <%=junctionTableKey.ForeignKeyMemberColumns[0].Name%> in the
+		///		Gets <%=GetClassName(primaryTable)%> objects from the datasource by <%=junctionTableKey.ForeignKeyMemberColumns[0].Name%> in the
 		///		<%=junctionTable.Name%> table. Table <%=primaryTable.Name%> is related to table <%=secondaryTable.Name%>
 		///		through the (M:N) relationship defined in the <%=junctionTable.Name%> table.
 		/// </summary>
 		/// <param name="transactionManager"><see cref="TransactionManager"/> object</param>
 	<% for (int i = 0; i < junctionTableKey.ForeignKeyMemberColumns.Count; i++) { %>
-		/// <param name="<%= GetPrivateName(junctionTableKey.ForeignKeyMemberColumns[i])%>"><%=GetColumnXmlComment(junctionTableKey.ForeignKeyMemberColumns[i],2)%></param>
+		/// <param name="<%= GetFieldName(junctionTableKey.ForeignKeyMemberColumns[i])%>"><%=GetColumnXmlComment(junctionTableKey.ForeignKeyMemberColumns[i],2)%></param>
 	<% } %>
 		/// <param name="start">Row number at which to start reading.</param>
 		/// <param name="pageLength">Number of rows to return.</param>
 		/// <param name="count">out parameter to get total records for query</param>
-		/// <returns>Returns a <c>TList</c> of <%=GetClassName(primaryTable.Name)%> objects.</returns>
-		public override <%=GetCollectionClassName(primaryTable.Name)%> GetBy<%=functionname%>(TransactionManager transactionManager, <%=GetFunctionHeaderParameters(junctionTableKey.ForeignKeyMemberColumns)%>, int start, int pageLength, out int count)
+		/// <returns>Returns a <c>TList</c> of <%=GetClassName(primaryTable)%> objects.</returns>
+		public override <%=GetClassName(primaryTable, ClassNameFormat.Collection)%> GetBy<%=functionname%>(TransactionManager transactionManager, <%=GetFunctionHeaderParameters(junctionTableKey.ForeignKeyMemberColumns)%>, int start, int pageLength, out int count)
 		{
 			GenericDatabase database = new GenericDatabase(this._connectionString, _providerFactory);
 			DbCommand commandWrapper = DbCommandProvider.GetCommandWrapper(database, "<%=owner + ProcedurePrefix + commandStem + SelectSuffix + "By" + functionname%>", _useStoredProcedure, _providerInvariantName);
 			
 			<% foreach(ColumnSchema col in junctionTableKey.ForeignKeyMemberColumns) { %>
-			database.AddInParameter(commandWrapper, "@<%=GetPropertyName(col)%>", DbType.<%=col.DataType.ToString()%>, <%=GetPrivateName(col)%>);
+			database.AddInParameter(commandWrapper, "@<%=GetPropertyName(col)%>", DbType.<%=col.DataType.ToString()%>, <%=GetFieldName(col)%>);
 			<% } %>
 			
 			IDataReader reader = null;
@@ -247,25 +247,16 @@ namespace <%=DALNameSpace%>.GenericClient
 			
 			try
 			{
-			if (transactionManager != null)
-			{
-				reader = Utility.ExecuteReader(transactionManager, commandWrapper);
-			}
-			else
-			{
-				reader = Utility.ExecuteReader(database, commandWrapper);
-			}		
-			Fill(reader, rows, start, pageLength);
-			count = -1;
-			if(reader.NextResult())
-			{
-				if(reader.Read())
-				{
-					count = reader.GetInt32(0);
-				}
-			}
-					
-			
+				if (transactionManager != null)
+					reader = Utility.ExecuteReader(transactionManager, commandWrapper);
+				else
+					reader = Utility.ExecuteReader(database, commandWrapper);
+
+				Fill(reader, rows, start, pageLength);
+				count = -1;
+				if(reader.NextResult())
+					if(reader.Read())
+						count = reader.GetInt32(0);
 			}
 			finally 
 			{
@@ -292,10 +283,10 @@ namespace <%=DALNameSpace%>.GenericClient
 		/// 	Deletes a row from the DataSource.
 		/// </summary>
 		<% for (int i = 0; i < SourceTable.PrimaryKey.MemberColumns.Count; i++) { %>
-		/// <param name="<%= GetPrivateName(SourceTable.PrimaryKey.MemberColumns[i])%>"><%=GetColumnXmlComment(SourceTable.PrimaryKey.MemberColumns[i],2)%>. Primary Key.</param>	
+		/// <param name="<%= GetFieldName(SourceTable.PrimaryKey.MemberColumns[i])%>"><%=GetColumnXmlComment(SourceTable.PrimaryKey.MemberColumns[i],2)%>. Primary Key.</param>	
 		<% } %>
 		/// <param name="transactionManager"><see cref="TransactionManager"/> object</param><% if (RowVersion != null){ %>
-		/// <param name="<%=GetPrivateName(RowVersion)%>">The timestamp field used for concurrency check.</param><% } %>
+		/// <param name="<%=GetFieldName(RowVersion)%>">The timestamp field used for concurrency check.</param><% } %>
 		/// <remarks>Deletes based on primary key(s).</remarks>
 		/// <returns>Returns true if operation suceeded.</returns>
         /// <exception cref="System.Exception">The command could not be executed.</exception>
@@ -304,17 +295,17 @@ namespace <%=DALNameSpace%>.GenericClient
 		<% if (RowVersion != null){ %>
         /// <exception cref="DBConcurrencyException">The record has been modified by an other user. Please reload the instance before deleting.</exception>
 		<%}%>
-		public override bool Delete(TransactionManager transactionManager, <%= GetFunctionHeaderParameters(SourceTable.PrimaryKey.MemberColumns) %><% if(RowVersion != null) {Response.Write(", byte[] " + GetPrivateName(RowVersion));}%>)
+		public override bool Delete(TransactionManager transactionManager, <%= GetFunctionHeaderParameters(SourceTable.PrimaryKey.MemberColumns) %><% if(RowVersion != null) {Response.Write(", byte[] " + GetFieldName(RowVersion));}%>)
 		{
 			GenericDatabase database = new GenericDatabase(this._connectionString, _providerFactory);
 			DbCommand commandWrapper = DbCommandProvider.GetCommandWrapper(database, "<%=owner + ProcedurePrefix + commandStem + DeleteSuffix%>", _useStoredProcedure, _providerInvariantName);
 			<% for(int i = 0; i < SourceTable.PrimaryKey.MemberColumns.Count; i++) { 
 				ColumnSchema col = SourceTable.PrimaryKey.MemberColumns[i];
 			%>
-			database.AddInParameter(commandWrapper, "@<%=GetPropertyName(col)%>", DbType.<%=col.DataType%>, <%=GetPrivateName(col)%>);
+			database.AddInParameter(commandWrapper, "@<%=GetPropertyName(col)%>", DbType.<%=col.DataType%>, <%=GetFieldName(col)%>);
 			<% } %>
 			<% if (RowVersion != null){ %>
-			database.AddInParameter(commandWrapper, "@<%=GetPropertyName(RowVersion)%>", DbType.<%= RowVersion.DataType.ToString() %>, <%= GetPrivateName(RowVersion) %>);
+			database.AddInParameter(commandWrapper, "@<%=GetPropertyName(RowVersion)%>", DbType.<%= RowVersion.DataType.ToString() %>, <%= GetFieldName(RowVersion) %>);
 			<% } %>
 			
 			int results = 0;
@@ -333,7 +324,7 @@ namespace <%=DALNameSpace%>.GenericClient
 			{
 				<% if (SourceTable.PrimaryKey.MemberColumns.Count > 0) { %>
 				string entityKey = EntityLocator.ConstructKeyFromPkItems(typeof(<%= entityClassName %>)
-					<% foreach (ColumnSchema col in SourceTable.PrimaryKey.MemberColumns){%>,<%=GetPrivateName(col)%><%}%>);
+					<% foreach (ColumnSchema col in SourceTable.PrimaryKey.MemberColumns){%>,<%=GetFieldName(col)%><%}%>);
 				EntityManager.StopTracking(entityKey);
 				<%}%>
 			}
@@ -705,7 +696,7 @@ namespace <%=DALNameSpace%>.GenericClient
 		/// <param name="pageLength">Number of rows to return.</param>
 		/// <param name="transactionManager"><see cref="TransactionManager"/> object</param>
 		<% for (int i = 0; i < fkeys[j].ForeignKeyMemberColumns.Count; i++) { %>
-		/// <param name="<%= GetPrivateName(fkeys[j].ForeignKeyMemberColumns[i])%>"><%=GetColumnXmlComment(fkeys[j].ForeignKeyMemberColumns[i],2)%></param>
+		/// <param name="<%= GetFieldName(fkeys[j].ForeignKeyMemberColumns[i])%>"><%=GetColumnXmlComment(fkeys[j].ForeignKeyMemberColumns[i],2)%></param>
 		<% } %>
 		/// <param name="count">out parameter to get total records for query</param>
 		/// <remarks></remarks>
@@ -719,7 +710,7 @@ namespace <%=DALNameSpace%>.GenericClient
 			DbCommand commandWrapper = DbCommandProvider.GetCommandWrapper(database, "<%=owner + ProcedurePrefix + commandStem + SelectSuffix + "By" + GetKeysName(fkeys[j].ForeignKeyMemberColumns)%>", _useStoredProcedure, _providerInvariantName);
 			
 			<% foreach(ColumnSchema col in fkeys[j].ForeignKeyMemberColumns) { %>
-				database.AddInParameter(commandWrapper, "@<%=GetPropertyName(col)%>", DbType.<%=col.DataType%>, <%=GetPrivateName(col)%>);
+				database.AddInParameter(commandWrapper, "@<%=GetPropertyName(col)%>", DbType.<%=col.DataType%>, <%=GetFieldName(col)%>);
 			<% } %>
 			
 			IDataReader reader = null;
@@ -802,7 +793,7 @@ namespace <%=DALNameSpace%>.GenericClient
 		/// </summary>
 		/// <param name="transactionManager"><see cref="TransactionManager"/> object</param>
 	<% for (int i = 0; i < indexes[j].MemberColumns.Count; i++) { %>
-		/// <param name="<%= GetPrivateName(indexes[j].MemberColumns[i])%>"><%= GetColumnXmlComment(indexes[j].MemberColumns[i],2)%></param>
+		/// <param name="<%= GetFieldName(indexes[j].MemberColumns[i])%>"><%= GetColumnXmlComment(indexes[j].MemberColumns[i],2)%></param>
 	<% } %>
 		/// <param name="start">Row number at which to start reading.</param>
 		/// <param name="pageLength">Number of rows to return.</param>
@@ -818,7 +809,7 @@ namespace <%=DALNameSpace%>.GenericClient
 			DbCommand commandWrapper = DbCommandProvider.GetCommandWrapper(database, "<%=owner + ProcedurePrefix + commandStem + SelectSuffix + "By" + GetKeysName(indexes[j].MemberColumns)%>", _useStoredProcedure, _providerInvariantName);
 			
 			<% foreach(ColumnSchema col in indexes[j].MemberColumns) { %>
-				database.AddInParameter(commandWrapper, "@<%=GetPropertyName(col)%>", DbType.<%=col.DataType%>, <%=GetPrivateName(col)%>);
+				database.AddInParameter(commandWrapper, "@<%=GetPropertyName(col)%>", DbType.<%=col.DataType%>, <%=GetFieldName(col)%>);
 			<% } %>
 			
 			IDataReader reader = null;
@@ -918,7 +909,7 @@ namespace <%=DALNameSpace%>.GenericClient
 			
 			DataTable dataTable = new DataTable();
 			<% 	for (int i = 0; i < cols.Count; i++) { %>
-			DataColumn col<%=i%> = dataTable.Columns.Add("<%=cols[i].Name%>", typeof(<%=GetCSTypeWithoutNullable(cols[i])%>));
+			DataColumn col<%=i%> = dataTable.Columns.Add("<%=cols[i].Name%>", typeof(<%=GetCSType(cols[i], false)%>));
 			col<%=i%>.AllowDBNull = <%= cols[i].AllowDBNull.ToString().ToLower()%>;		
 			<% } %>
 			
@@ -1260,11 +1251,11 @@ namespace <%=DALNameSpace%>.GenericClient
 			DbCommand commandWrapper = database.GetStoredProcCommand("<%=command.Name%>");
 			
 			<% foreach(ParameterSchema col in command.InputParameters)	{%>			
-				database.AddInParameter(commandWrapper, "@<%=GetPropertyName(col)%>", <%=GetDbType(col)%>,  <%=GetPrivateName(col)%> );
+				database.AddInParameter(commandWrapper, "@<%=GetPropertyName(col)%>", <%=GetDbType(col)%>,  <%=GetFieldName(col)%> );
 			<%}%>
 	
 			<% foreach(ParameterSchema col in command.AllOutputParameters)	{ %>
-				database.AddParameter(commandWrapper, "@<%=GetPropertyName(col)%>", DbType.<%=col.DataType.ToString()%>, ParameterDirection.InputOutput, "", DataRowVersion.Current,<%=GetPrivateName(col)%>);
+				database.AddParameter(commandWrapper, "@<%=GetPropertyName(col)%>", DbType.<%=col.DataType.ToString()%>, ParameterDirection.InputOutput, "", DataRowVersion.Current,<%=GetFieldName(col)%>);
 			<%}%>
 			
 			<%
@@ -1273,7 +1264,7 @@ namespace <%=DALNameSpace%>.GenericClient
 			
 			foreach(ParameterSchema outParam in command.AllOutputParameters)
 			{
-				outputValues.AppendFormat("\t\t\t{0} =  Utility.GetParameterValue<{1}>(commandWrapper.Parameters[\"@{2}\"]);\n",GetPrivateName(outParam), GetCSType(outParam), GetPropertyName(outParam)); 
+				outputValues.AppendFormat("\t\t\t{0} =  Utility.GetParameterValue<{1}>(commandWrapper.Parameters[\"@{2}\"]);\n",GetFieldName(outParam), GetCSType(outParam), GetPropertyName(outParam)); 
 			}
 			%>
 			<% if (returnType == "DataSet") { %>

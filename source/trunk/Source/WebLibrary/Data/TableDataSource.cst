@@ -46,15 +46,15 @@
 	IDictionary procs = GetCustomProcedures(SourceTable);
 	
 	string tableName = SourceTable.Name;
-	string className = GetClassName(tableName);
-	string keyClassName = GetKeyClassName(tableName);
-	string providerName = GetProviderName(tableName);
-	string providerBaseName = GetProviderBaseName(tableName);
+	string className = GetClassName(SourceTable);
+	string keyClassName = GetClassName(SourceTable, ClassNameFormat.Key);
+	string providerName = GetClassName(SourceTable, ClassNameFormat.Provider);
+	string providerBaseName = GetClassName(SourceTable, ClassNameFormat.ProviderBase);
 	string providerObject = "DataRepository." + providerName;
 	
 	if ( IsServiceLayer )
 	{
-		providerBaseName = GetServiceClassName(tableName);
+		providerBaseName = GetClassName(SourceTable, ClassNameFormat.Service);
 		providerObject = String.Format("new {0}()", providerBaseName);
 	}
 	
@@ -131,7 +131,7 @@
 					if ( IsJunctionKey(junctionTableKey) && junctionTableKey.Name != key.Name )
 					{
 						TableSchema secondaryTable = junctionTableKey.PrimaryKeyTable;
-						string functionname = "GetBy"+GetManyToManyName(junctionTableKey, GetCleanName(junctionTable.Name));
+						string functionname = "GetBy"+GetManyToManyName(junctionTableKey, junctionTable);
 						if(!manyToManyMethodNames.Contains(functionname)){
 							manyToManyMethodNames.Add(functionname);
 						}
@@ -331,7 +331,7 @@ namespace <%= WebNameSpace %>.Data
 				<%
 				if ( IncludeGetListByIX )
 				{
-					Response.Write(WriteUniqueIndexSelectStatements(tableName, SourceTable.PrimaryKey.MemberColumns, methods, true));
+					Response.Write(WriteUniqueIndexSelectStatements(SourceTable, SourceTable.PrimaryKey.MemberColumns, methods, true));
 				}
 				if ( IncludeGetList )
 				{
@@ -354,24 +354,24 @@ namespace <%= WebNameSpace %>.Data
 				if ( IncludeGetListByIX )
 				{
 					Response.Write("\t\t\t\t// PK" + Environment.NewLine);
-					Response.Write(WriteUniqueIndexSelectStatements(tableName, SourceTable.PrimaryKey.MemberColumns, methods));
+					Response.Write(WriteUniqueIndexSelectStatements(SourceTable, SourceTable.PrimaryKey.MemberColumns, methods));
 					Response.Write("\t\t\t\t// IX" + Environment.NewLine);
-					Response.Write(WriteIndexSelectStatements(tableName, methods));
+					Response.Write(WriteIndexSelectStatements(SourceTable, methods));
 				}
 				if ( IncludeGetListByFK )
 				{
 					Response.Write("\t\t\t\t// FK" + Environment.NewLine);
-					Response.Write(WriteFKSelectStatements(tableName, methods));
+					Response.Write(WriteFKSelectStatements(SourceTable, methods));
 				}
 				if ( IncludeManyToMany )
 				{
 					Response.Write("\t\t\t\t// M:M" + Environment.NewLine);
-					Response.Write(WriteManyToManySelectStatements(tableName, methods));
+					Response.Write(WriteManyToManySelectStatements(SourceTable, methods));
 				}
 				if ( IncludeCustoms )
 				{
 					Response.Write("\t\t\t\t// Custom" + Environment.NewLine);
-					Response.Write(WriteCustomSelectStatements(tableName, methods, IsServiceLayer));
+					Response.Write(WriteCustomSelectStatements(SourceTable, methods, IsServiceLayer));
 				}
 				%>
 				default:
@@ -623,47 +623,47 @@ private string TransactionManager
 	get { return (IncludeComponentLayer != MoM.Templates.ComponentPatternType.ServiceLayer) ? "GetTransactionManager(), " : ""; }
 }
 
-private string WriteUniqueIndexSelectStatements(string tableName, ColumnSchemaCollection columns, IList methods)
+private string WriteUniqueIndexSelectStatements(TableSchema table, ColumnSchemaCollection columns, IList methods)
 {
-	return WriteUniqueIndexSelectStatements(tableName, columns, methods, false);
+	return WriteUniqueIndexSelectStatements(table, columns, methods, false);
 }
-private string WriteUniqueIndexSelectStatements(string tableName, ColumnSchemaCollection columns, IList methods, bool isGet)
+private string WriteUniqueIndexSelectStatements(TableSchema table, ColumnSchemaCollection columns, IList methods, bool isGet)
 {
 	StringBuilder sb = new StringBuilder();
 	
 	if ( isGet )
 	{
 		methods.Add(MethodNames.Get);
-		sb.AppendFormat("\t\t\t\tcase {0}SelectMethod.{1}:{2}", GetClassName(tableName), MethodNames.Get, Environment.NewLine);
-		sb.AppendFormat("\t\t\t\t\t{0} entityKey  = new {0}();{1}", GetKeyClassName(tableName), Environment.NewLine);
+		sb.AppendFormat("\t\t\t\tcase {0}SelectMethod.{1}:{2}", GetClassName(table), MethodNames.Get, Environment.NewLine);
+		sb.AppendFormat("\t\t\t\t\t{0} entityKey  = new {0}();{1}", GetClassName(table, ClassNameFormat.Key), Environment.NewLine);
 		sb.AppendFormat("\t\t\t\t\tentityKey.Load(values);{0}", Environment.NewLine);
 		sb.AppendFormat("\t\t\t\t\titem = {1}.{2}({0}entityKey);{3}",
 						TransactionManager,
-						GetProviderName(tableName),
+						GetClassName(table, ClassNameFormat.Provider),
 						MethodNames.Get,
 						Environment.NewLine);
 	}
 	else
 	{
 		methods.Add(GetKeysName(columns));
-		sb.Append(WriteCaseStatement(tableName, GetKeysName(columns)));
-		sb.Append(WriteParameterStatements(columns, tableName));
+		sb.Append(WriteCaseStatement(table, GetKeysName(columns)));
+		sb.Append(WriteParameterStatements(columns));
 		sb.AppendFormat("\t\t\t\t\titem = {1}.GetBy{2}({0}{3});{4}",
 						TransactionManager,
-						GetProviderName(tableName),
+						GetClassName(table, ClassNameFormat.Provider),
 						GetKeysName(columns),
 						GetFunctionCallParameters(columns, "_nullable", AppendIf),
 						Environment.NewLine);
 	}
 					
-	sb.AppendFormat("\t\t\t\t\tresults = new {0}();{1}", GetCollectionClassName(tableName), Environment.NewLine);
+	sb.AppendFormat("\t\t\t\t\tresults = new {0}();{1}", GetClassName(table, ClassNameFormat.Collection), Environment.NewLine);
 	sb.AppendFormat("\t\t\t\t\tif ( item != null ) results.Add(item);{0}", Environment.NewLine);
 	sb.AppendFormat("\t\t\t\t\tcount = results.Count;{0}", Environment.NewLine);
 	sb.Append(WriteBreakStatement());
 	return sb.ToString();
 }
 
-private string WriteIndexSelectStatements(string tableName, IList methods)
+private string WriteIndexSelectStatements(TableSchema table, IList methods)
 {
 	StringBuilder sb = new StringBuilder();
 	
@@ -675,13 +675,13 @@ private string WriteIndexSelectStatements(string tableName, IList methods)
 		// check for dups
 		if( !methods.Contains(GetKeysName(indexSchema.MemberColumns)) )
 			if ( indexSchema.IsUnique )
-				sb.Append(WriteUniqueIndexSelectStatements(tableName, indexSchema.MemberColumns, methods));
+				sb.Append(WriteUniqueIndexSelectStatements(table, indexSchema.MemberColumns, methods));
 			else
 			{
 				methods.Add(GetKeysName(indexSchema.MemberColumns));
-				sb.Append(WriteCaseStatement(tableName, GetKeysName(indexSchema.MemberColumns)));
-				sb.Append(WriteParameterStatements(indexSchema.MemberColumns, tableName));
-				sb.Append(WriteGetByStatement(indexSchema.MemberColumns, tableName));
+				sb.Append(WriteCaseStatement(table, GetKeysName(indexSchema.MemberColumns)));
+				sb.Append(WriteParameterStatements(indexSchema.MemberColumns));
+				sb.Append(WriteGetByStatement(indexSchema.MemberColumns, table));
 				sb.Append(WriteBreakStatement());
 			}
 	}
@@ -689,7 +689,7 @@ private string WriteIndexSelectStatements(string tableName, IList methods)
 	return sb.ToString();
 }
 
-private string WriteFKSelectStatements(string tableName, IList methods)
+private string WriteFKSelectStatements(TableSchema table, IList methods)
 {
 	StringBuilder sb = new StringBuilder();
 	foreach ( TableKeySchema tableKey in SourceTable.ForeignKeys )
@@ -702,17 +702,16 @@ private string WriteFKSelectStatements(string tableName, IList methods)
 		{
 			methods.Add(GetKeysName(tableKey.ForeignKeyMemberColumns));
 
-			sb.Append(WriteCaseStatement(tableName, GetKeysName(tableKey.ForeignKeyMemberColumns)));
-			sb.Append(WriteParameterStatements(tableKey.ForeignKeyMemberColumns, tableName));
-			//sb.Append(WriteTotalRowCountStatement(tableKey.ForeignKeyMemberColumns, tableName));
-			sb.Append(WriteGetByStatement(tableKey.ForeignKeyMemberColumns, tableName));
+			sb.Append(WriteCaseStatement(table, GetKeysName(tableKey.ForeignKeyMemberColumns)));
+			sb.Append(WriteParameterStatements(tableKey.ForeignKeyMemberColumns));
+			sb.Append(WriteGetByStatement(tableKey.ForeignKeyMemberColumns, table));
 			sb.Append(WriteBreakStatement());
 		}
 	}
 	return sb.ToString();
 }
 
-private string WriteManyToManySelectStatements(string tableName, IList methods)
+private string WriteManyToManySelectStatements(TableSchema table, IList methods)
 {
 	StringBuilder sb = new StringBuilder();
 	foreach ( TableKeySchema key in SourceTable.PrimaryKeys )
@@ -728,15 +727,14 @@ private string WriteManyToManySelectStatements(string tableName, IList methods)
 				if ( IsJunctionKey(junctionTableKey) && junctionTableKey.Name != key.Name )
 				{
 					TableSchema secondaryTable = junctionTableKey.PrimaryKeyTable;
-					string methodName = GetManyToManyName(junctionTableKey, GetCleanName(junctionTable.Name));
+					string methodName = GetManyToManyName(junctionTableKey, junctionTable);
 					
 					if ( !methods.Contains(methodName) )
 					{
 						methods.Add(methodName);
-						sb.Append(WriteCaseStatement(tableName, methodName));
-						sb.Append(WriteParameterStatements(junctionTableKey.ForeignKeyMemberColumns, tableName));
-						//sb.Append(WriteTotalRowCountStatement(junctionTableKey.ForeignKeyMemberColumns, tableName, methodName));
-						sb.Append(WriteGetByStatement(junctionTableKey.ForeignKeyMemberColumns, tableName, methodName));
+						sb.Append(WriteCaseStatement(table, methodName));
+						sb.Append(WriteParameterStatements(junctionTableKey.ForeignKeyMemberColumns));
+						sb.Append(WriteGetByStatement(junctionTableKey.ForeignKeyMemberColumns, table, methodName));
 						sb.Append(WriteBreakStatement());
 					}
 				}
@@ -746,7 +744,7 @@ private string WriteManyToManySelectStatements(string tableName, IList methods)
 	return sb.ToString();
 }
 
-private string WriteCustomSelectStatements(string tableName, IList methods, bool isServiceLayer)
+private string WriteCustomSelectStatements(TableSchema table, IList methods, bool isServiceLayer)
 {
 	IDictionary procs = GetCustomProcedures(SourceTable);
 	StringBuilder sb = new StringBuilder();
@@ -766,10 +764,10 @@ private string WriteCustomSelectStatements(string tableName, IList methods, bool
 		{
 			methodParams = TransformStoredProcedureInputsToDataAccess(!isServiceLayer, command.InputParameters, true) + TransformStoredProcedureOutputsToDataAccess(command.InputParameters.Count > 0, command.AllOutputParameters, true);
 			methods.Add(methodName);
-			sb.Append(WriteCaseStatement(tableName, methodName, false));
-			sb.Append(WriteParameterStatements(command.InputParameters, tableName));
+			sb.Append(WriteCaseStatement(table, methodName, false));
+			sb.Append(WriteParameterStatements(command.InputParameters));
 			sb.AppendFormat("\t\t\t\t\tresults = {0}.{1}({2}{3}{4}{5});{6}",
-							GetProviderName(tableName),
+							GetClassName(table, ClassNameFormat.Provider),
 							methodName,
 							TransactionManager,
 							(isServiceLayer ? methodParams : pagingParams),
@@ -791,23 +789,23 @@ private string WriteCustomSelectStatements(string tableName, IList methods, bool
 	return sb.ToString();
 }
 
-private string WriteCaseStatement(string tableName, string methodName)
+private string WriteCaseStatement(TableSchema table, string methodName)
 {
-	return WriteCaseStatement(tableName, methodName, true);
+	return WriteCaseStatement(table, methodName, true);
 }
 
-private string WriteCaseStatement(string tableName, string methodName, bool includeGetBy)
+private string WriteCaseStatement(TableSchema table, string methodName, bool includeGetBy)
 {
 	StringBuilder sb = new StringBuilder();
 	sb.AppendFormat("\t\t\t\tcase {0}SelectMethod.{1}{2}:{3}",
-					GetClassName(tableName),
+					GetClassName(table),
 					(includeGetBy ? "GetBy" : ""),
 					methodName,
 					Environment.NewLine);
 	return sb.ToString();
 }
 
-private string WriteParameterStatements(ColumnSchemaCollection memberColumns, string tableName) //(MemberColumnSchemaCollection memberColumns, string tableName)
+private string WriteParameterStatements(ColumnSchemaCollection memberColumns)
 {
 	StringBuilder sb = new StringBuilder();
 	foreach(ColumnSchema column in memberColumns)
@@ -815,7 +813,7 @@ private string WriteParameterStatements(ColumnSchemaCollection memberColumns, st
 		if ( column.AllowDBNull )
 		{
 			sb.AppendFormat("\t\t\t\t\t{0} = ({2}) EntityUtil.ChangeType(values[\"{1}\"], typeof({2}));{3}",
-							GetPrivateName(column) + "_nullable",
+							GetFieldName(column) + "_nullable",
 							GetPropertyName(column),
 							GetCSType(column),
 							Environment.NewLine);
@@ -823,7 +821,7 @@ private string WriteParameterStatements(ColumnSchemaCollection memberColumns, st
 		else
 		{
 			sb.AppendFormat("\t\t\t\t\t{0} = ( values[\"{1}\"] != null ) ? ({2}) EntityUtil.ChangeType(values[\"{1}\"], typeof({2})) : {3};{4}",
-							GetPrivateName(column),
+							GetFieldName(column),
 							GetPropertyName(column),
 							GetCSType(column),
 							GetCSDefaultByType(column),
@@ -833,7 +831,7 @@ private string WriteParameterStatements(ColumnSchemaCollection memberColumns, st
 	return sb.ToString();
 }
 
-private string WriteParameterStatements(ParameterSchemaCollection parameters, string tableName) //(MemberColumnSchemaCollection memberColumns, string tableName)
+private string WriteParameterStatements(ParameterSchemaCollection parameters)
 {
 	StringBuilder sb = new StringBuilder();
 	foreach ( ParameterSchema param in parameters )
@@ -859,31 +857,31 @@ private string WriteParameterStatements(ParameterSchemaCollection parameters, st
 	return sb.ToString();
 }
 
-private string WriteTotalRowCountStatement(ColumnSchemaCollection memberColumns, string tableName)
+private string WriteTotalRowCountStatement(ColumnSchemaCollection memberColumns, TableSchema table)
 {
-	return WriteTotalRowCountStatement(memberColumns, tableName, null);
+	return WriteTotalRowCountStatement(memberColumns, table, null);
 }
-private string WriteTotalRowCountStatement(ColumnSchemaCollection memberColumns, string tableName, string functionName)
+private string WriteTotalRowCountStatement(ColumnSchemaCollection memberColumns, TableSchema table, string functionName)
 {
 	StringBuilder sb = new StringBuilder();
 	sb.AppendFormat("\t\t\t\t\tcount = {0}.GetBy{1}({2}).Count;{3}",
-					GetProviderName(tableName),
+					GetClassName(table, ClassNameFormat.Provider),
 					functionName == null ? GetKeysName(memberColumns) : functionName,
 					GetFunctionCallParameters(memberColumns, "_nullable", AppendIf),
 					Environment.NewLine);
 	return sb.ToString();
 }
 
-private string WriteGetByStatement(ColumnSchemaCollection memberColumns, string tableName)
+private string WriteGetByStatement(ColumnSchemaCollection memberColumns, TableSchema table)
 {
-	return WriteGetByStatement(memberColumns, tableName, null);
+	return WriteGetByStatement(memberColumns, table, null);
 }
-private string WriteGetByStatement(ColumnSchemaCollection memberColumns, string tableName, string functionName)
+private string WriteGetByStatement(ColumnSchemaCollection memberColumns, TableSchema table, string functionName)
 {
 	StringBuilder sb = new StringBuilder();
 	sb.AppendFormat("\t\t\t\t\tresults = {1}.GetBy{2}({0}{3}, this.StartIndex, this.PageSize, out count);{4}",
 					TransactionManager,
-					GetProviderName(tableName),
+					GetClassName(table, ClassNameFormat.Provider),
 					functionName == null ? GetKeysName(memberColumns) : functionName,
 					GetFunctionCallParameters(memberColumns, "_nullable", AppendIf),
 					Environment.NewLine);
@@ -991,7 +989,7 @@ private string WriteParameterDeclarations(IndexSchemaCollection indexes, TableKe
 private void WriteParameterDeclaration(ColumnSchema column, StringBuilder sb)
 {
 	sb.AppendFormat("\t\t\t{1} {0};{2}",
-					GetPrivateName(column) + (column.AllowDBNull ?  "_nullable" : "" ),					
+					GetFieldName(column) + (column.AllowDBNull ?  "_nullable" : "" ),					
 					GetCSType(column),
 					Environment.NewLine);
 }

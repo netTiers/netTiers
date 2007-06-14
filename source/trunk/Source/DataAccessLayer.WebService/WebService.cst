@@ -64,12 +64,9 @@ public class <%=ClassName%> : WebService
 		//bool IsPkeyReadOnly = false;
 		
 		// Name of the table being worked on.
-		string name = SourceTable.Name;
-		string className = NameSpace + "." + GetClassName(SourceTable.Name);
-		string collectionClassName = NameSpace + "." + GetCollectionClassName(SourceTable.Name);
-				
-		string commandStem = GetCleanName(SourceTable.Name);
-		string providerName = GetProviderName(SourceTable.Name);
+		string className = NameSpace + "." + GetClassName(SourceTable);
+		string collectionClassName = NameSpace + "." + GetClassName(SourceTable, ClassNameFormat.Collection);
+		string providerName = GetClassName(SourceTable, ClassNameFormat.Provider);
 		
 		// Collection of all columns in the table.
 		ColumnSchemaCollection cols = SourceTable.Columns;
@@ -127,14 +124,14 @@ public class <%=ClassName%> : WebService
 					if ( IsJunctionKey(junctionTableKey) && junctionTableKey.Name != key.Name )
 					{
 						TableSchema secondaryTable = junctionTableKey.PrimaryKeyTable;
-						string functionname = GetManyToManyName(junctionTableKey, GetCleanName(junctionTable.Name));
+						string functionname = GetManyToManyName(junctionTableKey, junctionTable);
 						methods.Add(providerName + "_GetBy" + functionname);
 %>
 
 	#region GetBy<%=functionname%>
 		
 	[WebMethod(Description="Get rows from the table <%=SourceTable.Name%>, through the junction table <%=junctionTable.Name%>.")]
-	public <%=NameSpace + "." + GetCollectionClassName(primaryTable.Name)%> <%=providerName%>_GetBy<%=functionname%>(<%=GetFunctionHeaderParameters(junctionTableKey.ForeignKeyMemberColumns)%>, int start, int pageLength, out int count)
+	public <%=NameSpace + "." + GetClassName(primaryTable, ClassNameFormat.Collection)%> <%=providerName%>_GetBy<%=functionname%>(<%=GetFunctionHeaderParameters(junctionTableKey.ForeignKeyMemberColumns)%>, int start, int pageLength, out int count)
 	{		
 		return <%=DALNameSpace%>.DataRepository.<%=providerName%>.GetBy<%=functionname%>(<%=GetFunctionCallParameters(junctionTableKey.ForeignKeyMemberColumns)%>, start, pageLength, out count);
 	}
@@ -165,9 +162,9 @@ public class <%=ClassName%> : WebService
 	/// <remarks>Deletes based on primary key(s).</remarks>
 	/// <returns>Returns true if operation suceeded.</returns>
 	[WebMethod(Description="Delete a row from the table <%=SourceTable.Name%>.")]
-	public bool <%=providerName%>_<%= MethodNames.Delete %>(<%= GetFunctionHeaderParameters(keys) %><% if(RowVersion != null) {Response.Write(", byte[] " + GetPrivateName(RowVersion));}%>)
+	public bool <%=providerName%>_<%= MethodNames.Delete %>(<%= GetFunctionHeaderParameters(keys) %><% if(RowVersion != null) {Response.Write(", byte[] " + GetFieldName(RowVersion));}%>)
 	{
-		return <%=DALNameSpace%>.DataRepository.<%=providerName%>.<%= MethodNames.Delete %>(<%= GetFunctionCallParameters(keys) %><% if(RowVersion != null) {Response.Write(", " + GetPrivateName(RowVersion));}%>);
+		return <%=DALNameSpace%>.DataRepository.<%=providerName%>.<%= MethodNames.Delete %>(<%= GetFunctionCallParameters(keys) %><% if(RowVersion != null) {Response.Write(", " + GetFieldName(RowVersion));}%>);
 	}
 	
 	#endregion
@@ -287,12 +284,10 @@ public class <%=ClassName%> : WebService
 			}
 			
 			string returnType = collectionClassName;
-			bool isUnique = false;
 			
 			if (indexes[j].IsUnique || indexes[j].IsPrimaryKey)
 			{
 				returnType = className;
-				isUnique = true;
 			}
 			
 			methods.Add(providerName + "_GetBy" + GetKeysName(indexes[j].MemberColumns));
@@ -427,9 +422,9 @@ public class <%=ClassName%> : WebService
 	<% foreach(ViewSchema SourceView in SourceViews)
 	{
 		
-		string className = NameSpace + "." + GetClassName(SourceView.Name);
-		string providerName = GetProviderName(SourceView.Name);		
-		string collectionClassName = NameSpace + "." + GetViewCollectionClassName(SourceView.Name);
+		string className = NameSpace + "." + GetClassName(SourceView);
+		string providerName = GetClassName(SourceView, ClassNameFormat.Provider);		
+		string collectionClassName = NameSpace + "." + GetClassName(SourceView, ClassNameFormat.ViewCollection);
 		
 		methods.Add(providerName + "_Get");
 	 	%>
