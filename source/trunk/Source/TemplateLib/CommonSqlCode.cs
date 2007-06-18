@@ -588,7 +588,10 @@ namespace MoM.Templates
                 string x = new string(chars);
             }
 
-            chars[chars.Length - 1] = Char.ToLower(chars[chars.Length - 1], CultureInfo.InvariantCulture);
+			if ( chars.Length > 0 )
+			{
+            	chars[chars.Length - 1] = Char.ToLower(chars[chars.Length - 1], CultureInfo.InvariantCulture);
+			}
 
             return new string(chars);
         }
