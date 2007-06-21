@@ -5204,13 +5204,17 @@ CREATE\s+PROC(?:EDURE)?                               # find the start of the st
 	#endregion
 	
 	#region Enterprise Library Version
-	
+	/// <summary>
+	/// Enterprise Library versions
+	/// </summary>
 	public enum EntLibVersion
 	{
 		/// <summary>Use Enterprise Library version 2.0.</summary>
 		v2,
 		/// <summary>Use Enterprise Library version 3.0.</summary>
-		v3
+		v3,
+		/// <summary>Use Enterprise Library version 3.1.</summary>
+		v3_1
 	}
 	
 	#endregion
