@@ -60,10 +60,11 @@ namespace MoM.Templates
 		private Hashtable aliases = null;
 		private bool includeGeneratedDate = false;
 		private NameConversionType nameConversion = NameConversionType.None;
+		private string safeNamePrefix = "SafeName_";
 		
 		#region CSharpKeywords
 		
-		private string[] csharpKeywords = new string[77] 
+		private string[] csharpKeywords =  
 		{
 				"abstract","event", "new", "struct", 
 				"as", "explicit", "null", "switch",
@@ -416,11 +417,19 @@ namespace MoM.Templates
 		}
 		
 		[Category("09. Code style - Advanced")]
-		[Description("If set to true, attempts to treat underscores, '_', as word seperators for Pascal casing.  So, a table called aspnet_users, turns into AspnetUsers.")]
+		[Description("If set to true, attempts to treat underscores, '_' and dashes '-', as word seperators for Pascal casing.  So, a table called aspnet_users, turns into AspnetUsers.")]
 		public bool ChangeUnderscoreToPascalCase
 		{
 			get { return this.changeUnderscoreToPascalCase; }
 			set { this.changeUnderscoreToPascalCase = value; }
+		}
+		
+		[Category("09. Code style - Advanced")]
+		[Description("Used to prefix names that would be unsafe (invalid) in C#. i.e C# keywords, any characters except letters, digits (Not first char though), and '_'.  Note: although spaces are not valid in C# names they will automatically be removed. Dashes are also invalid, but can be suppressed using the 'ChangeUnderscoreToPascalCase' option")]
+		public string SafeNamePrefix
+		{
+			get { return this.safeNamePrefix; }
+			set { this.safeNamePrefix = value; }
 		}
 		
 		[Editor(typeof(System.Windows.Forms.Design.FileNameEditor), typeof(System.Drawing.Design.UITypeEditor))] 
@@ -604,20 +613,23 @@ namespace MoM.Templates
         private string RemoveSeparatorAndCapNext(string input)
         {
             char[] splitter = new char[] { '-', '_', ' ' }; // potential chars to split on
-            string workingString = input;
+            string workingString = input.TrimEnd( splitter );
             char[] chars = workingString.ToCharArray();
-            int under = workingString.IndexOfAny( splitter );
 
-            while ( under > -1 )
-            {
-                chars[ under + 1 ] = Char.ToUpper( chars[under + 1], CultureInfo.InvariantCulture );
-                workingString = new String( chars );
-                under = workingString.IndexOfAny( splitter, under + 1 );
-            }
+			if ( chars.Length > 0 )
+			{
+            	int under = workingString.IndexOfAny( splitter );
+            	while ( under > -1 )
+            	{
+                	chars[ under + 1 ] = Char.ToUpper( chars[under + 1], CultureInfo.InvariantCulture );
+                	workingString = new String( chars );
+                	under = workingString.IndexOfAny( splitter, under + 1 );
+            	}
 
-            chars[0] = Char.ToUpper(chars[0], CultureInfo.InvariantCulture);
-            workingString = new string( chars );
-
+	            chars[0] = Char.ToUpper(chars[0], CultureInfo.InvariantCulture);
+			
+            	workingString = new string( chars );
+			}
             string regexReplacer = "[" + new string( ChangeUnderscoreToPascalCase ? new char[] { '-', '_', ' ' } : new char[] { ' ' } ) + "]";
 
             return Regex.Replace( workingString, regexReplacer, string.Empty );
@@ -1218,8 +1230,10 @@ namespace MoM.Templates
 					{
 						case ReturnFields.EntityName:
 						case ReturnFields.PropertyName:
+							name = GetCSharpSafeName(name);
 							return GetPascalCaseName(name); // class and property names are pascal-cased
 						case ReturnFields.FieldName:
+							name = GetCSharpSafeName(name);
 							return GetCamelCaseName(name); // fields (private member variables) are camel-cased
 						case ReturnFields.FriendlyName:
 							return PascalToSpaced(GetPascalCaseName(name)); // just return the pascal name with spaces
@@ -1370,6 +1384,59 @@ namespace MoM.Templates
 			}
 		}
 		
+        /// <summary>
+        /// Gets a C Sharp safe version of the specified name.
+        /// </summary>
+        /// <param name="name">The name.</param>
+        /// <returns></returns>
+        private string GetCSharpSafeName( string name )
+        {
+            string result = name;
+
+            // we must have something to start with!
+            if ( !IsValidCSharpName( result ) )
+            {
+                result = safeNamePrefix + result;
+				
+				 // replace any non valid char with an underscore
+                result = Regex.Replace( result, "[^a-zA-Z0-9_]", "_" );
+            }
+
+            return result;
+        }
+		
+		/// <summary>
+        /// Determines whether specified name is valid in C#.
+        /// </summary>
+        /// <param name="name">The name.</param>
+        /// <returns>
+        /// 	<c>true</c> if the name is valid; otherwise, <c>false</c>.
+        /// </returns>
+        private bool IsValidCSharpName( string name )
+        {
+            // we assume that the name is invalid
+            bool result = false;
+
+			// we must have something to start with!
+            if ( !string.IsNullOrEmpty( name ) )
+            {
+                // the first char must not be a digit
+                if ( !char.IsDigit( name, 0 ) )
+                {
+                    // check if its a reserved C# keyword
+                    if ( Array.IndexOf( csharpKeywords, name.ToLower() ) < 0 )
+                    {
+                        // only letters, digits and underscores are allowed
+						// we're also allowing spaces and dashes as the 
+						// user has the option of suppressing those
+                        Regex validChars = new Regex( @"[^a-zA-Z0-9_\s-]" );
+                        result = !validChars.IsMatch( name );
+                    }
+                }
+            }
+            return result;
+        }
+
 		#endregion // Get Names
 
 		#region Reflection Helpers

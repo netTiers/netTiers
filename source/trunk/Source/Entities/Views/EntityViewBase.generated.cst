@@ -59,7 +59,7 @@ namespace <%=NameSpace%>
 		/// <summary>
 		/// <%=SourceView.Columns[x].Name%> : <%=GetColumnXmlComment(SourceView.Columns[x],2)%>
 		/// </summary>
-		private <%= GetCSType(SourceView.Columns[x]) %><%= Tab(2) %>  <%= GetVariableName(SourceView.Columns[x]) %> = <% if ( SourceView.Columns[x].AllowDBNull && IsCSReferenceDataType(SourceView.Columns[x]) ) { %>null<% } else { %><%=GetCSDefaultByType(SourceView.Columns[x])%><% }%>;
+		private <%= GetCSType(SourceView.Columns[x]) %><%= Tab(2) %>  <%= GetFieldName(SourceView.Columns[x]) %> = <% if ( SourceView.Columns[x].AllowDBNull && IsCSReferenceDataType(SourceView.Columns[x]) ) { %>null<% } else { %><%=GetCSDefaultByType(SourceView.Columns[x])%><% }%>;
 		<%} //end for %>
 		
 		/// <summary>
@@ -86,7 +86,7 @@ namespace <%=NameSpace%>
 		public <%=abstractClassName%>(<% for (int x=0; x < SourceView.Columns.Count; x++) { %><%= GetCSType(SourceView.Columns[x]) %> <%= GetFieldName(SourceView.Columns[x]) %><%if (x < SourceView.Columns.Count -1){%>, <%} } // end for %>)
 		{
 			<% for (int x=0; x < SourceView.Columns.Count; x++) { %>
-			this.<%= GetVariableName(SourceView.Columns[x]) %> = <%= GetFieldName(SourceView.Columns[x]) %>;
+			this.<%= GetFieldName(SourceView.Columns[x]) %> = <%= GetFieldName(SourceView.Columns[x]) %>;
 			<% }// end for %>
 		}
 		
@@ -133,7 +133,7 @@ namespace <%=NameSpace%>
 		{
 			get
 			{
-				return this.<%= GetVariableName(SourceView.Columns[x]) %>; 
+				return this.<%= GetFieldName(SourceView.Columns[x]) %>; 
 			}
 			set
 			{
@@ -142,15 +142,15 @@ namespace <%=NameSpace%>
 					throw new ArgumentNullException("value", "<%= GetPropertyName(SourceView.Columns[x]) %> does not allow null values.");
 				<%}
 				if ( SourceView.Columns[x].AllowDBNull && !IsCSReferenceDataType(SourceView.Columns[x]) ) {%>
-				if (<%= GetVariableName(SourceView.Columns[x]) %> == value && <%=GetPropertyName(SourceView.Columns[x])%> != null )
+				if (<%= GetFieldName(SourceView.Columns[x]) %> == value && <%=GetPropertyName(SourceView.Columns[x])%> != null )
 				<%}
 				else
 				{%>
-				if (<%= GetVariableName(SourceView.Columns[x]) %> == value)
+				if (<%= GetFieldName(SourceView.Columns[x]) %> == value)
 				<%} // end if (! IsCSReferenceDataType(SourceView.Columns[x]) ) %>
 					return;
 					
-				this.<%= GetVariableName(SourceView.Columns[x]) %> = value;
+				this.<%= GetFieldName(SourceView.Columns[x]) %> = value;
 				this._isDirty = true;	
 				OnPropertyChanged(<%=className%>Column.<%=GetPropertyName(SourceView.Columns[x]) %>.ToString());
 			}
