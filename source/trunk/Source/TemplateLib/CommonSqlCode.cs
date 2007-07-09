@@ -54,6 +54,7 @@ namespace MoM.Templates
 		private bool cspUseDefaultValForNonNullableTypes = false;
 		private bool parseDbColDefaultVal  = false;
 		private bool changeUnderscoreToPascalCase  = true;
+		private PascalCasingStyle usePascalCasing = PascalCasingStyle.Style2;
 		private bool includeCustoms = true;
 		private NetTiers.NetTiersMap netTiersMap;
 		private MethodNamesProperty methodNames = null;
@@ -432,6 +433,16 @@ namespace MoM.Templates
 			set { this.safeNamePrefix = value; }
 		}
 		
+		
+		[Category("09. Code style - Advanced")]
+		[CodeTemplateProperty(CodeTemplatePropertyOption.Optional)]
+		[Description("Used to determine the type of pascal casing used. None - no casing is done, Style1 - original casing which does not convert uppercase characters, Style2 - newer casing that does convert uppercase")]
+		public PascalCasingStyle UsePascalCasing
+		{
+			get { return this.usePascalCasing; }
+			set { this.usePascalCasing = value; }
+		}
+		
 		[Editor(typeof(System.Windows.Forms.Design.FileNameEditor), typeof(System.Drawing.Design.UITypeEditor))] 
 		[Category("09. Code style - Advanced")]
 		[CodeTemplateProperty(CodeTemplatePropertyOption.Optional)]
@@ -525,12 +536,66 @@ namespace MoM.Templates
             return pascalName.Substring(0, 1).ToLower() + pascalName.Substring(1);
         }
 
-       /// <summary>
+		/// <summary>
+        /// Get the Pascal cased version of a name.  
+        /// </summary>
+        /// <param name="name">Name to be changed</param>
+        /// <returns>PascalCased version of the name</returns>
+		public string GetPascalCaseName(string name)
+		{
+			string result = name;
+			
+			switch ( UsePascalCasing )
+			{
+				case PascalCasingStyle.Style1 :
+					result = GetPascalCaseNameStyle1(name);
+					break;
+				case PascalCasingStyle.Style2 :
+					result = GetPascalCaseNameStyle2(name);
+					break;
+				default :
+					break;
+			}
+			
+			return result;
+		}
+		
+		/// <summary>
+        /// Get the Pascal cased version of a name.  
+        /// </summary>
+        /// <param name="name">Name to be changed</param>
+        /// <returns>PascalCased version of the name</returns>
+        public string GetPascalCaseNameStyle1(string name)
+        {
+			string[] splitNames;
+			name = name.Trim();
+			if (ChangeUnderscoreToPascalCase)
+			{
+				char[] splitter = {'_', ' '};
+				splitNames = name.Split(splitter);
+			}	
+			else
+			{
+				char[] splitter =  {' '};
+				splitNames = name.Split(splitter);
+			}
+			
+            string pascalName = "";
+            foreach (string s in splitNames)
+            {
+                if (s.Length > 0)
+                    pascalName += s.Substring(0, 1).ToUpper() + s.Substring(1);
+            }
+
+            return pascalName;
+        }
+		
+        /// <summary>
         /// Gets the pascal case name of a string.
         /// </summary>
         /// <param name="name">The name.</param>
         /// <returns></returns>
-        private string GetPascalCaseName( string name )
+        private string GetPascalCaseNameStyle2( string name )
         {
 			string pascalName = string.Empty;
           	string notStartingAlpha = Regex.Replace( name, "^[^a-zA-Z]+", string.Empty );
@@ -5284,6 +5349,29 @@ CREATE\s+PROC(?:EDURE)?                               # find the start of the st
 		v3_1
 	}
 	
+	#endregion
+	
+	#region PascalCasing style
+	/// <summary>
+	/// Indicates the style of Pascal casing to be used
+	/// </summary>
+	public enum PascalCasingStyle
+	{
+		/// <summary>
+		/// No pascal casing is applied
+		/// </summary>
+		None,
+		
+		/// <summary>
+		/// Original .NetTiers styling (pre SVN553)
+		/// </summary>
+		Style1,
+		
+		/// <summary>
+		/// New styling that handles uppercase (post SVN552)
+		/// </summary>
+		Style2,
+	}
 	#endregion
 	
 	#region Entity name conversion types
