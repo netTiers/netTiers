@@ -3123,11 +3123,11 @@ namespace MoM.Templates
 			else if (field.NativeType.ToLower() == "xml")
 				return "string";
 			else if (CSPUseDefaultValForNonNullableTypes && (field is ParameterSchema) && !IsCSReferenceDataType(field))
-				if (!DefaultIsNull((ParameterSchema)field))
+				if (!DefaultIsNull((ParameterSchema)field) || !nullable)
 					return field.SystemType.ToString();
 				else 
 					return field.SystemType.ToString() + "?";
-			else if (!IsCSReferenceDataType(field) && field.AllowDBNull)
+			else if (!IsCSReferenceDataType(field) && field.AllowDBNull && nullable)
 				return field.SystemType.ToString() + "?";
 			else
 				return field.SystemType.ToString();
