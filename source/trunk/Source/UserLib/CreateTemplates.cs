@@ -7,3 +7,8 @@
 		
 
         #endregion 
+		
+		#region Custom Code that executes once
+			// Use this area to subscribe to events or if you need to run some custom methods.
+			//Example:		
+		#endregion 

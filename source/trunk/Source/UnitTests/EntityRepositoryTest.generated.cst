@@ -76,7 +76,6 @@
 #region Using directives
 
 using System;
-using System.IO;
 using System.Xml;
 using System.Xml.Serialization;
 using <%=TestAssemblyNameSpace%>;
@@ -98,7 +97,7 @@ namespace <%=UTNameSpace%>
 		// the <%=collectionClassName%> instance used to test the repository.
 		static <%=collectionClassName%> mockCollection;
 		
-		static TransactionManager transactionManager = null;
+		public static TransactionManager transactionManager = null;
         
         /// <summary>
 		/// This method is used to construct the test environment prior to running the tests.
@@ -253,13 +252,13 @@ namespace <%=UTNameSpace%>
 			string fileName = "temp_<%=className%>.xml";
 		
 			//XmlSerializer mySerializer = new XmlSerializer(typeof(<%=className%>)); 
-			//FileStream myFileStream = new FileStream(fileName,  FileMode.Open); 
+			//FileStream myFileStream = new FileStream(fileName,  System.IO.FileMode.Open); 
 			//this.mock = (<%=className%>) mySerializer.Deserialize(myFileStream);
 			//myFileStream.Close();
-			StreamReader sr = File.OpenText(fileName);
+			System.IO.StreamReader sr = System.IO.File.OpenText(fileName);
 			object item = EntityHelper.DeserializeEntityXml<<%=className%>>(sr.ReadToEnd());
 			sr.Close();
-			File.Delete(fileName);
+			System.IO.File.Delete(fileName);
 			
 			System.Console.WriteLine("mock correctly deserialized from a temporary file.");
 		}
@@ -275,7 +274,7 @@ namespace <%=UTNameSpace%>
 			mockCollection.Add(mock);
 		
 			XmlSerializer mySerializer = new XmlSerializer(typeof(<%=collectionClassName%>)); 
-			StreamWriter myWriter = new StreamWriter(fileName); 
+			System.IO.StreamWriter myWriter = new System.IO.StreamWriter(fileName); 
 			mySerializer.Serialize(myWriter, mockCollection); 
 			myWriter.Close();
 			
@@ -291,10 +290,10 @@ namespace <%=UTNameSpace%>
 			string fileName = "temp_<%=GetClassName(SourceTable, ClassNameFormat.CollectionProperty)%>.xml";
 		
 			XmlSerializer mySerializer = new XmlSerializer(typeof(<%=collectionClassName%>)); 
-			FileStream myFileStream = new FileStream(fileName,  FileMode.Open); 
+			System.IO.FileStream myFileStream = new System.IO.FileStream(fileName,  System.IO.FileMode.Open); 
 			<%=collectionClassName%> mockCollection = (<%=collectionClassName%>) mySerializer.Deserialize(myFileStream);
 			myFileStream.Close();
-			File.Delete(fileName);
+			System.IO.File.Delete(fileName);
 			System.Console.WriteLine("<%=collectionClassName%> correctly deserialized from a temporary file.");	
 		}
 		#endregion
@@ -412,6 +411,7 @@ namespace <%=UTNameSpace%>
 					{%>
 					//OneToOneRelationship
 					<% for (int y=0;y<fkeys[x].ForeignKeyMemberColumns.Count; y++) { %>
+					<%= GetClassName(fkeys[x].PrimaryKeyTable, ClassNameFormat.UnitTest)%>.transactionManager = transactionManager;
 					<%= GetClassName(fkeys[x].PrimaryKeyTable)%> mock<%= GetClassName(fkeys[x].PrimaryKeyTable)%>By<%= GetPropertyName(fkeys[x].ForeignKeyMemberColumns[y])%> = <%= GetClassName(fkeys[x].PrimaryKeyTable, ClassNameFormat.UnitTest)%>.CreateMockInstance();
 					DataRepository.<%=GetClassName(fkeys[x].PrimaryKeyTable, ClassNameFormat.Provider)%>.<%= MethodNames.Insert %>(transactionManager, mock<%= GetClassName(fkeys[x].PrimaryKeyTable)%>By<%= GetPropertyName(fkeys[x].ForeignKeyMemberColumns[y])%>);
 					mock.<%= GetPropertyName(fkeys[x].ForeignKeyMemberColumns[y])%> = mock<%= GetClassName(fkeys[x].PrimaryKeyTable)%>By<%= GetPropertyName(fkeys[x].ForeignKeyMemberColumns[y])%>.<%=GetPropertyName(fkeys[x].PrimaryKeyMemberColumns[y])%>;
@@ -478,6 +478,7 @@ namespace <%=UTNameSpace%>
 					//OneToOneRelationship
 					<% for (int y=0;y<fkeys[x].ForeignKeyMemberColumns.Count; y++) 
 					{ %>
+					<%= GetClassName(fkeys[x].PrimaryKeyTable, ClassNameFormat.UnitTest)%>.transactionManager = transactionManager;
 					<%= GetClassName(fkeys[x].PrimaryKeyTable)%> mock<%= GetClassName(fkeys[x].PrimaryKeyTable)%>By<%= GetPropertyName(fkeys[x].ForeignKeyMemberColumns[y])%> = <%= GetClassName(fkeys[x].PrimaryKeyTable, ClassNameFormat.UnitTest)%>.CreateMockInstance();
 					DataRepository.<%=GetClassName(fkeys[x].PrimaryKeyTable, ClassNameFormat.Provider)%>.<%= MethodNames.Insert %>(transactionManager, mock<%= GetClassName(fkeys[x].PrimaryKeyTable)%>By<%= GetPropertyName(fkeys[x].ForeignKeyMemberColumns[y])%>);
 					mock.<%= GetPropertyName(fkeys[x].ForeignKeyMemberColumns[y])%> = mock<%= GetClassName(fkeys[x].PrimaryKeyTable)%>By<%= GetPropertyName(fkeys[x].ForeignKeyMemberColumns[y])%>.<%=GetPropertyName(fkeys[x].PrimaryKeyMemberColumns[y])%>;

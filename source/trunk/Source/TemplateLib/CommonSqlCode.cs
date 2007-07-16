@@ -24,7 +24,7 @@ namespace MoM.Templates
 	/// Common code-behind class used to simplify SQL Server based CodeSmith templates
 	/// </summary>
 	[DefaultProperty("ChooseSourceDatabase")]
-	public class CommonSqlCode : CodeTemplate
+	public partial class CommonSqlCode : CodeTemplate
 	{
 			
 		// [ab 012605] convenience array for checking if a datatype is an integer 
@@ -65,7 +65,7 @@ namespace MoM.Templates
 		
 		#region CSharpKeywords
 		
-		private string[] csharpKeywords =  
+		protected string[] csharpKeywords = new string[77] 
 		{
 				"abstract","event", "new", "struct", 
 				"as", "explicit", "null", "switch",
@@ -683,17 +683,17 @@ namespace MoM.Templates
 
 			if ( chars.Length > 0 )
 			{
-            	int under = workingString.IndexOfAny( splitter );
-            	while ( under > -1 )
-            	{
-                	chars[ under + 1 ] = Char.ToUpper( chars[under + 1], CultureInfo.InvariantCulture );
-                	workingString = new String( chars );
-                	under = workingString.IndexOfAny( splitter, under + 1 );
-            	}
+            int under = workingString.IndexOfAny( splitter );
+            while ( under > -1 )
+            {
+                chars[ under + 1 ] = Char.ToUpper( chars[under + 1], CultureInfo.InvariantCulture );
+                workingString = new String( chars );
+                under = workingString.IndexOfAny( splitter, under + 1 );
+            }
 
-	            chars[0] = Char.ToUpper(chars[0], CultureInfo.InvariantCulture);
+            chars[0] = Char.ToUpper(chars[0], CultureInfo.InvariantCulture);
 			
-            	workingString = new string( chars );
+            workingString = new string( chars );
 			}
             string regexReplacer = "[" + new string( ChangeUnderscoreToPascalCase ? new char[] { '-', '_', ' ' } : new char[] { ' ' } ) + "]";
 
@@ -5201,19 +5201,31 @@ CREATE\s+PROC(?:EDURE)?                               # find the start of the st
 		///<summary>
 		/// Get's the constraint side of a column from a m:m relationship to it's corresponding 1:m relationship
 		///</summary>
-		public ColumnSchema GetCorrespondingRelationship(TableKeySchemaCollection fkeys, ColumnSchema col)
-		{
-			//System.Diagnostics.Debugger.Break();
-			for (int j=0; j < fkeys.Count; j++)
+		public List<ColumnSchema> GetCorrespondingRelationships(SchemaExplorer.TableKeySchemaCollection fkeys, SchemaExplorer.ColumnSchema[] cols)
+		{	
+			List<ColumnSchema> result = new List<ColumnSchema>();
+			
+			for(int x=0; x < cols.Length; x++)
 			{
-				for (int y=0; y < fkeys[j].ForeignKeyMemberColumns.Count; y++)
+				ColumnSchema col = cols[x];
+				
+				for (int j=0; j < fkeys.Count; j++)
 				{
-					if (fkeys[j].ForeignKeyMemberColumns[y].Name.ToLower() 
-							== col.Name.ToLower())
-						return fkeys[j].PrimaryKeyMemberColumns[y];
+					if (col.Table != fkeys[j].ForeignKeyTable)
+						continue;
+						
+					for (int y=0; y < fkeys[j].ForeignKeyMemberColumns.Count; y++)
+					{						
+						if (fkeys[j].ForeignKeyMemberColumns[y].Name.ToLower() 
+								== col.Name.ToLower())
+						{	
+							if (fkeys[j].PrimaryKeyMemberColumns.Count - 1 >= y)
+								result.Add(fkeys[j].PrimaryKeyMemberColumns[y]);
+						}
+					}
 				}
 			}
-			return null;
+			return result;
 		}
 
 

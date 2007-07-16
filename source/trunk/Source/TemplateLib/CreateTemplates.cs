@@ -215,3 +215,4 @@
 			CodeTemplates.Add("TypedDataSource.cst", base.CreateTemplate<TypedDataSource>()); this.PerformStep();
 	
 		#endregion 
+			

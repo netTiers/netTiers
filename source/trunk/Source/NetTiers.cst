@@ -169,7 +169,7 @@
 	}
 
 	[Editor(typeof(System.Windows.Forms.Design.FolderNameEditor), typeof(System.Drawing.Design.UITypeEditor))] 
-	[CodeTemplateProperty(CodeTemplatePropertyOption.Optional)]
+	[Optional, NotChecked]
 	[Category("01. Getting Started - Required")]
 	[Description("The directory to output the results to.")]
 	[DefaultValue("")]
@@ -195,7 +195,7 @@
 	
 	[Editor(typeof(System.Windows.Forms.Design.FileNameEditor), typeof(System.Drawing.Design.UITypeEditor))] 
 	[Category("01. Getting Started - Required")]
-	[CodeTemplateProperty(CodeTemplatePropertyOption.Optional)]
+	[Optional, NotChecked]
 	[Description("Optional File Path to a table/object alias file.")]
 	public string MappingFile
 	{
@@ -244,7 +244,7 @@
 	
 	[Category("01b. Filter by Individual Objects - Optional")]
 	[Description("The tables you wish to generate, if you do not select any SourceTables or SourceViews, and SourceDatabase is completed, then the entire database will be generated.")]
-	[CodeTemplateProperty(CodeTemplatePropertyOption.Optional)]
+	[Optional, NotChecked]
 	public TableSchemaCollection SourceTables
 	{
 		get
@@ -262,7 +262,7 @@
 	
 	[Category("01b. Filter by Individual Objects - Optional")]
 	[Description("The tables to generate as enums. Your columns must meet the following rules. The first column must be a primary key and an Identity column, the second column must have a unique column constraint index, the optional third column will be the description of the generated enum. You must select this as a SourceTable as well in order to generate the enum.")]
-	[CodeTemplateProperty(CodeTemplatePropertyOption.Optional)]
+	[Optional, NotChecked]
 	public TableSchemaCollection EnumTables
 	{
 		get
@@ -280,7 +280,7 @@
 	
 	[Category("01b. Filter by Individual Objects - Optional")]
 	[Description("The views you wish to generate, if you do not select any SourceViews or SourceTables, and SourceDatabase is completed, then the entire database will be generated.")]
-	[CodeTemplateProperty(CodeTemplatePropertyOption.Optional)]
+	[Optional, NotChecked]
 	public ViewSchemaCollection SourceViews
 	{
 		get
@@ -299,7 +299,7 @@
 	
 	[Category("General")]
 	[Description("Should we use partials when generating .net 2.0 code?")]
-	[CodeTemplateProperty(CodeTemplatePropertyOption.Optional)]
+	[Optional, NotChecked]
 	[Browsable(false)]
 	[Obsolete("Partial class are now automatically where targetting .net2 framework.")]
 	public bool UsePartialClass
@@ -317,7 +317,7 @@
 	
 	[Category("General")]
 	[Description("Should overwrite partial stubs?")]
-	[CodeTemplateProperty(CodeTemplatePropertyOption.Optional)]
+	[Optional, NotChecked]
 	[Browsable(false)]
 	public bool OverwritePartialClassStub
 	{
@@ -334,7 +334,7 @@
 
 
 	[Editor(typeof(System.Windows.Forms.Design.FolderNameEditor), typeof(System.Drawing.Design.UITypeEditor))] 
-	[CodeTemplateProperty(CodeTemplatePropertyOption.Optional)]
+	[Optional, NotChecked]
 	[Category("06. Web - Advanced")]
 	[Description("The full path for the the WebService files. this path match with the webservice url.")]
 	[DefaultValue("c:\\inetpub\\wwwroot\\WebServices")]
@@ -355,7 +355,7 @@
 		} 
 	}
 
-	[CodeTemplateProperty(CodeTemplatePropertyOption.Optional)]
+	[Optional, NotChecked]
 	[Category("06. Web - Advanced")]
 	[Description("The IIS virtual directory path for the WebService files. This path should match with the WebserviceOutputPath.")]
 	[DefaultValue("http://localhost/NetTiersWS")]
@@ -375,7 +375,7 @@
 		} 
 	}
 
-	[CodeTemplateProperty(CodeTemplatePropertyOption.Optional)]
+	[Optional, NotChecked]
 	[Category("06b. Website - Advanced")]
 	[Description("Indicates the web admin sie name.")]
 	[DefaultValue("Application Name")]
@@ -410,11 +410,11 @@
 		if((this.State == TemplateState.Default || this.State == TemplateState.Validating)
 			&& propertyName == "ChooseSourceDatabase")
 		{
-			MappingFile = "";
-			OutputDirectory = "";
-			RootNameSpace = "";
-			WebServiceOutputPath = "";
-			WebServiceUrl = "";
+			//MappingFile = "";
+			//OutputDirectory = "";
+			//RootNameSpace = "";
+			//vWebServiceOutputPath = "";
+			//WebServiceUrl = "";
 			WebAdminSiteName = "";
 		}
 		
@@ -422,6 +422,7 @@
 	}
 	#endif
 	#endregion 
+
 	
 	#region Properties used by the wizard to report progression
 	
@@ -564,13 +565,15 @@
     public DateTime startTime = DateTime.Now;
 	public DateTime lastTime = DateTime.Now;
     // end xml report
-   
-   VSNetIntegration vsnetIntegration  = VSNetIntegration.SeparatedProjects;
-   VSNetVersion vsnetVersion = VSNetVersion.v2005;
-   
+    
+	VSNetIntegration vsnetIntegration  = VSNetIntegration.SeparatedProjects;
+    VSNetVersion vsnetVersion = VSNetVersion.v2005;
+
     //TextPad Regex for template listing array.  Used to convert to FrameWorkTemplates.cst
 	//\t\t\t\t\t\t\t\t\t\t\t\t\t\t"\(.*\\\\\)?\(.*\).cst",
-	
+
+	//Include the User Engine Methods
+	<!-- #include file="UserLib/CustomMethods.cs" --> 
 	
 	public enum AccessibilityEnum
 	{
@@ -617,6 +620,7 @@
 		}
 	}
 
+		
 public CodeTemplate GetTemplate(string templateType)
 {
 	return CodeTemplates[templateType];
@@ -742,8 +746,7 @@ public void Go()
 	attIncludeCustoms.Value = IncludeCustoms.ToString().ToLower();
 	customProcsNode.Attributes.Append(attIncludeCustoms);
 	docOutput.DocumentElement.AppendChild(customProcsNode);
-		
-
+	
 	if (IncludeSave)
 	{
 		IncludeInsert = true;
@@ -2236,7 +2239,7 @@ public void Go()
 				//----------------------------------------------------------------------------------------------------------------------------------------------
 				//-- Web Admin ASCX pages
 				//----------------------------------------------------------------------------------------------------------------------------------------------
-				if (true || !File.Exists(rootPathWebsite + "\\Admin\\" + GetClassName(SourceTable) + ".aspx"))
+				//if (true || !File.Exists(rootPathWebsite + "\\Admin\\" + GetClassName(SourceTable) + ".aspx"))
 				{											
 					this.GetTemplate("Entity.aspx.cst").SetProperty("SourceTable", SourceTable);
 					this.GetTemplate("Entity.aspx.cst").SetProperty("SourceTables", templateSourceTables);
@@ -2253,7 +2256,7 @@ public void Go()
 				//----------------------------------------------------------------------------------------------------------------------------------------------
 				//-- Web Admin ASCX pages
 				//----------------------------------------------------------------------------------------------------------------------------------------------			
-				if (true || !File.Exists(rootPathWebsite + "\\Admin\\" + GetClassName(SourceTable) + ".aspx.cs"))
+				//if (true || !File.Exists(rootPathWebsite + "\\Admin\\" + GetClassName(SourceTable) + ".aspx.cs"))
 				{											
 					this.GetTemplate("Entity.aspx.cs.cst").SetProperty("SourceTable", SourceTable);				
 					this.GetTemplate("Entity.aspx.cs.cst").SetProperty("NameSpace", RootNameSpace);
@@ -2266,7 +2269,7 @@ public void Go()
 					this.GetTemplate("Entity.aspx.cs.cst").RenderToFile(rootPathWebsite + "\\Admin\\" + GetClassName(SourceTable) + ".aspx.cs", true);
 	
 				}							
-				if (true || !File.Exists(rootPathWebsite + "\\Admin\\" + GetClassName(SourceTable) + "Edit.aspx"))
+				//if (true || !File.Exists(rootPathWebsite + "\\Admin\\" + GetClassName(SourceTable) + "Edit.aspx"))
 				{											
 					this.GetTemplate("EntityEdit.aspx.cst").SetProperty("SourceTable", SourceTable);				
 					this.GetTemplate("EntityEdit.aspx.cst").SetProperty("SourceTables", templateSourceTables);
@@ -2278,7 +2281,7 @@ public void Go()
 					
 					this.GetTemplate("EntityEdit.aspx.cst").RenderToFile(rootPathWebsite + "\\Admin\\" + GetClassName(SourceTable) + "Edit.aspx", true);						
 				}	
-				if (true || !File.Exists(rootPathWebsite + "\\Admin\\" + GetClassName(SourceTable) + "Edit.aspx.cs"))
+				//if (true || !File.Exists(rootPathWebsite + "\\Admin\\" + GetClassName(SourceTable) + "Edit.aspx.cs"))
 				{											
 					this.GetTemplate("EntityEdit.aspx.cs.cst").SetProperty("SourceTable", SourceTable);				
 					this.GetTemplate("EntityEdit.aspx.cs.cst").SetProperty("SourceTables", templateSourceTables);
@@ -2291,7 +2294,7 @@ public void Go()
 					
 					this.GetTemplate("EntityEdit.aspx.cs.cst").RenderToFile(rootPathWebsite + "\\Admin\\" + GetClassName(SourceTable) + "Edit.aspx.cs", true);						
 				}		
-				if (true || !File.Exists(rootPathWebsite + "\\Admin\\UserControls\\" + GetClassName(SourceTable) + "Fields.ascx"))
+				//if (true || !File.Exists(rootPathWebsite + "\\Admin\\UserControls\\" + GetClassName(SourceTable) + "Fields.ascx"))
 				{											
 					this.GetTemplate("EntityFields.ascx.cst").SetProperty("SourceTable", SourceTable);
 					this.GetTemplate("EntityFields.ascx.cst").SetProperty("SourceTables", templateSourceTables);
@@ -3740,7 +3743,7 @@ public void Go()
 		XslCompiledTransform xslt = new XslCompiledTransform();
 		xslt.Load(this.CodeTemplateInfo.DirectoryName + "\\VisualStudio\\reportHTML.xsl");
 		XmlTextWriter xmlWriter = new XmlTextWriter(OutputDirectory + "\\report.html", Encoding.UTF8);
-		xmlWriter.Formatting = Formatting.Indented;               
+		xmlWriter.Formatting = System.Xml.Formatting.Indented;               
 		xslt.Transform(docOutput, null, xmlWriter);
 		xmlWriter.Close();
 		

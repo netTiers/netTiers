@@ -31,7 +31,8 @@ namespace <%=DALNameSpace%>.SqlClient
 		private Hashtable shortNameProcedures;
 		private Hashtable longNameProcedures;
 		private static StoredProcedureProvider current = null;
-
+		private static object syncRoot = new object();
+		
 		/// <summary>
 		/// Creates a new <see cref="StoredProcedureProvider"/> instance.
 		/// </summary>
@@ -50,7 +51,7 @@ namespace <%=DALNameSpace%>.SqlClient
 			{
 				if (current == null)
 				{
-					lock(typeof(StoredProcedureProvider))
+					lock(syncRoot)
 					{
 						if (current == null)
 						{
@@ -154,7 +155,7 @@ namespace <%=DALNameSpace%>.SqlClient
 
 		#endregion
 		
-		#region "Embedded xml queries"
+		#region Embedded XML Queries
 		
 		/// <summary>
 	    /// Get the query text from the embedded xml file.
@@ -230,13 +231,17 @@ namespace <%=DALNameSpace%>.SqlClient
 		
 		private void InitializeProcedureLookupTables()
 		{
-			shortNameProcedures = Hashtable.Synchronized(new Hashtable());
-			longNameProcedures = Hashtable.Synchronized(new Hashtable());
-
-			foreach (Procedure procedure in procedures)
-			{
-				shortNameProcedures[procedure.Name] = procedure;
-				longNameProcedures[procedure.Owner + "." + procedure.Name] = procedure;
+			lock (syncRoot)
+            {
+	
+				shortNameProcedures = Hashtable.Synchronized(new Hashtable());
+				longNameProcedures = Hashtable.Synchronized(new Hashtable());
+	
+				foreach (Procedure procedure in procedures)
+				{
+					shortNameProcedures[procedure.Name] = procedure;
+					longNameProcedures[procedure.Owner + "." + procedure.Name] = procedure;
+				}
 			}
 		}
 	}
