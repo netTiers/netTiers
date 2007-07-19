@@ -11,7 +11,7 @@
 	Remarks:
 		Generated code will need the entreprise library 1.1 (june 2005) to function.
 --%>
-<%@ CodeTemplate Src="..\TemplateLib\CommonSqlCode.cs" Inherits="MoM.Templates.CommonSqlCode" Language="C#" TargetLanguage="C#" Description="Template description here." Debug="True"  ResponseEncoding="UTF-8"%>
+<%@ CodeTemplate Src="..\TemplateLib\CommonSqlCode.cs" Inherits="MoM.Templates.CommonSqlCode" Language="C#" TargetLanguage="C#" Description="Template description here." Debug="True"  ResponseEncoding="UTF-8" NoWarn="0108,0618,1572,1573,1574,0162,2002"%>
 <%@ Assembly Name="SchemaExplorer" %>
 <%@ Assembly Name="System.Design" %>
 <%@ Import Namespace="SchemaExplorer" %>
@@ -429,10 +429,10 @@ namespace <%=DALNameSpace%>.SqlClient
 					<%if (column.DataType.ToString() == "Guid") // fix for guid types
 					{%>
 					database.SetParameterValue(commandWrapper, "<%=columnNameParam%>", new Guid(
-						clause.Replace("<%=columnName%>","").Trim().TrimStart(equalSign).Trim().Trim(singleQuote)));
+						clause.Trim().Remove(0,<%=columnName.Length%>).Trim().TrimStart(equalSign).Trim().Trim(singleQuote)));
 					<%} else {%>
 					database.SetParameterValue(commandWrapper, "<%=columnNameParam%>", 
-						clause.Replace("<%=columnName%>","").Trim().TrimStart(equalSign).Trim().Trim(singleQuote));
+						clause.Trim().Remove(0,<%=columnName.Length%>).Trim().TrimStart(equalSign).Trim().Trim(singleQuote));
 					<%}%>
 					continue;
 				}
@@ -497,20 +497,24 @@ namespace <%=DALNameSpace%>.SqlClient
 		/// <param name="pageLength">Number of rows to return.</param>
 		/// <param name="count">out. The number of rows that match this query.</param>
 		/// <returns>Returns a typed collection of <%= className %> objects.</returns>
-		public override <%=collectionClassName%> <%= MethodNames.Find %>(TransactionManager transactionManager, SqlFilterParameterCollection parameters, string orderBy, int start, int pageLength, out int count)
+		public override <%=collectionClassName%> <%= MethodNames.Find %>(TransactionManager transactionManager, IFilterParameterCollection parameters, string orderBy, int start, int pageLength, out int count)
 		{
-			SqlDatabase database = new SqlDatabase(this._connectionString);
-			DbCommand commandWrapper = StoredProcedureProvider.GetCommandWrapper(database, "<%= owner + ProcedurePrefix + commandStem + FindSuffix %>_Dynamic", typeof(<%= entityClassName %>Column), parameters, orderBy, start, pageLength);
+			SqlFilterParameterCollection filter = null;
 			
-			if ( parameters != null )
-			{
-				SqlFilterParameter param;
+			if (parameters == null)
+				filter = new SqlFilterParameterCollection();
+			else 
+				filter = parameters.GetParameters();
+				
+			SqlDatabase database = new SqlDatabase(this._connectionString);
+			DbCommand commandWrapper = StoredProcedureProvider.GetCommandWrapper(database, "<%= owner + ProcedurePrefix + commandStem + FindSuffix %>_Dynamic", typeof(<%= entityClassName %>Column), filter, orderBy, start, pageLength);
+		
+			SqlFilterParameter param;
 
-				for ( int i = 0; i < parameters.Count; i++ )
-				{
-					param = parameters[i];
-					database.AddInParameter(commandWrapper, param.Name, param.DbType, param.GetValue());
-				}
+			for ( int i = 0; i < filter.Count; i++ )
+			{
+				param = filter[i];
+				database.AddInParameter(commandWrapper, param.Name, param.DbType, param.GetValue());
 			}
 
 			<%= collectionClassName %> rows = new <%= collectionClassName %>();
@@ -646,6 +650,13 @@ namespace <%=DALNameSpace%>.SqlClient
 		{
 			SqlDatabase database = new SqlDatabase(this._connectionString);
 			DbCommand commandWrapper = StoredProcedureProvider.GetCommandWrapper(database, "<%=owner + ProcedurePrefix + commandStem + SelectSuffix + "Paged"%>", _useStoredProcedure);
+		
+			
+            if (commandWrapper.CommandType == CommandType.Text
+                && commandWrapper.CommandText != null)
+            {
+                commandWrapper.CommandText = commandWrapper.CommandText.Replace(SqlUtil.PAGE_INDEX, string.Concat(SqlUtil.PAGE_INDEX, Guid.NewGuid().ToString("N").Substring(0, 8)));
+            }
 			
 			database.AddInParameter(commandWrapper, "@WhereClause", DbType.String, whereClause);
 			database.AddInParameter(commandWrapper, "@OrderBy", DbType.String, orderBy);

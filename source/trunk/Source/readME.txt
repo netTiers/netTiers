@@ -1,5 +1,5 @@
 =============================
-      .netTiers 2.0.0 
+      .netTiers 2.2.0.559 
 =============================
 
 -----------------------------
@@ -24,7 +24,7 @@ You can find detailed getting started information
 System Requirements
 --------------------
 Visual Studio 2005
-Codesmith 2.6+
+Codesmith 3.2+
 Microsoft SQL Server2000+ 
 Microsoft .Net 2.0 
 Enterprise Library 2.0 (Optional, Recommended) 

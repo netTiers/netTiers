@@ -4,7 +4,7 @@
  * Last modified at $Date: 2006-03-16 23:53:08 +0100 (jeu., 16 mars 2006) $
  * $Revision: 62 $
 --%>
-<%@ CodeTemplate Src="..\TemplateLib\CommonSqlCode.cs" Inherits="MoM.Templates.CommonSqlCode" Language="C#" TargetLanguage="C#" Description="Generate nUnit test for the entity." Debug="False"  ResponseEncoding="UTF-8"%>
+<%@ CodeTemplate Src="..\TemplateLib\CommonSqlCode.cs" Inherits="MoM.Templates.CommonSqlCode" Language="C#" TargetLanguage="C#" Description="Generate nUnit test for the entity." Debug="False"  ResponseEncoding="UTF-8" NoWarn="0108,0618,1572,1573,1574,0162,2002" %>
 
 <%@ Assembly Name="SchemaExplorer" %>
 <%@ Assembly Name="System.Design" %>
@@ -59,18 +59,16 @@ namespace <%=UTNameSpace%>
     public partial class <%=unitTestClassName%>
     {
     	// the <%=className%> instance used to test the repository.
-		static private <%=className%> mock;
+		private <%=className%> mock;
 		
 		// the <%=collectionClassName%> instance used to test the repository.
-		static <%=collectionClassName%> mockCollection;		
+		private <%=collectionClassName%> mockCollection;		
         
         /// <summary>
 		/// This method is used to construct the test environment prior to running the tests.
 		/// </summary>
         static private void Init_Generated()
         {
-			mock = (<%=className%>)CreateMockInstance();	
-			
 			System.Console.WriteLine(new String('-', 75));
 			System.Console.WriteLine("-- Testing the <%=className%> Entity with the {0} --", <%=DALNameSpace%>.DataRepository.Provider.Name);
 			System.Console.WriteLine(new String('-', 75));
@@ -87,24 +85,27 @@ namespace <%=UTNameSpace%>
 		
 		<% if (IncludeGetList) { %>
 		/// <summary>
-		/// Selects all <%=className%> objects of the database.
+		/// Selects a page of <%=className%> objects from the database.
 		/// </summary>
 		private void Step_1_SelectAll_Generated()
 		{
-			mockCollection = DataRepository.<%=providerName%>.<%= MethodNames.GetAll %>(0, 10);
-			Assert.IsTrue(mockCollection.Count > 0, "No records returned.");
-			System.Console.WriteLine("DataRepository.<%=providerName%>.<%= MethodNames.GetAll %>():");			
+			int count = -1;
+			mockCollection = DataRepository.<%=providerName%>.<%= MethodNames.GetPaged %>(null, 0, 10, out count);
+			Assert.IsTrue(count >= 0, "Select Query Failed with GetPaged");
+			System.Console.WriteLine("DataRepository.<%=providerName%>.<%= MethodNames.GetPaged %>():");			
 			System.Console.WriteLine(mockCollection);			
 		}
 		
 		/// <summary>
-		/// Selects all <%=className%> objects of the database.
+		/// Searches some <%=className%> objects from the database.
 		/// </summary>
 		private void Step_2_Search_Generated()
 		{
-			mockCollection = DataRepository.<%=providerName%>.<%= MethodNames.Get %>(0, 10);
-			Assert.IsTrue(mockCollection.Count > 0, "No records returned.");
-			System.Console.WriteLine("DataRepository.<%=providerName%>.<%= MethodNames.Get %>():");			
+			int count = -1;
+			mockCollection = DataRepository.<%=providerName%>.<%= MethodNames.Find %>(null, null, "", 0, 10, out count);
+			Assert.IsTrue(count >= 0 && mockCollection != null, "Query Failed to issue Find Command.");
+			
+			System.Console.WriteLine("DataRepository.<%=providerName%>.<%= MethodNames.Find%>():");			
 			System.Console.WriteLine(mockCollection);
 					
 		}

@@ -1,4 +1,4 @@
-﻿<%@ CodeTemplate Src="TemplateLib/CommonSqlCode.cs" Inherits="MoM.Templates.CommonSqlCode" Language="C#" TargetLanguage="Text" Description="NetTiers main template." Debug="True" ResponseEncoding="UTF-8"%>
+﻿<%@ CodeTemplate Src="TemplateLib/CommonSqlCode.cs" Inherits="MoM.Templates.CommonSqlCode" Language="C#" TargetLanguage="Text" Description="NetTiers main template." Debug="True" ResponseEncoding="UTF-8" NoWarn="0108,0618,1572,1573,1574,0162,2002"%>
 <%@ Assembly Name="SchemaExplorer" %>
 <%@ Assembly Name="System.Design" %>
 <%@ Assembly Name="System.DirectoryServices" %>
@@ -69,6 +69,7 @@
 <%@ Property Name="RetrySleepTime" Optional="True" Type="System.Int32" Category="07. CRUD - Advanced" Description="The number of milliseconds that the current thread will sleep between attempts.  Sleep only occurs if an exception is thrown." Default="1000" %>
 <%@ Property Name="RetrySleepStyle" Optional="True" Type="MoM.Templates.SleepStyle" Category="07. CRUD - Advanced" Description="" %>
 <%-- 7.0 CRUD Options --%>
+<%@ Property Name="LibraryPath" Type="System.String" Default="References" Category="07. CRUD - Advanced" Description="Path of the assembly library directory from the project output directory root." %>
 <%@ Property Name="IncludeCustoms" Type="System.Boolean" Default="True" Category="07. CRUD - Advanced" Description="If true custom stored procedures (that starts with '_TableName_') will be detected and generated." %>
 <%@ Property Name="CustomNonMatchingReturnType" Type="CustomNonMatchingReturnType" Default="DataSet" Category="07. CRUD - Advanced" Description="When using custom stored procedures, if the returned rows do not match the fields in an entity, a DataSet or IDataReader will be returned. Choose One.  This is useful if you've returned more than one resultset in a custom procedure; you can use a ConvertToDataSet(IDataReader) method in the Utility class to convert that to a DataSet." %>
 
@@ -910,7 +911,8 @@ public void Go()
 	// CREATING FOLDERS AND COPYING DEPENDENCIES.
 	//----------------------------------------------------------------------------------------------------------------------------------------------
 	AddMessageNode(initNode, 0, "Creating folders and copying dependencies.", false);
-	SafeCreateDirectory(OutputDirectory + "\\References");
+	string libPath = Path.GetFullPath(Path.Combine(OutputDirectory, LibraryPath));
+	SafeCreateDirectory(libPath);
 	
 	if(GenerateBusinessLogicLayer)
 	{
@@ -1098,17 +1100,17 @@ public void Go()
 	
 	//Copy References
 		string entLibSubDir = string.Format("EntLib{0}", EntLibVersion.ToString());
-		SafeCopyFile(this.CodeTemplateInfo.DirectoryName + "\\References\\" + entLibSubDir + "\\Microsoft.Practices.EnterpriseLibrary.Common.dll", OutputDirectory + "\\References\\Microsoft.Practices.EnterpriseLibrary.Common.dll");
-		SafeCopyFile(this.CodeTemplateInfo.DirectoryName + "\\References\\" + entLibSubDir + "\\Microsoft.Practices.EnterpriseLibrary.Data.dll", OutputDirectory + "\\References\\Microsoft.Practices.EnterpriseLibrary.Data.dll");
-		SafeCopyFile(this.CodeTemplateInfo.DirectoryName + "\\References\\" + entLibSubDir + "\\Microsoft.Practices.ObjectBuilder.dll", OutputDirectory + "\\References\\Microsoft.Practices.ObjectBuilder.dll");
-		SafeCopyFile(this.CodeTemplateInfo.DirectoryName + "\\References\\" + entLibSubDir + "\\Microsoft.Practices.EnterpriseLibrary.Caching.dll", OutputDirectory + "\\References\\Microsoft.Practices.EnterpriseLibrary.Caching.dll");
-		SafeCopyFile(this.CodeTemplateInfo.DirectoryName + "\\References\\" + entLibSubDir + "\\Microsoft.Practices.EnterpriseLibrary.Caching.Cryptography.dll", OutputDirectory + "\\References\\Microsoft.Practices.EnterpriseLibrary.Caching.Cryptography.dll");
-		SafeCopyFile(this.CodeTemplateInfo.DirectoryName + "\\References\\" + entLibSubDir + "\\Microsoft.Practices.EnterpriseLibrary.Logging.dll", OutputDirectory + "\\References\\Microsoft.Practices.EnterpriseLibrary.Logging.dll");
-		SafeCopyFile(this.CodeTemplateInfo.DirectoryName + "\\References\\" + entLibSubDir + "\\Microsoft.Practices.EnterpriseLibrary.Logging.Database.dll", OutputDirectory + "\\References\\Microsoft.Practices.EnterpriseLibrary.Logging.Database.dll");
-		SafeCopyFile(this.CodeTemplateInfo.DirectoryName + "\\References\\" + entLibSubDir + "\\Microsoft.Practices.EnterpriseLibrary.Security.dll", OutputDirectory + "\\References\\Microsoft.Practices.EnterpriseLibrary.Security.dll");
-		SafeCopyFile(this.CodeTemplateInfo.DirectoryName + "\\References\\" + entLibSubDir + "\\Microsoft.Practices.EnterpriseLibrary.Security.Cryptography.dll", OutputDirectory + "\\References\\Microsoft.Practices.EnterpriseLibrary.Security.Cryptography.dll");
-		SafeCopyFile(this.CodeTemplateInfo.DirectoryName + "\\References\\" + entLibSubDir + "\\Microsoft.Practices.EnterpriseLibrary.ExceptionHandling.dll", OutputDirectory + "\\References\\Microsoft.Practices.EnterpriseLibrary.ExceptionHandling.dll");
-		SafeCopyFile(this.CodeTemplateInfo.DirectoryName + "\\References\\" + entLibSubDir + "\\Microsoft.Practices.EnterpriseLibrary.ExceptionHandling.Logging.dll", OutputDirectory + "\\References\\Microsoft.Practices.EnterpriseLibrary.ExceptionHandling.Logging.dll");
+		SafeCopyFile(this.CodeTemplateInfo.DirectoryName + "\\References\\" + entLibSubDir + "\\Microsoft.Practices.EnterpriseLibrary.Common.dll", Path.Combine(libPath , "\\Microsoft.Practices.EnterpriseLibrary.Common.dll"));
+		SafeCopyFile(this.CodeTemplateInfo.DirectoryName + "\\References\\" + entLibSubDir + "\\Microsoft.Practices.EnterpriseLibrary.Data.dll", Path.Combine(libPath, "\\Microsoft.Practices.EnterpriseLibrary.Data.dll"));
+		SafeCopyFile(this.CodeTemplateInfo.DirectoryName + "\\References\\" + entLibSubDir + "\\Microsoft.Practices.ObjectBuilder.dll", Path.Combine(libPath ,  "\\Microsoft.Practices.ObjectBuilder.dll"));
+		SafeCopyFile(this.CodeTemplateInfo.DirectoryName + "\\References\\" + entLibSubDir + "\\Microsoft.Practices.EnterpriseLibrary.Caching.dll", Path.Combine(libPath ,  "\\Microsoft.Practices.EnterpriseLibrary.Caching.dll"));
+		SafeCopyFile(this.CodeTemplateInfo.DirectoryName + "\\References\\" + entLibSubDir + "\\Microsoft.Practices.EnterpriseLibrary.Caching.Cryptography.dll", Path.Combine(libPath , "\\Microsoft.Practices.EnterpriseLibrary.Caching.Cryptography.dll"));
+		SafeCopyFile(this.CodeTemplateInfo.DirectoryName + "\\References\\" + entLibSubDir + "\\Microsoft.Practices.EnterpriseLibrary.Logging.dll", Path.Combine(libPath ,  "\\Microsoft.Practices.EnterpriseLibrary.Logging.dll"));
+		SafeCopyFile(this.CodeTemplateInfo.DirectoryName + "\\References\\" + entLibSubDir + "\\Microsoft.Practices.EnterpriseLibrary.Logging.Database.dll", Path.Combine(libPath ,  "\\Microsoft.Practices.EnterpriseLibrary.Logging.Database.dll"));
+		SafeCopyFile(this.CodeTemplateInfo.DirectoryName + "\\References\\" + entLibSubDir + "\\Microsoft.Practices.EnterpriseLibrary.Security.dll", Path.Combine(libPath , "\\Microsoft.Practices.EnterpriseLibrary.Security.dll"));
+		SafeCopyFile(this.CodeTemplateInfo.DirectoryName + "\\References\\" + entLibSubDir + "\\Microsoft.Practices.EnterpriseLibrary.Security.Cryptography.dll", Path.Combine(libPath ,  "\\Microsoft.Practices.EnterpriseLibrary.Security.Cryptography.dll"));
+		SafeCopyFile(this.CodeTemplateInfo.DirectoryName + "\\References\\" + entLibSubDir + "\\Microsoft.Practices.EnterpriseLibrary.ExceptionHandling.dll", Path.Combine(libPath ,  "\\Microsoft.Practices.EnterpriseLibrary.ExceptionHandling.dll"));
+		SafeCopyFile(this.CodeTemplateInfo.DirectoryName + "\\References\\" + entLibSubDir + "\\Microsoft.Practices.EnterpriseLibrary.ExceptionHandling.Logging.dll", Path.Combine(libPath , "\\Microsoft.Practices.EnterpriseLibrary.ExceptionHandling.Logging.dll"));
 		// NUnit file
 		SafeCopyFile(this.CodeTemplateInfo.DirectoryName + "\\References\\nunit.framework.dll", OutputDirectory + "\\References\\nunit.framework.dll");
 	
@@ -2188,6 +2190,8 @@ public void Go()
 			this.GetTemplate(webConfigTemplate).SetProperty("ConnectionString", SourceDatabase.ConnectionString);
 			this.GetTemplate(webConfigTemplate).SetProperty("NetTiersSqlProvider", _netTiersSqlProvider);
 			this.GetTemplate(webConfigTemplate).SetProperty("ProviderInvariantName", _providerInvariantName);
+			this.GetTemplate(webConfigTemplate).SetProperty("EntLibVersion", EntLibVersion);
+			
 			
 			
 			if ( IncludeAtlasLibrary )
@@ -2501,7 +2505,13 @@ public void Go()
 	this.GetTemplate(projectTemplate).SetProperty("SupportsCodesmithBuildTask", false);
 	this.GetTemplate(projectTemplate).SetProperty("IncludeAtlasLibrary", IncludeAtlasLibrary);
 	this.GetTemplate(projectTemplate).SetProperty("IncludeAtlasToolkit", IncludeAtlasToolkit);
-	
+	this.GetTemplate(projectTemplate).SetProperty("EntLibVersion", EntLibVersion);
+		
+	string rootPath = Path.GetFullPath(Path.Combine(OutputDirectory, LibraryPath));
+	string otherPath = Path.GetFullPath(Directory.GetDirectories(OutputDirectory)[0]);
+	string libRelPath = RelativePathTo(otherPath, rootPath);
+	this.GetTemplate(projectTemplate).SetProperty("LibraryPath", libRelPath);
+			
 	// END: common project properties
 	
 	// Entities project
@@ -2545,7 +2555,7 @@ public void Go()
 		this.GetTemplate(projectTemplate).SetProperty("IncludeUnitTest", MoM.Templates.UnitTestStyle.None);
 		this.GetTemplate(projectTemplate).SetProperty("IncludeWCFDataAttributes", IncludeWCFDataAttributes);
 		this.GetTemplate(projectTemplate).SetProperty("IncludeDesignTimeSupport", false);
-				
+		
 		this.GetTemplate(projectTemplate).SetProperty("NetTiersTemplatePath", GetNetTiersTemplatePath());
 		this.GetTemplate(projectTemplate).SetProperty("PropertySetFilePath", GetPropertySetFilePath());
 		this.GetTemplate(projectTemplate).SetProperty("SupportsCodesmithBuildTask", DoesSupportCodesmithBuildTask());
@@ -2596,7 +2606,7 @@ public void Go()
 		this.GetTemplate(projectTemplate).SetProperty("IncludeUnitTest", MoM.Templates.UnitTestStyle.None);			
 		this.GetTemplate(projectTemplate).SetProperty("IncludeWCFDataAttributes", false);
 		this.GetTemplate(projectTemplate).SetProperty("IncludeDesignTimeSupport", false);
-
+		
 		//this.GetTemplate(projectTemplate).RenderToFile(rootPathDALSql + "\\" + DALSqlNameSpace + ".csproj", true);
 		this.RenderToFile(projectTemplate, rootPathDALSql + "\\" + DALSqlNameSpace + ".csproj", true);
 		}
@@ -2618,7 +2628,7 @@ public void Go()
 			this.GetTemplate(projectTemplate).SetProperty("IncludeUnitTest", MoM.Templates.UnitTestStyle.None);			
 			this.GetTemplate(projectTemplate).SetProperty("IncludeWCFDataAttributes", false);
 			this.GetTemplate(projectTemplate).SetProperty("IncludeDesignTimeSupport", false);
-	
+		
 			//this.GetTemplate(projectTemplate).RenderToFile(rootPathDALSql + "\\" + DALSqlNameSpace + ".csproj", true);
 			this.RenderToFile(projectTemplate, rootPathDALGeneric + "\\" + DALGenericNameSpace + ".csproj", true);
 		}
@@ -2666,7 +2676,7 @@ public void Go()
 			this.GetTemplate(projectTemplate).SetProperty("IncludeUnitTest", MoM.Templates.UnitTestStyle.None);			
 			this.GetTemplate(projectTemplate).SetProperty("IncludeWCFDataAttributes", false);
 			this.GetTemplate(projectTemplate).SetProperty("IncludeDesignTimeSupport", false);
-
+		
 			//this.GetTemplate(projectTemplate).RenderToFile(rootPathDALWS + "\\" + DALWSNameSpace + ".csproj", true);
 			this.RenderToFile(projectTemplate, rootPathDALWS + "\\" + DALWSNameSpace + ".csproj", true);
 		}
@@ -2690,7 +2700,7 @@ public void Go()
 		this.GetTemplate(projectTemplate).SetProperty("IncludeUnitTest", MoM.Templates.UnitTestStyle.None);
 		this.GetTemplate(projectTemplate).SetProperty("IncludeWCFDataAttributes", false);
 		this.GetTemplate(projectTemplate).SetProperty("IncludeDesignTimeSupport", false);
-
+		
 		this.RenderToFile(projectTemplate, rootPathWinLib + "\\" + WinLibNameSpace + ".csproj", true);
 	}
 	
@@ -2712,7 +2722,7 @@ public void Go()
 		this.GetTemplate(projectTemplate).SetProperty("IncludeUnitTest", MoM.Templates.UnitTestStyle.None);
 		this.GetTemplate(projectTemplate).SetProperty("IncludeWCFDataAttributes", false);
 		this.GetTemplate(projectTemplate).SetProperty("IncludeDesignTimeSupport", false);
-
+		
 		this.RenderToFile(projectTemplate, rootPathWebLib + "\\" + WebLibNameSpace + ".csproj", true);
 	}
 	
@@ -2734,7 +2744,7 @@ public void Go()
 		this.GetTemplate(projectTemplate).SetProperty("IncludeUnitTest", MoM.Templates.UnitTestStyle.None);
 		this.GetTemplate(projectTemplate).SetProperty("IncludeWCFDataAttributes", false);
 		this.GetTemplate(projectTemplate).SetProperty("IncludeDesignTimeSupport", false);
-
+		
 		this.RenderToFile(projectTemplate, rootPathWebsite + "\\" + WebsiteNameSpace + ".csproj", true);
 	}
 	
@@ -2757,7 +2767,6 @@ public void Go()
 		this.GetTemplate(projectTemplate).SetProperty("IncludeWCFDataAttributes", false);
 		this.GetTemplate(projectTemplate).SetProperty("IncludeDesignTimeSupport", false);
 		this.GetTemplate(projectTemplate).SetProperty("NetTiersSqlProvider", _netTiersSqlProvider);
-		
 		
 
 		//this.GetTemplate(projectTemplate).RenderToFile(rootPathUT + "\\" + UTNameSpace + ".csproj", true);
@@ -3755,10 +3764,12 @@ public void Go()
 			for (int i = 0; i < invalidUrlCharacters.Length; i++)
 				outputDirectory = outputDirectory.Replace(invalidUrlCharacters[i], System.Web.HttpUtility.UrlEncode(invalidUrlCharacters[i]));
 			
-			string file = @"file:\\\" + outputDirectory +  "\\report.html";
 			
 			try
 			{ 
+				outputDirectory = Path.GetFullPath(outputDirectory);
+				Directory.GetDirectoryRoot(outputDirectory);
+				string file = @"file:\\\" + outputDirectory +  "\\report.html";
 				Process.Start(file); 
 			} catch{}
 		}
@@ -3789,7 +3800,7 @@ public void Go()
 		Response.WriteLine(e);
 	}
 
-	string exTime = "Generation complete. Execution time: " + (DateTime.Now - startTime).ToString() + "\nYou can view current documentation @ http://wiki.netTiers.com"; 
+	string exTime = "Generation complete. Execution time: " + (DateTime.Now - startTime).ToString() + "\nYou can view current documentation @ http://docs.netTiers.com"; 
 	Trace.WriteLine(exTime);
 	Response.WriteLine(exTime);
 }
@@ -4124,6 +4135,67 @@ private XmlElement AddTableNode(string tableName)
 	return node;
 }
 
+///<summary>
+/// Contrib (paul welter)
+/// Creates a relative path between two absolute paths.
+///</summary>
+public static string RelativePathTo(string fromDirectory, string toPath)
+{
+	if (fromDirectory == null)
+		throw new ArgumentNullException("fromDirectory");
+	
+	if (toPath == null)
+		throw new ArgumentNullException("toPath");
+	
+	if (System.IO.Path.IsPathRooted(fromDirectory) && System.IO.Path.IsPathRooted(toPath))
+	{
+		if (string.Compare(System.IO.Path.GetPathRoot(fromDirectory),
+			System.IO.Path.GetPathRoot(toPath), true) != 0)
+		{
+			throw new ArgumentException(
+				string.Format("The paths '{0} and '{1}' have different path roots.",
+					fromDirectory, toPath));
+		}
+	}
+	
+	System.Collections.Specialized.StringCollection relativePath = new System.Collections.Specialized.StringCollection();
+	string[] fromDirectories = fromDirectory.Split(System.IO.Path.DirectorySeparatorChar);
+	string[] toDirectories = toPath.Split(System.IO.Path.DirectorySeparatorChar);
+	int length = Math.Min(fromDirectories.Length, toDirectories.Length);
+	int lastCommonRoot = -1;
+	
+	// find common root
+	for (int x = 0; x < length; x++)
+	{
+		if (string.Compare(fromDirectories[x], toDirectories[x], true) != 0)
+			break;
+		lastCommonRoot = x;
+	}
+	
+	if (lastCommonRoot == -1)
+	{
+		throw new ArgumentException(
+			string.Format("The paths '{0} and '{1}' do not have a common prefix path.",
+				fromDirectory, toPath));
+	}
+	
+	// add relative folders in from path
+	for (int x = lastCommonRoot + 1; x < fromDirectories.Length; x++)
+		if (fromDirectories[x].Length > 0)
+			relativePath.Add("..");
+	
+	// add to folders to path
+	for (int x = lastCommonRoot + 1; x < toDirectories.Length; x++)
+		relativePath.Add(toDirectories[x]);
+	
+	// create relative path
+	string[] relativeParts = new string[relativePath.Count];
+	relativePath.CopyTo(relativeParts, 0);
+	string newPath = string.Join(System.IO.Path.DirectorySeparatorChar.ToString(), relativeParts);
+	return newPath;
+}
+	
+	
 private string IncrementBuildVersion(string assemblyInfoFilename)
 {
 	using (StreamReader reader = File.OpenText(assemblyInfoFilename))

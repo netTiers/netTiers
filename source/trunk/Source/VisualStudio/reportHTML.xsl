@@ -73,7 +73,7 @@
               <p>To Configure your application to use .netTiers, add the following sections to your App / Web config files.
 			
 			 You can find more information on how to set this up at<br/> 
-			 <a href="http://wiki.nettiers.com">.netTiers 2 Install and Configuration Document @ http://wiki.netTiers.com</a>
+			 <a href="http://docs.nettiers.com">.netTiers 2 Install and Configuration Document @ http://docs.netTiers.com</a>
             </p>
             <p>1. Add a new section to the configSettings</p>
             
@@ -105,7 +105,7 @@
 	providerInvariantName="System.Data.SqlClient" 
 	entityFactoryType="<xsl:value-of select="//NetTiersReport/@FactoryType" />"
 	useEntityFactory="true"
-	enableEntityTracking="true"
+	enableEntityTracking="false"
 	enableMethodAuthorization="false"
 	useStoredProcedure="false"
   /&gt;

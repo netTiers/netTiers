@@ -1,4 +1,4 @@
-﻿<%@ CodeTemplate Src="..\..\TemplateLib\CommonSqlCode.cs" Inherits="MoM.Templates.CommonSqlCode" Language="C#" TargetLanguage="C#" Description="" Debug="True"  ResponseEncoding="UTF-8"%>
+﻿<%@ CodeTemplate Src="..\..\TemplateLib\CommonSqlCode.cs" Inherits="MoM.Templates.CommonSqlCode" Language="C#" TargetLanguage="C#" Description="" Debug="True"  ResponseEncoding="UTF-8" NoWarn="0108,0618,1572,1573,1574,0162,2002"%>
 <%@ Assembly Name="SchemaExplorer" %>
 <%@ Assembly Name="System.Design" %>
 <%@ Import Namespace="SchemaExplorer" %>
@@ -826,6 +826,9 @@ namespace <%=DALNameSpace%>.Bases
 				else
 					entity.<%=compositePropertyName%> = DataRepository.<%=GetClassName(tableKey.PrimaryKeyTable, ClassNameFormat.Provider)%>.GetBy<%= pkProperty %>(transactionManager, <%= callParams %>);		
 				
+				#if NETTIERS_DEBUG
+				System.Diagnostics.Debug.WriteLine("- property '<%= compositePropertyName%>' loaded. key " + entity.EntityTrackingKey);
+				#endif 
 				
 				if (deep && entity.<%=compositePropertyName%> != null)
 				{
@@ -869,7 +872,7 @@ namespace <%=DALNameSpace%>.Bases
 				entity.<%=item.PropertyNameUnique %> = DataRepository.<%=GetClassName(item.SecondaryTableSchema, ClassNameFormat.Provider)%>.GetBy<%=item.GetByKeysName%>(transactionManager, <%=item.CallParams%>);			 
 		
 				#if NETTIERS_DEBUG
-				Debug.WriteLine("- property '<%=item.PropertyNameUnique%>' loaded. key " + entity.EntityTrackingKey);
+				System.Diagnostics.Debug.WriteLine("- property '<%=item.PropertyNameUnique%>' loaded. key " + entity.EntityTrackingKey);
 				#endif 
 				
 				if (deep && entity.<%=item.PropertyNameUnique%> != null)
@@ -890,7 +893,7 @@ namespace <%=DALNameSpace%>.Bases
 			{
 				entity.<%=item.PropertyNameUnique%> = DataRepository.<%=GetClassName(item.SecondaryTableSchema, ClassNameFormat.Provider)%>.<%=item.GetByKeysName%>(transactionManager, <%=item.CallParams%>);
 				#if NETTIERS_DEBUG
-				Debug.WriteLine("- property '<%=item.PropertyNameUnique%>' loaded. key " + entity.EntityTrackingKey);
+				System.Diagnostics.Debug.WriteLine("- property '<%=item.PropertyNameUnique%>' loaded. key " + entity.EntityTrackingKey);
 				#endif 
 
 				if (deep && entity.<%=item.PropertyNameUnique%> != null)
@@ -911,7 +914,7 @@ namespace <%=DALNameSpace%>.Bases
 			if (CanDeepLoad(entity, "<%= listTypeName.Trim() %>|<%=item.PropertyNameUnique%>", deepLoadType, innerList)) 
 			{
 				#if NETTIERS_DEBUG
-				Debug.WriteLine("- property '<%=item.PropertyNameUnique%>' loaded. key " + entity.EntityTrackingKey);
+				System.Diagnostics.Debug.WriteLine("- property '<%=item.PropertyNameUnique%>' loaded. key " + entity.EntityTrackingKey);
 				#endif 
 
 				entity.<%=item.PropertyNameUnique%> = DataRepository.<%=GetClassName(item.SecondaryTableSchema, ClassNameFormat.Provider)%>.<%=item.GetByKeysName%>(transactionManager, <%=item.CallParams%>);
@@ -999,7 +1002,8 @@ namespace <%=DALNameSpace%>.Bases
 			#endregion Composite Parent Properties
 
 			// Save Root Entity through Provider
-			this.<%= MethodNames.Save %>(transactionManager, entity);
+			if (!entity.IsDeleted)
+				this.<%= MethodNames.Save %>(transactionManager, entity);
 			
 			<%
 			string[] relations = {"OneToOne", "ManyToMany", "OneToMany", "ManyToOne"};
@@ -1170,6 +1174,12 @@ namespace <%=DALNameSpace%>.Bases
 		    {
                 pair.Key.DynamicInvoke((object[])pair.Value);
 		    }
+			
+			// Save Root Entity through Provider, if not already saved in delete mode
+			if (entity.IsDeleted)
+				this.<%= MethodNames.Save %>(transactionManager, entity);
+				
+
 			deepHandles = null;
 			<%  } // end if last iteration
 			} //end for each relation

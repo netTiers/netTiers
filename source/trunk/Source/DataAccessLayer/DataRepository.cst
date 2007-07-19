@@ -1,4 +1,4 @@
-<%@ CodeTemplate Src="..\TemplateLib\CommonSqlCode.cs" Inherits="MoM.Templates.CommonSqlCode" Language="C#" TargetLanguage="C#" Description="Template description here." Debug="True" ResponseEncoding="UTF-8"%>
+﻿<%@ CodeTemplate Src="..\TemplateLib\CommonSqlCode.cs" Inherits="MoM.Templates.CommonSqlCode" Language="C#" TargetLanguage="C#" Description="Template description here." Debug="True" ResponseEncoding="UTF-8" NoWarn="0108,0618,1572,1573,1574,0162,2002"%>
 <%@ Assembly Name="SchemaExplorer" %>
 <%@ Assembly Name="System.Design" %>
 <%@ Import Namespace="SchemaExplorer" %>
@@ -492,4 +492,93 @@ namespace <%=DALNameSpace%>
 		
 		#endregion
 	}
+	
+	#region Query/Filters
+	<% 
+	System.Collections.Generic.List<SchemaObjectBase> tablesAndViews = new System.Collections.Generic.List<SchemaObjectBase>();
+	tablesAndViews.AddRange(SourceTables.ToArray());
+	tablesAndViews.AddRange(SourceViews.ToArray());
+	
+	foreach(SchemaObjectBase entity in tablesAndViews) 
+	{ 
+		string entityClassName = "";
+		
+		if (entity is TableSchema)
+		 entityClassName = GetClassName((TableSchema)entity);
+		else if (entity is ViewSchema)
+		 entityClassName = GetClassName((ViewSchema)entity);
+		
+	%>
+		
+	#region <%= entityClassName %>Filters
+	
+	/// <summary>
+	/// A strongly-typed instance of the <see cref="SqlFilterBuilder&lt;EntityColumn&gt;"/> class
+	/// that is used exclusively with a <see cref="<%= entityClassName %>"/> object.
+	/// </summary>
+	[CLSCompliant(true)]
+	public class <%= entityClassName %>Filters : <%= entityClassName %>FilterBuilder
+	{
+		#region Constructors
+
+		/// <summary>
+		/// Initializes a new instance of the <%= entityClassName %>Filters class.
+		/// </summary>
+		public <%= entityClassName %>Filters() : base() { }
+
+		/// <summary>
+		/// Initializes a new instance of the <%= entityClassName %>Filters class.
+		/// </summary>
+		/// <param name="ignoreCase">Specifies whether to create case-insensitive statements.</param>
+		public <%= entityClassName %>Filters(bool ignoreCase) : base(ignoreCase) { }
+
+		/// <summary>
+		/// Initializes a new instance of the <%= entityClassName %>Filters class.
+		/// </summary>
+		/// <param name="ignoreCase">Specifies whether to create case-insensitive statements.</param>
+		/// <param name="useAnd">Specifies whether to combine statements using AND or OR.</param>
+		public <%= entityClassName %>Filters(bool ignoreCase, bool useAnd) : base(ignoreCase, useAnd) { }
+
+		#endregion Constructors
+	}
+
+	#endregion <%= entityClassName %>Filters
+	
+	#region <%= entityClassName %>Query
+	
+	/// <summary>
+	/// A strongly-typed instance of the <see cref="<%= entityClassName %>ParameterBuilder"/> class
+	/// that is used exclusively with a <see cref="<%= entityClassName %>"/> object.
+	/// </summary>
+	[CLSCompliant(true)]
+	public class <%= entityClassName %>Query : <%= entityClassName %>ParameterBuilder
+	{
+		#region Constructors
+
+		/// <summary>
+		/// Initializes a new instance of the <%= entityClassName %>Query class.
+		/// </summary>
+		public <%= entityClassName %>Query() : base() { }
+
+		/// <summary>
+		/// Initializes a new instance of the <%= entityClassName %>Query class.
+		/// </summary>
+		/// <param name="ignoreCase">Specifies whether to create case-insensitive statements.</param>
+		public <%= entityClassName %>Query(bool ignoreCase) : base(ignoreCase) { }
+
+		/// <summary>
+		/// Initializes a new instance of the <%= entityClassName %>Query class.
+		/// </summary>
+		/// <param name="ignoreCase">Specifies whether to create case-insensitive statements.</param>
+		/// <param name="useAnd">Specifies whether to combine statements using AND or OR.</param>
+		public <%= entityClassName %>Query(bool ignoreCase, bool useAnd) : base(ignoreCase, useAnd) { }
+
+		#endregion Constructors
+	}
+
+	#endregion <%= entityClassName %>Query
+	<%}%>
+	#endregion
+
+	
 }

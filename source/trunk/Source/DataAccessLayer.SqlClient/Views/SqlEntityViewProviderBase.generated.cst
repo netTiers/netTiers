@@ -4,7 +4,7 @@
  * Last modified at $Date: 2006-04-07 14:24:32 -0500 (Fri, 07 Apr 2006) $
  * $Revision: 115 $
 --%>
-<%@ CodeTemplate Src="..\..\TemplateLib\CommonSqlCode.cs" Inherits="MoM.Templates.CommonSqlCode" Language="C#" TargetLanguage="C#" Description="Template description here." Debug="True"  ResponseEncoding="UTF-8" %>
+<%@ CodeTemplate Src="..\..\TemplateLib\CommonSqlCode.cs" Inherits="MoM.Templates.CommonSqlCode" Language="C#" TargetLanguage="C#" Description="Template description here." Debug="True"  ResponseEncoding="UTF-8" NoWarn="0108,0618,1572,1573,1574,0162,2002"%>
 <%@ Assembly Name="SchemaExplorer" %>
 <%@ Assembly Name="System.Design" %>
 
@@ -278,20 +278,24 @@ public abstract partial class <%=providerBaseName%> : <%=GetClassName(SourceView
 	/// <param name="pageLength">Number of rows to return.</param>
 	/// <param name="count">out. The number of rows that match this query.</param>
 	/// <returns>Returns a typed collection of <%= className %> objects.</returns>
-	public override <%=collectionClassName%> <%= MethodNames.Find %>(TransactionManager transactionManager, SqlFilterParameterCollection parameters, string orderBy, int start, int pageLength, out int count)
+	public override <%=collectionClassName%> <%= MethodNames.Find %>(TransactionManager transactionManager, IFilterParameterCollection parameters, string orderBy, int start, int pageLength, out int count)
 	{
-		SqlDatabase database = new SqlDatabase(this._connectionString);
-		DbCommand commandWrapper = StoredProcedureProvider.GetCommandWrapper(database, "<%= ProcedurePrefix + GetCleanName(name) + FindSuffix %>_Dynamic", typeof(<%= className %>Column), parameters, orderBy, start, pageLength);
+		SqlFilterParameterCollection filter = null;
 		
-		if ( parameters != null )
-		{
-			SqlFilterParameter param;
+		if (parameters == null)
+			filter = new SqlFilterParameterCollection();
+		else 
+			filter = parameters.GetParameters();
+			
+		SqlDatabase database = new SqlDatabase(this._connectionString);
+		DbCommand commandWrapper = StoredProcedureProvider.GetCommandWrapper(database, "<%= ProcedurePrefix + GetCleanName(name) + FindSuffix %>_Dynamic", typeof(<%= className %>Column), filter, orderBy, start, pageLength);
+		
+		SqlFilterParameter param;
 
-			for ( int i = 0; i < parameters.Count; i++ )
-			{
-				param = parameters[i];
-				database.AddInParameter(commandWrapper, param.Name, param.DbType, param.GetValue());
-			}
+		for ( int i = 0; i < filter.Count; i++ )
+		{
+			param = filter[i];
+			database.AddInParameter(commandWrapper, param.Name, param.DbType, param.GetValue());
 		}
 
 		<%= collectionClassName %> rows = new <%= collectionClassName %>();

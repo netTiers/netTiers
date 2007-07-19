@@ -3691,7 +3691,7 @@ CREATE\s+PROC(?:EDURE)?                               # find the start of the st
 				return numValue.ToString() + "F";
 			else if (column.NativeType.ToLower() == "xml")
 			{
-				return "\"" + "<TEST></TEST>" + "\"";
+				return "\"" + "<test></test>" + "\"";
 			}	
 			else
 			{
@@ -3819,6 +3819,8 @@ CREATE\s+PROC(?:EDURE)?                               # find the start of the st
 
 		public string RandomString(ColumnSchema column, bool lowerCase)
 		{
+			
+			
 			//Debugger.Break();
 			int size = 2; // default size
 			
@@ -3846,7 +3848,12 @@ CREATE\s+PROC(?:EDURE)?                               # find the start of the st
 				}
 			}
 			
-			return RandomString((size/2) -1, lowerCase);
+			string result = RandomString((size/2) -1, lowerCase);
+			
+			if (column.IsPrimaryKeyMember && !IsIdentityColumn(column) && !IsComputed(column))
+				return string.Concat(result, Guid.NewGuid().ToString("N").Substring(0,2));
+			
+			return result;	
 		}
 		
 		/// <summary>
@@ -5319,7 +5326,30 @@ CREATE\s+PROC(?:EDURE)?                               # find the start of the st
 			return _tbChild;
 		}
 		#endregion 
-		
+	
+		#region EntLibVersion
+		///<summary>
+		/// Gets the enterprise library version assembly signature
+		///</summary>
+		public string GetEntLibVersionSignature(EntLibVersion version)
+		{
+			string entlibVersionText = "";
+	
+			switch (version)
+			{
+				case MoM.Templates.EntLibVersion.v2 :
+					entlibVersionText = "Version=2.0.0.0, Culture=neutral, PublicKeyToken=null";
+					break;
+				case MoM.Templates.EntLibVersion.v3 :
+					entlibVersionText = "Version=3.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a";
+					break;
+				case MoM.Templates.EntLibVersion.v3_1 :
+					entlibVersionText = "Version=3.1.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a";
+					break;
+			}	
+			return entlibVersionText;
+		}
+		#endregion 
 	}
 
 	#region Retry
