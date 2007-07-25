@@ -1,0 +1,745 @@
+﻿<%@ CodeTemplate Language="C#" TargetLanguage="C#" Src="..\..\TemplateLib\CommonSqlCode.cs" Inherits="MoM.Templates.CommonSqlCode" Debug="False" Description="Generates the ProviderDataSource type." ResponseEncoding="UTF-8"  NoWarn="0108,0618,1572,1573,1574,0162,2002" %>
+<%@ Property Name="BLLNameSpace" Optional="False" Type="System.String" Category="Style" Description="Object Namespace." %>
+<%@ Property Name="DALNameSpace" Optional="False" Type="System.String" Category="Style" Description="DAL Namespace." %>
+<%@ Property Name="WebNameSpace" Optional="False" Type="System.String" Category="Style" Description="Web Namespace." %>
+
+<%@ Property Name="IncludeFind" Type="System.Boolean" Default="True" Category="CRUD Options" Description="If true find statements will be generated." %>
+<%@ Property Name="IncludeSave" Type="System.Boolean" Default="True" Category="CRUD Options" Description="If true combined insert/update/delete procedures will be generated. In consequence, if this option is selected IncludeInsert, IncludeUpdate and IncludeDelete are automatically activated." %>
+<%@ Property Name="IncludeInsert" Type="System.Boolean" Default="True" Category="CRUD Options" Description="If true insert procedures will be generated." %>
+<%@ Property Name="IncludeUpdate" Type="System.Boolean" Default="True" Category="CRUD Options" Description="If true update procedures will be generated." %>
+<%@ Property Name="IncludeDelete" Type="System.Boolean" Default="True" Category="CRUD Options" Description="If true delete procedures will be generated." %>
+<%@ Property Name="IncludeGet" Type="System.Boolean" Default="True" Category="CRUD Options" Description="If true get procedures will be generated." %>
+<%@ Property Name="IncludeGetList" Type="System.Boolean" Default="True" Category="CRUD Options" Description="If true getlist procedures will be generated." %>	
+<%@ Property Name="IncludeGetListByFK" Type="System.Boolean" Default="True" Category="CRUD Options" Description="If true get statements will be generated." %>
+<%@ Property Name="IncludeGetListByIX" Type="System.Boolean" Default="True" Category="CRUD Options" Description="If true getlist statements will be generated." %>
+<%@ Property Name="IncludeManyToMany" Type="System.Boolean" Default="True" Category="CRUD Options" Description="If true select statements will be generated for any many to many relationship." %>
+<%@ Property Name="IncludeRelations" Type="System.Boolean" Default="True" Category="CRUD Options" Description="If true, the child collection relationships will be generated within your entities, if set to false, these child collections will not be generated, and Deep Load/Save will not be generated." %>
+<%@ Property Name="IncludeComponentLayer" Type="MoM.Templates.ComponentPatternType" Category="02. Framework Generation - Optional" Description="The pattern type to implement in the Component Layer." Default="None" %>
+
+<%@ Assembly Name="SchemaExplorer" %>
+<%@ Assembly Name="System.Design" %>
+<%@ Import Namespace="System.Collections" %>
+<%
+	bool IncludeDeepLoad = (IncludeRelations && IncludeGetListByFK);
+	bool IncludeDeepSave = (IncludeDeepLoad && IncludeSave);
+	
+	bool HasInsertMethod = (IncludeInsert || IncludeSave || IncludeDeepSave);
+	bool HasUpdateMethod = (IncludeUpdate || IncludeSave || IncludeDeepSave);
+	
+	bool HasComponentLayer = (IncludeComponentLayer != MoM.Templates.ComponentPatternType.None);
+	
+	IList insertMethods = new ArrayList();
+	IList updateMethods = new ArrayList();
+	
+	if ( IncludeInsert )
+	{
+		insertMethods.Add(MethodNames.Insert);
+	}
+	if ( IncludeUpdate )
+	{
+		updateMethods.Add(MethodNames.Update);
+	}
+	if ( IncludeSave )
+	{
+		insertMethods.Add(MethodNames.Save);
+		updateMethods.Add(MethodNames.Save);
+	}
+	if ( IncludeDeepSave )
+	{
+		insertMethods.Add(MethodNames.DeepSave);
+		updateMethods.Add(MethodNames.DeepSave);
+	}
+%>
+#region Using directives
+using System;
+using System.Collections;
+using System.Collections.Generic;
+using System.Collections.Specialized;
+using System.ComponentModel;
+using System.Text;
+using System.Web.UI;
+using System.Web.UI.WebControls;
+
+using <%= BLLNameSpace %>;
+using <%= DALNameSpace %>;
+using <%= DALNameSpace %>.Bases;
+#endregion
+
+namespace <%= WebNameSpace %>.Data
+{
+	/// <summary>
+	/// Represents a business object that provides data to data-bound
+	/// controls in multi-tier Web application architectures.
+	/// </summary>
+	/// <typeparam name="Entity">The class of the business object being accessed.</typeparam>
+	/// <typeparam name="EntityKey">The class of the EntityId
+	/// property of the specified business object class.</typeparam>
+	public abstract class ProviderDataSource<Entity, EntityKey> : BaseDataSource<Entity, EntityKey>, ILinkedDataSource
+		where Entity : IEntityId<EntityKey>, new()
+		where EntityKey : IEntityKey, new()
+	{
+		#region Constructors
+
+		/// <summary>
+		/// Initializes a new instance of the ProviderDataSource class.
+		/// </summary>
+		public ProviderDataSource()
+		{
+		}
+
+		/// <summary>
+		/// Initializes a new instance of the ProviderDataSource class using
+		/// the specified data provider.
+		/// </summary>
+		/// <param name="provider">The business object that provides data access methods.</param>
+		public ProviderDataSource(IEntityProvider<Entity, EntityKey> provider)
+		{
+			Provider = provider;
+		}
+
+		#endregion Constructors
+
+		#region Properties
+
+		/// <summary>
+		/// Gets a reference to the ProviderDataSourceView used by the ProviderDataSource.
+		/// </summary>
+		protected ProviderDataSourceView<Entity, EntityKey> ProviderView
+		{
+			get { return ( View as ProviderDataSourceView<Entity, EntityKey> ); }
+		}
+
+		/// <summary>
+		/// Gets or sets the object that the ProviderDataSource object represents.
+		/// </summary>
+		[Browsable(false)]
+		public IEntityProvider<Entity, EntityKey> Provider
+		{
+			get { return ProviderView.Provider; }
+			set { ProviderView.Provider = value; }
+		}
+
+		/// <summary>
+		/// Gets or sets a value indicating whether to perform a DeepLoad operation
+		/// after a Select operation.
+		/// </summary>
+		public bool EnableDeepLoad
+		{
+			get
+			{
+				bool isEnabled = false;
+				Object enable = ViewState["EnableDeepLoad"];
+				if ( enable != null ) isEnabled = (bool) enable;
+				return isEnabled;
+			}
+			set { ViewState["EnableDeepLoad"] = value; }
+		}
+
+		/// <summary>
+		/// Gets the DeepLoadProperties property.
+		/// </summary>
+		[PersistenceMode(PersistenceMode.InnerProperty)]
+		public ProviderDataSourceDeepLoadList DeepLoadProperties
+		{
+			get
+			{
+				ProviderDataSourceDeepLoadList types = ViewState["DeepLoadProperties"] as ProviderDataSourceDeepLoadList;
+				if ( types == null )
+				{
+					types = new ProviderDataSourceDeepLoadList();
+					ViewState["DeepLoadProperties"] = types;
+				}
+				return types;
+			}
+		}
+
+		<% if ( HasInsertMethod ) { %>
+		/// <summary>
+		/// Gets or sets the name of the method or function that
+		/// the ProviderDataSource control invokes to insert data.
+		/// </summary>
+		public ProviderDataSourceInsertMethod InsertMethod
+		{
+			get
+			{
+				ProviderDataSourceInsertMethod insertMethod = ProviderDataSourceInsertMethod.<%= insertMethods[0] %>;
+				Object method = ViewState["InsertMethod"];
+				if ( method != null )
+				{
+					insertMethod = (ProviderDataSourceInsertMethod) method;
+				}
+				return insertMethod;
+			}
+			set { ViewState["InsertMethod"] = value; }
+		}
+
+		<% } // end if ( HasInsertMethod ) { %>
+		<% if ( HasUpdateMethod ) { %>
+		/// <summary>
+		/// Gets or sets the name of the method or function that
+		/// the ProviderDataSource control invokes to update data.
+		/// </summary>
+		public ProviderDataSourceUpdateMethod UpdateMethod
+		{
+			get
+			{
+				ProviderDataSourceUpdateMethod updateMethod = ProviderDataSourceUpdateMethod.<%= updateMethods[0] %>;
+				Object method = ViewState["UpdateMethod"];
+				if ( method != null )
+				{
+					updateMethod = (ProviderDataSourceUpdateMethod) method;
+				}
+				return updateMethod;
+			}
+			set { ViewState["UpdateMethod"] = value; }
+		}
+
+		<% } // end if ( HasUpdateMethod ) { %>
+		#endregion Properties
+
+		#region Methods
+
+		/// <summary>
+		/// Creates a new instance of the ProviderDataSourceView class that is to be
+		/// used by the ProviderDataSource.
+		/// </summary>
+		/// <returns>An instance of the ProviderDataSourceView class.</returns>
+		/// <remarks>This method should be overridden by sub-classes who need to provide
+		/// additional functionality through the use of a sub-classed ProviderDataSourceView.</remarks>
+		protected override BaseDataSourceView<Entity, EntityKey> GetNewDataSourceView()
+		{
+			return new ProviderDataSourceView<Entity, EntityKey>(this, DefaultViewName);
+		}
+
+		#endregion Methods
+
+		#region Events
+
+		/// <summary>
+		/// Occurs after the Selected event has fired.
+		/// </summary>
+		public event ProviderDataSourceDeepLoadEventHandler DeepLoading
+		{
+			add { ProviderView.DeepLoading += value; }
+			remove { ProviderView.DeepLoaded += value; }
+		}
+
+		/// <summary>
+		/// Occurs after the DeepLoading event has fired.
+		/// </summary>
+		public event ProviderDataSourceDeepLoadEventHandler DeepLoaded
+		{
+			add { ProviderView.DeepLoaded += value; }
+			remove { ProviderView.DeepLoaded += value; }
+		}
+
+		#endregion
+	}
+
+	/// <summary>
+	/// Supports the ProviderDataSource control and provides an interface for
+	/// data-bound controls to perform data operations with business and data objects.
+	/// </summary>
+	/// <typeparam name="Entity">The class of the business object being accessed.</typeparam>
+	/// <typeparam name="EntityKey">The class of the EntityId
+	/// property of the specified business object class.</typeparam>
+	public class ProviderDataSourceView<Entity, EntityKey> : BaseDataSourceView<Entity, EntityKey>
+		where Entity : IEntityId<EntityKey>, new()
+		where EntityKey : IEntityKey, new()
+	{
+		#region Declarations
+
+		private IEntityProvider<Entity, EntityKey> _provider;
+
+		#endregion Declarations
+
+		#region Constructors
+
+		/// <summary>
+		/// Initializes a new instance of the ProviderDataSourceView class.
+		/// </summary>
+		/// <param name="owner">A reference to the ProviderDataSource which created this instance.</param>
+		/// <param name="viewName">The name of the view.</param>
+		public ProviderDataSourceView(ProviderDataSource<Entity, EntityKey> owner, String viewName)
+			: base(owner, viewName)
+		{
+		}
+
+		#endregion Constructors
+
+		#region Properties
+
+		/// <summary>
+		/// Gets or sets the object that the ProviderDataSource object represents.
+		/// </summary>
+		internal IEntityProvider<Entity, EntityKey> Provider
+		{
+			get { return _provider; }
+			set { _provider = value; }
+		}
+
+		/// <summary>
+		/// Gets a strongly-typed reference to the Owner property.
+		/// </summary>
+		internal ProviderDataSource<Entity, EntityKey> ProviderOwner
+		{
+			get { return Owner as ProviderDataSource<Entity, EntityKey>; }
+		}
+
+		/// <summary>
+		/// Gets or sets a value indicating whether to perform a DeepLoad operation
+		/// after a Select operation.
+		/// </summary>
+		internal bool EnableDeepLoad
+		{
+			get { return ProviderOwner.EnableDeepLoad; }
+			set { ProviderOwner.EnableDeepLoad = value; }
+		}
+
+		/// <summary>
+		/// Gets the DeepLoadProperties property.
+		/// </summary>
+		internal ProviderDataSourceDeepLoadList DeepLoadProperties
+		{
+			get { return ProviderOwner.DeepLoadProperties; }
+		}
+		
+		<% if ( HasInsertMethod ) { %>
+		/// <summary>
+		/// Gets or sets the name of the method or function that
+		/// the ProviderDataSource control invokes to insert data.
+		/// </summary>
+		internal ProviderDataSourceInsertMethod InsertMethod
+		{
+			get { return ProviderOwner.InsertMethod; }
+			set { ProviderOwner.InsertMethod = value; }
+		}
+		
+		<% } // end if ( HasInsertMethod ) { %>
+		<% if ( HasUpdateMethod ) { %>
+		/// <summary>
+		/// Gets or sets the name of the method or function that
+		/// the ProviderDataSource control invokes to update data.
+		/// </summary>
+		internal ProviderDataSourceUpdateMethod UpdateMethod
+		{
+			get { return ProviderOwner.UpdateMethod; }
+			set { ProviderOwner.UpdateMethod = value; }
+		}
+		
+		<% } // end if ( HasUpdateMethod ) { %>
+		#endregion Properties
+
+		#region DeepLoad Methods
+
+		/// <summary>
+		/// Performs a DeepLoad operation on the specified entity collection.
+		/// </summary>
+		/// <param name="entityList"></param>
+		internal virtual void ExecuteDeepLoad(TList<Entity> entityList)
+		{
+			ProviderDataSourceDeepLoadEventArgs args1 = new ProviderDataSourceDeepLoadEventArgs(entityList, DeepLoadProperties);
+			OnDeepLoading(args1);
+
+			if ( args1.Cancel )
+			{
+				return;
+			}
+
+			try
+			{
+				DeepLoad(entityList, args1.DeepLoadProperties);
+
+				ProviderDataSourceDeepLoadEventArgs args2 = new ProviderDataSourceDeepLoadEventArgs(entityList, args1.DeepLoadProperties);
+				OnDeepLoaded(args2);
+			}
+			catch ( Exception )
+			{
+				<% // TODO: do we need to handle the exception? %>
+				throw;
+			}
+		}
+
+		/// <summary>
+		/// Performs a DeepLoad operation on the specified entity collection.
+		/// </summary>
+		/// <param name="entityList"></param>
+		/// <param name="properties"></param>
+		internal virtual void DeepLoad(TList<Entity> entityList, ProviderDataSourceDeepLoadList properties)
+		{
+		}
+
+		#endregion DeepLoad Methods
+
+		<% if ( HasInsertMethod ) { %>
+		#region Insert Methods
+
+		/// <summary>
+		/// Performs an insert operation on the specified Entity object.
+		/// </summary>
+		/// <param name="entity">The Entity object to insert.</param>
+		/// <returns>Returns true if successful, otherwise false.</returns>
+		protected override bool ExecuteInsert(Entity entity)
+		{
+			<% if ( IncludeSave ) { %>
+			if ( InsertMethod == ProviderDataSourceInsertMethod.<%= MethodNames.Save %> )
+			{
+				Provider.<%= MethodNames.Save %>(<% if(!HasComponentLayer){ %>GetTransactionManager(), <% } %>entity);
+				return true;
+			}
+			<% } // end if ( IncludeSave ) { %>
+			<% if ( IncludeDeepSave ) { %>
+			if ( InsertMethod == ProviderDataSourceInsertMethod.<%= MethodNames.DeepSave %> )
+			{
+				return Provider.<%= MethodNames.DeepSave %>(<% if(!HasComponentLayer){ %>GetTransactionManager(), <% } %>entity);
+			}
+			<% } // end if ( IncludeDeepSave ) { %>
+			<% if ( IncludeInsert ) { %>
+			if ( InsertMethod == ProviderDataSourceInsertMethod.<%= MethodNames.Insert %> )
+			{
+				return Provider.<%= MethodNames.Insert %>(<% if(!HasComponentLayer){ %>GetTransactionManager(), <% } %>entity);
+			}
+			<% } // end if ( IncludeInsert ) { %>
+			
+			return false;
+		}
+
+		#endregion Insert Methods
+
+		<%	} // end if ( HasInsertMethod ) %>
+		<% if ( HasUpdateMethod ) { %>
+		#region Update Methods
+
+		/// <summary>
+		/// Performs an update operation on the specified Entity object.
+		/// </summary>
+		/// <param name="entity">The Entity object to update.</param>
+		/// <returns>Returns true if successful, otherwise false.</returns>
+		protected override bool ExecuteUpdate(Entity entity)
+		{
+			<% if ( IncludeSave ) { %>
+			if ( UpdateMethod == ProviderDataSourceUpdateMethod.<%= MethodNames.Save %> )
+			{
+				Provider.<%= MethodNames.Save %>(<% if(!HasComponentLayer){ %>GetTransactionManager(), <% } %>entity);
+				return true;
+			}
+			<% } // end if ( IncludeSave ) { %>
+			<% if ( IncludeDeepSave ) { %>
+			if ( UpdateMethod == ProviderDataSourceUpdateMethod.<%= MethodNames.DeepSave %> )
+			{
+				return Provider.<%= MethodNames.DeepSave %>(<% if(!HasComponentLayer){ %>GetTransactionManager(), <% } %>entity);
+			}
+			<% } // end if ( IncludeDeepSave ) { %>
+			<% if ( IncludeUpdate ) { %>
+			if ( UpdateMethod == ProviderDataSourceUpdateMethod.<%= MethodNames.Update %> )
+			{
+				return Provider.<%= MethodNames.Update %>(<% if(!HasComponentLayer){ %>GetTransactionManager(), <% } %>entity);
+			}
+			<% } // end if ( IncludeUpdate ) { %>
+			
+			return false;
+		}
+
+		#endregion UpdateMethods
+
+		<% } // end if ( HasUpdateMethod ) %>
+		<% if ( IncludeDelete ) { %>
+		#region Delete Methods
+
+		/// <summary>
+		/// Performs a delete operation on the specified Entity object.
+		/// </summary>
+		/// <param name="entity">The Entity object to delete.</param>
+		/// <returns>Returns true if successful, otherwise false.</returns>
+		protected override bool ExecuteDelete(Entity entity)
+		{
+			return Provider.<%= MethodNames.Delete %>(<% if(!HasComponentLayer){ %>GetTransactionManager(), <% } %>entity);
+		}
+
+		#endregion Delete Methods
+
+		<% } // end if ( IncludeDelete ) %>
+		#region Helper Methods
+
+		/// <summary>
+		/// Gets the unique identifier of the specified entity object.
+		/// </summary>
+		/// <param name="entity">The current business object.</param>
+		/// <returns>Returns the unique identifier for the specified entity.</returns>
+		protected override EntityKey GetEntityId(Entity entity)
+		{
+			if ( entity != null )
+			{
+				return entity.EntityId;
+			}
+
+			return base.GetEntityId(entity);
+		}
+
+		/// <summary>
+		/// Gets the Entity object within the collection of Entity objects that matches
+		/// the values found in the specified EntityKey object.
+		/// </summary>
+		/// <param name="entityList">A collection of Entity objects.</param>
+		/// <param name="entityKey">An <see cref="T:EntityKey"/> object.</param>
+		/// <returns></returns>
+		protected override Entity GetCurrentEntity(IList<Entity> entityList, EntityKey entityKey)
+		{
+			return ( (ListBase<Entity>) entityList ).Find(delegate(Entity entity)
+			{
+				return entityKey.Equals(entity.EntityId);
+			});
+		}
+
+		/// <summary>
+		/// Stores the specified entity in the temporary cache.
+		/// </summary>
+		/// <param name="entity">The Entity object to cache.</param>
+		/// <param name="entityList">The list of Entity objects to cache.</param>
+		protected override void SetTempCache(Entity entity, out IList<Entity> entityList)
+		{
+			entityList = new List<Entity>();
+			entityList.Add(entity);
+		}
+
+		#endregion Helper Methods
+
+		#region Events
+
+		/// <summary>
+		/// Occurs after the Selected event has fired.
+		/// </summary>
+		internal event ProviderDataSourceDeepLoadEventHandler DeepLoading;
+
+		/// <summary>
+		/// Occurs after the DeepLoading event has fired.
+		/// </summary>
+		internal event ProviderDataSourceDeepLoadEventHandler DeepLoaded;
+
+		/// <summary>
+		/// Raises the Selected event.
+		/// </summary>
+		/// <param name="e">An instance of ObjectDataSourceStatusEventArgs containing the event data.</param>
+		internal override void OnSelected(ObjectDataSourceStatusEventArgs e)
+		{
+			base.OnSelected(e);
+
+			if ( EnableDeepLoad && e.ReturnValue != null )
+			{
+				ExecuteDeepLoad(e.ReturnValue as TList<Entity>);
+			}
+		}
+
+		/// <summary>
+		/// Raises the DeepLoading event.
+		/// </summary>
+		/// <param name="e">An instance of ProviderDataSourceDeepLoadEventArgs containing the event data.</param>
+		internal virtual void OnDeepLoading(ProviderDataSourceDeepLoadEventArgs e)
+		{
+			if ( DeepLoading != null )
+			{
+				DeepLoading(Owner, e);
+			}
+		}
+
+		/// <summary>
+		/// Raises the DeepLoaded event.
+		/// </summary>
+		/// <param name="e">An instance of ProviderDataSourceDeepLoadEventArgs containing the event data.</param>
+		internal virtual void OnDeepLoaded(ProviderDataSourceDeepLoadEventArgs e)
+		{
+			if ( DeepLoaded != null )
+			{
+				DeepLoaded(Owner, e);
+			}
+		}
+
+		#endregion Events
+	}
+
+	#region ProviderDataSourceDeepLoadList
+
+	/// <summary>
+	/// Groups DeepLoad information for the ProviderDataSource control.
+	/// </summary>
+	[ParseChildren(true), PersistChildren(false)]
+	public class ProviderDataSourceDeepLoadList
+	{
+		/// <summary>
+		/// The Method member variable.
+		/// </summary>
+		private DeepLoadType method = DeepLoadType.IncludeChildren;
+
+		/// <summary>
+		/// Gets or sets the Method property.
+		/// </summary>
+		public DeepLoadType Method
+		{
+			get { return method; }
+			set { method = value; }
+		}
+
+		/// <summary>
+		/// The Recursive member variable.
+		/// </summary>
+		private bool recursive = false;
+
+		/// <summary>
+		/// Gets or sets the Recursive property.
+		/// </summary>
+		public bool Recursive
+		{
+			get { return recursive; }
+			set { recursive = value; }
+		}
+
+		/// <summary>
+		/// The Types member variable.
+		/// </summary>
+		private IList types;
+
+		/// <summary>
+		/// Gets or sets the Types property.
+		/// </summary>
+		[PersistenceMode(PersistenceMode.InnerProperty)]
+		public IList Types
+		{
+			get
+			{
+				if ( types == null )
+				{
+					types = new ArrayList();
+				}
+				
+				return types;
+			}
+		}
+
+		/// <summary>
+		/// Gets an array of <see cref="System.Type"/> objects represented
+		/// by the current Types collection.
+		/// </summary>
+		/// <returns></returns>
+		public Type[] GetTypes()
+		{
+			Type[] childTypes = Type.EmptyTypes;
+
+			if ( types != null )
+			{
+				List<Type> list = new List<Type>();
+
+				foreach ( IChildEntityProperty property in types )
+				{
+					list.Add(ChildEntityTypeAttribute.GetType(property.ChildEntityType));
+				}
+
+				childTypes = list.ToArray();
+			}
+
+			return childTypes;
+		}
+	}
+
+	#endregion ProviderDataSourceDeepLoadList
+
+	#region ProviderDataSourceDeepLoadEventHandler
+
+	/// <summary>
+	/// Represents the methods that will handle the DeepLoading and DeepLoaded events.
+	/// </summary>
+	/// <param name="sender"></param>
+	/// <param name="e"></param>
+	public delegate void ProviderDataSourceDeepLoadEventHandler(object sender, ProviderDataSourceDeepLoadEventArgs e);
+
+	/// <summary>
+	/// Provides data for the DeepLoading and DeepLoaded events.
+	/// </summary>
+	public class ProviderDataSourceDeepLoadEventArgs : CancelEventArgs
+	{
+		/// <summary>
+		/// Initializes a new instance of the ProviderDataSourceDeepLoadEventArgs class.
+		/// </summary>
+		/// <param name="entityList"></param>
+		public ProviderDataSourceDeepLoadEventArgs(IList entityList)
+		{
+			this.entityList = entityList;
+		}
+
+		/// <summary>
+		/// Initializes a new instance of the ProviderDataSourceDeepLoadEventArgs class.
+		/// </summary>
+		/// <param name="entityList"></param>
+		/// <param name="properties"></param>
+		public ProviderDataSourceDeepLoadEventArgs(IList entityList, ProviderDataSourceDeepLoadList properties)
+			: this(entityList)
+		{
+			this.deepLoadProperties = properties;
+		}
+
+		/// <summary>
+		/// The EntityList member variable.
+		/// </summary>
+		private IList entityList;
+
+		/// <summary>
+		/// Gets the EntityList property.
+		/// </summary>
+		public IList EntityList
+		{
+			get { return entityList; }
+		}
+
+		/// <summary>
+		/// The DeepLoadProperties member variable.
+		/// </summary>
+		private ProviderDataSourceDeepLoadList deepLoadProperties;
+
+		/// <summary>
+		/// Gets the DeepLoadProperties property.
+		/// </summary>
+		public ProviderDataSourceDeepLoadList DeepLoadProperties
+		{
+			get { return deepLoadProperties; }
+		}
+	}
+
+	#endregion ProviderDataSourceDeepLoadEventHandler
+
+	<% if ( HasInsertMethod ) { %>
+	#region ProviderDataSourceInsertMethod
+	
+	/// <summary>
+	/// Enumeration of method names available for the ProviderDataSource.InsertMethod property.
+	/// </summary>
+	public enum ProviderDataSourceInsertMethod
+	{
+		<% for( int j = 0; j < insertMethods.Count; j++ ) { %>
+		/// <summary>
+		/// Represents the <%= insertMethods[j].ToString() %> method.
+		/// </summary>
+		<%= insertMethods[j].ToString() %><% if (j < insertMethods.Count-1) { %>,<% } %>
+		<% } %>
+	}
+	
+	#endregion ProviderDataSourceInsertMethod
+	
+	<% } // end if ( HasInsertMethods ) { %>
+	<% if ( HasUpdateMethod ) { %>
+	#region ProviderDataSourceUpdateMethod
+	
+	/// <summary>
+	/// Enumeration of method names available for the ProviderDataSource.UpdateMethod property.
+	/// </summary>
+	public enum ProviderDataSourceUpdateMethod
+	{
+		<% for( int j = 0; j < updateMethods.Count; j++ ) { %>
+		/// <summary>
+		/// Represents the <%= updateMethods[j].ToString() %> method.
+		/// </summary>
+		<%= updateMethods[j].ToString() %><% if (j < updateMethods.Count-1) { %>,<% } %>
+		<% } %>
+	}
+	
+	#endregion ProviderDataSourceUpdateMethod
+	<% } // end if ( HasUpdateMethods ) { %>
+}

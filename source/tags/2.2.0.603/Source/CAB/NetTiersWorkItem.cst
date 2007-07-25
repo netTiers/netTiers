@@ -1,0 +1,253 @@
+﻿<%@ CodeTemplate Language="C#" TargetLanguage="C#" Description="Generate a CAB WorkItem." Debug="True" ResponseEncoding="UTF-8" NoWarn="0108,0618,1572,1573,1574,0162,2002"%>
+<%@ Assembly Name="SchemaExplorer" %>
+<%@ Assembly Name="System.Design" %>
+<%@ Import Namespace="SchemaExplorer" %>
+<%@ Import Namespace="System.Collections" %>
+<%@ Import Namespace="System.Text" %>
+<%@ Property Name="NameSpace" Type="System.String" Category="Code" Description="Class Namespace." %>
+<%@ Property Name="EntityNameSpace" Type="System.String" Category="Code" Description="Class Namespace." %>
+<%@ Property Name="EntityName" Type="System.String" Category="Code" Description="Namespace." %>
+<%@ Property Name="MyWorkItemType" Type="WorkItemType" Category="CAB" Description="path." %>
+<%
+	string _workItemFolder = string.Empty;
+
+	string _workItemNameSpace = string.Empty;
+	string _viewClassName = string.Empty;
+	string _presenterClassName = string.Empty;
+	string _workItemClassName = string.Empty;
+	bool _isList = false;
+		
+	if (MyWorkItemType == WorkItemType.Edit)
+	{				
+		_workItemFolder = OutputDirectory + "\\Edit" + EntityName;
+			
+		_workItemNameSpace = NameSpace + ".Edit" + EntityName;
+		_viewClassName = "Edit" + EntityName + "View";
+		_presenterClassName = "Edit" + EntityName + "Presenter";
+		_workItemClassName = "Edit" + EntityName + "WorkItem";	
+		_isList = false;
+	}
+	else if (MyWorkItemType == WorkItemType.List)
+	{
+		_workItemFolder = OutputDirectory + "\\List" + EntityName;
+		
+		_workItemNameSpace = NameSpace + ".List" + EntityName;
+		_viewClassName = "List" + EntityName + "View";
+		_presenterClassName = "List" + EntityName + "Presenter";
+		_workItemClassName = "List" + EntityName + "WorkItem";
+		_isList = true;
+	}
+	else if (MyWorkItemType == WorkItemType.Context)
+	{
+		_workItemFolder = OutputDirectory + "\\Context" + EntityName;
+		
+		_workItemNameSpace = NameSpace + ".Context" + EntityName;
+		_viewClassName = "Context" + EntityName + "View";
+		_presenterClassName = "Context" + EntityName + "Presenter";
+		_workItemClassName = "Context" + EntityName + "WorkItem";
+		_isList = false;
+	}
+	else if (MyWorkItemType == WorkItemType.Report)
+	{
+		_workItemFolder = OutputDirectory + "\\Report" + EntityName;
+		
+		_workItemNameSpace = NameSpace + ".Report" + EntityName;
+		_viewClassName = "Report" + EntityName + "View";
+		_presenterClassName = "Report" + EntityName + "Presenter";
+		_workItemClassName = "Report" + EntityName + "WorkItem";
+		_isList = false;
+	}
+	else if (MyWorkItemType == WorkItemType.Search)
+	{
+		_workItemFolder = OutputDirectory + "\\Search" + EntityName;
+		
+		_workItemNameSpace = NameSpace + ".Search" + EntityName;
+		_viewClassName = "Search" + EntityName + "View";
+		_presenterClassName = "Search" + EntityName + "Presenter";
+		_workItemClassName = "Search" + EntityName + "WorkItem";
+		_isList = false;
+	}
+	  
+  	/// process
+  
+  	System.IO.DirectoryInfo di = new System.IO.DirectoryInfo(OutputDirectory + "\\Edit" + EntityName);	
+	di.Create();
+		
+	EntityViewTemplate.SetProperty("EntityName", EntityName); 
+	EntityViewTemplate.SetProperty("EntityNameSpace", EntityNameSpace); 
+	EntityViewTemplate.SetProperty("WorkItemNameSpace", _workItemNameSpace); 
+   	EntityViewTemplate.SetProperty("ViewClassName", _viewClassName); 
+	EntityViewTemplate.SetProperty("PresenterClassName", _presenterClassName); 
+	EntityViewTemplate.RenderToFile(_workItemFolder + "\\" + _viewClassName + ".cs", true); 
+	
+	EntityViewDesignerTemplate.SetProperty("EntityName", EntityName); 
+	EntityViewDesignerTemplate.SetProperty("EntityNameSpace", EntityNameSpace); 
+	EntityViewDesignerTemplate.SetProperty("WorkItemNameSpace", _workItemNameSpace); 
+   	EntityViewDesignerTemplate.SetProperty("ViewClassName", _viewClassName); 
+	EntityViewDesignerTemplate.SetProperty("PresenterClassName", _presenterClassName); 
+	EntityViewDesignerTemplate.RenderToFile(_workItemFolder + "\\" + _viewClassName + ".Designer.cs", true); 
+   	
+   	EntityPresenter.SetProperty("IsList", _isList); 
+   	EntityPresenter.SetProperty("EntityName", EntityName); 
+   	EntityPresenter.SetProperty("EntityNameSpace", EntityNameSpace); 
+	EntityPresenter.SetProperty("WorkItemNameSpace", _workItemNameSpace); 
+   	EntityPresenter.SetProperty("ViewClassName", _viewClassName); 	   	
+	EntityPresenter.SetProperty("PresenterClassName", _presenterClassName); 
+	EntityPresenter.SetProperty("WorkItemClassName", _workItemClassName); 
+	EntityPresenter.RenderToFile(_workItemFolder + "\\" + _presenterClassName + ".cs", true); 
+   	
+   	EntitytWorkItem.SetProperty("IsList", _isList); 
+   	EntitytWorkItem.SetProperty("EntityName", EntityName); 
+   	EntitytWorkItem.SetProperty("EntityNameSpace", EntityNameSpace); 
+	EntitytWorkItem.SetProperty("ViewClassName", _viewClassName); 
+	EntitytWorkItem.SetProperty("WorkItemNameSpace", _workItemNameSpace); 
+   	EntitytWorkItem.SetProperty("WorkItemClassName", _workItemClassName); 
+	EntitytWorkItem.RenderToFile(_workItemFolder + "\\" + _workItemClassName + ".cs", true); 
+	  
+%>
+
+<script runat="template"> 
+
+	public enum WorkItemType
+	{
+		Edit,
+		List,
+		Context,
+		Report,
+		Search
+	}	
+	
+	private string _outputDirectory = String.Empty;
+
+	private CodeTemplate _EntityViewTemplate;
+	private CodeTemplate _EntityPresenter;
+	private CodeTemplate _EntitytWorkItem;
+	private CodeTemplate _EntityViewDesignerTemplate;
+
+[Browsable(false)]
+public CodeTemplate EntityViewTemplate 
+{ 
+   get 
+   { 
+      if (_EntityViewTemplate == null) 
+      { 
+         CodeTemplateCompiler compiler = new CodeTemplateCompiler(this.CodeTemplateInfo.DirectoryName + "EntityWorkItem\\EntityView.cst"); 
+         compiler.Compile(); 
+         
+         if (compiler.Errors.Count == 0) 
+         { 
+            _EntityViewTemplate = compiler.CreateInstance(); 
+         } 
+         else 
+         { 
+            for (int i = 0; i < compiler.Errors.Count; i++) 
+            {
+               Response.WriteLine(compiler.Errors[ i].ToString()); 
+            } 
+         } 
+      } 
+      
+      return _EntityViewTemplate; 
+   } 
+} 
+
+[Browsable(false)]
+public CodeTemplate EntityViewDesignerTemplate 
+{ 
+   get 
+   { 
+      if (_EntityViewDesignerTemplate == null) 
+      { 
+         CodeTemplateCompiler compiler = new CodeTemplateCompiler(this.CodeTemplateInfo.DirectoryName + "EntityWorkItem\\EntityView.Designer.cst"); 
+         compiler.Compile(); 
+         
+         if (compiler.Errors.Count == 0) 
+         { 
+            _EntityViewDesignerTemplate = compiler.CreateInstance(); 
+         } 
+         else 
+         { 
+            for (int i = 0; i < compiler.Errors.Count; i++) 
+            {
+               Response.WriteLine(compiler.Errors[ i].ToString()); 
+            } 
+         } 
+      } 
+      
+      return _EntityViewDesignerTemplate; 
+   } 
+}
+
+[Browsable(false)]
+public CodeTemplate EntityPresenter 
+{ 
+   get 
+   { 
+      if (_EntityPresenter == null) 
+      { 
+         CodeTemplateCompiler compiler = new CodeTemplateCompiler(this.CodeTemplateInfo.DirectoryName + "EntityWorkItem\\EntityPresenter.cst"); 
+         compiler.Compile(); 
+         
+         if (compiler.Errors.Count == 0) 
+         { 
+            _EntityPresenter = compiler.CreateInstance(); 
+         } 
+         else 
+         { 
+            for (int i = 0; i < compiler.Errors.Count; i++) 
+            {
+               Response.WriteLine(compiler.Errors[ i].ToString()); 
+            } 
+         } 
+      } 
+      
+      return _EntityPresenter; 
+   } 
+} 
+
+[Browsable(false)]
+public CodeTemplate EntitytWorkItem 
+{ 
+   get 
+   { 
+      if (_EntitytWorkItem == null) 
+      { 
+         CodeTemplateCompiler compiler = new CodeTemplateCompiler(this.CodeTemplateInfo.DirectoryName + "EntityWorkItem\\EntitytWorkItem.cst"); 
+         compiler.Compile(); 
+         
+         if (compiler.Errors.Count == 0) 
+         { 
+            _EntitytWorkItem = compiler.CreateInstance(); 
+         } 
+         else 
+         { 
+            for (int i = 0; i < compiler.Errors.Count; i++) 
+            {
+               Response.WriteLine(compiler.Errors[ i].ToString()); 
+            } 
+         } 
+      } 
+      
+      return _EntitytWorkItem; 
+   } 
+} 
+
+	[Editor(typeof(System.Windows.Forms.Design.FolderNameEditor), typeof(System.Drawing.Design.UITypeEditor))] 
+	[CodeTemplateProperty(CodeTemplatePropertyOption.Required)]
+	[Category("Generation")]
+	[Description("The directory to output the classes to.")]
+	[DefaultValue("")]
+	public string OutputDirectory 
+	{ 
+		get
+		{			
+				return _outputDirectory;			
+		}
+		set
+		{
+			if (value.EndsWith("\\")) value = value.Substring(0, value.Length - 1);
+			_outputDirectory = value;
+		} 
+	}
+
+</script>

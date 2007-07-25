@@ -1,0 +1,81 @@
+﻿<%--
+ * $Id: Enum.cst,v 1.2 2005/12/03 12:34:49 jroland Exp $
+ * Last modified by $Author: jroland $
+ * Last modified at $Date: 2006-03-16 16:53:08 -0600 (Thu, 16 Mar 2006) $
+ * $Revision: 62 $
+--%>
+<%@ CodeTemplate Src="..\TemplateLib\CommonSqlCode.cs" Inherits="MoM.Templates.CommonSqlCode" Language="C#" TargetLanguage="C#" Description="Template description here." Debug="False" ResponseEncoding="UTF-8" NoWarn="0108,0618,1572,1573,1574,0162,2002" %>
+<%@ Assembly Name="SchemaExplorer" %>
+<%@ Import Namespace="SchemaExplorer" %>
+<%@ Import Namespace="System.Data" %>
+<%@ Import Namespace="System.Text.RegularExpressions" %>
+<%@ Assembly Name="System.Design" %>
+
+<%@ Property Name="NameSpace" Optional="True" Type="System.String" Category="Style" Description="Object Namespace." %>
+<%@ Property Name="SourceTable" Type="SchemaExplorer.TableSchema" Category="Connection" Description="Table Object should be based on." %>
+<%
+	DataTable datas = SourceTable.GetTableData();
+%>
+
+using System;
+
+namespace <%=NameSpace%>
+{
+	/// <summary>
+	/// <% if(SourceTable.Description.Length == 0 ) {%>An enum representation of the '<%=SourceTable.Name%>' table. [No description found in the database]<%} else {Response.Write(GetColumnXmlComment(SourceTable,1));}%>
+	/// </summary>
+	/// <remark>this enumeration contains the items contained in the table <%=SourceTable.Name%></remark>
+	[Serializable<% if (HasBitField(datas)) Response.Write(", Flags");%>]
+	public enum <%=GetClassName(SourceTable, ClassNameFormat.Enum)%>
+	{
+	<%
+		
+		for(int i=0; i<datas.Rows.Count; i++)
+		{
+			DataRow row = datas.Rows[i];
+			if (datas.Columns.Count > 2)
+			{
+				Response.Write("\t\t/// <summary> {0}", Environment.NewLine);
+				Response.Write("\t\t/// {0}{1}", row[2], Environment.NewLine);
+				Response.Write("\t\t/// </summary>{0}", Environment.NewLine);
+				
+				if ( row[2] != null )
+				{
+					Response.Write("\t\t[EnumTextValue(@\"{0}\")]{1}", GetDescriptionAttributeText(row[2].ToString()), Environment.NewLine);
+				}
+			}
+			else
+			{
+				Response.Write("\t\t/// <summary> {0}", Environment.NewLine);
+				Response.Write("\t\t/// {0}{1}", row[1], Environment.NewLine);
+				Response.Write("\t\t/// </summary>{0}", Environment.NewLine);
+			}
+			
+			//Initial Formatting - trim whitespace
+			string val = row[1].ToString().Trim();
+			
+			//Replace non-word characters
+			val = Regex.Replace(val,@"[\W]", "_");
+			
+			//Replace duplicate _ with a single instance
+			val = Regex.Replace(val,@"_+","_");
+			
+			//Remove digit characters from start
+			val = Regex.Replace(val,@"^[0-9]+","");
+			
+			//Strip any leading and trailing underscores
+			val = val.TrimStart(new char[] {'_'}).TrimEnd(new char[] {'_'});
+			
+			//If completely numeric value, prefix with Option_
+			if ( Regex.IsMatch(val,@"^[0-9]+$"))
+				val = "Option_" + val;
+				
+			//If empty string, use Option_[Value]
+			if ( val == string.Empty)
+				val = string.Format("Option_{0}",row[0]);
+			
+			Response.Write("\t\t{0} = {1}{2}{3}{3}", val, row[0], i<datas.Rows.Count-1 ? ", " : string.Empty, Environment.NewLine);
+		}
+	%>
+	}
+}

@@ -1,0 +1,425 @@
+﻿<%@ CodeTemplate Src="..\..\..\..\TemplateLib\CommonSqlCode.cs" Inherits="MoM.Templates.CommonSqlCode" Language="C#" TargetLanguage="C#" Description="Generates Entity Fields to be used from within EntityEdit screen" Debug="True" ResponseEncoding="UTF-8" NoWarn="0108,0618,1572,1573,1574,0162,2002"%>
+<%@ Assembly Name="SchemaExplorer" %>
+<%@ Assembly Name="System.Design" %>
+<%@ Import Namespace="SchemaExplorer" %>
+<%@ Import Namespace="System.Collections" %>
+<%@ Import Namespace="System.Text" %>
+
+<%@ Property Name="SourceTable" Type="SchemaExplorer.TableSchema" Category="Connection" Description="Table that the data access class should be based on." %>
+<%@ Property Name="SourceTables" Type="SchemaExplorer.TableSchemaCollection" Category="Connection" Description="All Tables that are selected, this will be used to see which relationships are available." %>
+
+<%@ Property Name="NameSpace" Type="System.String" Category="Style" Description="Class Namespace." %>
+<%@ Property Name="BLLNameSpace" Type="System.String" Category="Data" Description="BLL Namespace." %>
+<%@ Property Name="SourceDatabase" Type="SchemaExplorer.DatabaseSchema" Optional="False" Category="DataSource" 	Description="Database that the stored procedures should be based on." %>
+<%@ Property Name="IncludeAtlasLibrary" Type="System.Boolean" Default="false" Category="06b. Website - Advanced" Description="Indicates whether to include a reference to the Atlas component library." %>
+<%@ Property Name="IncludeAtlasToolkit" Type="System.Boolean" Default="false" Category="06b. Website - Advanced" Description="Indicates whether to include a reference to the Atlas Control Toolkit. This property is only taken into account when IncludeAtlasLibrary is true." %>
+<%
+
+	// Collection of all columns in the table.
+	ColumnSchemaCollection cols = SourceTable.Columns;
+	
+	// Collection of all columns in the table that are not primary keys.
+	//ColumnSchemaCollection nonKeys = SourceTable.NonPrimaryKeyColumns;
+	
+	// Collection of all primary key columns.
+	ColumnSchemaCollection keys = SourceTable.PrimaryKey.MemberColumns; 
+	
+	// Collection of ForeignKeys. Provides information about the foreign keys 
+	//(keys where the current table is the foreign table) contained in the table. 
+	TableKeySchemaCollection fkeys = SourceTable.ForeignKeys;
+	
+	//Provides information about the primary keys 
+	//(keys where the current table is the primary table) contained in the table. 
+	//TableKeySchemaCollection pkeys = SourceTable.PrimaryKeys;
+	
+	//Provides information about the indexes contained in the table. 
+	//IndexSchemaCollection indexes = SourceTable.Indexes;
+	
+	ColumnSchemaCollection colsUpdatable = new ColumnSchemaCollection();
+	foreach (ColumnSchema column in cols)
+	{	
+		if ( ! IsIdentityColumn(column) && ! IsComputed(column))
+		{		
+			colsUpdatable.Add(column); 
+		}
+	}
+	
+	TableKeySchemaCollection fKeysSingle = new TableKeySchemaCollection();
+	foreach(TableKeySchema tableKey in fkeys)
+	{
+		if ( tableKey.ForeignKeyMemberColumns.Count == 1)
+			fKeysSingle.Add(tableKey);
+	}
+
+	// Holds the RowVersion column if there's any
+	ColumnSchema RowVersion = null;
+
+	foreach (ColumnSchema column in cols)
+	{
+		if (column.NativeType.ToLower() == "timestamp")
+			RowVersion = column;
+	}
+
+	string entityName = GetClassName(SourceTable);
+	string className = NameSpace + "." + entityName;
+	string providerName = GetClassName(SourceTable, ClassNameFormat.Provider);
+	
+
+	TableSchemaCollection sourceTables = SourceTables;
+
+%>
+<%%@ Control Language="C#" ClassName="<%=entityName%>Fields" %%>
+
+<asp:FormView ID="FormView1" runat="server">
+	<ItemTemplate>
+		<table border="0" cellpadding="3" cellspacing="1">
+<%
+					foreach( ColumnSchema column in colsUpdatable)
+					{
+						string propertyName = GetPropertyName(column);
+						string editorControl = GetEditorControl(column, "", fkeys);
+						if (editorControl == null || editorControl == string.Empty)
+							continue;
+%>							
+			<tr>
+				<td class="literal"><%=GetFriendlyName(column)%>:</td>
+				<td>
+					<%= editorControl %>
+				</td>
+			</tr>				
+<%
+					}							
+		
+		// -- check if there is a N:M relationa and junction table only used as link table (i.e. no extra information)
+		TableSchema primaryTable = SourceTable;
+		
+		foreach(TableKeySchema key in SourceTable.PrimaryKeys)
+		{
+			// Check that the key is related to a junction table and that this key relate a PK in this junction table
+			if ( IsJunctionTable(key.ForeignKeyTable) && IsJunctionKey(key))
+			{
+				TableSchema junctionTable = key.ForeignKeyTable;
+				
+				// Search for the other(s) key(s) of the junction table' primary key
+				foreach(TableKeySchema junctionTableKey in junctionTable.ForeignKeys)
+				{									
+					if ( IsJunctionKey(junctionTableKey) && junctionTableKey.Name != key.Name  && junctionTable.Columns.Count == 2)
+					{
+						TableSchema secondaryTable = junctionTableKey.PrimaryKeyTable;
+						string functionname = GetManyToManyName(junctionTableKey, junctionTable);
+						
+						string secondaryTextValue = string.Empty;
+						foreach (ColumnSchema column in secondaryTable.Columns)
+						{
+							if (!column.IsForeignKeyMember	&& !column.IsPrimaryKeyMember)
+							{
+									secondaryTextValue = GetPropertyName(column);
+									break;
+							}
+						}
+						
+						string primaryPk, secondaryPk, junctionPk, junctionFk;
+						primaryPk = GetPropertyName(keys[0]);
+						secondaryPk = GetPropertyName(secondaryTable.PrimaryKey.MemberColumns[0]);
+						//junctionPk = GetPKPropertyName(keys[0].Name, junctionTable.ForeignKeys);
+						//junctionFk = GetPKPropertyName(secondaryTable.PrimaryKey.MemberColumns[0].Name, junctionTable.ForeignKeys);
+						junctionPk = GetPKPropertyName(keys[0], junctionTable.ForeignKeys);
+						junctionFk = GetPKPropertyName(secondaryTable.PrimaryKey.MemberColumns[0], junctionTable.ForeignKeys);
+												
+%>
+			<tr>
+				<td valign="top" class="literal"><%= GetFriendlyName(secondaryTable)%>:</td>
+				<td>
+					<asp:CheckBoxList ID="<%=GetClassName(secondaryTable)%>List" runat="server"
+						DataSourceID="<%=GetClassName(secondaryTable)%>DataSource"
+						DataTextField="<%=secondaryTextValue%>"
+						DataValueField="<%=secondaryPk%>"
+						RepeatColumns="4"
+					/>				
+					<data:<%=GetClassName(secondaryTable)%>DataSource ID="<%=GetClassName(secondaryTable)%>DataSource" runat="server"
+						SelectMethod="<%= MethodNames.GetAll %>"
+					/>
+					
+					<data:<%=GetClassName(junctionTableKey.ForeignKeyTable)%>DataSource ID="<%=GetClassName(junctionTableKey.ForeignKeyTable)%>DataSource" runat="server"
+						SelectMethod="GetBy<%=junctionPk%>"
+					>
+						<Parameters>							
+							<asp:QueryStringParameter Name="<%=junctionPk%>" QueryStringField="<%=primaryPk%>" Type="String" />
+						</Parameters>
+					</data:<%=GetClassName(junctionTableKey.ForeignKeyTable)%>DataSource>	
+					
+					<data:ManyToManyListRelationship ID="<%=GetClassName(junctionTableKey.ForeignKeyTable)%>Relationship" runat="server">
+						<PrimaryMember runat="server"
+							DataSourceID="<%=entityName%>DataSource"
+							EntityKeyName="<%=primaryPk%>"
+						/>
+						<LinkMember runat="server"
+							DataSourceID="<%=GetClassName(junctionTableKey.ForeignKeyTable)%>DataSource"
+							EntityKeyName="<%=junctionPk%>"
+							ForeignKeyName="<%=junctionFk%>"
+						/>
+						<ReferenceMember runat="server"
+							DataSourceID="<%=GetClassName(secondaryTable)%>DataSource"
+							ListControlID="<%=GetClassName(secondaryTable)%>List"
+							EntityKeyName="<%=secondaryPk%>"
+						/>
+					</data:ManyToManyListRelationship>					
+				</td>
+			</tr>			
+<%
+					}
+				}
+			}
+		}
+%>
+			
+		</table>
+
+	</ItemTemplate>
+</asp:FormView>
+
+
+<script runat="template">
+private string getParameters(ColumnSchemaCollection keys) 
+{
+    string s = string.Empty;
+	
+    for (int x = 0; x < keys.Count; x++)
+    {
+		s += string.Format("<asp:QueryStringParameter Name=\"{0}\" QueryStringField=\"{0}\" Type=\"String\" />", GetPropertyName(keys[x]));
+
+    }
+    return s;
+}	
+
+public string GetEditorControl(ColumnSchema column, string prefix, TableKeySchemaCollection fkeys)
+{
+	string propertyName = GetPropertyName(column);
+	string controlID = String.Format("data{0}{1}",prefix, propertyName);
+	string validatorID = String.Format("Val_{0}",controlID);
+	string controlDecl = String.Empty;
+	//Return the text representation of the editor control for a column
+		if ( column.IsForeignKeyMember )
+		{ 
+			string pkPropertyName = String.Empty;
+			string pkDisplayField = String.Empty;
+			string bindSignature = String.Empty;
+			string objectDataSource = String.Empty;
+			string pkCSType = String.Empty;
+			bool isAllowDbNull = column.AllowDBNull;
+			
+			foreach ( TableKeySchema tableKey in fkeys)
+			{
+				//Key Tables must be in SourceTables
+				if (!SourceTables.Contains(tableKey.ForeignKeyTable) || !SourceTables.Contains(tableKey.PrimaryKeyTable))
+					continue;
+				
+				//Must be a single-column FK
+				ColumnSchema fKeyColumn = tableKey.ForeignKeyMemberColumns[0];
+				if ( GetPropertyName(fKeyColumn) == propertyName )
+				{
+					pkPropertyName = GetPropertyName(tableKey.PrimaryKeyMemberColumns[0]);	
+					pkCSType = GetCSType(tableKey.PrimaryKeyMemberColumns[0]);
+					bindSignature = string.Format("Bind(\"{0}\")", propertyName);						
+										
+					//Find the first non-key column for display
+					foreach(ColumnSchema pkColumn in tableKey.PrimaryKeyTable.Columns)
+					{
+						if ( ! pkColumn.IsForeignKeyMember && ! pkColumn.IsPrimaryKeyMember )
+						{							
+							pkDisplayField = GetPropertyName(pkColumn);
+							break;
+						}
+					}									
+					
+					if ( objectDataSource == String.Empty )
+					{
+						objectDataSource = GetClassName(tableKey.PrimaryKeyTable);
+					}
+					
+					if ( pkDisplayField == String.Empty )
+					{
+						pkDisplayField = pkPropertyName;
+					}
+					break;	
+				}
+			}
+			
+			if (pkPropertyName != string.Empty)
+			{
+				if (isAllowDbNull)
+					controlDecl = String.Format("<data:EntityDropDownList runat=\"server\" ID=\"{0}\" DataSourceID=\"{3}{5}DataSource\" DataTextField=\"{2}\" DataValueField=\"{1}\" SelectedValue='<%# {4} %>' AppendNullItem=\"true\" Required=\"false\" NullItemText=\"< Please Choose ...>\" />", controlID, pkPropertyName, pkDisplayField, propertyName, bindSignature, objectDataSource);				
+				else
+					controlDecl = String.Format("<data:EntityDropDownList runat=\"server\" ID=\"{0}\" DataSourceID=\"{3}{5}DataSource\" DataTextField=\"{2}\" DataValueField=\"{1}\" SelectedValue='<%# {4} %>' AppendNullItem=\"true\" Required=\"true\" NullItemText=\"< Please Choose ...>\" ErrorText=\"Required\" />", controlID, pkPropertyName, pkDisplayField, propertyName, bindSignature, objectDataSource);				
+				controlDecl += "\n";
+				controlDecl += Tab(5) + "<data:" + objectDataSource + "DataSource ID=\"" + propertyName + objectDataSource + "DataSource\" runat=\"server\" ";
+				controlDecl += "SelectMethod=\"" + MethodNames.GetAll + "\" ";
+				controlDecl += " />";				
+			}
+		}
+	else
+	{
+		switch ( column.DataType )
+		{
+			case DbType.Boolean:
+				//Return a checkbox control
+				//controlDecl = String.Format("<asp:CheckBox runat=\"server\" id=\"{0}\" Checked='<%# Bind(\"{1}\") %>'></asp:CheckBox>",controlID, propertyName);
+				
+				//Return a radiobuttonlist control
+				controlDecl = String.Format("<asp:RadioButtonList runat=\"server\" ID=\"{0}\" SelectedValue='<%# Bind(\"{1}\") %>' RepeatDirection=\"Horizontal\"><asp:ListItem Value=\"True\" Text=\"Yes\" Selected=\"True\"></asp:ListItem><asp:ListItem Value=\"False\" Text=\"No\"></asp:ListItem></asp:RadioButtonList>",controlID, propertyName);
+				break;
+			case DbType.AnsiString:
+			case DbType.AnsiStringFixedLength:
+			case DbType.String:
+			case DbType.StringFixedLength:
+				//Return a textbox control
+				if ( column.Size >= 255 || column.Size == -1 || (column.Size == 16 && column.NativeType.ToLower().EndsWith("text") ))
+				{
+					controlDecl = String.Format("<asp:TextBox runat=\"server\" ID=\"{0}\" Text='<%# Bind(\"{1}\") %>'  TextMode=\"MultiLine\"  Width=\"250px\" Rows=\"5\"></asp:TextBox>",controlID, propertyName);
+				}
+				else
+				{
+					controlDecl = String.Format("<asp:TextBox runat=\"server\" ID=\"{0}\" Text='<%# Bind(\"{1}\") %>' {2}></asp:TextBox>",controlID, propertyName, WriteOutMaxLength(column));
+				}
+				
+				if ( ! column.AllowDBNull )
+				{
+					//Add a validator control
+					controlDecl += String.Format("<asp:RequiredFieldValidator ID=\"Req{0}\" runat=\"server\" Display=\"Dynamic\" ControlToValidate=\"{1}\" ErrorMessage=\"Required\"></asp:RequiredFieldValidator>",validatorID, controlID);
+				}
+				break;
+				
+			case DbType.Currency:					
+			case DbType.Decimal:
+			case DbType.Double:
+			case DbType.Single:
+			case DbType.Int16: 
+			case DbType.Int32:
+			case DbType.Int64: 
+			case DbType.Byte:
+				//Return a textbox control								
+				controlDecl = String.Format("<asp:TextBox runat=\"server\" ID=\"{0}\" Text='<%# Bind(\"{1}\") %>'></asp:TextBox>",controlID, propertyName);
+				
+				if ( ! column.AllowDBNull )
+				{
+					//Add a validator control
+					controlDecl += String.Format("<asp:RequiredFieldValidator ID=\"Req{0}\" runat=\"server\" Display=\"Dynamic\" ControlToValidate=\"{1}\" ErrorMessage=\"Required\"></asp:RequiredFieldValidator>",validatorID, controlID);
+				}
+				
+				object maxValue = Double.MaxValue;
+				object minValue = Double.MinValue;
+				string valType = String.Empty;
+				
+				//Add a range validator
+				switch ( column.DataType )
+				{
+					case DbType.Currency:
+						maxValue = 999999999;//Double.MaxValue;
+						minValue = -999999999;//Double.MinValue;
+						valType = "Currency";
+						break;
+					case DbType.Decimal:
+						maxValue = 999999999;//Decimal.MaxValue;
+						minValue = -999999999;//Decimal.MinValue;
+						valType = "Double";
+						break;
+					case DbType.Double:
+						maxValue = 999999999;//Double.MaxValue;
+						minValue = -999999999;//Double.MinValue;
+						valType = "Double";
+						break;
+					case DbType.Single:
+						maxValue = 999999999;//Single.MaxValue;
+						minValue = -999999999;//Single.MinValue;
+						valType = "Double";
+						break;
+					case DbType.Int16:
+						maxValue = Int16.MaxValue;
+						minValue = Int16.MinValue;
+						valType = "Integer";
+						break;
+					case DbType.Int32:
+						maxValue = Int32.MaxValue;
+						minValue = Int32.MinValue;
+						valType = "Integer";
+						break;
+					case DbType.Int64:
+						maxValue = Int64.MaxValue;
+						minValue = Int64.MinValue;
+						valType = "Double";
+						break;
+					case DbType.Byte:
+						maxValue = Byte.MaxValue;
+						minValue = Byte.MinValue;
+						valType = "Integer";
+						break;
+				}
+				
+				if (column.DataType == DbType.Currency)
+				{
+					controlDecl += String.Format("<asp:RegularExpressionValidator ID=\"RegEx{0}\"  runat=\"server\" ControlToValidate=\"{1}\" Display=\"Dynamic\" ValidationExpression=\"^[-]?(\\d{{1,9}})(?:[.,]\\d{{1,4}})?$\" ErrorMessage=\"Invalid Value\" />", validatorID, controlID);
+				}
+				else
+				{
+					controlDecl += String.Format("<asp:RangeValidator ID=\"Range{0}\" runat=\"server\" Display=\"Dynamic\" ControlToValidate=\"{1}\" ErrorMessage=\"Invalid value\" MaximumValue=\"{2}\" MinimumValue=\"{3}\" Type=\"{4}\"></asp:RangeValidator>",validatorID, controlID, maxValue.ToString(), minValue.ToString(),valType);
+				}
+				
+				break;
+				
+			case DbType.Date: 
+			case DbType.DateTime:
+				//Return a textbox control
+				controlDecl = String.Format("<asp:TextBox runat=\"server\" ID=\"{0}\" Text='<%# Bind(\"{1}\", \"{2}\") %>' MaxLength=\"10\"></asp:TextBox>",controlID, propertyName, "{0:d}");
+				
+				//Add an image button to pick from a calendar
+				if (!IncludeAtlasToolkit) {
+					controlDecl +=  String.Format("<asp:ImageButton ID=\"cal_{0}\" runat=\"server\" SkinID=\"CalendarImageButton\" OnClientClick=\"javascript:showCalendarControl(this.previousSibling);return false;\" />",controlID);
+				}
+				else {
+					controlDecl +=  String.Format("<asp:ImageButton ID=\"cal_{0}\" runat=\"server\" SkinID=\"CalendarImageButton\" OnClientClick=\"javascript:return false;\" />",controlID);
+					controlDecl += string.Format("<ajaxToolkit:CalendarExtender runat=\"server\" TargetControlID=\"{0}\" CssClass=\"ajaxToolkit-CalendarExtender\" Format=\"MM/dd/yyyy\" PopupButtonID=\"cal_{0}\" />", controlID); 
+				}
+				
+				if ( ! column.AllowDBNull )
+				{
+					//Add a validator control
+					controlDecl += String.Format("<asp:RequiredFieldValidator ID=\"Req{0}\" runat=\"server\" Display=\"Dynamic\" ControlToValidate=\"{1}\" ErrorMessage=\"Required\"></asp:RequiredFieldValidator>",validatorID, controlID);
+				}
+				break;
+				
+			/*
+			case DbType.Binary: return new byte[] { };
+			case DbType.Byte: return (byte)0;
+			
+			
+			;
+			case DbType.Guid: return Guid.Empty;
+			
+			case DbType.Object: return null;
+			 return 0F;
+			
+			case DbType.Time: return DateTime.MinValue;
+			case DbType.VarNumeric: return 0;*/
+			default:
+				controlDecl = String.Format("<asp:HiddenField runat=\"server\" id=\"data{2}{0}\" Value='<%# Bind(\"{1}\") %>'></asp:HiddenField>",propertyName, propertyName,prefix);
+				break;
+		
+		}
+		//return column.NativeType;
+	}
+	
+	return controlDecl;
+}	
+	
+	public string WriteOutMaxLength(ColumnSchema column) 
+	{
+		if (column.Size == -1) {
+			return string.Empty;	
+		}
+		else 
+		{
+			return string.Format("MaxLength=\"{0}\"", column.Size);
+		}
+	}
+		
+</script>

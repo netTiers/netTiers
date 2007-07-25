@@ -1,0 +1,38 @@
+﻿<%--
+ * $Id: CommandEntity.cst,v 1.1 2005/12/02 15:23:23 jroland Exp $
+ * Last modified by $Author: jroland $
+ * Last modified at $Date: 2006-03-16 16:53:08 -0600 (Thu, 16 Mar 2006) $
+ * $Revision: 62 $
+--%>
+<%@ CodeTemplate Language="C#" TargetLanguage="C#" Src="..\TemplateLib\CommonSqlCode.cs" Inherits="MoM.Templates.CommonSqlCode" Description="Business Object template." ResponseEncoding="UTF-8"  NoWarn="0108,0618,1572,1573,1574,0162,2002"%>
+<%@ Assembly Name="SchemaExplorer" %>
+<%@ Assembly Name="System.Design" %>
+<%@ Property Name="NameSpace" Type="System.String" Category="Data" Description="Object Namespace." %>
+<%@ Property Name="Command" Type="SchemaExplorer.CommandSchema" Category="Connection" Description="Table Object should be based on." %>
+<%
+	string className = GetClassName(Command);	// TODO trim start name
+%>
+#region Using directives
+
+using System;
+using System.ComponentModel;
+using System.Collections;
+using System.Xml.Serialization;
+
+#endregion
+
+namespace <%=NameSpace%>
+{
+	<% 
+	foreach(SchemaExplorer.CommandResultSchema result in Command.CommandResults)
+	{%>
+	public struct <%=className+ "Rowset" + result.Name %>
+	{		
+		<%for (int x=0; x < result.Columns.Count; x++){%>
+		public <%= GetCSType(result.Columns[x])%> <%= GetPropertyName(result.Columns[x]) %>;			
+		<%} // end for each columns%>
+	}
+	<%}
+	%>
+	
+}

@@ -1,0 +1,201 @@
+﻿<%@ CodeTemplate Src="..\..\..\TemplateLib\CommonSqlCode.cs" Inherits="MoM.Templates.CommonSqlCode" Language="C#" TargetLanguage="C#" Description="Generates code behind edit input screen for an entitiy using EntityDataSource Control." Debug="True" ResponseEncoding="UTF-8" NoWarn="0108,0618,1572,1573,1574,0162,2002"%>
+<%@ Assembly Name="SchemaExplorer" %>
+<%@ Assembly Name="System.Design" %>
+<%@ Import Namespace="SchemaExplorer" %>
+<%@ Import Namespace="System.Collections" %>
+<%@ Import Namespace="System.Text" %>
+
+<%@ Property Name="SourceTable" Type="SchemaExplorer.TableSchema" Category="Connection" Description="Table that the data access class should be based on." %>
+<%@ Property Name="SourceTables" Type="SchemaExplorer.TableSchemaCollection" Category="Connection" Description="All Tables that are selected, this will be used to see which relationships are available." %>
+
+<%@ Property Name="NameSpace" Type="System.String" Category="Style" Description="ASP 2.0 Namespace" %>
+<%@ Property Name="WebProjectNameSpace" Type="System.String" Category="Style" Description="ASP 2.0 Namespace" %>
+<%@ Property Name="BLLNameSpace" Type="System.String" Category="Data" Description="BLL Namespace." %>
+<%@ Property Name="SourceDatabase" Type="SchemaExplorer.DatabaseSchema" Optional="False" Category="DataSource" 	Description="Database that the stored procedures should be based on." %>
+<%@ Property Name="IncludeAtlasLibrary" Type="System.Boolean" Default="false" Category="06b. Website - Advanced" Description="Indicates whether to include a reference to the Atlas component library." %>
+<%@ Property Name="IncludeAtlasToolkit" Type="System.Boolean" Default="false" Category="06b. Website - Advanced" Description="Indicates whether to include a reference to the Atlas Control Toolkit. This property is only taken into account when IncludeAtlasLibrary is true." %>
+
+<%
+
+	// Collection of all columns in the table.
+	ColumnSchemaCollection cols = SourceTable.Columns;
+	
+	// Collection of all columns in the table that are not primary keys.
+	//ColumnSchemaCollection nonKeys = SourceTable.NonPrimaryKeyColumns;
+	
+	// Collection of all primary key columns.
+	ColumnSchemaCollection keys = SourceTable.PrimaryKey.MemberColumns; 
+	
+	// Collection of ForeignKeys. Provides information about the foreign keys 
+	//(keys where the current table is the foreign table) contained in the table. 
+	TableKeySchemaCollection fkeys = SourceTable.ForeignKeys;
+	
+	//Provides information about the primary keys 
+	//(keys where the current table is the primary table) contained in the table. 
+	//TableKeySchemaCollection pkeys = SourceTable.PrimaryKeys;
+	
+	//Provides information about the indexes contained in the table. 
+	//IndexSchemaCollection indexes = SourceTable.Indexes;
+	
+	ColumnSchemaCollection colsUpdatable = new ColumnSchemaCollection();
+	foreach (ColumnSchema column in cols)
+	{
+		if ( ! IsIdentityColumn(column) && ! IsComputed(column) )
+			colsUpdatable.Add(column);
+	}
+	
+	TableKeySchemaCollection fKeysSingle = new TableKeySchemaCollection();
+	foreach(TableKeySchema tableKey in fkeys)
+	{
+		if ( tableKey.ForeignKeyMemberColumns.Count == 1)
+			fKeysSingle.Add(tableKey);
+	}
+
+	// Holds the RowVersion column if there's any
+	ColumnSchema RowVersion = null;
+
+	foreach (ColumnSchema column in cols)
+	{
+		if (column.NativeType.ToLower() == "timestamp")
+			RowVersion = column;
+	}
+
+	string entityName = GetClassName(SourceTable);
+	string className = NameSpace + "." + GetClassName(SourceTable);
+	string providerName = GetClassName(SourceTable, ClassNameFormat.Provider);
+
+	TableSchemaCollection sourceTables = new TableSchemaCollection();
+	
+	for (int i=0; i < SourceDatabase.Tables.Count; i++)
+	{
+		sourceTables.Add(SourceDatabase.Tables[i]);
+	}
+	
+	int iRelatedCounter = 0;
+%>
+#region Imports...
+using System;
+using System.Data;
+using System.Configuration;
+using System.Collections;
+using System.Web;
+using System.Web.Security;
+using System.Web.UI;
+using System.Web.UI.WebControls;
+using System.Web.UI.WebControls.WebParts;
+using System.Web.UI.HtmlControls;
+using <%=WebProjectNameSpace%>.Web.UI;
+#endregion
+
+public partial class <%=entityName%>Edit : System.Web.UI.Page
+{
+	protected void Page_Load(object sender, EventArgs e)
+	{		
+		FormUtil.RedirectAfterInsertUpdate(FormView1, "<%=entityName%>Edit.aspx?{0}", <%=entityName%>DataSource);
+		FormUtil.RedirectAfterAddNew(FormView1, "<%=entityName%>Edit.aspx");
+		FormUtil.RedirectAfterCancel(FormView1, "<%=entityName%>.aspx");
+		<%
+			// -- SetDefaultMode checks for one parameter if it exists, so that 
+			// -- it sets the right mode for the FormView
+		%>
+		FormUtil.SetDefaultMode(FormView1, "<%=GetPropertyName(keys[0])%>");
+	}
+<%
+	// -- check if table is not Junction table
+	if (keys.Count == 1)
+	{
+		TableSchemaCollection tablesRelated1 = GetTablesCollectionByFk(SourceTable.PrimaryKey.MemberColumns[0], sourceTables);
+		for (int x = 0; x < tablesRelated1.Count; x++)
+		{  
+			//Related Table must be in SourceTables
+			if (!SourceTables.Contains(tablesRelated1[x]))
+				continue;
+				
+			string entityRelated = GetClassName(tablesRelated1[x]);
+			ColumnSchemaCollection keysRelatedCol = tablesRelated1[x].PrimaryKey.MemberColumns;
+			string keysRelated = GetKeysName(keysRelatedCol);
+			iRelatedCounter++;
+%>
+	protected void GridView<%=entityRelated%>_SelectedIndexChanged(object sender, EventArgs e)
+	{
+		string urlParams = string.Format(<%=getUrlFk(keysRelatedCol, entityRelated)%>);
+		Response.Redirect("<%=entityRelated%>Edit.aspx?" + urlParams, true);		
+	}	
+<%							
+		}		
+	}
+%>
+}
+
+
+<script runat="template">
+	private string getUrlFk(SchemaExplorer.ColumnSchemaCollection fkeys, string entityRelated) 
+	{
+        string s = string.Empty;
+		string g = string.Empty;
+		
+        for (int x = 0; x < fkeys.Count; x++)
+        {			
+            s += string.Format("{0}={{" + x + "}}", GetPropertyName(fkeys[x]));
+			g += string.Format("GridView{1}.SelectedDataKey.Values[{0}]", x.ToString(), entityRelated);
+            if (x < fkeys.Count - 1)
+            {
+                s += "&";
+				g += ", ";
+            }			
+
+        }
+        return string.Format("\"{0}\", {1}", s, g);
+	}
+	
+	/// <summary>
+    /// This method is responsible to loop through primary keys and constuct WhereClause Condition,
+	/// which will be used by the TypedDataSource object GetPaged methods
+    /// </summary>
+    /// <param name="keys"></param>
+	/// <remark> 
+	/// Using only the first primary key to display data for the related tables
+	/// </remark>
+	private string getUrl(ColumnSchemaCollection keys) 
+	{
+        string s = string.Empty;
+		string g = string.Empty;
+		
+        //for (int x = 0; x < keys.Count; x++)
+		for (int x = 0; x < 1; x++)  // -- use only first pk
+        {
+            s += string.Format("{0}='{{" + x + "}}'", keys[x].Name);
+			g += string.Format("Request.QueryString[\"{0}\"].ToString()", GetPropertyName(keys[x]));
+            
+			/*
+			if (x < keys.Count - 1)
+            {
+                s += " AND ";
+				g += ", ";
+            }
+			*/
+
+        }
+        return string.Format("\"{0}\", {1}", s, g);
+	}
+
+	private string getUrlCondition(ColumnSchemaCollection keys) 
+	{
+		string g = string.Empty;
+		
+        //for (int x = 0; x < keys.Count; x++)
+		for (int x = 0; x < 1; x++)
+        {
+			g += string.Format("Request.QueryString[\"{0}\"] != null", GetPropertyName(keys[x]));
+            
+			/*
+			if (x < keys.Count - 1)
+            {
+				g += " && ";
+            }
+			*/
+
+        }
+        return g;
+	}
+</script>

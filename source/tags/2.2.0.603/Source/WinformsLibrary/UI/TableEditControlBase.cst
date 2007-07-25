@@ -1,0 +1,331 @@
+﻿<%@ CodeTemplate Language="C#" TargetLanguage="c#" Src="..\..\TemplateLib\CommonSqlCode.cs" Inherits="MoM.Templates.CommonSqlCode" Debug="False" Description="Template description here." ResponseEncoding="UTF-8" NoWarn="0108,0618,1572,1573,1574,0162,2002"  %>
+<%@ Assembly Name="SchemaExplorer" %>
+<%@ Assembly Name="System.Design" %>
+
+<%@ Import Namespace="SchemaExplorer" %>
+<%@ Import Namespace="System.Collections" %>
+<%@ Import Namespace="System.Text" %>
+<%@ Import Namespace="System" %>
+
+<%@ Property Name="SourceTable" Type="SchemaExplorer.TableSchema" Category="Connection" Description="Table that the data access class should be based on." %>
+<%@ Property Name="NameSpace" Type="System.String" Category="Namespaces" Description="Root Namespace." %>
+<%@ Property Name="WinLibNameSpace" Type="System.String" Category="Namespaces" Description="the Namespace of the windows forms library." %>
+<%@ Property Name="BusinessLogicLayerNameSpace" Type="System.String" Category="Namespaces" Description="The sub namespace that is added to the root namespace for the entities." Default="" Optional="true" %>
+<%
+	string name =	GetClassName(SourceTable);
+	string entityName = BusinessLogicLayerNameSpace + "." + name;
+	string className = name + "EditControlBase";
+	//string entityDataSource =  NameSpace + ".Web.Data." + GetClassName(SourceTable.Name) + "DataSource";
+%>
+
+namespace <%=WinLibNameSpace%>
+{
+	/// <summary>
+	/// This is the abstract edit form for the <see cref="<%=entityName%>"/> entity.
+	/// </summary>
+	/// <remarks>This class is overwritten by .netTiers at each generation.</remarks>
+	[System.ComponentModel.DesignerCategoryAttribute("code")]
+	public abstract class <%=className%> : System.Windows.Forms.UserControl
+	{
+		#region Fields
+		
+		//private System.Windows.Forms.TableLayoutPanel uxTableLayoutPanel;
+		/// <summary>
+		/// The ErrorProvider for the Entity;
+		/// </summary>
+		protected System.Windows.Forms.ErrorProvider uxErrorProvider;
+		
+		/// <summary>
+		/// The BindingSource for the entity.
+		///</summary>
+		protected System.Windows.Forms.BindingSource uxBindingSource;
+						
+		<% for (int i=0; i<SourceTable.Columns.Count; i++)
+		{ 
+			ColumnSchema column = SourceTable.Columns[i];
+			string dgvColumnName = "ux" + GetPropertyName(column);
+			if (SourceTable.ForeignKeyColumns.Contains(column))
+			{%>
+		
+		/// <summary>
+		/// ComboBox for the <%=GetPropertyName(column)%> property.
+		/// </summary>
+		protected System.Windows.Forms.ComboBox <%=dgvColumnName%>;
+			<% } else if (column.SystemType == typeof(System.Boolean)){ %>
+		
+		/// <summary>
+		/// CheckBox for the <%=GetPropertyName(column)%> property.
+		/// </summary>
+		protected System.Windows.Forms.CheckBox <%=dgvColumnName%>;
+			<% } else if (column.SystemType == typeof(System.DateTime)){ %>
+		
+		/// <summary>
+		/// DataTimePicker for the <%=GetPropertyName(column)%> property.
+		/// </summary>
+		protected System.Windows.Forms.DateTimePicker <%=dgvColumnName%>;
+		<% } else if (column.NativeType == "image" || column.NativeType == "timestamp"){ %>
+		<% } else { %>
+		
+		/// <summary>
+		/// TextBox for the <%=GetPropertyName(column)%> property. 
+		/// </summary>
+		protected System.Windows.Forms.TextBox <%=dgvColumnName%>;
+			<% } %>
+		
+		/// <summary>
+		/// The <see cref="System.Windows.Forms.Label"/> associated with the <%=GetPropertyName(column)%> property.
+		/// </summary>
+		protected System.Windows.Forms.Label ux<%=GetPropertyName(column)%>Label;
+		<% } %>
+		#endregion
+		
+		#region Main entity
+		private <%=entityName%> _<%=name%>;
+		/// <summary>
+		/// Gets or sets the <see cref="<%=entityName%>"/> entity to edit with this form.
+		/// </summary>
+		/// <value>The <see cref="<%=entityName%>"/> instance.</value>
+		public <%=entityName%> <%=name%>
+		{
+			get {return this._<%=name%>;}
+			set
+			{
+				this._<%=name%> = value;
+				if (value != null) 
+				{
+					this.uxBindingSource.DataSource = value;
+					BindControls();
+				}			
+				
+			}
+		}
+		#endregion
+		
+		/// <summary>
+		/// Binds the controls.
+		/// </summary>
+		private void BindControls()
+		{
+			<% for (int i=0; i<SourceTable.Columns.Count; i++)
+			{ 
+				ColumnSchema column = SourceTable.Columns[i];
+				string dgvColumnName = "ux" + GetPropertyName(column);
+			%>
+			<% if (SourceTable.ForeignKeyColumns.Contains(column)) { %>
+			this.<%=dgvColumnName%>.DataBindings.Clear();
+			this.<%=dgvColumnName%>.DataBindings.Add("SelectedValue", this.uxBindingSource, "<%=GetPropertyName(column)%>", true, System.Windows.Forms.DataSourceUpdateMode.OnPropertyChanged);
+			<% } else if (column.SystemType == typeof(System.Boolean)){ %>
+			this.<%=dgvColumnName%>.DataBindings.Clear();
+			this.<%=dgvColumnName%>.DataBindings.Add("Checked", this.uxBindingSource, "<%=GetPropertyName(column)%>", true, System.Windows.Forms.DataSourceUpdateMode.OnPropertyChanged);
+			<% } else if (column.SystemType == typeof(System.DateTime)){ %>
+			this.<%=dgvColumnName%>.DataBindings.Clear();
+			this.<%=dgvColumnName%>.DataBindings.Add("Value", this.uxBindingSource, "<%=GetPropertyName(column)%>", true, System.Windows.Forms.DataSourceUpdateMode.OnPropertyChanged);
+			<% } else if (column.NativeType == "image" || column.NativeType == "timestamp"){ %>
+			<% } else { %>
+			this.<%=dgvColumnName%>.DataBindings.Clear();
+			this.<%=dgvColumnName%>.DataBindings.Add("Text", this.uxBindingSource, "<%=GetPropertyName(column)%>", true, System.Windows.Forms.DataSourceUpdateMode.OnPropertyChanged);
+			<% } %>		
+			<% } %>
+		}					
+		
+		#region Constructor
+		
+		/// <summary>
+		/// Initializes a new instance of the <see cref="<%=className%>"/> class.
+		/// </summary>
+		public <%=className%>()
+		{
+			InitializeComponent();			
+			
+			this.uxBindingSource.CurrentItemChanged += new System.EventHandler(uxBindingSource_currentItemChanged);
+		}		
+		
+		/// <summary>
+		/// 
+		/// </summary>
+		private void uxBindingSource_currentItemChanged(object sender, System.EventArgs e)
+		{
+			if (_<%=name%> != null) _<%=name%>.Validate();
+		}	
+				
+		/// <summary>
+		/// Initializes the component.
+		/// </summary>
+		public void InitializeComponent()
+		{
+			this.components = new System.ComponentModel.Container();
+			this.uxErrorProvider = new System.Windows.Forms.ErrorProvider(this.components);
+			this.uxBindingSource = new System.Windows.Forms.BindingSource(this.components);
+			
+			//this.uxTableLayoutPanel = new System.Windows.Forms.TableLayoutPanel();
+			<% for (int i=0; i<SourceTable.Columns.Count; i++)
+			{ 
+				ColumnSchema column = SourceTable.Columns[i];
+				string dgvColumnName = "ux" + GetPropertyName(column);
+				if (SourceTable.ForeignKeyColumns.Contains(column))
+				{%>
+			this.<%=dgvColumnName%> = new System.Windows.Forms.ComboBox();
+				<% } else if (column.SystemType == typeof(System.Boolean)){ %>
+			this.<%=dgvColumnName%> = new System.Windows.Forms.CheckBox();
+			<% } else if (column.SystemType == typeof(System.DateTime)){ %>
+			this.<%=dgvColumnName%> = new System.Windows.Forms.DateTimePicker();
+			<% } else if (column.NativeType == "image" || column.NativeType == "timestamp") {%>
+			<% } else { %>
+			this.<%=dgvColumnName%> = new System.Windows.Forms.TextBox();
+				<% } %>
+			ux<%=GetPropertyName(column)%>Label = new System.Windows.Forms.Label();
+				<% } %>
+			
+			((System.ComponentModel.ISupportInitialize)(this.uxBindingSource)).BeginInit();
+			((System.ComponentModel.ISupportInitialize)(this.uxErrorProvider)).BeginInit();
+			this.SuspendLayout();
+			
+			// 
+			// uxTableLayoutPanel
+			// 
+			//this.uxTableLayoutPanel.AutoSize = true;
+			//this.uxTableLayoutPanel.AutoSizeMode = System.Windows.Forms.AutoSizeMode.GrowAndShrink;
+			//this.uxTableLayoutPanel.ColumnCount = 2;
+			//this.uxTableLayoutPanel.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Absolute, 120F));
+			//this.uxTableLayoutPanel.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Absolute, 250F));
+			//this.uxTableLayoutPanel.Location = new System.Drawing.System.Drawing.Point(3, 3);
+			//this.uxTableLayoutPanel.Name = "uxTableLayoutPanel";
+			//this.uxTableLayoutPanel.RowCount = 2;
+			//this.uxTableLayoutPanel.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 25F));
+			//this.uxTableLayoutPanel.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 25F));
+			//this.uxTableLayoutPanel.Size = new System.Drawing.Size(450, 50);
+			//this.uxTableLayoutPanel.TabIndex = 0;
+			
+			//
+			// uxErrorProvider
+			//
+			this.uxErrorProvider.ContainerControl = this;
+			this.uxErrorProvider.DataSource = this.uxBindingSource;
+			
+			<% for (int i=0; i<SourceTable.Columns.Count; i++)
+			{ 
+				ColumnSchema column = SourceTable.Columns[i];
+				string dgvColumnName = "ux" + GetPropertyName(column);
+				int left = 3;
+				int heightIncrement = 26;
+				int leftInput = 160;
+				
+				if (column.NativeType != "image" && column.NativeType != "timestamp")
+				{ %>
+			//
+			// <%=dgvColumnName%>Label
+			//
+			this.<%=dgvColumnName%>Label.Text = "<%=GetPropertyName(column)%>:";
+			this.<%=dgvColumnName%>Label.Location = new System.Drawing.Point(<%=left%>, <%=i * heightIncrement%>);
+			this.Controls.Add(this.<%=dgvColumnName%>Label);
+			//this.uxTableLayoutPanel.Controls.Add(this.<%=dgvColumnName%>Label);			
+			//
+			// <%=dgvColumnName%>
+			//
+			<%if (SourceTable.ForeignKeyColumns.Contains(column)) {%>
+			<% } else if (column.SystemType == typeof(System.String)) { %>
+			this.<%=dgvColumnName%>.Width = 250;
+				<% if (column.Size > 0 ) { %>
+			this.<%=dgvColumnName%>.MaxLength = <%=column.Size%>;
+				<% } else { %>
+			this.<%=dgvColumnName%>.Multiline = true;
+			//this.<%=dgvColumnName%>.Height = 80;
+				<% } %>
+			<% } %>
+			<% if (IsComputed(column) || IsIdentityColumn(column)) { %>
+			this.<%=dgvColumnName%>.ReadOnly = true;
+			<% } %>
+			//this.uxTableLayoutPanel.Controls.Add(this.<%=dgvColumnName%>);
+			this.<%=dgvColumnName%>.Location = new System.Drawing.Point(<%=leftInput%>, <%=i * heightIncrement%>);
+			this.Controls.Add(this.<%=dgvColumnName%>);
+			<% } } %>	
+			<% for (int i=0; i<SourceTable.ForeignKeys.Count; i++)
+			{ 
+				ColumnSchema column = SourceTable.ForeignKeys[i].ForeignKeyMemberColumns[0];
+				string dgvColumnName = "ux" + GetPropertyName(column) ;
+			%>			
+			//
+			// <%=dgvColumnName%>
+			//				
+			this.<%=dgvColumnName%>.DisplayMember = "<%=GetPropertyName(SourceTable.ForeignKeys[i].PrimaryKeyTable.Columns[1]) %>";	
+			this.<%=dgvColumnName%>.ValueMember = "<%=GetPropertyName(SourceTable.ForeignKeys[i].PrimaryKeyTable.PrimaryKey.MemberColumns[0])%>";	
+		<%  } %>
+			// 
+			// <%=className%>
+			// 
+			this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
+			this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
+			//this.Controls.Add(this.uxTableLayoutPanel);
+			this.AutoScroll = true;
+			this.Name = "<%=className%>";
+			this.Size = new System.Drawing.Size(478, 311);
+			//this.Localizable = true;
+			((System.ComponentModel.ISupportInitialize)(this.uxErrorProvider)).EndInit();
+			((System.ComponentModel.ISupportInitialize)(this.uxBindingSource)).EndInit();			
+			this.ResumeLayout(false);
+			this.PerformLayout();
+		}
+		#endregion
+				
+		#region ComboBox List
+		
+		<% for (int i=0; i<SourceTable.ForeignKeys.Count; i++) { %>
+		<% if (SourceTable.ForeignKeys[i].ForeignKeyMemberColumns.Count == 1) { %>
+				
+		private <%=BusinessLogicLayerNameSpace%>.TList<<%=BusinessLogicLayerNameSpace%>.<%=GetClassName(SourceTable.ForeignKeys[i].PrimaryKeyTable)%>> _<%=GetPropertyName(SourceTable.ForeignKeys[i].ForeignKeyMemberColumns[0])%>List;
+		
+		/// <summary>
+		/// The ComboBox associated with the <%=GetPropertyName(SourceTable.ForeignKeys[i].ForeignKeyMemberColumns[0])%> property.
+		/// </summary>
+		[System.ComponentModel.Category("ComboBox BindingSources")]
+		public <%=BusinessLogicLayerNameSpace%>.TList<<%=BusinessLogicLayerNameSpace%>.<%=GetClassName(SourceTable.ForeignKeys[i].PrimaryKeyTable)%>> <%=GetPropertyName(SourceTable.ForeignKeys[i].ForeignKeyMemberColumns[0])%>List
+		{
+			get {return _<%=GetPropertyName(SourceTable.ForeignKeys[i].ForeignKeyMemberColumns[0])%>List;}
+			set 
+			{
+				this._<%=GetPropertyName(SourceTable.ForeignKeys[i].ForeignKeyMemberColumns[0])%>List = value;
+				this.ux<%=GetPropertyName(SourceTable.ForeignKeys[i].ForeignKeyMemberColumns[0])%>.DataSource = null;
+				this.ux<%=GetPropertyName(SourceTable.ForeignKeys[i].ForeignKeyMemberColumns[0])%>.DataSource = value;
+			}
+		}
+		
+		private bool _allowNewItemIn<%=GetPropertyName(SourceTable.ForeignKeys[i].ForeignKeyMemberColumns[0])%>List;
+		
+		/// <summary>
+		/// Indicates if the ComboBox associated with the <%=GetPropertyName(SourceTable.ForeignKeys[i].ForeignKeyMemberColumns[0])%> property allow user to add item.
+		/// </summary>
+		[System.ComponentModel.Category(".netTiers"), System.ComponentModel.Description("Indicates if end user can add a new item in the combobox. an event will be thrown then.")]
+		public bool AllowNewItemIn<%=GetPropertyName(SourceTable.ForeignKeys[i].ForeignKeyMemberColumns[0])%>List
+		{
+			get { return _allowNewItemIn<%=GetPropertyName(SourceTable.ForeignKeys[i].ForeignKeyMemberColumns[0])%>List;}
+			set
+			{
+				this._allowNewItemIn<%=GetPropertyName(SourceTable.ForeignKeys[i].ForeignKeyMemberColumns[0])%>List = value;
+				this.ux<%=GetPropertyName(SourceTable.ForeignKeys[i].ForeignKeyMemberColumns[0])%>.DropDownStyle = value ? System.Windows.Forms.ComboBoxStyle.DropDown : System.Windows.Forms.ComboBoxStyle.DropDownList;
+			}
+		}
+		
+		<% } %>
+		<% } %>
+		
+		#endregion
+		
+		/// <summary> 
+		/// Required designer variable.
+		/// </summary>
+		private System.ComponentModel.IContainer components = null;
+
+		/// <summary> 
+		/// Clean up any resources being used.
+		/// </summary>
+		/// <param name="disposing">true if managed resources should be disposed; otherwise, false.</param>
+		protected override void Dispose(bool disposing)
+		{
+			if (disposing && (components != null))
+			{
+				components.Dispose();
+			}
+			base.Dispose(disposing);
+		}
+	}
+}

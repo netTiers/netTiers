@@ -1,0 +1,149 @@
+﻿<%--
+ * $Id: EntityDataSource.cst,v 1.0 2006/03/19 01:00:00 bdiaz Exp $
+ * Last modified by $Author: bdiaz $
+ * Last modified at $Date: 2006-03-19 01:00:00 -0600 (Sun, 19 Mar 2006) $
+ * $Revision: 1 $
+--%>
+<%@ CodeTemplate Language="C#" TargetLanguage="C#" Src="..\..\TemplateLib\CommonSqlCode.cs" Inherits="MoM.Templates.CommonSqlCode" Debug="False" Description="Generates the EntityTransactionModule class." ResponseEncoding="UTF-8"  NoWarn="0108,0618,1572,1573,1574,0162,2002" %>
+
+<%@ Property Name="BLLNameSpace" Optional="False" Type="System.String" Category="Style" Description="BLL Namespace." %>
+<%@ Property Name="DALNameSpace" Optional="False" Type="System.String" Category="Style" Description="DAL Namespace." %>
+<%@ Property Name="WebNameSpace" Optional="False" Type="System.String" Category="Style" Description="Web Namespace." %>
+
+<%@ Property Name="ComponentLayerNameSpace" Optional="False" Type="System.String" Category="Style" Description="Component Namespace." %>
+<%@ Property Name="IncludeComponentLayer" Type="MoM.Templates.ComponentPatternType" Category="02. Framework Generation - Optional" Description="The pattern type to implement in the Component Layer." Default="None" %>
+
+<%@ Assembly Name="SchemaExplorer" %>
+<%@ Assembly Name="System.Design" %>
+<%@ Assembly Name="System.Data" %>
+<%@ Import Namespace="System.Data" %>
+<%
+	bool HasComponentLayer = (IncludeComponentLayer != MoM.Templates.ComponentPatternType.None);
+%>
+#region Using Directives
+using System;
+using System.Data;
+using System.Collections;
+using System.Configuration;
+using System.Web;
+using System.Web.Security;
+using System.Web.UI;
+using System.Web.UI.WebControls;
+using System.Web.UI.WebControls.WebParts;
+using System.Web.UI.HtmlControls;
+using <%= DALNameSpace %>;
+<% if ( HasComponentLayer ) { %>
+using <%= ComponentLayerNameSpace %>;
+<% } %>
+#endregion
+
+namespace <%= WebNameSpace %>.Data
+{
+	/// <summary>
+	/// Provides access to a TransactionManager instance associated with
+	/// the current HttpContext.
+	/// </summary>
+	public class EntityTransactionModule : IHttpModule
+	{
+		<% if ( !HasComponentLayer ) { %>
+		private static readonly String ManagerKey = "EntityTransactionManager";
+		<% } %>
+
+		/// <summary>
+		/// Initializes a new instance of the EntityTransactionModule class.
+		/// </summary>
+		public EntityTransactionModule()
+		{
+		}
+
+		#region IHttpModule Members
+
+		/// <summary>
+		/// Initializes a module and prepares it to handle requests.
+		/// </summary>
+		/// <param name="application">An reference to the current HttpApplication instance.</param>
+		public void Init(HttpApplication application)
+		{
+			application.EndRequest += new EventHandler(OnEndRequest);
+		}
+
+		/// <summary>
+		/// Disposes of the resources (other than memory) used by the module.
+		/// </summary>
+		public void Dispose()
+		{
+		}
+
+		#endregion
+
+		#region Event Handlers
+
+		/// <summary>
+		/// Handles the System.Web.HttpApplication.EndRequest event.
+		/// </summary>
+		/// <param name="sender"></param>
+		/// <param name="e"></param>
+		protected void OnEndRequest(Object sender, EventArgs e)
+		{
+			HttpApplication application = (HttpApplication) sender;
+			HttpContext context = application.Context;
+			<% if ( HasComponentLayer ) { %>
+			TransactionManager mgr = ConnectionScope.Current.TransactionManager;
+			<% } else { %>
+			TransactionManager mgr = context.Items[ManagerKey] as TransactionManager;
+			<% } %>
+
+			if ( mgr != null && mgr.IsOpen )
+			{
+				<% if ( !HasComponentLayer ) { %>
+				context.Items[ManagerKey] = null;
+				
+				<% } %>
+				if ( context.Error != null )
+				{
+					mgr.Rollback();
+				}
+				else
+				{
+					mgr.Commit();
+				}
+			}
+		}
+
+		#endregion
+
+		/// <summary>
+		/// Gets a reference to the TransactionManager object associated
+		/// with the current HttpContext.  If one is not available, this method
+		/// creates a new instance, associates it with the current HttpContext,
+		/// and begins a new transaction.
+		/// </summary>
+		public static TransactionManager TransactionManager
+		{
+			get
+			{
+				<% if ( HasComponentLayer ) { %>
+				return ConnectionScope.ValidateOrCreateTransaction();
+				<% } else { %>
+				HttpContext context = HttpContext.Current;
+				TransactionManager mgr = null;
+
+				if ( context != null )
+				{
+					mgr = context.Items[ManagerKey] as TransactionManager;
+
+					if ( mgr == null )
+					{
+						mgr = DataRepository.Provider.CreateTransaction();
+						mgr.BeginTransaction();
+
+						context.Items[ManagerKey] = mgr;
+					}
+				}
+
+				return mgr;
+				<% } %>
+			}
+		}
+	}
+}

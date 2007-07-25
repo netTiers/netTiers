@@ -1,0 +1,669 @@
+﻿<%--
+ * $Id: WsEntityProviderBase.generated.cst
+--%>
+<%@ CodeTemplate Src="..\TemplateLib\CommonSqlCode.cs" Inherits="MoM.Templates.CommonSqlCode" Language="C#" TargetLanguage="C#" Description="Template description here." Debug="true" ResponseEncoding="UTF-8" NoWarn="0108,0618,1572,1573,1574,0162,2002"%>
+<%@ Assembly Name="SchemaExplorer" %>
+<%@ Assembly Name="System.Design" %>
+<%@ Import Namespace="SchemaExplorer" %>
+<%@ Import Namespace="System.Collections" %>
+
+<%@ Property Name="SourceTables" Type="SchemaExplorer.TableSchemaCollection" Category="Connection" Description="Tables of the system." %>
+<%@ Property Name="SourceTable" Type="SchemaExplorer.TableSchema" Category="Connection" Description="Table that the data access class should be based on." %>
+
+<%@ Property Name="CustomNonMatchingReturnType" Type="CustomNonMatchingReturnType" Default="DataSet" Category="Options" Description="When using custom stored procedures, if the returned rows do not match the fields in an entity, a DataSet or IDataReader will be returned. Choose One.  This is useful if you've returned more than one resultset in a custom procedure; you can use a ConvertToDataSet(IDataReader) method in the Utility class to convert that to a DataSet." %>
+<%@ Property Name="IncludeCustoms" Type="System.Boolean" Default="True" Category="Options" Description="If true customs stored procedures will be generated as functions." %>
+<%@ Property Name="IncludeInsert" Type="System.Boolean" Default="True" Category="Options" Description="If true insert functions will be generated." %>
+<%@ Property Name="IncludeUpdate" Type="System.Boolean" Default="True" Category="Options" Description="If true update functions will be generated." %>
+<%@ Property Name="IncludeSave" Type="System.Boolean" Default="True" Category="Options" Description="If true combined insert/update functions will be generated." %>
+<%@ Property Name="IncludeDelete" Type="System.Boolean" Default="True" Category="Options" Description="If true delete functions will be generated." %>
+<%@ Property Name="IncludeGetList" Type="System.Boolean" Default="True" Category="Options" Description="If true getlist functions will be generated." %>
+<%@ Property Name="IncludeGetListByFK" Type="System.Boolean" Default="True" Category="Options" Description="If true get functions will be generated." %>
+<%@ Property Name="IncludeGetListByIX" Type="System.Boolean" Default="True" Category="Options" Description="If true getlist functions will be generated." %>
+<%@ Property Name="IncludeFind" Type="System.Boolean" Default="True" Category="Options" Description="If true find functions will be generated." %>
+<%@ Property Name="IncludeManyToMany" Type="System.Boolean" Default="True" Category="Options" Description="If true select statements will be generated for any many to many relationship." %>
+
+<%@ Property Name="InsertSuffix" Type="System.String" Default="_Insert" Category="Style" Description="Suffix to use for all generated INSERT functions." %>
+<%@ Property Name="UpdateSuffix" Type="System.String" Default="_Update" Category="Style" Description="Suffix to use for all generated UPDATE functions." %>
+<%@ Property Name="DeleteSuffix" Type="System.String" Default="_Delete" Category="Style" Description="Suffix to use for all generated DELETE functions." %>
+<%@ Property Name="SelectSuffix" Type="System.String" Default="_Get" Category="Style" Description="Suffix to use for all generated SELECT functions." %>
+<%@ Property Name="SelectAllSuffix" Type="System.String" Default="List" Category="Style" Description="Suffix to use for all generated SELECT functions." %>
+<%@ Property Name="FindSuffix" Type="System.String" Default="_Find" Category="Style" Description="Suffix to use for all generated SELECT functions." %>
+
+<%@ Property Name="NameSpace" Type="System.String" Category="Style" Description="Class Namespace." %>
+<%@ Property Name="DALNameSpace" Type="System.String" Category="Data" Description="DAL Namespace." %>
+
+<%@ Property Name="WebReferenceName" Type="System.String" Default="" Category="Decoration" Description="The WebService Proxy Class Name." %>
+<%@ Property Name="ProxyClassName" Type="System.String" Default="WsProxy" Optional="True" Category="Decoration" Description="The WebService Proxy Class Name." %>
+
+<%
+	System.Collections.ArrayList methods = new System.Collections.ArrayList();
+	methods.Add("GetAll");
+
+	// Name of the table being worked on.
+	string name = SourceTable.Name;
+	
+	// Collection of all columns in the table.
+	ColumnSchemaCollection cols = SourceTable.Columns;
+	
+	// Collection of all columns in the table that are not primary keys.
+	ColumnSchemaCollection nonKeys = SourceTable.NonPrimaryKeyColumns;
+	
+	// Collection of all primary key columns.
+	//ColumnSchemaCollection keys = SourceTable.PrimaryKey.MemberColumns; 
+	
+	// Collection of ForeignKeys. Provides information about the foreign keys 
+	//(keys where the current table is the foreign table) contained in the table. 
+	TableKeySchemaCollection fkeys = SourceTable.ForeignKeys;
+	
+	//Provides information about the primary keys 
+	//(keys where the current table is the primary table) contained in the table. 
+	TableKeySchemaCollection pkeys = SourceTable.PrimaryKeys;
+	
+	//Provides information about the indexes contained in the table. 
+	IndexSchemaCollection indexes = SourceTable.Indexes;
+		
+	// Holds the RowVersion column if there's any
+	ColumnSchema RowVersion = null;
+
+	foreach (ColumnSchema column in cols)
+	{
+		if (column.NativeType.ToLower() == "timestamp")
+			RowVersion = column;
+	}
+	
+	
+	string className = NameSpace + "." + GetClassName(SourceTable);
+	string abstractRepositoryClassName = "Ws" + GetClassName(SourceTable, ClassNameFormat.ProviderBase);
+	string providerBaseName = GetClassName(SourceTable, ClassNameFormat.ProviderBase);
+	string collectionClassName = NameSpace + "." + GetClassName(SourceTable, ClassNameFormat.Collection);
+	string providerName = GetClassName(SourceTable, ClassNameFormat.Provider);
+	
+	string commandStem = GetCleanName(SourceTable);
+		
+	// this array store each Get BY MemberColumns in order to avoid to create doublon Get methods
+	System.Collections.ArrayList getbyKeys = new System.Collections.ArrayList();
+%>
+/*
+	File Generated by NetTiers templates [www.nettiers.com]
+	<%
+	if( IncludeGeneratedDate)
+	{
+	%>
+	Generated on : <%=DateTime.Now.ToLongDateString()%>
+	<%
+	}
+	%>
+	Important: Do not modify this file. Edit the file <%=className%>.cs instead.
+*/
+
+#region Using directives
+
+using System;
+using System.Data;
+using System.Collections;
+using System.Diagnostics;
+using <%=NameSpace%>;
+using <%=DALNameSpace%>.Bases;
+
+#endregion
+
+namespace <%=DALNameSpace%>.WebServiceClient
+{
+
+	///<summary>
+	/// This class is the webservice client implementation that exposes CRUD methods for <%=className%> objects.
+	///</summary>
+	public abstract partial class <%=abstractRepositoryClassName%> : <%=providerBaseName%>
+	{
+		#region Declarations	
+	
+		/// <summary>
+		/// the Url of the webservice.
+		/// </summary>
+		private string url;
+			
+		#endregion Declarations
+		
+		#region Constructors
+	
+		/// <summary>
+		/// Creates a new <see cref="<%=abstractRepositoryClassName%>"/> instance.
+		/// Uses connection string to connect to datasource.
+		/// </summary>
+		public <%=abstractRepositoryClassName%>()
+		{		
+		}
+		
+		/// <summary>
+		/// Creates a new <see cref="<%=abstractRepositoryClassName%>"/> instance.
+		/// Uses connection string to connect to datasource.
+		/// </summary>
+		/// <param name="url">The url to the nettiers webservice.</param>
+		public <%=abstractRepositoryClassName%>(string url)
+		{
+			this.Url = url;
+		}
+			
+		#endregion Constructors
+		
+		#region Url
+		///<summary>
+		/// Current URL for webservice endpoint. 
+		///</summary>
+		public string Url
+        {
+        	get {return url;}
+        	set {url = value;}
+        }
+		#endregion 
+		
+		#region Convertion utility
+		
+		/// <summary>
+		/// Convert a collection from the ws proxy to a nettiers collection.
+		/// </summary>
+		public static <%=collectionClassName%> Convert(<%=WebReferenceName + "." + GetClassName(SourceTable) %>[] items)
+		{
+			<%=collectionClassName%> outItems = new <%=collectionClassName%>();
+			foreach(<%=WebReferenceName + "." + GetClassName(SourceTable)%> item in items)
+			{
+				outItems.Add(Convert(item));
+			}
+			return outItems;
+		}
+		
+		/// <summary>
+		/// Convert a nettiers collection to the ws proxy collection.
+		/// </summary>
+		public static <%=className%> Convert(<%=WebReferenceName+"."+GetClassName(SourceTable)%> item)
+		{	
+			<%=className%> outItem = new <%=className%>();
+			Convert(outItem, item);					
+			return outItem;
+		}
+		
+		/// <summary>
+		/// Convert a nettiers collection to the ws proxy collection.
+		/// </summary>
+		public static <%=className%> Convert(<%=className%> outItem , <%=WebReferenceName+"."+GetClassName(SourceTable)%> item)
+		{	
+			if (item != null && outItem != null)
+			{
+			<% for(int i=0; i<SourceTable.Columns.Count; i++) { %>
+				outItem.<%= GetPropertyName(SourceTable.Columns[i]) %> = item.<%= GetPropertyName(SourceTable.Columns[i]) %>;
+				<% } %>
+				
+				<% for (int i=0; i < SourceTable.PrimaryKey.MemberColumns.Count; i++)
+				{
+					if( !IsComputed(SourceTable.PrimaryKey.MemberColumns[i]) && !IsIdentityColumn(SourceTable.PrimaryKey.MemberColumns[i]) )
+					{%>
+				outItem.Original<%=GetPropertyName(SourceTable.PrimaryKey.MemberColumns[i])%> = item.<%=GetPropertyName(SourceTable.PrimaryKey.MemberColumns[i])%>;
+					<%}
+				} %>
+				outItem.AcceptChanges();			
+			}
+							
+			return outItem;
+		}
+		
+		/// <summary>
+		/// Convert a nettiers entity to the ws proxy entity.
+		/// </summary>
+		public static <%=WebReferenceName+"."+GetClassName(SourceTable)%> Convert(<%=className%> item)
+		{			
+			<%=WebReferenceName+"."+GetClassName(SourceTable)%> outItem = new <%=WebReferenceName+"."+GetClassName(SourceTable)%>();			
+			<% for(int i=0; i<SourceTable.Columns.Count; i++) { %>
+			outItem.<%= GetPropertyName(SourceTable.Columns[i]) %> = item.<%= GetPropertyName(SourceTable.Columns[i]) %>;
+			<% } %>
+
+			<% for (int i=0; i < SourceTable.PrimaryKey.MemberColumns.Count; i++)
+			{
+				if( !IsComputed(SourceTable.PrimaryKey.MemberColumns[i]) && !IsIdentityColumn(SourceTable.PrimaryKey.MemberColumns[i]) )
+				{%>
+			outItem.Original<%=GetPropertyName(SourceTable.PrimaryKey.MemberColumns[i])%> = item.Original<%=GetPropertyName(SourceTable.PrimaryKey.MemberColumns[i])%>;
+				<%}
+			} %>
+							
+			return outItem;
+		}
+		
+		/// <summary>
+		/// Convert a collection from  to a nettiers collection to a the ws proxy collection.
+		/// </summary>
+		public static <%=WebReferenceName + "." + GetClassName(SourceTable) %>[] Convert(<%=collectionClassName%> items)
+		{
+			<%=WebReferenceName + "." + GetClassName(SourceTable) %>[] outItems = new <%=WebReferenceName + "." + GetClassName(SourceTable) %>[items.Count];
+			int count = 0;
+		
+			foreach (<%=className%> item in items)
+			{
+				outItems[count++] = Convert(item);
+			}
+			return outItems;
+		}
+
+		
+		#endregion
+		
+		<% if(IncludeManyToMany) { %>
+		#region Get from  Many To Many Relationship Functions
+		<%
+		TableSchema primaryTable = SourceTable;
+		
+		foreach(TableKeySchema key in SourceTable.PrimaryKeys)
+		{
+			// Check that the key is related to a junction table and that this key relate a PK in this junction table
+			if ( IsJunctionTable(key.ForeignKeyTable) && IsJunctionKey(key))
+			{
+				TableSchema junctionTable = key.ForeignKeyTable;
+				
+				// Search for the other(s) key(s) of the junction table' primary key
+				foreach(TableKeySchema junctionTableKey in junctionTable.ForeignKeys)
+				{				
+					if ( IsJunctionKey(junctionTableKey) && junctionTableKey.Name != key.Name )
+					{
+						TableSchema secondaryTable = junctionTableKey.PrimaryKeyTable;
+						string functionname = GetManyToManyName(junctionTableKey, junctionTable);
+						methods.Add("GetBy" + functionname);
+
+%>					
+		#region GetBy<%=functionname%>
+		
+		/// <summary>
+		///		Gets <%=primaryTable.Name%> objects from the datasource by <%=junctionTableKey.ForeignKeyMemberColumns[0].Name%> in the
+		///		<%=junctionTable.Name%> table. Table <%=primaryTable.Name%> is related to table <%=secondaryTable.Name%>
+		///		through the (M:N) relationship defined in the <%=junctionTable.Name%> table.
+		/// </summary>
+		/// <param name="transactionManager"><see cref="TransactionManager"/> object</param>
+		/// <param name="start">Row number at which to start reading.</param>
+		/// <param name="pagelen">Number of rows to return.</param>
+	<% for (int i = 0; i < junctionTableKey.ForeignKeyMemberColumns.Count; i++) { %>
+		/// <param name="<%= GetFieldName(junctionTableKey.ForeignKeyMemberColumns[i]) %>"><%=GetColumnXmlComment(junctionTableKey.ForeignKeyMemberColumns[i],2)%></param>
+	<% } %>
+		/// <param name="count">Number of rows in the DataSource.</param>
+		/// <remarks></remarks>
+		/// <returns>Returns a typed collection of <%=primaryTable.Name%> objects.</returns>
+		public override <%=GetClassName(primaryTable, ClassNameFormat.Collection)%> GetBy<%=functionname%>(TransactionManager transactionManager, <%=GetFunctionHeaderParameters(junctionTableKey.ForeignKeyMemberColumns)%>, int start, int pagelen, out int count)
+		{
+			<%=WebReferenceName%>.<%=ProxyClassName%> proxy = new <%=WebReferenceName%>.<%=ProxyClassName%>();
+			proxy.Url = Url;
+				
+			<%=WebReferenceName%>.<%=GetClassName(primaryTable)%>[] items = proxy.<%=providerName + "_GetBy" + functionname%>(<%= GetFunctionCallParameters(junctionTableKey.ForeignKeyMemberColumns) %>, start, pagelen, out count);
+	
+			return Convert(items); 
+		}
+		
+		#endregion GetBy<%=functionname%>
+		
+					<%
+					} //end if there is many to many relationship.
+				} //end foreach			
+			}// end if(IsJunctionTable(junctionTableKey.ForeignKeyTable)) %>
+		<%}//end foreach pkey %>
+		#endregion	
+		<%} //endif(IncludeManyToMany) %>
+		
+		
+		<% if (IncludeDelete && SourceTable.PrimaryKey != null) {
+				methods.Add(MethodNames.Delete);
+		%>
+		#region <%= MethodNames.Delete %> Methods
+			
+			/// <summary>
+			/// 	Deletes a row from the DataSource.
+			/// </summary>
+			<% for (int i = 0; i < SourceTable.PrimaryKey.MemberColumns.Count; i++) { %>
+			/// <param name="<%= GetFieldName(SourceTable.PrimaryKey.MemberColumns[i]) %>"><%= GetColumnXmlComment(SourceTable.PrimaryKey.MemberColumns[i],2)%>. Primary Key.</param>	
+			<% } %>
+			/// <param name="transactionManager"><see cref="TransactionManager"/> object</param>
+			/// <remarks>Deletes based on primary key(s).</remarks>
+			/// <returns>Returns true if operation suceeded.</returns>
+			public override bool <%= MethodNames.Delete %>(TransactionManager transactionManager, <%= GetFunctionHeaderParameters(SourceTable.PrimaryKey.MemberColumns) %><% if(RowVersion != null) {Response.Write(", byte[] " + GetFieldName(RowVersion));}%>)
+			{
+				// call the proxy
+				<%=WebReferenceName%>.<%=ProxyClassName%> proxy = new <%=WebReferenceName%>.<%=ProxyClassName%>();
+				proxy.Url = Url;
+				
+				bool result = proxy.<%=providerName%>_<%= MethodNames.Delete %>(<%= GetFunctionCallParameters(SourceTable.PrimaryKey.MemberColumns) %><% if(RowVersion != null) {Response.Write(", " + GetFieldName(RowVersion));}%>);				
+				return result;
+			}
+			
+			#endregion <%= MethodNames.Delete %> Methods
+		<% } //endif(includedelete) %>
+	
+		
+		<% if (IncludeFind) { 
+				methods.Add(MethodNames.Find);
+			%>
+		#region <%= MethodNames.Find %> Methods
+		
+		
+		/// <summary>
+		/// 	Returns rows meeting the whereclause condition from the DataSource.
+		/// </summary>
+		/// <param name="transactionManager"><see cref="TransactionManager"/> object</param>
+		/// <param name="start">Row number at which to start reading.</param>
+		/// <param name="pagelen">Number of rows to return.</param>
+		/// <param name="whereClause">Specifies the condition for the rows returned by a query (Name='John Doe', Name='John Doe' AND Id='1', Name='John Doe' OR Id='1').</param>
+		/// <param name="count">Number of rows in the DataSource.</param>
+		/// <remarks>Operators must be capitalized (OR, AND)</remarks>
+		/// <returns>Returns a typed collection of <%=className%> objects.</returns>
+		public override <%=collectionClassName%> <%= MethodNames.Find %>(TransactionManager transactionManager, string whereClause, int start, int pagelen, out int count)
+		{
+			<%=WebReferenceName%>.<%=ProxyClassName%> proxy = new <%=WebReferenceName%>.<%=ProxyClassName%>();
+			proxy.Url = Url;
+			
+			<%=WebReferenceName%>.<%=GetClassName(SourceTable)%>[] items = proxy.<%=providerName %>_<%= MethodNames.Find %>(whereClause, start, pagelen, out count);
+			
+			return Convert(items); 
+		}
+		
+		#endregion <%= MethodNames.Find %> Methods
+		<% } //endif (IncludeFind) %>
+		
+		
+		<% if (IncludeGetList) { 
+				methods.Add(MethodNames.GetAll);
+				methods.Add(MethodNames.GetPaged);
+			%>
+		#region <%= MethodNames.GetAll %> Methods
+				
+		/// <summary>
+		/// 	Gets All rows from the DataSource.
+		/// </summary>
+		/// <param name="transactionManager"><see cref="TransactionManager"/> object</param>
+		/// <param name="start">Row number at which to start reading.</param>
+		/// <param name="pageLength">Number of rows to return.</param>
+		/// <param name="count">out parameter to get total records for query</param>			
+		/// <remarks></remarks>
+		/// <returns>Returns a typed collection of <%=className%> objects.</returns>
+		public override <%=collectionClassName%> <%= MethodNames.GetAll %>(TransactionManager transactionManager, int start, int pageLength, out int count)
+		{
+			<%=WebReferenceName%>.<%=ProxyClassName%> proxy = new <%=WebReferenceName%>.<%=ProxyClassName%>();
+			proxy.Url = Url;
+				
+			<%=WebReferenceName%>.<%=GetClassName(SourceTable)%>[] items = proxy.<%=providerName%>_<%= MethodNames.GetAll %>(start, pageLength, out count);
+			
+			return Convert(items); 
+		}
+		
+		#endregion <%= MethodNames.GetAll %> Methods
+		
+		#region <%= MethodNames.GetPaged %> Methods
+						
+		/// <summary>
+		/// Gets a page of rows from the DataSource.
+		/// </summary>
+		/// <param name="transactionManager"><see cref="TransactionManager"/> object</param>
+		/// <param name="whereClause">Specifies the condition for the rows returned by a query (Name='John Doe', Name='John Doe' AND Id='1', Name='John Doe' OR Id='1').</param>
+		/// <param name="orderBy">Specifies the sort criteria for the rows in the DataSource (Name ASC; BirthDay DESC, Name ASC);</param>
+		/// <param name="start">Row number at which to start reading.</param>
+		/// <param name="pageLength">Number of rows to return.</param>
+		/// <param name="count">Number of rows in the DataSource.</param>
+		/// <remarks></remarks>
+		/// <returns>Returns a typed collection of <%=className%> objects.</returns>
+		public override <%=collectionClassName%> <%= MethodNames.GetPaged %>(TransactionManager transactionManager, string whereClause, string orderBy, int start, int pageLength, out int count)
+		{
+			whereClause = whereClause ?? string.Empty;
+			orderBy = orderBy ?? string.Empty;
+			
+			<%=WebReferenceName%>.<%=ProxyClassName%> proxy = new <%=WebReferenceName%>.<%=ProxyClassName%>();
+			proxy.Url = Url;
+			
+			<%=WebReferenceName%>.<%=GetClassName(SourceTable)%>[] items = proxy.<%=providerName%>_<%= MethodNames.GetPaged %>(whereClause, orderBy, start, pageLength, out count);
+			
+			// Create a collection and fill it with the dataset
+			return Convert(items); 
+		}
+		
+		#endregion <%= MethodNames.GetPaged %> Methods
+		<% } //endif (IncludeGetList) %>
+	
+		
+	<% if (IncludeGetListByFK) { %>
+		#region Get By Foreign Key Functions
+	<%
+		for (int j=0; j < fkeys.Count;j++)
+		{	
+			if(IsForeignKeyCoveredByIndex(fkeys[j]))
+				continue;
+					
+				getbyKeys.Add(GetKeysName(fkeys[j].ForeignKeyMemberColumns));
+				
+				methods.Add("GetBy" + GetKeysName(fkeys[j].ForeignKeyMemberColumns));
+				
+	%>
+		
+		/// <summary>
+		/// 	Gets rows from the datasource based on the <%=fkeys[j].Name%> key.
+		///		<%=fkeys[j].Name%> Description: <%=GetColumnXmlComment(fkeys[j],2)%>
+		/// </summary>
+		/// <param name="start">Row number at which to start reading.</param>
+		/// <param name="pageLength">Number of rows to return.</param>
+		/// <param name="transactionManager"><see cref="TransactionManager"/> object</param>
+	<% for (int i = 0; i < fkeys[j].ForeignKeyMemberColumns.Count; i++) { %>
+		/// <param name="<%= GetFieldName(fkeys[j].ForeignKeyMemberColumns[i])%>"><%=GetColumnXmlComment(fkeys[j].ForeignKeyMemberColumns[i],2)%></param>
+	<% } %>
+		/// <param name="count">out parameter to get total records for query</param>	
+		/// <remarks></remarks>		
+		/// <returns>Returns a typed collection of <%=className%> objects.</returns>
+		public override <%=collectionClassName%> GetBy<%=GetKeysName(fkeys[j].ForeignKeyMemberColumns)%>(TransactionManager transactionManager, <%= GetFunctionHeaderParameters(fkeys[j].ForeignKeyMemberColumns) %>, int start, int pageLength, out int count)
+		{
+			<%=WebReferenceName%>.<%=ProxyClassName%> proxy = new <%=WebReferenceName%>.<%=ProxyClassName%>();
+			proxy.Url = Url;
+			<%=WebReferenceName%>.<%=GetClassName(SourceTable)%>[] items = proxy.<%=providerName%>_GetBy<%=GetKeysName(fkeys[j].ForeignKeyMemberColumns)%>(<%= GetFunctionCallParameters(fkeys[j].ForeignKeyMemberColumns) %>, start, pageLength, out count);
+			
+			return Convert(items); 
+		}
+			
+	<% 		}//endfor %>
+		#endregion
+	<% 	} //endif (IncludeGetListByFK) %>
+		
+		
+	<% if (IncludeGetListByIX) { %>	
+		#region Get By Index Functions
+		<%	
+		for (int j=0; j < indexes.Count;j++)
+		{
+			// Check if this key is not already generated
+			if(getbyKeys.IndexOf(GetKeysName(indexes[j].MemberColumns)) >=0 )
+			{
+				continue;
+			}
+			else
+			{
+				// add this key to the index list
+				getbyKeys.Add(GetKeysName(indexes[j].MemberColumns));
+			}
+			
+			string returnType = collectionClassName;
+			bool isUnique = false;
+				
+			//if (IsPrimaryKey(indexes[j]))
+			if (indexes[j].IsUnique || indexes[j].IsPrimaryKey)
+			{
+				returnType = className;
+				isUnique = true;
+			}
+			
+			methods.Add("GetBy" + GetKeysName(indexes[j].MemberColumns));
+			
+	%>
+					
+		/// <summary>
+		/// 	Gets rows from the datasource based on the <%=indexes[j].Name%> index.
+		/// </summary>
+		/// <param name="start">Row number at which to start reading.</param>
+		/// <param name="pageLength">Number of rows to return.</param>
+	<% for (int i = 0; i < indexes[j].MemberColumns.Count; i++) { %>
+		/// <param name="<%= GetFieldName(indexes[j].MemberColumns[i])%>"><%= GetColumnXmlComment(indexes[j].MemberColumns[i],2)%></param>
+	<% } %>
+		/// <param name="transactionManager"><see cref="TransactionManager"/> object</param>
+		/// <param name="count">out parameter to get total records for query</param>	
+		/// <remarks></remarks>
+		/// <returns>Returns an instance of the <see cref="<%=returnType.Replace("<", "&lt;").Replace(">", "&gt;")%>"/> class.</returns>
+		public override <%=returnType%> GetBy<%=GetKeysName(indexes[j].MemberColumns)%>(TransactionManager transactionManager, <%= GetFunctionHeaderParameters(indexes[j].MemberColumns) %>, int start, int pageLength, out int count)
+		{
+			<%=WebReferenceName%>.<%=ProxyClassName%> proxy = new <%=WebReferenceName%>.<%=ProxyClassName%>();
+			proxy.Url = Url;
+			<%=WebReferenceName%>.<%=GetClassName(SourceTable)%><% if (!isUnique) Response.Write("[]");%> items = proxy.<%=providerName%>_GetBy<%=GetKeysName(indexes[j].MemberColumns)%>(<%= GetFunctionCallParameters(indexes[j].MemberColumns) %>, start, pageLength, out count);
+			
+			return Convert(items); 
+		}
+		
+	<%		}//endfor %>
+		#endregion Get By Index Functions
+	<%	}//end if includegetlistbyix %>
+	
+	
+	<% if (IncludeInsert) { 
+		methods.Add(MethodNames.Insert);
+		methods.Add(MethodNames.BulkInsert);
+		%>
+		#region <%= MethodNames.Insert %> Methods
+		/// <summary>
+		/// 	Inserts a <%=className%> object into the datasource using a transaction.
+		/// </summary>
+		/// <param name="transactionManager"><see cref="TransactionManager"/> object</param>
+		/// <param name="entity"><%=className%> object to insert.</param>		
+		/// <remarks></remarks>		
+		/// <returns>Returns true if operation is successful.</returns>
+		public override bool <%= MethodNames.Insert %>(TransactionManager transactionManager, <%=className%> entity)
+		{
+			<%=WebReferenceName%>.<%=ProxyClassName%> proxy = new <%=WebReferenceName%>.<%=ProxyClassName%>();
+			proxy.Url = Url;
+			
+			try
+			{
+				<%=WebReferenceName%>.<%=GetClassName(SourceTable)%> result = proxy.<%=providerName%>_<%= MethodNames.Insert %>(Convert(entity));
+				Convert(entity, result);
+				return true;
+			}
+			catch(Exception ex)
+			{
+				System.Diagnostics.Debug.WriteLine(ex);
+				return false;
+			}
+		}
+	
+		/// <summary>
+		/// Lets you efficiently bulk many entity to the database.
+		/// </summary>
+		/// <param name="transactionManager">NOTE: The transaction manager should be null for the web service client implementation.</param>
+		/// <param name="entityList">The entities.</param>
+		/// <remarks>
+		/// After inserting into the datasource, the <%=className%> object will be updated
+		/// to refelect any changes made by the datasource. (ie: identity or computed columns)
+		/// </remarks>
+		public override void <%= MethodNames.BulkInsert %>(TransactionManager transactionManager, TList<<%=className%>> entityList)
+		{
+			<%=WebReferenceName%>.<%=ProxyClassName%> proxy = new <%=WebReferenceName%>.<%=ProxyClassName%>();
+			proxy.Url = Url;
+			try
+			{
+				proxy.<%=providerName%>_<%= MethodNames.BulkInsert %>(Convert(entityList));
+			}
+			catch (Exception ex)
+			{	
+				System.Diagnostics.Debug.WriteLine(ex);
+			}
+		}
+
+		#endregion <%= MethodNames.Insert %> Methods
+	<%	}//endif (IncludeInsert) %>
+	
+	
+	<% if (IncludeUpdate) { 
+		methods.Add(MethodNames.Update);
+		
+		%>	
+		#region <%= MethodNames.Update %> Methods
+						
+		/// <summary>
+		/// 	Update an existing row in the datasource.
+		/// </summary>
+		/// <param name="transactionManager"><see cref="TransactionManager"/> object</param>
+		/// <param name="entity"><%=className%> object to update.</param>		
+		/// <remarks></remarks>
+		/// <returns>Returns true if operation is successful.</returns>
+		public override bool <%= MethodNames.Update %>(TransactionManager transactionManager, <%=className%> entity)
+		{
+			<%=WebReferenceName%>.<%=ProxyClassName%> proxy = new <%=WebReferenceName%>.<%=ProxyClassName%>();
+			proxy.Url = Url;
+			
+			try
+			{
+				<%=WebReferenceName%>.<%=GetClassName(SourceTable)%> result = proxy.<%=providerName%>_<%= MethodNames.Update %>(Convert(entity));
+				Convert(entity, result);
+				entity.AcceptChanges();
+				return true;
+			}
+			catch(Exception ex)
+			{
+				System.Diagnostics.Debug.WriteLine(ex);
+				return false;
+			}
+		}
+		
+		#endregion <%= MethodNames.Update %> Methods
+	<%	}//endif %>
+			
+	<% if (IncludeCustoms) { %>
+		#region Custom Methods
+		
+	<% 
+	System.Collections.IDictionary procs = GetCustomProcedures(SourceTable);
+	
+	foreach(DictionaryEntry item in procs)
+	{
+		SchemaExplorer.CommandSchema command = (SchemaExplorer.CommandSchema) item.Value;
+		string methodName  = item.Key.ToString();
+		
+		string uniqueMethodName = methodName;
+		
+		//if (methods.Contains(methodName))
+			//uniqueMethodName = methodName + "Custom";
+			
+		string returnType = GetReturnCustomProcReturnType(CustomNonMatchingReturnType, SourceTable, command);
+		string returnTypeForComment = returnType.Replace("<", "&lt;").Replace(">", "&gt;");		
+	%>
+	
+		#region <%=command.Name%>
+				
+		/// <summary>
+		///	This method wrap the '<%=command.Name%>' stored procedure. 
+		/// </summary><%=TransformStoredProcedureInputsToMethodComments(command.InputParameters) + TransformStoredProcedureOutputsToMethodComments(command.AllOutputParameters)%>
+		/// <param name="start">Row number at which to start reading.</param>
+		/// <param name="pageLength">Number of rows to return.</param>
+		/// <param name="transactionManager"><see cref="TransactionManager"/> object</param>
+		/// <remark>This method is generate from a stored procedure.</remark><% if (returnType != "void") {%>
+		/// <returns>A <see cref="<%=returnTypeForComment%>"/> instance.</returns><%}%>
+		public override <%=returnType%> <%=methodName%>(TransactionManager transactionManager, int start, int pageLength <%=TransformStoredProcedureInputsToMethod(true, command.InputParameters) + TransformStoredProcedureOutputsToMethod(true, command.AllOutputParameters) %>)
+		{
+			<%=WebReferenceName%>.<%=ProxyClassName%> proxy = new <%=WebReferenceName%>.<%=ProxyClassName%>();
+			proxy.Url = Url;
+						
+			<% if (returnType == collectionClassName || returnType == collectionClassName.Substring (collectionClassName.LastIndexOf (".") + 1)) { %>
+			<%=WebReferenceName%>.<%=GetClassName(SourceTable)%>[] items = proxy.<%=providerName%>_<%=uniqueMethodName%>(start, pageLength <%=TransformStoredProcedureInputsToDataAccess(true, command.InputParameters) + TransformStoredProcedureOutputsToDataAccess(true, command.AllOutputParameters)%>);
+			return Convert(items); 
+			<% } else if (returnType == "void") { %>
+			proxy.<%=providerName%>_<%= uniqueMethodName %>(start, pageLength<%=TransformStoredProcedureInputsToDataAccess(true, command.InputParameters) + TransformStoredProcedureOutputsToDataAccess(true, command.AllOutputParameters)%>);
+			<% } else if (returnType == "DataSet"){ %>
+			return proxy.<%=providerName%>_<%=uniqueMethodName%>(start, pageLength<%=TransformStoredProcedureInputsToDataAccess(true, command.InputParameters) + TransformStoredProcedureOutputsToDataAccess(true, command.AllOutputParameters)%>);
+			<% } else { %>
+				throw new NotSupportedException("This <%=methodName%> for custom procedure <%=command.Name%> is implemented to return an IDataReader.  These are not supported by the client proxy.");
+			<% } %>		
+		}
+		
+		#endregion
+		
+	<%
+		}
+	%>
+		
+		#endregion
+	<% } //endif IncludeCustoms %>
+					
+	}//end class
+} // end namespace

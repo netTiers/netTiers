@@ -1,0 +1,63 @@
+﻿<%@ CodeTemplate Language="C#" TargetLanguage="c#" Src="..\..\TemplateLib\CommonSqlCode.cs" Inherits="MoM.Templates.CommonSqlCode" Debug="False" Description="Template description here." ResponseEncoding="UTF-8"  NoWarn="0108,0618,1572,1573,1574,0162,2002" %>
+<%@ Assembly Name="SchemaExplorer" %>
+<%@ Assembly Name="System.Design" %>
+
+<%@ Import Namespace="SchemaExplorer" %>
+<%@ Import Namespace="System.Collections" %>
+<%@ Import Namespace="System.Text" %>
+<%@ Import Namespace="System" %>
+
+<%@ Property Name="SourceTables" Type="SchemaExplorer.TableSchemaCollection" Category="Connection" Description="Table that the data access class should be based on." %>
+<%@ Property Name="NameSpace" Type="System.String" Category="Style" Description="Root Namespace." %>
+<%@ Property Name="WinLibNameSpace" Type="System.String" Category="Style" Description="the Namespace of the windows forms library." %>
+<%@ Property Name="BusinessLogicLayerNameSpace" Type="System.String" Category="Namespaces" Description="The sub namespace that is added to the root namespace for the entities." Default="" Optional="true" %>
+
+using System;
+using System.Collections.Generic;
+using System.ComponentModel;
+using System.Drawing;
+using System.Data;
+using System.Text;
+using System.Windows.Forms;
+
+namespace <%=WinLibNameSpace%>
+{
+
+<% for(int i = 0; i<SourceTables.Count; i++) {%>
+	public class <%=GetClassName(SourceTables[i])%>BindingSource : BindingSource
+	{
+		public <%=GetClassName(SourceTables[i])%>BindingSource() : base()
+		{
+			DataSource = typeof(<%=BusinessLogicLayerNameSpace%>.<%=GetClassName(SourceTables[i])%>);
+		}
+		
+		public <%=GetClassName(SourceTables[i])%>BindingSource(System.ComponentModel.IContainer container) : base(container)
+		{
+		}
+		
+		public <%=GetClassName(SourceTables[i])%>BindingSource(<%=BusinessLogicLayerNameSpace%>.<%=GetClassName(SourceTables[i])%> entity) : this()
+		{
+			_entityList = new <%=BusinessLogicLayerNameSpace%>.TList<<%=BusinessLogicLayerNameSpace%>.<%=GetClassName(SourceTables[i])%>>();
+			_entityList.Add(entity);
+			DataSource = entity;
+		}
+		
+		public <%=GetClassName(SourceTables[i])%>BindingSource(<%=BusinessLogicLayerNameSpace%>.TList<<%=BusinessLogicLayerNameSpace%>.<%=GetClassName(SourceTables[i])%>> list) : this()
+		{
+			_entityList = list;	
+			DataSource = this._entityList;
+		}
+		
+		private <%=BusinessLogicLayerNameSpace%>.TList<<%=BusinessLogicLayerNameSpace%>.<%=GetClassName(SourceTables[i])%>> _entityList;
+		
+		public <%=BusinessLogicLayerNameSpace%>.TList<<%=BusinessLogicLayerNameSpace%>.<%=GetClassName(SourceTables[i])%>> EntityList
+		{
+			get { return this._entityList;}
+			set 
+			{ 
+				this._entityList = value; 				
+			}
+		}
+	}
+<% } %>
+}

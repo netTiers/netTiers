@@ -1,0 +1,234 @@
+﻿<%--
+ * $Id: OrderedEntityViewRepositoryTestList.cst,v 1.0 2006/09/21 15:27:00 xko Exp $
+ * Last modified by $Author: xko $
+ * Last modified at $Date: 2006-09-21 15:27:00 -0500 (Thu, 21 Sep 2006) $
+ * $Revision: 1 $
+--%>
+<%@ CodeTemplate Src="..\TemplateLib\CommonSqlCode.cs" Inherits="MoM.Templates.CommonSqlCode" Language="C#" TargetLanguage="C#" Description="Generate nUnit test for the entity." Debug="False"  ResponseEncoding="UTF-8" NoWarn="0108,0618,1572,1573,1574,0162,2002" %>
+<%@ Assembly Name="SchemaExplorer" %>
+<%@ Assembly Name="System.Design" %>
+<%@ Assembly Name="System.Security" %>
+<%@ Assembly Name="System" %>
+<%@ Import Namespace="System.Text" %>
+<%@ Import Namespace="System.Security.Cryptography" %>
+<%@ Import Namespace="SchemaExplorer" %>
+<%@ Property Name="SourceTables" Type="SchemaExplorer.TableSchemaCollection" Optional="True"  Category="DataSource" Description="Tables that the stored procedures should be based on." %>
+<%@ Property Name="SourceTable" Type="SchemaExplorer.TableSchema" Category="Connection" Description="Table that the data access class should be based on." %>
+<%@ Property Name="RootNameSpace" Type="System.String" Default="" Optional="False" Category="Data" Description="Path to unit test directory" %>
+<%@ Property Name="UTNameSpace" Type="System.String" Category="Data" Description="Project root Namespace." %>
+<%@ Property Name="IncludeInsert" Type="System.Boolean" Default="True" Category="Options" Description="If true insert functions will be generated." %>
+<%@ Property Name="IncludeUpdate" Type="System.Boolean" Default="True" Category="Options" Description="If true update functions will be generated." %>
+<%@ Property Name="IncludeSave" Type="System.Boolean" Default="True" Category="Options" Description="If true combined insert/update functions will be generated." %>
+<%@ Property Name="IncludeDelete" Type="System.Boolean" Default="True" Category="Options" Description="If true delete functions will be generated." %>
+<%@ Property Name="IncludeGetList" Type="System.Boolean" Default="True" Category="Options" Description="If true getlist functions will be generated." %>
+<%@ Property Name="IncludeManyToMany" Type="System.Boolean" Default="True" Category="Options" Description="If true many2many functions will be generated." %>
+<%@ Property Name="IncludeGetListByFK" Type="System.Boolean" Default="True" Category="CRUD Options" Description="If true get statements will be generated." %>
+<%@ Property Name="IncludeGetListByIX" Type="System.Boolean" Default="True" Category="CRUD Options" Description="If true get statements will be generated." %>
+<%@ Property Name="IncludeRelations" Type="System.Boolean" Default="True" Category="CRUD Options" Description="If true deep load will be tested" %>
+<%@ Property Name="IncludeUnitTest" Type="MoM.Templates.UnitTestStyle" Default="NUnit" Category="General" Description="Indicates type of Unit tests to be generated." %>
+<%@ Property Name="RootPathUT" Type="System.String" Default="" Optional="False" Category="Directories" Description="Path to unit test directory" %>
+<%
+	string unitTestClassName = GetClassName(SourceTable, ClassNameFormat.UnitTest);
+%>
+<%
+	// Collection of all columns in the table.
+	ColumnSchemaCollection cols = SourceTable.Columns;
+	
+	// Collection of all columns in the table that are not primary keys.
+	ColumnSchemaCollection nonKeys = SourceTable.NonPrimaryKeyColumns;
+	
+	// Collection of all primary key columns.
+	ColumnSchemaCollection keys = SourceTable.PrimaryKey.MemberColumns;
+	
+	// Collection of ForeignKeys. Provides information about the foreign keys 
+	//(keys where the current table is the foreign table) contained in the table. 
+	TableKeySchemaCollection fkeys = SourceTable.ForeignKeys;
+	
+	//Provides information about the primary keys 
+	//(keys where the current table is the primary table) contained in the table. 
+	TableKeySchemaCollection pkeys = SourceTable.PrimaryKeys;
+	
+	//Provides information about the indexes contained in the table. 
+	IndexSchemaCollection indexes = SourceTable.Indexes;
+	
+	// this array store each Get BY MemberColumns in order to avoid to create doublon Get methods
+	System.Collections.ArrayList getbyKeys = new System.Collections.ArrayList();
+%>
+<% // Calculate System GUIDs	
+	SHA1Managed crypto = new SHA1Managed();
+	byte[] bytes = new byte[16];
+	// Calculate TestMethod GUIDs
+	Array.Copy(crypto.ComputeHash(Encoding.Unicode.GetBytes(UTNameSpace + "." + unitTestClassName + ".Step_01_Insert")), bytes, 16);
+	Guid guidStep_01 = new Guid(bytes);
+	Array.Copy(crypto.ComputeHash(Encoding.Unicode.GetBytes(UTNameSpace + "." + unitTestClassName + ".Step_02_SelectAll")), bytes, 16);
+	Guid guidStep_02 = new Guid(bytes);
+	Array.Copy(crypto.ComputeHash(Encoding.Unicode.GetBytes(UTNameSpace + "." + unitTestClassName + ".Step_03_DeepLoad")), bytes, 16);
+	Guid guidStep_03 = new Guid(bytes);
+	Array.Copy(crypto.ComputeHash(Encoding.Unicode.GetBytes(UTNameSpace + "." + unitTestClassName + ".Step_04_Update")), bytes, 16);
+	Guid guidStep_04 = new Guid(bytes);
+	Array.Copy(crypto.ComputeHash(Encoding.Unicode.GetBytes(UTNameSpace + "." + unitTestClassName + ".Step_05_Delete")), bytes, 16);
+	Guid guidStep_05 = new Guid(bytes);
+	Array.Copy(crypto.ComputeHash(Encoding.Unicode.GetBytes(UTNameSpace + "." + unitTestClassName + ".Step_06_SerializeEntity")), bytes, 16);
+	Guid guidStep_06 = new Guid(bytes);
+	Array.Copy(crypto.ComputeHash(Encoding.Unicode.GetBytes(UTNameSpace + "." + unitTestClassName + ".Step_07_DeserializeEntity")), bytes, 16);
+	Guid guidStep_07 = new Guid(bytes);
+	Array.Copy(crypto.ComputeHash(Encoding.Unicode.GetBytes(UTNameSpace + "." + unitTestClassName + ".Step_08_SerializeCollection")), bytes, 16);
+	Guid guidStep_08 = new Guid(bytes);
+	Array.Copy(crypto.ComputeHash(Encoding.Unicode.GetBytes(UTNameSpace + "." + unitTestClassName + ".Step_09_DeserializeCollection")), bytes, 16);
+	Guid guidStep_09 = new Guid(bytes);
+	Array.Copy(crypto.ComputeHash(Encoding.Unicode.GetBytes(UTNameSpace + "." + unitTestClassName + ".Step_10_FK")), bytes, 16);
+	Guid guidStep_10 = new Guid(bytes);
+	Array.Copy(crypto.ComputeHash(Encoding.Unicode.GetBytes(UTNameSpace + "." + unitTestClassName + ".Step_11_IX")), bytes, 16);
+	Guid guidStep_11 = new Guid(bytes);
+	Array.Copy(crypto.ComputeHash(Encoding.Unicode.GetBytes(UTNameSpace + "." + unitTestClassName + ".Step_20_TestEntityHelper")), bytes, 16);
+	Guid guidStep_20 = new Guid(bytes);
+	
+	// Calculate TestID GUID for ordered test list
+	Array.Copy(crypto.ComputeHash(Encoding.Unicode.GetBytes(UTNameSpace + "." + unitTestClassName)), bytes, 16);
+	Guid guidOrderedTest = new Guid(bytes);
+	
+	// Calculate ProjectID GUID for test project
+	Array.Copy(crypto.ComputeHash(Encoding.Unicode.GetBytes(UTNameSpace)), bytes, 16);
+	Guid guidTestProject = new Guid(bytes);
+	%>
+<?xml version="1.0" encoding="utf-8"?>
+<Tests>
+	<edtdocversion branch="retail" build="50727" revision="42" />
+	<AutoSuite type="Microsoft.VisualStudio.TestTools.TestTypes.Ordered.AutoSuite, Microsoft.VisualStudio.QualityTools.Tips.OrderedTest.ObjectModel, Version=8.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a">
+		<m_continueAfterFailure type="System.Boolean">True</m_continueAfterFailure>
+		<links type="System.Collections.ArrayList">
+			<% if (IncludeInsert) { %>
+				<element type="Microsoft.VisualStudio.TestTools.Common.Link">
+					<id type="System.Guid"><%=guidStep_01%></id>
+					<name type="System.String">Step_01_Insert</name>
+					<storage type="System.String">bin\release\<%=UTNameSpace%>.dll</storage>
+					<type type="System.Type, mscorlib">Microsoft.VisualStudio.TestTools.TestTypes.Unit.UnitTestElement, Microsoft.VisualStudio.QualityTools.Tips.UnitTest.ObjectModel, Version=8.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</type>
+					<enabled type="System.Boolean">True</enabled>
+				</element>
+			<% } %>
+			<% if (IncludeGetList) { %>
+				<element type="Microsoft.VisualStudio.TestTools.Common.Link">
+					<id type="System.Guid"><%=guidStep_02%></id>
+					<name type="System.String">Step_02_SelectAll</name>
+					<storage type="System.String">bin\release\<%=UTNameSpace%>.dll</storage>
+					<type type="System.Type, mscorlib">Microsoft.VisualStudio.TestTools.TestTypes.Unit.UnitTestElement, Microsoft.VisualStudio.QualityTools.Tips.UnitTest.ObjectModel, Version=8.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</type>
+					<enabled type="System.Boolean">True</enabled>
+				</element>
+			<% } %>
+			<% if (IncludeRelations && IncludeGetListByFK) { %>
+					<element type="Microsoft.VisualStudio.TestTools.Common.Link">
+					<id type="System.Guid"><%=guidStep_03%></id>
+					<name type="System.String">Step_03_DeepLoad</name>
+					<storage type="System.String">bin\release\<%=UTNameSpace%>.dll</storage>
+					<type type="System.Type, mscorlib">Microsoft.VisualStudio.TestTools.TestTypes.Unit.UnitTestElement, Microsoft.VisualStudio.QualityTools.Tips.UnitTest.ObjectModel, Version=8.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</type>
+					<enabled type="System.Boolean">True</enabled>
+				</element>
+			<% } %>
+			<% if (IncludeUpdate) { %>
+				<element type="Microsoft.VisualStudio.TestTools.Common.Link">
+					<id type="System.Guid"><%=guidStep_04%></id>
+					<name type="System.String">Step_04_Update</name>
+					<storage type="System.String">bin\release\<%=UTNameSpace%>.dll</storage>
+					<type type="System.Type, mscorlib">Microsoft.VisualStudio.TestTools.TestTypes.Unit.UnitTestElement, Microsoft.VisualStudio.QualityTools.Tips.UnitTest.ObjectModel, Version=8.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</type>
+					<enabled type="System.Boolean">True</enabled>
+				</element>
+			<% } %>
+			<% if (IncludeDelete) { %>
+					<element type="Microsoft.VisualStudio.TestTools.Common.Link">
+					<id type="System.Guid"><%=guidStep_05%></id>
+					<name type="System.String">Step_05_Delete</name>
+					<storage type="System.String">bin\release\<%=UTNameSpace%>.dll</storage>
+					<type type="System.Type, mscorlib">Microsoft.VisualStudio.TestTools.TestTypes.Unit.UnitTestElement, Microsoft.VisualStudio.QualityTools.Tips.UnitTest.ObjectModel, Version=8.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</type>
+					<enabled type="System.Boolean">True</enabled>
+				</element>
+			<% } %>
+			<element type="Microsoft.VisualStudio.TestTools.Common.Link">
+				<id type="System.Guid"><%=guidStep_06%></id>
+				<name type="System.String">Step_06_SerializeEntity</name>
+				<storage type="System.String">bin\release\<%=UTNameSpace%>.dll</storage>
+				<type type="System.Type, mscorlib">Microsoft.VisualStudio.TestTools.TestTypes.Unit.UnitTestElement, Microsoft.VisualStudio.QualityTools.Tips.UnitTest.ObjectModel, Version=8.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</type>
+				<enabled type="System.Boolean">True</enabled>
+			</element>
+			<element type="Microsoft.VisualStudio.TestTools.Common.Link">
+				<id type="System.Guid"><%=guidStep_07%></id>
+				<name type="System.String">Step_07_DeserializeEntity</name>
+				<storage type="System.String">bin\release\<%=UTNameSpace%>.dll</storage>
+				<type type="System.Type, mscorlib">Microsoft.VisualStudio.TestTools.TestTypes.Unit.UnitTestElement, Microsoft.VisualStudio.QualityTools.Tips.UnitTest.ObjectModel, Version=8.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</type>
+				<enabled type="System.Boolean">True</enabled>
+			</element>
+			<element type="Microsoft.VisualStudio.TestTools.Common.Link">
+				<id type="System.Guid"><%=guidStep_08%></id>
+				<name type="System.String">Step_08_SerializeCollection</name>
+				<storage type="System.String">bin\release\<%=UTNameSpace%>.dll</storage>
+				<type type="System.Type, mscorlib">Microsoft.VisualStudio.TestTools.TestTypes.Unit.UnitTestElement, Microsoft.VisualStudio.QualityTools.Tips.UnitTest.ObjectModel, Version=8.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</type>
+				<enabled type="System.Boolean">True</enabled>
+			</element>
+			<element type="Microsoft.VisualStudio.TestTools.Common.Link">
+				<id type="System.Guid"><%=guidStep_09%></id>
+				<name type="System.String">Step_09_DeserializeCollection</name>
+				<storage type="System.String">bin\release\<%=UTNameSpace%>.dll</storage>
+				<type type="System.Type, mscorlib">Microsoft.VisualStudio.TestTools.TestTypes.Unit.UnitTestElement, Microsoft.VisualStudio.QualityTools.Tips.UnitTest.ObjectModel, Version=8.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</type>
+				<enabled type="System.Boolean">True</enabled>
+			</element>
+			<% if (IncludeGetListByFK) { %>
+				<element type="Microsoft.VisualStudio.TestTools.Common.Link">
+					<id type="System.Guid"><%=guidStep_10%></id>
+					<name type="System.String">Step_10_FK</name>
+					<storage type="System.String">bin\release\<%=UTNameSpace%>.dll</storage>
+					<type type="System.Type, mscorlib">Microsoft.VisualStudio.TestTools.TestTypes.Unit.UnitTestElement, Microsoft.VisualStudio.QualityTools.Tips.UnitTest.ObjectModel, Version=8.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</type>
+					<enabled type="System.Boolean">True</enabled>
+				</element>
+			<% } %>
+			<% if (IncludeGetListByIX) { %>
+				<element type="Microsoft.VisualStudio.TestTools.Common.Link">
+					<id type="System.Guid"><%=guidStep_11%></id>
+					<name type="System.String">Step_11_IX</name>
+					<storage type="System.String">bin\release\<%=UTNameSpace%>.dll</storage>
+					<type type="System.Type, mscorlib">Microsoft.VisualStudio.TestTools.TestTypes.Unit.UnitTestElement, Microsoft.VisualStudio.QualityTools.Tips.UnitTest.ObjectModel, Version=8.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</type>
+					<enabled type="System.Boolean">True</enabled>
+				</element>
+			<% } %>
+			<element type="Microsoft.VisualStudio.TestTools.Common.Link">
+				<id type="System.Guid"><%=guidStep_20%></id>
+				<name type="System.String">Step_20_TestEntityHelper</name>
+				<storage type="System.String">bin\release\<%=UTNameSpace%>.dll</storage>
+				<type type="System.Type, mscorlib">Microsoft.VisualStudio.TestTools.TestTypes.Unit.UnitTestElement, Microsoft.VisualStudio.QualityTools.Tips.UnitTest.ObjectModel, Version=8.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</type>
+				<enabled type="System.Boolean">True</enabled>
+			</element>
+		</links>
+		<cssProjectStructure type="System.String" />
+		<isRunOnRestart type="System.Boolean">False</isRunOnRestart>
+		<timeOut type="System.Int32">2147483647</timeOut>
+		<isGroupable type="System.Boolean">True</isGroupable>
+		<abortRunOnAgentFailure type="System.Boolean">False</abortRunOnAgentFailure>
+		<cssIteration type="System.String" />
+		<workItemIds type="System.Collections.Generic.List`1[[System.Int32, mscorlib, Version=2.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089]]">
+			<_size type="System.Int32">0</_size>
+			<_version type="System.Int32">1</_version>
+		</workItemIds>
+		<id type="Microsoft.VisualStudio.TestTools.Common.TestId">
+			<id type="System.Guid"><%=guidOrderedTest%></id>
+		</id>
+		<name type="System.String"><%=unitTestClassName%></name>
+		<description type="System.String">Unit tests of <%=unitTestClassName%></description>
+		<enabled type="System.Boolean">True</enabled>
+		<owner type="System.String" />
+		<priority type="System.Int32">0</priority>
+		<executionId type="Microsoft.VisualStudio.TestTools.Common.TestExecId">
+			<id type="System.Guid">00000000-0000-0000-0000-000000000000</id>
+		</executionId>
+		<parentExecutId type="Microsoft.VisualStudio.TestTools.Common.TestExecId">
+			<id type="System.Guid">00000000-0000-0000-0000-000000000000</id>
+		</parentExecutId>
+		<deploymentItems type="Microsoft.VisualStudio.TestTools.Common.DeploymentItemCollection" />
+		<agentAttributes type="System.Collections.Specialized.StringDictionary, System, Version=2.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089" />
+		<storage type="System.String"><%=RootPathUT%>\<%=unitTestClassName%>.orderedtest</storage>
+		<projectData type="Microsoft.VisualStudio.TestTools.Common.ProjectData">
+			<id type="System.Guid"><%=guidTestProject%></id>
+			<projectName type="System.String"><%=UTNameSpace%></projectName>
+			<solutionName type="System.String"><%=RootNameSpace%></solutionName>
+			<projectRelativePath type="System.String"><%=UTNameSpace%>\<%=UTNameSpace%>.csproj</projectRelativePath>
+		</projectData>
+		<m_nonRunnableReason type="System.String" />
+	</AutoSuite>
+</Tests>
