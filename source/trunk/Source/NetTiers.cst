@@ -12,7 +12,7 @@
 <%@ Import NameSpace="System.Diagnostics" %>
 <%@ Import NameSpace="System.Xml" %>
 <%@ Import NameSpace="System.Xml.Xsl" %>
-<%@ Import NameSpace="System.Xml.XPath" %>
+<%@ Import NameSpace="System.Xml.XPath" %> 
 
 <%-- 1. Datasource --%>
 <%@ Property Name="ChooseSourceDatabase" Type="SchemaExplorer.DatabaseSchema" Optional="False" Category="01. Getting Started - Required" Description="Database that the tables views, and stored procedures should be based on. IMPORTANT!!! If SourceTables and SourceViews are left blank, the Entire Database will then be generated." %>
@@ -1113,7 +1113,7 @@ public void Go()
 		SafeCopyFile(this.CodeTemplateInfo.DirectoryName + "\\References\\" + entLibSubDir + "\\Microsoft.Practices.EnterpriseLibrary.ExceptionHandling.dll", libPath +  "\\Microsoft.Practices.EnterpriseLibrary.ExceptionHandling.dll");
 		SafeCopyFile(this.CodeTemplateInfo.DirectoryName + "\\References\\" + entLibSubDir + "\\Microsoft.Practices.EnterpriseLibrary.ExceptionHandling.Logging.dll", libPath + "\\Microsoft.Practices.EnterpriseLibrary.ExceptionHandling.Logging.dll");
 		// NUnit file
-		SafeCopyFile(this.CodeTemplateInfo.DirectoryName + "\\References\\nunit.framework.dll", OutputDirectory + "\\References\\nunit.framework.dll");
+		SafeCopyFile(this.CodeTemplateInfo.DirectoryName + "\\References\\nunit.framework.dll", libPath + "\\nunit.framework.dll");
 	
 
 	AddExecutionTime(initNode);
@@ -2225,7 +2225,7 @@ public void Go()
 			this.GetTemplate("Default.aspx.cs.cst").SetProperty("WebsiteNameSpace", WebsiteNameSpace);
 			this.GetTemplate("Default.aspx.cs.cst").SetProperty("UseWebAppProject", UseWebAppProject);
 			this.RenderToFile("Default.aspx.cs.cst", rootPathWebsite + "\\Default.aspx.cs", true);
-			
+			 
 			if ( UseWebAppProject )
 			{
 				AddFileNode(commonNode, "Default.aspx.designer.cs");
@@ -3801,7 +3801,9 @@ public void Go()
 		Response.WriteLine(e);
 	}
 
-	string exTime = "Generation complete. Execution time: " + (DateTime.Now - startTime).ToString() + "\nYou can view current documentation @ http://docs.netTiers.com"; 
+	string exTime = string.Concat("Generation complete. Execution time: " , (DateTime.Now - startTime).ToString() , Environment.NewLine , "You can view current documentation @ http://docs.netTiers.com" ); 
+	exTime = string.Concat(exTime, string.Format("{0}Generated solution can be found here: {0}{1}", Environment.NewLine, GetSolutionFileLink()));
+	
 	Trace.WriteLine(exTime);
 	Response.WriteLine(exTime);
 }
@@ -3874,10 +3876,11 @@ private string GetSolutionFileLink()
 ///</summary>
 private string GetPropertySetFilePath()
 {
+	string libPath = Path.GetFullPath(Path.Combine(OutputDirectory, LibraryPath));
 	#if CodeSmith40
-	string path = this.OutputDirectory + (this.OutputDirectory.EndsWith("\\") ? "" : "\\") + "References\\" + this.NameSpace + "CodeSmithProject.csp";
+	string path = Path.Combine(libPath , this.NameSpace + "CodeSmithProject.csp");
 	#else
-	string path = this.OutputDirectory + (this.OutputDirectory.EndsWith("\\") ? "" : "\\") + "References\\" + this.NameSpace + "PropertySet.xml";
+	string path = Path.Combine(libPath , this.NameSpace + "PropertySet.xml");
 	#endif 
 	
 	if (!File.Exists(path))

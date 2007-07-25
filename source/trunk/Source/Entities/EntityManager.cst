@@ -89,48 +89,57 @@ namespace <%=NameSpace%>
             if (entityFactoryType == null)
                 throw new ArgumentException("entityFactoryType");
             #endregion 
-
-            Entity entity = default(Entity);
+			
+			Entity entity = default(Entity);
+			
+			lock (syncObject) //This is here because most of the classes in ObjectBuilder are NOT thread-safe
+			{
+				//Generated Table Entities Type
+				Type defaultType = typeof(Entity);
+				bool isCacheable = defaultType.GetInterface("IEntityCacheItem") != null;
+	
+				//see if entity is cachable, if IEntityCacheItem
+				//retrieve from cache.
+				if (isCacheable)
+					entity = EntityCache.GetItem<Entity>(key.ToString());
+	
+				if (entity != null)
+					return entity;
             
-            //Generated Table Entities Type
-            Type defaultType = typeof(Entity);
-            bool isCacheable = defaultType.GetInterface("IEntityCacheItem") != null;
-
-            //see if entity is cachable, if IEntityCacheItem
-            //retrieve from cache.
-            if (isCacheable)
-                entity = EntityCache.GetItem<Entity>(key.ToString());
-
-            if (entity != null)
-                return entity;
-            
-            IEntityFactory factory = null;
-            if (EntityFactories.ContainsKey(entityFactoryType.FullName))
-                factory = EntityFactories[entityFactoryType.FullName];
-            else
-                factory = TryAddEntityFactory(entityFactoryType);
-
-            
-            //attempt to locate
-            if (key != null && isLocatorEnabled)
-            {
-                if (EntityLocator.Contains(key))
-                {
-                    entity = EntityLocator.Get(key) as Entity;
-                }
-            }
-
-            //if not found try create from factory
-            if (entity == null)
-                entity = factory.CreateEntity(typeString, defaultType) as Entity;
-
-            //add to locator and start tracking.
-            if (!entity.IsEntityTracked)
-                StartTracking(key, entity, isLocatorEnabled);
-
-            //add entity to Cache if IEntityCacheItem
-            if (entity.GetType().GetInterface("IEntityCacheItem") != null)
-                EntityCache.AddCache(key, entity);
+				IEntityFactory factory = null;
+				lock (syncObject)
+				{
+					if (EntityFactories.ContainsKey(entityFactoryType.FullName))
+						factory = EntityFactories[entityFactoryType.FullName];
+					else
+						factory = TryAddEntityFactory(entityFactoryType);
+				}
+	
+				
+				//attempt to locate
+				if (key != null && isLocatorEnabled)
+				{
+					lock (syncObject)
+					{
+						if (EntityLocator.Contains(key))
+						{
+							entity = EntityLocator.Get(key) as Entity;
+						}
+					}
+				}
+	
+				//if not found try create from factory
+				if (entity == null)
+					entity = factory.CreateEntity(typeString, defaultType) as Entity;
+	
+				//add to locator and start tracking.
+				if (!entity.IsEntityTracked)
+					StartTracking(key, entity, isLocatorEnabled);
+	
+				//add entity to Cache if IEntityCacheItem
+				if (entity.GetType().GetInterface("IEntityCacheItem") != null)
+					EntityCache.AddCache(key, entity);
+			}
 
             return entity;
         }
@@ -161,10 +170,14 @@ namespace <%=NameSpace%>
 
             
             IEntityFactory factory = null;
-            if (EntityFactories.ContainsKey(entityFactoryType.FullName))
-                factory = EntityFactories[entityFactoryType.FullName];
-            else
-                factory = TryAddEntityFactory(entityFactoryType);
+			
+			lock (syncObject)
+			{
+            	if (EntityFactories.ContainsKey(entityFactoryType.FullName))
+                	factory = EntityFactories[entityFactoryType.FullName];
+            	else
+                	factory = TryAddEntityFactory(entityFactoryType);
+			}
          
             entity = factory.CreateViewEntity(typeString, defaultType) as Entity;
             
@@ -187,10 +200,13 @@ namespace <%=NameSpace%>
 			//attempt to locate
             if (key != null && isLocatorEnabled)
             {
-                if (EntityLocator.Contains(key))
-                {
-                    entity = EntityLocator.Get(key) as Entity;
-                }
+				lock (syncObject)
+				{
+                	if (EntityLocator.Contains(key))
+                	{
+                    	entity = EntityLocator.Get(key) as Entity;
+                	}
+				}
             }
 			return entity;
 		}

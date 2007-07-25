@@ -3350,7 +3350,7 @@ CREATE\s+PROC(?:EDURE)?                               # find the start of the st
 						if ( defaultValue.ToLower() == "getdate()" )
 							defaultValue = "DateTime.Now";
 						else if ( defaultValue.ToLower() == "newid()" )
-							defaultValue = "new Guid()";
+							defaultValue = "Guid.NewGuid()";
 						else if ( defaultValue.ToLower() == "getutcdate()" )
 							defaultValue = "DateTime.UtcNow";
 						else
@@ -3413,7 +3413,7 @@ CREATE\s+PROC(?:EDURE)?                               # find the start of the st
 								return null;
 			
 						case DbType.Guid:
-							if (defaultValue == "new Guid()")
+							if (defaultValue == "new Guid()"|| defaultValue == "Guid.NewGuid()")
 								return defaultValue;
 								
 							guidConvert = new Guid(defaultValue);

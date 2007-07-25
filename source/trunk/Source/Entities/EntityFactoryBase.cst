@@ -164,9 +164,12 @@ namespace <%=NameSpace%>
         public static T Create<T>() where T : IEntity, new()
         {
             Type type = typeof(T);
-
-            if (!internalTypeCache.ContainsValue(type))
-                internalTypeCache.Add(type.FullName, type);
+			
+			lock (syncRoot)
+            {
+            	if (!internalTypeCache.ContainsValue(type))
+                	internalTypeCache.Add(type.FullName, type);
+			}
 
             //fire pre creating event
             OnEntityCreating(type);
@@ -244,8 +247,11 @@ namespace <%=NameSpace%>
 
             typeString = string.Format("{0}.{1}", currentEntityAssemblyNamespace, typeString);
 
-            if (internalTypeCache.ContainsKey(typeString))
-                return CoreCreate(internalTypeCache[typeString]);
+			lock (syncRoot)
+            {
+            	if (internalTypeCache.ContainsKey(typeString))
+                	return CoreCreate(internalTypeCache[typeString]);
+			}
 
             // resolve the type
             Type targetType = ResolveType(typeString);
@@ -270,10 +276,10 @@ namespace <%=NameSpace%>
         /// <returns>created object</returns>
         private static object CoreCreate(Type type)
         {
-            if (!internalTypeCache.ContainsValue(type))
+			lock (syncRoot)
             {
-                lock (syncRoot)
-                {
+            	if (!internalTypeCache.ContainsValue(type))
+            	{
                     internalTypeCache.Add(type.FullName, type);
                 }
             }
