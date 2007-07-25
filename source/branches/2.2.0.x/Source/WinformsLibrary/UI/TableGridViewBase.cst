@@ -1,0 +1,450 @@
+﻿<%@ CodeTemplate Language="C#" TargetLanguage="c#" Src="..\..\TemplateLib\CommonSqlCode.cs" Inherits="MoM.Templates.CommonSqlCode" Debug="False" Description="Template description here." ResponseEncoding="UTF-8"  NoWarn="0108,0618,1572,1573,1574,0162,2002" %>
+<%@ Assembly Name="SchemaExplorer" %>
+<%@ Assembly Name="System.Design" %>
+
+<%@ Import Namespace="SchemaExplorer" %>
+<%@ Import Namespace="System.Collections" %>
+<%@ Import Namespace="System.Text" %>
+<%@ Import Namespace="System" %>
+
+<%@ Property Name="SourceTable" Type="SchemaExplorer.TableSchema" Category="Connection" Description="Table that the data access class should be based on." %>
+<%@ Property Name="NameSpace" Type="System.String" Category="Style" Description="Root Namespace." %>
+<%@ Property Name="WinLibNameSpace" Type="System.String" Category="Style" Description="the Namespace of the windows forms library." %>
+<%@ Property Name="BusinessLogicLayerNameSpace" Type="System.String" Category="Namespaces" Description="The sub namespace that is added to the root namespace for the entities." Default="" Optional="true" %>
+<%
+	string name =	GetClassName(SourceTable);
+	string entityName = BusinessLogicLayerNameSpace + "." + name;
+	string dgvName = name + "DataGridView";
+	//string entityDataSource =  NameSpace + ".Web.Data." + GetClassName(SourceTable.Name) + "DataSource";
+%>
+
+namespace <%=WinLibNameSpace%>
+{
+	/// <summary>
+	/// abstract <%=name%> typed datagridview
+	/// </summary>
+	[System.ComponentModel.DesignerCategoryAttribute("code")]
+	public abstract class <%=dgvName%>Base : System.Windows.Forms.UserControl
+	{	
+		/// <summary> 
+		/// Thrown when the current Entity changed.
+		/// </summary>
+		public event System.EventHandler<<%=name%>DataGridViewEventArgs> CurrentEntityChanged;
+		
+		#region Fields
+				
+		/// <summary> 
+		/// the current entity.
+		/// </summary>
+		private <%=entityName%> _current<%=name%> = null;
+		//private Dictionary<string, string> _columnsHeaders = new Dictionary<string, string>();
+		
+		/// <summary> 
+		/// the datagridview instance
+		/// </summary>
+		protected System.Windows.Forms.DataGridView ux<%=name%>DataGridView;
+		
+		/// <summary> 
+		/// the errorprovider
+		/// </summary>
+		protected System.Windows.Forms.ErrorProvider ux<%=GetClassName(SourceTable)%>ErrorProvider;
+		
+		/// <summary> 
+		/// the bindingsource
+		/// </summary>
+		protected System.Windows.Forms.BindingSource ux<%=GetClassName(SourceTable)%>BindingSource;
+		
+		<% for (int i=0; i<SourceTable.Columns.Count; i++)
+		{ 
+			ColumnSchema column = SourceTable.Columns[i];
+			string dgvColumnName = "ux" + GetPropertyName(column) + "DataGridViewColumn";
+			if (SourceTable.ForeignKeyColumns.Contains(column))
+			{%>
+		/// <summary> 
+		/// the DGV column associated with the <%=GetPropertyName(column)%> property
+		/// </summary>
+		protected System.Windows.Forms.DataGridViewComboBoxColumn <%=dgvColumnName%>;
+			<% } else if (column.SystemType == typeof(System.Boolean)){ %>
+		
+		/// <summary> 
+		/// the DGV column associated with the <%=GetPropertyName(column)%> property
+		/// </summary>
+		protected System.Windows.Forms.DataGridViewCheckBoxColumn <%=dgvColumnName%>;
+			<% } else { %>
+		
+		/// <summary> 
+		/// the DGV column associated with the <%=GetPropertyName(column)%> property
+		/// </summary>
+		protected System.Windows.Forms.DataGridViewTextBoxColumn <%=dgvColumnName%>;
+			<% } %>
+		<% } %>
+		
+		#endregion
+					
+		#region Combo list
+		
+		<% for (int i=0; i<SourceTable.ForeignKeys.Count; i++) { %>
+		<% if (SourceTable.ForeignKeys[i].ForeignKeyMemberColumns.Count == 1) { %>
+				
+		private <%=BusinessLogicLayerNameSpace%>.TList<<%=BusinessLogicLayerNameSpace%>.<%=GetClassName(SourceTable.ForeignKeys[i].PrimaryKeyTable)%>> _<%=GetPropertyName(SourceTable.ForeignKeys[i].ForeignKeyMemberColumns[0])%>List;
+		
+		/// <summary> 
+		/// The list of selectable <%=GetClassName(SourceTable.ForeignKeys[i].PrimaryKeyTable)%>
+		/// </summary>
+		[System.ComponentModel.Category("DropDownList BindingSources")]
+		public <%=BusinessLogicLayerNameSpace%>.TList<<%=BusinessLogicLayerNameSpace%>.<%=GetClassName(SourceTable.ForeignKeys[i].PrimaryKeyTable)%>> <%=GetPropertyName(SourceTable.ForeignKeys[i].ForeignKeyMemberColumns[0])%>List
+		{
+			get {return this._<%=GetPropertyName(SourceTable.ForeignKeys[i].ForeignKeyMemberColumns[0])%>List;}
+			set 
+			{
+				this._<%=GetPropertyName(SourceTable.ForeignKeys[i].ForeignKeyMemberColumns[0])%>List = value;
+				this.ux<%=GetPropertyName(SourceTable.ForeignKeys[i].ForeignKeyMemberColumns[0])%>DataGridViewColumn.DataSource = null;
+				this.ux<%=GetPropertyName(SourceTable.ForeignKeys[i].ForeignKeyMemberColumns[0])%>DataGridViewColumn.DataSource = this._<%=GetPropertyName(SourceTable.ForeignKeys[i].ForeignKeyMemberColumns[0])%>List;
+			}
+		}
+		
+		private bool _allowNewItemIn<%=GetPropertyName(SourceTable.ForeignKeys[i].ForeignKeyMemberColumns[0])%>List;
+		
+		/// <summary> 
+		/// Indicates if user can add an item in the list of <%=GetClassName(SourceTable.ForeignKeys[i].PrimaryKeyTable)%>
+		/// </summary>
+		[System.ComponentModel.Category(".netTiers"), System.ComponentModel.Description("Indicates if end user can add a new item in the combobox. an event will be thrown then.")]
+		public bool AllowNewItemIn<%=GetPropertyName(SourceTable.ForeignKeys[i].ForeignKeyMemberColumns[0])%>List
+		{
+			get { return _allowNewItemIn<%=GetPropertyName(SourceTable.ForeignKeys[i].ForeignKeyMemberColumns[0])%>List;}
+			set
+			{
+				this._allowNewItemIn<%=GetPropertyName(SourceTable.ForeignKeys[i].ForeignKeyMemberColumns[0])%>List = value;
+				this.ux<%=GetPropertyName(SourceTable.ForeignKeys[i].ForeignKeyMemberColumns[0])%>DataGridViewColumn.DisplayStyle = value ? System.Windows.Forms.DataGridViewComboBoxDisplayStyle.ComboBox : System.Windows.Forms.DataGridViewComboBoxDisplayStyle.DropDownButton;
+			}
+		}
+		
+		<% } %>
+		<% } %>
+		#endregion
+		
+		#region Main Datasource
+		
+		private <%=BusinessLogicLayerNameSpace%>.TList<<%=BusinessLogicLayerNameSpace%>.<%=GetClassName(SourceTable)%>> _<%=GetClassName(SourceTable)%>List;
+				
+		/// <summary> 
+		/// The list of <%=GetClassName(SourceTable)%> to be displayed in the DGV.
+		/// </summary>
+		[System.ComponentModel.Category("Data")]
+		public <%=BusinessLogicLayerNameSpace%>.TList<<%=BusinessLogicLayerNameSpace%>.<%=GetClassName(SourceTable)%>> <%=GetClassName(SourceTable)%>List
+		{
+			get {return this._<%=GetClassName(SourceTable)%>List;}
+			set
+			{
+				this._<%=GetClassName(SourceTable)%>List = value;
+				this.ux<%=GetClassName(SourceTable)%>BindingSource.DataSource = null;
+				this.ux<%=GetClassName(SourceTable)%>BindingSource.DataSource = value;
+				this.ux<%=name%>DataGridView.DataSource = null;
+				this.ux<%=name%>DataGridView.DataSource = this.ux<%=GetClassName(SourceTable)%>BindingSource;				
+				//this.ux<%=GetClassName(SourceTable)%>BindingSource.ListChanged += new System.ComponentModel.ListChangedEventHandler(ux<%=GetClassName(SourceTable)%>BindingSource_ListChanged);
+				this.ux<%=GetClassName(SourceTable)%>BindingSource.CurrentItemChanged += new System.EventHandler(On<%=GetClassName(SourceTable)%>BindingSourceCurrentItemChanged);
+			}
+		}
+		
+		private void On<%=name%>BindingSourceCurrentItemChanged(object sender, System.EventArgs e)
+		{
+			_current<%=name%> = ux<%=name%>BindingSource.Current as <%=entityName%>;
+			
+			if (_current<%=name%> != null)
+			{
+				_current<%=name%>.Validate();
+			}
+			//_<%=GetClassName(SourceTable)%>.Validate();
+			OnCurrentEntityChanged();
+		}
+
+		//void ux<%=name%>BindingSource_ListChanged(object sender, System.ComponentModel.ListChangedEventArgs e)
+		//{
+			//throw new Exception("The method or operation is not implemented.");
+		//}		
+		
+		#endregion
+		
+		/// <summary>
+		/// Gets the currently selected <c cref="<%=entityName%>"/> instance.
+		/// </summary>
+		public <%=entityName%> Selected<%=name%>
+		{
+			get {return this._current<%=name%>;}
+		}
+		
+		#region other properties
+		
+		/// <summary>
+		/// Gets or sets a value indicating whether you have provided your own data-management operations for the DataGridView control.
+		/// </summary>
+		[System.ComponentModel.Category(".netTiers")]
+		public bool VirtualMode
+		{
+			get {return this.ux<%=name%>DataGridView.VirtualMode;}
+			set
+			{
+				this.ux<%=name%>DataGridView.VirtualMode = value;
+			}
+		}
+		
+		/// <summary>
+		/// Gets or sets a value indicating whether the option to add rows is displayed to the user.
+		/// </summary>
+		[System.ComponentModel.Category(".netTiers")]
+		public bool AllowUserToAddRows
+		{
+			get {return this.ux<%=name%>DataGridView.AllowUserToAddRows;}
+			set {this.ux<%=name%>DataGridView.AllowUserToAddRows = value;}
+		}
+		
+		/// <summary>
+		/// Gets or sets a value indicating whether the user is allowed to delete rows from the DataGridView.
+		/// </summary>
+		[System.ComponentModel.Category(".netTiers")]
+		public bool AllowUserToDeleteRows
+		{
+			get {return this.ux<%=name%>DataGridView.AllowUserToDeleteRows;}
+			set {this.ux<%=name%>DataGridView.AllowUserToDeleteRows = value;}
+		}
+		
+		/// <summary>
+		/// Gets the <c cref="DataGridView"/> instance.
+		/// </summary>
+		[System.ComponentModel.Category(".netTiers")]
+		public System.Windows.Forms.DataGridView DataGridView
+		{
+			get {return this.ux<%=name%>DataGridView;}
+		}
+		
+		/// <summary>
+		/// Gets a collection that contains all the columns in the control.
+		/// </summary>
+		[System.ComponentModel.Category(".netTiers")]		
+		[System.ComponentModel.DesignerSerializationVisibilityAttribute(System.ComponentModel.DesignerSerializationVisibility.Visible)]
+		//[System.ComponentModel.EditorAttribute("System.Windows.Forms.Design.DataGridViewColumnCollectionEditor, System.Design", typeof(System.Drawing.Design.UITypeEditor))] 
+		public System.Windows.Forms.DataGridViewColumnCollection Columns
+		{
+			get { return this.ux<%=name%>DataGridView.Columns; }
+		}
+		
+		#endregion
+		
+		/// <summary> 
+		/// Required designer variable.
+		/// </summary>
+		private System.ComponentModel.IContainer components = null;
+	
+		/// <summary> 
+		/// Clean up any resources being used.
+		/// </summary>
+		/// <param name="disposing">true if managed resources should be disposed; otherwise, false.</param>
+		protected override void Dispose(bool disposing)
+		{
+			if (disposing && (components != null))
+			{
+				components.Dispose();
+			}
+			base.Dispose(disposing);
+		}
+	
+		#region Constructor
+	
+		/// <summary>
+		/// Initializes a new instance of the <see cref="<%=dgvName%>Base"/> class.
+		/// </summary>
+		public <%=dgvName%>Base()
+		{			
+			this.components = new System.ComponentModel.Container();			
+			
+			this.ux<%=name%>DataGridView = new System.Windows.Forms.DataGridView();
+			this.ux<%=GetClassName(SourceTable)%>BindingSource = new System.Windows.Forms.BindingSource(this.components);
+			this.ux<%=GetClassName(SourceTable)%>ErrorProvider = new System.Windows.Forms.ErrorProvider(this.components);
+			<% for (int i=0; i<SourceTable.Columns.Count; i++)
+			{ 
+				ColumnSchema column = SourceTable.Columns[i];
+				string dgvColumnName = "this.ux" + GetPropertyName(column) + "DataGridViewColumn";
+			
+				if (SourceTable.ForeignKeyColumns.Contains(column)){%>
+			<%=dgvColumnName%> = new System.Windows.Forms.DataGridViewComboBoxColumn();
+				<% } else if (column.SystemType == typeof(System.Boolean)){ %>
+			<%=dgvColumnName%> = new System.Windows.Forms.DataGridViewCheckBoxColumn();
+				<% } else { %>
+			<%=dgvColumnName%> = new System.Windows.Forms.DataGridViewTextBoxColumn();
+				<% } %>	
+			<% } %>
+			<% for (int i=0; i<SourceTable.ForeignKeys.Count; i++) { %>
+			<% if (SourceTable.ForeignKeys[i].ForeignKeyMemberColumns.Count == 1) { %>
+			//this.ux<%=GetPropertyName(SourceTable.ForeignKeys[i].ForeignKeyMemberColumns[0])%>BindingSource = new <%=GetClassName(SourceTable.ForeignKeys[i].PrimaryKeyTable)%>BindingSource(this.components);
+			//((System.ComponentModel.ISupportInitialize)(this.ux<%=GetPropertyName(SourceTable.ForeignKeys[i].ForeignKeyMemberColumns[0])%>BindingSource)).BeginInit();
+			<% } %>
+			<% } %>
+			((System.ComponentModel.ISupportInitialize)(this.ux<%=name%>DataGridView)).BeginInit();
+			((System.ComponentModel.ISupportInitialize)(this.ux<%=GetClassName(SourceTable)%>BindingSource)).BeginInit();
+			((System.ComponentModel.ISupportInitialize)(this.ux<%=GetClassName(SourceTable)%>ErrorProvider)).BeginInit();
+			this.SuspendLayout();
+						
+			// 
+			// ux<%=GetClassName(SourceTable)%>ErrorProvider
+			// 
+			this.ux<%=GetClassName(SourceTable)%>ErrorProvider.ContainerControl = this;
+			this.ux<%=GetClassName(SourceTable)%>ErrorProvider.DataSource = this.ux<%=GetClassName(SourceTable)%>BindingSource;						
+			// 
+			// ux<%=name%>DataGridView
+			// 
+			this.ux<%=name%>DataGridView.AutoGenerateColumns = false;
+			this.ux<%=name%>DataGridView.ColumnHeadersHeightSizeMode = System.Windows.Forms.DataGridViewColumnHeadersHeightSizeMode.AutoSize;
+			this.ux<%=name%>DataGridView.Columns.AddRange(new System.Windows.Forms.DataGridViewColumn[] {
+			<% for (int i=0; i<SourceTable.Columns.Count; i++)
+			{ 
+				Response.Write("\t\tthis.ux" + GetPropertyName(SourceTable.Columns[i]) + "DataGridViewColumn");
+				if (i<SourceTable.Columns.Count-1)
+				{
+					Response.Write(",\r\n");
+				}			
+			}
+			%>			
+			});
+			this.ux<%=name%>DataGridView.Dock = System.Windows.Forms.DockStyle.Fill;
+			this.ux<%=name%>DataGridView.Location = new System.Drawing.Point(0, 0);
+			this.ux<%=name%>DataGridView.Name = "ux<%=name%>DataGridView";
+			this.ux<%=name%>DataGridView.Size = new System.Drawing.Size(470, 300);
+			this.ux<%=name%>DataGridView.TabIndex = 0;	
+			this.ux<%=name%>DataGridView.BackgroundColor = System.Drawing.Color.WhiteSmoke;
+			this.ux<%=name%>DataGridView.EnableHeadersVisualStyles = false;
+			this.ux<%=name%>DataGridView.DataError += new System.Windows.Forms.DataGridViewDataErrorEventHandler(this.On<%=name%>DataGridViewDataError);
+			this.ux<%=name%>DataGridView.CellValueNeeded += new System.Windows.Forms.DataGridViewCellValueEventHandler(this.On<%=name%>DataGridViewCellValueNeeded);
+			this.ux<%=name%>DataGridView.CellValuePushed += new System.Windows.Forms.DataGridViewCellValueEventHandler(this.On<%=name%>DataGridViewCellValuePushed);
+			
+			<% for (int i=0; i<SourceTable.Columns.Count; i++)
+			{ 
+				ColumnSchema column = SourceTable.Columns[i];
+				string dgvColumnName = "ux" + GetPropertyName(column) + "DataGridViewColumn";
+			%>
+			//
+			// <%=dgvColumnName%>
+			//
+			this.<%=dgvColumnName%>.AutoSizeMode = System.Windows.Forms.DataGridViewAutoSizeColumnMode.DisplayedCells;
+			this.<%=dgvColumnName%>.DataPropertyName = "<%=GetPropertyName(column)%>";
+			this.<%=dgvColumnName%>.HeaderText = "<%=GetPropertyName(column)%>";
+			this.<%=dgvColumnName%>.Name = "<%=dgvColumnName%>";
+			this.<%=dgvColumnName%>.Resizable = System.Windows.Forms.DataGridViewTriState.True;
+			this.<%=dgvColumnName%>.SortMode = System.Windows.Forms.DataGridViewColumnSortMode.Automatic;
+			this.<%=dgvColumnName%>.ReadOnly = <% if (IsComputed(column) || IsIdentityColumn(column)) { %>true<% } else {%>false<%}%>;		
+			<% } %>		
+			<% for (int i=0; i<SourceTable.ForeignKeys.Count; i++)
+			{ 
+				ColumnSchema column = SourceTable.ForeignKeys[i].ForeignKeyMemberColumns[0];
+				string dgvColumnName = "ux" + GetPropertyName(column) + "DataGridViewColumn";
+			%>			
+			//
+			// <%=dgvColumnName%>
+			//				
+			this.<%=dgvColumnName%>.DisplayMember = "<%=GetPropertyName(SourceTable.ForeignKeys[i].PrimaryKeyTable.Columns[1]) %>";	
+			this.<%=dgvColumnName%>.ValueMember = "<%=GetPropertyName(SourceTable.ForeignKeys[i].PrimaryKeyTable.PrimaryKey.MemberColumns[0])%>";	
+			this.<%=dgvColumnName%>.DisplayStyleForCurrentCellOnly = true;
+			//<%=dgvColumnName%>.DataSource = ux<%=GetPropertyName(column)%>BindingSource;				
+				
+		<%  } %>
+			
+			// this
+			this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
+			this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
+			this.Controls.Add(this.ux<%=name%>DataGridView);
+			this.Name = "<%=dgvName%>";
+			this.Size = new System.Drawing.Size(470, 300);
+			<% for (int i=0; i<SourceTable.ForeignKeys.Count; i++) { %>
+			<% if (SourceTable.ForeignKeys[i].ForeignKeyMemberColumns.Count == 1) { %>
+			//((System.ComponentModel.ISupportInitialize)(this.ux<%=GetPropertyName(SourceTable.ForeignKeys[i].ForeignKeyMemberColumns[0])%>BindingSource)).EndInit();
+			<% } %>
+			<% } %>
+			((System.ComponentModel.ISupportInitialize)(this.ux<%=GetClassName(SourceTable)%>ErrorProvider)).EndInit();
+			((System.ComponentModel.ISupportInitialize)(this.ux<%=name%>DataGridView)).EndInit();
+			((System.ComponentModel.ISupportInitialize)(this.ux<%=GetClassName(SourceTable)%>BindingSource)).EndInit();
+			this.ResumeLayout(false);
+		}
+		#endregion
+				
+		#region events
+		
+		/// <summary>
+		/// Raised the CurrentEntityChanged event.
+		/// </summary>
+		protected void OnCurrentEntityChanged()
+		{
+			if (CurrentEntityChanged != null)
+			{
+				<%=name%>DataGridViewEventArgs args = new <%=name%>DataGridViewEventArgs();
+				args.<%=name%> = _current<%=name%>;
+				CurrentEntityChanged(this, args); 
+			}
+		}
+		
+		#endregion
+		
+		/// <summary>
+		/// Strongly typed event 
+		/// </summary>
+		public class <%=name%>DataGridViewEventArgs : System.EventArgs
+		{
+			private <%=entityName%>	_<%=name%>;
+	
+			/// <summary>
+			/// the  <%=entityName%> instance.
+			/// </summary>
+			public <%=entityName%> <%=name%>
+			{
+				get { return _<%=name%>; }
+				set { _<%=name%> = value; }
+			}	
+		}
+		
+		/// <summary>
+		/// Handles the DataError event of the ux<%=name%>DataGridView control.
+		/// </summary>
+		/// <param name="sender">The source of the event.</param>
+		/// <param name="e">The <see cref="T:System.Windows.Forms.DataGridViewDataErrorEventArgs"/> instance containing the event data.</param>
+		protected void On<%=name%>DataGridViewDataError(object sender, System.Windows.Forms.DataGridViewDataErrorEventArgs e)
+		{
+			System.Diagnostics.Debug.WriteLine(string.Format( "{0}, {1}", e.ColumnIndex, e.RowIndex));
+		}
+		
+		/// <summary>
+		/// Handles the CellValueNeeded event of the ux<%=name%>DataGridView control.
+		/// </summary>
+		/// <param name="sender">The source of the event.</param>
+		/// <param name="e">The <see cref="T:System.Windows.Forms.DataGridViewCellValueEventArgs"/> instance containing the event data.</param>
+		protected void On<%=name%>DataGridViewCellValueNeeded(object sender, System.Windows.Forms.DataGridViewCellValueEventArgs e)
+		{
+			switch(ux<%=name%>DataGridView.Columns[e.ColumnIndex].Name)
+			{
+				<% for (int i=0; i<SourceTable.Columns.Count; i++) { %>
+					case "ux<%=GetPropertyName(SourceTable.Columns[i])%>DataGridViewColumn":
+						e.Value = <%=GetClassName(SourceTable)%>List[e.RowIndex].<%=GetPropertyName(SourceTable.Columns[i])%>;
+						break;
+				<% }%>
+				default:
+				break;
+			}
+		}
+		
+		/// <summary>
+		/// Handles the CellValuePushed event of the ux<%=name%>DataGridView control.
+		/// </summary>
+		/// <param name="sender">The source of the event.</param>
+		/// <param name="e">The <see cref="T:System.Windows.Forms.DataGridViewCellValueEventArgs"/> instance containing the event data.</param>
+		protected void On<%=name%>DataGridViewCellValuePushed(object sender, System.Windows.Forms.DataGridViewCellValueEventArgs e)
+		{
+			switch(ux<%=name%>DataGridView.Columns[e.ColumnIndex].Name)
+			{
+				<% for (int i=0; i<SourceTable.Columns.Count; i++) { %>
+					case "ux<%=GetPropertyName(SourceTable.Columns[i])%>DataGridViewColumn":
+						<%=GetClassName(SourceTable)%>List[e.RowIndex].<%=GetPropertyName(SourceTable.Columns[i])%> = (<%=GetCSType(SourceTable.Columns[i])%>)e.Value;
+						break;
+				<% }%>
+				default:
+				break;
+			}
+		}
+	}
+}

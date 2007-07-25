@@ -1,0 +1,154 @@
+﻿<%@ CodeTemplate Src="..\..\..\TemplateLib\CommonSqlCode.cs" Inherits="MoM.Templates.CommonSqlCode" Language="C#" TargetLanguage="C#" Description="Generates Code behind for the EntityDataSource Control used to display ViewGrid" Debug="True" ResponseEncoding="UTF-8" NoWarn="0108,0618,1572,1573,1574,0162,2002"%>
+<%@ Assembly Name="SchemaExplorer" %>
+<%@ Assembly Name="System.Design" %>
+<%@ Import Namespace="SchemaExplorer" %>
+<%@ Import Namespace="System.Collections" %>
+<%@ Import Namespace="System.Text" %>
+
+<%@ Property Name="SourceTable" Type="SchemaExplorer.TableSchema" Category="Connection" Description="Table that the data access class should be based on." %>
+<%@ Property Name="WebProjectNameSpace" Type="System.String" Category="Style" Description="ASP 2.0 Namespace" %>
+<%@ Property Name="NameSpace" Type="System.String" Category="Style" Description="ASP 2.0 Namespace" %>
+<%@ Property Name="BLLNameSpace" Type="System.String" Category="Data" Description="BLL Namespace." %>
+<%@ Property Name="DALNameSpace" Type="System.String" Category="Data" Description="BLL Namespace." %>
+<%@ Property Name="IncludeAtlasLibrary" Type="System.Boolean" Default="false" Category="06b. Website - Advanced" Description="Indicates whether to include a reference to the Atlas component library." %>
+<%@ Property Name="IncludeAtlasToolkit" Type="System.Boolean" Default="false" Category="06b. Website - Advanced" Description="Indicates whether to include a reference to the Atlas Control Toolkit. This property is only taken into account when IncludeAtlasLibrary is true." %>
+
+
+<%
+	
+	// Collection of all columns in the table.
+	ColumnSchemaCollection cols = SourceTable.Columns;
+	
+	// Collection of all columns in the table that are not primary keys.
+	//ColumnSchemaCollection nonKeys = SourceTable.NonPrimaryKeyColumns;
+	
+	// Collection of all primary key columns.
+	ColumnSchemaCollection keys = SourceTable.PrimaryKey.MemberColumns; 
+	
+	// Collection of ForeignKeys. Provides information about the foreign keys 
+	//(keys where the current table is the foreign table) contained in the table. 
+	TableKeySchemaCollection fkeys = SourceTable.ForeignKeys;
+	
+	//Provides information about the primary keys 
+	//(keys where the current table is the primary table) contained in the table. 
+	//TableKeySchemaCollection pkeys = SourceTable.PrimaryKeys;
+	
+	//Provides information about the indexes contained in the table. 
+	//IndexSchemaCollection indexes = SourceTable.Indexes;
+	
+	ColumnSchemaCollection colsUpdatable = new ColumnSchemaCollection();
+	foreach (ColumnSchema column in cols)
+	{
+		if ( ! IsIdentityColumn(column) && ! IsComputed(column) )
+			colsUpdatable.Add(column);
+	}
+	
+	TableKeySchemaCollection fKeysSingle = new TableKeySchemaCollection();
+	foreach(TableKeySchema tableKey in fkeys)
+	{
+		if ( tableKey.ForeignKeyMemberColumns.Count == 1)
+			fKeysSingle.Add(tableKey);
+	}
+
+	// Holds the RowVersion column if there's any
+	ColumnSchema RowVersion = null;
+
+	foreach (ColumnSchema column in cols)
+	{
+		if (column.NativeType.ToLower() == "timestamp")
+			RowVersion = column;
+	}
+
+	string entityName = GetClassName(SourceTable);
+	string className = NameSpace + "." + GetClassName(SourceTable);
+	string providerName = GetClassName(SourceTable, ClassNameFormat.Provider);
+%>
+#region Using directives
+using System;
+using System.Data;
+using System.Configuration;
+using System.Web;
+using System.Web.Security;
+using System.Web.UI;
+using System.Web.UI.WebControls;
+using System.Web.UI.WebControls.WebParts;
+using System.Web.UI.HtmlControls;
+using <%=WebProjectNameSpace%>.Web.UI;
+#endregion
+
+public partial class <%=entityName%> : System.Web.UI.Page
+{	
+    protected void Page_Load(object sender, EventArgs e)
+	{
+		FormUtil.RedirectAfterUpdate(GridView1, "<%=entityName%>.aspx?page={0}");
+		FormUtil.SetPageIndex(GridView1, "page");
+    }
+
+	protected void GridView1_SelectedIndexChanged(object sender, EventArgs e)
+	{
+		string urlParams = string.Format(<%=getUrl(keys)%>);
+		Response.Redirect("<%=entityName%>Edit.aspx?" + urlParams, true);
+	}
+	
+	<%
+	if (SourceTable.PrimaryKey.MemberColumns.Count == 1)
+	{
+		foreach (ColumnSchema col in SourceTable.Columns)
+		{
+			bool isBlobField = (IsBlobField(col) 
+							&& SourceTable.PrimaryKey.MemberColumns.Count == 1
+							&& IncludeAtlasToolkit);
+			if (!isBlobField)
+				continue;
+			string keyType = GetCSType(SourceTable.PrimaryKey.MemberColumns[0]);	
+			string propertyName = GetPropertyName(col);
+			string parse = "TryParse";
+			
+			if (keyType.ToLower().Contains("guid"))
+				parse = string.Format("{0}.{1}.EntityUtil.GuidTryParse", WebProjectNameSpace, BLLNameSpace);
+	%>
+	
+	[System.Web.Script.Services.ScriptMethod]
+	[System.Web.Services.WebMethod]
+	public static string Get<%=  propertyName %>Content(string contextKey)
+	{        
+		<% if (keyType.ToLower().Contains("string")) {%>
+		<%= keyType %> key = contextKey;
+		<% }else { %>
+		<%= keyType %> key;
+		<%= keyType %>.<%= parse %>(contextKey, out key);
+		<% } %>
+        
+        <%=WebProjectNameSpace%>.<%=BLLNameSpace%>.<%=entityName%> content 
+			= <%=WebProjectNameSpace%>.<%=DALNameSpace%>.DataRepository.<%=entityName%>Provider.GetBy<%= GetKeysName(SourceTable.PrimaryKey.MemberColumns) %>(key);
+        
+        if (content == null)
+            return "No Content Found!";
+
+        return string.Format("<div id='previewContent'>{0}</div>", content.<%= propertyName %>);
+	}
+	<%	} 	
+	}%>
+}
+
+
+<script runat="template">
+	private string getUrl(ColumnSchemaCollection keys) 
+	{
+        string s = string.Empty;
+		string g = string.Empty;
+		
+        for (int x = 0; x < keys.Count; x++)
+        {
+            s += string.Format("{0}={{" + x + "}}", GetPropertyName(keys[x]));
+			g += string.Format("GridView1.SelectedDataKey.Values[{0}]", x.ToString());
+            if (x < keys.Count - 1)
+            {
+                s += "&";
+				g += ", ";
+            }			
+
+        }
+        return string.Format("\"{0}\", {1}", s, g);
+	}
+</script>

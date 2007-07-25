@@ -1,0 +1,584 @@
+﻿<%@ CodeTemplate Src="..\TemplateLib\CommonSqlCode.cs" Inherits="MoM.Templates.CommonSqlCode" Language="C#" TargetLanguage="C#" Description="Template description here." Debug="True" ResponseEncoding="UTF-8" NoWarn="0108,0618,1572,1573,1574,0162,2002"%>
+<%@ Assembly Name="SchemaExplorer" %>
+<%@ Assembly Name="System.Design" %>
+<%@ Import Namespace="SchemaExplorer" %>
+
+<%@ Property Name="NameSpace" Type="System.String" Category="Data" Description="Entities Namespace." %>
+<%@ Property Name="DALNameSpace" Type="System.String" Category="Data" Description="DAL Namespace." %>
+<%@ Property Name="SourceTables" Type="SchemaExplorer.TableSchemaCollection" Category="Connection" Description="Tables of the system." %>
+<%@ Property Name="SourceViews" Type="SchemaExplorer.ViewSchemaCollection" Category="Connection" Description="Tables of the system." %>
+<%@ Property Name="IncludeDesignTimeSupport" Type="System.Boolean" Default="true" Category="05. WebLibrary - Advanced" Description="Indicates if Visual Studio design-time support should be provided for the Web Library controls." %>
+#region Using directives
+
+using System;
+using System.Collections.Generic;
+using System.Configuration;
+using System.Configuration.Provider;
+using System.Web.Configuration;
+using System.Web;
+using <%=NameSpace%>;
+using <%=DALNameSpace%>;
+using <%=DALNameSpace%>.Bases;
+
+#endregion
+
+namespace <%=DALNameSpace%>
+{
+	/// <summary>
+	/// This class represents the Data source repository and gives access to all the underlying providers.
+	/// </summary>
+	[CLSCompliant(true)]
+	public sealed class DataRepository 
+	{
+		private static volatile NetTiersProvider _provider = null;
+        private static volatile NetTiersProviderCollection _providers = null;
+		private static volatile NetTiersServiceSection _section = null;
+		<% if ( IncludeDesignTimeSupport ) { %>
+		private static volatile Configuration _config = null;
+		<% } %>
+        
+        private static object SyncRoot = new object();
+				
+		private DataRepository()
+		{
+		}
+		
+		#region Public LoadProvider
+		/// <summary>
+        /// Enables the DataRepository to programatically create and 
+        /// pass in a <c>NetTiersProvider</c> during runtime.
+        /// </summary>
+        /// <param name="provider">An instatiated NetTiersProvider.</param>
+        public static void LoadProvider(NetTiersProvider provider)
+        {
+			LoadProvider(provider, false);
+        }
+		
+		/// <summary>
+        /// Enables the DataRepository to programatically create and 
+        /// pass in a <c>NetTiersProvider</c> during runtime.
+        /// </summary>
+        /// <param name="provider">An instatiated NetTiersProvider.</param>
+        /// <param name="setAsDefault">ability to set any valid provider as the default provider for the DataRepository.</param>
+		public static void LoadProvider(NetTiersProvider provider, bool setAsDefault)
+        {
+            if (provider == null)
+                throw new ArgumentNullException("provider");
+
+            if (_providers == null)
+			{
+				lock(SyncRoot)
+				{
+            		if (_providers == null)
+						_providers = new NetTiersProviderCollection();
+				}
+			}
+			
+            if (_providers[provider.Name] == null)
+            {
+                lock (_providers.SyncRoot)
+                {
+                    _providers.Add(provider);
+                }
+            }
+
+            if (_provider == null || setAsDefault)
+            {
+                lock (SyncRoot)
+                {
+                    if(_provider == null || setAsDefault)
+                         _provider = provider;
+                }
+            }
+        }
+		#endregion 
+		
+		///<summary>
+		/// Configuration based provider loading, will load the providers on first call.
+		///</summary>
+		private static void LoadProviders()
+        {
+            // Avoid claiming lock if providers are already loaded
+            if (_provider == null)
+            {
+                lock (SyncRoot)
+                {
+                    // Do this again to make sure _provider is still null
+                    if (_provider == null)
+                    {
+                        // Load registered providers and point _provider to the default provider
+                        _providers = new NetTiersProviderCollection();
+
+                        ProvidersHelper.InstantiateProviders(NetTiersSection.Providers, _providers, typeof(NetTiersProvider));
+						_provider = _providers[NetTiersSection.DefaultProvider];
+
+                        if (_provider == null)
+                        {
+                            throw new ProviderException("Unable to load default NetTiersProvider");
+                        }
+                    }
+                }
+            }
+        }
+
+		/// <summary>
+        /// Gets the provider.
+        /// </summary>
+        /// <value>The provider.</value>
+        public static NetTiersProvider Provider
+        {
+            get { LoadProviders(); return _provider; }
+        }
+
+		/// <summary>
+        /// Gets the provider collection.
+        /// </summary>
+        /// <value>The providers.</value>
+        public static NetTiersProviderCollection Providers
+        {
+            get { LoadProviders(); return _providers; }
+        }
+		
+		/// <summary>
+		/// Creates a new <c cref="TransactionManager"/> instance from the current datasource.
+		/// </summary>
+		/// <returns></returns>
+		public TransactionManager CreateTransaction()
+		{
+			return _provider.CreateTransaction();
+		}
+
+		#region Configuration
+
+		/// <summary>
+		/// Gets a reference to the configured NetTiersServiceSection object.
+		/// </summary>
+		public static NetTiersServiceSection NetTiersSection
+		{
+			get
+			{
+				// Try to get a reference to the default <netTiersService> section
+				_section = WebConfigurationManager.GetSection("netTiersService") as NetTiersServiceSection;
+
+				if ( _section == null )
+				{
+					// otherwise look for section based on the assembly name
+					_section = WebConfigurationManager.GetSection("<%=DALNameSpace%>") as NetTiersServiceSection;
+				}
+
+				<% if ( IncludeDesignTimeSupport ) { %>
+				#region Design-Time Support
+
+				if ( _section == null )
+				{
+					// lastly, try to find the specific NetTiersServiceSection for this assembly
+					foreach ( ConfigurationSection temp in Configuration.Sections )
+					{
+						if ( temp is NetTiersServiceSection )
+						{
+							_section = temp as NetTiersServiceSection;
+							break;
+						}
+					}
+				}
+
+				#endregion Design-Time Support
+				
+				<% } // end if ( IncludeDesignTimeSupport ) { %>
+				if ( _section == null )
+				{
+					throw new ProviderException("Unable to load NetTiersServiceSection");
+				}
+
+				return _section;
+			}
+		}
+
+		<% if ( IncludeDesignTimeSupport ) { %>
+		#region Design-Time Support
+
+		/// <summary>
+		/// Gets a reference to the application configuration object.
+		/// </summary>
+		public static Configuration Configuration
+		{
+			get
+			{
+				if ( _config == null )
+				{
+					// load specific config file
+					if ( HttpContext.Current != null )
+					{
+						_config = WebConfigurationManager.OpenWebConfiguration("~");
+					}
+					else
+					{
+						String configFile = AppDomain.CurrentDomain.SetupInformation.ConfigurationFile.Replace(".config", "").Replace(".temp", "");
+
+						// check for design mode
+						if ( configFile.ToLower().Contains("devenv.exe") )
+						{
+							_config = GetDesignTimeConfig();
+						}
+						else
+						{
+							_config = ConfigurationManager.OpenExeConfiguration(configFile);
+						}
+					}
+				}
+
+				return _config;
+			}
+		}
+
+		private static Configuration GetDesignTimeConfig()
+		{
+			ExeConfigurationFileMap configMap = null;
+			Configuration config = null;
+			String path = null;
+
+			// Get an instance of the currently running Visual Studio IDE.
+			EnvDTE80.DTE2 dte = (EnvDTE80.DTE2) System.Runtime.InteropServices.Marshal.GetActiveObject("VisualStudio.DTE.8.0");
+			if ( dte != null )
+			{
+				dte.SuppressUI = true;
+
+				EnvDTE.ProjectItem item = dte.Solution.FindProjectItem("web.config");
+				if ( item != null )
+				{
+					if (!item.ContainingProject.FullName.ToLower().StartsWith("http:"))
+               {
+                  System.IO.FileInfo info = new System.IO.FileInfo(item.ContainingProject.FullName);
+                  path = String.Format("{0}\\{1}", info.Directory.FullName, item.Name);
+                  configMap = new ExeConfigurationFileMap();
+                  configMap.ExeConfigFilename = path;
+               }
+               else
+               {
+                  configMap = new ExeConfigurationFileMap();
+                  configMap.ExeConfigFilename = item.get_FileNames(0);
+               }}
+
+				/*
+				Array projects = (Array) dte2.ActiveSolutionProjects;
+				EnvDTE.Project project = (EnvDTE.Project) projects.GetValue(0);
+				System.IO.FileInfo info;
+
+				foreach ( EnvDTE.ProjectItem item in project.ProjectItems )
+				{
+					if ( String.Compare(item.Name, "web.config", true) == 0 )
+					{
+						info = new System.IO.FileInfo(project.FullName);
+						path = String.Format("{0}\\{1}", info.Directory.FullName, item.Name);
+						configMap = new ExeConfigurationFileMap();
+						configMap.ExeConfigFilename = path;
+						break;
+					}
+				}
+				*/
+			}
+
+			config = ConfigurationManager.OpenMappedExeConfiguration(configMap, ConfigurationUserLevel.None);
+			return config;
+		}
+
+		#endregion Design-Time Support
+
+		<% } // end if ( IncludeDesignTimeSupport ) { %>
+		#endregion Configuration
+
+		#region Connections
+
+		/// <summary>
+		/// Gets a reference to the ConnectionStringSettings collection.
+		/// </summary>
+		public static ConnectionStringSettingsCollection ConnectionStrings
+		{
+			get
+			{
+				<% if ( IncludeDesignTimeSupport ) { %>
+				// use default ConnectionStrings if _section has already been discovered
+				if ( _config == null && _section != null )
+				{
+					return WebConfigurationManager.ConnectionStrings;
+				}
+				
+				return Configuration.ConnectionStrings.ConnectionStrings;
+				<% } else { %>
+				return WebConfigurationManager.ConnectionStrings;
+				<% } // end if ( IncludeDesignTimeSupport ) { %>
+			}
+		}
+
+		// dictionary of connection providers
+		private static Dictionary<String, ConnectionProvider> _connections;
+
+		/// <summary>
+		/// Gets the dictionary of connection providers.
+		/// </summary>
+		public static Dictionary<String, ConnectionProvider> Connections
+		{
+			get
+			{
+				if ( _connections == null )
+				{
+					lock (SyncRoot)
+                	{
+						if (_connections == null)
+						{
+							_connections = new Dictionary<String, ConnectionProvider>();
+		
+							// add a connection provider for each configured connection string
+							foreach ( ConnectionStringSettings conn in ConnectionStrings )
+							{
+								_connections.Add(conn.Name, new ConnectionProvider(conn.Name));
+							}
+						}
+					}
+				}
+
+				return _connections;
+			}
+		}
+
+		/// <summary>
+		/// Adds the specified connection string to the map of connection strings.
+		/// </summary>
+		/// <param name="connectionStringName">The connection string name.</param>
+		/// <param name="connectionString">The provider specific connection information.</param>
+		public static void AddConnection(String connectionStringName, String connectionString)
+		{
+			lock (SyncRoot)
+            {
+				Connections.Remove(connectionStringName);
+				ConnectionProvider connection = new ConnectionProvider(connectionStringName, connectionString);
+				Connections.Add(connectionStringName, connection);
+			}
+		}
+
+		/// <summary>
+		/// Provides ability to switch connection string at runtime.
+		/// </summary>
+		public sealed class ConnectionProvider
+		{
+			private NetTiersProvider _provider;
+			private NetTiersProviderCollection _providers;
+			private String _connectionStringName;
+			private String _connectionString;
+
+			/// <summary>
+			/// Initializes a new instance of the ConnectionProvider class.
+			/// </summary>
+			/// <param name="connectionStringName">The connection string name.</param>
+			public ConnectionProvider(String connectionStringName)
+			{
+				_connectionStringName = connectionStringName;
+			}
+
+			/// <summary>
+			/// Initializes a new instance of the ConnectionProvider class.
+			/// </summary>
+			/// <param name="connectionStringName">The connection string name.</param>
+			/// <param name="connectionString">The provider specific connection information.</param>
+			public ConnectionProvider(String connectionStringName, String connectionString)
+			{
+				_connectionString = connectionString;
+				_connectionStringName = connectionStringName;
+			}
+
+			/// <summary>
+			/// Gets the provider.
+			/// </summary>
+			public NetTiersProvider Provider
+			{
+				get { LoadProviders(); return _provider; }
+			}
+
+			/// <summary>
+			/// Gets the provider collection.
+			/// </summary>
+			public NetTiersProviderCollection Providers
+			{
+				get { LoadProviders(); return _providers; }
+			}
+
+			/// <summary>
+			/// Instantiates the configured providers based on the supplied connection string.
+			/// </summary>
+			private void LoadProviders()
+			{
+				DataRepository.LoadProviders();
+
+				// Avoid claiming lock if providers are already loaded
+				if ( _providers == null )
+				{
+					lock ( SyncRoot )
+					{
+						// Do this again to make sure _provider is still null
+						if ( _providers == null )
+						{
+							// apply connection information to each provider
+							for ( int i = 0; i < NetTiersSection.Providers.Count; i++ )
+							{
+								NetTiersSection.Providers[i].Parameters["connectionStringName"] = _connectionStringName;
+								// remove previous connection string, if any
+								NetTiersSection.Providers[i].Parameters.Remove("connectionString");
+
+								if ( !String.IsNullOrEmpty(_connectionString) )
+								{
+									NetTiersSection.Providers[i].Parameters["connectionString"] = _connectionString;
+								}
+							}
+
+							// Load registered providers and point _provider to the default provider
+							_providers = new NetTiersProviderCollection();
+
+							ProvidersHelper.InstantiateProviders(NetTiersSection.Providers, _providers, typeof(NetTiersProvider));
+							_provider = _providers[NetTiersSection.DefaultProvider];
+						}
+					}
+				}
+			}
+		}
+
+		#endregion Connections
+
+		#region Static properties
+		<% foreach(TableSchema SourceTable in SourceTables) { 
+			string className = GetClassName(SourceTable);
+			string providerName = GetClassName(SourceTable, ClassNameFormat.Provider);
+			string providerBaseName = GetClassName(SourceTable, ClassNameFormat.ProviderBase);%>
+		
+		#region <%=providerName%>
+
+		///<summary>
+		/// Gets the current instance of the Data Access Logic Component for the <see cref="<%=className%>"/> business entity.
+		/// It exposes CRUD methods as well as selecting on index, foreign keys and custom stored procedures.
+		///</summary>
+		public static <%=providerBaseName%> <%=providerName%>
+		{
+			get 
+			{
+				LoadProviders();
+				return _provider.<%=providerName%>;
+			}
+		}
+		
+		#endregion
+		<%}%>
+		
+		<% foreach(ViewSchema SourceView in SourceViews) { 
+			string className = GetClassName(SourceView);
+			string providerName = GetClassName(SourceView, ClassNameFormat.Provider);
+			string providerBaseName = GetClassName(SourceView, ClassNameFormat.ProviderBase);%>			
+		
+		#region <%=providerName%>
+		
+		///<summary>
+		/// Gets the current instance of the Data Access Logic Component for the <see cref="<%=className%>"/> business entity.
+		/// It exposes CRUD methods as well as selecting on index, foreign keys and custom stored procedures.
+		///</summary>
+		public static <%=providerBaseName%> <%=providerName%>
+		{
+			get 
+			{
+				LoadProviders();
+				return _provider.<%=providerName%>;
+			}
+		}
+		
+		#endregion
+		<%}%>
+		
+		#endregion
+	}
+	
+	#region Query/Filters
+	<% 
+	System.Collections.Generic.List<SchemaObjectBase> tablesAndViews = new System.Collections.Generic.List<SchemaObjectBase>();
+	tablesAndViews.AddRange(SourceTables.ToArray());
+	tablesAndViews.AddRange(SourceViews.ToArray());
+	
+	foreach(SchemaObjectBase entity in tablesAndViews) 
+	{ 
+		string entityClassName = "";
+		
+		if (entity is TableSchema)
+		 entityClassName = GetClassName((TableSchema)entity);
+		else if (entity is ViewSchema)
+		 entityClassName = GetClassName((ViewSchema)entity);
+		
+	%>
+		
+	#region <%= entityClassName %>Filters
+	
+	/// <summary>
+	/// A strongly-typed instance of the <see cref="SqlFilterBuilder&lt;EntityColumn&gt;"/> class
+	/// that is used exclusively with a <see cref="<%= entityClassName %>"/> object.
+	/// </summary>
+	[CLSCompliant(true)]
+	public class <%= entityClassName %>Filters : <%= entityClassName %>FilterBuilder
+	{
+		#region Constructors
+
+		/// <summary>
+		/// Initializes a new instance of the <%= entityClassName %>Filters class.
+		/// </summary>
+		public <%= entityClassName %>Filters() : base() { }
+
+		/// <summary>
+		/// Initializes a new instance of the <%= entityClassName %>Filters class.
+		/// </summary>
+		/// <param name="ignoreCase">Specifies whether to create case-insensitive statements.</param>
+		public <%= entityClassName %>Filters(bool ignoreCase) : base(ignoreCase) { }
+
+		/// <summary>
+		/// Initializes a new instance of the <%= entityClassName %>Filters class.
+		/// </summary>
+		/// <param name="ignoreCase">Specifies whether to create case-insensitive statements.</param>
+		/// <param name="useAnd">Specifies whether to combine statements using AND or OR.</param>
+		public <%= entityClassName %>Filters(bool ignoreCase, bool useAnd) : base(ignoreCase, useAnd) { }
+
+		#endregion Constructors
+	}
+
+	#endregion <%= entityClassName %>Filters
+	
+	#region <%= entityClassName %>Query
+	
+	/// <summary>
+	/// A strongly-typed instance of the <see cref="<%= entityClassName %>ParameterBuilder"/> class
+	/// that is used exclusively with a <see cref="<%= entityClassName %>"/> object.
+	/// </summary>
+	[CLSCompliant(true)]
+	public class <%= entityClassName %>Query : <%= entityClassName %>ParameterBuilder
+	{
+		#region Constructors
+
+		/// <summary>
+		/// Initializes a new instance of the <%= entityClassName %>Query class.
+		/// </summary>
+		public <%= entityClassName %>Query() : base() { }
+
+		/// <summary>
+		/// Initializes a new instance of the <%= entityClassName %>Query class.
+		/// </summary>
+		/// <param name="ignoreCase">Specifies whether to create case-insensitive statements.</param>
+		public <%= entityClassName %>Query(bool ignoreCase) : base(ignoreCase) { }
+
+		/// <summary>
+		/// Initializes a new instance of the <%= entityClassName %>Query class.
+		/// </summary>
+		/// <param name="ignoreCase">Specifies whether to create case-insensitive statements.</param>
+		/// <param name="useAnd">Specifies whether to combine statements using AND or OR.</param>
+		public <%= entityClassName %>Query(bool ignoreCase, bool useAnd) : base(ignoreCase, useAnd) { }
+
+		#endregion Constructors
+	}
+
+	#endregion <%= entityClassName %>Query
+	<%}%>
+	#endregion
+
+	
+}

@@ -1,0 +1,320 @@
+﻿<%@ CodeTemplate Src="..\..\..\TemplateLib\CommonSqlCode.cs" Inherits="MoM.Templates.CommonSqlCode" Language="C#" TargetLanguage="C#" Description="Template description here." Debug="True"  ResponseEncoding="UTF-8" NoWarn="0108,0618,1572,1573,1574,0162,2002"%>
+<%@ Assembly Name="SchemaExplorer" %>
+<%@ Assembly Name="System.Design" %>
+<%@ Import Namespace="SchemaExplorer" %>
+
+<%@ Property Name="SourceView" Type="SchemaExplorer.ViewSchema" Category="Connection" Description="Table that the data access class should be based on." %>
+
+<%@ Property Name="IncludeCustoms" Type="System.Boolean" Default="True" Category="Options" Description="If true customs stored procedures will be generated as functions." %>
+<%@ Property Name="CustomNonMatchingReturnType" Type="CustomNonMatchingReturnType" Default="DataSet" Category="Options" Description="When using custom stored procedures, if the returned rows do not match the fields in an entity, a DataSet or IDataReader will be returned. Choose One.  This is useful if you've returned more than one resultset in a custom procedure; you can use a ConvertToDataSet(IDataReader) method in the Utility class to convert that to a DataSet." %>
+<%@ Property Name="IncludeGetList" Type="System.Boolean" Default="True" Category="Options" Description="If true getlist functions will be generated." %>
+<%@ Property Name="IncludeGetListByIX" Type="System.Boolean" Default="True" Category="Options" Description="If true getlist functions will be generated." %>
+
+<%@ Property Name="NameSpace" Type="System.String" Category="Style" Description="Class Namespace." %>
+<%@ Property Name="DALNameSpace" Type="System.String" Category="Style" Description="Class Namespace." %>
+<%
+	// Name of the table being worked on.
+	string name = SourceView.Name;
+	
+	// Collection of all columns in the table.
+	ViewColumnSchemaCollection cols = SourceView.Columns;
+	
+	string className = GetClassName(SourceView);
+	string collectionClassName = GetClassName(SourceView, ClassNameFormat.ViewCollection);
+	string collectionClassNameForComment = collectionClassName.Replace("<", "&lt;").Replace(">", "&gt;");
+	
+	string baseProviderName = GetClassName(SourceView, ClassNameFormat.ProviderBase);
+	
+	// this array store each Get BY MemberColumns in order to avoid to create doublon Get methods
+	System.Collections.ArrayList getbyKeys = new System.Collections.ArrayList();
+
+%>
+#region Using directives
+
+using System;
+using System.Data;
+using System.Collections;
+using System.Collections.Generic;
+using System.Diagnostics;
+using <%=NameSpace%>;
+using <%=DALNameSpace%>;
+
+#endregion
+
+namespace <%=DALNameSpace%>.Bases
+{	
+	///<summary>
+	/// This class is the base class for any <see cref="<%=baseProviderName%>"/> implementation.
+	/// It exposes CRUD methods as well as selecting on index, foreign keys and custom stored procedures.
+	///</summary>
+	public abstract class <%=baseProviderName%>Core : EntityViewProviderBase<<%= className %>>
+	{
+		<% if (IncludeCustoms) { %>
+		#region Custom Methods
+		
+	<%
+		System.Collections.IDictionary procs = GetCustomProcedures(SourceView);
+		foreach(System.Collections.DictionaryEntry item in procs)
+		{
+			CommandSchema command = (CommandSchema) item.Value;
+			string methodName  = item.Key.ToString();		
+			string returnType = GetReturnCustomProcReturnType(CustomNonMatchingReturnType, SourceView, command);
+			string returnTypeForComment = returnType.Replace("<", "&lt;").Replace(">", "&gt;");
+			string returnKeyword = (returnType != "void" ? "return" : string.Empty);	
+
+	%>
+		
+		#region <%=command.Name%>
+		
+		/// <summary>
+		///	This method wrap the '<%=command.Name%>' stored procedure. 
+		/// </summary><%=TransformStoredProcedureInputsToMethodComments(command.InputParameters)%>
+		/// <remark>This method is generate from a stored procedure.</remark><% if (returnType != "void") {%>
+		/// <returns>A <see cref="<%=returnTypeForComment%>"/> instance.</returns><%}%>
+		public <%=returnType%> <%=methodName%>(<%=TransformStoredProcedureInputsToMethod(false, command.InputParameters)%>)
+		{
+			<%= returnKeyword %> <%=methodName%>(null, 0, int.MaxValue <%=TransformStoredProcedureInputsToDataAccess(true, command.InputParameters)%>);
+		}
+		
+		/// <summary>
+		///	This method wrap the '<%=command.Name%>' stored procedure. 
+		/// </summary><%=TransformStoredProcedureInputsToMethodComments(command.InputParameters)%>
+		/// <param name="start">Row number at which to start reading.</param>
+		/// <param name="pageLength">Number of rows to return.</param>
+		/// <remark>This method is generate from a stored procedure.</remark><% if (returnType != "void") {%>
+		/// <returns>A <see cref="<%=returnTypeForComment%>"/> instance.</returns><%}%>
+		public <%=returnType%> <%=methodName%>(int start, int pageLength<%=TransformStoredProcedureInputsToMethod(true, command.InputParameters)%>)
+		{
+			<%= returnKeyword %> <%=methodName%>(null, start, pageLength <%=TransformStoredProcedureInputsToDataAccess(true, command.InputParameters)%>);
+		}
+				
+		/// <summary>
+		///	This method wrap the '<%=command.Name%>' stored procedure. 
+		/// </summary><%=TransformStoredProcedureInputsToMethodComments(command.InputParameters)%>
+		/// <remark>This method is generate from a stored procedure.</remark><% if (returnType != "void") {%>
+		/// <param name="transactionManager"><see cref="TransactionManager"/> object</param>
+		/// <returns>A <see cref="<%=returnTypeForComment%>"/> instance.</returns><%}%>
+		public <%=returnType%> <%=methodName%>(TransactionManager transactionManager<%=TransformStoredProcedureInputsToMethod(true, command.InputParameters)%>)
+		{
+			<%= returnKeyword %> <%=methodName%>(transactionManager, 0, int.MaxValue <%=TransformStoredProcedureInputsToDataAccess(true, command.InputParameters)%>);
+		}
+		
+		/// <summary>
+		///	This method wrap the '<%=command.Name%>' stored procedure. 
+		/// </summary><%=TransformStoredProcedureInputsToMethodComments(command.InputParameters)%>
+		/// <param name="start">Row number at which to start reading.</param>
+		/// <param name="pageLength">Number of rows to return.</param>
+		/// <param name="transactionManager"><see cref="TransactionManager"/> object</param>
+		/// <remark>This method is generate from a stored procedure.</remark><% if (returnType != "void") {%>
+		/// <returns>A <see cref="<%=returnTypeForComment%>"/> instance.</returns><%}%>
+		public abstract <%=returnType%> <%=methodName%>(TransactionManager transactionManager, int start, int pageLength <%=TransformStoredProcedureInputsToMethod(true, command.InputParameters)%>);
+		
+		#endregion
+<%
+		}	//end foreach command
+%>
+		
+		#endregion
+
+		<% } %>
+		#region Helper Functions
+		
+		/*
+		///<summary>
+		/// Fill an <%=collectionClassNameForComment%> From a DataSet
+		///</summary>
+		/// <param name="dataSet">the DataSet</param>
+		/// <param name="rows">The collection to fill</param>
+		/// <param name="start">Start row</param>
+		/// <param name="pagelen">number of row.</param>
+		///<returns><see chref="<%=collectionClassNameForComment%>"/></returns>
+		protected static <%=collectionClassNameForComment%> Fill(DataSet dataSet, <%=collectionClassName%> rows, int start, int pagelen)
+		{
+			if (dataSet.Tables.Count == 1)
+			{
+				return Fill(dataSet.Tables[0], rows, start, pagelen);
+			}
+			else
+			{
+				return new <%=collectionClassName%>();
+			}	
+		}
+		
+		
+		///<summary>
+		/// Fill an <%=collectionClassNameForComment%> From a DataTable
+		///</summary>
+		/// <param name="dataTable">the DataTable that hold the data.</param>
+		/// <param name="rows">The collection to fill</param>
+		/// <param name="start">Start row</param>
+		/// <param name="pagelen">number of row.</param>
+		///<returns><see chref="<%=collectionClassName%>"/></returns>
+		protected static <%=collectionClassNameForComment%> Fill(DataTable dataTable, <%=collectionClassName%> rows, int start, int pagelen)
+		{
+			int recordnum = 0;
+			
+			System.Collections.IEnumerator dataRows =  dataTable.Rows.GetEnumerator();
+			
+			while (dataRows.MoveNext() && (pagelen != 0))
+			{
+				if(recordnum >= start)
+				{
+					DataRow row = (DataRow)dataRows.Current;
+				
+					<%=className%> c = new <%=className%>();
+					<%for (int x=0; x < cols.Count;x++) { %>
+					<%= GetObjectPropertyAccessor(cols[x], "c")%> = (Convert.IsDBNull(row["<%=cols[x].Name%>"]))?<%= GetCSDefaultByType(cols[x])%>:(<%=GetCSType(cols[x])%>)row["<%=cols[x].Name%>"];
+					<% } //end for %>
+					c.AcceptChanges();
+					rows.Add(c);
+					pagelen -= 1;
+				}
+				recordnum += 1;
+			}
+			return rows;
+		}
+		*/	
+						
+		///<summary>
+		/// Fill an <see cref="<%=collectionClassNameForComment%>"/> From a DataReader.
+		///</summary>
+		/// <param name="reader">Datareader</param>
+		/// <param name="rows">The collection to fill</param>
+		/// <param name="start">Start row</param>
+		/// <param name="pageLength">number of row.</param>
+		///<returns>a <see cref="<%=collectionClassNameForComment%>"/></returns>
+		protected <%=collectionClassName%> Fill(IDataReader reader, <%=collectionClassName%> rows, int start, int pageLength)
+		{
+			int recordnum = 0;
+			while (reader.Read() && (pageLength != 0))
+			{
+				if(recordnum >= start)
+				{
+					<%=className%> entity = null;
+					if (DataRepository.Provider.UseEntityFactory)
+					{
+						entity = EntityManager.CreateViewEntity<<%=className%>>("<%=className%>",  DataRepository.Provider.EntityCreationalFactoryType); 
+					}
+					else
+					{
+						entity = new <%= className %>();
+					}
+					<%for (int x=0; x < cols.Count;x++) { %>
+					<%= GetObjectPropertySetExpression(cols[x], "reader", "entity", 4) %>;
+					//<%= GetObjectPropertyAccessor(cols[x],"entity")%> = (Convert.IsDBNull(reader["<%=cols[x].Name%>"]))?<%= GetCSDefaultByType(cols[x])%>:(<%=GetCSType(cols[x])%>)reader["<%=cols[x].Name%>"];
+					<% } //end for %>
+					entity.AcceptChanges();
+					rows.Add(entity);
+					pageLength -= 1;
+				}
+				recordnum += 1;
+			}
+			return rows;
+		}
+		
+		
+		/// <summary>
+		/// Refreshes the <see cref="<%=className%>"/> object from the <see cref="IDataReader"/>.
+		/// </summary>
+		/// <param name="reader">The <see cref="IDataReader"/> to read from.</param>
+		/// <param name="entity">The <see cref="<%=className%>"/> object to refresh.</param>
+		protected void RefreshEntity(IDataReader reader, <%=className%> entity)
+		{
+			reader.Read();
+			<%for (int x=0; x < cols.Count;x++) { %>
+			<%= GetObjectPropertySetExpression(cols[x], "reader", "entity", 4) %>;
+			//<%= GetObjectPropertyAccessor(cols[x], "entity")%> = (Convert.IsDBNull(reader["<%=cols[x].Name%>"]))?<%= GetCSDefaultByType(cols[x])%>:(<%=GetCSType(cols[x])%>)reader["<%=cols[x].Name%>"];
+			<% } //end for %>
+			reader.Close();
+	
+			entity.AcceptChanges();
+		}
+		
+		/*
+		/// <summary>
+		/// Refreshes the <see cref="<%=className%>"/> object from the <see cref="DataSet"/>.
+		/// </summary>
+		/// <param name="dataSet">The <see cref="DataSet"/> to read from.</param>
+		/// <param name="entity">The <see cref="<%=className%>"/> object.</param>
+		protected static void RefreshEntity(DataSet dataSet, <%=className%> entity)
+		{
+			DataRow dataRow = dataSet.Tables[0].Rows[0];
+			
+			<%for (int x=0; x < cols.Count;x++) { %>
+			<%= GetObjectPropertyAccessor(cols[x], "entity")%> = (Convert.IsDBNull(dataRow["<%=cols[x].Name%>"]))?<%= GetCSDefaultByType(cols[x])%>:(<%=GetCSType(cols[x])%>)dataRow["<%=cols[x].Name%>"];
+			<% } //end for %>
+			entity.AcceptChanges();
+		}
+		*/
+			
+		#endregion Helper Functions
+	}//end class
+
+	#region <%= className %>FilterBuilder
+	
+	/// <summary>
+	/// A strongly-typed instance of the <see cref="SqlFilterBuilder&lt;EntityColumn&gt;"/> class
+	/// that is used exclusively with a <see cref="<%= className %>"/> object.
+	/// </summary>
+	[CLSCompliant(true)]
+	public class <%= className %>FilterBuilder : SqlFilterBuilder<<%= className %>Column>
+	{
+		#region Constructors
+
+		/// <summary>
+		/// Initializes a new instance of the <%= className %>FilterBuilder class.
+		/// </summary>
+		public <%= className %>FilterBuilder() : base() { }
+
+		/// <summary>
+		/// Initializes a new instance of the <%= className %>FilterBuilder class.
+		/// </summary>
+		/// <param name="ignoreCase">Specifies whether to create case-insensitive statements.</param>
+		public <%= className %>FilterBuilder(bool ignoreCase) : base(ignoreCase) { }
+
+		/// <summary>
+		/// Initializes a new instance of the <%= className %>FilterBuilder class.
+		/// </summary>
+		/// <param name="ignoreCase">Specifies whether to create case-insensitive statements.</param>
+		/// <param name="useAnd">Specifies whether to combine statements using AND or OR.</param>
+		public <%= className %>FilterBuilder(bool ignoreCase, bool useAnd) : base(ignoreCase, useAnd) { }
+
+		#endregion Constructors
+	}
+
+	#endregion <%= className %>FilterBuilder
+
+	#region <%= className %>ParameterBuilder
+	
+	/// <summary>
+	/// A strongly-typed instance of the <see cref="ParameterizedSqlFilterBuilder&lt;EntityColumn&gt;"/> class
+	/// that is used exclusively with a <see cref="<%= className %>"/> object.
+	/// </summary>
+	[CLSCompliant(true)]
+	public class <%= className %>ParameterBuilder : ParameterizedSqlFilterBuilder<<%= className %>Column>
+	{
+		#region Constructors
+
+		/// <summary>
+		/// Initializes a new instance of the <%= className %>ParameterBuilder class.
+		/// </summary>
+		public <%= className %>ParameterBuilder() : base() { }
+
+		/// <summary>
+		/// Initializes a new instance of the <%= className %>ParameterBuilder class.
+		/// </summary>
+		/// <param name="ignoreCase">Specifies whether to create case-insensitive statements.</param>
+		public <%= className %>ParameterBuilder(bool ignoreCase) : base(ignoreCase) { }
+
+		/// <summary>
+		/// Initializes a new instance of the <%= className %>ParameterBuilder class.
+		/// </summary>
+		/// <param name="ignoreCase">Specifies whether to create case-insensitive statements.</param>
+		/// <param name="useAnd">Specifies whether to combine statements using AND or OR.</param>
+		public <%= className %>ParameterBuilder(bool ignoreCase, bool useAnd) : base(ignoreCase, useAnd) { }
+
+		#endregion Constructors
+	}
+
+	#endregion <%= className %>ParameterBuilder
+} // end namespace

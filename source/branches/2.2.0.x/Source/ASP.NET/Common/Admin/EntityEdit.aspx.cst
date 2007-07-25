@@ -1,0 +1,246 @@
+﻿<%@ CodeTemplate Src="..\..\..\TemplateLib\CommonSqlCode.cs" Inherits="MoM.Templates.CommonSqlCode" Language="C#" TargetLanguage="C#" Description="Generates entity update screen using EntityDataSource Control." Debug="True" ResponseEncoding="UTF-8" NoWarn="0108,0618,1572,1573,1574,0162,2002"%>
+<%@ Assembly Name="SchemaExplorer" %>
+<%@ Assembly Name="System.Design" %>
+<%@ Import Namespace="SchemaExplorer" %>
+<%@ Import Namespace="System.Collections" %>
+<%@ Import Namespace="System.Text" %>
+
+<%@ Property Name="SourceTable" Type="SchemaExplorer.TableSchema" Category="Connection" Description="Table that the data access class should be based on." %>
+<%@ Property Name="SourceTables" Type="SchemaExplorer.TableSchemaCollection" Category="Connection" Description="All Tables that are selected, this will be used to see which relationships are available." %>
+
+<%@ Property Name="NameSpace" Type="System.String" Category="Style" Description="Class Namespace." %>
+<%@ Property Name="BLLNameSpace" Type="System.String" Category="Data" Description="BLL Namespace." %>
+<%@ Property Name="SourceDatabase" Type="SchemaExplorer.DatabaseSchema" Optional="False" Category="DataSource" 	Description="Database that the stored procedures should be based on." %>
+<%@ Property Name="IncludeAtlasLibrary" Type="System.Boolean" Default="false" Category="06b. Website - Advanced" Description="Indicates whether to include a reference to the Atlas component library." %>
+<%@ Property Name="IncludeAtlasToolkit" Type="System.Boolean" Default="false" Category="06b. Website - Advanced" Description="Indicates whether to include a reference to the Atlas Control Toolkit. This property is only taken into account when IncludeAtlasLibrary is true." %>
+
+<%
+
+	// Collection of all columns in the table.
+	ColumnSchemaCollection cols = SourceTable.Columns;
+	
+	// Collection of all columns in the table that are not primary keys.
+	//ColumnSchemaCollection nonKeys = SourceTable.NonPrimaryKeyColumns;
+	
+	// Collection of all primary key columns.
+	ColumnSchemaCollection keys = SourceTable.PrimaryKey.MemberColumns; 
+	
+	// Collection of ForeignKeys. Provides information about the foreign keys 
+	//(keys where the current table is the foreign table) contained in the table. 
+	TableKeySchemaCollection fkeys = SourceTable.ForeignKeys;
+	
+	//Provides information about the primary keys 
+	//(keys where the current table is the primary table) contained in the table. 
+	//TableKeySchemaCollection pkeys = SourceTable.PrimaryKeys;
+	
+	//Provides information about the indexes contained in the table. 
+	//IndexSchemaCollection indexes = SourceTable.Indexes;
+	
+	ColumnSchemaCollection colsUpdatable = new ColumnSchemaCollection();
+	foreach (ColumnSchema column in cols)
+	{	
+		if ( ! IsIdentityColumn(column) && ! IsComputed(column) )
+			colsUpdatable.Add(column); 
+	}
+	
+	TableKeySchemaCollection fKeysSingle = new TableKeySchemaCollection();
+	foreach(TableKeySchema tableKey in fkeys)
+	{
+		if ( tableKey.ForeignKeyMemberColumns.Count == 1)
+			fKeysSingle.Add(tableKey);
+	}
+
+	// Holds the RowVersion column if there's any
+	ColumnSchema RowVersion = null;
+
+	foreach (ColumnSchema column in cols)
+	{
+		if (column.NativeType.ToLower() == "timestamp")
+			RowVersion = column;
+	}
+
+	string entityName = GetClassName(SourceTable);
+	string className = NameSpace + "." + entityName;
+	string providerName = GetClassName(SourceTable, ClassNameFormat.Provider);
+	
+
+	TableSchemaCollection sourceTables = new TableSchemaCollection();
+	
+	for (int i=0; i < SourceDatabase.Tables.Count; i++)
+	{
+		sourceTables.Add(SourceDatabase.Tables[i]);
+	}
+%>
+<%%@ Page Language="C#" Theme="Default" MasterPageFile="~/MasterPages/admin.master" AutoEventWireup="true"  CodeFile="<%=entityName%>Edit.aspx.cs" Inherits="<%=entityName%>Edit" Title="<%=entityName%> Edit" %%>
+
+<asp:Content ID="Content2" ContentPlaceHolderID="ContentPlaceHolder2" Runat="Server"><%=GetFriendlyName(SourceTable)%> - Add/Edit</asp:Content>
+<asp:Content ID="Content1" ContentPlaceHolderID="ContentPlaceHolder1" Runat="Server">
+		<data:MultiFormView ID="FormView1" DataKeyNames="<%=GetDataKeyNames(keys)%>" runat="server" DataSourceID="<%=entityName%>DataSource">
+		
+			<EditItemTemplatePaths>
+				<data:TemplatePath Path="~/Admin/UserControls/<%=entityName%>Fields.ascx" />
+			</EditItemTemplatePaths>
+		
+			<InsertItemTemplatePaths>
+				<data:TemplatePath Path="~/Admin/UserControls/<%=entityName%>Fields.ascx" />
+			</InsertItemTemplatePaths>
+		
+			<EmptyDataTemplate>
+				<b><%=entityName%> not found!</b>
+			</EmptyDataTemplate>
+			
+			<FooterTemplate>
+				<asp:Button ID="InsertButton" runat="server" CausesValidation="True" CommandName="Insert" Text="Insert" />
+				<asp:Button ID="UpdateButton" runat="server" CausesValidation="True" CommandName="Update" Text="Update" />
+				<asp:Button ID="CancelButton" runat="server" CausesValidation="False" CommandName="Cancel" Text="Cancel" />
+			</FooterTemplate>
+
+		</data:MultiFormView>
+		
+		<data:<%=entityName%>DataSource ID="<%=entityName%>DataSource" runat="server"
+			SelectMethod="GetBy<%=GetKeysName(keys)%>"
+		>
+			<Parameters>
+				<%=getParameters(keys)%>
+			</Parameters>
+		</data:<%=entityName%>DataSource>
+		
+		<br />
+
+<%
+	string ae = string.Empty;
+	
+	// -- check for junction table
+	if (keys.Count == 1) 
+	{
+		TableSchemaCollection tablesRelated = GetTablesCollectionByFk(SourceTable.PrimaryKey.MemberColumns[0], sourceTables);
+		for (int x = 0; x < tablesRelated.Count; x++)
+		{  
+			//Related Table must be in SourceTables
+			if (!SourceTables.Contains(tablesRelated[x]))
+				continue;
+
+			string entityRelated = GetClassName(tablesRelated[x]);
+			ColumnSchemaCollection keysRelatedCol = tablesRelated[x].PrimaryKey.MemberColumns;
+			ColumnSchemaCollection foreignKeyCols = GetRelationshipColumnByFk(keys, tablesRelated[x]);
+			
+			string keysRelated = GetKeysName(keysRelatedCol);
+							
+			if (IncludeAtlasToolkit && IncludeAtlasLibrary)
+			{
+%>
+		<asp:Panel ID="<%=entityRelated%>Panel2" runat="server" CssClass="collapsePanelHeader"> 
+			<div style="padding:5px; cursor: pointer; vertical-align: middle;">
+				<div style="float: left; vertical-align: middle;"><asp:Image ID="<%=entityRelated%>Image" runat="server" ImageUrl="~/images/expand_blue.jpg"/></div>
+				<div style="float: left; padding-left: 5px;"><%=GetFriendlyName(tablesRelated[x])%> Details</div>
+				<div style="float: left; margin-left: 20px;"><asp:Label ID="<%=entityRelated%>Label" runat="server" /></div>
+			</div>
+		</asp:Panel>	
+		<asp:Panel ID="<%=entityRelated%>Panel1" runat="server" CssClass="collapsePanel" Height="0">
+<%
+			}
+%>
+		<data:EntityGridView ID="GridView<%=entityRelated%>" runat="server"
+			AutoGenerateColumns="False"					
+			OnSelectedIndexChanged="GridView<%=entityRelated%>_SelectedIndexChanged"			 			 
+			DataSourceID="<%=entityRelated%>DataSource"
+			DataKeyNames="<%=GetDataKeyNames(keysRelatedCol)%>"
+			AllowMultiColumnSorting="false"
+			DefaultSortColumnName="" 
+			DefaultSortDirection="Ascending"	
+			ExcelExportFileName="Export_<%=entityRelated%>.xls"  		
+			Visible='<%%# (FormView1.DefaultMode == FormViewMode.Insert) ? false : true %%>'	
+			>
+			<Columns>
+				<asp:CommandField ShowSelectButton="True" />
+<%			
+			
+			foreach (ColumnSchema tCol in tablesRelated[x].Columns)
+			{				
+				string propertyName = GetPropertyName(tCol);
+				if (!tCol.IsForeignKeyMember && !tCol.IsPrimaryKeyMember && !tCol.NativeType.ToLower().Equals("xml")) 
+				{
+%>
+				<asp:BoundField DataField="<%=propertyName%>" HeaderText="<%=GetFriendlyName(tCol)%>" SortExpression="<%=tCol.Name%>" />				
+<%    
+				}				
+        	}
+%>
+			</Columns>
+			<EmptyDataTemplate>
+				<b>No <%=GetFriendlyName(tablesRelated[x])%> Found! </b>
+				<asp:HyperLink runat="server" ID="hyp<%=GetClassName(tablesRelated[x])%>" NavigateUrl="~/admin/<%=GetClassName(tablesRelated[x])%>Edit.aspx">Add New</asp:HyperLink>
+			</EmptyDataTemplate>
+		</data:EntityGridView>					
+		
+		<data:<%=entityRelated%>DataSource ID="<%=entityRelated%>DataSource" runat="server" SelectMethod="<%= MethodNames.Find %>">
+		    <Parameters>
+				<data:SqlParameter Name="Parameters">
+					<Filters>
+						<data:<%=entityRelated%>Filter  Column="<%=GetKeysName(foreignKeyCols)%>" QueryStringField="<%=GetKeysName(keys)%>" /> 
+					</Filters>
+				</data:SqlParameter>
+				<data:CustomParameter Name="OrderByClause" Value="" ConvertEmptyStringToNull="false" /> 
+		    </Parameters>
+		</data:<%=entityRelated%>DataSource>		
+		
+		<br />
+<%
+			if (IncludeAtlasToolkit && IncludeAtlasLibrary)
+			{
+%>
+		</asp:Panel>
+<%		
+			}
+			
+			ae += StringOut(entityRelated);
+			ae += "\n\n";
+    	}	
+%>
+		
+<%
+		if (IncludeAtlasToolkit && IncludeAtlasLibrary)
+		{
+			Response.Write(ae);
+		}
+	}
+%>
+
+</asp:Content>
+
+<script runat="template">
+	public string StringOut(string EntityName) 
+	{
+		return string.Format(@"<ajaxToolkit:CollapsiblePanelExtender ID=""cpe{0}"" runat=""Server"" TargetControlID=""{0}Panel1""
+            ExpandControlID=""{0}Panel2"" CollapseControlID=""{0}Panel2"" Collapsed=""True""
+            TextLabelID=""{0}Label"" ExpandedText=""(Hide Details...)"" CollapsedText=""(Show Details...)""
+            ImageControlID=""{0}Image"" ExpandedImage=""~/images/collapse_blue.jpg"" CollapsedImage=""~/images/expand_blue.jpg""
+            SuppressPostBack=""true""/>", EntityName);	
+	}
+	
+	/*
+	public string WriteAtlasExtender(string ae) 
+	{
+		string s = string.Empty;
+		if (ae != string.Empty) 
+		{
+			s += "<ajaxToolkit:CollapsiblePanelExtender ID=\"cpe\" runat=\"Server\">\r\n";	
+			s += string.Format("{0}", ae);
+			s += "\r\n</ajaxToolkit:CollapsiblePanelExtender>\r\n";
+		}
+		return (s);
+	}
+	*/
+
+	private string getParameters(ColumnSchemaCollection keys) 
+	{
+        string s = string.Empty;
+		
+        for (int x = 0; x < keys.Count; x++)
+        {
+			s += string.Format("<asp:QueryStringParameter Name=\"{0}\" QueryStringField=\"{0}\" Type=\"String\" />\r\n", GetPropertyName(keys[x]));
+
+        }
+        return s;
+	}
+</script>

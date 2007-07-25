@@ -1,0 +1,758 @@
+﻿<%@ CodeTemplate Language="C#" TargetLanguage="Text" Description="" Debug="True" ResponseEncoding="UTF-8" %>
+<%@ Property Name="RootNameSpace" Type="System.String" Category="Data" Description="Website Namespace." %>
+<%@ Property Name="BusinessLogicLayerNameSpace" Type="System.String" Category="03. Namespaces - Required" Description="The sub namespace that is added to the root namespace for the entities." Default="Entities" Optional="False"  NoWarn="0108,0618,1572,1573,1574,0162,2002" %>
+
+#region Using directives
+
+using System;
+using System.Collections.Generic;
+using System.ComponentModel;
+using System.Text;
+using System.Web.UI;
+using System.IO;
+using System.Web.UI.WebControls;
+using System.Reflection;
+using <%=RootNameSpace%>;
+using <%=RootNameSpace%>.Web.Data;
+using <%=RootNameSpace%>.<%=BusinessLogicLayerNameSpace%>;
+
+#endregion
+
+namespace <%=RootNameSpace%>.Web.UI
+{
+    /// <summary>
+    /// Provides Search Functionality for GridView that uses TypedDataSource. This Composite Control automaticaly builds Fields dropdownlist box
+    /// based on the Business Entity class properties collection and GridView Column HeaderText 
+    /// and SortExpression properties.
+    /// </summary>
+    [
+        Designer(typeof(System.Web.UI.Design.WebControls.CompositeControlDesigner)),
+        ToolboxData("<{0}:GridViewSearchPanel runat=\"server\" GridViewControl=\"GridView1\" PersistenceMethod=\"None\" Filter=\"\" />")
+    ]
+    public class GridViewSearchPanel : CompositeControl
+    {
+        #region Fields
+        private string _gridViewControlID = string.Empty;
+        private string _businessEntityType = string.Empty;
+        private GridView GridView1;
+        private DataSourceControl TypedDataSource;
+
+        private DropDownList cboFieldName;
+        private DropDownList cboOperator;
+        private TextBox txtKeyword;
+        private FieldCollection _fields;
+        #endregion
+
+        /// <summary>
+        /// SearchButtonClicked event raised whenever the Search Button Clicked
+        /// </summary>
+        public event EventHandler SearchButtonClicked;
+
+        /// <summary>
+        /// ResetButtonClicked event raised whenever the Reset Button Clicked
+        /// </summary>
+        public event EventHandler ResetButtonClicked;
+
+        #region Constructors
+        /// <summary>
+        /// Initializes a new instance of the GridViewSearchPanel class.
+        /// </summary>
+        public GridViewSearchPanel()
+        {
+
+        }
+        #endregion
+
+        #region Properties
+        /// <summary>
+        /// Set / Gets the GridView ControlID
+        /// </summary>
+        [
+        Browsable(true),
+        Description("Set / Gets the GridView ControlID"),
+        Category("Misc"),
+        DefaultValue(""),
+        ]
+        public string GridViewControlID
+        {
+            get { return _gridViewControlID; }
+            set { _gridViewControlID = value; }
+        }
+
+        /// <summary>
+        /// Set / Gets the whereClause
+        /// </summary>
+        private string whereClause
+        {
+            get
+            {
+                if (ViewState["_whereClause"] != null)
+                {
+                    return (string)ViewState["_whereClause"];
+                }
+                else
+                {
+                    return string.Empty;
+                }
+            }
+            set
+            {
+                ViewState["_whereClause"] = value;
+            }
+        }
+
+        /// <summary>
+        /// Gets or sets the persistence method
+        /// </summary>
+        public PersistenceMethod PersistenceMethod
+        {
+            get
+            {
+                PersistenceMethod persistenceMethod = PersistenceMethod.Session;
+                Object method = ViewState["_persistenceMethod"];
+                if (method != null)
+                {
+                    persistenceMethod = (PersistenceMethod)method;
+                }
+                return persistenceMethod;
+            }
+            set { ViewState["_persistenceMethod"] = value; }
+        }
+
+        /// <summary>
+        /// Gets or sets the persistent cookie expiry datetime
+        /// </summary>
+        public DateTime PersistentCookieExpiryDateTime
+        {
+            get
+            {
+                Object expiryDateTime = ViewState["_persistentCookieExpiryDateTime"];
+                if (expiryDateTime != null)
+                {
+                    return (DateTime)ViewState["_persistentCookieExpiryDateTime"];
+                }
+                else
+                {
+                    return DateTime.Today.AddDays(1);
+                }
+            }
+            set
+            {
+                ViewState["_persistentCookieExpiryDateTime"] = value;
+            }
+        }
+
+        ///<summary>
+        /// Set / Gets the Filter criteria
+        ///</summary>
+        [
+        Browsable(true),
+        Description("Set / Gets the Filter criteria"),
+        Category("Misc"),
+        DefaultValue(""),
+        ]
+        public string Filter
+        {
+            get
+            {
+                if (ViewState["_filter"] != null)
+                {
+                    return (string)ViewState["_filter"];
+                }
+                else
+                {
+                    return string.Empty;
+                }
+            }
+            set
+            {
+                ViewState["_filter"] = value;
+            }
+        }
+
+        /// <summary>
+        /// Gets or sets the name of the search field name.
+        /// </summary>
+        /// <value>The name of the search field name.</value>
+        [
+        Browsable(true),
+        Description("Set / Gets the Search Field Name"),
+        Category("Misc"),
+        DefaultValue(""),
+        ]
+        public string SearchFieldName
+        {
+            get
+            {
+                EnsureChildControls();
+                return cboFieldName.SelectedValue;
+            }
+            set
+            {
+                EnsureChildControls();
+                ListItem fieldItem = cboFieldName.Items.FindByValue(value);
+                if (fieldItem != null)
+                {
+                    cboFieldName.SelectedItem.Selected = false; // deselect any currently selected item
+                    fieldItem.Selected = true;
+                }
+            }
+        }
+
+        /// <summary>
+        /// Gets or sets the search operator.
+        /// </summary>
+        /// <value>The search operator.</value>
+        [
+        Browsable(true),
+        Description("Set / Gets the Search Operator"),
+        Category("Misc"),
+        DefaultValue("Contains"),
+        ]
+        public SearchOperator SearchOperator
+        {
+            get
+            {
+                EnsureChildControls();
+                return (SearchOperator)Convert.ToInt32(cboOperator.SelectedValue);
+            }
+            set
+            {
+                EnsureChildControls();
+                ListItem opItem = cboOperator.Items.FindByValue(((int)value).ToString());
+                if (opItem != null)
+                {
+                    cboOperator.SelectedItem.Selected = false; // deselect any currently selected item
+                    opItem.Selected = true;
+                }
+            }
+        }
+
+        /// <summary>
+        /// Gets or sets the search keyword.
+        /// </summary>
+        /// <value>The search keyword.</value>
+        [
+        Browsable(true),
+        Description("Set / Gets the Search keyword"),
+        Category("Misc"),
+        DefaultValue(""),
+        ]
+        public string SearchKeyword
+        {
+            get
+            {
+                EnsureChildControls();
+                return txtKeyword.Text;
+            }
+            set
+            {
+                EnsureChildControls();
+                txtKeyword.Text = value;
+            }
+        }
+
+        /// <summary>
+        /// Gets / sets the Fields To Exclude Fields Collection
+        /// </summary>
+        [
+        Browsable(true),
+        Description("Set / Gets the Fields To Exclude Fields Collection"),
+        Category("Misc"),
+        DefaultValue(""),
+        ]
+        [PersistenceMode(PersistenceMode.InnerProperty)]
+        public FieldCollection FieldsToExclude
+        {
+            get
+            {
+                if (_fields == null)
+                {
+                    _fields = new FieldCollection();
+                }
+                return _fields;
+            }
+        }
+		
+		///<summary>
+        /// Set / Gets the CausesValidation
+        ///</summary>
+        [
+        Browsable(true),
+        Description("Whether the control causes validation to fire"),
+        Category("Behavior"),
+        DefaultValue("true"),
+        ]
+        public bool CausesValidation
+        {
+            get
+            {
+                if (ViewState["_causesValidation"] != null)
+                {
+                    return (bool)ViewState["_causesValidation"];
+                }
+                else
+                {
+                    return true;
+                }
+            }
+            set
+            {
+                ViewState["_causesValidation"] = value;
+            }
+        }
+		
+		///<summary>
+        /// Set / Gets the LookFor Text
+        ///</summary>
+        [
+        Browsable(true),
+        Description("Text to display for the 'Look For' label"),
+        Category("Misc"),
+        DefaultValue("Look For:"),
+        ]
+        public string LookForText
+        {
+            get
+            {
+                if (ViewState["_lookForText"] != null)
+                {
+                    return (string)ViewState["_lookForText"];
+                }
+                else
+                {
+                    return "Look For:";
+                }
+            }
+            set
+            {
+                ViewState["_lookForText"] = value;
+            }
+        }
+		
+  		///<summary>
+        /// Set / Gets the WhichText
+        ///</summary>
+        [
+        Browsable(true),
+        Description("Text to display for the 'Which' label"),
+        Category("Misc"),
+        DefaultValue("Which:"),
+        ]
+        public string WhichText
+        {
+            get
+            {
+                if (ViewState["_whichText"] != null)
+                {
+                    return (string)ViewState["_whichText"];
+                }
+                else
+                {
+                    return "Which:";
+                }
+            }
+            set
+            {
+                ViewState["_whichText"] = value;
+            }
+        }
+        #endregion
+
+
+        /// <summary>
+        /// Raises the <see cref="E:System.Web.UI.Control.Init"></see> event.
+        /// </summary>
+        /// <param name="e">The <see cref="T:System.EventArgs"></see> object that contains the event data.</param>
+        /// <remarks>
+        /// Page is responsible to maintain GridViewSearchPanel state, therefor subscribing to the 
+        /// Page Init (to handle control's state) that occures after the GridViewSearchPanel Init
+        /// </remarks>
+        protected override void OnInit(EventArgs e)
+        {
+            this.Page.Init += new EventHandler(
+                    delegate(object sender, EventArgs ea)
+                    {
+                        switch (this.PersistenceMethod)
+                        {
+                            case PersistenceMethod.Cookie:
+                            case PersistenceMethod.PersistentCookie:
+                                FormUtil.HandleGridViewSearchPanelState(this, PersistentCookieExpiryDateTime);
+                                break;
+                            case PersistenceMethod.Session:
+                                FormUtil.HandleGridViewSearchPanelState(this, this.PersistenceMethod);
+                                break;
+                            case PersistenceMethod.None:
+                                break;
+                        }
+                    });
+            base.OnInit(e);
+        }
+        /// <summary>
+        /// Raises the <see cref="E:System.Web.UI.Control.Load"></see> event.
+        /// </summary>
+        /// <param name="e">The <see cref="T:System.EventArgs"></see> object that contains the event data.</param>
+        protected override void OnLoad(EventArgs e)
+        {
+            base.OnLoad(e);
+            base.EnsureChildControls();
+            if (!Page.IsPostBack)
+            {
+                // if we have a search value then build the search
+                if ((!string.IsNullOrEmpty(txtKeyword.Text) &&
+                        !string.IsNullOrEmpty(cboFieldName.SelectedValue)) ||
+                            !string.IsNullOrEmpty(Filter))
+                {
+                    this.DataBind();
+                }
+                
+                ExcludeFields();
+            }
+        }
+
+        /// <summary>
+        /// Binds a data source to the invoked server control and all its child controls.
+        /// </summary>        
+        public override void DataBind()
+        {
+            base.DataBind();
+            BuildSearch();
+        }
+
+        /// <summary>
+        /// Make sure that CreateChildControls has been called 
+        /// before the control is rendered
+        /// </summary>
+        /// <param name="writer"></param>
+        protected override void Render(HtmlTextWriter writer)
+        {
+            base.EnsureChildControls();
+            base.Render(writer);
+        }
+
+        /// <summary>
+        /// Called by the ASP.NET page framework to notify server controls that 
+        /// use composition-based implementation to create any child controls they 
+        /// contain in preparation for posting back or rendering. 
+        /// </summary>
+        protected override void CreateChildControls()
+        {
+            // Start with a clean form 
+            base.Controls.Clear();
+
+            cboFieldName = new DropDownList();
+            cboFieldName.ID = "cboFieldName";
+            cboFieldName.SkinID = "cboFieldName";
+
+            if (!base.DesignMode)
+            {
+                GridView1 = (GridView)this.Parent.FindControl(this.GridViewControlID);
+                TypedDataSource = (DataSourceControl)this.Parent.FindControl(GridView1.DataSourceID);
+
+                Type[] typeArguments = TypedDataSource.GetType().BaseType.GetGenericArguments();
+                _businessEntityType = typeArguments[0].FullName;
+
+                #region Set up the fields drop down list using the list of table columns
+                Type enumType = EntityUtil.GetType(_businessEntityType + "Column");
+
+                Array c = Enum.GetValues(enumType);
+                for (int i = 0; i < c.Length; i++)
+                {
+                    ColumnEnumAttribute cea = EntityHelper.GetAttribute<ColumnEnumAttribute>((Enum)c.GetValue(i));
+                    // only show fields that we can realistically search against
+                    switch (cea.DbType)
+                    {
+                        case System.Data.DbType.AnsiString:
+                        case System.Data.DbType.AnsiStringFixedLength:
+                        case System.Data.DbType.Boolean:
+                        case System.Data.DbType.Byte:
+                        case System.Data.DbType.Currency:
+                        case System.Data.DbType.Date:
+                        case System.Data.DbType.DateTime:
+                        case System.Data.DbType.Decimal:
+                        case System.Data.DbType.Double:
+                        case System.Data.DbType.Int16:
+                        case System.Data.DbType.Int32:
+                        case System.Data.DbType.Int64:
+                        case System.Data.DbType.SByte:
+                        case System.Data.DbType.Single:
+                        case System.Data.DbType.String:
+                        case System.Data.DbType.StringFixedLength:
+                        case System.Data.DbType.Time:
+                        case System.Data.DbType.UInt16:
+                        case System.Data.DbType.UInt32:
+                        case System.Data.DbType.UInt64:
+                        case System.Data.DbType.VarNumeric:
+                        case System.Data.DbType.Xml:
+                            #region Add fields to the dropdown collection
+                            ListItem li = new ListItem();
+                            li.Text = EntityHelper.GetPascalSpacedName(cea.Name);
+                            li.Value = cea.Name;
+                            cboFieldName.Items.Add(li);
+                            #endregion
+                            break;
+                        default:
+                            break;
+                    }
+                }
+                #endregion
+            }
+            else
+            {
+                cboFieldName.Items.Add(new ListItem("FieldName", "FieldValue"));
+            }
+
+            #region UI implementation
+            cboOperator = new DropDownList();
+            cboOperator.ID = "cboOperator";
+            cboOperator.SkinID = "cboOperator";
+            cboOperator.Items.Add(new ListItem("contains", "0"));
+            cboOperator.Items.Add(new ListItem("starts with", "1"));
+            cboOperator.Items.Add(new ListItem("equals", "2"));
+            cboOperator.Items.Add(new ListItem("ends with", "3"));
+
+            txtKeyword = new TextBox();
+            txtKeyword.ID = "txtKeyword";
+            txtKeyword.SkinID = "txtKeyword";
+
+            Label lblLookFor = new Label();
+            lblLookFor.ID = "lblLookFor";
+            lblLookFor.SkinID = "lblLookFor";
+            lblLookFor.Text = LookForText;
+
+            Label lblWhich = new Label();
+            lblWhich.ID = "lblWhich";
+            lblWhich.SkinID = "lblWhich";
+            lblWhich.Text = WhichText;
+
+            Button cmdSearch = new Button();
+            cmdSearch.ID = "cmdSearch";
+            cmdSearch.SkinID = "cmdSearch";
+            cmdSearch.Text = "Search";
+			cmdSearch.CausesValidation = CausesValidation;
+            cmdSearch.Click += new EventHandler(cmdSearch_Click);
+
+            Button cmdReset = new Button();
+            cmdReset.ID = "cmdReset";
+            cmdReset.SkinID = "cmdReset";
+            cmdReset.Text = "Reset";
+			cmdReset.CausesValidation = CausesValidation;
+            cmdReset.Click += new EventHandler(cmdReset_Click);
+
+            Table tbl = new Table();
+            tbl.SkinID = "tblSearchPanel";
+            TableRow tr = new TableRow();
+            TableCell td;
+
+            td = new TableCell();
+            td.Controls.Add(lblLookFor);
+            tr.Cells.Add(td);
+
+            td = new TableCell();
+            td.Controls.Add(cboFieldName);
+            tr.Cells.Add(td);
+
+            td = new TableCell();
+            td.Controls.Add(lblWhich);
+            tr.Cells.Add(td);
+
+            td = new TableCell();
+            td.Controls.Add(cboOperator);
+            tr.Cells.Add(td);
+
+            td = new TableCell();
+            td.Controls.Add(txtKeyword);
+            tr.Cells.Add(td);
+
+            td = new TableCell();
+            td.Controls.Add(cmdSearch);
+            tr.Cells.Add(td);
+
+            td = new TableCell();
+            td.Controls.Add(cmdReset);
+            tr.Cells.Add(td);
+
+            tbl.Rows.Add(tr);
+            #endregion
+
+            base.Controls.Add(tbl);
+            base.ClearChildViewState();
+        }
+
+        #region Event Methods
+        /// <summary>
+        /// Displays a Reset button control on the Web page
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
+        void cmdReset_Click(object sender, EventArgs e)
+        {
+            cboFieldName.SelectedIndex = 0;
+            cboOperator.SelectedIndex = 0;
+            txtKeyword.Text = string.Empty;
+
+            whereClause = string.Empty;
+            SetWhereClause(string.Empty);
+            GridView1.DataBind();
+
+            if (ResetButtonClicked != null) ResetButtonClicked(sender, e);
+        }
+
+        /// <summary>
+        /// Displays a Search button control on the Web page
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
+        void cmdSearch_Click(object sender, EventArgs e)
+        {
+            this.DataBind();
+            GridView1.PageIndex = 0; // default to first page
+            GridView1.DataBind();
+
+            if (SearchButtonClicked != null) SearchButtonClicked(sender, e);
+        }
+
+        /// <summary>
+        /// Builds the search.
+        /// </summary>
+        private void BuildSearch()
+        {
+            switch (cboOperator.SelectedValue)
+            {
+                case "0":
+                    whereClause = string.Format("[{0}] LIKE '%{1}%'", cboFieldName.SelectedValue, txtKeyword.Text);
+                    break;
+
+                case "1":
+                    whereClause = string.Format("[{0}] LIKE '{1}%'", cboFieldName.SelectedValue, txtKeyword.Text);
+                    break;
+
+                case "2":
+                    whereClause = string.Format("[{0}] = '{1}'", cboFieldName.SelectedValue, txtKeyword.Text);
+                    break;
+
+                case "3":
+                    whereClause = string.Format("[{0}] LIKE '%{1}'", cboFieldName.SelectedValue, txtKeyword.Text);
+                    break;
+            }
+
+            SetWhereClause(whereClause);
+        }
+        #endregion
+
+        #region Help Methods
+        /// <summary>
+        /// Sets DataSourceObject Parameter's WhereClause property
+        /// </summary>
+        /// <param name="whereClause"></param>
+        private void SetWhereClause(string whereClause)
+        {
+            Type t = TypedDataSource.GetType();
+            System.Reflection.PropertyInfo prop = t.GetProperty("Parameters");
+            ParameterCollection col = (ParameterCollection)prop.GetValue(TypedDataSource, null);
+            CustomParameter p = col["WhereClause"] as CustomParameter;
+
+            // -- check if WhereClause exists in parameter's collection
+            if (p != null)
+            {
+                p.Value = GetWhereClauseStatement(whereClause);
+            }
+            else
+            {
+                p = new CustomParameter();
+                p.Name = "WhereClause";
+                p.ConvertEmptyStringToNull = false;
+                p.Value = GetWhereClauseStatement(whereClause);
+                col.Add(p);
+            }
+        }
+
+        /// <summary>
+        /// Constructs the statement based on several conditions
+        /// </summary>
+        /// <param name="whereClause"></param>
+        /// <returns></returns>
+        private string GetWhereClauseStatement(string whereClause)
+        {
+            if (whereClause == string.Empty)
+            {
+                return Filter;
+            }
+            else if (Filter == string.Empty)
+            {
+                return whereClause;
+            }
+            else
+            {
+                return string.Format("{0} AND {1}", Filter, whereClause);
+            }
+        }
+
+        /// <summary>
+        /// Excluding fields from the list of the fields collection
+        /// </summary>
+        private void ExcludeFields()
+        {
+            foreach (Field f in FieldsToExclude)
+            {
+                ListItem li = cboFieldName.Items.FindByValue(f.Value);
+                if (li != null)
+                {
+                    cboFieldName.Items.Remove(li);
+                }
+            }
+        }
+        #endregion
+    }
+
+    #region classes: Field, FieldCollection
+    /// <summary>
+    /// Field
+    /// </summary>
+    public class Field
+    {
+        private string _value;
+
+        /// <summary>
+        /// Field value that corresponds to the list ValueField
+        /// </summary>
+        [DefaultValue("")]
+        public string Value
+        {
+            get
+            {
+                if (_value == null)
+                {
+                    return String.Empty;
+                }
+                return _value;
+            }
+            set
+            {
+                _value = value;
+            }
+        }
+    }
+
+    /// <summary>
+    /// Collection of custom fields that has its' own string property
+    /// </summary>
+    public class FieldCollection : List<Field> { }
+
+    #endregion
+
+    /// <summary>
+    /// Enum for the search panel search operator
+    /// </summary>
+    public enum SearchOperator
+    {
+        /// does a contains search - '%{0}%'
+        Contains = 0,
+        /// does a starts with search - '{0}%'
+        StartsWith = 1,
+        /// does a equals search - '{0}'
+        Equals = 2,
+        /// does an ends with search - '%{0}'
+        EndsWith = 3
+    }
+}

@@ -1,0 +1,183 @@
+﻿<%@ CodeTemplate Language="C#" TargetLanguage="Text" Description="" Debug="True" ResponseEncoding="UTF-8"  NoWarn="0108,0618,1572,1573,1574,0162,2002"  %>
+<%@ Property Name="RootNameSpace" Type="System.String" Category="Data" Description="Website Namespace." %>
+
+#region Using directives
+using System;
+using System.Collections.Generic;
+using System.Text;
+using System.Web.UI.WebControls;
+using System.Web.UI;
+using System.Collections;
+using <%=RootNameSpace%>;
+#endregion
+
+namespace <%=RootNameSpace%>.Web.UI
+{
+    /// <summary>
+    /// Specialised DataBoundControl that renders as a Label
+    /// <remarks>
+    /// DataSource should return 1 row
+    /// </remarks>
+    /// </summary>
+    public class EntityLabel : DataBoundControl
+    {
+        #region Properties
+        /// <summary>
+        /// Gets or sets the data value field.
+        /// </summary>
+        /// <value>The data value field.</value>
+        public virtual string DataValueField
+        {
+            get
+            {
+                object o = ViewState[ "DataValueField" ];
+                if ( o == null )
+                {
+                    return string.Empty;
+                }
+                return (string)o;
+            }
+            set
+            {
+                ViewState[ "DataValueField" ] = value;
+            }
+        }
+
+        /// <summary>
+        /// Gets or sets the data text field.
+        /// </summary>
+        /// <value>The data text field.</value>
+        public virtual string DataTextField
+        {
+            get
+            {
+                object o = ViewState[ "DataTextField" ];
+                if ( o == null )
+                {
+                    return string.Empty;
+                }
+                return (string)o;
+            }
+            set
+            {
+                ViewState[ "DataTextField" ] = value;
+            }
+        }
+
+        /// <summary>
+        /// Gets or sets the data text format string.
+        /// </summary>
+        /// <value>The data text format string.</value>
+        public virtual string DataTextFormatString
+        {
+            get
+            {
+                object o = ViewState[ "DataTextFormatString" ];
+                if ( o == null )
+                {
+                    return string.Empty;
+                }
+                return (string)o;
+            }
+            set
+            {
+                ViewState[ "DataTextFormatString" ] = value;
+            }
+        }
+
+        /// <summary>
+        /// Gets or sets the text.
+        /// </summary>
+        /// <value>The text.</value>
+        public virtual string Text
+        {
+            get
+            {
+                object o = ViewState[ "Text" ];
+                if ( o == null )
+                {
+                    return string.Empty;
+                }
+                return (string)o;
+            }
+            set
+            {
+                ViewState[ "Text" ] = value;
+            }
+        }
+
+        /// <summary>
+        /// Gets or sets the value.
+        /// </summary>
+        /// <value>The value.</value>
+        public virtual string Value
+        {
+            get
+            {
+                object o = ViewState[ "value" ];
+                if ( o == null )
+                {
+                    return string.Empty;
+                }
+                return (string)o;
+            }
+            set
+            {
+                ViewState[ "Value" ] = value;
+            }
+        } 
+        #endregion
+
+        #region Override Data methods
+        /// <summary>
+        /// When overridden in a derived class, binds data from the data source to the control.
+        /// </summary>
+        /// <param name="data">The <see cref="T:System.Collections.IEnumerable"></see> list of data returned from a <see cref="M:System.Web.UI.WebControls.DataBoundControl.PerformSelect"></see> method call.</param>
+        protected override void PerformDataBinding( System.Collections.IEnumerable data )
+        {
+            if ( data == null )
+            {
+                return;
+            }
+
+            // get the next data item
+            IEnumerator e = data.GetEnumerator();
+            while ( e.MoveNext() )
+            {
+                // get the text item if specified
+                if ( !string.IsNullOrEmpty( DataTextField ) )
+                {
+                     this.Text = DataBinder.GetPropertyValue( e.Current, DataTextField ).ToString();
+                }
+
+                // get the value item if specified
+                if ( !string.IsNullOrEmpty( DataValueField ) )
+                {
+                    this.Text = DataBinder.GetPropertyValue( e.Current, DataValueField ).ToString();
+                }
+
+                // we only do the first item
+                break;
+            }
+        } 
+        #endregion
+
+        #region Override Control methods
+        /// <summary>
+        /// Renders the control to the specified HTML writer.
+        /// </summary>
+        /// <param name="writer">The <see cref="T:System.Web.UI.HtmlTextWriter"></see> object that receives the control content.</param>
+        protected override void Render( HtmlTextWriter writer )
+        {
+            if ( !string.IsNullOrEmpty( this.DataTextFormatString ) )
+            {
+                writer.Write( string.Format( this.DataTextFormatString, Text ) );
+            }
+            else
+            {
+                writer.Write( Text );
+            }
+        } 
+        #endregion
+    }
+}

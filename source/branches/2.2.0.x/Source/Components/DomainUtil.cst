@@ -1,0 +1,210 @@
+﻿<%@ CodeTemplate Src="..\TemplateLib\CommonSqlCode.cs" Inherits="MoM.Templates.CommonSqlCode" Language="C#" TargetLanguage="C#" Description="The interface that each business object of the domain implements." ResponseEncoding="UTF-8" NoWarn="0108,0618,1572,1573,1574,0162,2002"%>
+<%@ Assembly Name="SchemaExplorer" %>
+<%@ Import Namespace="SchemaExplorer" %>
+<%@ Assembly Name="System.Design" %>
+
+<%@ Property Name="NameSpace" Optional="False" Type="System.String" Category="Style" Description="Object Namespace." %>
+<%@ Property Name="BLLNameSpace" Optional="False" Type="System.String" Category="Style" Description="Object Namespace." %>
+<%@ Property Name="DALNameSpace" Optional="False" Type="System.String" Category="Style" Description="Repository Namespace." %>
+<%@ Assembly Name="SchemaExplorer" %>
+using System;
+using System.Data;
+using System.Collections.Generic;
+using System.Collections;
+using System.Text;
+
+using <%= BLLNameSpace %>;
+using <%= DALNameSpace %>;
+using <%= DALNameSpace %>.Bases;
+
+using Microsoft.Practices.EnterpriseLibrary.ExceptionHandling;
+
+namespace <%= NameSpace %>
+{
+	/// <summary>
+	/// DomainUtil class.
+	/// </summary>
+    [Serializable]
+    public static class DomainUtil
+	{
+		
+        /// <summary>
+        /// Aggregates all the errors in a collection
+        /// </summary>
+        public static string GetErrorsFromList<T>(TList<T> list) where T : EntityBase, new()
+        {
+            System.Text.StringBuilder builder = new System.Text.StringBuilder();
+            foreach (T entity in list.InvalidItems)
+            {
+                if (entity != null)
+                    builder.Append(entity.Error);
+            }
+
+            return builder.ToString();
+        }		
+		
+		/// <summary>
+		/// Wraps call to tohe <see cref="ExceptionPolicy"/> class which handles all exceptions based on the security policy.
+		/// </summary>
+		public static bool HandleException(Exception e, string policyName)
+		{
+			try
+            {
+				return ExceptionPolicy.HandleException(e, policyName);
+            }
+            catch (System.Configuration.ConfigurationErrorsException)
+            {
+				return true;
+            }
+		}
+
+        #region Helper Methods
+        /// <summary>
+        /// Get a default value for a given data type
+        /// </summary>
+        /// <param name="dataType">Data type for which to get the default value</param>
+        /// <returns>An object of the default value.</returns>
+        public static Object GetDefaultByType(DbType dataType)
+        {
+            switch (dataType)
+            {
+                case DbType.AnsiString: return string.Empty;
+                case DbType.AnsiStringFixedLength: return string.Empty;
+                case DbType.Binary: return new byte[] { };
+                case DbType.Boolean: return false;
+                case DbType.Byte: return (byte)0;
+                case DbType.Currency: return 0m;
+                case DbType.Date: return DateTime.MinValue;
+                case DbType.DateTime: return DateTime.MinValue;
+                case DbType.Decimal: return 0m;
+                case DbType.Double: return 0f;
+                case DbType.Guid: return Guid.Empty;
+                case DbType.Int16: return (short)0;
+                case DbType.Int32: return 0;
+                case DbType.Int64: return (long)0;
+                case DbType.Object: return null;
+                case DbType.Single: return 0F;
+                case DbType.String: return String.Empty;
+                case DbType.StringFixedLength: return string.Empty;
+                case DbType.Time: return DateTime.MinValue;
+                case DbType.VarNumeric: return 0;
+                default: return null;
+
+            }
+        }
+
+        /// <summary>
+        /// Get Value or Default Value from an IDataParamater
+        /// Based on DbType
+        /// </summary>
+        /// <param name="p">The IDataParameter instance type is used to determine the default value.</param>
+        /// <returns></returns>
+        public static Object GetDataValue(IDataParameter p)
+        {
+            if (p.Value != DBNull.Value)
+                return p.Value;
+            else
+                return GetDefaultByType(p.DbType);
+        }
+
+        /// <summary>
+        /// Checks to see if the Default Value has been set to the parameter.
+        /// If it's the default value, then create.
+        /// </summary>
+        /// <param name="val">The value we want to check.</param>
+        /// <param name="dbtype">The DbType from wich we take the default value.</param>
+        /// <returns></returns>
+        public static object DefaultToDBNull(object val, DbType dbtype)
+        {
+            if (val == null || Object.Equals(val, GetDefaultByType(dbtype)))
+                return System.DBNull.Value;
+            else
+                return val;
+        }
+
+        #region GetParameterValue<T>
+        /// <summary>
+        /// Generic method to return the value of a nullable parameter
+        /// </summary>
+        /// <typeparam name="T">Type of value to return</typeparam>
+        /// <param name="parameter">Parameter from which to extract the value</param>
+        /// <returns></returns>
+        public static T GetParameterValue<T>(IDataParameter parameter)
+        {
+            if (parameter.Value == System.DBNull.Value)
+            {
+                return default(T);
+            }
+            else
+            {
+                return (T)parameter.Value;
+            }
+        }
+        #endregion
+
+        #region ConvertDatareaderToDataSet
+        /// <summary>
+        /// Converts a IDataReader to a DataSet.  For use when a custom stored procedure returns an <see cref="IDataReader" />, it will
+        /// convert all result sets returned as a DataSet.
+        /// </summary>
+        /// <param name="reader">The reader to convert</param>
+        /// <returns>A dataset with one table per result in the reader</returns>
+        public static DataSet ConvertDataReaderToDataSet(IDataReader reader)
+        {
+            DataSet dataSet = new DataSet();
+            do
+            {
+                // Create new data table
+
+                DataTable schemaTable = reader.GetSchemaTable();
+                DataTable dataTable = new DataTable();
+
+                if (schemaTable != null)
+                {
+                    // A query returning records was executed
+
+                    for (int i = 0; i < schemaTable.Rows.Count; i++)
+                    {
+                        DataRow dataRow = schemaTable.Rows[i];
+                        // Create a column name that is unique in the data table
+                        string columnName = (string)dataRow["ColumnName"];
+                        // Add the column definition to the data table
+                        DataColumn column = new DataColumn(columnName, (Type)dataRow["DataType"]);
+                        dataTable.Columns.Add(column);
+                    }
+
+                    dataSet.Tables.Add(dataTable);
+
+                    // Fill the data table we just created
+
+                    while (reader.Read())
+                    {
+                        DataRow dataRow = dataTable.NewRow();
+
+                        for (int i = 0; i < reader.FieldCount; i++)
+                            dataRow[i] = reader.GetValue(i);
+
+                        dataTable.Rows.Add(dataRow);
+                    }
+                }
+                else
+                {
+                    // No records were returned
+
+                    DataColumn column = new DataColumn("RowsAffected");
+                    dataTable.Columns.Add(column);
+                    dataSet.Tables.Add(dataTable);
+                    DataRow dataRow = dataTable.NewRow();
+                    dataRow[0] = reader.RecordsAffected;
+                    dataTable.Rows.Add(dataRow);
+                }
+            }
+            while (reader.NextResult());
+            return dataSet;
+        }
+        #endregion
+
+        #endregion
+
+	}
+}

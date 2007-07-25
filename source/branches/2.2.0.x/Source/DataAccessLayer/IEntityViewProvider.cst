@@ -1,0 +1,87 @@
+﻿<%@ CodeTemplate Language="C#" TargetLanguage="C#" Src="..\TemplateLib\CommonSqlCode.cs" Inherits="MoM.Templates.CommonSqlCode" Debug="False" Description="Generates the IEntityViewProvider type." ResponseEncoding="UTF-8"  NoWarn="0108,0618,1572,1573,1574,0162,2002"%>
+<%@ Property Name="BLLNameSpace" Optional="False" Type="System.String" Category="Style" Description="Object Namespace." %>
+<%@ Property Name="DALNameSpace" Optional="False" Type="System.String" Category="Style" Description="DAL Namespace." %>
+
+<%@ Property Name="IncludeGetList" Type="System.Boolean" Default="True" Category="Options" Description="If true getlist functions will be generated." %>
+<%@ Property Name="IncludeFind" Type="System.Boolean" Default="True" Category="Options" Description="If true Find functions will be generated." %>
+<%@ Property Name="IncludeComponentLayer" Type="MoM.Templates.ComponentPatternType" Category="02. Framework Generation - Optional" Description="The pattern type to implement in the Component Layer." Default="None" %>
+
+<%@ Assembly Name="SchemaExplorer" %>
+<%@ Assembly Name="System.Design" %>
+#region Using Directives
+using System;
+using <%= BLLNameSpace %>;
+#endregion
+<%
+	//bool HasComponentLayer = (IncludeComponentLayer != MoM.Templates.ComponentPatternType.None);
+	bool HasComponentLayer = (IncludeComponentLayer == MoM.Templates.ComponentPatternType.ServiceLayer);
+%>
+namespace <%= DALNameSpace %>
+{
+	/// <summary>
+	/// Defines the common data access methods that can be used by the
+	/// ReadOnlyDataSource control to interact with the underlying data store.
+	/// </summary>
+	/// <typeparam name="Entity">The class of the business object being accessed.</typeparam>
+	public interface IEntityViewProvider<Entity> where Entity : new()
+	{
+		<% if ( IncludeGetList ) { %>
+		/// <summary>
+		/// Gets a page of rows from the DataSource.
+		/// </summary>
+		<% if (!HasComponentLayer) { %>
+		/// <param name="mgr">A <see cref="TransactionManager"/> object.</param>
+		<% } %>
+		/// <param name="whereClause">Specifies the condition for the rows returned by a query (Name='John Doe', Name='John Doe' AND Id='1', Name='John Doe' OR Id='1').</param>
+		/// <param name="orderBy">Specifies the sort criteria for the rows in the DataSource (Name ASC; BirthDay DESC, Name ASC);</param>
+		/// <param name="start">Row number at which to start reading.</param>
+		/// <param name="pageLength">Number of rows to return.</param>
+		/// <param name="count">The total number of rows in the data source.</param>
+		/// <returns>Returns a typed collection of Entity objects.</returns>
+		VList<Entity> <%= MethodNames.Get %>(<% if(!HasComponentLayer){ %>TransactionManager mgr, <% } %>String whereClause, String orderBy, int start, int pageLength, out int count);
+
+		/// <summary>
+		/// Gets a page of rows from the DataSource.
+		/// </summary>
+		<% if (!HasComponentLayer) { %>
+		/// <param name="mgr">A <see cref="TransactionManager"/> object.</param>
+		<% } %>
+		/// <param name="whereClause">Specifies the condition for the rows returned by a query (Name='John Doe', Name='John Doe' AND Id='1', Name='John Doe' OR Id='1').</param>
+		/// <param name="orderBy">Specifies the sort criteria for the rows in the DataSource (Name ASC; BirthDay DESC, Name ASC);</param>
+		/// <param name="start">Row number at which to start reading.</param>
+		/// <param name="pageLength">Number of rows to return.</param>
+		/// <param name="count">The total number of rows in the data source.</param>
+		/// <returns>Returns a typed collection of Entity objects.</returns>
+		VList<Entity> <%= MethodNames.GetPaged %>(<% if(!HasComponentLayer){ %>TransactionManager mgr, <% } %>String whereClause, String orderBy, int start, int pageLength, out int count);
+
+		/// <summary>
+		/// Gets all rows from the DataSource.
+		/// </summary>
+		<% if (!HasComponentLayer) { %>
+		/// <param name="mgr">A <see cref="TransactionManager"/> object.</param>
+		<% } %>
+		/// <param name="start">Row number at which to start reading.</param>
+		/// <param name="pageLength">Number of rows to return.</param>
+		/// <param name="count">Number of rows in the DataSource.</param>
+		/// <returns>Returns a typed collection of Entity objects.</returns>
+		VList<Entity> <%= MethodNames.GetAll %>(<% if(!HasComponentLayer){ %>TransactionManager mgr, <% } %>int start, int pageLength, out int count);
+		
+		<% } // end if ( IncludeGetList ) %>
+		<% if ( IncludeFind ) { %>
+		/// <summary>
+		/// 	Returns rows from the DataSource that meet the parameter conditions.
+		/// </summary>
+		<% if (!HasComponentLayer) { %>
+		/// <param name="mgr">A <see cref="TransactionManager"/> object.</param>
+		<% } %>
+		/// <param name="parameters">A collection of <see cref="SqlFilterParameter"/> objects.</param>
+		/// <param name="orderBy">Specifies the sort criteria for the rows in the DataSource (Name ASC; BirthDay DESC, Name ASC);</param>
+		/// <param name="start">Row number at which to start reading.</param>
+		/// <param name="pageLength">Number of rows to return.</param>
+		/// <param name="count">out. The number of rows that match this query.</param>
+		/// <returns>Returns a typed collection of Entity objects.</returns>
+		VList<Entity> <%= MethodNames.Find %>(<% if(!HasComponentLayer){ %>TransactionManager mgr, <% } %>IFilterParameterCollection parameters, string orderBy, int start, int pageLength, out int count);
+		
+		<% } // end if ( IncludeFind ) %>
+	}
+}

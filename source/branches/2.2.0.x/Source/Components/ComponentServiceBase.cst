@@ -1,0 +1,188 @@
+﻿<%--
+ * $Id: EntityBase.cst,v 1.31 2005/06/27 12:12:42 jroland Exp $
+ * Last modified by $Author: jroland $
+ * Last modified at $Date: 2005/06/27 12:12:42 $
+ * $Revision: 1.31 $
+
+	Written By:
+		Ryan Hurdon
+	Description:
+		This script will create data access layer classes. It requires stored procedures
+		created from the procedure script. So for this code to work properly you need to run
+		the procedure template, the rowobject template, and the rowcollection template on
+		the same table. You can also optionally use the main script which will run them all
+		for you.
+--%>
+<%@ CodeTemplate Src="..\TemplateLib\CommonSqlCode.cs" Inherits="MoM.Templates.CommonSqlCode" Language="C#" TargetLanguage="C#" Description="Component Object Class" ResponseEncoding="UTF-8" NoWarn="0108,0618,1572,1573,1574,0162,2002"%>
+<%@ Assembly Name="SchemaExplorer" %>
+<%@ Assembly Name="System.Design" %>
+<%@ Import Namespace="SchemaExplorer" %>
+
+<%@ Property Name="SourceTable" Type="SchemaExplorer.TableSchema" Category="Connection" Description="Table Object should be based on." %>
+<%@ Property Name="SourceTables" Type="SchemaExplorer.TableSchemaCollection" Category="Connection" Description="Tables of the sytem." %>
+
+<%@ Property Name="IncludeRelations" Type="System.Boolean" Default="True" Category="Options" Description="Include Collections for Related Entities."%>
+<%@ Property Name="IncludeCustoms" Type="System.Boolean" Default="True" Category="Options" Description="If true customs stored procedures will be generated as functions." %>
+<%@ Property Name="IncludeInsert" Type="System.Boolean" Default="True" Category="Options" Description="If true insert functions will be generated." %>
+<%@ Property Name="IncludeUpdate" Type="System.Boolean" Default="True" Category="Options" Description="If true update functions will be generated." %>
+<%@ Property Name="IncludeSave" Type="System.Boolean" Default="True" Category="Options" Description="If true combined insert/update functions will be generated." %>
+<%@ Property Name="IncludeDelete" Type="System.Boolean" Default="True" Category="Options" Description="If true delete functions will be generated." %>
+<%@ Property Name="IncludeManyToMany" Type="System.Boolean" Default="True" Category="Options" Description="If true select statements will be generated for any many to many relationship." %>
+<%@ Property Name="IncludeGetList" Type="System.Boolean" Default="True" Category="Options" Description="If true getlist functions will be generated." %>
+<%@ Property Name="IncludeGetListByFK" Type="System.Boolean" Default="True" Category="Options" Description="If true get functions will be generated." %>
+<%@ Property Name="IncludeGetListByIX" Type="System.Boolean" Default="True" Category="Options" Description="If true getlist functions will be generated." %>
+<%@ Property Name="IncludeFind" Type="System.Boolean" Default="True" Category="Options" Description="If true find functions will be generated." %>
+
+<%@ Property Name="ComponentPattern" Optional="False" Type="MoM.Templates.ComponentPatternType" Category="Pattern" Description="Component Pattern Type." %>
+<%@ Property Name="CustomNonMatchingReturnType" Type="CustomNonMatchingReturnType" Default="DataSet" Category="Options" Description="When using custom stored procedures, if the returned rows do not match the fields in an entity, a DataSet or IDataReader will be returned. Choose One.  This is useful if you've returned more than one resultset in a custom procedure; you can use a ConvertToDataSet(IDataReader) method in the Utility class to convert that to a DataSet." %>
+
+<%@ Property Name="NameSpace" Optional="True" Type="System.String" Category="Style" Description="Object Namespace." %>
+<%@ Property Name="BLLNameSpace" Optional="True" Type="System.String" Category="Style" Description="Component Namespace." %>
+<%@ Property Name="DALNameSpace" Optional="True" Type="System.String" Category="Style" Description="DAL Namespace." %>
+	
+<%@ Property Name="UsePartialClass" Type="System.Boolean" Default="true" Category="General" Description="Indicates if partial class should be generated." %>
+<%
+	string className = GetClassName(SourceTable);
+	string collectionClassName = GetClassName(SourceTable, ClassNameFormat.Collection);
+	string keyClassName = GetClassName(SourceTable, ClassNameFormat.Key);
+	string entitiesCollectionClassName = GetClassName(SourceTable, ClassNameFormat.Collection).Replace("<", "<Entities.");
+	
+	string structName = GetClassName(SourceTable, ClassNameFormat.Struct);
+	string abstractClassName = GetClassName(SourceTable, ClassNameFormat.AbstractService);
+	string partialClassInternalPrefix = UsePartialClass ? "" : "";
+	string newCollectionClassName = "";
+	
+	if (ComponentPattern == MoM.Templates.ComponentPatternType.DomainModel)
+		newCollectionClassName = string.Format("new {0} (", collectionClassName);
+
+	// Collection of all columns in the table.
+	ColumnSchemaCollection cols = SourceTable.Columns;
+		
+	//Provides information about the indexes contained in the table. 
+	//IndexSchemaCollection indexes = SourceTable.Indexes;
+		
+	ColumnSchemaCollection colsUpdatable = new ColumnSchemaCollection();
+	foreach (ColumnSchema column in cols)
+	{
+		if ( ! IsIdentityColumn(column) && ! IsComputed(column) )
+			colsUpdatable.Add(column);
+	}
+	
+	//Get the columns that are common to all tables
+	ColumnSchemaCollection commonColumns = GetCommonTableColumns(SourceTables);
+	
+	string today = DateTime.Now.ToLongDateString();
+
+	// Collection of all columns in the table that are not primary keys.
+	//ColumnSchemaCollection nonKeys = SourceTable.NonPrimaryKeyColumns;
+	
+	// Collection of all primary  = SourceTable.PrimaryKey.key columns.
+	//ColumnSchemaCollection keysMemberColumns;
+	ColumnSchemaCollection keys = SourceTable.PrimaryKey.MemberColumns;
+	
+	// Collection of ForeignKeys. Provides information about the foreign keys 
+	//(keys where the current table is the foreign table) contained in the table. 
+	TableKeySchemaCollection fkeys = SourceTable.ForeignKeys;
+	
+	//Provides information about the primary keys 
+	//(keys where the current table is the primary table) contained in the table. 
+	TableKeySchemaCollection  pkeys = SourceTable.PrimaryKeys;
+	
+	//Provides information about the indexes contained in the table. 
+	IndexSchemaCollection indexes = SourceTable.Indexes;
+		
+	// this array store each Get BY MemberColumns in order to avoid to create doublon Get methods
+	System.Collections.ArrayList getbyKeys = new System.Collections.ArrayList();
+%>
+
+/*
+	File generated by NetTiers templates [www.nettiers.com]
+	<%
+	if( IncludeGeneratedDate)
+	{
+	%>
+	Generated on : <%=DateTime.Now.ToLongDateString()%>
+	<%
+	}
+	%>
+	Important: Do not modify this file. Edit the file <%=className%>.cs instead.
+*/
+
+#region Using Directives
+using System;
+using System.ComponentModel;
+using System.Collections;
+using System.Collections.Generic;
+using System.Security.Permissions;
+using System.Xml.Serialization;
+using System.Runtime.Serialization;
+using System.Security;
+using System.Data;
+
+using <%=BLLNameSpace%>;
+using <%=BLLNameSpace%>.Validation;
+using Entities = <%=BLLNameSpace%>;
+using <%=DALNameSpace%>;
+using <%=DALNameSpace%>.Bases;
+
+
+using Microsoft.Practices.EnterpriseLibrary.Logging;
+
+#endregion 
+
+namespace <%=NameSpace%>
+{		
+	
+	///<summary>
+	/// An object representation of the '<%=SourceTable.Name%>' table.
+	///</summary>
+	/// <remarks>
+	/// IMPORTANT!!! You should not modify this <% if (UsePartialClass) Response.Write("partial "); else Response.Write("base "); %> class, modify the <%= className%>.cs file instead.
+	/// All custom implementations should be done in the <see cref="<%=className%>"/> class.
+	/// </remarks>
+	[DataObject]
+	[CLSCompliant(true)]
+	public <% if (UsePartialClass) Response.Write("partial "); %>class <%=abstractClassName%> : ServiceBase<<%= className %>, <%= keyClassName %>>
+	{
+
+		#region Constructors
+		///<summary>
+		/// Creates a new <see cref="<%=className%>"/> instance .
+		///</summary>
+		public <%=abstractClassName%>() : base()
+		{
+		}
+		
+		///<summary>
+		/// A simple factory method to create a new <see cref="<%=className%>"/> instance.
+		///</summary>
+		<% for (int x=0; x < colsUpdatable.Count; x++) { %>
+		///<param name="<%=GetFieldName(colsUpdatable[x]) %>"><%= GetColumnXmlComment(colsUpdatable[x],2)%></param>
+		<% } %>
+		public static <%=className%> Create<%=className%>(<% for (int x=0; x < colsUpdatable.Count; x++) { %><%= GetCSType(colsUpdatable[x]) %> <%= GetFieldName(colsUpdatable[x]) %><%if (x < colsUpdatable.Count -1){%>, <%} }// end for %>)
+		{
+			<%=className%> newEntity<%=className%> = new <%=className%>();
+			<% for (int x=0; x < colsUpdatable.Count; x++) { %>
+			<%= GetObjectPropertyAccessor(colsUpdatable[x], "newEntity" + className) %>  = <%= GetFieldName(colsUpdatable[x]) %>;
+			<% }// end for %>
+			return newEntity<%=className%>;
+		}
+		#endregion Constructors
+		<%		
+		// If the chosen pattern to implement is a domain pattern, go ahead 
+		// and fill all data repository wrapper access here.	
+		
+		CodeTemplate template = CodeTemplates["ComponentDataAccess.cst"];
+		
+		this.CopyPropertiesTo(template);
+		template.SetProperty("RenderOverload", false);
+		template.SetProperty("RenderImplementation", true);
+		Response.Write(template.RenderToString()); %>
+	
+	}//End Class
+} // end namespace
+
+
+
+
+

@@ -1,0 +1,1417 @@
+﻿<%--
+ * $Id: SqlEntityProviderBase.generated.cst,v 1.3 2006/02/27 22:06:45 bgjohnso Exp $
+ * Last modified by $Author: rockmaster1 $
+ * Last modified at $Date: 2006-04-28 17:19:22 -0500 (Fri, 28 Apr 2006) $
+ * $Revision: 142 $
+
+	Written By:
+		John Roland (from the orginal work of Ryan Hurdon)
+	Description:
+		This script create a data access layer component for a database table.	
+	Remarks:
+		Generated code will need the entreprise library 1.1 (june 2005) to function.
+--%>
+<%@ CodeTemplate Src="..\TemplateLib\CommonSqlCode.cs" Inherits="MoM.Templates.CommonSqlCode" Language="C#" TargetLanguage="C#" Description="Template description here." Debug="True"  ResponseEncoding="UTF-8" NoWarn="0108,0618,1572,1573,1574,0162,2002"%>
+<%@ Assembly Name="SchemaExplorer" %>
+<%@ Assembly Name="System.Design" %>
+<%@ Import Namespace="SchemaExplorer" %>
+<%@ Import Namespace="System.Collections"%>
+<%@ Import Namespace="System.Text" %>
+
+<%@ Property Name="SourceTables" Type="SchemaExplorer.TableSchemaCollection" Category="Connection" Description="Tables of the system." %>
+<%@ Property Name="SourceTable" Type="SchemaExplorer.TableSchema" Category="Connection" Description="Table that the data access class should be based on." %>
+
+<%@ Property Name="IncludeCustoms" Type="System.Boolean" Default="True" Category="Options" Description="If true customs stored procedures will be generated as functions." %>
+<%@ Property Name="CustomNonMatchingReturnType" Type="CustomNonMatchingReturnType" Default="DataSet" Category="Options" Description="When using custom stored procedures, if the returned rows do not match the fields in an entity, a DataSet or IDataReader will be returned. Choose One.  This is useful if you've returned more than one resultset in a custom procedure; you can use a ConvertToDataSet(IDataReader) method in the Utility class to convert that to a DataSet." %>
+<%@ Property Name="IncludeInsert" Type="System.Boolean" Default="True" Category="Options" Description="If true insert functions will be generated." %>
+<%@ Property Name="IncludeUpdate" Type="System.Boolean" Default="True" Category="Options" Description="If true update functions will be generated." %>
+<%@ Property Name="IncludeSave" Type="System.Boolean" Default="True" Category="Options" Description="If true combined insert/update functions will be generated." %>
+<%@ Property Name="IncludeDelete" Type="System.Boolean" Default="True" Category="Options" Description="If true delete functions will be generated." %>
+<%@ Property Name="IncludeGetList" Type="System.Boolean" Default="True" Category="Options" Description="If true getlist functions will be generated." %>
+<%@ Property Name="IncludeGetListByFK" Type="System.Boolean" Default="True" Category="Options" Description="If true get functions will be generated." %>
+<%@ Property Name="IncludeGetListByIX" Type="System.Boolean" Default="True" Category="Options" Description="If true getlist functions will be generated." %>
+<%@ Property Name="IncludeFind" Type="System.Boolean" Default="False" Category="Options" Description="If true find functions will be generated." %>
+<%@ Property Name="IncludeManyToMany" Type="System.Boolean" Default="True" Category="Options" Description="If true select statements will be generated for any many to many relationship." %>
+<%@ Property Name="IncludeDatabaseFeatures" Type="MoM.Templates.DatabaseType" Category="02. Framework Generation - Optional" Description="Indicates which database specific features to generate." Default="None" %>
+
+<%@ Property Name="InsertSuffix" Type="System.String" Default="_Insert" Category="Style" Description="Suffix to use for all generated INSERT functions." %>
+<%@ Property Name="UpdateSuffix" Type="System.String" Default="_Update" Category="Style" Description="Suffix to use for all generated UPDATE functions." %>
+<%@ Property Name="DeleteSuffix" Type="System.String" Default="_Delete" Category="Style" Description="Suffix to use for all generated DELETE functions." %>
+<%@ Property Name="SelectSuffix" Type="System.String" Default="_Get" Category="Style" Description="Suffix to use for all generated SELECT functions." %>
+<%@ Property Name="SelectAllSuffix" Type="System.String" Default="List" Category="Style" Description="Suffix to use for all generated SELECT functions." %>
+<%@ Property Name="FindSuffix" Type="System.String" Default="_Find" Category="Style" Description="Suffix to use for all generated SELECT functions." %>
+<%@ Property Name="NameSpace" Type="System.String" Category="Style" Description="Class Namespace." %>
+<%@ Property Name="DALNameSpace" Type="System.String" Category="Data" Description="DAL Namespace." %>
+
+<%
+	// Name of the table being worked on.
+	string name = SourceTable.Name;
+	
+	//Get the owner of the table
+	string owner = GetOwnerName(SourceTable, true);
+	
+	// Collection of all columns in the table.
+	ColumnSchemaCollection cols = SourceTable.Columns;
+	
+	// Collection of all columns in the table that are not primary keys.
+	ColumnSchemaCollection nonKeys = SourceTable.NonPrimaryKeyColumns;
+	
+	// Collection of all primary key columns.
+	//ColumnSchemaCollection keys = SourceTable.PrimaryKey.MemberColumns; 
+	
+	// Collection of ForeignKeys. Provides information about the foreign keys 
+	//(keys where the current table is the foreign table) contained in the table. 
+	TableKeySchemaCollection fkeys = SourceTable.ForeignKeys;
+	
+	//Provides information about the primary keys 
+	//(keys where the current table is the primary table) contained in the table. 
+	TableKeySchemaCollection pkeys = SourceTable.PrimaryKeys;
+	
+	//Provides information about the indexes contained in the table. 
+	IndexSchemaCollection indexes = SourceTable.Indexes;
+		
+	// Holds the RowVersion column if there's any
+	ColumnSchema RowVersion = null;
+
+	foreach (ColumnSchema column in cols)
+	{
+		if (column.NativeType.ToLower() == "timestamp")
+			RowVersion = column;
+	}
+	
+	
+	string className = NameSpace + "." + GetClassName(SourceTable);
+	string entityClassName = GetClassName(SourceTable);
+	string abstractRepositoryClassName = "Sql" + GetClassName(SourceTable, ClassNameFormat.ProviderBase);
+	string providerBaseName = GetClassName(SourceTable, ClassNameFormat.ProviderBase);
+	string providerName = "Sql" + GetClassName(SourceTable, ClassNameFormat.Provider);
+	string collectionClassName = NameSpace + "." + GetClassName(SourceTable, ClassNameFormat.Collection);
+	
+	string commandStem = GetCleanName(SourceTable);
+		
+	// this array store each Get BY MemberColumns in order to avoid to create doublon Get methods
+	System.Collections.ArrayList getbyKeys = new System.Collections.ArrayList();
+%>
+/*
+	File Generated by NetTiers templates [www.nettiers.com]
+	<%
+	if( IncludeGeneratedDate)
+	{
+	%>
+	Generated on : <%=DateTime.Now.ToLongDateString()%>
+	<%
+	}
+	%>
+	Important: Do not modify this file. Edit the file <%=providerName%>.cs instead.
+*/
+
+#region using directives
+
+using System;
+using System.Data;
+using System.Data.Common;
+using System.Text;
+
+using Microsoft.Practices.EnterpriseLibrary.Data;
+using Microsoft.Practices.EnterpriseLibrary.Data.Sql;
+
+using System.Collections;
+using System.Collections.Specialized;
+
+using System.Diagnostics;
+using <%=NameSpace%>;
+using <%=DALNameSpace%>;
+using <%=DALNameSpace%>.Bases;
+
+#endregion
+
+namespace <%=DALNameSpace%>.SqlClient
+{
+	///<summary>
+	/// This class is the SqlClient Data Access Logic Component implementation for the <see cref="<%=GetClassName(SourceTable)%>"/> entity.
+	///</summary>
+	public abstract partial class <%=abstractRepositoryClassName%> : <%=providerBaseName%>
+	{
+		#region Declarations
+		
+		string _connectionString;
+	    bool _useStoredProcedure;
+	    string _providerInvariantName;
+			
+		#endregion "Declarations"
+			
+		#region Constructors
+		
+		/// <summary>
+		/// Creates a new <see cref="<%=abstractRepositoryClassName%>"/> instance.
+		/// </summary>
+		public <%=abstractRepositoryClassName%>()
+		{
+		}
+	
+	/// <summary>
+	/// Creates a new <see cref="<%=abstractRepositoryClassName%>"/> instance.
+	/// Uses connection string to connect to datasource.
+	/// </summary>
+	/// <param name="connectionString">The connection string to the database.</param>
+	/// <param name="useStoredProcedure">A boolean value that indicates if we use the stored procedures or embedded queries.</param>
+	/// <param name="providerInvariantName">Name of the invariant provider use by the DbProviderFactory.</param>
+	public <%=abstractRepositoryClassName%>(string connectionString, bool useStoredProcedure, string providerInvariantName)
+	{
+		this._connectionString = connectionString;
+		this._useStoredProcedure = useStoredProcedure;
+		this._providerInvariantName = providerInvariantName;
+	}
+		
+	#endregion "Constructors"
+	
+		#region Public properties
+	/// <summary>
+    /// Gets or sets the connection string.
+    /// </summary>
+    /// <value>The connection string.</value>
+    public string ConnectionString
+	{
+		get {return this._connectionString;}
+		set {this._connectionString = value;}
+	}
+	
+	/// <summary>
+    /// Gets or sets a value indicating whether to use stored procedures.
+    /// </summary>
+    /// <value><c>true</c> if we choose to use use stored procedures; otherwise, <c>false</c>.</value>
+	public bool UseStoredProcedure
+	{
+		get {return this._useStoredProcedure;}
+		set {this._useStoredProcedure = value;}
+	}
+	
+	/// <summary>
+    /// Gets or sets the invariant provider name listed in the DbProviderFactories machine.config section.
+    /// </summary>
+    /// <value>The name of the provider invariant.</value>
+    public string ProviderInvariantName
+    {
+        get { return this._providerInvariantName; }
+        set { this._providerInvariantName = value; }
+    }
+	#endregion
+	
+	<% if(IncludeManyToMany) { %>
+		#region Get Many To Many Relationship Functions
+	<%
+		TableSchema primaryTable = SourceTable;
+		
+		foreach(TableKeySchema key in SourceTable.PrimaryKeys)
+		{
+			// Check that the key is related to a junction table and that this key relate a PK in this junction table
+			if ( IsJunctionTable(key.ForeignKeyTable) && IsJunctionKey(key))
+			{
+				TableSchema junctionTable = key.ForeignKeyTable;
+				
+				// Search for the other(s) key(s) of the junction table' primary key
+				foreach(TableKeySchema junctionTableKey in junctionTable.ForeignKeys)
+				{				
+					if ( IsJunctionKey(junctionTableKey) && junctionTableKey.Name != key.Name )
+					{
+						TableSchema secondaryTable = junctionTableKey.PrimaryKeyTable;
+						string functionname = GetManyToManyName(junctionTableKey, junctionTable);
+%>
+	
+		#region GetBy<%=functionname%>
+		/// <summary>
+		///		Gets <%=GetClassName(primaryTable)%> objects from the datasource by <%=junctionTableKey.ForeignKeyMemberColumns[0].Name%> in the
+		///		<%=junctionTable.Name%> table. Table <%=primaryTable.Name%> is related to table <%=secondaryTable.Name%>
+		///		through the (M:N) relationship defined in the <%=junctionTable.Name%> table.
+		/// </summary>
+		/// <param name="transactionManager"><see cref="TransactionManager"/> object</param>
+	<% for (int i = 0; i < junctionTableKey.ForeignKeyMemberColumns.Count; i++) { %>
+		/// <param name="<%= GetFieldName(junctionTableKey.ForeignKeyMemberColumns[i])%>"><%=GetColumnXmlComment(junctionTableKey.ForeignKeyMemberColumns[i],2)%></param>
+	<% } %>
+		/// <param name="start">Row number at which to start reading.</param>
+		/// <param name="pageLength">Number of rows to return.</param>
+		/// <param name="count">out parameter to get total records for query</param>
+		/// <returns>Returns a <c>TList</c> of <%=GetClassName(primaryTable)%> objects.</returns>
+		public override <%=GetClassName(primaryTable, ClassNameFormat.Collection)%> GetBy<%=functionname%>(TransactionManager transactionManager, <%=GetFunctionHeaderParameters(junctionTableKey.ForeignKeyMemberColumns)%>, int start, int pageLength, out int count)
+		{
+			SqlDatabase database = new SqlDatabase(this._connectionString);
+			DbCommand commandWrapper = StoredProcedureProvider.GetCommandWrapper(database, "<%=owner + ProcedurePrefix + commandStem + SelectSuffix + "By" + functionname%>", _useStoredProcedure);
+			
+			<% foreach(ColumnSchema col in junctionTableKey.ForeignKeyMemberColumns) { %>
+			database.AddInParameter(commandWrapper, "@<%=GetPropertyName(col)%>", DbType.<%=col.DataType.ToString()%>, <%=GetFieldName(col)%>);
+			<% } %>
+			
+			IDataReader reader = null;
+			//Create collection and fill
+			<%=collectionClassName%> rows = new <%=collectionClassName%>();
+			
+			try
+			{
+				//Provider Data Requesting Command Event
+				OnDataRequesting(new CommandEventArgs(commandWrapper, "GetBy<%=functionname%>", rows)); 
+	
+				if (transactionManager != null)
+				{
+					reader = Utility.ExecuteReader(transactionManager, commandWrapper);
+				}
+				else
+				{
+					reader = Utility.ExecuteReader(database, commandWrapper);
+				}		
+				Fill(reader, rows, start, pageLength);
+				count = -1;
+				if(reader.NextResult())
+				{
+					if(reader.Read())
+					{
+						count = reader.GetInt32(0);
+					}
+				}
+					
+				//Provider Data Requested Command Event
+				OnDataRequested(new CommandEventArgs(commandWrapper, "GetBy<%=functionname%>", rows)); 
+
+			}
+			finally 
+			{
+				if (reader != null) 
+					reader.Close();
+					
+				commandWrapper = null;
+			}
+			return rows; 
+		}
+		
+		#endregion GetBy<%=functionname%>
+		
+				<%
+				} //end if there is many to many relationship.
+			} //end foreach			
+	 	}// end if(IsJunctionTable(junctionTableKey.ForeignKeyTable)) %>
+	<%}//end foreach pkey %>
+		#endregion
+	<%} //end if many to many %>
+	
+<% if (IncludeDelete && SourceTable.PrimaryKey != null) {%>
+		#region <%= MethodNames.Delete %> Functions
+		/// <summary>
+		/// 	Deletes a row from the DataSource.
+		/// </summary>
+		<% for (int i = 0; i < SourceTable.PrimaryKey.MemberColumns.Count; i++) { %>
+		/// <param name="<%= GetFieldName(SourceTable.PrimaryKey.MemberColumns[i])%>"><%=GetColumnXmlComment(SourceTable.PrimaryKey.MemberColumns[i],2)%>. Primary Key.</param>	
+		<% } %>
+		/// <param name="transactionManager"><see cref="TransactionManager"/> object</param><% if (RowVersion != null){ %>
+		/// <param name="<%=GetFieldName(RowVersion)%>">The timestamp field used for concurrency check.</param><% } %>
+		/// <remarks>Deletes based on primary key(s).</remarks>
+		/// <returns>Returns true if operation suceeded.</returns>
+        /// <exception cref="System.Exception">The command could not be executed.</exception>
+        /// <exception cref="System.Data.DataException">The <paramref name="transactionManager"/> is not open.</exception>
+        /// <exception cref="System.Data.Common.DbException">The command could not be executed.</exception>
+		<% if (RowVersion != null){ %>
+        /// <exception cref="DBConcurrencyException">The record has been modified by an other user. Please reload the instance before deleting.</exception>
+		<%}%>
+		public override bool <%= MethodNames.Delete %>(TransactionManager transactionManager, <%= GetFunctionHeaderParameters(SourceTable.PrimaryKey.MemberColumns) %><% if(RowVersion != null) {Response.Write(", byte[] " + GetFieldName(RowVersion));}%>)
+		{
+			SqlDatabase database = new SqlDatabase(this._connectionString);
+			DbCommand commandWrapper = StoredProcedureProvider.GetCommandWrapper(database, "<%=owner + ProcedurePrefix + commandStem + DeleteSuffix%>", _useStoredProcedure);
+			<% for(int i = 0; i < SourceTable.PrimaryKey.MemberColumns.Count; i++) { 
+				ColumnSchema col = SourceTable.PrimaryKey.MemberColumns[i];
+			%>
+			database.AddInParameter(commandWrapper, "@<%=GetPropertyName(col)%>", DbType.<%=col.DataType%>, <%=GetFieldName(col)%>);
+			<% } %>
+			<% if (RowVersion != null){ %>
+			database.AddInParameter(commandWrapper, "@<%=GetPropertyName(RowVersion)%>", DbType.<%= RowVersion.DataType.ToString() %>, <%= GetFieldName(RowVersion) %>);
+			<% } %>
+			
+			//Provider Data Requesting Command Event
+			OnDataRequesting(new CommandEventArgs(commandWrapper, "<%= MethodNames.Delete %>")); 
+
+			int results = 0;
+			
+			if (transactionManager != null)
+			{	
+				results = Utility.ExecuteNonQuery(transactionManager, commandWrapper);
+			}
+			else
+			{
+				results = Utility.ExecuteNonQuery(database,commandWrapper);
+			}
+			
+			//Stop Tracking Now that it has been updated and persisted.
+			if (DataRepository.Provider.EnableEntityTracking)
+			{
+				<% if (SourceTable.PrimaryKey.MemberColumns.Count > 0) { %>
+				string entityKey = EntityLocator.ConstructKeyFromPkItems(typeof(<%= entityClassName %>)
+					<% foreach (ColumnSchema col in SourceTable.PrimaryKey.MemberColumns){%>,<%=GetFieldName(col)%><%}%>);
+				EntityManager.StopTracking(entityKey);
+				<%}%>
+			}
+			
+			//Provider Data Requested Command Event
+			OnDataRequested(new CommandEventArgs(commandWrapper, "<%= MethodNames.Delete %>")); 
+
+			if (results == 0)
+			{
+				<% if (RowVersion != null){ %>
+				throw new DBConcurrencyException ("The record has been modified by an other user. Please reload the instance before deleting.");
+				<% } else { %>
+				//throw new DataException("The record has been already deleted.");
+				return false;
+				<% } %>
+			}
+			commandWrapper = null;
+			
+			return Convert.ToBoolean(results);
+		}//end Delete
+		#endregion
+<% } //end if(includedelete)%>
+
+	<%/*	
+		-------------------------------
+		FIND FUNCTIONS
+		-------------------------------
+	*/%>
+	<% if (IncludeFind) { %>
+		#region <%= MethodNames.Find %> Functions
+
+		#region Parsed Find Methods
+		/// <summary>
+		/// 	Returns rows meeting the whereclause condition from the DataSource.
+		/// </summary>
+		/// <param name="transactionManager"><see cref="TransactionManager"/> object</param>
+		/// <param name="whereClause">Specifies the condition for the rows returned by a query (Name='John Doe', Name='John Doe' AND Id='1', Name='John Doe' OR Id='1').</param>
+		/// <param name="start">Row number at which to start reading.</param>
+		/// <param name="pageLength">Number of rows to return.</param>
+		/// <param name="count">out. The number of rows that match this query.</param>
+		/// <remarks>Operators must be capitalized (OR, AND)</remarks>
+		/// <returns>Returns a typed collection of <%=className%> objects.</returns>
+		public override <%=collectionClassName%> <%= MethodNames.Find %>(TransactionManager transactionManager, string whereClause, int start, int pageLength, out int count)
+		{
+			count = -1;
+			if (whereClause.IndexOf(";") > -1)
+				return new <%=collectionClassName%>();
+	
+			SqlDatabase database = new SqlDatabase(this._connectionString);
+			DbCommand commandWrapper = StoredProcedureProvider.GetCommandWrapper(database, "<%=owner + ProcedurePrefix + commandStem + FindSuffix%>", _useStoredProcedure);
+
+		bool searchUsingOR = false;
+		if (whereClause.IndexOf(" OR ") > 0) // did they want to do "a=b OR c=d OR..."?
+			searchUsingOR = true;
+		
+		database.AddInParameter(commandWrapper, "@SearchUsingOR", DbType.Boolean, searchUsingOR);
+		
+	<% foreach(ColumnSchema column in SourceTable.Columns) {%>
+		database.AddInParameter(commandWrapper, "@<%=GetPropertyName(column)%>", DbType.<%=column.DataType%>, DBNull.Value);
+	<% } %>
+	
+			// replace all instances of 'AND' and 'OR' because we already set searchUsingOR
+			whereClause = whereClause.Replace(" AND ", "|").Replace(" OR ", "|") ; 
+			string[] clauses = whereClause.ToLower().Split('|');
+		
+			// Here's what's going on below: Find a field, then to get the value we
+			// drop the field name from the front, trim spaces, drop the '=' sign,
+			// trim more spaces, and drop any outer single quotes.
+			// Now handles the case when two fields start off the same way - like "Friendly='Yes' AND Friend='john'"
+				
+			char[] equalSign = {'='};
+			char[] singleQuote = {'\''};
+			<% string columnName, columnNameSpace, columnNameEqual, columnNameParam; %>
+	   		foreach (string clause in clauses)
+			{
+				<% foreach(ColumnSchema column in SourceTable.Columns) {%>	
+				<% columnName = column.Name.ToLower();
+				      columnNameSpace = columnName + " ";
+				      columnNameEqual = columnName + "=";
+				      columnNameParam = "@" + GetPropertyName(column);
+				%>
+				if (clause.Trim().StartsWith("<%=columnNameSpace%>") || clause.Trim().StartsWith("<%=columnNameEqual%>"))
+				{
+					<%if (column.DataType.ToString() == "Guid") // fix for guid types
+					{%>
+					database.SetParameterValue(commandWrapper, "<%=columnNameParam%>", new Guid(
+						clause.Trim().Remove(0,<%=columnName.Length%>).Trim().TrimStart(equalSign).Trim().Trim(singleQuote)));
+					<%} else {%>
+					database.SetParameterValue(commandWrapper, "<%=columnNameParam%>", 
+						clause.Trim().Remove(0,<%=columnName.Length%>).Trim().TrimStart(equalSign).Trim().Trim(singleQuote));
+					<%}%>
+					continue;
+				}
+				<% } %>
+	
+				throw new ArgumentException("Unable to use this part of the where clause in this version of Find: " + clause);
+			}
+					
+			IDataReader reader = null;
+			//Create Collection
+			<%=collectionClassName%> rows = new <%=collectionClassName%>();
+	
+				
+			try
+			{
+				//Provider Data Requesting Command Event
+				OnDataRequesting(new CommandEventArgs(commandWrapper, "<%= MethodNames.Find %>", rows)); 
+
+				if (transactionManager != null)
+				{
+					reader = Utility.ExecuteReader(transactionManager, commandWrapper);
+				}
+				else
+				{
+					reader = Utility.ExecuteReader(database, commandWrapper);
+				}		
+				
+				Fill(reader, rows, start, pageLength);
+				
+				if(reader.NextResult())
+				{
+					if(reader.Read())
+					{
+						count = reader.GetInt32(0);
+					}
+				}
+				
+				//Provider Data Requested Command Event
+				OnDataRequested(new CommandEventArgs(commandWrapper, "<%= MethodNames.Find %>", rows)); 
+			}
+			finally
+			{
+				if (reader != null) 
+					reader.Close();	
+					
+				commandWrapper = null;
+			}
+			return rows;
+		}
+
+		#endregion Parsed <%= MethodNames.Find %> Methods
+		
+		#region Parameterized <%= MethodNames.Find %> Methods
+		
+		/// <summary>
+		/// 	Returns rows from the DataSource that meet the parameter conditions.
+		/// </summary>
+		/// <param name="transactionManager"><see cref="TransactionManager"/> object</param>
+		/// <param name="parameters">A collection of <see cref="SqlFilterParameter"/> objects.</param>
+		/// <param name="orderBy">Specifies the sort criteria for the rows in the DataSource (Name ASC; BirthDay DESC, Name ASC);</param>
+		/// <param name="start">Row number at which to start reading.</param>
+		/// <param name="pageLength">Number of rows to return.</param>
+		/// <param name="count">out. The number of rows that match this query.</param>
+		/// <returns>Returns a typed collection of <%= className %> objects.</returns>
+		public override <%=collectionClassName%> <%= MethodNames.Find %>(TransactionManager transactionManager, IFilterParameterCollection parameters, string orderBy, int start, int pageLength, out int count)
+		{
+			SqlFilterParameterCollection filter = null;
+			
+			if (parameters == null)
+				filter = new SqlFilterParameterCollection();
+			else 
+				filter = parameters.GetParameters();
+				
+			SqlDatabase database = new SqlDatabase(this._connectionString);
+			DbCommand commandWrapper = StoredProcedureProvider.GetCommandWrapper(database, "<%= owner + ProcedurePrefix + commandStem + FindSuffix %>_Dynamic", typeof(<%= entityClassName %>Column), filter, orderBy, start, pageLength);
+		
+			SqlFilterParameter param;
+
+			for ( int i = 0; i < filter.Count; i++ )
+			{
+				param = filter[i];
+				database.AddInParameter(commandWrapper, param.Name, param.DbType, param.GetValue());
+			}
+
+			<%= collectionClassName %> rows = new <%= collectionClassName %>();
+			IDataReader reader = null;
+			
+			try
+			{
+				//Provider Data Requesting Command Event
+				OnDataRequesting(new CommandEventArgs(commandWrapper, "<%= MethodNames.Find %>", rows)); 
+
+				if ( transactionManager != null )
+				{
+					reader = Utility.ExecuteReader(transactionManager, commandWrapper);
+				}
+				else
+				{
+					reader = Utility.ExecuteReader(database, commandWrapper);
+				}
+				
+				Fill(reader, rows, 0, int.MaxValue);
+				count = rows.Count;
+				
+				if ( reader.NextResult() )
+				{
+					if ( reader.Read() )
+					{
+						count = reader.GetInt32(0);
+					}
+				}
+				
+				//Provider Data Requested Command Event
+				OnDataRequested(new CommandEventArgs(commandWrapper, "<%= MethodNames.Find %>", rows)); 
+			}
+			finally
+			{
+				if ( reader != null )
+					reader.Close();
+					
+				commandWrapper = null;
+			}
+			
+			return rows;
+		}
+		
+		#endregion Parameterized <%= MethodNames.Find %> Methods
+		
+		#endregion <%= MethodNames.Find %> Functions
+	<% } %>
+	
+	<%/*	
+		-------------------------------
+		GET LIST FUNCTIONS
+		-------------------------------
+	*/%>
+<% if (IncludeGetList) { %>
+		#region <%= MethodNames.GetAll %> Methods
+				
+		/// <summary>
+		/// 	Gets All rows from the DataSource.
+		/// </summary>
+		/// <param name="transactionManager"><see cref="TransactionManager"/> object</param>
+		/// <param name="start">Row number at which to start reading.</param>
+		/// <param name="pageLength">Number of rows to return.</param>
+		/// <param name="count">out. The number of rows that match this query.</param>
+		/// <remarks></remarks>
+		/// <returns>Returns a typed collection of <%=className%> objects.</returns>
+        /// <exception cref="System.Exception">The command could not be executed.</exception>
+        /// <exception cref="System.Data.DataException">The <paramref name="transactionManager"/> is not open.</exception>
+        /// <exception cref="System.Data.Common.DbException">The command could not be executed.</exception>
+		public override <%=collectionClassName%> <%= MethodNames.GetAll %>(TransactionManager transactionManager, int start, int pageLength, out int count)
+		{
+			SqlDatabase database = new SqlDatabase(this._connectionString);
+			DbCommand commandWrapper = StoredProcedureProvider.GetCommandWrapper(database, "<%=owner + ProcedurePrefix + commandStem + SelectSuffix + SelectAllSuffix%>", _useStoredProcedure);
+			
+			IDataReader reader = null;
+		
+			//Create Collection
+			<%=collectionClassName%> rows = new <%=collectionClassName%>();
+			
+			try
+			{
+				//Provider Data Requesting Command Event
+				OnDataRequesting(new CommandEventArgs(commandWrapper, "<%= MethodNames.GetAll %>", rows)); 
+					
+				if (transactionManager != null)
+				{
+					reader = Utility.ExecuteReader(transactionManager, commandWrapper);
+				}
+				else
+				{
+					reader = Utility.ExecuteReader(database, commandWrapper);
+				}		
+		
+				Fill(reader, rows, start, pageLength);
+				count = -1;
+				if(reader.NextResult())
+				{
+					if(reader.Read())
+					{
+						count = reader.GetInt32(0);
+					}
+				}
+				
+				//Provider Data Requested Command Event
+				OnDataRequested(new CommandEventArgs(commandWrapper, "<%= MethodNames.GetAll %>", rows)); 
+			}
+			finally 
+			{
+				if (reader != null) 
+					reader.Close();
+					
+				commandWrapper = null;	
+			}
+			return rows;
+		}//end getall
+		
+		#endregion
+				
+		#region <%= MethodNames.GetPaged %> Methods
+				
+		/// <summary>
+		/// Gets a page of rows from the DataSource.
+		/// </summary>
+		/// <param name="start">Row number at which to start reading.</param>
+		/// <param name="pageLength">Number of rows to return.</param>
+		/// <param name="count">Number of rows in the DataSource.</param>
+		/// <param name="whereClause">Specifies the condition for the rows returned by a query (Name='John Doe', Name='John Doe' AND Id='1', Name='John Doe' OR Id='1').</param>
+		/// <param name="orderBy">Specifies the sort criteria for the rows in the DataSource (Name ASC; BirthDay DESC, Name ASC);</param>
+		/// <param name="transactionManager"><see cref="TransactionManager"/> object</param>
+		/// <remarks></remarks>
+		/// <returns>Returns a typed collection of <%=className%> objects.</returns>
+		public override <%=collectionClassName%> <%= MethodNames.GetPaged %>(TransactionManager transactionManager, string whereClause, string orderBy, int start, int pageLength, out int count)
+		{
+			SqlDatabase database = new SqlDatabase(this._connectionString);
+			DbCommand commandWrapper = StoredProcedureProvider.GetCommandWrapper(database, "<%=owner + ProcedurePrefix + commandStem + SelectSuffix + "Paged"%>", _useStoredProcedure);
+		
+			
+            if (commandWrapper.CommandType == CommandType.Text
+                && commandWrapper.CommandText != null)
+            {
+                commandWrapper.CommandText = commandWrapper.CommandText.Replace(SqlUtil.PAGE_INDEX, string.Concat(SqlUtil.PAGE_INDEX, Guid.NewGuid().ToString("N").Substring(0, 8)));
+            }
+			
+			database.AddInParameter(commandWrapper, "@WhereClause", DbType.String, whereClause);
+			database.AddInParameter(commandWrapper, "@OrderBy", DbType.String, orderBy);
+			database.AddInParameter(commandWrapper, "@PageIndex", DbType.Int32, start);
+			database.AddInParameter(commandWrapper, "@PageSize", DbType.Int32, pageLength);
+		
+			IDataReader reader = null;
+			//Create Collection
+			<%=collectionClassName%> rows = new <%=collectionClassName%>();
+			
+			try
+			{
+				//Provider Data Requesting Command Event
+				OnDataRequesting(new CommandEventArgs(commandWrapper, "<%= MethodNames.GetPaged %>", rows)); 
+
+				if (transactionManager != null)
+				{
+					reader = Utility.ExecuteReader(transactionManager, commandWrapper);
+				}
+				else
+				{
+					reader = Utility.ExecuteReader(database, commandWrapper);
+				}
+				
+				Fill(reader, rows, 0, int.MaxValue);
+				count = rows.Count;
+
+				if(reader.NextResult())
+				{
+					if(reader.Read())
+					{
+						count = reader.GetInt32(0);
+					}
+				}
+				
+				//Provider Data Requested Command Event
+				OnDataRequested(new CommandEventArgs(commandWrapper, "<%= MethodNames.GetPaged %>", rows)); 
+
+			}
+			catch(Exception)
+			{			
+				throw;
+			}
+			finally
+			{
+				if (reader != null) 
+					reader.Close();
+				
+				commandWrapper = null;
+			}
+			
+			return rows;
+		}
+		
+		#endregion	
+		
+<%
+ 	} //end IncludeGetList
+	
+	/*---------------------------------------------------------------------------------
+								Get By FK
+	  -------------------------------------------------------------------------------*/
+	
+	if (IncludeGetListByFK) { %>
+		#region Get By Foreign Key Functions
+<%
+		for (int j=0; j < fkeys.Count;j++)
+		{
+			if(IsForeignKeyCoveredByIndex(fkeys[j]))
+					continue;
+					
+			getbyKeys.Add(GetKeysName(fkeys[j].ForeignKeyMemberColumns));
+%>	
+
+		#region GetBy<%=GetKeysName(fkeys[j].ForeignKeyMemberColumns)%>
+		/// <summary>
+		/// 	Gets rows from the datasource based on the <%=fkeys[j].Name%> key.
+		///		<%=fkeys[j].Name%> Description: <%=GetColumnXmlComment(fkeys[j],2)%>
+		/// </summary>
+		/// <param name="start">Row number at which to start reading.</param>
+		/// <param name="pageLength">Number of rows to return.</param>
+		/// <param name="transactionManager"><see cref="TransactionManager"/> object</param>
+		<% for (int i = 0; i < fkeys[j].ForeignKeyMemberColumns.Count; i++) { %>
+		/// <param name="<%= GetFieldName(fkeys[j].ForeignKeyMemberColumns[i])%>"><%=GetColumnXmlComment(fkeys[j].ForeignKeyMemberColumns[i],2)%></param>
+		<% } %>
+		/// <param name="count">out parameter to get total records for query</param>
+		/// <remarks></remarks>
+		/// <returns>Returns a typed collection of <%=className%> objects.</returns>
+        /// <exception cref="System.Exception">The command could not be executed.</exception>
+        /// <exception cref="System.Data.DataException">The <paramref name="transactionManager"/> is not open.</exception>
+        /// <exception cref="System.Data.Common.DbException">The command could not be executed.</exception>
+		public override <%=collectionClassName%> GetBy<%=GetKeysName(fkeys[j].ForeignKeyMemberColumns)%>(TransactionManager transactionManager, <%= GetFunctionHeaderParameters(fkeys[j].ForeignKeyMemberColumns) %>, int start, int pageLength, out int count)
+		{
+			SqlDatabase database = new SqlDatabase(this._connectionString);
+			DbCommand commandWrapper = StoredProcedureProvider.GetCommandWrapper(database, "<%=owner + GetProcNameForGetByIX(ProcedurePrefix + commandStem + SelectSuffix + "By", fkeys[j].ForeignKeyMemberColumns)%>", _useStoredProcedure);
+			
+			<% foreach(ColumnSchema col in fkeys[j].ForeignKeyMemberColumns) { %>
+				database.AddInParameter(commandWrapper, "@<%=GetPropertyName(col)%>", DbType.<%=col.DataType%>, <%=GetFieldName(col)%>);
+			<% } %>
+			
+			IDataReader reader = null;
+			<%=collectionClassName%> rows = new <%=collectionClassName%>();
+			try
+			{
+				//Provider Data Requesting Command Event
+				OnDataRequesting(new CommandEventArgs(commandWrapper, "GetBy<%=GetKeysName(fkeys[j].ForeignKeyMemberColumns)%>", rows)); 
+
+				if (transactionManager != null)
+				{
+					reader = Utility.ExecuteReader(transactionManager, commandWrapper);
+				}
+				else
+				{
+					reader = Utility.ExecuteReader(database, commandWrapper);
+				}
+			
+				//Create Collection
+				Fill(reader, rows, start, pageLength);
+				count = -1;
+				if(reader.NextResult())
+				{
+					if(reader.Read())
+					{
+						count = reader.GetInt32(0);
+					}
+				}
+				
+				//Provider Data Requested Command Event
+				OnDataRequested(new CommandEventArgs(commandWrapper, "GetBy<%=GetKeysName(fkeys[j].ForeignKeyMemberColumns)%>", rows)); 
+			}
+			finally
+			{
+				if (reader != null) 
+					reader.Close();
+					
+				commandWrapper = null;
+			}
+			return rows;
+		}	
+		#endregion
+	
+<% 		}//endfor %>
+	#endregion
+	
+<% 	} //end includegetlistbyfk %>
+<%
+
+	/*---------------------------------------------------------------------------------
+								Get By Index
+	  -------------------------------------------------------------------------------*/
+	
+	if (IncludeGetListByIX) {
+	%>	
+		#region Get By Index Functions
+	<%	
+		for (int j=0; j < indexes.Count;j++)
+		{
+			// Check if this key is not already generated
+			if(getbyKeys.IndexOf(GetKeysName(indexes[j].MemberColumns)) >=0 )
+			{
+				continue;
+			}
+			else
+			{
+				// add this key to the index list
+				getbyKeys.Add(GetKeysName(indexes[j].MemberColumns));
+			}
+			
+			string returnType = collectionClassName;
+			bool isUnique = false;
+				
+			//if (IsPrimaryKey(indexes[j]))
+			if (indexes[j].IsUnique || indexes[j].IsPrimaryKey)
+			{
+				returnType = className;
+				isUnique = true;
+			}
+			
+			string returnTypeForComment = returnType.Replace("<", "&lt;").Replace(">", "&gt;");
+	%>
+
+		#region GetBy<%=GetKeysName(indexes[j].MemberColumns)%>
+					
+		/// <summary>
+		/// 	Gets rows from the datasource based on the <%=indexes[j].Name%> index.
+		/// </summary>
+		/// <param name="transactionManager"><see cref="TransactionManager"/> object</param>
+	<% for (int i = 0; i < indexes[j].MemberColumns.Count; i++) { %>
+		/// <param name="<%= GetFieldName(indexes[j].MemberColumns[i])%>"><%= GetColumnXmlComment(indexes[j].MemberColumns[i],2)%></param>
+	<% } %>
+		/// <param name="start">Row number at which to start reading.</param>
+		/// <param name="pageLength">Number of rows to return.</param>
+		/// <param name="count">out parameter to get total records for query</param>
+		/// <returns>Returns an instance of the <see cref="<%=returnTypeForComment%>"/> class.</returns>
+		/// <remarks></remarks>
+        /// <exception cref="System.Exception">The command could not be executed.</exception>
+        /// <exception cref="System.Data.DataException">The <paramref name="transactionManager"/> is not open.</exception>
+        /// <exception cref="System.Data.Common.DbException">The command could not be executed.</exception>
+		public override <%=returnType%> GetBy<%=GetKeysName(indexes[j].MemberColumns)%>(TransactionManager transactionManager, <%= GetFunctionHeaderParameters(indexes[j].MemberColumns) %>, int start, int pageLength, out int count)
+		{
+			SqlDatabase database = new SqlDatabase(this._connectionString);
+			DbCommand commandWrapper = StoredProcedureProvider.GetCommandWrapper(database, "<%=owner + GetProcNameForGetByIX(ProcedurePrefix + commandStem + SelectSuffix + "By", indexes[j].MemberColumns)%>", _useStoredProcedure);
+			
+			<% foreach(ColumnSchema col in indexes[j].MemberColumns) { %>
+				database.AddInParameter(commandWrapper, "@<%=GetPropertyName(col)%>", DbType.<%=col.DataType%>, <%=GetFieldName(col)%>);
+			<% } %>
+			
+			IDataReader reader = null;
+			<%=collectionClassName%> tmp = new <%=collectionClassName%>();
+			try
+			{
+				//Provider Data Requesting Command Event
+				OnDataRequesting(new CommandEventArgs(commandWrapper, "GetBy<%=GetKeysName(indexes[j].MemberColumns)%>", tmp)); 
+
+				if (transactionManager != null)
+				{
+					reader = Utility.ExecuteReader(transactionManager, commandWrapper);
+				}
+				else
+				{
+					reader = Utility.ExecuteReader(database, commandWrapper);
+				}		
+		
+				//Create collection and fill
+				Fill(reader, tmp, start, pageLength);
+				count = -1;
+				if(reader.NextResult())
+				{
+					if(reader.Read())
+					{
+						count = reader.GetInt32(0);
+					}
+				}
+				
+				//Provider Data Requested Command Event
+				OnDataRequested(new CommandEventArgs(commandWrapper, "GetBy<%=GetKeysName(indexes[j].MemberColumns)%>", tmp));
+			}
+			finally 
+			{
+				if (reader != null) 
+					reader.Close();
+					
+				commandWrapper = null;
+			}
+			
+			<% if (isUnique) { %>
+			if (tmp.Count == 1)
+			{
+				return tmp[0];
+			}
+			else if (tmp.Count == 0)
+			{
+				return null;
+			}
+			else
+			{
+				throw new DataException("Cannot find the unique instance of the class.");
+			}
+			<% } else { %>
+			return tmp;
+			<% } %>	
+			
+			//return rows;
+		}
+		
+		#endregion
+
+<%		}//endfor %>
+	#endregion Get By Index Functions
+<%	}//end if includegetlistbyix
+	
+		/*---------------------------------------------------------------------------------
+								Insert
+							Single Key, Identity
+	  	-------------------------------------------------------------------------------*/
+	
+	if (IncludeInsert) 
+	{
+%>
+
+		#region <%= MethodNames.Insert %> Methods
+		/// <summary>
+		/// Lets you efficiently bulk many entity to the database.
+		/// </summary>
+		/// <param name="transactionManager">The transaction manager.</param>
+		/// <param name="entities">The entities.</param>
+		/// <remarks>
+		///		After inserting into the datasource, the <%=className%> object will be updated
+		/// 	to refelect any changes made by the datasource. (ie: identity or computed columns)
+		/// </remarks>	
+		public override void <%= MethodNames.BulkInsert %>(TransactionManager transactionManager, TList<<%=className%>> entities)
+		{
+			//System.Data.SqlClient.SqlBulkCopy bulkCopy = new System.Data.SqlClient.SqlBulkCopy(this._connectionString, System.Data.SqlClient.SqlBulkCopyOptions.CheckConstraints); //, null);
+			
+			System.Data.SqlClient.SqlBulkCopy bulkCopy = null;
+	
+			if (transactionManager != null && transactionManager.IsOpen)
+			{			
+				System.Data.SqlClient.SqlConnection cnx = transactionManager.TransactionObject.Connection as System.Data.SqlClient.SqlConnection;
+				System.Data.SqlClient.SqlTransaction transaction = transactionManager.TransactionObject as System.Data.SqlClient.SqlTransaction;
+				bulkCopy = new System.Data.SqlClient.SqlBulkCopy(cnx, System.Data.SqlClient.SqlBulkCopyOptions.CheckConstraints, transaction); //, null);
+			}
+			else
+			{
+				bulkCopy = new System.Data.SqlClient.SqlBulkCopy(this._connectionString, System.Data.SqlClient.SqlBulkCopyOptions.CheckConstraints); //, null);
+			}
+			
+			bulkCopy.BulkCopyTimeout = 360;
+			bulkCopy.DestinationTableName = "<%=SourceTable.Name%>";
+			
+			DataTable dataTable = new DataTable();
+			<% 	for (int i = 0; i < cols.Count; i++) { %>
+			DataColumn col<%=i%> = dataTable.Columns.Add("<%=cols[i].Name%>", typeof(<%=GetCSType(cols[i], false)%>));
+			col<%=i%>.AllowDBNull = <%= cols[i].AllowDBNull.ToString().ToLower()%>;		
+			<% } %>
+			
+			<% 
+			for (int i = 0; i < cols.Count; i++) { %>
+			bulkCopy.ColumnMappings.Add("<%=cols[i].Name%>", "<%=cols[i].Name%>");
+			<% } %>
+			
+			foreach(<%=className%> entity in entities)
+			{
+				if (entity.EntityState != EntityState.Added)
+					continue;
+					
+				DataRow row = dataTable.NewRow();
+				<% for (int i = 0; i < cols.Count; i++) { %>
+				
+				<% if (cols[i].AllowDBNull && !IsCSReferenceDataType(cols[i])  ){ %>
+					row["<%=cols[i].Name %>"] = entity.<%=GetPropertyName(cols[i])%>.HasValue ? (object) entity.<%=GetPropertyName(cols[i])%>  : System.DBNull.Value;
+				<% } else { %>
+					row["<%=cols[i].Name %>"] = entity.<%= GetPropertyName(cols[i]) %>;
+				<% } // end if %>		
+							
+				<% } // end for %>
+				
+				dataTable.Rows.Add(row);
+			}		
+			
+			// send the data to the server		
+			bulkCopy.WriteToServer(dataTable);		
+			
+			// update back the state
+			foreach(<%=className%> entity in entities)
+			{
+				if (entity.EntityState != EntityState.Added)
+					continue;
+			
+				entity.AcceptChanges();
+			}
+		}
+				
+		/// <summary>
+		/// 	Inserts a <%=className%> object into the datasource using a transaction.
+		/// </summary>
+		/// <param name="transactionManager"><see cref="TransactionManager"/> object</param>
+		/// <param name="entity"><%=className%> object to insert.</param>
+		/// <remarks>
+		///		After inserting into the datasource, the <%=className%> object will be updated
+		/// 	to refelect any changes made by the datasource. (ie: identity or computed columns)
+		/// </remarks>	
+		/// <returns>Returns true if operation is successful.</returns>
+        /// <exception cref="System.Exception">The command could not be executed.</exception>
+        /// <exception cref="System.Data.DataException">The <paramref name="transactionManager"/> is not open.</exception>
+        /// <exception cref="System.Data.Common.DbException">The command could not be executed.</exception>
+		public override bool <%= MethodNames.Insert %>(TransactionManager transactionManager, <%=className%> entity)
+		{
+			SqlDatabase database = new SqlDatabase(this._connectionString);
+			DbCommand commandWrapper = StoredProcedureProvider.GetCommandWrapper(database, "<%=owner + ProcedurePrefix + commandStem + InsertSuffix %>", _useStoredProcedure);
+			
+			<%			
+			for (int i = 0; i < cols.Count; i++)		
+			{ 	
+				if (RowVersion != null && cols[i] == RowVersion) { %>
+			database.AddOutParameter(commandWrapper, "@<%=GetPropertyName(RowVersion)%>", DbType.<%= RowVersion.DataType.ToString() %>, 8);
+				<% } else if ( IsComputed(cols[i]) || IsIdentityColumn(cols[i]) ) { %>
+			database.AddOutParameter(commandWrapper, "@<%=GetPropertyName(cols[i])%>", DbType.<%= cols[i].DataType.ToString() %>, <%= cols[i].Size.ToString() %>);
+				<%} else {
+					if (cols[i].AllowDBNull && !IsCSReferenceDataType(cols[i])  )
+					{ 
+			// String types are nullable, but all other types are value types %>
+			database.AddInParameter(commandWrapper, "@<%=GetPropertyName(cols[i])%>", DbType.<%= cols[i].DataType.ToString() %>, (entity.<%=GetPropertyName(cols[i])%>.HasValue ? (object) entity.<%=GetPropertyName(cols[i])%>  : System.DBNull.Value));
+					<% } else {%>
+			database.AddInParameter(commandWrapper, "@<%=GetPropertyName(cols[i])%>", <%= GetDbType(cols[i]) %>, entity.<%=GetPropertyName(cols[i])%> );
+				<% }
+				}		
+			} // end for 
+			
+			%>
+			
+			int results = 0;
+			
+			//Provider Data Requesting Command Event
+			OnDataRequesting(new CommandEventArgs(commandWrapper, "<%= MethodNames.Insert %>", entity));
+				
+			if (transactionManager != null)
+			{
+				results = Utility.ExecuteNonQuery(transactionManager, commandWrapper);
+			}
+			else
+			{
+				results = Utility.ExecuteNonQuery(database,commandWrapper);
+			}
+					
+			<%
+			// Update identity or computed columns
+			for (int i = 0; i < cols.Count; i++)		
+			{
+				if (IsComputed(cols[i]) || IsIdentityColumn(cols[i]) )
+				{
+					string castTo = String.Empty;
+					
+					if (cols[i].NativeType == "xml") 
+						castTo = typeof(System.String).ToString();
+					else
+						castTo = cols[i].SystemType.ToString();	%>
+
+			entity.<%=GetPropertyName(cols[i])%> = (<%=castTo%>) database.GetParameterValue(commandWrapper, "@<%=GetPropertyName(cols[i])%>");						
+				<%}
+			}
+			%>
+			
+			<% 			
+			// synchronise utility properties for updatable primary key
+			for (int i = 0; i < SourceTable.PrimaryKey.MemberColumns.Count; i++)		
+			{
+				if( !IsComputed(SourceTable.PrimaryKey.MemberColumns[i]) && !IsIdentityColumn(SourceTable.PrimaryKey.MemberColumns[i]) )
+				{%>
+			entity.Original<%=GetPropertyName(SourceTable.PrimaryKey.MemberColumns[i])%> = entity.<%=GetPropertyName(SourceTable.PrimaryKey.MemberColumns[i])%>;
+				<%}
+			}
+			
+			%>
+			
+			entity.AcceptChanges();
+	
+			//Provider Data Requested Command Event
+			OnDataRequested(new CommandEventArgs(commandWrapper, "<%= MethodNames.Insert %>", entity));
+
+			return Convert.ToBoolean(results);
+		}	
+		#endregion
+
+<%
+	}//end if
+
+		/*---------------------------------------------------------------------------------
+								Update
+	  	-------------------------------------------------------------------------------*/
+		
+	if (IncludeUpdate) 
+	{
+		
+%>	
+		#region <%= MethodNames.Update %> Methods
+				
+		/// <summary>
+		/// 	Update an existing row in the datasource.
+		/// </summary>
+		/// <param name="transactionManager"><see cref="TransactionManager"/> object</param>
+		/// <param name="entity"><%=className%> object to update.</param>
+		/// <remarks>
+		///		After updating the datasource, the <%=className%> object will be updated
+		/// 	to refelect any changes made by the datasource. (ie: identity or computed columns)
+		/// </remarks>
+		/// <returns>Returns true if operation is successful.</returns>
+        /// <exception cref="System.Exception">The command could not be executed.</exception>
+        /// <exception cref="System.Data.DataException">The <paramref name="transactionManager"/> is not open.</exception>
+        /// <exception cref="System.Data.Common.DbException">The command could not be executed.</exception>
+		public override bool <%= MethodNames.Update %>(TransactionManager transactionManager, <%=className%> entity)
+		{
+			SqlDatabase database = new SqlDatabase(this._connectionString);
+			DbCommand commandWrapper = StoredProcedureProvider.GetCommandWrapper(database, "<%=owner + ProcedurePrefix + commandStem + UpdateSuffix %>", _useStoredProcedure);
+			
+			<%		
+			//Debugger.Break();
+			for (int i = 0; i < cols.Count; i++)		
+			{ 	
+				if (IsComputed(cols[i]) && cols[i] != RowVersion)
+				{
+					if (cols[i].NativeType == "numeric" )
+					{%>
+			database.AddParameter(commandWrapper, "@<%=GetPropertyName(cols[i])%>", SqlDbType.<%= cols[i].DataType.ToString() %>, <%= cols[i].Size.ToString() %>, ParameterDirection.Output, true, <%= cols[i].Precision.ToString() %>, <%= cols[i].Scale.ToString() %>, null, DataRowVersion.Default, null);
+			<%
+					}
+					else
+					{%>
+			database.AddOutParameter(commandWrapper, "@<%=GetPropertyName(cols[i])%>", DbType.<%= cols[i].DataType.ToString() %>, <%= cols[i].Size.ToString() %>);
+			
+				<%	}
+				}
+				else
+				{
+					if (cols[i].AllowDBNull && !IsCSReferenceDataType(cols[i])  )
+					{ 
+						// String types are nullable, but all other types are value types%>
+			database.AddInParameter(commandWrapper, "@<%=GetPropertyName(cols[i])%>", DbType.<%= cols[i].DataType.ToString() %>, (entity.<%=GetPropertyName(cols[i])%>.HasValue ? (object) entity.<%=GetPropertyName(cols[i])%> : System.DBNull.Value) );
+					<%}
+					else				
+				{%>
+			database.AddInParameter(commandWrapper, "@<%=GetPropertyName(cols[i])%>", <%=GetDbType(cols[i]) %>, entity.<%=GetPropertyName(cols[i])%> );
+				<%}
+				}
+				if (cols[i].IsPrimaryKeyMember && !IsComputed(cols[i]) && !IsIdentityColumn(cols[i]) && cols[i] != RowVersion)
+				{%>
+			database.AddInParameter(commandWrapper, "@Original<%=GetPropertyName(cols[i])%>", DbType.<%= cols[i].DataType.ToString() %>, entity.Original<%=GetPropertyName(cols[i])%>);
+				<%}
+			}
+			
+			if (RowVersion != null)
+			{%>
+			database.AddOutParameter(commandWrapper, "@Returned<%=GetPropertyName(RowVersion)%>", DbType.<%= RowVersion.DataType.ToString() %>, 8);
+			<%}%>
+			
+			int results = 0;
+			
+			//Provider Data Requesting Command Event
+			OnDataRequesting(new CommandEventArgs(commandWrapper, "<%= MethodNames.Update %>", entity));
+
+			if (transactionManager != null)
+			{
+				results = Utility.ExecuteNonQuery(transactionManager, commandWrapper);
+			}
+			else
+			{
+				results = Utility.ExecuteNonQuery(database,commandWrapper);
+			}
+			
+			//Stop Tracking Now that it has been updated and persisted.
+			if (DataRepository.Provider.EnableEntityTracking)
+				EntityManager.StopTracking(entity.EntityTrackingKey);
+			
+		<%
+		if (RowVersion != null)
+		{%>
+			if (results == 0)
+			{
+				throw new DBConcurrencyException("Concurrency exception");
+			}
+		
+			entity.<%=GetPropertyName(RowVersion)%> = (<%=RowVersion.SystemType.ToString()%>)database.GetParameterValue(commandWrapper, "@Returned<%=GetPropertyName(RowVersion)%>");
+		<%}
+			
+		// Update identity or computed columns
+		for (int i = 0; i < cols.Count; i++)		
+		{
+			if (IsComputed(cols[i]) && cols[i] != RowVersion)
+			{
+					string castTo = String.Empty;
+				
+					if (cols[i].NativeType == "xml") 
+						castTo = typeof(System.String).ToString();
+					else
+						castTo = cols[i].SystemType.ToString();				
+				%>
+			entity.<%=GetPropertyName(cols[i])%> = (<%=castTo%>)database.GetParameterValue(commandWrapper, "@<%=GetPropertyName(cols[i])%>");
+			<%}
+		
+			// if in the PK, update the original
+			if (cols[i].IsPrimaryKeyMember && !IsComputed(cols[i]) && !IsIdentityColumn(cols[i]) && cols[i] != RowVersion)
+			{%>
+			entity.Original<%=GetPropertyName(cols[i])%> = entity.<%=GetPropertyName(cols[i])%>;
+			<%}
+			
+		}%>
+			
+			entity.AcceptChanges();
+			
+			//Provider Data Requested Command Event
+			OnDataRequested(new CommandEventArgs(commandWrapper, "<%= MethodNames.Update %>", entity));
+
+			return Convert.ToBoolean(results);
+		}
+			
+		#endregion
+		
+<%	}//end if %>
+<%
+
+/*---------------------------------------------------------------------------------
+							CUSTOM STORED PROCEDURES
+  -------------------------------------------------------------------------------*/%>
+<% if (IncludeCustoms) { %>
+		#region Custom Methods
+	
+<% 
+	System.Collections.IDictionary procs = GetCustomProcedures(SourceTable);
+	
+	foreach(DictionaryEntry item in procs)
+	{  
+		SchemaExplorer.CommandSchema command = (SchemaExplorer.CommandSchema) item.Value;
+		string methodName  = item.Key.ToString();					
+		string returnType = GetReturnCustomProcReturnType(CustomNonMatchingReturnType, SourceTable, command);
+		string returnTypeForComment = returnType.Replace("<", "&lt;").Replace(">", "&gt;");%>
+
+		#region <%=command.Name%>
+					
+		/// <summary>
+		///	This method wrap the '<%=command.Name%>' stored procedure. 
+		/// </summary>	<%=TransformStoredProcedureInputsToMethodComments(command.InputParameters) + TransformStoredProcedureOutputsToMethodComments(command.AllOutputParameters)%>
+		/// <param name="start">Row number at which to start reading.</param>
+		/// <param name="pageLength">Number of rows to return.</param>
+		/// <param name="transactionManager"><see cref="TransactionManager"/> object</param>
+		/// <remark>This method is generate from a stored procedure.</remark><% if (returnType != "void") {%>
+		/// <returns>A <see cref="<%=returnTypeForComment%>"/> instance.</returns><%}%>
+		public override <%= returnType %> <%=methodName%>(TransactionManager transactionManager, int start, int pageLength <%=TransformStoredProcedureInputsToMethod(true, command.InputParameters) + TransformStoredProcedureOutputsToMethod(true, command.AllOutputParameters)%>)
+		{
+			SqlDatabase database = new SqlDatabase(this._connectionString);
+			DbCommand commandWrapper = database.GetStoredProcCommand("<%= GetOwnerName(command, true) %><%=GetSafeName(command.Name)%>");
+			
+		<% foreach(ParameterSchema col in command.InputParameters)	{%>			
+			database.AddInParameter(commandWrapper, "<%=col.Name%>", <%=GetDbType(col)%>,  <%=GetFieldName(col)%> );
+		<%}%>
+	
+		<% foreach(SchemaExplorer.ParameterSchema col in command.AllOutputParameters)	{ %>
+			database.AddParameter(commandWrapper, "<%=col.Name%>", DbType.<%=col.DataType.ToString()%>, <%= col.Size %>, ParameterDirection.InputOutput, <%= col.AllowDBNull.ToString().ToLower() %>, <%= col.Precision %>, <%= col.Scale %>, string.Empty, DataRowVersion.Current, <%=GetFieldName(col)%>);
+		<%}%>
+			
+			<%			
+			//Set up the output params
+			StringBuilder outputValues = new StringBuilder();
+
+			foreach(ParameterSchema outParam in command.AllOutputParameters)
+			{
+				outputValues.AppendFormat("\t\t\t{0} =  Utility.GetParameterValue<{1}>(commandWrapper.Parameters[\"{2}\"]);\n",GetFieldName(outParam), GetCSType(outParam), outParam.Name); 
+			}
+			%>
+			<% if (returnType == "DataSet") { %>
+			DataSet ds = null;
+			
+			//Provider Data Requesting Command Event
+			OnDataRequesting(new CommandEventArgs(commandWrapper, "<%= methodName %>", (IEntity)null));
+
+			if (transactionManager != null)
+			{	
+				ds = database.ExecuteDataSet(commandWrapper, transactionManager.TransactionObject);
+			}
+			else
+			{
+				ds = database.ExecuteDataSet(commandWrapper);
+			}
+			
+			//Provider Data Requested Command Event
+			OnDataRequested(new CommandEventArgs(commandWrapper, "<%= methodName %>", (IEntity)null));
+
+			
+<%=outputValues.ToString()%>
+			
+			return ds;	
+			<% } else if (returnType == "IDataReader") { %>
+			IDataReader dr = null;
+			//Provider Data Requesting Command Event
+			OnDataRequesting(new CommandEventArgs(commandWrapper, "<%= methodName %>", (IEntity)null));
+
+			if (transactionManager != null)
+			{	
+				dr = Utility.ExecuteReader(transactionManager,commandWrapper);
+			}
+			else
+			{
+				dr = Utility.ExecuteReader(database, commandWrapper);
+			}
+			
+			//Provider Data Requested Command Event
+			OnDataRequested(new CommandEventArgs(commandWrapper, "<%= methodName %>", (IEntity)null));
+
+<%=outputValues.ToString()%>
+
+			return dr;
+			<% } else if (returnType == "void") { %>
+			//Provider Data Requesting Command Event
+			OnDataRequesting(new CommandEventArgs(commandWrapper, "<%= methodName %>", (IEntity)null));
+
+			if (transactionManager != null)
+			{	
+				Utility.ExecuteNonQuery(transactionManager, commandWrapper );
+			}
+			else
+			{
+				Utility.ExecuteNonQuery(database, commandWrapper);
+			}
+						
+			//Provider Data Requested Command Event
+			OnDataRequested(new CommandEventArgs(commandWrapper, "<%= methodName %>", (IEntity)null));
+
+<%=outputValues.ToString()%>
+				
+				return;
+			<% } else if 	(collectionClassName.Contains(returnType)) { %>
+			IDataReader reader = null;
+			
+			//Create Collection
+			<% if (collectionClassName.Contains(returnType)) {%>
+				<%=collectionClassName%> rows = new <%=collectionClassName%>();
+				//Provider Data Requesting Command Event
+				OnDataRequesting(new CommandEventArgs(commandWrapper, "<%= methodName %>", rows));
+	
+				if (transactionManager != null)
+				{	
+					reader = Utility.ExecuteReader(transactionManager, commandWrapper);
+				}
+				else
+				{
+					reader = Utility.ExecuteReader(database, commandWrapper);
+				}	
+				
+				try
+				{    
+					Fill(reader, rows, start, pageLength);
+				}
+				finally
+				{
+					if (reader != null) 
+						reader.Close();
+				}
+				
+				//Provider Data Requested Command Event
+				OnDataRequested(new CommandEventArgs(commandWrapper, "<%= methodName %>", rows));
+
+<%=outputValues.ToString()%>
+				return rows;
+				<%} else if (returnType != "void"){%>
+				<%=returnType%> tmp = null;
+				
+				//Provider Data Requesting Command Event
+				OnDataRequesting(new CommandEventArgs(commandWrapper, "<%= methodName %>", tmp));
+				
+				if (transactionManager != null)
+				{	
+					reader = Utility.ExecuteReader(transactionManager, commandWrapper);
+				}
+				else
+				{
+					reader = Utility.ExecuteReader(database, commandWrapper);
+				}	
+				
+				try
+				{
+					reader.Read();
+					tmp = (<%=returnType%>)reader[0];
+				//Provider Data Requested Command Event
+				OnDataRequested(new CommandEventArgs(commandWrapper, "<%= methodName %>", tmp));
+
+				}finally {reader.Close();}
+<%=outputValues.ToString()%>
+				return tmp;
+				<% } %>		
+			<% } %>
+		}
+		#endregion
+<%
+	}
+%>
+		#endregion
+<% } // endif IncludeCustoms %>
+	}//end class
+} // end namespace

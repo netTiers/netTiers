@@ -1,0 +1,93 @@
+﻿<%@ CodeTemplate Language="C#" TargetLanguage="XML" Description="EntLibConfiguration file." Debug="true" ResponseEncoding="UTF-8"  NoWarn="0108,0618,1572,1573,1574,0162,2002" %>
+<%@ Property Name="NameSpace" Type="System.String" Category="Data" Description="Namespace." %>
+<%@ Property Name="BLLNameSpace" Type="System.String" Category="Data" Description="BLL Namespace." %>
+<configuration>
+    <configSections>
+        <section name="securityConfiguration" type="Microsoft.Practices.EnterpriseLibrary.Security.Configuration.SecuritySettings, Microsoft.Practices.EnterpriseLibrary.Security, Version=2.0.0.0, Culture=neutral, PublicKeyToken=null" />
+        <section name="loggingConfiguration" type="Microsoft.Practices.EnterpriseLibrary.Logging.Configuration.LoggingSettings, Microsoft.Practices.EnterpriseLibrary.Logging, Version=2.0.0.0, Culture=neutral, PublicKeyToken=null" />
+        <section name="exceptionHandling" type="Microsoft.Practices.EnterpriseLibrary.ExceptionHandling.Configuration.ExceptionHandlingSettings, Microsoft.Practices.EnterpriseLibrary.ExceptionHandling, Version=2.0.0.0, Culture=neutral, PublicKeyToken=null" />
+        <section name="dataConfiguration" type="Microsoft.Practices.EnterpriseLibrary.Data.Configuration.DatabaseSettings, Microsoft.Practices.EnterpriseLibrary.Data, Version=2.0.0.0, Culture=neutral, PublicKeyToken=null" />
+        <section name="cachingConfiguration" type="Microsoft.Practices.EnterpriseLibrary.Caching.Configuration.CacheManagerSettings, Microsoft.Practices.EnterpriseLibrary.Caching, Version=2.0.0.0, Culture=neutral, PublicKeyToken=null" />
+    </configSections>
+    <securityConfiguration defaultAuthorizationInstance="NetTiers.RuleProvider"
+        defaultSecurityCacheInstance="Caching Store Provider">
+        <authorizationProviders>
+            <add type="Microsoft.Practices.EnterpriseLibrary.Security.AuthorizationRuleProvider, Microsoft.Practices.EnterpriseLibrary.Security, Version=2.0.0.0, Culture=neutral, PublicKeyToken=null"
+                name="NetTiers.RuleProvider">
+                <rules>
+                    <add expression="I:? OR R:Guest" name="AnonymousRule" />
+                </rules>
+            </add>
+        </authorizationProviders>
+        <securityCacheProviders>
+            <add cacheManagerInstanceName="<%= BLLNameSpace %>.EntityCache"
+                defaultSlidingSessionExpirationInMinutes="10" defaultAbsoluteSessionExpirationInMinutes="60"
+                type="Microsoft.Practices.EnterpriseLibrary.Security.Cache.CachingStore.CachingStoreProvider, Microsoft.Practices.EnterpriseLibrary.Security.Cache.CachingStore, Version=2.0.0.0, Culture=neutral, PublicKeyToken=null"
+                name="Caching Store Provider" />
+        </securityCacheProviders>
+    </securityConfiguration>
+    <loggingConfiguration name="Logging Application Block" tracingEnabled="true"
+        defaultCategory="General" logWarningsWhenNoCategoriesMatch="true">
+        <listeners>
+            <add fileName="<%= NameSpace %>.log.exclude" header="----------------------------------------"
+                footer="----------------------------------------" formatter="Text Formatter"
+                listenerDataType="Microsoft.Practices.EnterpriseLibrary.Logging.Configuration.FlatFileTraceListenerData, Microsoft.Practices.EnterpriseLibrary.Logging, Version=2.0.0.0, Culture=neutral, PublicKeyToken=null"
+                traceOutputOptions="None" type="Microsoft.Practices.EnterpriseLibrary.Logging.TraceListeners.FlatFileTraceListener, Microsoft.Practices.EnterpriseLibrary.Logging, Version=2.0.0.0, Culture=neutral, PublicKeyToken=null"
+                name="FlatFile TraceListener" />
+        </listeners>
+        <formatters>
+            <add template="Timestamp: {timestamp}&#xD;&#xA;Message: {message}&#xD;&#xA;Category: {category}&#xD;&#xA;Priority: {priority}&#xD;&#xA;EventId: {eventid}&#xD;&#xA;Severity: {severity}&#xD;&#xA;Title:{title}"
+                type="Microsoft.Practices.EnterpriseLibrary.Logging.Formatters.TextFormatter, Microsoft.Practices.EnterpriseLibrary.Logging, Version=2.0.0.0, Culture=neutral, PublicKeyToken=null"
+                name="Text Formatter" />
+        </formatters>
+        <categorySources>
+            <add switchValue="Error" name="Exceptions">
+                <listeners>
+                    <add name="FlatFile TraceListener" />
+                </listeners>
+            </add>
+            <add switchValue="All" name="General">
+                <listeners>
+                    <add name="FlatFile TraceListener" />
+                </listeners>
+            </add>
+        </categorySources>
+        <specialSources>
+            <allEvents switchValue="All" name="All Events" />
+            <notProcessed switchValue="All" name="Unprocessed Category" />
+            <errors switchValue="All" name="Logging Errors &amp; Warnings">
+                <listeners>
+                    <add name="FlatFile TraceListener" />
+                </listeners>
+            </errors>
+        </specialSources>
+    </loggingConfiguration>
+    <exceptionHandling>
+        <exceptionPolicies>
+            <add name="NoneExceptionPolicy">
+                <exceptionTypes>
+                    <add type="System.Exception, mscorlib, Version=2.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089"
+                        postHandlingAction="None" name="Exception">
+                        <exceptionHandlers>
+                            <add logCategory="Exceptions" eventId="100" severity="Error"
+                                title="<%= NameSpace %> Exception Handling" formatterType="Microsoft.Practices.EnterpriseLibrary.ExceptionHandling.XmlExceptionFormatter, Microsoft.Practices.EnterpriseLibrary.ExceptionHandling, Version=2.0.0.0, Culture=neutral, PublicKeyToken=null"
+                                priority="0" type="Microsoft.Practices.EnterpriseLibrary.ExceptionHandling.Logging.LoggingExceptionHandler, Microsoft.Practices.EnterpriseLibrary.ExceptionHandling.Logging, Version=2.0.0.0, Culture=neutral, PublicKeyToken=null"
+                                name="Logging Handler" />
+                        </exceptionHandlers>
+                    </add>
+                </exceptionTypes>
+            </add>
+        </exceptionPolicies>
+    </exceptionHandling>
+    <cachingConfiguration defaultCacheManager="<%= BLLNameSpace %>.EntityCache">
+        <cacheManagers>
+            <add expirationPollFrequencyInSeconds="60" maximumElementsInCacheBeforeScavenging="1000"
+                numberToRemoveWhenScavenging="10" backingStoreName="Null Storage"
+                name="<%= BLLNameSpace %>.EntityCache" />
+        </cacheManagers>
+        <backingStores>
+            <add encryptionProviderName="" type="Microsoft.Practices.EnterpriseLibrary.Caching.BackingStoreImplementations.NullBackingStore, Microsoft.Practices.EnterpriseLibrary.Caching, Version=2.0.0.0, Culture=neutral, PublicKeyToken=null"
+                name="Null Storage" />
+        </backingStores>
+    </cachingConfiguration>
+</configuration>

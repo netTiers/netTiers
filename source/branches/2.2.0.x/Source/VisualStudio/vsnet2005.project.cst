@@ -1,0 +1,1184 @@
+﻿<%@ CodeTemplate Src="../TemplateLib/CommonSqlCode.cs" Inherits="MoM.Templates.CommonSqlCode" Language="C#" TargetLanguage="Xml" Description="Template description here." Debug="True" ResponseEncoding="UTF-8" NoWarn="0108,0618,1572,1573,1574,0162,2002" %>
+
+<%@ Property Name="SourceDatabase" Type="SchemaExplorer.DatabaseSchema" Optional="True" Category="Context" Description="Database that the stored procedures should be based on." %>
+<%@ Property Name="SourceTables" Type="SchemaExplorer.TableSchemaCollection" Category="Context" Description="Tables that the stored procedures should be based on." %>
+<%@ Property Name="SourceViews" Type="SchemaExplorer.ViewSchemaCollection" Category="Context" Description="Views that the stored procedures should be based on." %>
+<%@ Property Name="EnumTables" Type="SchemaExplorer.TableSchemaCollection" Category="Context" Description="Tables that the stored procedures should be based on." %>
+
+
+<%@ Property Name="BLLGuid" Type="System.String" Category="Style" Description="BLL Project Guid" %>
+<%@ Property Name="DALGuid" Type="System.String" Category="Style" Description="DAL Project Guid" %>
+<%@ Property Name="DALSqlGuid" Type="System.String" Category="Style" Description="DAL Project Guid" %>
+<%@ Property Name="DALGenericGuid" Type="System.String" Category="Style" Description="DAL Project Guid" %>
+<%@ Property Name="DALWSGuid" Type="System.String" Category="Style" Description="DAL Project Guid" %>
+<%@ Property Name="UTGuid" Type="System.String" Category="Context" Description="Unit tests Project Guid" %>
+<%@ Property Name="WSGuid" Type="System.String" Category="Context" Description="WebService Project Guid" %>
+<%@ Property Name="WebLibGuid" Type="System.String" Category="Context" Description="Web Library Project Guid" %>
+<%@ Property Name="WebsiteGuid" Type="System.String" Category="Context" Description="Website Project Guid" %>
+<%@ Property Name="ComponentsGuid" Type="System.String" Category="Context" Description="Components Guid" %>
+
+<%@ Property Name="OutputDirectory" Type="System.String" Category="General" Description="The root output folder."%>
+
+<%@ Property Name="NameSpace" Type="System.String" Category="Style" Description="Root Namespace" %>
+<%@ Property Name="BLLNameSpace" Type="System.String" Category="Data" Description="Entities Namespace." %>
+<%@ Property Name="DALNameSpace" Type="System.String" Category="Data" Description="DAL Namespace." %>
+<%@ Property Name="DALSqlNameSpace" Type="System.String" Category="Data" Description="DAL sql Namespace." %>
+<%@ Property Name="DALGenericNameSpace" Type="System.String" Category="Data" Description="DAL sql Namespace." %>
+<%@ Property Name="DALWSNameSpace" Type="System.String" Category="Data" Description="DAL ws Namespace." %>
+<%@ Property Name="UTNameSpace" Type="System.String" Category="Data" Description="UT Namespace." %>
+<%@ Property Name="WSNameSpace" Type="System.String" Category="Data" Description="WebService Namespace." %>
+<%@ Property Name="WebLibNameSpace" Type="System.String" Category="Data" Description="Web Library Namespace." %>
+<%@ Property Name="WebsiteNameSpace" Type="System.String" Category="Data" Description="Website Namespace." %>
+<%@ Property Name="ComponentLayerNameSpace" Type="System.String" Category="Data" Description="Component Layer Namespace." %>
+<%@ Property Name="ComponentPattern" Default="None" Type="MoM.Templates.ComponentPatternType" Category="Data" Description="Component Layer Pattern Type." %>
+
+<%@ Property Name="IncludeBll" Type="System.Boolean" Category="Option" Description="" %>
+
+<%@ Property Name="NetTiersSqlProvider" Type="System.Boolean" Category="Data" Description="Indicates if we use the SqlClient Provider." %>
+<%@ Property Name="WinLibGuid" Type="System.String" Category="Context" Description="Win Library Project Guid" %>
+<%@ Property Name="WinLibNameSpace" Type="System.String" Category="Data" Description="Win Library Namespace." %>
+<%@ Property Name="IncludeWinLibrary" Type="System.Boolean" Category="Option" Description="" default="false" %>
+
+<%@ Property Name="IncludeDALBase" Type="System.Boolean" Category="Option" Description="" %>
+<%@ Property Name="IncludeSqlClient" Type="System.Boolean" Category="Option" Description="" %>
+<%@ Property Name="IncludeGenericClient" Type="System.Boolean" Category="Option" Description="" %>
+<%@ Property Name="IncludeWebLibrary" Type="System.Boolean" Category="Option" Description="" %>
+<%@ Property Name="IncludeWebsite" Type="System.Boolean" Category="Option" Description="" %>
+<%@ Property Name="IncludeWebservice" Type="System.Boolean" Category="Option" Description="" %>
+<%@ Property Name="IncludeComponents" Type="System.Boolean"  Category="Option" Description="Determines whether or not a component library is being used." %>
+<%@ Property Name="IncludeWebserviceClient" Type="System.Boolean" Category="Option" Description="" %>
+<%@ Property Name="IncludeUnitTest" Type="MoM.Templates.UnitTestStyle" Default="NUnit" Category="General" Description="Indicates type of Unit tests to be generated." %>
+<%@ Property Name="IncludeWCFDataAttributes" Type="System.Boolean" Default="False" Category="02. Framework Generation - Optional" Description="Indicates if the WCF attributes, [DataContract] and [DataMember], should be included on the entity classes." %>
+<%@ Property Name="IncludeDesignTimeSupport" Type="System.Boolean" Default="true" Category="05. WebLibrary - Advanced" Description="Indicates if Visual Studio design-time support should be provided for the Web Library controls." %>
+
+<%@ Property Name="SignAssembly" Type="System.Boolean" Category="Option" Description="" Default="false" %>
+<%@ Property Name="LibraryPath" Type="System.String" Default="..\\References" Category="Option" Description="Path of the assembly library directory." %>
+
+<%@ Property Name="NetTiersTemplatePath" Type="System.String" Category="Option" Description="" Default="" %>
+<%@ Property Name="PropertySetFilePath" Type="System.String" Category="Option" Description="" Default="" %>
+<%@ Property Name="SupportsCodesmithBuildTask" Type="System.Boolean" Category="Option" Description="" Default="false" %>
+
+<%@ Property Name="CustomCodeFolderName" Type="System.String" Category="General" Description="the name of a folder that can contains custom class to dynamically add to the entity project." Default="App_Code" %>
+<%@ Property Name="IncludeAtlasLibrary" Type="System.Boolean" Default="false" Category="06b. Website - Advanced" Description="Indicates whether to include a reference to the Atlas component library." %>
+<%@ Property Name="IncludeAtlasToolkit" Type="System.Boolean" Default="false" Category="06b. Website - Advanced" Description="Indicates whether to include a reference to the Atlas Control Toolkit. This property is only taken into account when IncludeAtlasLibrary is true." %>
+
+<%@ Property Name="WebServiceUrl" Type="System.String" Category="WebService" Description="The webservice base URL. The asmx filename will be added programmatically." Default="http://localhost/Services/" %>
+<%@ Property Name="rootPathWS" Type="System.String" Category="WebService" Description="The folder where the webservice code is generated." Default="" %>
+<%@ Property Name="EntLibVersion" Type="MoM.Templates.EntLibVersion" Default="v2" Category="02. Framework Generation - Optional" Description="Indicates the Enterprise Library version to use. Options include v2, v3 and v3.1" %>
+
+<%@ Assembly Name="SchemaExplorer" %>
+<%@ Assembly Name="System.Design" %>
+<%@ Import Namespace="SchemaExplorer" %>
+<%@ Import Namespace="System.Text" %>
+<%@ Import Namespace="System.Text.RegularExpressions" %>
+
+<%
+	string entlibVersionText = GetEntLibVersionSignature(EntLibVersion);
+	string fileName = string.Empty;
+	
+	// the assembly and documentation filename
+	if (IncludeBll)
+	{
+		fileName =  BLLNameSpace; 
+	}
+	else if (IncludeDALBase) 
+	{
+		fileName = DALNameSpace;
+	}
+	else if (IncludeSqlClient) 
+	{
+		fileName = DALSqlNameSpace; 
+	}
+	else if (IncludeGenericClient)
+	{
+		fileName = DALGenericNameSpace; 
+	} 
+	else if (IncludeUnitTest != MoM.Templates.UnitTestStyle.None)
+	{
+		fileName = UTNameSpace;
+	}
+	else if (IncludeWebservice)
+	{
+		fileName = WSNameSpace;
+	}
+	else if (IncludeWebserviceClient)
+	{
+		fileName = DALWSNameSpace;
+	}
+	else if (IncludeWebLibrary)
+	{
+		fileName = WebLibNameSpace;
+	}
+	else if (IncludeWinLibrary)
+	{
+		fileName = WinLibNameSpace;
+	}
+	else if (IncludeWebsite)
+	{
+		fileName = WebsiteNameSpace;
+	}
+	else if (IncludeComponents)
+	{
+		fileName = ComponentLayerNameSpace;
+	}
+	else
+	{
+		fileName = NameSpace;
+	}	
+	
+	string BLLSubFolder = string.Empty;
+	string DALSubFolder = string.Empty;
+	string SqlClientSubFolder = string.Empty;
+	string GenericClientSubFolder = string.Empty;
+	string WSClientSubFolder = string.Empty;
+	string ComponentsSubFolder = string.Empty;
+	string UTSubFolder = string.Empty;
+	string WebLibSubFolder = string.Empty;
+	string WinLibSubFolder = string.Empty;
+	
+%>
+<Project DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <PropertyGroup>
+    <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
+    <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
+    <ProductVersion>8.0.50727</ProductVersion>
+    <SchemaVersion>2.0</SchemaVersion>
+    <ProjectGuid>{<% if (IncludeBll) Response.Write(BLLGuid); else if (IncludeComponents) Response.Write(ComponentsGuid); else if (IncludeDALBase) Response.Write(DALGuid); else if (IncludeSqlClient) Response.Write(DALSqlGuid); else if (IncludeGenericClient) Response.Write(DALGenericGuid); else if (IncludeUnitTest != MoM.Templates.UnitTestStyle.None) Response.Write(UTGuid); else if (IncludeWebservice) Response.Write(WSGuid);else if (IncludeWebserviceClient) Response.Write(DALWSGuid); else if (IncludeWebLibrary) Response.Write(WebLibGuid); else if (IncludeWinLibrary) Response.Write(WinLibGuid); else if (IncludeWebsite) Response.Write(WebsiteGuid);  %>}</ProjectGuid>
+	<% if ( IncludeWebsite ) { %>
+    <ProjectTypeGuids>{349c5851-65df-11da-9384-00065b846f21};{fae04ec0-301f-11d3-bf4b-00c04f79efbc}</ProjectTypeGuids>
+	<% } else { %>
+    <ProjectType><%if (IncludeWebservice) Response.Write("Web"); else Response.Write("Local"); %></ProjectType>
+	<% } %>
+    <OutputType>Library</OutputType>
+    <ApplicationIcon>
+	</ApplicationIcon>
+    <AssemblyKeyContainerName>
+	</AssemblyKeyContainerName>
+    <AssemblyName><%=fileName%></AssemblyName>
+    <AssemblyOriginatorKeyFile>..\<%=NameSpace%>.snk</AssemblyOriginatorKeyFile>
+	<SignAssembly><%=SignAssembly.ToString().ToLower()%></SignAssembly>
+    <DefaultClientScript>JScript</DefaultClientScript>
+    <DefaultHTMLPageLayout>Grid</DefaultHTMLPageLayout>
+    <DefaultTargetSchema>IE50</DefaultTargetSchema>
+    <DelaySign>false</DelaySign>
+    <RootNamespace><%=fileName%></RootNamespace>
+    <RunPostBuildEvent>OnBuildSuccess</RunPostBuildEvent>
+    <StartupObject></StartupObject>
+    <FileUpgradeFlags></FileUpgradeFlags>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
+    <OutputPath>bin\<% if (!IncludeWebsite) { %>Debug\<% } %></OutputPath>
+    <AllowUnsafeBlocks>false</AllowUnsafeBlocks>
+    <BaseAddress>285212672</BaseAddress>
+    <CheckForOverflowUnderflow>false</CheckForOverflowUnderflow>
+    <ConfigurationOverrideFile>
+    </ConfigurationOverrideFile>
+    <DefineConstants>DEBUG;TRACE</DefineConstants>
+    <DocumentationFile><%=fileName%>.xml</DocumentationFile>
+    <DebugSymbols>true</DebugSymbols>
+    <FileAlignment>4096</FileAlignment>
+    <NoStdLib>false</NoStdLib>
+    <NoWarn>
+    </NoWarn>
+    <Optimize>false</Optimize>
+    <RegisterForComInterop>false</RegisterForComInterop>
+    <RemoveIntegerChecks>false</RemoveIntegerChecks>
+    <TreatWarningsAsErrors>false</TreatWarningsAsErrors>
+    <WarningLevel>4</WarningLevel>
+<% if (IncludeUnitTest == MoM.Templates.UnitTestStyle.VSTS) 
+   { %>
+	<ProjectTypeGuids>{3AC096D0-A1C2-E12C-1390-A8335801FDAB};{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}</ProjectTypeGuids>
+<% } %>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
+    <OutputPath>bin\<% if (!IncludeWebsite) { %>Release\<% } %></OutputPath>
+    <AllowUnsafeBlocks>false</AllowUnsafeBlocks>
+    <BaseAddress>285212672</BaseAddress>
+    <CheckForOverflowUnderflow>false</CheckForOverflowUnderflow>
+    <ConfigurationOverrideFile>
+    </ConfigurationOverrideFile>
+    <DefineConstants>TRACE</DefineConstants>
+    <DocumentationFile><%=fileName%>.xml</DocumentationFile>
+	 <DebugType>pdbonly</DebugType>
+    <DebugSymbols>false</DebugSymbols>
+    <FileAlignment>4096</FileAlignment>
+    <NoStdLib>false</NoStdLib>
+    <NoWarn>
+    </NoWarn>
+    <Optimize>true</Optimize>
+    <RegisterForComInterop>false</RegisterForComInterop>
+    <RemoveIntegerChecks>false</RemoveIntegerChecks>
+    <TreatWarningsAsErrors>false</TreatWarningsAsErrors>
+    <WarningLevel>4</WarningLevel>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'GenerateDebug|AnyCPU' ">
+    <OutputPath>bin\<% if (!IncludeWebsite) { %>Debug\<% } %></OutputPath>
+    <AllowUnsafeBlocks>false</AllowUnsafeBlocks>
+    <BaseAddress>285212672</BaseAddress>
+    <CheckForOverflowUnderflow>false</CheckForOverflowUnderflow>
+    <ConfigurationOverrideFile>
+    </ConfigurationOverrideFile>
+    <DefineConstants>DEBUG;TRACE</DefineConstants>
+    <DocumentationFile><%=fileName%>.xml</DocumentationFile>
+    <DebugSymbols>true</DebugSymbols>
+    <FileAlignment>4096</FileAlignment>
+    <NoStdLib>false</NoStdLib>
+    <NoWarn>
+    </NoWarn>
+    <Optimize>false</Optimize>
+    <RegisterForComInterop>false</RegisterForComInterop>
+    <RemoveIntegerChecks>false</RemoveIntegerChecks>
+    <TreatWarningsAsErrors>false</TreatWarningsAsErrors>
+    <WarningLevel>4</WarningLevel>
+<% if (IncludeUnitTest == MoM.Templates.UnitTestStyle.VSTS) 
+   { %>
+	<ProjectTypeGuids>{3AC096D0-A1C2-E12C-1390-A8335801FDAB};{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}</ProjectTypeGuids>
+<% } %>
+  </PropertyGroup>
+  <ItemGroup>
+    <Reference Include="System"/>
+    <Reference Include="System.Web"/>
+    <Reference Include="System.Data"/>
+    <Reference Include="System.Design"/>
+    <Reference Include="System.Xml"/>
+    <Reference Include="System.Configuration" />
+    <Reference Include="System.Drawing" />
+	<% if ( IncludeWCFDataAttributes ) { %>    
+    <Reference Include="System.Runtime.Serialization, Version=3.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089, processorArchitecture=MSIL" />
+	<% } %>
+	<% if ( IncludeDesignTimeSupport ) { %>
+    <Reference Include="EnvDTE, Version=8.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a" />
+    <Reference Include="EnvDTE80, Version=8.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a" />
+	<% } %>
+	<%
+	if (IncludeWinLibrary) {
+	%>
+	<Reference Include="System.Windows.Forms" />
+	<% } %>
+    <% 
+	if (IncludeBll || IncludeComponents || IncludeWebsite)
+	{
+	%>
+	<Reference Include="Microsoft.Practices.EnterpriseLibrary.Common, <%= entlibVersionText %>">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath><%= LibraryPath %>\Microsoft.Practices.EnterpriseLibrary.Common.dll</HintPath>
+    </Reference>    
+    <Reference Include="Microsoft.Practices.EnterpriseLibrary.Caching, <%= entlibVersionText %>">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath><%= LibraryPath %>\Microsoft.Practices.EnterpriseLibrary.Caching.dll</HintPath>
+    </Reference>
+    <Reference Include="Microsoft.Practices.EnterpriseLibrary.Caching.Cryptography, <%= entlibVersionText %>">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath><%= LibraryPath %>\Microsoft.Practices.EnterpriseLibrary.Caching.Cryptography.dll</HintPath>
+    </Reference>
+	<Reference Include="Microsoft.Practices.ObjectBuilder, <%= entlibVersionText %>">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath><%= LibraryPath %>\Microsoft.Practices.ObjectBuilder.dll</HintPath>
+    </Reference>
+	<% if (IncludeComponents || IncludeWebsite){%>
+	<Reference Include="Microsoft.Practices.EnterpriseLibrary.Logging, <%= entlibVersionText %>">
+		<SpecificVersion>False</SpecificVersion>
+		<HintPath><%= LibraryPath %>\Microsoft.Practices.EnterpriseLibrary.Logging.dll</HintPath>
+	</Reference>
+	<Reference Include="Microsoft.Practices.EnterpriseLibrary.Logging.Database, <%= entlibVersionText %>">
+		<SpecificVersion>False</SpecificVersion>
+		<HintPath><%= LibraryPath %>\Microsoft.Practices.EnterpriseLibrary.Logging.Database.dll</HintPath>
+	</Reference>
+	<Reference Include="Microsoft.Practices.EnterpriseLibrary.ExceptionHandling, <%= entlibVersionText %>">
+		<SpecificVersion>False</SpecificVersion>
+		<HintPath><%= LibraryPath %>\Microsoft.Practices.EnterpriseLibrary.ExceptionHandling.dll</HintPath>
+	</Reference>
+	<Reference Include="Microsoft.Practices.EnterpriseLibrary.ExceptionHandling.Logging, <%= entlibVersionText %>">
+		<SpecificVersion>False</SpecificVersion>
+		<HintPath><%= LibraryPath %>\Microsoft.Practices.EnterpriseLibrary.ExceptionHandling.Logging.dll</HintPath>
+	</Reference>	
+	<Reference Include="Microsoft.Practices.EnterpriseLibrary.Security, <%= entlibVersionText %>">
+		<SpecificVersion>False</SpecificVersion>
+		<HintPath><%= LibraryPath %>\Microsoft.Practices.EnterpriseLibrary.Security.dll</HintPath>
+	</Reference>	
+	<Reference Include="Microsoft.Practices.EnterpriseLibrary.Security.Cryptography, <%= entlibVersionText %>">
+		<SpecificVersion>False</SpecificVersion>
+		<HintPath><%= LibraryPath %>\Microsoft.Practices.EnterpriseLibrary.Security.Cryptography.dll</HintPath>
+	</Reference>
+	<%}%>
+	<%	}  // END If IncludeBLL || IncludeComponents 
+	else if (IncludeDALBase || IncludeSqlClient || IncludeGenericClient || IncludeWebserviceClient) {%>    
+    <Reference Include="Microsoft.Practices.EnterpriseLibrary.Common, <%= entlibVersionText %>">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath><%= LibraryPath %>\Microsoft.Practices.EnterpriseLibrary.Common.dll</HintPath>
+    </Reference>    
+    <Reference Include="Microsoft.Practices.EnterpriseLibrary.Data, <%= entlibVersionText %>">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath><%= LibraryPath %>\Microsoft.Practices.EnterpriseLibrary.Data.dll</HintPath>
+    </Reference>
+    <Reference Include="Microsoft.Practices.ObjectBuilder, Version=1.0.51206.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath><%= LibraryPath %>\Microsoft.Practices.ObjectBuilder.dll</HintPath>
+    </Reference>
+     <%}%>
+	<% if ( IncludeWebsite && IncludeAtlasLibrary ) { %>
+	
+	<% } %>
+	<% if ( IncludeWebsite && IncludeAtlasToolkit ) { %>
+    <Reference Include="AjaxControlToolkit">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath><%= LibraryPath %>\AjaxControlToolkit.dll</HintPath>
+    </Reference>
+    <Reference Include="AJAXExtensionsToolbox">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath><%= LibraryPath %>\AJAXExtensionsToolbox.dll</HintPath>
+    </Reference>
+	<% } %>
+     
+     <% if (!IncludeBll) {%>	   
+	<ProjectReference Include="..\<%=BLLNameSpace%>\<%=BLLNameSpace%>.csproj">
+      <Name><%=BLLNameSpace%></Name>
+      <Project>{<%=BLLGuid%>}</Project>
+      <Package>{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}</Package>
+    </ProjectReference>
+	<%}%>
+	
+	<% if (IncludeSqlClient || IncludeGenericClient || IncludeWebserviceClient || IncludeWebLibrary) { %>
+    <ProjectReference Include="..\<%=DALNameSpace%>\<%=DALNameSpace%>.csproj">
+        <Name><%=DALNameSpace%></Name>
+        <Project>{<%=DALGuid%>}</Project>
+        <Package>{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}</Package>
+    </ProjectReference>
+    <% } %>
+	
+	<% if (IncludeWebservice || IncludeComponents || IncludeWebsite) { %>
+    <ProjectReference Include="..\<%=DALNameSpace%>\<%=DALNameSpace%>.csproj">
+        <Name><%=DALNameSpace%></Name>
+        <Project>{<%=DALGuid%>}</Project>
+        <Package>{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}"</Package>
+    </ProjectReference>
+	<% if ( IncludeSqlClient ) { %>
+	<ProjectReference Include="..\<%=DALSqlNameSpace%>\<%=DALSqlNameSpace%>.csproj">
+        <Name><%=DALSqlNameSpace%></Name>
+        <Project>{<%=DALSqlGuid%>}</Project>
+        <Package>{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}</Package>
+    </ProjectReference>
+	<% } %>
+	<% if ( IncludeGenericClient ) { %>
+	<ProjectReference Include="..\<%=DALGenericNameSpace%>\<%=DALGenericNameSpace%>.csproj">
+        <Name><%=DALGenericNameSpace%></Name>
+        <Project>{<%=DALGenericGuid%>}</Project>
+        <Package>{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}</Package>
+    </ProjectReference>
+	<% } %>
+	<% } %>
+	
+	<% if ( (IncludeWebLibrary || IncludeWebsite) && ComponentPattern != MoM.Templates.ComponentPatternType.None ) { %>
+    <ProjectReference Include="..\<%=ComponentLayerNameSpace%>\<%=ComponentLayerNameSpace%>.csproj">
+        <Name><%=ComponentLayerNameSpace%></Name>
+        <Project>{<%=ComponentsGuid%>}</Project>
+        <Package>{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}"</Package>
+    </ProjectReference>
+	<% } %>
+	
+	<% if ( IncludeWebsite ) { %>
+    <ProjectReference Include="..\<%= WebLibNameSpace %>\<%= WebLibNameSpace %>.csproj">
+        <Name><%= WebLibNameSpace %></Name>
+        <Project>{<%= WebLibGuid %>}</Project>
+        <Package>{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}"</Package>
+    </ProjectReference>
+	<% } %>
+    
+    <% if (IncludeUnitTest != MoM.Templates.UnitTestStyle.None) { %>
+    
+    <!-- check the GAC ? -->
+	<% if (IncludeUnitTest == MoM.Templates.UnitTestStyle.NUnit) { %>
+    <Reference Include="nunit.framework, PublicKeyToken=96d09a1eb7f44a77">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath><%= LibraryPath %>\nunit.framework.dll</HintPath>
+    </Reference>
+	<% } else { // We have VSTS Unit tests %>
+	<Reference Include="Microsoft.VisualStudio.QualityTools.UnitTestFramework, Version=8.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>C:\WINNT\assembly\GAC_MSIL\Microsoft.VisualStudio.QualityTools.UnitTestFramework\8.0.0.0__b03f5f7f11d50a3a\Microsoft.VisualStudio.QualityTools.UnitTestFramework.dll</HintPath>
+    </Reference>
+	<% } // end if MoM.Templates.UnitTestStyle.NUnit %>
+
+    <ProjectReference Include="..\<%=DALNameSpace%>\<%=DALNameSpace%>.csproj">
+        <Name><%=DALNameSpace%></Name>
+        <Project>{<%=DALGuid%>}</Project>
+        <Package>{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}"</Package>
+    </ProjectReference>
+    <% if (NetTiersSqlProvider) { %>
+	<ProjectReference Include="..\<%=DALNameSpace + ".SqlClient" %>\<%=DALNameSpace + ".SqlClient" %>.csproj">
+        <Name><%=DALNameSpace + ".SqlClient" %></Name>
+        <Project>{<%=DALSqlGuid%>}</Project>
+        <Package>{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}</Package>
+    </ProjectReference>
+	<% } else { %>
+		<ProjectReference Include="..\<%=DALNameSpace + ".GenericClient" %>\<%=DALNameSpace + ".GenericClient" %>.csproj">
+        <Name><%=DALNameSpace + ".GenericClient" %></Name>
+        <Project>{<%=DALGenericGuid%>}</Project>
+        <Package>{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}</Package>
+    </ProjectReference>
+	<% } %>
+	<% if ( ComponentPattern != MoM.Templates.ComponentPatternType.None ) { %>
+	<ProjectReference Include="..\<%=ComponentLayerNameSpace%>\<%=ComponentLayerNameSpace%>.csproj">
+        <Name><%=ComponentLayerNameSpace%></Name>
+        <Project>{<%=ComponentsGuid%>}</Project>
+        <Package>{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}"</Package>
+    </ProjectReference>
+	<% } %>
+	     
+    <% } // end if IncludeUnitTest %>  
+    	
+	
+	
+	 <% if (IncludeWebservice || IncludeWebserviceClient) { %>
+	<Reference Include="System.Web.Services">
+      <Name>System.Web.Services</Name>
+    </Reference>
+    <Reference Include="System.Web">
+      <Name>System.Web</Name>
+    </Reference>
+    <%}%>
+	
+	</ItemGroup>
+	
+	<% if ((IncludeUnitTest != MoM.Templates.UnitTestStyle.None) || IncludeWebservice) {%>
+	<ItemGroup>
+		<None Include="<%=UTNameSpace%>.dll.config">
+			<CopyToOutputDirectory>Always</CopyToOutputDirectory>
+		</None>
+		<None Include="entlib.config">
+			<CopyToOutputDirectory>Always</CopyToOutputDirectory>
+		</None>
+	</ItemGroup>
+	<% } %>
+		
+	<% if ( CustomCodeFolderName != null && CustomCodeFolderName.Length > 0 ) {  %>
+	<!-- Custom code folder: <%= OutputDirectory + "\\" + fileName + "\\" + CustomCodeFolderName %> -->
+	<ItemGroup>	
+		<Folder Include="<%= CustomCodeFolderName %>\" />
+        <Compile Include="<%=CustomCodeFolderName%>\**\*.cs">
+          <SubType>Code</SubType>
+        </Compile>		
+	</ItemGroup>
+	<% } %>
+
+	<!-- Include any user files -->
+	<ItemGroup>	
+		<Compile Include="**\*.user.*" Exclude="**\*.csproj.user" >
+          <SubType>Code</SubType>
+        </Compile>		
+	</ItemGroup>
+	
+	<ItemGroup>
+<%	
+	// Loop on each view
+	for (int i = 0; i < SourceViews.Count; i++)
+	{
+		if (IncludeBll)
+		{%>
+			<Compile Include="<%=BLLSubFolder%>Views\<%=GetClassName(SourceViews[i])%>.cs">
+			  <SubType>Code</SubType>
+			</Compile>
+			<Compile Include="<%=BLLSubFolder%>Views\<%=GetClassName(SourceViews[i], ClassNameFormat.PartialAbstract)%>.cs">
+			  <DependentUpon><%=GetClassName(SourceViews[i])%>.cs</DependentUpon>
+			  <SubType>Code</SubType>
+			</Compile>
+						
+		<%} // endif includeBll
+		
+		
+		if (IncludeDALBase)
+		{%>
+			<Compile Include="<%=DALSubFolder%>Bases\Views\<%=GetClassName(SourceViews[i], ClassNameFormat.ProviderBase)%>.cs">
+			  <SubType>Code</SubType>
+			</Compile>
+			<Compile Include="<%=DALSubFolder%>Bases\Views\<%=GetClassName(SourceViews[i], ClassNameFormat.PartialProviderBase)%>Core.cs">
+				<DependentUpon><%=GetClassName(SourceViews[i], ClassNameFormat.ProviderBase)%>.cs</DependentUpon>
+			  <SubType>Code</SubType>
+			</Compile>
+		<%}
+				
+		if (IncludeSqlClient)
+		{%>
+			<Compile Include="<%=SqlClientSubFolder%>Views\Sql<%=GetClassName(SourceViews[i], ClassNameFormat.Provider)%>.cs">
+			  <SubType>Code</SubType>
+			</Compile>
+			<Compile Include="<%=SqlClientSubFolder%>Views\Sql<%=GetClassName(SourceViews[i], ClassNameFormat.PartialProviderBase)%>.cs">
+			   <DependentUpon>Sql<%=GetClassName(SourceViews[i], ClassNameFormat.Provider)%>.cs</DependentUpon>
+			   <SubType>Code</SubType>
+			</Compile>
+		<%}
+		
+		if (IncludeWebserviceClient)
+		{%>
+			<Compile Include="<%=WSClientSubFolder%>Views\Ws<%=GetClassName(SourceViews[i], ClassNameFormat.Provider)%>.cs">
+			  <SubType>Code</SubType>
+			</Compile>
+			<Compile Include="<%=WSClientSubFolder%>Views\Ws<%=GetClassName(SourceViews[i], ClassNameFormat.ProviderBase)%>.generated.cs">
+			   <DependentUpon>Ws<%=GetClassName(SourceViews[i], ClassNameFormat.Provider)%>.cs</DependentUpon>
+			   <SubType>Code</SubType>
+			</Compile>
+		<%}
+		
+		if (IncludeUnitTest != MoM.Templates.UnitTestStyle.None) { %>
+		<Compile Include="<%=UTSubFolder%>Views\<%=GetClassName(SourceViews[i], ClassNameFormat.UnitTest)%>.cs">
+			<SubType>Code</SubType>
+		</Compile>					
+		<Compile Include="<%=UTSubFolder%>Views\<%=GetClassName(SourceViews[i], ClassNameFormat.PartialUnitTest)%>.cs">
+			<SubType>Code</SubType>
+			<DependentUpon><%=GetClassName(SourceViews[i], ClassNameFormat.UnitTest)%>.cs</DependentUpon>
+		</Compile>
+		<%}	// endif IncludeUnitTest
+		if (IncludeUnitTest == MoM.Templates.UnitTestStyle.VSTS) { %>
+			<None Include="<%=UTSubFolder%>Views\<%=GetClassName(SourceViews[i], ClassNameFormat.UnitTest)%>.orderedtest"/>
+		<%}	// endif IncludeUnitTest for VSTS ordered test lists
+	}
+			
+	// Loop on each table
+	for (int i = 0; i < SourceTables.Count; i++)
+	{
+		if (IncludeBll)
+		{%>
+			<Compile Include="<%=BLLSubFolder%><%=GetClassName(SourceTables[i])%>.cs">
+			  <SubType>Code</SubType>
+			</Compile>
+			<Compile Include="<%=BLLSubFolder%><%=GetClassName(SourceTables[i], ClassNameFormat.PartialAbstract)%>.cs">
+			  <DependentUpon><%=GetClassName(SourceTables[i])%>.cs</DependentUpon>
+			  <SubType>Code</SubType>
+			</Compile>
+			<Compile Include="<%=BLLSubFolder%><%= GetClassName(SourceTables[i], ClassNameFormat.Interface)%>.cs">
+			  <DependentUpon><%=GetClassName(SourceTables[i])%>.cs</DependentUpon>
+			  <SubType>Code</SubType>
+			</Compile>
+		
+			<% if (EnumTables.Contains(SourceTables[i])) { %>
+				<Compile Include="<%=BLLSubFolder%><%=GetClassName(SourceTables[i], ClassNameFormat.Enum)%>.cs">
+				  <SubType>Code</SubType>
+				</Compile>
+			<% } %>
+		
+		<%} // endif includeBll
+		
+		if (IncludeComponents && ComponentPattern == MoM.Templates.ComponentPatternType.DomainModel)
+		{%>
+		<Compile Include="<%=ComponentsSubFolder%><%=GetClassName(SourceTables[i])%>.cs">
+		  <SubType>Code</SubType>
+		</Compile>
+		<Compile Include="<%=ComponentsSubFolder%><%=GetClassName(SourceTables[i], ClassNameFormat.PartialAbstract)%>.cs">
+		  <DependentUpon><%=GetClassName(SourceTables[i])%>.cs</DependentUpon>
+		  <SubType>Code</SubType>
+		</Compile>	
+		<%}
+		else if (IncludeComponents && ComponentPattern == MoM.Templates.ComponentPatternType.ServiceLayer)
+		{%> 
+		<Compile Include="<%=ComponentsSubFolder%><%=GetClassName(SourceTables[i], ClassNameFormat.Service)%>.cs">
+		  <SubType>Code</SubType>
+		</Compile>
+		<Compile Include="<%=ComponentsSubFolder%><%=GetClassName(SourceTables[i], ClassNameFormat.PartialAbstractService)%>.cs">
+		  <DependentUpon><%=GetClassName(SourceTables[i], ClassNameFormat.Service)%>.cs</DependentUpon>
+		  <SubType>Code</SubType>
+		</Compile>	
+		<% } else if (IncludeWinLibrary) { %>
+		<Compile Include="UI\<%=GetClassName(SourceTables[i])%>DataGridView.cs">
+		  <SubType>designer</SubType>
+		</Compile>
+		<Compile Include="UI\<%=GetClassName(SourceTables[i])%>DataGridViewBase.cs">
+		   <DependentUpon><%=GetClassName(SourceTables[i])%>DataGridView.cs</DependentUpon>
+		  <SubType>Code</SubType>
+		</Compile>		
+		<Compile Include="UI\<%=GetClassName(SourceTables[i])%>EditControl.cs">
+		  <SubType>designer</SubType>
+		</Compile>
+		<Compile Include="UI\<%=GetClassName(SourceTables[i])%>EditControlBase.cs">
+		   <DependentUpon><%=GetClassName(SourceTables[i])%>EditControl.cs</DependentUpon>
+		  <SubType>Code</SubType>
+		</Compile>
+		<% } 
+		if (IncludeDALBase) {%>
+			<Compile Include="<%=DALSubFolder%>Bases\<%=GetClassName(SourceTables[i], ClassNameFormat.ProviderBase)%>.cs">
+			  <SubType>Code</SubType>
+			</Compile>
+			
+			<Compile Include="<%=DALSubFolder%>Bases\<%=GetClassName(SourceTables[i], ClassNameFormat.PartialProviderBase)%>Core.cs">
+			  <DependentUpon><%=GetClassName(SourceTables[i], ClassNameFormat.ProviderBase)%>.cs</DependentUpon>
+			  <SubType>Code</SubType>
+			</Compile>
+		<%}
+		
+		if (IncludeSqlClient)
+		{%>
+			<Compile Include="<%=SqlClientSubFolder%>Sql<%=GetClassName(SourceTables[i], ClassNameFormat.Provider)%>.cs">
+			  <SubType>Code</SubType>
+			</Compile>
+			
+			<Compile Include="<%=SqlClientSubFolder%>Sql<%=GetClassName(SourceTables[i], ClassNameFormat.PartialProviderBase)%>.cs">
+			  <DependentUpon>Sql<%=GetClassName(SourceTables[i], ClassNameFormat.Provider)%>.cs</DependentUpon>
+			  <SubType>Code</SubType>
+			</Compile>
+		<%}
+					
+		if (IncludeGenericClient)
+		{%>
+		
+			<Compile Include="<%=GenericClientSubFolder%>Generic<%=GetClassName(SourceTables[i], ClassNameFormat.Provider)%>.cs">
+			  <SubType>Code</SubType>
+			</Compile>
+			
+			<Compile Include="<%=GenericClientSubFolder%>Generic<%=GetClassName(SourceTables[i], ClassNameFormat.PartialProviderBase)%>.cs">
+			  <DependentUpon>Generic<%=GetClassName(SourceTables[i], ClassNameFormat.Provider)%>.cs</DependentUpon>
+			  <SubType>Code</SubType>
+			</Compile>					
+		<%}
+		
+		if ((IncludeUnitTest != MoM.Templates.UnitTestStyle.None) /* && !IsJunctionTable(SourceTables[i]) */) { %>
+			<Compile Include="<%=UTSubFolder%><%=GetClassName(SourceTables[i], ClassNameFormat.UnitTest)%>.cs">
+			  	<SubType>Code</SubType>
+			</Compile>	
+			<Compile Include="<%=UTSubFolder%><%=GetClassName(SourceTables[i], ClassNameFormat.UnitTest)%>.generated.cs">
+			  	<SubType>Code</SubType>
+				<DependentUpon><%=GetClassName(SourceTables[i], ClassNameFormat.UnitTest)%>.cs</DependentUpon>
+			</Compile>
+		<%}	// endif IncludeUnitTest
+		
+		if ((IncludeUnitTest == MoM.Templates.UnitTestStyle.VSTS) /*&& !IsJunctionTable(SourceTables[i])*/) { %>
+			<None Include="<%=UTSubFolder%><%=GetClassName(SourceTables[i], ClassNameFormat.UnitTest)%>.orderedtest"/>
+		<%}	// endif IncludeUnitTest for VSTS ordered test lists
+						
+		
+		if (IncludeWebserviceClient)
+		{%>
+			<Compile Include="<%=WSClientSubFolder%>Ws<%=GetClassName(SourceTables[i], ClassNameFormat.Provider)%>.cs">
+			  <SubType>Code</SubType>
+			</Compile>
+			<Compile Include="<%=WSClientSubFolder%>Ws<%=GetClassName(SourceTables[i], ClassNameFormat.ProviderBase)%>.generated.cs">
+			  <DependentUpon>Ws<%=GetClassName(SourceTables[i], ClassNameFormat.Provider)%>.cs</DependentUpon>
+			  <SubType>Code</SubType>
+			</Compile>
+		<%}	// endif IncludeWebservice
+	}// endfor SourceTables.Count
+%>		
+		<Compile Include="..\AssemblyInfo.cs">
+		  <SubType>Code</SubType>
+		</Compile>
+			
+		<% /* Include the IEntity interface. */ %>
+		<% if (IncludeBll) { %>
+			<Compile Include="<%=BLLSubFolder%>IEntity.cs">
+			  <SubType>Code</SubType>
+			</Compile>
+			<Compile Include="<%=BLLSubFolder%>IEntityId.cs">
+			  <SubType>Code</SubType>
+			</Compile>
+			<Compile Include="<%=BLLSubFolder%>IEntityKey.cs">
+			  <SubType>Code</SubType>
+			</Compile>
+			<Compile Include="<%=BLLSubFolder%>EntityBase.cs">
+			  <SubType>Code</SubType>
+			</Compile>
+			<Compile Include="<%=BLLSubFolder%>EntityBaseCore.generated.cs">
+			  <SubType>Code</SubType>
+			  <DependentUpon>EntityBase.cs</DependentUpon>
+			</Compile>
+			<Compile Include="<%=BLLSubFolder%>EntityKeyBase.cs">
+			  <SubType>Code</SubType>
+			</Compile>
+			<Compile Include="<%=BLLSubFolder%>EntityKeyBaseCore.generated.cs">
+			  <SubType>Code</SubType>
+			  <DependentUpon>EntityKeyBase.cs</DependentUpon>
+			</Compile>
+			<Compile Include="<%=BLLSubFolder%>ListBase.cs">
+			  <SubType>Code</SubType>
+			</Compile>
+			<Compile Include="<%=BLLSubFolder%>TList.cs">
+			  <SubType>Code</SubType>
+			</Compile>
+			<Compile Include="<%=BLLSubFolder%>Views\VList.cs">
+			  <SubType>Code</SubType>
+			</Compile>
+			<Compile Include="<%=BLLSubFolder%>EntityFilter.cs">
+			  <SubType>Code</SubType>
+			</Compile>
+			<Compile Include="<%=BLLSubFolder%>EntityPropertyComparer.cs">
+			  <SubType>Code</SubType>
+			</Compile>
+			<Compile Include="<%=BLLSubFolder%>EntityHelper.cs">
+			  <SubType>Code</SubType>
+			</Compile>
+			<Compile Include="<%=BLLSubFolder%>EntityUtil.cs">
+			  <SubType>Code</SubType>
+			</Compile>
+			<Compile Include="<%=BLLSubFolder%>IEntityFactory.cs">
+			  <SubType>Code</SubType>
+			</Compile>
+			<Compile Include="<%=BLLSubFolder%>EntityFactoryBase.cs">
+			  <SubType>Code</SubType>
+			</Compile>			
+			<Compile Include="<%=BLLSubFolder%>EntityFactory.cs">
+			  <SubType>Code</SubType>
+			</Compile>
+			<Compile Include="<%=BLLSubFolder%>EntityLocator.cs">
+			  <SubType>Code</SubType>
+			</Compile>		
+			<Compile Include="<%=BLLSubFolder%>EntityManager.cs">
+			  <SubType>Code</SubType>
+			</Compile>
+			<Compile Include="<%=BLLSubFolder%>IEntityCacheItem.cs">
+			  <SubType>Code</SubType>
+			</Compile>		
+			<Compile Include="<%=BLLSubFolder%>EntityCache.cs">
+			  <SubType>Code</SubType>
+			</Compile>
+			<Compile Include="<%=BLLSubFolder%>GenericTypeConverter.cs">
+			  <SubType>Code</SubType>
+			</Compile>
+			<Compile Include="<%=BLLSubFolder%>Validation\BrokenRule.cs">
+			  <SubType>Code</SubType>
+			</Compile>
+			<Compile Include="<%=BLLSubFolder%>Validation\BrokenRulesList.cs">
+			  <SubType>Code</SubType>
+			</Compile>
+			<Compile Include="<%=BLLSubFolder%>Validation\CommonRules.cs">
+			  <SubType>Code</SubType>
+			</Compile>
+			<Compile Include="<%=BLLSubFolder%>Validation\ValidationRuleArgs.cs">
+			  <SubType>Code</SubType>
+			</Compile>
+			<Compile Include="<%=BLLSubFolder%>Validation\ValidationRuleHandler.cs">
+			  <SubType>Code</SubType>
+			</Compile>
+			<Compile Include="<%=BLLSubFolder%>Validation\ValidationRuleInfo.cs">
+			  <SubType>Code</SubType>
+			</Compile>
+			<Compile Include="<%=BLLSubFolder%>Validation\ValidationRules.cs">
+			  <SubType>Code</SubType>
+			</Compile>
+		<% } %>
+		<% 
+		if (IncludeComponents) 
+		{
+		// Loop on each view
+		for (int i = 0; i < SourceViews.Count; i++)
+		{
+		
+			if (ComponentPattern == MoM.Templates.ComponentPatternType.DomainModel)
+			{
+			%>
+			<Compile Include="<%=ComponentsSubFolder%>Views\<%=GetClassName(SourceViews[i])%>.cs">
+			  <SubType>Code</SubType>
+			</Compile>
+			<Compile Include="<%=ComponentsSubFolder%>Views\<%=GetClassName(SourceViews[i], ClassNameFormat.PartialAbstractService)%>.cs">
+			  <DependentUpon><%=GetClassName(SourceViews[i])%>.cs</DependentUpon>
+			  <SubType>Code</SubType>
+			</Compile>
+		<%} 
+		  else 
+		  {
+		 %> 
+			<Compile Include="<%=ComponentsSubFolder%>Views\<%=GetClassName(SourceViews[i], ClassNameFormat.Service)%>.cs">
+			  <SubType>Code</SubType>
+			</Compile>
+			<Compile Include="<%=ComponentsSubFolder%>Views\<%=GetClassName(SourceViews[i], ClassNameFormat.PartialAbstractService)%>.cs">
+			  <DependentUpon><%=GetClassName(SourceViews[i], ClassNameFormat.Service)%>.cs</DependentUpon>
+			  <SubType>Code</SubType>
+			</Compile>
+		   <%			
+		   }
+		}
+		%>
+		<!-- 
+			<Compile Include="<%=ComponentsSubFolder%>Processors\**\*.cs">
+			   <SubType>Code</SubType>
+			</Compile>		
+		 -->
+			<Compile Include="<%=ComponentsSubFolder%>Processors\GenericProcessorResult.cs">
+			  <SubType>Code</SubType>
+			</Compile>		
+			<Compile Include="<%=ComponentsSubFolder%>Processors\IProcessor.cs">
+			  <SubType>Code</SubType>
+			</Compile>		
+			<Compile Include="<%=ComponentsSubFolder%>Processors\IProcessorResult.cs">
+			  <SubType>Code</SubType>
+			</Compile>		
+			<Compile Include="<%=ComponentsSubFolder%>Processors\ProcessorBase.cs">
+			  <SubType>Code</SubType>
+			</Compile>		
+			
+			<Compile Include="<%=ComponentsSubFolder%>SecurityContext.cs">
+			  <SubType>Code</SubType>
+			</Compile>		
+			<Compile Include="<%=ComponentsSubFolder%>DomainUtil.cs">
+			  <SubType>Code</SubType>
+			</Compile>
+			<Compile Include="<%=ComponentsSubFolder%>ConnectionScope.cs">
+			  <SubType>Code</SubType>
+			</Compile>
+		<%
+		if (IncludeComponents && ComponentPattern == MoM.Templates.ComponentPatternType.DomainModel) {%>
+			<Compile Include="<%=ComponentsSubFolder%>IComponentEntity.cs">
+			  <SubType>Code</SubType>
+			</Compile>
+			<Compile Include="<%=ComponentsSubFolder%>ComponentEntityFactory.cs">
+			  <SubType>Code</SubType>
+			</Compile>
+		<% }else if (IncludeComponents && ComponentPattern == MoM.Templates.ComponentPatternType.ServiceLayer) {%>
+			<Compile Include="<%=ComponentsSubFolder%>ServiceResult.cs">
+			  <SubType>Code</SubType>
+			</Compile>
+			<Compile Include="<%=ComponentsSubFolder%>ServiceBase.cs">
+			  <SubType>Code</SubType>
+			</Compile>
+			<Compile Include="<%=ComponentsSubFolder%>ServiceBaseCore.generated.cs">
+			  <SubType>Code</SubType>
+			  <DependentUpon>ServiceBase.cs</DependentUpon>
+			</Compile>
+			<Compile Include="<%=ComponentsSubFolder%>IComponentService.cs">
+			  <SubType>Code</SubType>
+			</Compile>		
+			<Compile Include="<%=ComponentsSubFolder%>Views\ServiceViewBase.cs">
+			  <SubType>Code</SubType>
+			</Compile>
+			<Compile Include="<%=ComponentsSubFolder%>Views\ServiceViewBaseCore.generated.cs">
+			  <SubType>Code</SubType>
+			  <DependentUpon>ServiceViewBase.cs</DependentUpon>
+			</Compile>
+		<% } }%>
+
+		<%/* If SqlCLient is wanted, include the sql Utilities classes */ %>	
+		<% if (IncludeDALBase) {%>
+			<Compile Include="<%=DALSubFolder%>DataRepository.cs">
+			  <SubType>Code</SubType>
+			</Compile>
+			
+			<Compile Include="<%=DALSubFolder%>Bases\NetTiersProvider.cs">
+			  <SubType>Code</SubType>
+			</Compile>
+			
+			<Compile Include="<%=DALSubFolder%>Bases\NetTiersProviderCollection.cs">
+			  <SubType>Code</SubType>
+			</Compile>
+			
+			<Compile Include="<%=DALSubFolder%>Bases\NetTiersServiceSection.cs">
+			  <SubType>Code</SubType>
+			</Compile>
+			
+			<Compile Include="<%=DALSubFolder%>Bases\EntityProviderBase.cs">
+			  <SubType>Code</SubType>
+			</Compile>
+			<Compile Include="<%=DALSubFolder%>Bases\EntityProviderBaseCore.generated.cs">
+			  <SubType>Code</SubType>
+			  <DependentUpon>EntityProviderBase.cs</DependentUpon>
+			</Compile>
+			
+			<Compile Include="<%=DALSubFolder%>Bases\EntityViewProviderBase.cs">
+			  <SubType>Code</SubType>
+			</Compile>
+			<Compile Include="<%=DALSubFolder%>Bases\EntityViewProviderBaseCore.generated.cs">
+			  <SubType>Code</SubType>
+			  <DependentUpon>EntityViewProviderBase.cs</DependentUpon>
+			</Compile>
+			
+			<Compile Include="<%=DALSubFolder%>Query\ExpressionParserBase.cs">
+			  <SubType>Code</SubType>
+			</Compile>
+			<Compile Include="<%=DALSubFolder%>Query\SqlExpressionParser.cs">
+			  <SubType>Code</SubType>
+			</Compile>
+			<Compile Include="<%=DALSubFolder%>Query\SqlStringBuilder.cs">
+			  <SubType>Code</SubType>
+			</Compile>
+			<Compile Include="<%=DALSubFolder%>Query\SqlUtil.cs">
+			  <SubType>Code</SubType>
+			</Compile>
+			<Compile Include="<%=DALSubFolder%>Query\StringTokenizer.cs">
+			  <SubType>Code</SubType>
+			</Compile>
+			
+			<Compile Include="<%=DALSubFolder%>Utility.cs">
+			  <SubType>Code</SubType>
+			</Compile>
+			<Compile Include="<%=DALSubFolder%>TransactionManager.cs">
+			  <SubType>Code</SubType>
+			</Compile>
+			<Compile Include="<%=DALSubFolder%>IEntityProvider.cs">
+			  <SubType>Code</SubType>
+			</Compile>
+			<Compile Include="<%=DALSubFolder%>IEntityViewProvider.cs">
+			  <SubType>Code</SubType>
+			</Compile>
+			
+		<% } %>
+		<% if (IncludeSqlClient) {%>
+			<Compile Include="<%=SqlClientSubFolder%>SqlNetTiersProvider.cs">
+			  <SubType>Code</SubType>
+			</Compile>
+			
+			<!--<Compile Include="<%=SqlClientSubFolder%>SqlDataRepository.cs">
+			  <SubType>Code</SubType>
+			</Compile>-->
+						
+			<EmbeddedResource Include="<%=SqlClientSubFolder%>Procedures.xml">
+		      <SubType>EmbeddedResource</SubType>
+		    </EmbeddedResource>
+			
+			<Compile Include="<%=SqlClientSubFolder%>StoredProcedureProvider.cs">
+			  <SubType>Code</SubType>
+			</Compile>			
+		<%}%>
+		
+		<% if (IncludeGenericClient) {%>
+			<Compile Include="<%=GenericClientSubFolder%>GenericNetTiersProvider.cs">
+			  <SubType>Code</SubType>
+			</Compile>
+			
+			<Compile Include="<%=GenericClientSubFolder%>DbCommandManager.cs">
+			  <SubType>Code</SubType>
+			</Compile>
+			
+			<EmbeddedResource Include="<%=GenericClientSubFolder%>System.Data.SQLite.Procedures.xml">
+		      <SubType>EmbeddedResource</SubType>
+		    </EmbeddedResource>
+		<%}%>
+		
+		<% if (IncludeWebLibrary) { %>
+			<Compile Include="<%=WebLibSubFolder%>Data\BaseDataSource.cs">
+			  <SubType>Code</SubType>
+			</Compile>			
+			<Compile Include="<%=WebLibSubFolder%>Data\BaseDataSourceDesigner.cs">
+			  <SubType>Code</SubType>
+			</Compile>			
+			<Compile Include="<%=WebLibSubFolder%>Data\CustomDataSource.cs">
+			  <SubType>Code</SubType>
+			</Compile>			
+			<Compile Include="<%=WebLibSubFolder%>Data\CustomDataSourceDesigner.cs">
+			  <SubType>Code</SubType>
+			</Compile>			
+			<Compile Include="<%=WebLibSubFolder%>Data\CustomParameter.cs">
+			  <SubType>Code</SubType>
+			</Compile>			
+			<Compile Include="<%=WebLibSubFolder%>Data\DataParameter.cs">
+			  <SubType>Code</SubType>
+			</Compile>			
+			<Compile Include="<%=WebLibSubFolder%>Data\EntityDataSource.cs">
+			  <SubType>Code</SubType>
+			</Compile>			
+			<Compile Include="<%=WebLibSubFolder%>Data\EntityDataSourceFilter.cs">
+			  <SubType>Code</SubType>
+			</Compile>			
+			<Compile Include="<%=WebLibSubFolder%>Data\EntityRelationship.cs">
+			  <SubType>Code</SubType>
+			</Compile>			
+			<Compile Include="<%=WebLibSubFolder%>Data\EntityRelationshipMember.cs">
+			  <SubType>Code</SubType>
+			</Compile>			
+			<Compile Include="<%=WebLibSubFolder%>Data\EntityTransactionModule.cs">
+			  <SubType>Code</SubType>
+			</Compile>			
+			<Compile Include="<%=WebLibSubFolder%>Data\ILinkedDataSource.cs">
+			  <SubType>Code</SubType>
+			</Compile>			
+			<Compile Include="<%=WebLibSubFolder%>Data\ManyToManyListRelationship.cs">
+			  <SubType>Code</SubType>
+			</Compile>			
+			<Compile Include="<%=WebLibSubFolder%>Data\ManyToManyViewRelationship.cs">
+			  <SubType>Code</SubType>
+			</Compile>			
+			<Compile Include="<%=WebLibSubFolder%>Data\OneToManyGridRelationship.cs">
+			  <SubType>Code</SubType>
+			</Compile>			
+			<Compile Include="<%=WebLibSubFolder%>Data\OneToOneViewRelationship.cs">
+			  <SubType>Code</SubType>
+			</Compile>			
+			<Compile Include="<%=WebLibSubFolder%>Data\ProviderDataSource.cs">
+			  <SubType>Code</SubType>
+			</Compile>			
+			<Compile Include="<%=WebLibSubFolder%>Data\ProviderDataSourceDesigner.cs">
+			  <SubType>Code</SubType>
+			</Compile>			
+			<Compile Include="<%=WebLibSubFolder%>Data\ReadOnlyDataSource.cs">
+			  <SubType>Code</SubType>
+			</Compile>			
+			<Compile Include="<%=WebLibSubFolder%>Data\ReadOnlyDataSourceDesigner.cs">
+			  <SubType>Code</SubType>
+			</Compile>
+			<Compile Include="<%=WebLibSubFolder%>Data\SqlParameter.cs">
+			  <SubType>Code</SubType>
+			</Compile>
+			<% foreach ( TableSchema table in SourceTables ) { %>
+			<Compile Include="<%= WebLibSubFolder %>DataSourceControls\<%= GetClassName(table) %>DataSource.cs">
+			  <SubType>Code</SubType>
+			</Compile>
+			<Compile Include="<%= WebLibSubFolder %>UI\RepeaterControls\<%= GetClassName(table) %>Repeater.cs">
+			  <SubType>Code</SubType>
+			</Compile>
+			<% } %>
+			<% foreach ( ViewSchema view in SourceViews ) { %>
+			<Compile Include="<%= WebLibSubFolder %>DataSourceControls\Views\<%= GetClassName(view) %>DataSource.cs">
+			  <SubType>Code</SubType>
+			</Compile>
+			<Compile Include="<%= WebLibSubFolder %>UI\RepeaterControls\Views\<%= GetClassName(view) %>Repeater.cs">
+			  <SubType>Code</SubType>
+			</Compile>
+			<% } %>
+			<Compile Include="<%=WebLibSubFolder%>UI\FormUtil.cs">
+			  <SubType>Code</SubType>
+			</Compile>			
+			<Compile Include="<%=WebLibSubFolder%>UI\FormUtilBase.generated.cs">
+			  <SubType>Code</SubType>
+			  <DependentUpon>FormUtil.cs</DependentUpon>
+			</Compile>			
+			<Compile Include="<%=WebLibSubFolder%>UI\MultiBindableTemplate.cs">
+			  <SubType>Code</SubType>
+			</Compile>			
+			<Compile Include="<%=WebLibSubFolder%>UI\MultiFormView.cs">
+			  <SubType>Code</SubType>
+			</Compile>			
+			<Compile Include="<%=WebLibSubFolder%>UI\EntityGridView.cs">
+			  <SubType>Code</SubType>
+			</Compile>			
+			<Compile Include="<%=WebLibSubFolder%>UI\EntityDropDownList.cs">
+			  <SubType>Code</SubType>
+			</Compile>
+			<Compile Include="<%=WebLibSubFolder%>UI\BoundRadioButtonField.cs">
+			  <SubType>Code</SubType>
+			</Compile>			
+			<Compile Include="<%=WebLibSubFolder%>UI\BoundEntityDropDownField.cs">
+			  <SubType>Code</SubType>
+			</Compile>
+			<Compile Include="<%=WebLibSubFolder%>UI\GridViewSearchPanel.cs">
+			  <SubType>Code</SubType>
+			</Compile>
+			<Compile Include="<%=WebLibSubFolder%>UI\GridViewSearchPanelState.cs">
+			  <SubType>Code</SubType>
+			</Compile>
+			<Compile Include="<%=WebLibSubFolder%>UI\EntityLabel.cs">
+			  <SubType>Code</SubType>
+			</Compile>
+			<Compile Include="<%=WebLibSubFolder%>UI\HyperlinkField.cs">
+			  <SubType>Code</SubType>
+			</Compile>			
+			
+		<% } %>
+		
+		<% if (IncludeWinLibrary) { %>
+			<!--<Compile Include="Data\BindingSources.cs">
+			  <SubType>Code</SubType>
+			</Compile>-->
+		<% } %>
+		
+		<%  if (IncludeWebservice) {%>
+			<Compile Include="<%=GetClassName(SourceDatabase) + "Services.asmx"%>">
+			  <SubType>Form</SubType>
+			</Compile>
+		<% } %>
+		
+		<%/* If WebService CLient is wanted, include the web references files */ %>
+        <% if (IncludeWebserviceClient) { %>
+            <Compile Include="Web References\WsProxy\Reference.cs">
+			  <AutoGen>True</AutoGen>
+			  <DesignTime>True</DesignTime>
+			  <DependentUpon>results.discomap</DependentUpon>
+			</Compile>
+        <% } %>
+		 <AppDesigner Include="Properties\" />
+	</ItemGroup>
+	
+	<% if ( IncludeWebsite ) { %>
+		<ItemGroup>
+			<Content Include="Default.aspx" />
+			<Content Include="Web.config" />
+			<Content Include="entlib.config" />
+		</ItemGroup>
+		<ItemGroup>
+			<Compile Include="Default.aspx.cs">
+				<SubType>ASPXCodeBehind</SubType>
+				<DependentUpon>Default.aspx</DependentUpon>
+			</Compile>
+			<Compile Include="Default.aspx.designer.cs">
+				<DependentUpon>Default.aspx</DependentUpon>
+			</Compile>
+		</ItemGroup>
+	<% } %>
+	
+	<% if (IncludeWebserviceClient) { %>
+		<ItemGroup>
+			<Compile Include="<%=WSClientSubFolder%>WsNetTiersProvider.cs">
+			  <SubType>Code</SubType>
+			</Compile>
+			
+			<!--<Compile Include="<%=WSClientSubFolder%>WsDataRepository.cs">
+			  <SubType>Code</SubType>
+			</Compile>-->
+		</ItemGroup>
+		<ItemGroup>
+			<WebReferences Include="Web References\" />
+		</ItemGroup>
+		<ItemGroup>
+			<WebReferenceUrl Include="<%=WebServiceUrl%>/<%=GetClassName(SourceDatabase)%>Services.asmx">
+				<UrlBehavior>Static</UrlBehavior>
+				<RelPath>Web References\WsProxy\</RelPath>
+				<UpdateFromURL><%=WebServiceUrl%>/<%=GetClassName(SourceDatabase)%>Services.asmx</UpdateFromURL>
+				<ServiceLocationURL>
+				</ServiceLocationURL>
+				<CachedDynamicPropName>
+				</CachedDynamicPropName>
+				<CachedAppSettingsObjectName>Settings</CachedAppSettingsObjectName>
+				<CachedSettingsPropName><%=GetClassName(SourceDatabase)%>Application_WsProxy_<%=GetClassName(SourceDatabase)%>Services</CachedSettingsPropName>
+			</WebReferenceUrl>
+		</ItemGroup>
+		<ItemGroup>
+			<None Include="Web References\WsProxy\<%=GetClassName(SourceDatabase)%>Services.disco" />
+			<None Include="Web References\WsProxy\<%=GetClassName(SourceDatabase)%>Services.wsdl" />
+			<None Include="Web References\WsProxy\results.discomap">
+				<Generator>MSDiscoCodeGenerator</Generator>
+				<LastGenOutput>Reference.cs</LastGenOutput>
+			</None>
+		</ItemGroup>
+	<% } %>
+	
+	<% if (SignAssembly) { %>
+		<ItemGroup>
+			<None Include="..\<%=NameSpace%>.snk">
+				<Link><%=NameSpace%>.snk</Link>
+			</None>
+		</ItemGroup>
+	<% } %>
+	
+  <Import Project="$(MSBuildBinPath)\Microsoft.CSHARP.Targets" />
+  <% if ( IncludeWebsite ) { %>
+  <Import Project="$(MSBuildExtensionsPath)\Microsoft\VisualStudio\v8.0\WebApplications\Microsoft.WebApplication.targets" />
+  <% } %>
+	<%	if (IncludeBll && SupportsCodesmithBuildTask
+				&& PropertySetFilePath.Length > 0 
+				&& NetTiersTemplatePath.Length > 0) 
+		{	 
+	%>
+	<!-- 
+	<Import Project="$(MSBuildExtensionsPath)\CodeSmith\CodeSmith.Targets"/>
+    <Target Name="BeforeBuild" Condition=" '$(Configuration)|$(Platform)' == 'GenerateDebug|AnyCPU' ">
+    	 <CodeSmith PropertySetFile="<%= PropertySetFilePath %>" TemplateFile="<%= NetTiersTemplatePath %>" />
+  	</Target>
+	-->
+	<% 	} %>
+  <PropertyGroup>
+    <PreBuildEvent>
+    </PreBuildEvent>
+	<PostBuildEvent>
+	</PostBuildEvent>
+  </PropertyGroup>
+
+  <% if ( IncludeWebsite ) { %>
+  <ProjectExtensions>
+    <VisualStudio>
+      <FlavorProperties GUID="{349c5851-65df-11da-9384-00065b846f21}">
+        <WebProjectProperties>
+          <UseIIS>False</UseIIS>
+          <AutoAssignPort>True</AutoAssignPort>
+          <DevelopmentServerPort>0</DevelopmentServerPort>
+          <DevelopmentServerVPath>/</DevelopmentServerVPath>
+          <IISUrl></IISUrl>
+          <NTLMAuthentication>False</NTLMAuthentication>
+        </WebProjectProperties>
+      </FlavorProperties>
+    </VisualStudio>
+  </ProjectExtensions>
+  <% } %>
+</Project>
