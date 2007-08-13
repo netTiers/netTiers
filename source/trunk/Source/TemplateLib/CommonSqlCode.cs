@@ -43,6 +43,10 @@ namespace MoM.Templates
 		private string unitTestFormat		= "{0}Test";
 		private string enumFormat 			= "{0}List";
 		private string manyToManyFormat		= "{0}From{1}";
+		private string columnClassNameFormat = "{0}Column";
+		private string comparerClassNameFormat = "{0}Comparer";
+		private string eventHandlerClassNameFormat = "{0}EventHandler";
+		private string eventArgsClassNameFormat = "{0}EventArgs";
 		private string strippedTablePrefixes		= "tbl;tbl_";
 		private string strippedTableSuffixes		= "_t";
 		private string serviceClassNameFormat = "{0}Service";
@@ -408,7 +412,67 @@ namespace MoM.Templates
 				this.serviceClassNameFormat = value;
 			}
 		}
-				
+		
+		[Category("09. Code style - Advanced")]
+		[Description("The format used by the Column ClassNameFormat. Parameter {0} is replaced by the original class name.")]
+		public string ColumnClassNameFormat
+		{
+			get {return this.columnClassNameFormat;}
+			set
+			{
+				if (value.IndexOf("{0}") == -1) 
+				{
+					throw new ArgumentException("This parameter must contains the pattern {0} to be valid.", "ColumnClassNameFormat");
+				}
+				this.columnClassNameFormat = value;
+			}
+		}
+		
+		[Category("09. Code style - Advanced")]
+		[Description("The format used by the Comparer ClassNameFormat. Parameter {0} is replaced by the original class name.")]
+		public string ComparerClassNameFormat
+		{
+			get {return this.comparerClassNameFormat;}
+			set
+			{
+				if (value.IndexOf("{0}") == -1) 
+				{
+					throw new ArgumentException("This parameter must contains the pattern {0} to be valid.", "ComparerClassNameFormat");
+				}
+				this.comparerClassNameFormat = value;
+			}
+		}
+		
+		[Category("09. Code style - Advanced")]
+		[Description("The format used by the EventHandler ClassNameFormat. Parameter {0} is replaced by the original class name.")]
+		public string EventHandlerClassNameFormat
+		{
+			get {return this.eventHandlerClassNameFormat;}
+			set
+			{
+				if (value.IndexOf("{0}") == -1) 
+				{
+					throw new ArgumentException("This parameter must contains the pattern {0} to be valid.", "EventHandlerClassNameFormat");
+				}
+				this.eventHandlerClassNameFormat = value;
+			}
+		}
+		
+		[Category("09. Code style - Advanced")]
+		[Description("The format used by the EventHandler ClassNameFormat. Parameter {0} is replaced by the original class name.")]
+		public string EventArgsClassNameFormat
+		{
+			get {return this.eventArgsClassNameFormat;}
+			set
+			{
+				if (value.IndexOf("{0}") == -1) 
+				{
+					throw new ArgumentException("This parameter must contains the pattern {0} to be valid.", "EventArgsClassNameFormat");
+				}
+				this.eventArgsClassNameFormat = value;
+			}
+		}
+		
 		[Category("07. CRUD - Advanced")]
 		[Description("If set to true, attempts to parse the Default Value of your column and set it for the default value of the property on initialization.")]
 		public bool ParseDbColDefaultVal
@@ -1118,19 +1182,19 @@ namespace MoM.Templates
 					return string.Format("I{0}", name);
 					
 				case ClassNameFormat.Key:
-					return string.Format(entityKeyFormat, name);
+					return string.Format(this.entityKeyFormat, name);
 				
 				case ClassNameFormat.Column:
-					return string.Format("{0}Column", name);
+					return string.Format(this.columnClassNameFormat, name);
 				
 				case ClassNameFormat.Comparer:
-					return string.Format("{0}Comparer", name);
+					return string.Format(this.comparerClassNameFormat, name);
 				
 				case ClassNameFormat.EventHandler:
-					return string.Format("{0}EventHandler", name);
+					return string.Format(this.eventHandlerClassNameFormat, name);
 				
 				case ClassNameFormat.EventArgs:
-					return string.Format("{0}EventArgs", name);
+					return string.Format(this.eventArgsClassNameFormat, name);
 				
 				case ClassNameFormat.Partial:
 					return string.Format("{0}.generated", name);
