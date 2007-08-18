@@ -3420,6 +3420,20 @@ CREATE\s+PROC(?:EDURE)?                               # find the start of the st
 						else
 							return null;
 					}
+					else if ( defaultValue.ToLower().Contains("create default") )
+					{
+						// match CREATE DEFAULT statements
+						Regex regex = new Regex(
+							@"(?:as)(?:\s*)(?:'?)(?<defaultValue>[^';]*)(?:'?)(?:;?)",
+							RegexOptions.IgnoreCase
+							| RegexOptions.CultureInvariant
+							| RegexOptions.IgnorePatternWhitespace
+							| RegexOptions.Compiled
+						);
+						defaultValue = regex.Match(defaultValue).Groups["defaultValue"].Value;
+					}
+					else
+						return null;
 				}
 
 				if (column.NativeType.ToLower() == "real")
