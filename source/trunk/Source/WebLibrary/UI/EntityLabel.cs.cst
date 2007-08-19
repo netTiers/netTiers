@@ -1,4 +1,4 @@
-﻿<%@ CodeTemplate Language="C#" TargetLanguage="Text" Description="" Debug="True" ResponseEncoding="UTF-8"  NoWarn="0108,0618,1572,1573,1574,0162,2002"  %>
+﻿<%@ CodeTemplate Language="C#" TargetLanguage="Text" Description="" Debug="True" ResponseEncoding="UTF-8" NoWarn="0108,0618,1572,1573,1574,0162,2002" %>
 <%@ Property Name="RootNameSpace" Type="System.String" Category="Data" Description="Website Namespace." %>
 
 #region Using directives
@@ -153,7 +153,7 @@ namespace <%=RootNameSpace%>.Web.UI
                 // get the value item if specified
                 if ( !string.IsNullOrEmpty( DataValueField ) )
                 {
-                    this.Text = DataBinder.GetPropertyValue( e.Current, DataValueField ).ToString();
+                    this.Value = DataBinder.GetPropertyValue( e.Current, DataValueField ).ToString();
                 }
 
                 // we only do the first item
@@ -169,9 +169,17 @@ namespace <%=RootNameSpace%>.Web.UI
         /// <param name="writer">The <see cref="T:System.Web.UI.HtmlTextWriter"></see> object that receives the control content.</param>
         protected override void Render( HtmlTextWriter writer )
         {
-            if ( !string.IsNullOrEmpty( this.DataTextFormatString ) )
+            if ( !string.IsNullOrEmpty( this.DataTextFormatString ) &&
+					this.DataTextFormatString.IndexOf( "{0}" ) > -1 )
             {
-                writer.Write( string.Format( this.DataTextFormatString, Text ) );
+				if ( this.DataTextFormatString.IndexOf( "{1}" ) > -1 )
+            	{
+                	writer.Write( string.Format( this.DataTextFormatString, Text, Value ) );
+            	}
+				else
+				{
+	                writer.Write( string.Format( this.DataTextFormatString, Text ) );
+				}
             }
             else
             {
