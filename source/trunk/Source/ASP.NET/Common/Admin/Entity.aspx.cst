@@ -104,7 +104,7 @@
 							&& IncludeAtlasToolkit)
 						{
 							string tempDSO = string.Empty;
-							Response.Write(WriteBlobTemplateField(column) + "\r\n");
+							Response.Write(WriteBlobTemplateField(column, suffix) + "\r\n");
 							entityDSO+=tempDSO;
 							suffix++;
 						}
@@ -308,10 +308,10 @@ public string WriteTemplateField(ColumnSchema column, int tabs, out string entit
 	*/
 }
 
-public string WriteBlobTemplateField(ColumnSchema column) 
+public string WriteBlobTemplateField(ColumnSchema column, int suffix) 
 {
 	string propertyName = GetPropertyName(column);
-	return string.Format(_blobTemplate, GetFriendlyName(column), propertyName, GetPropertyName(SourceTable.PrimaryKey.MemberColumns[0]));
+	return string.Format(_blobTemplate, GetFriendlyName(column), propertyName, GetPropertyName(SourceTable.PrimaryKey.MemberColumns[0]), suffix);
 }
 
 public string WriteBoundField(ColumnSchema column, int tabs) {
@@ -368,15 +368,15 @@ const string _templateField = @"				<data:HyperLinkField HeaderText=""{1}"" Data
 const string _blobTemplate = @"
 				<asp:templatefield headertext='{0} Preview'>
 				<itemtemplate>
-					<ajaxToolkit:ModalPopupExtender id='ModalPopupExtender' runat='server'
-						TargetControlID='LinkButton' 
+					<ajaxToolkit:ModalPopupExtender id='ModalPopupExtender{3}' runat='server'
+						TargetControlID='LinkButton{3}' 
 						PopupControlID='Panel1' 
 						OkControlID='Button1'
 						BackgroundCssClass='ModalBackground' 
 						DynamicControlID='lblPreview'
 						DynamicContextKey='<%# DataBinder.Eval(Container.DataItem, ""{2}"") %>'
 						DynamicServiceMethod='Get{1}Content' />
-					<asp:LinkButton ID='LinkButton' runat='server' Text='Preview' />
+					<asp:LinkButton ID='LinkButton{3}' runat='server' Text='Preview' />
 				</itemtemplate>
 				</asp:templatefield>
 	";
