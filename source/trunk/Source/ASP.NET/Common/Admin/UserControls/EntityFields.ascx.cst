@@ -78,15 +78,17 @@
 					{
 						string propertyName = GetPropertyName(column);
 						string editorControl = GetEditorControl(column, "", fkeys);
+            string controlID = GetControlID(column,"");
+            string associatedControlID = GetAssociatedControlID(controlID);
 						if (editorControl == null || editorControl == string.Empty)
 							continue;
-%>							
+%>
 			<tr>
-				<td class="literal"><%=GetFriendlyName(column)%>:</td>
-				<td>
+        <td class="literal"><asp:Label ID="<%= associatedControlID %>" runat="server" Text="<%=GetFriendlyName(column)%>:" AssociatedControlID="<%= controlID %>" /></td>
+        <td>
 					<%= editorControl %>
 				</td>
-			</tr>				
+			</tr>
 <%
 					}							
 		
@@ -136,33 +138,18 @@
 						DataValueField="<%=secondaryPk%>"
 						RepeatColumns="4"
 					/>				
-					<data:<%=GetClassName(secondaryTable)%>DataSource ID="<%=GetClassName(secondaryTable)%>DataSource" runat="server"
-						SelectMethod="<%= MethodNames.GetAll %>"
-					/>
+					<data:<%=GetClassName(secondaryTable)%>DataSource ID="<%=GetClassName(secondaryTable)%>DataSource" runat="server" SelectMethod="<%= MethodNames.GetAll %>"/>
 					
-					<data:<%=GetClassName(junctionTableKey.ForeignKeyTable)%>DataSource ID="<%=GetClassName(junctionTableKey.ForeignKeyTable)%>DataSource" runat="server"
-						SelectMethod="GetBy<%=junctionPk%>"
-					>
+					<data:<%=GetClassName(junctionTableKey.ForeignKeyTable)%>DataSource ID="<%=GetClassName(junctionTableKey.ForeignKeyTable)%>DataSource" runat="server" SelectMethod="GetBy<%=junctionPk%>" >
 						<Parameters>							
 							<asp:QueryStringParameter Name="<%=junctionPk%>" QueryStringField="<%=primaryPk%>" Type="String" />
 						</Parameters>
 					</data:<%=GetClassName(junctionTableKey.ForeignKeyTable)%>DataSource>	
 					
 					<data:ManyToManyListRelationship ID="<%=GetClassName(junctionTableKey.ForeignKeyTable)%>Relationship" runat="server">
-						<PrimaryMember runat="server"
-							DataSourceID="<%=entityName%>DataSource"
-							EntityKeyName="<%=primaryPk%>"
-						/>
-						<LinkMember runat="server"
-							DataSourceID="<%=GetClassName(junctionTableKey.ForeignKeyTable)%>DataSource"
-							EntityKeyName="<%=junctionPk%>"
-							ForeignKeyName="<%=junctionFk%>"
-						/>
-						<ReferenceMember runat="server"
-							DataSourceID="<%=GetClassName(secondaryTable)%>DataSource"
-							ListControlID="<%=GetClassName(secondaryTable)%>List"
-							EntityKeyName="<%=secondaryPk%>"
-						/>
+						<PrimaryMember runat="server" DataSourceID="<%=entityName%>DataSource" EntityKeyName="<%=primaryPk%>" />
+						<LinkMember runat="server" DataSourceID="<%=GetClassName(junctionTableKey.ForeignKeyTable)%>DataSource" EntityKeyName="<%=junctionPk%>" ForeignKeyName="<%=junctionFk%>" />
+						<ReferenceMember runat="server" DataSourceID="<%=GetClassName(secondaryTable)%>DataSource" ListControlID="<%=GetClassName(secondaryTable)%>List" EntityKeyName="<%=secondaryPk%>" />
 					</data:ManyToManyListRelationship>					
 				</td>
 			</tr>			
@@ -191,6 +178,17 @@ private string getParameters(ColumnSchemaCollection keys)
     }
     return s;
 }	
+
+public string GetAssociatedControlID(string controlid)
+{
+  return String.Format("lbl{0}",controlid);
+}
+
+public string GetControlID(ColumnSchema column, string prefix)
+{
+	string propertyName = GetPropertyName(column);
+	return String.Format("data{0}{1}",prefix, propertyName);
+}
 
 public string GetEditorControl(ColumnSchema column, string prefix, TableKeySchemaCollection fkeys)
 {
