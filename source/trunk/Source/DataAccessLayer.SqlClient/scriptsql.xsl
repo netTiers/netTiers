@@ -10,8 +10,8 @@
 <xsl:output method="text"/>
 
 <xsl:template match="/">
-Use [<xsl:value-of select="/root/database"/>]
-Go
+USE [<xsl:value-of select="/root/database"/>]
+GO
 SET QUOTED_IDENTIFIER ON 
 GO
 SET ANSI_NULLS OFF 
