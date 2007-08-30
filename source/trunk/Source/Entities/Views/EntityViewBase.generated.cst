@@ -67,6 +67,13 @@ namespace <%=NameSpace%>
 		/// </summary>
 		private object _tag;
 		
+		/// <summary>
+		/// Suppresses Entity Events from Firing, 
+		/// useful when loading the entities from the database.
+		/// </summary>
+	    [NonSerialized] 
+		private bool suppressEntityEvents = false;
+		
 		#endregion Variable Declarations
 		
 		#region Constructors
@@ -151,8 +158,9 @@ namespace <%=NameSpace%>
 					return;
 					
 				this.<%= GetFieldName(SourceView.Columns[x]) %> = value;
-				this._isDirty = true;	
-				OnPropertyChanged(<%=className%>Column.<%=GetPropertyName(SourceView.Columns[x]) %>.ToString());
+				this._isDirty = true;
+				
+				OnPropertyChanged("<%=GetPropertyName(SourceView.Columns[x]) %>");
 			}
 		}
 		
@@ -180,6 +188,22 @@ namespace <%=NameSpace%>
 			}
 		}
 	
+		/// <summary>
+		/// Determines whether this entity is to suppress events while set to true.
+		/// </summary>
+		[System.ComponentModel.Bindable(false)]
+		[BrowsableAttribute(false), XmlIgnoreAttribute()]
+		public bool SuppressEntityEvents
+		{	
+			get
+			{
+				return suppressEntityEvents;
+			}
+			set
+			{
+				suppressEntityEvents = value;
+			}	
+		}
 
 		private bool _isDeleted = false;
 		/// <summary>
@@ -389,9 +413,12 @@ namespace <%=NameSpace%>
       /// <param name="e">PropertyChangedEventArgs</param>
 		protected virtual void OnPropertyChanged(PropertyChangedEventArgs e)
 		{
-			if (null != PropertyChanged)
+			if (!SuppressEntityEvents)
 			{
-				PropertyChanged(this, e);
+				if (null != PropertyChanged)
+				{
+					PropertyChanged(this, e);
+				}
 			}
 		}
 		

@@ -1742,21 +1742,41 @@ namespace MoM.Templates
 		/// <remarks>This method should not append the trailing semicolon.</remarks>
 		public string GetObjectPropertySetExpression(ColumnSchema column, string containerName, string objectName, int indent)
 		{
+			//if ( column.AllowDBNull )
+			//{
+			//	return string.Format("{2} = {1}.IsDBNull({1}.GetOrdinal(\"{0}\")) ? null : ({3}){1}[\"{0}\"]",
+			//	/*0*/column.Name,
+			//	/*1*/containerName,
+			//	/*2*/GetObjectPropertyAccessor(column,objectName),
+			//	/*3*/GetCSType(column));
+			//}
+			//else
+			//{
+			//	return string.Format("{2} = ({3}){1}[\"{0}\"]",
+			//	/*0*/column.Name,
+			//	/*1*/containerName,
+			//	/*2*/GetObjectPropertyAccessor(column,objectName),
+			//	/*3*/GetCSType(column));
+			//}
 			if ( column.AllowDBNull )
 			{
-				return string.Format("{2} = {1}.IsDBNull({1}.GetOrdinal(\"{0}\")) ? null : ({3}){1}[\"{0}\"]",
-				/*0*/column.Name,
+				return string.Format("{2} = ({1}.IsDBNull(((int){4}Column.{0} - 1)))?null:({3}){1}[((int){4}Column.{0} - 1)]",
+				/*0*/GetPropertyName(column),
 				/*1*/containerName,
 				/*2*/GetObjectPropertyAccessor(column,objectName),
-				/*3*/GetCSType(column));
+				/*3*/GetCSType(column),
+				/*4*/GetClassName(column.Table));
 			}
 			else
 			{
-				return string.Format("{2} = ({3}){1}[\"{0}\"]",
-				/*0*/column.Name,
+				// regular NOT NULL data types, set to default value for type if null
+				return string.Format("{2} = ({3}){1}[((int){5}Column.{0} - 1)]",
+				/*0*/GetPropertyName(column),
 				/*1*/containerName,
 				/*2*/GetObjectPropertyAccessor(column,objectName),
-				/*3*/GetCSType(column));
+				/*3*/GetCSType(column),
+				/*4*/GetCSDefaultByType(column),
+				/*5*/GetClassName(column.Table));
 			}
 		}
 				
@@ -1830,23 +1850,43 @@ namespace MoM.Templates
 		/// <remarks>This method should not append the trailing semicolon.</remarks>
 		public string GetObjectPropertySetExpression(ViewColumnSchema column, string containerName, string objectName, int indent)
 		{
+			//if ( column.AllowDBNull )
+			//{
+			//	// nullable reference types (strings), set to null if null retrieved from database
+			//	return string.Format("{2} = {1}.IsDBNull({1}.GetOrdinal(\"{0}\")) ? null : ({3}){1}[\"{0}\"]",
+			//		/*0*/column.Name,
+			//		/*1*/containerName,
+			//		/*2*/GetObjectPropertyAccessor(column,objectName),
+			//		/*3*/GetCSType(column));
+			//}
+			//else
+			//{
+			//	// regular NOT NULL data types, set to default value for type if null
+			//	return string.Format("{2} = ({3}){1}[\"{0}\"]",
+			//		/*0*/column.Name,
+			//		/*1*/containerName,
+			//		/*2*/GetObjectPropertyAccessor(column,objectName),
+			//		/*3*/GetCSType(column));
+			//}
 			if ( column.AllowDBNull )
 			{
-				// nullable reference types (strings), set to null if null retrieved from database
-				return string.Format("{2} = {1}.IsDBNull({1}.GetOrdinal(\"{0}\")) ? null : ({3}){1}[\"{0}\"]",
-					/*0*/column.Name,
-					/*1*/containerName,
-					/*2*/GetObjectPropertyAccessor(column,objectName),
-					/*3*/GetCSType(column));
+				return string.Format("{2} = ({1}.IsDBNull(((int){4}Column.{0})))?null:({3}){1}[((int){4}Column.{0})]",
+				/*0*/GetPropertyName(column),
+				/*1*/containerName,
+				/*2*/GetObjectPropertyAccessor(column,objectName),
+				/*3*/GetCSType(column),
+				/*4*/GetClassName(column.View));
 			}
 			else
 			{
 				// regular NOT NULL data types, set to default value for type if null
-				return string.Format("{2} = ({3}){1}[\"{0}\"]",
-					/*0*/column.Name,
-					/*1*/containerName,
-					/*2*/GetObjectPropertyAccessor(column,objectName),
-					/*3*/GetCSType(column));
+				return string.Format("{2} = ({3}){1}[((int){5}Column.{0})]",
+				/*0*/GetPropertyName(column),
+				/*1*/containerName,
+				/*2*/GetObjectPropertyAccessor(column,objectName),
+				/*3*/GetCSType(column),
+				/*4*/GetCSDefaultByType(column),
+				/*5*/GetClassName(column.View));
 			}
 		}
 

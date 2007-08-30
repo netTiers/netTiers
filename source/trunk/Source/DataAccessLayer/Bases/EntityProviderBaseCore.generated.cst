@@ -667,58 +667,66 @@ namespace <%=DALNameSpace%>.Bases
 		/// <returns>a <see cref="<%=collectionClassNameForComment%>"/></returns>
 		public static <%=collectionClassName%> Fill(IDataReader reader, <%=collectionClassName%> rows, int start, int pageLength)
 		{
-		// advance to the starting row
-		for (int i = 0; i < start; i++)
-		{
-			if (!reader.Read())
-			return rows; // not enough rows, just return
-		}
-		for (int i = 0; i < pageLength; i++)
-		{
-			if (!reader.Read())
-			break; // we are done
-			string key = null;
+			NetTiersProvider currentProvider = DataRepository.Provider;
+            bool useEntityFactory = currentProvider.UseEntityFactory;
+            bool enableEntityTracking = currentProvider.EnableEntityTracking;
+            LoadPolicy currentLoadPolicy = currentProvider.CurrentLoadPolicy;
 			
-			<%=className%> c = null;
-			if (DataRepository.Provider.UseEntityFactory)
+			// advance to the starting row
+			for (int i = 0; i < start; i++)
 			{
-			key = new System.Text.StringBuilder("<%= entityClassName %>")<%
-			for (int x=0; x < cols.Count; x++) {
-			if(cols[x].IsPrimaryKeyMember) {%>
-			.Append("|").Append((reader.IsDBNull(((int)<%= NameSpace %>.<%= GetClassName(SourceTable, ClassNameFormat.Column) %>.<%= GetPropertyName(cols[x]) %> - 1))?<%= GetCSDefaultByType(cols[x])%>:(<%=GetCSType(cols[x])%>)reader[((int)<%= NameSpace %>.<%= GetClassName(SourceTable, ClassNameFormat.Column) %>.<%= GetPropertyName(cols[x]) %> - 1)]).ToString())<%
-			}// end if
-			} //end for each column %>.ToString();
-			c = EntityManager.LocateOrCreate<<%=entityClassName%>>(
-			key.ToString(), // EntityTrackingKey
-			"<%=entityClassName%>",  //Creational Type
-			DataRepository.Provider.EntityCreationalFactoryType,  //Factory used to create entity
-			DataRepository.Provider.EnableEntityTracking); // Track this entity?
+				if (!reader.Read())
+				return rows; // not enough rows, just return
 			}
-			else
+			for (int i = 0; i < pageLength; i++)
 			{
-			c = new <%= className %>();
+				if (!reader.Read())
+					break; // we are done
+					
+				string key = null;
+				
+				<%=className%> c = null;
+				if (useEntityFactory)
+				{
+					key = new System.Text.StringBuilder("<%= entityClassName %>")<%
+					for (int x=0; x < cols.Count; x++) {
+					if(cols[x].IsPrimaryKeyMember) {%>
+					.Append("|").Append((reader.IsDBNull(((int)<%= NameSpace %>.<%= GetClassName(SourceTable, ClassNameFormat.Column) %>.<%= GetPropertyName(cols[x]) %> - 1))?<%= GetCSDefaultByType(cols[x])%>:(<%=GetCSType(cols[x])%>)reader[((int)<%= NameSpace %>.<%= GetClassName(SourceTable, ClassNameFormat.Column) %>.<%= GetPropertyName(cols[x]) %> - 1)]).ToString())<%
+					}// end if
+					} //end for each column %>.ToString();
+					c = EntityManager.LocateOrCreate<<%=entityClassName%>>(
+					key.ToString(), // EntityTrackingKey
+					"<%=entityClassName%>",  //Creational Type
+					currentProvider.EntityCreationalFactoryType,  //Factory used to create entity
+					currentProvider.EnableEntityTracking); // Track this entity?
+				}
+				else
+				{
+					c = new <%= className %>();
+				}
+				
+				if (!enableEntityTracking ||
+					c.EntityState == EntityState.Added ||
+					(enableEntityTracking &&
+						(
+							(currentLoadPolicy == LoadPolicy.PreserveChanges && c.EntityState == EntityState.Unchanged) ||
+							(currentLoadPolicy == LoadPolicy.DiscardChanges && (c.EntityState == EntityState.Unchanged || c.EntityState == EntityState.Changed))
+						)
+					))
+				{
+					c.SuppressEntityEvents = true;
+					<%for (int x=0; x < cols.Count;x++) { %>
+					<%= GetObjectPropertySetExpression(cols[x], "reader", "c", 5) %>;
+					<% if( cols[x].IsPrimaryKeyMember && !IsIdentityColumn(cols[x]) && !IsComputed(cols[x]) ) {%>
+					c.Original<%=GetPropertyName(cols[x])%> = c.<%=GetPropertyName(cols[x])%>;
+					<% }// end if %>
+					<%} //end for each column %>
+					c.EntityTrackingKey = key;
+					c.AcceptChanges();
+					c.SuppressEntityEvents = false;
+				}
+				rows.Add(c);
 			}
-			
-			if (!DataRepository.Provider.EnableEntityTracking ||
-			c.EntityState == EntityState.Added ||
-			(DataRepository.Provider.EnableEntityTracking &&
-			((DataRepository.Provider.CurrentLoadPolicy == LoadPolicy.PreserveChanges && c.EntityState == EntityState.Unchanged) ||
-			(DataRepository.Provider.CurrentLoadPolicy == LoadPolicy.DiscardChanges && (c.EntityState == EntityState.Unchanged ||
-								c.EntityState == EntityState.Changed)))))
-						{
-			c.SuppressEntityEvents = true;
-			<%for (int x=0; x < cols.Count;x++) { %>
-			<%= GetObjectPropertySetExpression(cols[x], "reader", "c", 5) %>;
-			<% if( cols[x].IsPrimaryKeyMember && !IsIdentityColumn(cols[x]) && !IsComputed(cols[x]) ) {%>
-			c.Original<%=GetPropertyName(cols[x])%> = c.<%=GetPropertyName(cols[x])%>;
-			<% }// end if %>
-			<%} //end for each column %>
-			c.EntityTrackingKey = key;
-			c.AcceptChanges();
-			c.SuppressEntityEvents = false;
-			}
-			rows.Add(c);
-		}
 		return rows;
 		}		
 		/// <summary>
