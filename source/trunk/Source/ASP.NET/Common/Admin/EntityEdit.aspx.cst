@@ -13,7 +13,8 @@
 <%@ Property Name="SourceDatabase" Type="SchemaExplorer.DatabaseSchema" Optional="False" Category="DataSource" 	Description="Database that the stored procedures should be based on." %>
 <%@ Property Name="IncludeAtlasLibrary" Type="System.Boolean" Default="false" Category="06b. Website - Advanced" Description="Indicates whether to include a reference to the Atlas component library." %>
 <%@ Property Name="IncludeAtlasToolkit" Type="System.Boolean" Default="false" Category="06b. Website - Advanced" Description="Indicates whether to include a reference to the Atlas Control Toolkit. This property is only taken into account when IncludeAtlasLibrary is true." %>
-
+<%@ Property Name="IncludeGetListByFK" Type="System.Boolean" Default="True" Category="Options" Description="If true get functions will be generated." %>
+<%@ Property Name="IncludeRelations" Type="System.Boolean" Default="True" Category="Options" Description="If true DeepSave/Load will have a collection to fill.  There's still a requirement for IncludeByFk && IncludeSave" %>
 <%
 
 	// Collection of all columns in the table.
@@ -154,7 +155,7 @@
 			<Columns>
 				<asp:CommandField ShowSelectButton="True" />
 <%			
-			
+			int suffix = 1;
 			foreach (ColumnSchema tCol in tablesRelated[x].Columns)
 			{				
 				string propertyName = GetPropertyName(tCol);
@@ -163,6 +164,11 @@
 %>
 				<asp:BoundField DataField="<%=propertyName%>" HeaderText="<%=GetFriendlyName(tCol)%>" SortExpression="<%=tCol.Name%>" />				
 <%    
+				}	
+				else if (tCol.IsForeignKeyMember && IncludeRelations && IncludeGetListByFK) 
+				{					
+					Response.Write(WriteTemplateField(tCol, 4, suffix) + "\r\n");
+					suffix++;
 				}				
         	}
 %>
@@ -173,7 +179,68 @@
 			</EmptyDataTemplate>
 		</data:EntityGridView>					
 		
-		<data:<%=entityRelated%>DataSource ID="<%=entityRelated%>DataSource" runat="server" SelectMethod="<%= MethodNames.Find %>">
+		<data:<%=entityRelated%>DataSource ID="<%=entityRelated%>DataSource" runat="server" SelectMethod="<%= MethodNames.Find %>"
+			<% 
+			Hashtable children = GetChildrenCollections(tablesRelated[x], SourceTables);
+			if (tablesRelated[x].ForeignKeys.Count > 0) {%>
+			EnableDeepLoad="True"
+			>
+			<DeepLoadProperties Method="IncludeChildren" Recursive="False">
+	            <Types>
+			<% if ( IncludeRelations && IncludeGetListByFK ) 
+			{ 
+			//Generate enum for each child type foreign key relation		
+					System.Collections.ArrayList addedList = new System.Collections.ArrayList();
+					foreach(TableKeySchema tableKey in tablesRelated[x].ForeignKeys)
+					{
+						// related table must be in the selection
+						if (SourceTables.Contains(tableKey.PrimaryKeyTable)) 
+						{
+							string pkClassName = GetClassName(tableKey.PrimaryKeyTable);
+							string pkProperty = GetKeysName(tableKey.PrimaryKeyMemberColumns);
+							string fkPropertyName = GetKeysName(tableKey.ForeignKeyMemberColumns);
+							string compositePropertyName =  fkPropertyName + "Source";
+						
+						if (addedList.Contains(pkClassName))
+							continue;
+											
+						addedList.Add(pkClassName); 	
+				%>						
+					<data:<%= entityRelated %>Property Name="<%= pkClassName %>"/> 
+				<%
+				} // end if
+			} // end foreach
+			%>
+			<%
+			foreach(CollectionInfo item in GetChildrenCollections(tablesRelated[x], SourceTables).Values)
+			{	
+				if (item.CollectionRelationshipType != RelationshipType.OneToOne)
+				{
+					if (addedList.Contains(item.CollectionName))
+						continue;
+					
+			%>
+					<%%--<data:<%= entityRelated %>Property Name="<%= item.PropertyNameUnique %>" />--%>
+			<% 
+			//addedList.Add(item.CollectionName);
+			}
+			else
+			{
+				if (addedList.Contains(item.CleanName))
+					continue;
+			%>
+					<%%--<data:<%= entityRelated %>Property Name="<%= item.PropertyNameUnique %>" />--%>
+			<%	
+			}
+		  }
+		}
+		%>  
+				</Types>
+			</DeepLoadProperties>
+			<% }
+			else
+				Response.Write("\t\t>\n");
+			%>		
 		    <Parameters>
 				<data:SqlParameter Name="Parameters">
 					<Filters>
@@ -209,6 +276,69 @@
 </asp:Content>
 
 <script runat="template">
+	public string WriteTemplateField(ColumnSchema column, int tabs, int suffix) {
+		const string _templateField = @"				<data:HyperLinkField HeaderText=""{1}"" DataNavigateUrlFormatString=""{3}Edit.aspx?{2}={{0}}"" DataNavigateUrlFields=""{2}"" DataContainer=""{0}Source"" DataTextField=""{5}"" />";
+		string propertyName = GetPropertyName(column);	
+		
+		string pkPropertyName = String.Empty;
+		string pkColumnName = String.Empty;
+		string fkPropertyName = String.Empty;
+		string fkFriendlyName = String.Empty;
+		string fkColumnName = String.Empty;
+		string pkDisplayField = String.Empty;	
+		string objectDataSource = String.Empty;
+		string pkCSType = String.Empty;
+		TableSchema fkTable = null;
+
+		foreach (TableKeySchema tableKey in column.Table.ForeignKeys)
+		{
+			//Key Tables must be in SourceTables
+			if (!SourceTables.Contains(tableKey.ForeignKeyTable) || !SourceTables.Contains(tableKey.PrimaryKeyTable))
+				continue;
+				
+			fkTable = tableKey.PrimaryKeyTable;
+			ColumnSchema fKeyColumn = tableKey.ForeignKeyMemberColumns[0];
+			fkPropertyName = GetPropertyName(fKeyColumn);
+			fkFriendlyName = GetFriendlyName(fKeyColumn);
+			fkColumnName = fKeyColumn.Name;
+			
+			if ( GetPropertyName(fKeyColumn) == propertyName )
+			{
+				pkPropertyName = GetPropertyName(tableKey.PrimaryKeyMemberColumns[0]);	
+				pkColumnName = tableKey.PrimaryKeyMemberColumns[0].Name;
+				
+				pkCSType = GetCSType(tableKey.PrimaryKeyMemberColumns[0]);
+				
+				//Find the first non-key column for display
+				foreach(ColumnSchema pkColumn in tableKey.PrimaryKeyTable.Columns)
+					if ( !pkColumn.IsForeignKeyMember && !pkColumn.IsPrimaryKeyMember )
+					{							
+						pkDisplayField = GetPropertyName(pkColumn);
+						break;
+					}
+				
+				if (objectDataSource == String.Empty )
+					objectDataSource = GetClassName(tableKey.PrimaryKeyTable);
+
+				if (pkDisplayField == String.Empty )
+					pkDisplayField = pkPropertyName;
+
+				break;						
+			}
+		}
+		if (fkPropertyName == string.Empty || pkPropertyName == string.Empty)
+			return string.Empty;		
+		
+		return string.Format(_templateField, 
+			/*0*/ fkPropertyName, 
+			/*1*/ fkFriendlyName, 
+			/*2*/ pkPropertyName, 
+			/*3*/ GetClassName(fkTable), 
+			/*4*/ fkColumnName, 
+			/*5*/ pkDisplayField, 
+			/*6*/ string.Concat(objectDataSource, "DataSource", suffix.ToString()));		
+	}
+	
 	public string StringOut(string EntityName) 
 	{
 		return string.Format(@"<ajaxToolkit:CollapsiblePanelExtender ID=""cpe{0}"" runat=""Server"" TargetControlID=""{0}Panel1""
@@ -218,20 +348,6 @@
             SuppressPostBack=""true""/>", EntityName);	
 	}
 	
-	/*
-	public string WriteAtlasExtender(string ae) 
-	{
-		string s = string.Empty;
-		if (ae != string.Empty) 
-		{
-			s += "<ajaxToolkit:CollapsiblePanelExtender ID=\"cpe\" runat=\"Server\">\r\n";	
-			s += string.Format("{0}", ae);
-			s += "\r\n</ajaxToolkit:CollapsiblePanelExtender>\r\n";
-		}
-		return (s);
-	}
-	*/
-
 	private string getParameters(ColumnSchemaCollection keys) 
 	{
         string s = string.Empty;
