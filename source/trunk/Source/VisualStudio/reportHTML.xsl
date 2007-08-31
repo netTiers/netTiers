@@ -75,10 +75,10 @@
 			 You can find more information on how to set this up at<br/> 
 			 <a href="http://docs.nettiers.com">.netTiers 2 Install and Configuration Document @ http://docs.netTiers.com</a>
             </p>
-            <p>1. Add a new section to the configSettings</p>
+            <p>1. Add a new section to the configSections</p>
             
 <pre>
-  &lt;section name="netTiersService"
+  &lt;section name="<xsl:value-of select="//NetTiersReport/@DALNameSpace" />"
 		type="<xsl:value-of select="//NetTiersReport/@DALNameSpace" />.Bases.NetTiersServiceSection, <xsl:value-of select="//NetTiersReport/@DALNameSpace" />"
 		allowDefinition="MachineToApplication"
 		restartOnExternalChanges="true" /&gt;
@@ -91,7 +91,7 @@
 </pre>
          <p>3.  Add the netTierService configuration section to your configuration file. Comment / Uncomment which provider you plan on using / not using</p>
  <pre>
-&lt;netTiersService defaultProvider="SqlNetTiersProvider"&gt;
+&lt;<xsl:value-of select="//NetTiersReport/@DALNameSpace" /> defaultProvider="SqlNetTiersProvider"&gt;
   &lt;providers&gt;
     <!--
     *** SqlClient Provider ***
@@ -119,7 +119,7 @@
       />
     -->
   &lt;/providers&gt;
-&lt;/netTiersService&gt;
+&lt;/<xsl:value-of select="//NetTiersReport/@DALNameSpace" />&gt;
  </pre>
           </div>
           <div id="Documentation" style="display:inline">
