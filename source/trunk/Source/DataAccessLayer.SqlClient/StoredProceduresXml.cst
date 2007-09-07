@@ -48,7 +48,7 @@ if ( IncludeDrop &&
 		!string.IsNullOrEmpty( ProcedurePrefix ) )
 {
 %>
-<procedure owner="dbo" name="<%=ProcedurePrefix%>DropAllProcedures" <%if (GrantUser != "") {%>grant="<%=GrantUser%>"<%}%>>
+<procedure owner="dbo" name="<%=ProcedurePrefix%>DropAllProcedures" >
 <comment>-- Drops all existing netTiers stored procedures</comment>
 <parameters/>
 
@@ -57,7 +57,35 @@ BEGIN
 DECLARE @procedureName SYSNAME
 DECLARE c CURSOR FOR
 SELECT name FROM sysobjects WHERE type = 'P' AND objectproperty(id, 'IsMSShipped') = 0 
-AND name LIKE '<%=ProcedurePrefix%>%' AND name NOT LIKE '<%=CustomProcedureStartsWith%>%'
+AND name LIKE '<%=ProcedurePrefix%>%' 
+<%
+//Exclude all custom stored procs for tables
+foreach(TableSchema table in SourceTables)
+{
+	System.Collections.IDictionary procs = GetCustomProcedures(table);
+	
+	foreach(DictionaryEntry item in procs)
+	{  
+		SchemaExplorer.CommandSchema command = (SchemaExplorer.CommandSchema) item.Value;
+%>
+AND name <> '<%=command.Name%>'
+<%
+	}
+}
+//Exclude all custom stored procs for views
+foreach(ViewSchema view in SourceViews)
+{
+	System.Collections.IDictionary procs = GetCustomProcedures(view);
+	
+	foreach(DictionaryEntry item in procs)
+	{  
+		SchemaExplorer.CommandSchema command = (SchemaExplorer.CommandSchema) item.Value;
+%>
+AND name <> '<%=command.Name%>'
+<%
+	}
+}
+%>
 OPEN c
 FETCH NEXT FROM c INTO @procedureName
 WHILE @@FETCH_STATUS = 0
