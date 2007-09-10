@@ -1172,6 +1172,7 @@ namespace MoM.Templates
 			switch (format)
 			{
 				case ClassNameFormat.None:
+					//return string.Format(entityFormat, name);
 					return name;
 				
 				case ClassNameFormat.Base:
@@ -1363,7 +1364,7 @@ namespace MoM.Templates
 							return GetPascalCaseName(name); // class and property names are pascal-cased
 						case ReturnFields.FieldName:
 							name = GetCSharpSafeName(name);
-							return GetCamelCaseName(name); // fields (private member variables) are camel-cased
+							return GetCamelCaseName(name); // fields (private member variables) are camel-cased and prefixed with an underscore
 						case ReturnFields.FriendlyName:
 							return PascalToSpaced(GetPascalCaseName(name)); // just return the pascal name with spaces
 						case ReturnFields.Id:
@@ -4963,10 +4964,10 @@ CREATE\s+PROC(?:EDURE)?                               # find the start of the st
 							collectionInfo.PkIdxName = junctionTableKey.Name;
 							
 							// Property Name
-							collectionInfo.PropertyName = string.Format("{0}_From_{1}", GetClassName(collectionInfo.SecondaryTableSchema, ClassNameFormat.CollectionProperty), GetClassName(collectionInfo.JunctionTableSchema)); 
+							collectionInfo.PropertyName =  string.Format("{2}{0}_From_{1}", GetClassName(collectionInfo.SecondaryTableSchema, ClassNameFormat.CollectionProperty), GetClassName(collectionInfo.JunctionTableSchema),GetKeysName(junctionTableKey.ForeignKeyMemberColumns)); 
 
 							// Uninque Property Name, in case of conflict
-							collectionInfo.PropertyNameUnique = string.Format("{0}_From_{1}", GetClassName( collectionInfo.SecondaryTableSchema, ClassNameFormat.CollectionProperty), GetClassName(collectionInfo.JunctionTableSchema)); 
+							collectionInfo.PropertyNameUnique =   string.Format("{2}{0}_From_{1}", GetClassName( collectionInfo.SecondaryTableSchema, ClassNameFormat.CollectionProperty), GetClassName(collectionInfo.JunctionTableSchema),GetKeysName(junctionTableKey.ForeignKeyMemberColumns)); 
 
 							// Field Variable String
 							collectionInfo.FieldName = GetCamelCaseName(collectionInfo.PropertyNameUnique);

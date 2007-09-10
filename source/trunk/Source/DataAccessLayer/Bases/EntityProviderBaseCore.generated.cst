@@ -94,6 +94,7 @@ namespace <%=DALNameSpace%>.Bases
 		<%
 		TableSchema primaryTable = SourceTable;
 		
+		System.Collections.Hashtable manyToManyFunctions = new System.Collections.Hashtable();
 		foreach(TableKeySchema key in SourceTable.PrimaryKeys)
 		{
 			// Check that the key is related to a junction table
@@ -110,6 +111,9 @@ namespace <%=DALNameSpace%>.Bases
 					{
 						TableSchema secondaryTable = junctionTableKey.PrimaryKeyTable;
 						string functionname = GetManyToManyName(junctionTableKey, junctionTable);
+						if (!manyToManyFunctions.ContainsKey(functionname))
+						{
+							manyToManyFunctions.Add(functionname,null);
 %>
 		#region GetBy<%=functionname%>
 		
@@ -223,6 +227,7 @@ namespace <%=DALNameSpace%>.Bases
 		#endregion GetBy<%=functionname%>
 		
 					<%
+						}//end if the function has already been created
 					} //end if there is many to many relationship.
 				} //end foreach			
 		 	}// end if(IsJunctionTable(junctionTableKey.ForeignKeyTable)) %>
@@ -938,7 +943,7 @@ namespace <%=DALNameSpace%>.Bases
 			#endregion 
 			<% } %>	    
 			
-		    <% }//end foreach CollectionInfo%>
+		    <% }//end foreach CollectionInfo%> 
 			
 			//Fire all DeepLoad Items
 			foreach(KeyValuePair<Delegate, object> pair in deepHandles.Values)
@@ -1021,7 +1026,7 @@ namespace <%=DALNameSpace%>.Bases
 				if (i == 0)
 				{ %>
 			//used to hold DeepSave method delegates and fire after all the local children have been saved.
-			Dictionary<Delegate, object> deepHandles = new Dictionary<Delegate, object>();
+			Dictionary<string, KeyValuePair<Delegate, object>> deepHandles = new Dictionary<string, KeyValuePair<Delegate, object>>();
 				  <%  
 				}
 
@@ -1052,10 +1057,10 @@ namespace <%=DALNameSpace%>.Bases
 					}
 					%>
 					DataRepository.<%=GetClassName(item.SecondaryTableSchema, ClassNameFormat.Provider)%>.<%= MethodNames.Save %>(transactionManager, entity.<%=item.PropertyNameUnique%>);
-					deepHandles.Add(
-						(DeepSaveSingleHandle< <%=item.TypeName %> >) DataRepository.<%=GetClassName(item.SecondaryTableSchema, ClassNameFormat.Provider)%>.<%= MethodNames.DeepSave %>,
+					deepHandles.Add("<%=item.PropertyNameUnique%>",
+						new KeyValuePair<Delegate, object>((DeepSaveSingleHandle< <%=item.TypeName %> >) DataRepository.<%=GetClassName(item.SecondaryTableSchema, ClassNameFormat.Provider)%>.<%= MethodNames.DeepSave %>,
 						new object[] { transactionManager, entity.<%=item.PropertyNameUnique %>, deepSaveType, childTypes, innerList }
-					);
+					));
 				}
 			} 
 			#endregion 
@@ -1071,10 +1076,10 @@ namespace <%=DALNameSpace%>.Bases
 				if (entity.<%=item.PropertyNameUnique%>.Count > 0 || entity.<%=item.PropertyNameUnique%>.DeletedItems.Count > 0)
 				{
 					DataRepository.<%=GetClassName(item.SecondaryTableSchema, ClassNameFormat.Provider)%>.<%= MethodNames.Save %>(transactionManager, entity.<%=item.PropertyNameUnique %>); 
-					deepHandles.Add(
-						(DeepSaveHandle<<%= GetClassName(item.SecondaryTableSchema) %>>) DataRepository.<%=GetClassName(item.SecondaryTableSchema, ClassNameFormat.Provider)%>.<%= MethodNames.DeepSave %>,
+					deepHandles.Add("<%=item.PropertyNameUnique%>",
+						new KeyValuePair<Delegate, object>((DeepSaveHandle<<%= GetClassName(item.SecondaryTableSchema) %>>) DataRepository.<%=GetClassName(item.SecondaryTableSchema, ClassNameFormat.Provider)%>.<%= MethodNames.DeepSave %>,
 						new object[] { transactionManager, entity.<%=item.PropertyNameUnique %>, deepSaveType, childTypes, innerList }
-					);
+					));
 				}
 			}
 			#endregion 
@@ -1164,10 +1169,10 @@ namespace <%=DALNameSpace%>.Bases
 					{
 						DataRepository.<%=GetClassName(item.SecondaryTableSchema, ClassNameFormat.Provider)%>.<%= MethodNames.Save %>(transactionManager, entity.<%=item.PropertyNameUnique%>);
 						
-						deepHandles.Add(
-							(DeepSaveHandle< <%=item.CleanName%> >) DataRepository.<%=GetClassName(item.SecondaryTableSchema, ClassNameFormat.Provider)%>.<%= MethodNames.DeepSave %>,
+						deepHandles.Add("<%=item.PropertyNameUnique%>",
+						new KeyValuePair<Delegate, object>((DeepSaveHandle< <%=item.CleanName%> >) DataRepository.<%=GetClassName(item.SecondaryTableSchema, ClassNameFormat.Provider)%>.<%= MethodNames.DeepSave %>,
 							new object[] { transactionManager, entity.<%=item.PropertyNameUnique%>, deepSaveType, childTypes, innerList }
-						);
+						));
 					}
 				} 
 			#endregion 
@@ -1178,7 +1183,7 @@ namespace <%=DALNameSpace%>.Bases
 			if (i == relations.Length - 1)	{ 
 			%>
 			//Fire all DeepSave Items
-			foreach(KeyValuePair<Delegate, object> pair in deepHandles)
+			foreach(KeyValuePair<Delegate, object> pair in deepHandles.Values)
 		    {
                 pair.Key.DynamicInvoke((object[])pair.Value);
 		    }

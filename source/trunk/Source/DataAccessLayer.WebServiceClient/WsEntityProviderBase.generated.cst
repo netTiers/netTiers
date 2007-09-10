@@ -250,6 +250,7 @@ namespace <%=DALNameSpace%>.WebServiceClient
 		<%
 		TableSchema primaryTable = SourceTable;
 		
+		System.Collections.Hashtable manyToManyFunctions = new System.Collections.Hashtable();
 		foreach(TableKeySchema key in SourceTable.PrimaryKeys)
 		{
 			// Check that the key is related to a junction table and that this key relate a PK in this junction table
@@ -264,7 +265,10 @@ namespace <%=DALNameSpace%>.WebServiceClient
 					{
 						TableSchema secondaryTable = junctionTableKey.PrimaryKeyTable;
 						string functionname = GetManyToManyName(junctionTableKey, junctionTable);
-						methods.Add("GetBy" + functionname);
+						if (!manyToManyFunctions.ContainsKey(functionname))
+						{
+							manyToManyFunctions.Add(functionname,null);
+							methods.Add("GetBy" + functionname);
 
 %>					
 		#region GetBy<%=functionname%>
@@ -296,6 +300,7 @@ namespace <%=DALNameSpace%>.WebServiceClient
 		#endregion GetBy<%=functionname%>
 		
 					<%
+						}//end if the function has already been created
 					} //end if there is many to many relationship.
 				} //end foreach			
 			}// end if(IsJunctionTable(junctionTableKey.ForeignKeyTable)) %>
