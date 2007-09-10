@@ -1180,7 +1180,7 @@ namespace MoM.Templates
 					return string.Format(baseClassFormat, name);
 				
 				case ClassNameFormat.Interface:
-					return string.Format("I{0}", name);
+					return string.Format(interfaceFormat, name);
 					
 				case ClassNameFormat.Key:
 					return string.Format(this.entityKeyFormat, name);
