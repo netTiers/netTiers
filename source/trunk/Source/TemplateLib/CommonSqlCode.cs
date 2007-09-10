@@ -1364,7 +1364,7 @@ namespace MoM.Templates
 							return GetPascalCaseName(name); // class and property names are pascal-cased
 						case ReturnFields.FieldName:
 							name = GetCSharpSafeName(name);
-							return GetCamelCaseName(name); // fields (private member variables) are camel-cased and prefixed with an underscore
+							return "_" + GetCamelCaseName(name); // fields (private member variables) are camel-cased and prefixed with an underscore
 						case ReturnFields.FriendlyName:
 							return PascalToSpaced(GetPascalCaseName(name)); // just return the pascal name with spaces
 						case ReturnFields.Id:
