@@ -1120,6 +1120,29 @@ namespace MoM.Templates
 			return GetName(col, ReturnFields.FriendlyName);
 		}
 		
+		/// <summary>
+		///  Gets the name to be used for the TList class
+		/// </summary>
+		public string GetTListName()
+		{
+			string listName = GetFormattedClassName(" ",ClassNameFormat.Collection);
+			//Remove the generic portion of the name (i.e <Entity>)
+			
+			return listName.Remove(listName.IndexOf("<"));
+			
+		}
+		
+		/// <summary>
+		///  Gets the name to be used for the VList class
+		/// </summary>
+		public string GetVListName()
+		{
+			string listName = GetFormattedClassName(" ",ClassNameFormat.ViewCollection);
+			//Remove the generic portion of the name (i.e <Entity>)
+			
+			return listName.Remove(listName.IndexOf("<"));
+		}
+		
 		public enum ReturnFields
 		{
 			EntityName,
@@ -1172,8 +1195,8 @@ namespace MoM.Templates
 			switch (format)
 			{
 				case ClassNameFormat.None:
-					//return string.Format(entityFormat, name);
-					return name;
+					return string.Format(entityFormat, name);
+					//return name;
 				
 				case ClassNameFormat.Base:
 				case ClassNameFormat.Abstract:
@@ -1231,7 +1254,7 @@ namespace MoM.Templates
 					return string.Format(entityDataFormat, name);
 				
 				case ClassNameFormat.Collection:
-					return string.Format(genericListFormat, name);
+					return string.Format(genericListFormat, GetFormattedClassName(name, ClassNameFormat.None));
 				
 				case ClassNameFormat.AbstractCollection:
 					return GetFormattedClassName( GetFormattedClassName(name, ClassNameFormat.Collection), ClassNameFormat.Abstract);
@@ -1240,7 +1263,7 @@ namespace MoM.Templates
 					return string.Format(collectionFormat, name);
 				
 				case ClassNameFormat.ViewCollection:
-					return string.Format(genericViewFormat, name);
+					return string.Format(genericViewFormat, GetFormattedClassName(name, ClassNameFormat.None));
 				
 				case ClassNameFormat.Provider:
 				case ClassNameFormat.Repository:
@@ -1761,23 +1784,23 @@ namespace MoM.Templates
 			//}
 			if ( column.AllowDBNull )
 			{
-				return string.Format("{2} = ({1}.IsDBNull(((int){4}Column.{0} - 1)))?null:({3}){1}[((int){4}Column.{0} - 1)]",
+				return string.Format("{2} = ({1}.IsDBNull(((int){4}.{0} - 1)))?null:({3}){1}[((int){4}.{0} - 1)]",
 				/*0*/GetPropertyName(column),
 				/*1*/containerName,
 				/*2*/GetObjectPropertyAccessor(column,objectName),
 				/*3*/GetCSType(column),
-				/*4*/GetClassName(column.Table));
+				/*4*/GetClassName(column.Table, ClassNameFormat.Column));
 			}
 			else
 			{
 				// regular NOT NULL data types, set to default value for type if null
-				return string.Format("{2} = ({3}){1}[((int){5}Column.{0} - 1)]",
+				return string.Format("{2} = ({3}){1}[((int){5}.{0} - 1)]",
 				/*0*/GetPropertyName(column),
 				/*1*/containerName,
 				/*2*/GetObjectPropertyAccessor(column,objectName),
 				/*3*/GetCSType(column),
 				/*4*/GetCSDefaultByType(column),
-				/*5*/GetClassName(column.Table));
+				/*5*/GetClassName(column.Table, ClassNameFormat.Column));
 			}
 		}
 				
