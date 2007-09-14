@@ -1,6 +1,7 @@
 ﻿<%@ CodeTemplate Src="..\..\TemplateLib\CommonSqlCode.cs" Inherits="MoM.Templates.CommonSqlCode" Language="C#" TargetLanguage="C#" Description="" Debug="True"  ResponseEncoding="UTF-8" NoWarn="0108,0618,1572,1573,1574,0162,2002"%>
 <%@ Assembly Name="SchemaExplorer" %>
 <%@ Assembly Name="System.Design" %>
+<%@ Import Namespace="System.Text" %>
 <%@ Import Namespace="SchemaExplorer" %>
 
 <%@ Property Name="SourceTables" Type="SchemaExplorer.TableSchemaCollection" Category="Connection" Description="Tables of the system." %>
@@ -1093,75 +1094,64 @@ namespace <%=DALNameSpace%>.Bases
 			%>
 	
 			#region <%= listTypeName %>
-				if (CanDeepSave(entity.<%=item.PropertyNameUnique%>, "<%= listTypeName.Trim() %>|<%=item.CollectionName %>", deepSaveType, innerList)) 
+				if (CanDeepSave(entity.<%=item.PropertyNameUnique%>, "<%= listTypeName.Trim() %>|<%=item.PropertyNameUnique %>", deepSaveType, innerList)) 
 				{	
 					// update each child parent id with the real parent id (mostly used on insert)
 					foreach(<%=item.CleanName%> child in entity.<%= item.PropertyNameUnique %>)
 					{
 						<%
+						
 						System.Collections.ArrayList filled = new System.Collections.ArrayList();
-						for(int j = 0; j < item.TableKey.ForeignKeyMemberColumns.Count; j++)
+						StringBuilder sb1 = new StringBuilder();
+						StringBuilder sb2 = new StringBuilder();
+						string fkPropName = GetKeysName(item.TableKey.ForeignKeyMemberColumns);
+						//Many-to-many are handled below
+						if (!IsJunctionKey(item.TableKey))
 						{
-							string fkPropertyName = GetKeysName(item.TableKey.ForeignKeyMemberColumns);
-							string currProp = GetPropertyName(item.TableKey.ForeignKeyMemberColumns[j]);
-							if(filled.Contains(fkPropertyName))
-								continue;
-							
-							//if (!System.Diagnostics.Debugger.IsAttached)
-								//System.Diagnostics.Debugger.Break();
-							
-							filled.Add(fkPropertyName);
-							
-							Response.Write(string.Format("{0}if(child.{1}Source != null){2}", Tab(6), fkPropertyName, Environment.NewLine));
-							Response.Write(string.Format("{0}child.{1} = child.{2}Source.{3};{4}", Tab(7) , GetPropertyName(item.TableKey.ForeignKeyMemberColumns[j]), fkPropertyName , GetPropertyName(item.TableKey.PrimaryKeyMemberColumns[j]) , Environment.NewLine));
-							Response.Write(string.Format("{0}else{1}", Tab(6),  Environment.NewLine));
-							Response.Write(string.Format("{0}child.{1} = entity.{2};{3}", Tab(7) , GetPropertyName(item.TableKey.ForeignKeyMemberColumns[j]) , GetPropertyName(item.TableKey.PrimaryKeyMemberColumns[j]) , Environment.NewLine));
-							Response.WriteLine();
-							
-							System.Collections.Generic.List<string> m2mfilled = new System.Collections.Generic.List<string>();
-							
-							//if key is part of m:m relationship, ensure to automatically sync the saved entity.
-							foreach(CollectionInfo m2mItem in GetChildrenCollections(SourceTable, SourceTables).Values) 
+							for(int j = 0; j < item.TableKey.ForeignKeyMemberColumns.Count; j++)
 							{
-								if (!IncludeManyToMany)
-									break;
 								
-								if (m2mItem.CollectionRelationshipType != RelationshipType.ManyToMany)
-									continue;
+								string currProp = GetPropertyName(item.TableKey.ForeignKeyMemberColumns[j]);
 								
-								//if (m2mItem.PkColNames[0] == item.TableKey.ForeignKeyMemberColumns[0].Name)
-								if(GetClassName(m2mItem.JunctionTableSchema) != item.CleanName
-									|| currProp == GetKeysName(m2mItem.JunctionTablePkColNames))
-									continue;
-
-								System.Collections.Generic.List<ColumnSchema> columnRelationship = GetCorrespondingRelationships(m2mItem.JunctionTableSchema.Keys, m2mItem.JunctionTablePkColNames);
-
-								for(int y=0; y < m2mItem.JunctionTablePkColNames.Length; y++)
-								{
-									if (columnRelationship != null)
-									{
-										if (m2mfilled.Contains(GetPropertyName(m2mItem.JunctionTablePkColNames[y])))
-											continue;
-											
-										m2mfilled.Add(GetPropertyName(m2mItem.JunctionTablePkColNames[y]));
-										Response.WriteLine(string.Format("{0}//Handle right table of {1}", Tab(6), m2mItem.PropertyNameUnique));
-										Response.Write(string.Format("{0}if(child.{1}Source != null){2}", Tab(6), GetPropertyName(m2mItem.JunctionTablePkColNames[y]), Environment.NewLine));
-										Response.WriteLine(Tab(6) + "{");
-
-										Response.WriteLine(string.Format("{0}child.{1} = child.{2}Source.{3};{4}", 
-											Tab(8), 
-											//GetPropertyName(m2mItem.PkColNames[y]),
-											//GetKeysName(m2mItem.PkColNames), 
-											GetPropertyName(m2mItem.JunctionTablePkColNames[y]),
-											GetPropertyName(m2mItem.JunctionTablePkColNames[y]),
-											GetPropertyName(columnRelationship[y]), 
-											Environment.NewLine));
-											
-										Response.WriteLine(Tab(6) + "}");
-										Response.WriteLine();
-									}
-								}
+								sb1.AppendFormat("{0}child.{1} = child.{2}Source.{3};{4}", Tab(7) , GetPropertyName(item.TableKey.ForeignKeyMemberColumns[j]), fkPropName , GetPropertyName(item.TableKey.PrimaryKeyMemberColumns[j]) , Environment.NewLine);
+								sb2.AppendFormat("{0}child.{1} = entity.{2};{3}", Tab(7) , GetPropertyName(item.TableKey.ForeignKeyMemberColumns[j]) , GetPropertyName(item.TableKey.PrimaryKeyMemberColumns[j]) , Environment.NewLine);
 							}
+							
+							
+							Response.Write(string.Format("{0}if(child.{1}Source != null){2}", Tab(6), fkPropName, Environment.NewLine));
+							Response.Write("{0}{{{1}",Tab(6),  Environment.NewLine);
+							Response.Write(sb1.ToString());
+							Response.Write("{0}}}{1}",Tab(6),  Environment.NewLine);
+							Response.Write(string.Format("{0}else{1}", Tab(6),  Environment.NewLine));
+							Response.Write("{0}{{{1}",Tab(6),  Environment.NewLine);
+							Response.Write(sb2.ToString());
+							Response.Write("{0}}}{1}",Tab(6),  Environment.NewLine);
+							Response.WriteLine();
+						}
+
+						System.Collections.Generic.List<string> m2mfilled = new System.Collections.Generic.List<string>();
+						
+						//if key is part of m:m relationship, ensure to automatically sync the saved entity.
+						System.Collections.Hashtable childCollections = GetChildrenCollections(SourceTable, SourceTables);
+						
+						foreach(CollectionInfo m2mItem in childCollections.Values) 
+						{
+							
+							if (!IncludeManyToMany)
+								break;
+							
+							if (m2mItem.CollectionRelationshipType != RelationshipType.ManyToMany)
+								continue;
+								
+							if(GetClassName(m2mItem.JunctionTableSchema) != item.CleanName
+									//|| currProp == GetKeysName(m2mItem.JunctionTablePkColNames)
+									)
+									continue;
+		
+							CreateManyToManySourceAssignments(m2mItem.TableKey,m2mfilled);
+							CreateManyToManySourceAssignments(m2mItem.SecondaryTableKey, m2mfilled);
+							
+	
 						}%>
 					}
 
@@ -1346,3 +1336,33 @@ namespace <%=DALNameSpace%>.Bases
 
 	#endregion <%= entityClassName %>ParameterBuilder
 } // end namespace
+<script runat="template">
+private void CreateManyToManySourceAssignments(TableKeySchema tableKey,System.Collections.Generic.List<string> m2mfilled)
+{
+	StringBuilder sb = new StringBuilder();
+	string fkPropertyName = GetKeysName(tableKey.ForeignKeyMemberColumns);
+	
+	if (m2mfilled.Contains(fkPropertyName)) return;
+	
+	m2mfilled.Add(fkPropertyName);
+	for(int y=0; y < tableKey.PrimaryKeyMemberColumns.Count; y++)
+	{
+			
+			sb.AppendFormat("{0}child.{1} = child.{2}Source.{3};{4}", 
+				Tab(8), 
+				GetPropertyName(tableKey.ForeignKeyMemberColumns[y]),
+				fkPropertyName, 
+				GetPropertyName(tableKey.PrimaryKeyMemberColumns[y]),
+				Environment.NewLine);	
+	}
+	
+	Response.Write(string.Format("{0}if(child.{1}Source != null){2}", 
+		Tab(6), 
+		fkPropertyName, 
+		Environment.NewLine));
+	Response.Write("{0}{{{1}",Tab(6),  Environment.NewLine);
+	Response.Write(sb.ToString());
+	Response.Write("{0}}}{1}",Tab(6),  Environment.NewLine);
+	Response.WriteLine();
+}
+</script>

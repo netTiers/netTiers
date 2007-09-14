@@ -4972,6 +4972,7 @@ CREATE\s+PROC(?:EDURE)?                               # find the start of the st
 							collectionInfo.SecondaryTablePkColNames = GetColumnNames(junctionTableKey.PrimaryKeyTable.PrimaryKey.MemberColumns);
 							collectionInfo.JunctionTableSchema = junctionTable;
 							collectionInfo.SecondaryTableSchema = junctionTableKey.PrimaryKeyTable;
+							collectionInfo.SecondaryTableKey = junctionTableKey;
 							collectionInfo.PrimaryTableSchema = table;
 							collectionInfo.JunctionTableSchema = junctionTable;
 							collectionInfo.JunctionTable = GetClassName(junctionTable);
@@ -5068,6 +5069,7 @@ CREATE\s+PROC(?:EDURE)?                               # find the start of the st
 			public string GetByKeysName = string.Empty;
 			public RelationshipType CollectionRelationshipType;	
 			public TableKeySchema TableKey = null;
+			public TableKeySchema SecondaryTableKey = null;
 		}
 		#endregion
 			
