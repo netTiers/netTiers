@@ -97,6 +97,7 @@
 		
 		foreach(TableKeySchema key in SourceTable.PrimaryKeys)
 		{
+				
 			// Check that the key is related to a junction table and that this key relate a PK in this junction table
 			if ( IsJunctionTable(key.ForeignKeyTable) && IsJunctionKey(key))
 			{
@@ -120,25 +121,29 @@
 							}
 						}
 						
-						string primaryPk, secondaryPk, junctionPk, junctionFk;
+						string primaryPk, secondaryPk, junctionPk, junctionFk, dataSourceId;
 						primaryPk = GetPropertyName(keys[0]);
 						secondaryPk = GetPropertyName(secondaryTable.PrimaryKey.MemberColumns[0]);
 						//junctionPk = GetPKPropertyName(keys[0].Name, junctionTable.ForeignKeys);
 						//junctionFk = GetPKPropertyName(secondaryTable.PrimaryKey.MemberColumns[0].Name, junctionTable.ForeignKeys);
 						junctionPk = GetPKPropertyName(keys[0], junctionTable.ForeignKeys);
-						junctionFk = GetPKPropertyName(secondaryTable.PrimaryKey.MemberColumns[0], junctionTable.ForeignKeys);
-												
+						junctionFk = GetPKPropertyName(secondaryTable.PrimaryKey.MemberColumns[0], junctionTableKey);
+						
+						//Check to see if we have an M:M relationship where both sides of the relationship point to the same table
+						//i.e. Person (PersonId)--> RelatedPerson (PersonId, RelatedPersonId) --> Person (PersonId)
+						if (junctionPk == junctionFk) continue;
+						dataSourceId = string.Format("{0}ReferenceDataSource",GetClassName(secondaryTable));
 %>
 			<tr>
 				<td valign="top" class="literal"><%= GetFriendlyName(secondaryTable)%>:</td>
 				<td>
 					<asp:CheckBoxList ID="<%=GetClassName(secondaryTable)%>List" runat="server"
-						DataSourceID="<%=GetClassName(secondaryTable)%>DataSource"
+						DataSourceID="<%=dataSourceId%>"
 						DataTextField="<%=secondaryTextValue%>"
 						DataValueField="<%=secondaryPk%>"
 						RepeatColumns="4"
 					/>				
-					<data:<%=GetClassName(secondaryTable)%>DataSource ID="<%=GetClassName(secondaryTable)%>DataSource" runat="server" SelectMethod="<%= MethodNames.GetAll %>"/>
+					<data:<%=GetClassName(secondaryTable)%>DataSource ID="<%=dataSourceId%>" runat="server" SelectMethod="<%= MethodNames.GetAll %>"/>
 					
 					<data:<%=GetClassName(junctionTableKey.ForeignKeyTable)%>DataSource ID="<%=GetClassName(junctionTableKey.ForeignKeyTable)%>DataSource" runat="server" SelectMethod="GetBy<%=junctionPk%>" >
 						<Parameters>							
@@ -149,7 +154,7 @@
 					<data:ManyToManyListRelationship ID="<%=GetClassName(junctionTableKey.ForeignKeyTable)%>Relationship" runat="server">
 						<PrimaryMember runat="server" DataSourceID="<%=entityName%>DataSource" EntityKeyName="<%=primaryPk%>" />
 						<LinkMember runat="server" DataSourceID="<%=GetClassName(junctionTableKey.ForeignKeyTable)%>DataSource" EntityKeyName="<%=junctionPk%>" ForeignKeyName="<%=junctionFk%>" />
-						<ReferenceMember runat="server" DataSourceID="<%=GetClassName(secondaryTable)%>DataSource" ListControlID="<%=GetClassName(secondaryTable)%>List" EntityKeyName="<%=secondaryPk%>" />
+						<ReferenceMember runat="server" DataSourceID="<%=dataSourceId%>" ListControlID="<%=GetClassName(secondaryTable)%>List" EntityKeyName="<%=secondaryPk%>" />
 					</data:ManyToManyListRelationship>					
 				</td>
 			</tr>			

@@ -2195,15 +2195,22 @@ namespace MoM.Templates
 		{
 			foreach (TableKeySchema key in fkeys)
 			{
-				foreach (ColumnSchema col in key.PrimaryKeyMemberColumns)
-				{
-					if (col.Name == pk.Name && col.Table.FullName == pk.Table.FullName)
-					{
-						return GetPropertyName(key.ForeignKeyMemberColumns[0]);
-					}
-				}
+				string name = GetPKPropertyName(pk,key);
+				if (!string.IsNullOrEmpty(name)) return name;
 			}
 			return "//TODO: UNKNOWN, COULD NOT FIND FK COLUMN PROPERTY NAME\t ";
+		}
+		public string GetPKPropertyName(SchemaExplorer.ColumnSchema pk, TableKeySchema fkey)
+		{
+			foreach (ColumnSchema col in fkey.PrimaryKeyMemberColumns)
+			{
+				if (col.Name == pk.Name && col.Table.FullName == pk.Table.FullName)
+				{
+					return GetPropertyName(fkey.ForeignKeyMemberColumns[0]);
+				}
+			}
+			
+			return string.Empty;
 		}
 		#endregion 
 
