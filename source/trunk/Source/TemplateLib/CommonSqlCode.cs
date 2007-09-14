@@ -1209,7 +1209,7 @@ namespace MoM.Templates
 					return string.Format(this.entityKeyFormat, name);
 				
 				case ClassNameFormat.Column:
-					return string.Format(this.columnClassNameFormat, name);
+					return string.Format(this.columnClassNameFormat, GetFormattedClassName(name, ClassNameFormat.None));
 				
 				case ClassNameFormat.Comparer:
 					return string.Format(this.comparerClassNameFormat, name);
@@ -1267,7 +1267,7 @@ namespace MoM.Templates
 				
 				case ClassNameFormat.Provider:
 				case ClassNameFormat.Repository:
-					return string.Format(providerFormat, name);
+					return string.Format(providerFormat, GetFormattedClassName(name, ClassNameFormat.None));
 					
 				case ClassNameFormat.AbstractRepository:
 					return GetFormattedClassName( GetFormattedClassName(name, ClassNameFormat.Repository), ClassNameFormat.Abstract);
