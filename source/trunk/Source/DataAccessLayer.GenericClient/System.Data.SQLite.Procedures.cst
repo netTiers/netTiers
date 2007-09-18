@@ -28,7 +28,8 @@
 <%@ Property Name="SelectAllSuffix" Type="System.String" Default="List" Category="Style" Description="Suffix to use for all generated SELECT stored procedures." %>
 <%@ Property Name="FindSuffix" Type="System.String" Default="_Find" Category="Style" Description="Suffix to use for all generated selective SELECT stored procedures." %>
 <%@ Property Name="ProcedurePrefix" Type="System.String" Default="" Category="Style" Optional="True" Description="prefix to use for all generated stored procedures." %>
-<%@ Property Name="GrantUser" Type="System.String" Category="Style" Description="Optional user or role to GRANT EXEC Procedure permissions to" Default="" Optional="True" %>
+<%@ Property Name="GrantReadUser" Type="System.String" Category="Style" Description="Optional user or role to GRANT EXEC Procedure permissions to" Default="" Optional="True" %>
+<%@ Property Name="GrantWriteUser" Type="System.String" Category="Style" Description="Optional user or role to GRANT EXEC Procedure permissions to" Default="" Optional="True" %>
 	
 <%@ Assembly Name="SchemaExplorer" %>
 <%@ Assembly Name="System.Design" %>
@@ -36,6 +37,27 @@
 <%@ Import Namespace="System.Text" %>
 <%@ Import Namespace="System.Text.RegularExpressions" %>
 <%@ Import Namespace="System.Collections" %>
+<%
+	/* Added to support the Grant[Read|Write]User functionality */
+	bool hasGrantReadUser = !string.IsNullOrEmpty(GrantReadUser); 
+	bool hasGrantWriteUser = !string.IsNullOrEmpty(GrantWriteUser);
+	bool hasGrantUser = hasGrantReadUser || hasGrantWriteUser; 
+	string grantUser = string.Empty;
+	
+	if (hasGrantReadUser && hasGrantWriteUser)
+	{
+		grantUser = string.Format("{0},{1}", GrantReadUser, GrantWriteUser);
+	}
+	else if (hasGrantReadUser)
+	{
+		grantUser = GrantReadUser;
+	}
+	else if (hasGrantWriteUser)
+	{
+		grantUser = GrantWriteUser;
+	}
+	
+%>
 <?xml version="1.0" encoding="utf-8" ?>
 <?xml-stylesheet type='text/xsl' href="scriptsql.xsl"?>
 <root xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
@@ -106,7 +128,7 @@
 		if (IncludeGetList)
 		{%>
 		
-		<procedure owner="<%=SourceTable.Owner%>" name="<%= ProcedurePrefix + commandStem + SelectSuffix + SelectAllSuffix %>" <%if (GrantUser != "") {%>grant="<%=GrantUser%>"<%}%>>
+		<procedure owner="<%=SourceTable.Owner%>" name="<%= ProcedurePrefix + commandStem + SelectSuffix + SelectAllSuffix %>" <%if (hasGrantUser) {%>grant="<%=grantUser%>"<%}%>>
 			<comment><![CDATA[<%= GetProcSqlComment(string.Format("Gets all records from the {0} table", name), tableComment) %>]]></comment>
 			<parameters/>
 			<body><![CDATA[
@@ -123,7 +145,7 @@
 		if (SourceTable.PrimaryKey != null) {
 		%>
 		
-		<procedure owner="<%=SourceTable.Owner%>" name="<%= ProcedurePrefix + commandStem + SelectSuffix %>Paged" <%if (GrantUser != "") {%>grant="<%=GrantUser%>"<%}%>>
+		<procedure owner="<%=SourceTable.Owner%>" name="<%= ProcedurePrefix + commandStem + SelectSuffix %>Paged" <%if (hasGrantUser) {%>grant="<%=grantUser%>"<%}%>>
 			<comment><![CDATA[<%= GetProcSqlComment(string.Format("Gets records from the {0} table passing page index and page count parameters", name), tableComment) %>]]></comment>
 			<parameters>
 				<parameter name="@WhereClause" type="varchar" direction="Input" size="2000" precision="0" scale="0" param="(2000)" />
@@ -145,7 +167,7 @@
 			]]></body>
 		</procedure>
 		
-		<procedure owner="<%=SourceTable.Owner%>" name="<%= ProcedurePrefix + commandStem + SelectSuffix %>PagedCount" <%if (GrantUser != "") {%>grant="<%=GrantUser%>"<%}%>>
+		<procedure owner="<%=SourceTable.Owner%>" name="<%= ProcedurePrefix + commandStem + SelectSuffix %>PagedCount" <%if (hasGrantUser) {%>grant="<%=grantUser%>"<%}%>>
 			<parameters>
 				<parameter name="@WhereClause" type="varchar" direction="Input" size="2000" precision="0" scale="0" param="(2000)" />
 				<parameter name="@OrderBy" type="varchar" direction="Input" size="2000" precision="0" scale="0" param="(2000)"/>
@@ -179,7 +201,7 @@
 		// Insert
 		if (IncludeInsert)
 		{%>
-		<procedure owner="<%=SourceTable.Owner%>" name="<%= ProcedurePrefix + commandStem + InsertSuffix %>" <%if (GrantUser != "") {%>grant="<%=GrantUser%>"<%}%>>
+		<procedure owner="<%=SourceTable.Owner%>" name="<%= ProcedurePrefix + commandStem + InsertSuffix %>" <%if (GrantWriteUser != "") {%>grant="<%=GrantWriteUser%>"<%}%>>
 			<comment><![CDATA[<%= GetProcSqlComment(string.Format("Inserts a record into the {0} table", name), tableComment) %>]]></comment>
 			<parameters>
 				<% 
@@ -202,7 +224,7 @@
 							
 			]]></body>
 		</procedure>
-		<procedure owner="<%=SourceTable.Owner%>" name="<%= ProcedurePrefix + commandStem + "Last" + InsertSuffix %>" <%if (GrantUser != "") {%>grant="<%=GrantUser%>"<%}%>>
+		<procedure owner="<%=SourceTable.Owner%>" name="<%= ProcedurePrefix + commandStem + "Last" + InsertSuffix %>" <%if (GrantWriteUser != "") {%>grant="<%=GrantWriteUser%>"<%}%>>
 			<parameters>			
 			</parameters>
 			<body><![CDATA[
@@ -222,7 +244,7 @@
 		// -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- 
 		if (IncludeUpdate) 
 		{%>
-		<procedure owner="<%=SourceTable.Owner%>" name="<%= ProcedurePrefix + commandStem + UpdateSuffix %>" <%if (GrantUser != "") {%>grant="<%=GrantUser%>"<%}%>>
+		<procedure owner="<%=SourceTable.Owner%>" name="<%= ProcedurePrefix + commandStem + UpdateSuffix %>" <%if (GrantWriteUser != "") {%>grant="<%=GrantWriteUser%>"<%}%>>
 			<comment><![CDATA[<%= GetProcSqlComment(string.Format("Updates a record in the {0} table", name), tableComment) %>]]></comment>
 			<parameters>
 				<% 
@@ -284,7 +306,7 @@
 		// -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- 
 		if (IncludeDelete && SourceTable.PrimaryKey != null) 
 		{%>
-		<procedure owner="<%=SourceTable.Owner%>" name="<%= ProcedurePrefix + commandStem + DeleteSuffix %>" <%if (GrantUser != "") {%>grant="<%=GrantUser%>"<%}%>>
+		<procedure owner="<%=SourceTable.Owner%>" name="<%= ProcedurePrefix + commandStem + DeleteSuffix %>" <%if (GrantWriteUser != "") {%>grant="<%=GrantWriteUser%>"<%}%>>
 			<comment><![CDATA[<%= GetProcSqlComment(string.Format("Deletes a record in the {0} table", name), tableComment) %>]]></comment>
 			<parameters>
 			<% 
@@ -332,7 +354,7 @@
 					
 				getbyKeys.Add(GetKeysName(fkeys[j].ForeignKeyMemberColumns));
 %>
-		<procedure owner="<%=SourceTable.Owner%>" name="<%= ProcedurePrefix + commandStem + SelectSuffix + "By" + GetKeysName(fkeys[j].ForeignKeyMemberColumns) %>" <%if (GrantUser != "") {%>grant="<%=GrantUser%>"<%}%>>
+		<procedure owner="<%=SourceTable.Owner%>" name="<%= ProcedurePrefix + commandStem + SelectSuffix + "By" + GetKeysName(fkeys[j].ForeignKeyMemberColumns) %>" <%if (hasGrantUser) {%>grant="<%=grantUser%>"<%}%>>
 			<comment><![CDATA[<%= GetProcSqlComment(string.Format("Select records from the {0} table through a foreign key", SourceTable.Name), "") %>]]></comment>
 			<parameters>
 			<% 
@@ -378,7 +400,7 @@
 					getbyKeys.Add(GetKeysName(indexes[j].MemberColumns));
 				}
 %>
-		<procedure owner="<%=SourceTable.Owner%>" name="<%= ProcedurePrefix + commandStem + SelectSuffix + "By" + GetKeysName(indexes[j].MemberColumns) %>" <%if (GrantUser != "") {%>grant="<%=GrantUser%>"<%}%>>
+		<procedure owner="<%=SourceTable.Owner%>" name="<%= ProcedurePrefix + commandStem + SelectSuffix + "By" + GetKeysName(indexes[j].MemberColumns) %>" <%if (hasGrantUser) {%>grant="<%=grantUser%>"<%}%>>
 			<comment><![CDATA[<%= GetProcSqlComment(string.Format("Select records from the {0} table through an index", SourceTable.Name), "") %>]]></comment>
 			<parameters>
 			<% 
@@ -437,7 +459,7 @@
 													
 							// here query
 %>
-		<procedure owner="<%=SourceTable.Owner%>" name="<%= ProcedurePrefix + commandStem + SelectSuffix + "By" + functionname %>" <%if (GrantUser != "") {%>grant="<%=GrantUser%>"<%}%>>
+		<procedure owner="<%=SourceTable.Owner%>" name="<%= ProcedurePrefix + commandStem + SelectSuffix + "By" + functionname %>" <%if (hasGrantUser) {%>grant="<%=grantUser%>"<%}%>>
 			<comment><![CDATA[<%= GetProcSqlComment("Gets records through a junction table", "") %>]]></comment>
 			<parameters>
 			<% 
@@ -491,7 +513,7 @@ SELECT <% for (int i = 0; i < primaryTable.Columns.Count; i++)
 		// -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- 
 		if(IncludeFind)
 		{%>
-		<procedure owner="<%=SourceTable.Owner%>" name="<%= ProcedurePrefix + commandStem + FindSuffix %>" <%if (GrantUser != "") {%>grant="<%=GrantUser%>"<%}%>>
+		<procedure owner="<%=SourceTable.Owner%>" name="<%= ProcedurePrefix + commandStem + FindSuffix %>" <%if (hasGrantUser) {%>grant="<%=grantUser%>"<%}%>>
 			<comment><![CDATA[<%= GetProcSqlComment(string.Format("Finds records in the {0} table passing nullable parameters", name), tableComment) %>]]></comment>
 			<parameters>
 				<parameter name="@SearchUsingOR" type="bit" direction="Input" size="0" precision="1" scale="0" param="" nulldefault="null"/>
@@ -556,7 +578,7 @@ SELECT <% for (int i = 0; i < primaryTable.Columns.Count; i++)
 
 		<% if ( SourceTable.PrimaryKey != null ) { %>
 		
-		<procedure owner="<%=SourceTable.Owner%>" name="<%= ProcedurePrefix + commandStem + FindSuffix %>_Dynamic" <%if (GrantUser != "") {%>grant="<%=GrantUser%>"<%}%> skip="true">
+		<procedure owner="<%=SourceTable.Owner%>" name="<%= ProcedurePrefix + commandStem + FindSuffix %>_Dynamic" <%if (hasGrantUser) {%>grant="<%=grantUser%>"<%}%> skip="true">
 			<comment><![CDATA[<%= GetProcSqlComment(string.Format("Gets records from the {0} table using a dynamically generated query.", name), tableComment) %>]]></comment>
 			<parameters/>
 			<body><![CDATA[
@@ -637,7 +659,7 @@ SELECT <% for (int i = 0; i < primaryTable.Columns.Count; i++)
 		
 		if (IncludeGetList) 
 		{%>
-		<procedure owner="<%=SourceView.Owner%>" name="<%= ProcedurePrefix + commandStem + SelectSuffix + SelectAllSuffix %>" <%if (GrantUser != "") {%>grant="<%=GrantUser%>"<%}%>>
+		<procedure owner="<%=SourceView.Owner%>" name="<%= ProcedurePrefix + commandStem + SelectSuffix + SelectAllSuffix %>" <%if (hasGrantUser) {%>grant="<%=grantUser%>"<%}%>>
 			<comment><![CDATA[<%= GetProcSqlComment(string.Format("Gets all records from the {0} view", name), tableComment) %>]]></comment>
 			<parameters/>
 			<body><![CDATA[
@@ -652,7 +674,7 @@ SELECT <% for (int i = 0; i < primaryTable.Columns.Count; i++)
 			]]></body>
 		</procedure>
 		
-		<procedure owner="<%=SourceView.Owner%>" name="<%= ProcedurePrefix + commandStem + SelectSuffix %>" <%if (GrantUser != "") {%>grant="<%=GrantUser%>"<%}%>>
+		<procedure owner="<%=SourceView.Owner%>" name="<%= ProcedurePrefix + commandStem + SelectSuffix %>" <%if (hasGrantUser) {%>grant="<%=grantUser%>"<%}%>>
 			<comment><![CDATA[<%= GetProcSqlComment(string.Format("Gets records from the {0} view passing page index and page count parameters", name), tableComment) %>]]></comment>
 			<parameters>
 				<parameter name="@WhereClause" type="varchar" direction="Input" size="2000" precision="0" scale="0" param="(2000)" />
@@ -678,7 +700,7 @@ SELECT <% for (int i = 0; i < primaryTable.Columns.Count; i++)
 		
 		if ( IncludeFind ) { %>
 		
-		<procedure owner="<%=SourceView.Owner%>" name="<%= ProcedurePrefix + commandStem + FindSuffix %>_Dynamic" <%if (GrantUser != "") {%>grant="<%=GrantUser%>"<%}%> skip="true">
+		<procedure owner="<%=SourceView.Owner%>" name="<%= ProcedurePrefix + commandStem + FindSuffix %>_Dynamic" <%if (hasGrantUser) {%>grant="<%=grantUser%>"<%}%> skip="true">
 			<comment><![CDATA[<%= GetProcSqlComment(string.Format("Gets records from the {0} table using a dynamically generated query.", name), tableComment) %>]]></comment>
 			<parameters/>
 			<body><![CDATA[
