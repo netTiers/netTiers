@@ -632,7 +632,7 @@ namespace MoM.Templates
         public string GetPascalCaseNameStyle1(string name)
         {
 			string[] splitNames;
-			name = name.Trim();
+			name = Regex.Replace( name, "^[^a-zA-Z]+", string.Empty ).Trim();
 			if (ChangeUnderscoreToPascalCase)
 			{
 				char[] splitter = {'_', ' '};
