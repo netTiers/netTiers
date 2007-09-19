@@ -5,6 +5,7 @@
 using System;
 using System.Collections.Generic;
 using System.Text;
+using System.Text.RegularExpressions;
 using System.Web.UI.WebControls;
 using System.Web.UI;
 using System.Collections;
@@ -21,6 +22,11 @@ namespace <%=RootNameSpace%>.Web.UI
     /// </summary>
     public class EntityLabel : DataBoundControl
     {
+		#region Fields
+        Regex placeHolder0 = new Regex( @"\{(?<ID>[0])(?<PARAM>:[^}]+)?\}" ); // first placeholder
+        Regex placeHolder1 = new Regex( @"\{(?<ID>[1])(?<PARAM>:[^}]+)?\}" ); // second placeholder
+		#endregion
+		
         #region Properties
         /// <summary>
         /// Gets or sets the data value field.
@@ -89,43 +95,21 @@ namespace <%=RootNameSpace%>.Web.UI
         /// Gets or sets the text.
         /// </summary>
         /// <value>The text.</value>
-        public virtual string Text
+        public virtual object Text
         {
-            get
-            {
-                object o = ViewState[ "Text" ];
-                if ( o == null )
-                {
-                    return string.Empty;
-                }
-                return (string)o;
-            }
-            set
-            {
-                ViewState[ "Text" ] = value;
-            }
+            get { return ViewState[ "Text" ]; }
+            set { ViewState[ "Text" ] = value; }
         }
 
         /// <summary>
         /// Gets or sets the value.
         /// </summary>
         /// <value>The value.</value>
-        public virtual string Value
+        public virtual object Value
         {
-            get
-            {
-                object o = ViewState[ "value" ];
-                if ( o == null )
-                {
-                    return string.Empty;
-                }
-                return (string)o;
-            }
-            set
-            {
-                ViewState[ "Value" ] = value;
-            }
-        } 
+            get { return ViewState[ "Value" ]; }
+            set { ViewState[ "Value" ] = value; }
+        }  
         #endregion
 
         #region Override Data methods
@@ -147,13 +131,13 @@ namespace <%=RootNameSpace%>.Web.UI
                 // get the text item if specified
                 if ( !string.IsNullOrEmpty( DataTextField ) )
                 {
-                     this.Text = DataBinder.GetPropertyValue( e.Current, DataTextField ).ToString();
+                     this.Text = DataBinder.GetPropertyValue( e.Current, DataTextField );
                 }
 
                 // get the value item if specified
                 if ( !string.IsNullOrEmpty( DataValueField ) )
                 {
-                    this.Value = DataBinder.GetPropertyValue( e.Current, DataValueField ).ToString();
+                    this.Value = DataBinder.GetPropertyValue( e.Current, DataValueField );
                 }
 
                 // we only do the first item
@@ -170,9 +154,9 @@ namespace <%=RootNameSpace%>.Web.UI
         protected override void Render( HtmlTextWriter writer )
         {
             if ( !string.IsNullOrEmpty( this.DataTextFormatString ) &&
-					this.DataTextFormatString.IndexOf( "{0}" ) > -1 )
+                    placeHolder0.IsMatch( this.DataTextFormatString ) )
             {
-				if ( this.DataTextFormatString.IndexOf( "{1}" ) > -1 )
+                if ( placeHolder1.IsMatch( this.DataTextFormatString ) )
             	{
                 	writer.Write( string.Format( this.DataTextFormatString, Text, Value ) );
             	}
