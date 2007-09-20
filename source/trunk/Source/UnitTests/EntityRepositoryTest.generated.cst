@@ -477,13 +477,16 @@ namespace <%=UTNameSpace%>
 						}
 					}
 					if(OneToOneRelationship)
-					{%>
+					{
+						string pkClassName = GetClassName(fkeys[x].PrimaryKeyTable);
+						string fkKeysName = GetKeysName(fkeys[x].ForeignKeyMemberColumns);
+						string mockOneToOne = string.Format("mock{0}By{1}",pkClassName,fkKeysName);
+					%>
 			//OneToOneRelationship
+			<%= GetClassName(fkeys[x].PrimaryKeyTable)%> <%=mockOneToOne%> = <%= GetClassName(fkeys[x].PrimaryKeyTable, ClassNameFormat.UnitTest)%>.CreateMockInstance(tm);
+			DataRepository.<%=GetClassName(fkeys[x].PrimaryKeyTable, ClassNameFormat.Provider)%>.<%= MethodNames.Insert %>(tm, <%=mockOneToOne%>);
 					<% for (int y=0;y<fkeys[x].ForeignKeyMemberColumns.Count; y++) { %>
-			<%= GetClassName(fkeys[x].PrimaryKeyTable)%> mock<%= GetClassName(fkeys[x].PrimaryKeyTable)%>By<%= GetPropertyName(fkeys[x].ForeignKeyMemberColumns[y])%> = <%= GetClassName(fkeys[x].PrimaryKeyTable, ClassNameFormat.UnitTest)%>.CreateMockInstance(tm);
-			DataRepository.<%=GetClassName(fkeys[x].PrimaryKeyTable, ClassNameFormat.Provider)%>.<%= MethodNames.Insert %>(tm, mock<%= GetClassName(fkeys[x].PrimaryKeyTable)%>By<%= GetPropertyName(fkeys[x].ForeignKeyMemberColumns[y])%>);
-			mock.<%= GetPropertyName(fkeys[x].ForeignKeyMemberColumns[y])%> = mock<%= GetClassName(fkeys[x].PrimaryKeyTable)%>By<%= GetPropertyName(fkeys[x].ForeignKeyMemberColumns[y])%>.<%=GetPropertyName(fkeys[x].PrimaryKeyMemberColumns[y])%>;
-					
+			mock.<%= GetPropertyName(fkeys[x].ForeignKeyMemberColumns[y])%> = <%=mockOneToOne%>.<%=GetPropertyName(fkeys[x].PrimaryKeyMemberColumns[y])%>;
 					<% }
 					} 
 					else
@@ -496,6 +499,7 @@ namespace <%=UTNameSpace%>
 						<% for (int y=0;y < fkeys[x].ForeignKeyMemberColumns.Count; y++) { %>
 				mock.<%= GetPropertyName(fkeys[x].ForeignKeyMemberColumns[y]) %> = _collection<%=x%>[0].<%=GetPropertyName(fkeys[x].PrimaryKeyMemberColumns[y])%>;
 						<% } %>
+						
 			}
 					<% } //OneToOneRelationship
 				} //end if 
@@ -543,15 +547,20 @@ namespace <%=UTNameSpace%>
 						}
 					}
 					if(OneToOneRelationship)
-					{%>
+					{
+						string pkClassName = GetClassName(fkeys[x].PrimaryKeyTable);
+						string fkKeysName = GetKeysName(fkeys[x].ForeignKeyMemberColumns);
+						string mockOneToOne = string.Format("mock{0}By{1}",pkClassName,fkKeysName);
+					%>
 			//OneToOneRelationship
+			<%= GetClassName(fkeys[x].PrimaryKeyTable)%> <%=mockOneToOne%> = <%= GetClassName(fkeys[x].PrimaryKeyTable, ClassNameFormat.UnitTest)%>.CreateMockInstance(tm);
+			DataRepository.<%=GetClassName(fkeys[x].PrimaryKeyTable, ClassNameFormat.Provider)%>.<%= MethodNames.Insert %>(tm, <%=mockOneToOne%>);
 					<% for (int y=0;y<fkeys[x].ForeignKeyMemberColumns.Count; y++) 
 					{ %>
-			<%= GetClassName(fkeys[x].PrimaryKeyTable)%> mock<%= GetClassName(fkeys[x].PrimaryKeyTable)%>By<%= GetPropertyName(fkeys[x].ForeignKeyMemberColumns[y])%> = <%= GetClassName(fkeys[x].PrimaryKeyTable, ClassNameFormat.UnitTest)%>.CreateMockInstance(tm);
-			DataRepository.<%=GetClassName(fkeys[x].PrimaryKeyTable, ClassNameFormat.Provider)%>.<%= MethodNames.Insert %>(tm, mock<%= GetClassName(fkeys[x].PrimaryKeyTable)%>By<%= GetPropertyName(fkeys[x].ForeignKeyMemberColumns[y])%>);
-			mock.<%= GetPropertyName(fkeys[x].ForeignKeyMemberColumns[y])%> = mock<%= GetClassName(fkeys[x].PrimaryKeyTable)%>By<%= GetPropertyName(fkeys[x].ForeignKeyMemberColumns[y])%>.<%=GetPropertyName(fkeys[x].PrimaryKeyMemberColumns[y])%>;
-					<% }
-					}
+			mock.<%= GetPropertyName(fkeys[x].ForeignKeyMemberColumns[y])%> = <%=mockOneToOne%>.<%=GetPropertyName(fkeys[x].PrimaryKeyMemberColumns[y])%>;
+					<% }%>
+					
+					<%}
 					else
 					{%>
 			int count<%= x %> = 0;
