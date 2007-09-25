@@ -1077,9 +1077,18 @@ namespace <%=DALNameSpace%>.SqlClient
 				{
 					string castTo = GetCSType(cols[i]);
 					string fieldName = GetFieldName(cols[i]);
+					string propertySetter = string.Empty;
+					if (cols[i].AllowDBNull)
+					{
+						propertySetter	= string.Format("entity.{0} = Convert.IsDBNull({1}) ? null : ({2}){1};",GetPropertyName(cols[i]),fieldName,castTo);
+					}
+					else
+					{
+						propertySetter	= string.Format("entity.{0} = ({2}){1};",GetPropertyName(cols[i]),fieldName,castTo);
+					}
 					%>
 			object <%=fieldName%> = database.GetParameterValue(commandWrapper, "@<%=GetPropertyName(cols[i])%>");
-			entity.<%=GetPropertyName(cols[i])%> = Convert.IsDBNull(<%=fieldName%>) ? null : (<%=castTo%>)<%=fieldName%> ;						
+			<%=propertySetter%>
 				<%}
 			}
 			%>
@@ -1212,9 +1221,19 @@ namespace <%=DALNameSpace%>.SqlClient
 			{
 				string castTo = GetCSType(cols[i]);
 				string fieldName = GetFieldName(cols[i]);
+				
+				string propertySetter = string.Empty;
+				if (cols[i].AllowDBNull)
+				{
+					propertySetter	= string.Format("entity.{0} = Convert.IsDBNull({1}) ? null : ({2}){1};",GetPropertyName(cols[i]),fieldName,castTo);
+				}
+				else
+				{
+					propertySetter	= string.Format("entity.{0} = ({2}){1};",GetPropertyName(cols[i]),fieldName,castTo);
+				}
 					%>
 			object <%=fieldName%> = database.GetParameterValue(commandWrapper, "@<%=GetPropertyName(cols[i])%>");
-			entity.<%=GetPropertyName(cols[i])%> = Convert.IsDBNull(<%=fieldName%>) ? null : (<%=castTo%>)<%=fieldName%> ;						
+			<%=propertySetter%>
 			<%}
 		
 			// if in the PK, update the original
