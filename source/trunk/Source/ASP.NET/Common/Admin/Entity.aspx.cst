@@ -93,7 +93,7 @@
 					foreach( ColumnSchema column in colsUpdatable)
 					{
 						if (column.IsForeignKeyMember && IncludeRelations && IncludeGetListByFK) 
-						{					
+						{			
 							string tempDSO = string.Empty;
 							Response.Write(WriteTemplateField(column, 4, out tempDSO, suffix) + "\r\n");
 							entityDSO+=tempDSO;
@@ -243,22 +243,27 @@ public string WriteTemplateField(ColumnSchema column, int tabs, out string entit
 	string pkDisplayField = String.Empty;	
 	string objectDataSource = String.Empty;
 	string pkCSType = String.Empty;
+	string keysName = String.Empty;
+	StringBuilder navigateUrlParms = new StringBuilder();
+	StringBuilder navigateUrlFields = new StringBuilder();
+	StringBuilder headerText = new StringBuilder();
+	
 	TableSchema fkTable = null;
-
+//Response.WriteLine(keysName);
 	foreach (TableKeySchema tableKey in column.Table.ForeignKeys)
 	{
 		//Key Tables must be in SourceTables
 		if (!SourceTables.Contains(tableKey.ForeignKeyTable) || !SourceTables.Contains(tableKey.PrimaryKeyTable))
 			continue;
-			
+		
 		fkTable = tableKey.PrimaryKeyTable;
 		ColumnSchema fKeyColumn = tableKey.ForeignKeyMemberColumns[0];
 		fkPropertyName = GetPropertyName(fKeyColumn);
-		fkFriendlyName = GetFriendlyName(fKeyColumn);
+		//fkFriendlyName = GetFriendlyName(fKeyColumn);
 		fkColumnName = fKeyColumn.Name;
-		
+
 		if ( GetPropertyName(fKeyColumn) == propertyName )
-		{
+		{	
 			pkPropertyName = GetPropertyName(tableKey.PrimaryKeyMemberColumns[0]);	
 			pkColumnName = tableKey.PrimaryKeyMemberColumns[0].Name;
 			
@@ -277,6 +282,27 @@ public string WriteTemplateField(ColumnSchema column, int tabs, out string entit
 
 			if (pkDisplayField == String.Empty )
 				pkDisplayField = pkPropertyName;
+				
+			keysName = GetKeysName(tableKey.ForeignKeyMemberColumns);
+			
+			for(int x = 0; x < tableKey.ForeignKeyMemberColumns.Count; x++)
+			{
+				ColumnSchema fkColumn = tableKey.ForeignKeyMemberColumns[x];
+				//Assume related pk and fk columns are in same order...
+				ColumnSchema pkColumn = tableKey.PrimaryKeyMemberColumns[x];
+				
+				//Form edit url string
+				if (x > 0) navigateUrlParms.Append("&");
+				navigateUrlParms.AppendFormat("{0}={{{1}}}",GetPropertyName(pkColumn), x);
+				
+				//form the navigate url fields
+				if (x > 0) navigateUrlFields.Append(",");
+				navigateUrlFields.Append(GetPropertyName(pkColumn));
+				
+				//Form the header text
+				if (x > 0) headerText.Append(" / ");
+				headerText.Append(GetFriendlyName(fkColumn));
+			}
 
 			break;						
 		}
@@ -285,13 +311,12 @@ public string WriteTemplateField(ColumnSchema column, int tabs, out string entit
 		return s;		
 	
 	return string.Format(_templateField, 
-		/*0*/ fkPropertyName, 
-		/*1*/ fkFriendlyName, 
-		/*2*/ pkPropertyName, 
-		/*3*/ GetClassName(fkTable), 
-		/*4*/ fkColumnName, 
-		/*5*/ pkDisplayField, 
-		/*6*/ string.Concat(objectDataSource, "DataSource", suffix.ToString()));
+		/*0*/ headerText.ToString(), 
+		/*1*/ GetClassName(fkTable), 
+		/*2*/ pkDisplayField, 
+		/*3*/ keysName,
+		/*4*/ navigateUrlParms.ToString(),
+		/*5*/ navigateUrlFields.ToString());
 	
 	/*
 	s += Tab(4) + "<data:BoundEntityDropDownField DataField=\"" + fkPropertyName + "\" HeaderText=\"" + GetPascalSpacedName(fkPropertyName) + "\" SortExpression=\"[" + fkColumnName + "]\"\r\n";
@@ -342,7 +367,7 @@ public string WriteBoundField(ColumnSchema column, int tabs) {
 	
 }
 
-const string _templateField = @"				<data:HyperLinkField HeaderText=""{1}"" DataNavigateUrlFormatString=""{3}Edit.aspx?{2}={{0}}"" DataNavigateUrlFields=""{2}"" DataContainer=""{0}Source"" DataTextField=""{5}"" />";
+const string _templateField = @"				<data:HyperLinkField HeaderText=""{0}"" DataNavigateUrlFormatString=""{1}Edit.aspx?{4}"" DataNavigateUrlFields=""{5}"" DataContainer=""{3}Source"" DataTextField=""{2}"" />";
 	
 	//	const string _templateField = @"
 	//					<asp:TemplateField HeaderText=""{1}"">
