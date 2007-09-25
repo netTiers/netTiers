@@ -1075,14 +1075,11 @@ namespace <%=DALNameSpace%>.SqlClient
 			{
 				if (IsComputed(cols[i]) || IsIdentityColumn(cols[i]) )
 				{
-					string castTo = String.Empty;
-					
-					if (cols[i].NativeType == "xml") 
-						castTo = typeof(System.String).ToString();
-					else
-						castTo = cols[i].SystemType.ToString();	%>
-
-			entity.<%=GetPropertyName(cols[i])%> = (<%=castTo%>) database.GetParameterValue(commandWrapper, "@<%=GetPropertyName(cols[i])%>");						
+					string castTo = GetCSType(cols[i]);
+					string fieldName = GetFieldName(cols[i]);
+					%>
+			object <%=fieldName%> = database.GetParameterValue(commandWrapper, "@<%=GetPropertyName(cols[i])%>");
+			entity.<%=GetPropertyName(cols[i])%> = Convert.IsDBNull(<%=fieldName%>) ? null : (<%=castTo%>)<%=fieldName%> ;						
 				<%}
 			}
 			%>
@@ -1213,14 +1210,11 @@ namespace <%=DALNameSpace%>.SqlClient
 		{
 			if (IsComputed(cols[i]) && cols[i] != RowVersion)
 			{
-					string castTo = String.Empty;
-				
-					if (cols[i].NativeType == "xml") 
-						castTo = typeof(System.String).ToString();
-					else
-						castTo = cols[i].SystemType.ToString();				
-				%>
-			entity.<%=GetPropertyName(cols[i])%> = (<%=castTo%>)database.GetParameterValue(commandWrapper, "@<%=GetPropertyName(cols[i])%>");
+				string castTo = GetCSType(cols[i]);
+				string fieldName = GetFieldName(cols[i]);
+					%>
+			object <%=fieldName%> = database.GetParameterValue(commandWrapper, "@<%=GetPropertyName(cols[i])%>");
+			entity.<%=GetPropertyName(cols[i])%> = Convert.IsDBNull(<%=fieldName%>) ? null : (<%=castTo%>)<%=fieldName%> ;						
 			<%}
 		
 			// if in the PK, update the original
