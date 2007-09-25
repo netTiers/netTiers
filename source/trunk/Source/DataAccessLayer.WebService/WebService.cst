@@ -110,7 +110,7 @@ public class <%=ClassName%> : WebService
 	#region Get from  Many To Many Relationship Functions
 	<%
 		TableSchema primaryTable = SourceTable;
-		
+		System.Collections.Hashtable manyToManyFunctions = new System.Collections.Hashtable();
 		foreach(TableKeySchema key in SourceTable.PrimaryKeys)
 		{
 			// Check that the key is related to a junction table and that this key relate a PK in this junction table
@@ -126,6 +126,9 @@ public class <%=ClassName%> : WebService
 						TableSchema secondaryTable = junctionTableKey.PrimaryKeyTable;
 						string functionname = GetManyToManyName(junctionTableKey, junctionTable);
 						methods.Add(providerName + "_GetBy" + functionname);
+						if (!manyToManyFunctions.ContainsKey(functionname))
+						{
+							manyToManyFunctions.Add(functionname,null);
 %>
 
 	#region GetBy<%=functionname%>
@@ -139,6 +142,7 @@ public class <%=ClassName%> : WebService
 	#endregion GetBy<%=functionname%>
 	
 				<%
+					}//end if the function has already been created
 				} //end if there is many to many relationship.
 			} //end foreach			
 	 	}// end if(IsJunctionTable(junctionTableKeyForeignKeyTable)) %>
