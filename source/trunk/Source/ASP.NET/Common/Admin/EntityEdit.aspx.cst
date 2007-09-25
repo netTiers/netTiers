@@ -113,17 +113,23 @@
 	
 	// -- check for junction table
 	if (keys.Count == 1) 
-	{
-		TableSchemaCollection tablesRelated = GetTablesCollectionByFk(SourceTable.PrimaryKey.MemberColumns[0], sourceTables);
-		for (int x = 0; x < tablesRelated.Count; x++)
-		{  
+	{		
+		System.Collections.Hashtable colls = GetChildrenCollections(SourceTable, SourceTables);
+		foreach(CollectionInfo ci in colls.Values)
+		{ 
+			TableSchema relatedTable = ci.SecondaryTableSchema;
+			
 			//Related Table must be in SourceTables
-			if (!SourceTables.Contains(tablesRelated[x]))
+			//Must be OneToMany relation
+			//Must not be a junction table
+			if (!SourceTables.Contains(relatedTable) 
+				|| ci.CollectionRelationshipType != RelationshipType.OneToMany
+				|| IsJunctionTable(relatedTable))
 				continue;
-
-			string entityRelated = GetClassName(tablesRelated[x]);
-			ColumnSchemaCollection keysRelatedCol = tablesRelated[x].PrimaryKey.MemberColumns;
-			ColumnSchemaCollection foreignKeyCols = GetRelationshipColumnByFk(keys, tablesRelated[x]);
+	
+			string entityRelated = GetClassName(relatedTable);
+			ColumnSchemaCollection keysRelatedCol = relatedTable.PrimaryKey.MemberColumns;
+			ColumnSchemaCollection foreignKeyCols = ci.TableKey.ForeignKeyMemberColumns;
 			
 			string keysRelated = GetKeysName(keysRelatedCol);
 							
@@ -133,7 +139,7 @@
 		<asp:Panel ID="<%=entityRelated%>Panel2" runat="server" CssClass="collapsePanelHeader"> 
 			<div style="padding:5px; cursor: pointer; vertical-align: middle;">
 				<div style="float: left; vertical-align: middle;"><asp:Image ID="<%=entityRelated%>Image" runat="server" ImageUrl="~/images/expand_blue.jpg"/></div>
-				<div style="float: left; padding-left: 5px;"><%=GetFriendlyName(tablesRelated[x])%> Details</div>
+				<div style="float: left; padding-left: 5px;"><%=GetFriendlyName(relatedTable)%> Details</div>
 				<div style="float: left; margin-left: 20px;"><asp:Label ID="<%=entityRelated%>Label" runat="server" /></div>
 			</div>
 		</asp:Panel>	
@@ -156,13 +162,13 @@
 				<asp:CommandField ShowSelectButton="True" />
 <%			
 			int suffix = 1;
-			foreach (ColumnSchema tCol in tablesRelated[x].Columns)
+			foreach (ColumnSchema tCol in relatedTable.Columns)
 			{				
 				string propertyName = GetPropertyName(tCol);
 				if (!tCol.IsForeignKeyMember && !tCol.IsPrimaryKeyMember && !tCol.NativeType.ToLower().Equals("xml")) 
 				{
 %>
-				<asp:BoundField DataField="<%=propertyName%>" HeaderText="<%=GetFriendlyName(tCol)%>" SortExpression="<%=tCol.Name%>" />				
+				<asp:BoundField DataField="<%=propertyName%>" HeaderText="<%=GetFriendlyName(tCol)%>" SortExpression="[<%=tCol.Name%>]" />				
 <%    
 				}	
 				else if (tCol.IsForeignKeyMember && IncludeRelations && IncludeGetListByFK) 
@@ -174,15 +180,15 @@
 %>
 			</Columns>
 			<EmptyDataTemplate>
-				<b>No <%=GetFriendlyName(tablesRelated[x])%> Found! </b>
-				<asp:HyperLink runat="server" ID="hyp<%=GetClassName(tablesRelated[x])%>" NavigateUrl="~/admin/<%=GetClassName(tablesRelated[x])%>Edit.aspx">Add New</asp:HyperLink>
+				<b>No <%=GetFriendlyName(relatedTable)%> Found! </b>
+				<asp:HyperLink runat="server" ID="hyp<%=GetClassName(relatedTable)%>" NavigateUrl="~/admin/<%=GetClassName(relatedTable)%>Edit.aspx">Add New</asp:HyperLink>
 			</EmptyDataTemplate>
 		</data:EntityGridView>					
 		
 		<data:<%=entityRelated%>DataSource ID="<%=entityRelated%>DataSource" runat="server" SelectMethod="<%= MethodNames.Find %>"
 			<% 
-			Hashtable children = GetChildrenCollections(tablesRelated[x], SourceTables);
-			if (tablesRelated[x].ForeignKeys.Count > 0) {%>
+			Hashtable children = GetChildrenCollections(relatedTable, SourceTables);
+			if (relatedTable.ForeignKeys.Count > 0) {%>
 			EnableDeepLoad="True"
 			>
 			<DeepLoadProperties Method="IncludeChildren" Recursive="False">
@@ -191,7 +197,7 @@
 			{ 
 			//Generate enum for each child type foreign key relation		
 					System.Collections.ArrayList addedList = new System.Collections.ArrayList();
-					foreach(TableKeySchema tableKey in tablesRelated[x].ForeignKeys)
+					foreach(TableKeySchema tableKey in relatedTable.ForeignKeys)
 					{
 						// related table must be in the selection
 						if (SourceTables.Contains(tableKey.PrimaryKeyTable)) 
@@ -212,7 +218,7 @@
 			} // end foreach
 			%>
 			<%
-			foreach(CollectionInfo item in GetChildrenCollections(tablesRelated[x], SourceTables).Values)
+			foreach(CollectionInfo item in GetChildrenCollections(relatedTable, SourceTables).Values)
 			{	
 				if (item.CollectionRelationshipType != RelationshipType.OneToOne)
 				{
@@ -241,6 +247,7 @@
 			else
 				Response.Write("\t\t>\n");
 			%>		
+			
 		    <Parameters>
 				<data:SqlParameter Name="Parameters">
 					<Filters>
