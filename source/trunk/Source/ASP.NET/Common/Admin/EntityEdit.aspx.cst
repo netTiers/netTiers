@@ -110,7 +110,7 @@
 
 <%
 	string ae = string.Empty;
-	
+	int index = 0;
 	// -- check for junction table
 	if (keys.Count == 1) 
 	{		
@@ -126,12 +126,15 @@
 				|| ci.CollectionRelationshipType != RelationshipType.OneToMany
 				|| IsJunctionTable(relatedTable))
 				continue;
-	
+			
+			index++;
 			string entityRelated = GetClassName(relatedTable);
 			ColumnSchemaCollection keysRelatedCol = relatedTable.PrimaryKey.MemberColumns;
 			ColumnSchemaCollection foreignKeyCols = ci.TableKey.ForeignKeyMemberColumns;
 			
 			string keysRelated = GetKeysName(keysRelatedCol);
+			
+			string dataSourceId = string.Format("{0}DataSource{1}",entityRelated,index);
 							
 			if (IncludeAtlasToolkit && IncludeAtlasLibrary)
 			{
@@ -150,7 +153,7 @@
 		<data:EntityGridView ID="GridView<%=entityRelated%>" runat="server"
 			AutoGenerateColumns="False"					
 			OnSelectedIndexChanged="GridView<%=entityRelated%>_SelectedIndexChanged"			 			 
-			DataSourceID="<%=entityRelated%>DataSource"
+			DataSourceID="<%=dataSourceId%>"
 			DataKeyNames="<%=GetDataKeyNames(keysRelatedCol)%>"
 			AllowMultiColumnSorting="false"
 			DefaultSortColumnName="" 
@@ -185,7 +188,7 @@
 			</EmptyDataTemplate>
 		</data:EntityGridView>					
 		
-		<data:<%=entityRelated%>DataSource ID="<%=entityRelated%>DataSource" runat="server" SelectMethod="<%= MethodNames.Find %>"
+		<data:<%=entityRelated%>DataSource ID="<%=dataSourceId%>" runat="server" SelectMethod="<%= MethodNames.Find %>"
 			<% 
 			Hashtable children = GetChildrenCollections(relatedTable, SourceTables);
 			if (relatedTable.ForeignKeys.Count > 0) {%>
