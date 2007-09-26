@@ -5241,7 +5241,7 @@ CREATE\s+PROC(?:EDURE)?                               # find the start of the st
 					if((i.IsUnique || i.IsPrimaryKey) && (keyschema.ForeignKeyMemberColumns.Count == i.MemberColumns.Count))
 					{
 						//The index must contain the same column
-						if(i.MemberColumns.Contains(column.Name) && (!IsJunctionTable(keyschema.ForeignKeyTable)))
+						if(i.MemberColumns.Contains(column.Name)) //&& (!IsJunctionTable(keyschema.ForeignKeyTable)))
 						{
 							columnIsUnique = true;
 						}
