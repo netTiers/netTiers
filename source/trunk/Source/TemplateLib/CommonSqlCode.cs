@@ -2467,6 +2467,21 @@ namespace MoM.Templates
 		{
 			return column.SystemType.ToString() == typeof(System.Guid).ToString();
 		}
+		
+		/// <summary>
+		/// Check if a column is a rowguid column for replication
+		/// </summary>
+		/// <param name="column">DB table column to be checked</param>
+		/// <returns>Identity?</returns>
+		public bool IsRowGuidColumn(ColumnSchema column)
+		{
+			if (column.ExtendedProperties["CS_IsRowGuidCol"] != null)
+				return (bool)column.ExtendedProperties["CS_IsRowGuidCol"].Value;
+			
+			return false;
+		}
+
+
 /*
 		/// <summary>
 		/// Get the owner of a table.
