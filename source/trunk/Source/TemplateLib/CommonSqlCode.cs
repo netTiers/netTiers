@@ -3470,7 +3470,6 @@ CREATE\s+PROC(?:EDURE)?                               # find the start of the st
 			{
 				//Get Default Value 
 				defaultValue = defaultValueProperty.Value.ToString();
-				
 				if (defaultValue == null || defaultValue.Trim().Length == 0)
 					return null;
 				
@@ -3481,10 +3480,10 @@ CREATE\s+PROC(?:EDURE)?                               # find the start of the st
 					defaultValue = defaultValue.Substring(1);
 					defaultValue = defaultValue.Substring(0, defaultValue.Length - 1);
 				}
-				
+
 				if (IsNumericType(column as ColumnSchema))
 					defaultValue = defaultValue.TrimEnd('.');
-					
+
 				if (defaultValueProperty.DataType == DbType.String)
 				{
 					// probably a char type.  Let's remove the quotes so parsing is happy
@@ -3518,8 +3517,11 @@ CREATE\s+PROC(?:EDURE)?                               # find the start of the st
 						);
 						defaultValue = regex.Match(defaultValue).Groups["defaultValue"].Value;
 					}
-					else
+					else if (string.IsNullOrEmpty(defaultValue))
+					{
 						return null;
+					}
+						
 				}
 
 				if (column.NativeType.ToLower() == "real")
@@ -3533,6 +3535,7 @@ CREATE\s+PROC(?:EDURE)?                               # find the start of the st
 				else
 				{
 					DbType dataType = column.DataType;
+
 					switch (dataType)
 					{
 						case DbType.AnsiString:
