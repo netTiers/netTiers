@@ -1143,6 +1143,127 @@ namespace MoM.Templates
 			return listName.Remove(listName.IndexOf("<"));
 		}
 		
+				/// <summary>
+        /// Determine if a table column should be included in generated output
+        /// </summary>
+        /// <param name="table">The table.</param>
+        /// <param name="column">The column.</param>
+        /// <returns>the value of the IncludeInOutput property defined in mapping file for the table and column</returns>       	
+		public bool IncludeInOutput(TableSchema table, ColumnSchema column){
+			
+			if (CurrentNetTiersMap != null)			
+			{
+				foreach(TableMetaData mappedTable in CurrentNetTiersMap.Tables)
+				{
+					if(mappedTable.Id == table.Name)
+					{
+						foreach(ColumnMetaData mappedColumn in mappedTable.Columns)
+						{						
+							if (mappedColumn.Id == column.Name)
+							{
+								return (bool)GetPropertyValue(mappedColumn, ReturnFields.IncludeInOutput.ToString());
+							}
+						}
+					}
+				}
+			}
+			
+			return true; //assumes mapping file not specified\available or mapping file does not contain information for the specified Table\Column
+		}	
+		
+		#region ColumnSchemaComparer
+		
+		public class ColumnSchemaComparer : IComparer {
+	
+			private string _sortBy;
+			private SchemaExplorer.TableSchema _table;
+			private bool _tableFound = false;
+			private NetTiers.NetTiersMap _currentNettiersMap;
+	
+			public ColumnSchemaComparer() {				
+			}
+	
+			public ColumnSchemaComparer(string sortBy, SchemaExplorer.TableSchema table, NetTiers.NetTiersMap currentNettiersMap) {
+				if (currentNettiersMap == null)			
+				{
+					throw new Exception("There is no mapping file currently available");
+				}
+				
+				_sortBy = sortBy;
+				_table = table;
+				_currentNettiersMap = currentNettiersMap;
+			}
+	
+			public string SortBy {
+				get {
+					return _sortBy;
+				}
+				set {
+					_sortBy = value;
+				}
+			}
+	
+			/// <summary>
+			/// The Compare method should compare the obj to the current instance. 
+			/// 1. Return a value less than zero if pFirstObject is less than pObjectToCompare. 
+			/// 2. Return 0 if pFirstObject is equal to pObjectToCompare. 
+			/// 3. Return a value larger than zero if pFirstObject is greater than pObjectToCompare.
+			/// </summary>
+			/// <param name="pFirstObject"></param>
+			/// <param name="pObjectToCompare"></param>
+			/// <returns></returns>
+			
+			public Int32 Compare(Object firstObject, Object objectToCompare) {
+				if(firstObject is ColumnSchema) {
+					
+					switch(this._sortBy) {
+						
+						case "Id":      
+							return(FindIndexOfColumn(_table, (ColumnSchema)firstObject, _currentNettiersMap) - FindIndexOfColumn(_table, (ColumnSchema)objectToCompare,_currentNettiersMap));
+							
+							break;
+						default:
+							return 0;
+					}
+				}
+				else
+					return 0;
+			}
+		}
+		#endregion
+		
+		/// <summary>
+		/// Find the index of a column in the mapping file
+		/// </summary>		
+		/// <returns></returns>
+		public static int FindIndexOfColumn(TableSchema table, ColumnSchema column, NetTiers.NetTiersMap currentNettiersMap)
+		{
+			int index;
+			
+			if (currentNettiersMap != null)			
+			{
+				foreach(TableMetaData mappedTable in currentNettiersMap.Tables)
+				{
+					if(mappedTable.Id == table.Name)
+					{
+						index = 0;
+						
+						foreach(ColumnMetaData mappedColumn in mappedTable.Columns)
+						{						
+							if (mappedColumn.Id == column.Name)
+							{
+								return index;
+							}
+							
+							index++;
+						}
+					}
+				}
+			}
+			
+			return -1; //will occur if no mapping file provided or table\column cannot be found in mapping file
+		}
+		
 		public enum ReturnFields
 		{
 			EntityName,
@@ -1150,7 +1271,8 @@ namespace MoM.Templates
 			FieldName,
 			Id,
 			CSType,
-			FriendlyName
+			FriendlyName,
+			IncludeInOutput
 		}
 		
 		public enum ClassNameFormat
