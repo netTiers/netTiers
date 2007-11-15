@@ -461,6 +461,57 @@ namespace <%=NameSpace%>
 			return result;
 		}
 		
+        #region Find All Distinct
+        /// <summary>
+        /// Finds all distinct elements for the specified column
+        /// </summary>
+        /// <param name="column">The column.</param>
+        /// <returns></returns>
+        public virtual <%=listName%><T> FindAllDistinct( Enum column )
+        {
+            return FindAllDistinct( column.ToString() );
+        }
+        /// <summary>
+        /// Finds all distinct elements for the specified column
+        /// </summary>
+        /// <param name="columnName">Name of the column.</param>
+        /// <returns></returns>
+        public virtual TList<T> FindAllDistinct( string columnName )
+        {
+            PropertyDescriptorCollection props = TypeDescriptor.GetProperties( typeof( T ) );
+            PropertyDescriptor filterBy = props.Find( columnName, true );
+            <%=listName%><T> result = new <%=listName%><T>();
+            
+            object a;
+            object b;
+            bool found;
+
+            foreach ( T item in this )
+            {
+                a = filterBy.GetValue( item );
+                found = false;
+
+                foreach ( T item2 in result )
+                {
+                    b = filterBy.GetValue( item2 );
+                    if ( ( a == null && b == null ) ||
+                        ( a != null && b != null && a.Equals( b ) ) )
+                    {
+                        found = true;
+                        break;
+                    }
+                }
+
+                if ( !found )
+                {
+                    result.Add( item );
+                }
+            }
+
+            return result;
+        }
+        #endregion Find All Distinct
+		
 		/// <summary>
 		/// Determines whether the <see cref="T:<%=listName%>{T}"></see> contains elements that match the conditions defined by the specified predicate.
 		/// </summary>
