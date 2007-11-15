@@ -88,6 +88,7 @@
 																																													
 			CodeTemplates.Add("DataRepository.cst", base.CreateTemplate<DataRepository>()); this.PerformStep();
 			CodeTemplates.Add("Utility.cst", base.CreateTemplate<Utility>()); this.PerformStep();
+			CodeTemplates.Add("ITransactionManager.cst", base.CreateTemplate<ITransactionManager>()); this.PerformStep();
 			CodeTemplates.Add("TransactionManager.cst", base.CreateTemplate<TransactionManager>()); this.PerformStep();
 			CodeTemplates.Add("IEntityProvider.cst", base.CreateTemplate<IEntityProvider>()); this.PerformStep();
 			CodeTemplates.Add("IEntityViewProvider.cst", base.CreateTemplate<IEntityViewProvider>()); this.PerformStep();
