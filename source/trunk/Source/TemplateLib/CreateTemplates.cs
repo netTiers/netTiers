@@ -92,8 +92,11 @@
 			CodeTemplates.Add("TransactionManager.cst", base.CreateTemplate<TransactionManager>()); this.PerformStep();
 			CodeTemplates.Add("IEntityProvider.cst", base.CreateTemplate<IEntityProvider>()); this.PerformStep();
 			CodeTemplates.Add("IEntityViewProvider.cst", base.CreateTemplate<IEntityViewProvider>()); this.PerformStep();
-																																													
+
+			CodeTemplates.Add("INetTiersProvider.cst", base.CreateTemplate<INetTiersProvider>()); this.PerformStep();							
 			CodeTemplates.Add("NetTiersProvider.cst", base.CreateTemplate<NetTiersProvider>()); this.PerformStep();							
+			CodeTemplates.Add("NetTiersProviderBase.cst", base.CreateTemplate<NetTiersProviderBase>()); this.PerformStep();							
+		
 			CodeTemplates.Add("NetTiersProviderCollection.cst", base.CreateTemplate<NetTiersProviderCollection>()); this.PerformStep();							
 			CodeTemplates.Add("NetTiersServiceSection.cst", base.CreateTemplate<NetTiersServiceSection>()); this.PerformStep();							
 																	
