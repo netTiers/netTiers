@@ -68,7 +68,9 @@
 			
 			
 			CodeTemplates.Add("IComponentEntity.cst", base.CreateTemplate<IComponentEntity>()); this.PerformStep();
+			CodeTemplates.Add("IConnectionScope.cst", base.CreateTemplate<IConnectionScope>()); this.PerformStep();
 			CodeTemplates.Add("ConnectionScope.cst", base.CreateTemplate<ConnectionScope>()); this.PerformStep();
+			CodeTemplates.Add("ConnectionScopeBase.cst", base.CreateTemplate<ConnectionScopeBase>()); this.PerformStep();
 			CodeTemplates.Add("DomainUtil.cst", base.CreateTemplate<DomainUtil>()); this.PerformStep();
 			CodeTemplates.Add("IComponentService.cst", base.CreateTemplate<IComponentService>()); this.PerformStep();
 			CodeTemplates.Add("ServiceBase.cst", base.CreateTemplate<ServiceBase>()); this.PerformStep();
@@ -84,7 +86,7 @@
 			CodeTemplates.Add("ProcessorBase.cst", base.CreateTemplate<ProcessorBase>()); this.PerformStep();
 			CodeTemplates.Add("GenericProcessorResult.cst", base.CreateTemplate<GenericProcessorResult>()); this.PerformStep();
 			CodeTemplates.Add("SecurityContext.cst", base.CreateTemplate<SecurityContext>()); this.PerformStep();														
-																															
+			CodeTemplates.Add("ContextView.cst", base.CreateTemplate<ContextView>()); this.PerformStep();																																													
 																																													
 			CodeTemplates.Add("DataRepository.cst", base.CreateTemplate<DataRepository>()); this.PerformStep();
 			CodeTemplates.Add("Utility.cst", base.CreateTemplate<Utility>()); this.PerformStep();

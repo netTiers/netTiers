@@ -7,7 +7,7 @@
 <%@ Property Name="BLLNameSpace" Optional="False" Type="System.String" Category="Style" Description="Object Namespace." %>
 <%@ Property Name="DALNameSpace" Optional="False" Type="System.String" Category="Style" Description="Object Namespace." %>
 <%@ Assembly Name="SchemaExplorer" %>
-
+#region Using directives
 using System;
 using System.ComponentModel;
 using System.Security;
@@ -18,7 +18,7 @@ using <%= BLLNameSpace %>;
 using <%= DALNameSpace %>;
 
 using Microsoft.Practices.EnterpriseLibrary.Security;
-//using Microsoft.Practices.EnterpriseLibrary.Security.Cache.CachingStore;
+#endregion Using directives
 
 namespace <%=NameSpace%>
 {
@@ -28,16 +28,7 @@ namespace <%=NameSpace%>
 	/// </summary>
 	public class SecurityContext<Entity> where Entity : IEntity, new()
 	{
-		/// <summary>
-		/// Initializes a new instance of the SecurityContext class.
-		/// </summary>
-		public SecurityContext()
-		{
-			this.Identity = System.Threading.Thread.CurrentPrincipal.Identity;
-			this.Principal = System.Threading.Thread.CurrentPrincipal;
-		}
-		
-		
+		#region Fields
         private object profile = null;
         private IIdentity identity = null;
         private IPrincipal principal = null;
@@ -45,9 +36,11 @@ namespace <%=NameSpace%>
 		//private ISecurityCacheProvider securityCacheProvider = null; 
 		private static readonly string ruleProviderKey = "NetTiers.RuleProvider";
 		private static object syncObject = new object();
+		#endregion Fields
 		
+		#region Properties
         /// <summary>
-        /// The Current IIdentity .
+        /// The Current IIdentity.
         /// </summary>
         public IIdentity Identity
         {
@@ -96,7 +89,20 @@ namespace <%=NameSpace%>
 				}
 			}
 		}
+		#endregion Properties
 		
+		#region Constructors
+		/// <summary>
+		/// Initializes a new instance of the SecurityContext class.
+		/// </summary>
+		public SecurityContext()
+		{
+			this.Identity = System.Threading.Thread.CurrentPrincipal.Identity;
+			this.Principal = System.Threading.Thread.CurrentPrincipal;
+		}
+		#endregion Constructors		
+		
+		#region Public methods
 		/// <summary>
 		/// Determine whether user is authorized for the rule based on the rule provider
 		/// </summary>
@@ -117,98 +123,6 @@ namespace <%=NameSpace%>
 			
 			return true;
 		}
+		#endregion Public methods		
 	}
-
-    /// <summary>
-    /// Used to create a general view of the current context.  
-    /// Useful for firing events and giving the UI a picture of 
-    /// current State of Operation.
-    /// </summary>
-    /// <typeparam name="Entity">The Entity object</typeparam>
-    /// <typeparam name="Domain">Type that holds </typeparam>
-	public class ContextView<Entity, Domain> where Entity : IEntity, new() where Domain : class
-	{
-		private Entity persistingObject;
-		private TransactionManager transactionManager; 
-		private SecurityContext<Entity> securityContext;
-
-        /// <summary>
-        /// Initializes a new instance of the <see cref="ContextView&lt;Entity, Domain&gt;"/> class.
-        /// </summary>
-		public ContextView()
-		{
-		}
-
-        /// <summary>
-        /// Initializes a new instance of the <see cref="ContextView&lt;Entity, Domain&gt;"/> class.
-        /// </summary>
-        /// <param name="persistingObject">The persisting object.</param>
-        /// <param name="securityContext">The security context.</param>
-        public ContextView(Entity persistingObject, SecurityContext<Entity> securityContext)
-		{
-			this.persistingObject = persistingObject;
-			this.securityContext = securityContext;
-		}
-
-        /// <summary>
-        /// Initializes a new instance of the <see cref="ContextView&lt;Entity, Domain&gt;"/> class.
-        /// </summary>
-        /// <param name="persistingObject">The persisting object.</param>
-        /// <param name="securityContext">The security context.</param>
-        /// <param name="transactionManager">The transaction manager.</param>
-        public ContextView(Entity persistingObject, SecurityContext<Entity> securityContext, TransactionManager transactionManager)
-		{
-			this.persistingObject = persistingObject;
-			this.securityContext = securityContext;
-			this.transactionManager = transactionManager;
-		}
-
-        /// <summary>
-        /// Gets or sets the persisting object.
-        /// </summary>
-        /// <value>The persisting object.</value>
-		public Entity PersistingObject
-		{
-			get
-			{
-				return persistingObject;	
-			}	
-			set
-			{
-				persistingObject = value;	
-			}
-		}
-
-        /// <summary>
-        /// Gets or sets the security context.
-        /// </summary>
-        /// <value>The security context.</value>
-        public SecurityContext<Entity> SecurityContext
-		{
-			get
-			{
-                return securityContext; 	
-			}	
-			set
-			{
-				securityContext = value;	
-			}
-		}
-
-        /// <summary>
-        /// Gets or sets the transaction manager.
-        /// </summary>
-        /// <value>The transaction manager.</value>
-		public TransactionManager TransactionManager
-		{
-			get
-			{
-				return transactionManager;
-			}
-			set
-			{
-				transactionManager = value;
-			}
-		}
-	}	
 }
