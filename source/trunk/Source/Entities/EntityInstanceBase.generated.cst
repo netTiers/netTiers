@@ -74,13 +74,13 @@
 */
 
 #region using directives
-
 using System;
 using System.ComponentModel;
 using System.Collections;
 using System.Xml.Serialization;
 using System.Runtime.Serialization;
 
+using <%=NameSpace%>.Validation;
 #endregion
 
 namespace <%=NameSpace%>
@@ -93,7 +93,7 @@ namespace <%=NameSpace%>
 	<% } %>
 	[Serializable, DataObject]
 	[CLSCompliant(true)]
-	public abstract partial class <%=abstractClassName%> : EntityBase, <%=NameSpace%>.<%=interfaceName%>, IEntityId<<%= keyClassName %>>, System.IComparable, System.ICloneable, IEditableObject, IComponent, INotifyPropertyChanged
+	public abstract partial class <%=abstractClassName%> : EntityBase, <%=interfaceName%>, IEntityId<<%= keyClassName %>>, System.IComparable, System.ICloneable, IEditableObject, IComponent, INotifyPropertyChanged
 	{		
 		#region Variable Declarations
 		
@@ -331,17 +331,15 @@ WriteRelationshipPropertyString();
 			if (! cols[x].AllowDBNull && IsCSReferenceDataType(cols[x])) 
 			{
 				%>
-			ValidationRules.AddRule(
-				Validation.CommonRules.NotNull,
-				new Validation.ValidationRuleArgs("<%=propertyName%>", "<%=friendlyName%>"));
+			ValidationRules.AddRule( CommonRules.NotNull,
+				new ValidationRuleArgs("<%=propertyName%>", "<%=friendlyName%>"));
 				<%							
 			}
 			
 			if (CanCheckLength(cols[x]))
 			{%>
-			ValidationRules.AddRule(
-				Validation.CommonRules.StringMaxLength, 
-				new Validation.CommonRules.MaxLengthRuleArgs("<%=propertyName%>", "<%=friendlyName%>", <%=cols[x].Size%>));
+			ValidationRules.AddRule( CommonRules.StringMaxLength, 
+				new CommonRules.MaxLengthRuleArgs("<%=propertyName%>", "<%=friendlyName%>", <%=cols[x].Size%>));
 			<%
 			}			
 		}
