@@ -19,6 +19,7 @@
 <%@ Property Name="NameSpace" Optional="True" Type="System.String" Category="Style" Description="Object Namespace." %>
 	
 <%@ Property Name="UsePartialClass" Type="System.Boolean" Default="true" Category="General" Description="Indicates if partial class should be generated." %>
+<%@ Property Name="EqualitySemantics" Type="MoM.Templates.EqualitySemantics" Default="Value" Category="02. Framework Generation - Optional" Description="Equality semantics used for Entity instances.  If 'Reference', default reference type semantics will be used (based on object identity).  If 'Value', Equals() and GetHashCode() will be overridden to use value semantics (based on object contents)." %>
 
 <%-- When debugging, you must include this section of code 
 <%@ Register Name="EntityData" Template="EntityData.cst" MergeProperties="False" ExcludeProperties="" %>
@@ -665,16 +666,18 @@ WriteRelationshipPropertyString();
 }	
 		
 		#endregion
-
+	
+	<% if(EqualitySemantics == MoM.Templates.EqualitySemantics.Value) {%>
+	#region Value Semantics Instance Equality
         ///<summary>
-        /// Returns a value indicating whether this instance is equal to a specified object.
+        /// Returns a value indicating whether this instance is equal to a specified object using value semantics.
         ///</summary>
         ///<param name="Object1">An object to compare to this instance.</param>
         ///<returns>true if Object1 is a <see cref="<%=abstractClassName%>"/> and has the same value as this instance; otherwise, false.</returns>
         public override bool Equals(object Object1)
         {
 			if (Object1 is <%=abstractClassName%>)
-				return Equals(this, (<%=abstractClassName%>)Object1);
+				return ValueEquals(this, (<%=abstractClassName%>)Object1);
 			else
 				return false;
         }
@@ -707,7 +710,7 @@ WriteRelationshipPropertyString();
         }
 		
 		///<summary>
-		/// Returns a value indicating whether this instance is equal to a specified object.
+		/// Returns a value indicating whether this instance is equal to a specified object using value semantics.
 		///</summary>
 		///<param name="toObject">An object to compare to this instance.</param>
 		///<returns>true if toObject is a <see cref="<%=abstractClassName%>"/> and has the same value as this instance; otherwise, false.</returns>
@@ -715,17 +718,18 @@ WriteRelationshipPropertyString();
 		{
 			if (toObject == null)
 				return false;
-			return Equals(this, toObject);
+			return ValueEquals(this, toObject);
 		}
-		
+		#endregion
+		<% } %>
 		
 		///<summary>
-		/// Determines whether the specified <see cref="<%=abstractClassName%>"/> instances are considered equal.
+		/// Determines whether the specified <see cref="<%=abstractClassName%>"/> instances are considered equal using value semantics.
 		///</summary>
 		///<param name="Object1">The first <see cref="<%=abstractClassName%>"/> to compare.</param>
 		///<param name="Object2">The second <see cref="<%=abstractClassName%>"/> to compare. </param>
 		///<returns>true if Object1 is the same instance as Object2 or if both are null references or if objA.Equals(objB) returns true; otherwise, false.</returns>
-		public static bool Equals(<%=abstractClassName%> Object1, <%=abstractClassName%> Object2)
+		public static bool ValueEquals(<%=abstractClassName%> Object1, <%=abstractClassName%> Object2)
 		{
 			// both are null
 			if (Object1 == null && Object2 == null)

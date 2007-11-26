@@ -5733,6 +5733,16 @@ CREATE\s+PROC(?:EDURE)?                               # find the start of the st
 	}
 	#endregion
 	
+	#region Entity Equality Semantics
+	public enum EqualitySemantics
+	{
+		/// <summary>Uses default implementation of Equals() and GetHashCode() (Reference - type Semantics, based on object identity)</summary>
+		Reference,
+		/// <summary>Override Entity Equals() and GetHashCode() to use value - type semantics (Equality based on object contents)</summary>
+		Value
+	}
+	#endregion
+	
 	#region DatabaseType
 	public enum DatabaseType
 	{
