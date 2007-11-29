@@ -65,6 +65,8 @@
 <%@ Property Name="WebServiceUrl" Type="System.String" Category="WebService" Description="The webservice base URL. The asmx filename will be added programmatically." Default="http://localhost/Services/" %>
 <%@ Property Name="rootPathWS" Type="System.String" Category="WebService" Description="The folder where the webservice code is generated." Default="" %>
 <%@ Property Name="EntLibVersion" Type="MoM.Templates.EntLibVersion" Default="v2" Category="02. Framework Generation - Optional" Description="Indicates the Enterprise Library version to use. Options include v2, v3 and v3.1" %>
+<%@ Property Name="VisualStudioVersion" Type="MoM.Templates.VSNetVersion" Default="v2005" Category="02. Framework Generation - Optional" Description="Indicates the Version of Visual Studio to target. Options include v2005 and v2008" %>
+<%@ Property Name="DotNetVersion" Type="MoM.Templates.DotNetFrameworkVersion" Default="v2" Category="02. Framework Generation - Optional" Description="Indicates the Version of Dot Net to target. Options include v2, v3 and v3.5" %>
 
 <%@ Assembly Name="SchemaExplorer" %>
 <%@ Assembly Name="System.Design" %>
@@ -137,11 +139,11 @@
 	string WinLibSubFolder = string.Empty;
 	
 %>
-<Project DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+<Project DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003" ToolsVersion="3.5">
   <PropertyGroup>
     <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
     <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
-    <ProductVersion>8.0.50727</ProductVersion>
+    <ProductVersion><%= GetVisualStudioProductVersionString( VisualStudioVersion ) %></ProductVersion>
     <SchemaVersion>2.0</SchemaVersion>
     <ProjectGuid>{<% if (IncludeBll) Response.Write(BLLGuid); else if (IncludeComponents) Response.Write(ComponentsGuid); else if (IncludeDALBase) Response.Write(DALGuid); else if (IncludeSqlClient) Response.Write(DALSqlGuid); else if (IncludeGenericClient) Response.Write(DALGenericGuid); else if (IncludeUnitTest != MoM.Templates.UnitTestStyle.None) Response.Write(UTGuid); else if (IncludeWebservice) Response.Write(WSGuid);else if (IncludeWebserviceClient) Response.Write(DALWSGuid); else if (IncludeWebLibrary) Response.Write(WebLibGuid); else if (IncludeWinLibrary) Response.Write(WinLibGuid); else if (IncludeWebsite) Response.Write(WebsiteGuid);  %>}</ProjectGuid>
 	<% if ( IncludeWebsite ) { %>
@@ -149,6 +151,7 @@
 	<% } else { %>
     <ProjectType><%if (IncludeWebservice) Response.Write("Web"); else Response.Write("Local"); %></ProjectType>
 	<% } %>
+	<% if (VisualStudioVersion == MoM.Templates.VSNetVersion.v2008) { %><TargetFrameworkVersion>v<%= GetDotNetFrameworkString( DotNetVersion ) %></TargetFrameworkVersion><%}%>
     <OutputType>Library</OutputType>
     <ApplicationIcon>
 	</ApplicationIcon>

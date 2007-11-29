@@ -39,6 +39,8 @@
 <%@ Property Name="WebServiceUrl" Type="System.String" Category="WebService" Description="The webservice base URL. The asmx filename will be added programmatically." Default="http://localhost/Services/" %>
 <%@ Property Name="rootPathWS" Type="System.String" Category="WebService" Description="The folder where the webservice code is generated." Default="" %>
 <%@ Property Name="UseWebAppProject" Type="System.Boolean" Default="false" Category="06b. Website - Advanced" Description="Indicates if a Web Application Project file should be generated." %>
+<%@ Property Name="VisualStudioVersion" Type="MoM.Templates.VSNetVersion" Default="v2005" Category="02. Framework Generation - Optional" Description="Indicates the Version of Visual Studio to target. Options include v2005 and v2008" %>
+<%@ Property Name="DotNetVersion" Type="MoM.Templates.DotNetFrameworkVersion" Default="v2" Category="02. Framework Generation - Optional" Description="Indicates the Version of Dot Net to target. Options include v2, v3 and v3.5" %>
 
 <%@ Property Name="SignAssembly" Type="System.Boolean" Category="Option" Description="" Default="false" %>
 
@@ -47,8 +49,8 @@
 <%@ Import Namespace="SchemaExplorer" %>
 <%@ Import Namespace="System.Text" %>
 <%@ Import Namespace="System.Text.RegularExpressions" %>
-Microsoft Visual Studio Solution File, Format Version 9.00
-# Visual Studio 2005
+Microsoft Visual Studio Solution File, Format Version <%= (VisualStudioVersion == MoM.Templates.VSNetVersion.v2005) ? "9.00" : "10.00" %>
+# Visual Studio <%= (VisualStudioVersion == MoM.Templates.VSNetVersion.v2005) ? "2005" : "2008" %>
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "<%=BLLNameSpace%>", "<%=BLLNameSpace%>\<%=BLLNameSpace%>.csproj", "{<%=BLLGuid%>}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "<%=DALNameSpace%>", "<%=DALNameSpace%>\<%=DALNameSpace%>.csproj", "{<%=DALGuid%>}"
@@ -82,6 +84,7 @@ EndProject
 Project("{<%= websiteProjectGuid %>}") = "<%= websiteProjectName %>", "<%= websiteProjectFile %>", "{<%= WebsiteGuid %>}"
 	<% if ( !UseWebAppProject ) { %>
 	ProjectSection(WebsiteProperties) = preProject
+		<% if (VisualStudioVersion == MoM.Templates.VSNetVersion.v2008) { %>TargetFramework = "<%= GetDotNetFrameworkString( DotNetVersion ) %>"<%}%>
 		ProjectReferences = "{<%= BLLGuid %>}|<%= BLLNameSpace %>.dll;{<%= DALGuid %>}|<%= DALNameSpace %>.dll;{<% if (IncludeSqlClient) {%><%=DALSqlGuid%>}|<%=DALSqlNameSpace%>.dll<%} else {%><%=DALGenericGuid%>}|<%=DALGenericNameSpace%>.dll<%}%>;<% if ( IncludeComponents ) { %>{<%= ComponentsGuid %>}|<%= ComponentLayerNameSpace %>.dll;<% } %>{<%= WebLibGuid %>}|<%= WebLibNameSpace %>.dll;"
 		Debug.AspNetCompiler.VirtualPath = "/<%= WebsiteNameSpace %>"
 		Debug.AspNetCompiler.PhysicalPath = "<%= WebsiteNameSpace %>\"

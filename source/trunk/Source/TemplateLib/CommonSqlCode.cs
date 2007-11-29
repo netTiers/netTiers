@@ -5640,7 +5640,37 @@ CREATE\s+PROC(?:EDURE)?                               # find the start of the st
 			}	
 			return entlibVersionText;
 		}
-		#endregion 
+		#endregion
+		
+		public string GetVisualStudioProductVersionString( VSNetVersion version )
+		{
+			string versionNumber = "8.0.50727";
+			
+			switch ( version )
+			{
+				case ( VSNetVersion.v2008 ) :
+					versionNumber = "9.0.21022";
+					break;
+			}
+		
+			return versionNumber;
+		}
+		
+		public string GetDotNetFrameworkString( DotNetFrameworkVersion version )
+		{
+			string versionNumber = "2.0";
+			switch ( version )
+			{
+				case ( DotNetFrameworkVersion.v3 ) :
+					versionNumber = "3.0";
+					break;
+				case ( DotNetFrameworkVersion.v3_5 ) :
+					versionNumber = "3.5";
+				break;
+			}
+		
+			return versionNumber;
+		}
 	}
 
 	#region Retry
@@ -5741,6 +5771,25 @@ CREATE\s+PROC(?:EDURE)?                               # find the start of the st
 		/// <summary>Override Entity Equals() and GetHashCode() to use value - type semantics (Equality based on object contents)</summary>
 		Value
 	}
+	#endregion
+	
+	#region VS and Dot Net Version
+		
+	public enum VSNetVersion
+	{
+		v2005
+		,v2008
+	}
+	
+	public enum DotNetFrameworkVersion
+	{
+		/// <summary> version 2.0 </summary>
+		v2,
+		/// <summary> version 3.0 </summary>
+		v3,
+		/// <summary> version 3.5 </summary>
+		v3_5
+	}	
 	#endregion
 	
 	#region DatabaseType
@@ -6014,7 +6063,7 @@ CREATE\s+PROC(?:EDURE)?                               # find the start of the st
 	
 	#endregion MethodNamesProperty
 	
-	#region Archived Depricated
+	#region Archived Deprecated
 	/*
 	///<summary>
 	/// returns true all primary key columns have is a foreign key relationship
