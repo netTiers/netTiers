@@ -651,7 +651,7 @@
 
 		#region <%= action %> Entity
 		/// <summary>
-		/// 	<%= constructorAccessModifier %>method that <%= action %>s a <%=className%> object into the datasource using a transaction.
+		/// <%= constructorAccessModifier %> method that <%= action %>s a <%=className%> object into the datasource using a transaction.
 		/// </summary>
 		<% if (IsServiceLayer) { %>
 		/// <param name="entity"><%=className%> object to <%= action %>.</param>
@@ -697,41 +697,41 @@
 		[DataObjectMethod(DataObjectMethodType.<%= methodType %>)]
 		<%= IsServiceLayer ? interfaceImplModifier : constructorAccessModifierOnMembers %> <%= (action != MethodNames.Save ? "bool" : returnEntity) %> <%=partialClassInternalPrefix%><%= action %>(<%= memberMethodEntity %>)
 		{
+			#region Security and validation check
 			// throws security exception if not authorized
 			SecurityContext.IsAuthorized("<%= action %>");
 			
 			if (!<%= memberMethodEntityCall %>.IsValid)
 				throw new EntityNotValidException(<%= memberMethodEntityCall %>, "<%= action %>", <%= memberMethodEntityCall %>.Error);
+			#endregion Security and validation check
 			
+			#region Initialisation
 			TransactionManager transactionManager = null; 
 			<% if (action != MethodNames.Save) { %>
 			bool result = false;
 			<% } %>
+			NetTiersProvider dataProvider;
+			bool isBorrowedTransaction;
+			#endregion Initialisation
 			
 			try
             {	
-				bool isBorrowedTransaction = ConnectionScope.Current.HasTransaction;
+				transactionManager = base.HandleTransactionAndProviderSetup( transactionManager, out isBorrowedTransaction, out dataProvider );
 				
-				//since this is a read operation, don't create a tran by default, only use tran if provided to us for custom isolation level
-				transactionManager = ConnectionScope.ValidateOrCreateTransaction();
-				NetTiersProvider dataProvider = ConnectionScope.Current.DataProvider;
-					
 				//Persist Entity
 				<% if (action != MethodNames.Save) { %>result = <% } %>dataProvider.<%= GetClassName(SourceTable, ClassNameFormat.Provider) %>.<%= action %>(transactionManager, <%= memberMethodEntityCall %>); 
 				
-				//if persisted and tran not borrowed, commit
-				if(!isBorrowedTransaction && transactionManager != null && transactionManager.IsOpen)
-					transactionManager.Commit();
+                base.HandleTransactionCommit( transactionManager, isBorrowedTransaction );
 			}
             catch (Exception exc)
             {
-				//if open, rollback
-                if (transactionManager != null && transactionManager.IsOpen) 
-					transactionManager.Rollback();
+				#region Handle transaction rollback and exception
+                base.HandleTransactionRollback( transactionManager );
 				
 				//Handle exception based on policy
                 if (DomainUtil.HandleException(exc, layerExceptionPolicy)) 
 					throw;
+				#endregion Handle transaction rollback and exception
 			}
 			<% if ( action != MethodNames.Save || IsServiceLayer ) { %>
 			
@@ -742,7 +742,7 @@
 		
 		#region <%= action %> Collection
 		/// <summary>
-		/// 	<%= constructorAccessModifier %> method that <%= action %>s rows in <see cref="<%=collectionClassNameComment %>" /> to the datasource.
+		/// <%= constructorAccessModifier %> method that <%= action %>s rows in <see cref="<%=collectionClassNameComment %>" /> to the datasource.
 		/// </summary>
 		/// <param name="entityCollection"><c><%=className%></c> objects in a <see cref="<%=collectionClassNameComment %>" /> object to <%= action %>.</param>
 		/// <remarks>
@@ -780,6 +780,7 @@
 		[DataObjectMethod(DataObjectMethodType.<%= methodType %>)]
 		<%= constructorAccessModifier %> <%=collectionClassName%> <%=partialClassInternalPrefix%><%= action %>(<%=collectionClassName%> entityCollection)
 		{
+			#region Security and validation check
 			// throws security exception if not authorized
 			SecurityContext.IsAuthorized("<%= action %>");
 		
@@ -787,33 +788,32 @@
 			{
 				throw new EntityNotValidException(entityCollection, "<%= action %>", DomainUtil.GetErrorsFromList<<%= className %>>(entityCollection));
 			}
-			
+			#endregion Security and validation check
+
+			#region Initialisation
 			TransactionManager transactionManager = null; 
+			NetTiersProvider dataProvider;
+			bool isBorrowedTransaction;
+			#endregion Initialisation
+
 			try
             {
-				bool isBorrowedTransaction = ConnectionScope.Current.HasTransaction;
+				transactionManager = base.HandleTransactionAndProviderSetup( transactionManager, out isBorrowedTransaction, out dataProvider );
 				
-				//since this is a read operation, don't create a tran by default, only use tran if provided to us for custom isolation level
-				transactionManager = ConnectionScope.ValidateOrCreateTransaction();
-				NetTiersProvider dataProvider = ConnectionScope.Current.DataProvider;
-                
 				//Persist <%= action %>
 				dataProvider.<%= GetClassName(SourceTable, ClassNameFormat.Provider) %>.<%= action %>(transactionManager, <%= newEntityCollectionClassName %>entityCollection<%= newEntityCollectionClassNameEnd %>); 
                 
-				//If success, Commit
-				if(!isBorrowedTransaction && transactionManager != null && transactionManager.IsOpen)
-					transactionManager.Commit();
-            	
+                base.HandleTransactionCommit( transactionManager, isBorrowedTransaction );
 			}
             catch (Exception exc)
             {
-				//if open, rollback
-                if (transactionManager != null && transactionManager.IsOpen) 
-					transactionManager.Rollback();
+				#region Handle transaction rollback and exception
+                base.HandleTransactionRollback( transactionManager );
 				
 				//Handle exception based on policy
                 if (DomainUtil.HandleException(exc, layerExceptionPolicy)) 
 					throw;
+				#endregion Handle transaction rollback and exception
             }
 			
 			return entityCollection;		
@@ -851,36 +851,36 @@
 		[DataObjectMethod(DataObjectMethodType.Delete)]
 		<%= constructorAccessModifierOnMembers %> bool <%=partialClassInternalPrefix%><%= MethodNames.Delete %>(<%= GetFunctionHeaderParameters(keys) %><% if(RowVersion != null) {Response.Write(", byte[] " + GetFieldName(RowVersion));}%>)
 		{
+			#region Security check
 			// throws security exception if not authorized
 			SecurityContext.IsAuthorized("<%= MethodNames.Delete %>");
+			#endregion Security check
 
+			#region Initialisation
 			bool result = false;
 			TransactionManager transactionManager = null; 
+			NetTiersProvider dataProvider;
+			bool isBorrowedTransaction;
+			#endregion Initialisation
+			
 			try
             {
-				bool isBorrowedTransaction = ConnectionScope.Current.HasTransaction;
-				
-				//since this is a read operation, don't create a tran by default, only use tran if provided to us for custom isolation level
-				transactionManager = ConnectionScope.ValidateOrCreateTransaction();
-				NetTiersProvider dataProvider = ConnectionScope.Current.DataProvider;
+				transactionManager = base.HandleTransactionAndProviderSetup( transactionManager, out isBorrowedTransaction, out dataProvider );
                 
 				//Delete
 				result = dataProvider.<%= GetClassName(SourceTable, ClassNameFormat.Provider) %>.<%= MethodNames.Delete %>(transactionManager, <%= GetFunctionCallParameters(keys) %><% if(RowVersion != null) {Response.Write(", " + GetFieldName(RowVersion));}%>);
 	        
-				//If success, Commit
-				if(!isBorrowedTransaction && transactionManager != null && transactionManager.IsOpen)
-					transactionManager.Commit();
-            	
+                base.HandleTransactionCommit( transactionManager, isBorrowedTransaction );
 			}
             catch (Exception exc)
             {
-				//if open, rollback
-                if (transactionManager != null && transactionManager.IsOpen)
-                        transactionManager.Rollback();
-                    
+				#region Handle transaction rollback and exception
+                base.HandleTransactionRollback( transactionManager );
+				
 				//Handle exception based on policy
                 if (DomainUtil.HandleException(exc, layerExceptionPolicy)) 
 					throw;
+				#endregion Handle transaction rollback and exception
             }
 			
 			return result;

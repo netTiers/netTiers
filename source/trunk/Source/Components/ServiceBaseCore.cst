@@ -491,6 +491,67 @@ namespace <%=NameSpace%>
 		
 		<% } // end if ( IncludeSave ) %>
 		#endregion IEntityProvider Implementation
+		
+		#region Transaction helper methods
+        /// <summary>
+        /// Handles the transaction and provider setup.
+        /// </summary>
+        /// <param name="transactionManager">The transaction manager.</param>
+        /// <param name="isBorrowedTransaction">if set to <c>true</c> [is borrowed transaction].</param>
+        /// <param name="dataProvider">The data provider.</param>
+        /// <returns></returns>
+		protected virtual TransactionManager HandleTransactionAndProviderSetup( TransactionManager transactionManager, 
+																	out bool isBorrowedTransaction, out NetTiersProvider dataProvider )
+        {
+            dataProvider = ConnectionScope.Current.DataProvider;
+			
+            return HandleTransactionSetup( transactionManager, out isBorrowedTransaction );
+        }
+		
+		/// <summary>
+        /// Handles the transaction setup.
+        /// </summary>
+        /// <param name="transactionManager">The transaction manager.</param>
+        /// <param name="isBorrowedTransaction">if set to <c>true</c> [is borrowed transaction].</param>
+        /// <returns></returns>
+		protected virtual TransactionManager HandleTransactionSetup( TransactionManager transactionManager, out bool isBorrowedTransaction )
+        {
+            isBorrowedTransaction = ConnectionScope.Current.HasTransaction;
+            transactionManager = ConnectionScope.ValidateOrCreateTransaction();
+			
+            return transactionManager;
+        }
+		
+		/// <summary>
+        /// Handles the transaction commit.
+        /// </summary>
+        /// <param name="transactionManager">The transaction manager.</param>
+        /// <param name="isBorrowedTransaction">if set to <c>true</c> [is borrowed transaction].</param>
+        protected virtual void HandleTransactionCommit( TransactionManager transactionManager, bool isBorrowedTransaction )
+        {
+            // If success, Commit
+            if ( !isBorrowedTransaction &&
+                    transactionManager != null && 
+					transactionManager.IsOpen )
+            {
+                transactionManager.Commit();
+            }
+        }
+		
+		/// <summary>
+        /// Handles the transaction rollback.
+        /// </summary>
+        /// <param name="transactionManager">The transaction manager.</param>
+        protected virtual void HandleTransactionRollback( TransactionManager transactionManager )
+        {
+            // if open, rollback
+            if ( transactionManager != null && 
+					transactionManager.IsOpen )
+			{
+                transactionManager.Rollback();
+			}
+        }
+		#endregion Transaction helper methods
 	}
 
 	/// <summary>
