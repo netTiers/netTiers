@@ -19,11 +19,13 @@
 <%@ Property Name="IncludeGetListByFK" Type="System.Boolean" Default="True" Category="Options" Description="If true get functions will be generated." %>
 <%@ Property Name="IncludeGetListByIX" Type="System.Boolean" Default="True" Category="Options" Description="If true getlist functions will be generated." %>
 <%@ Property Name="IncludeFind" Type="System.Boolean" Default="True" Category="Options" Description="If true find functions will be generated." %>
+<%@ Property Name="ComponentPattern" Optional="False" Type="MoM.Templates.ComponentPatternType" Category="Pattern" Description="Component Pattern Type." %>
 
 <%@ Property Name="NameSpace" Optional="False" Type="System.String" Category="Style" Description="Object Namespace." %>
 <%@ Property Name="BLLNameSpace" Optional="False" Type="System.String" Category="Style" Description="BLL Object Namespace." %>
 <%@ Property Name="DALNameSpace" Optional="False" Type="System.String" Category="Style" Description="DAL Object Namespace." %>
 <%@ Assembly Name="SchemaExplorer" %>
+
 <%
 	string listName = GetTListName();
 %>
@@ -50,12 +52,132 @@ namespace <%=NameSpace%>
 		where Entity : IEntityId<EntityKey>, new() 
 		where EntityKey : IEntityKey, new()
 	{
-		
+		#region Fields
 		private IList<IProcessor> processorList = new List<IProcessor>();
 		private ServiceResult serviceResult = null;
 		private bool abortOnFailure = true;
 		private int currentProcessorIndex = 0;
 		
+		#region Protected fields
+		protected static string layerExceptionPolicy { get { return "<%= ComponentPattern %>ExceptionPolicy"; } }
+        protected static bool noTranByDefault { get { return false; } }
+        protected static int defaultMaxRecords { get { return 10000; }    }
+		#endregion Protected fields
+		#endregion Fields
+		
+		#region Properties
+		/// <summary>
+		///	Provides a List of Processors to execute external business process logic in.
+		/// </summary>
+		///<value>A list of business rule processors to execute</value>
+		public virtual IList<IProcessor> ProcessorList 
+		{
+			get	{ return processorList;	} 
+			set { processorList = value; }
+		}
+
+		/// <summary>
+		///	Provides a Notification Pattern of Process Results.
+		/// </summary>
+		///<value>A list of business rule processors to execute</value>
+		public virtual ServiceResult ServiceProcessResult
+		{
+			get
+			{
+				if (serviceResult == null)
+				{
+					serviceResult = new ServiceResult();
+				}
+				
+				return serviceResult;
+			}
+		}
+
+		/// <summary>
+		///	Provides a way to terminate the Processor calls upon an exception. 
+		/// </summary>
+		///<value>bool value determining to stop once an exceptions been thrown. </value>		
+		public virtual bool AbortOnFailure 
+		{
+			get { return abortOnFailure; } 
+			set	{ abortOnFailure = value; } 
+		}
+
+		/// <summary>
+		/// Current Processor being executed
+		/// </summary>
+		public virtual string CurrentProcessor
+		{
+			get 
+			{
+				if (ProcessorList.Count > CurrentProcessorIndex)
+				{
+					return ProcessorList[CurrentProcessorIndex].ProcessName;
+				}
+				
+				return null;
+			}	
+		}
+
+		/// <summary>
+		/// Current Number of Processes completed thus far.
+		/// </summary>
+		public virtual int ProcessCounter
+		{
+			get {return currentProcessorIndex + 1;}
+		}
+		
+		/// <summary>
+		/// Current index of the processor currently or last executed 
+		/// </summary>
+		public virtual int CurrentProcessorIndex
+		{
+			get {return currentProcessorIndex;}
+		}
+		
+		/// <summary>
+		/// Total Number of Processes currently enlisted in this service 
+		/// </summary>
+		public virtual int TotalProcesses
+		{
+			get {return ProcessorList.Count;}		
+		}
+		#endregion Properties
+		
+		#region Events
+		/// <summary>
+		///	Provides the notification on the change of process state to interested parties.
+		/// </summary>
+		public virtual void OnProcessStarting(ProcessorBase processor)
+		{
+			if (ProcessStarting != null)
+				ProcessStarting(this, new ProcessorEventArgs(processor));
+		}
+
+		/// <summary>
+		///	Provides the notification on the change of process state to interested parties.
+		/// </summary>
+		public virtual void OnProcessEnded(ProcessorBase processor)
+		{
+			if (ProcessEnded != null)
+				ProcessEnded(this, new ProcessorEventArgs(processor));
+		}
+		
+		/// <summary>
+		/// Event to indicate that a processor has began.
+		/// </summary>
+		[field: NonSerialized]
+		public event ProcessStartingHandler ProcessStarting;
+
+		/// <summary>
+		/// Event to indicate that a processor has ended.
+		/// </summary>
+		[field: NonSerialized]
+		public event ProcessEndedHandler ProcessEnded;
+	
+		#endregion Events	
+
+		#region Execute methods
 		/// <summary>
 		///	Provides the beginning
 		/// </summary>
@@ -121,124 +243,10 @@ namespace <%=NameSpace%>
 					return result;
 
 			}
+			
 			return result;
 		}
-		
-		/// <summary>
-		///	Provides a List of Processors to execute external business process logic in.
-		/// </summary>
-		///<value>A list of business rule processors to execute</value>
-		public virtual IList<IProcessor> ProcessorList 
-		{
-			get
-				{
-					return processorList;
-				} 
-			set
-				{
-					processorList = value;
-				}
-		}
-
-		/// <summary>
-		///	Provides a Notification Pattern of Process Results.
-		/// </summary>
-		///<value>A list of business rule processors to execute</value>
-		public virtual ServiceResult ServiceProcessResult
-		{
-			get{
-				if (serviceResult == null)
-					serviceResult = new ServiceResult();
-				
-				return serviceResult;
-			}
-		}
-
-		/// <summary>
-		///	Provides a way to terminate the Processor calls upon an exception. 
-		/// </summary>
-		///<value>bool value determining to stop once an exceptions been thrown. </value>		
-		public virtual bool AbortOnFailure 
-		{
-			get
-			{
-				return abortOnFailure;
-			} 
-			set
-			{
-				abortOnFailure = value;
-			} 
-		}
-
-		/// <summary>
-		/// Current Processor being executed
-		/// </summary>
-		public virtual string CurrentProcessor
-		{
-			get {
-					if (ProcessorList.Count > CurrentProcessorIndex)
-						return ProcessorList[CurrentProcessorIndex].ProcessName;
-					
-					return null;
-				}	
-		}
-
-		/// <summary>
-		/// Current Number of Processes completed thus far.
-		/// </summary>
-		public virtual int ProcessCounter
-		{
-			get {return currentProcessorIndex + 1;}
-		}
-		
-		/// <summary>
-		/// Current index of the processor currently or last executed 
-		/// </summary>
-		public virtual int CurrentProcessorIndex
-		{
-			get {return currentProcessorIndex;}
-		}
-		
-		/// <summary>
-		/// Total Number of Processes currently enlisted in this service 
-		/// </summary>
-		public virtual int TotalProcesses
-		{
-			get {return ProcessorList.Count;}		
-		}
-		
-		#region Events
-		/// <summary>
-		///	Provides the notification on the change of process state to interested parties.
-		/// </summary>
-		public virtual void OnProcessStarting(ProcessorBase processor)
-		{
-			if (ProcessStarting != null)
-				ProcessStarting(this, new ProcessorEventArgs(processor));
-		}
-
-		/// <summary>
-		///	Provides the notification on the change of process state to interested parties.
-		/// </summary>
-		public virtual void OnProcessEnded(ProcessorBase processor)
-		{
-			if (ProcessEnded != null)
-				ProcessEnded(this, new ProcessorEventArgs(processor));
-		}
-		
-		/// <summary>
-		/// Event to indicate that a processor has began.
-		/// </summary>
-		[field: NonSerialized]
-		public event ProcessStartingHandler ProcessStarting;
-
-		/// <summary>
-		/// Event to indicate that a processor has ended.
-		/// </summary>
-		[field: NonSerialized]
-		public event ProcessEndedHandler ProcessEnded;
-	
-		#endregion Events	
+		#endregion Execute methods
 
 		#region IEntityProvider Implementation
 		
@@ -495,29 +503,68 @@ namespace <%=NameSpace%>
 		#region Transaction helper methods
         /// <summary>
         /// Handles the transaction and provider setup.
+		/// <remarks>
+		/// No transaction manager is created if it doesn't already exist
+		/// </remarks>
+        /// </summary>
+        /// <param name="transactionManager">The transaction manager.</param>
+        /// <param name="dataProvider">The data provider.</param>
+        /// <returns></returns>
+		protected virtual TransactionManager HandleTransactionAndProviderSetup( TransactionManager transactionManager, 
+																					out NetTiersProvider dataProvider )
+        {
+			bool isBorrowedTransaction = false;
+			return HandleTransactionAndProviderSetup( transactionManager, noTranByDefault, out isBorrowedTransaction, out dataProvider );
+		}
+		
+		/// <summary>
+        /// Handles the transaction and provider setup.
+		/// <remarks>
+		/// Creates a transaction if it does not already exist
+		/// </remarks>
         /// </summary>
         /// <param name="transactionManager">The transaction manager.</param>
         /// <param name="isBorrowedTransaction">if set to <c>true</c> [is borrowed transaction].</param>
         /// <param name="dataProvider">The data provider.</param>
         /// <returns></returns>
 		protected virtual TransactionManager HandleTransactionAndProviderSetup( TransactionManager transactionManager, 
-																	out bool isBorrowedTransaction, out NetTiersProvider dataProvider )
+																					out bool isBorrowedTransaction, 
+																					out NetTiersProvider dataProvider )
+        {
+            return HandleTransactionAndProviderSetup( transactionManager, true, out isBorrowedTransaction, out dataProvider );
+        }
+		
+        /// <summary>
+        /// Handles the transaction and provider setup.
+        /// </summary>
+        /// <param name="transactionManager">The transaction manager.</param>
+		/// <param name="createTransaction">Determines if a transaction should be created if it does not already exist</param>
+        /// <param name="isBorrowedTransaction">if set to <c>true</c> [is borrowed transaction].</param>
+        /// <param name="dataProvider">The data provider.</param>
+        /// <returns></returns>
+		protected virtual TransactionManager HandleTransactionAndProviderSetup( TransactionManager transactionManager, 
+																					bool createTransaction,
+																					out bool isBorrowedTransaction, 
+																					out NetTiersProvider dataProvider )
         {
             dataProvider = ConnectionScope.Current.DataProvider;
 			
-            return HandleTransactionSetup( transactionManager, out isBorrowedTransaction );
+            return HandleTransactionSetup( transactionManager, createTransaction, out isBorrowedTransaction );
         }
 		
 		/// <summary>
         /// Handles the transaction setup.
         /// </summary>
         /// <param name="transactionManager">The transaction manager.</param>
+		/// <param name="createTransaction">Determines if a transaction should be created if it does not already exist</param>
         /// <param name="isBorrowedTransaction">if set to <c>true</c> [is borrowed transaction].</param>
         /// <returns></returns>
-		protected virtual TransactionManager HandleTransactionSetup( TransactionManager transactionManager, out bool isBorrowedTransaction )
+		protected virtual TransactionManager HandleTransactionSetup( TransactionManager transactionManager, 
+																		bool createTransaction, 
+																		out bool isBorrowedTransaction )
         {
             isBorrowedTransaction = ConnectionScope.Current.HasTransaction;
-            transactionManager = ConnectionScope.ValidateOrCreateTransaction();
+            transactionManager = ConnectionScope.ValidateOrCreateTransaction( createTransaction );
 			
             return transactionManager;
         }
@@ -554,6 +601,7 @@ namespace <%=NameSpace%>
 		#endregion Transaction helper methods
 	}
 
+	#region Process delegates
 	/// <summary>
 	/// ProcessStartingHandler
 	/// </summary>
@@ -567,9 +615,12 @@ namespace <%=NameSpace%>
 	/// <param name="sender"></param>
 	/// <param name="args"></param>
 	public delegate void ProcessEndedHandler(object sender, ProcessorEventArgs args);
+
+	#endregion Process delegates
 	
+	#region Event arguments
 	/// <summary>
-	/// ProcessorEventArgs
+	/// Processor Event Args
 	/// </summary>
 	public class ProcessorEventArgs : EventArgs
 	{
@@ -594,4 +645,5 @@ namespace <%=NameSpace%>
 	        set { processor = value; }
 	    }
 	}
+	#endregion Event arguments	
 }
