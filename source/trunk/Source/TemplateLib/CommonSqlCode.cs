@@ -5642,6 +5642,20 @@ CREATE\s+PROC(?:EDURE)?                               # find the start of the st
 		}
 		#endregion
 		
+		public string GetMSBuildExtensionsVersionString( VSNetVersion version )
+		{
+			string versionNumber = "8.0";
+			
+			switch ( version )
+			{
+				case ( VSNetVersion.v2008 ) :
+					versionNumber = "9.0";
+					break;
+			}
+		
+			return versionNumber;
+		}
+		
 		public string GetVisualStudioProductVersionString( VSNetVersion version )
 		{
 			string versionNumber = "8.0.50727";
