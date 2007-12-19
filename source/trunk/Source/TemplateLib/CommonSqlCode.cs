@@ -5787,6 +5787,14 @@ CREATE\s+PROC(?:EDURE)?                               # find the start of the st
 	}
 	#endregion
 	
+	#region Validation Option Entlib or NetTiers
+	public enum ValidationType
+	{
+		NetTiers,
+		EntLib
+	}
+	#endregion
+	
 	#region VS and Dot Net Version
 		
 	public enum VSNetVersion

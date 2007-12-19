@@ -1,4 +1,4 @@
-﻿<%--
+<%--
  * $Id: IEntity.cst,v 1.13 2006/02/27 22:09:40 bgjohnso Exp $
  * Last modified by $Author: bgjohnso $
  * Last modified at $Date: 2006/02/27 22:09:40 $
@@ -20,6 +20,7 @@
 <%@ Property Name="IncludeGetListByIX" Type="System.Boolean" Default="True" Category="Options" Description="If true getlist functions will be generated." %>
 <%@ Property Name="IncludeFind" Type="System.Boolean" Default="True" Category="Options" Description="If true find functions will be generated." %>
 <%@ Property Name="ComponentPattern" Optional="False" Type="MoM.Templates.ComponentPatternType" Category="Pattern" Description="Component Pattern Type." %>
+<%@ Property Name="ValidationType" Type="MoM.Templates.ValidationType" Default="NetTiers" Category="02. Framework Generation - Optional" Description="Choice to either use .netTiers validation framework, or Enterprise Library VAB" %>
 
 <%@ Property Name="NameSpace" Optional="False" Type="System.String" Category="Style" Description="Object Namespace." %>
 <%@ Property Name="BLLNameSpace" Optional="False" Type="System.String" Category="Style" Description="BLL Object Namespace." %>
@@ -35,6 +36,9 @@ using System.Collections;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Diagnostics;
+<% if(ValidationType == MoM.Templates.ValidationType.EntLib){%>
+using Microsoft.Practices.EnterpriseLibrary.Validation;
+<%}%>
 using <%=BLLNameSpace%>;
 using <%=BLLNameSpace%>.Validation;
 using <%=DALNameSpace%>;
@@ -268,10 +272,14 @@ namespace <%=NameSpace%>
 					result.ProcessorResultList.Add(processResult);
 	
 					//Add To Aggregated Broken Rules List
+ 					<% if(ValidationType == MoM.Templates.ValidationType.NetTiers){%>
  					foreach(BrokenRulesList list in processResult.BrokenRulesLists.Values)
-					{
-                        result.ProcessBrokenRuleLists.Add((ProcessorBase)ProcessorList[i], list);				
-					}
+                        result.ProcessBrokenRuleLists.Add((ProcessorBase)ProcessorList[i], list);
+					<%}%>
+					<% if(ValidationType == MoM.Templates.ValidationType.EntLib){%>
+					foreach(ValidationResults results in processResult.BrokenRulesLists.Values)
+						result.ProcessBrokenRuleLists.Add((ProcessorBase)ProcessorList[i], results);
+					<%}%>
 				}
 				
 				OnProcessEnded(ProcessorList[i] as ProcessorBase);	//Fire Process Ending Event

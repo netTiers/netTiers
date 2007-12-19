@@ -1,4 +1,4 @@
-﻿<%--
+<%--
 	Template for the table entity base class.
 --%>
 <%@ CodeTemplate Src="..\TemplateLib\CommonSqlCode.cs" Debug="True" Inherits="MoM.Templates.CommonSqlCode" Language="C#" TargetLanguage="C#" Description="Business object base class"  ResponseEncoding="UTF-8" NoWarn="0108,0618,1572,1573,1574,0162,2002"%>
@@ -20,6 +20,7 @@
 	
 <%@ Property Name="UsePartialClass" Type="System.Boolean" Default="true" Category="General" Description="Indicates if partial class should be generated." %>
 <%@ Property Name="EqualitySemantics" Type="MoM.Templates.EqualitySemantics" Default="Value" Category="02. Framework Generation - Optional" Description="Equality semantics used for Entity instances.  If 'Reference', default reference type semantics will be used (based on object identity).  If 'Value', Equals() and GetHashCode() will be overridden to use value semantics (based on object contents)." %>
+<%@ Property Name="ValidationType" Type="MoM.Templates.ValidationType" Default="NetTiers" Category="02. Framework Generation - Optional" Description="Choice to either use .netTiers validation framework, or Enterprise Library VAB" %>
 
 <%-- When debugging, you must include this section of code 
 <%@ Register Name="EntityData" Template="EntityData.cst" MergeProperties="False" ExcludeProperties="" %>
@@ -80,6 +81,10 @@ using System.ComponentModel;
 using System.Collections;
 using System.Xml.Serialization;
 using System.Runtime.Serialization;
+<% if(ValidationType == MoM.Templates.ValidationType.EntLib){%>
+using Microsoft.Practices.EnterpriseLibrary.Validation.Validators;
+using Microsoft.Practices.EnterpriseLibrary.Validation;
+<%}%>
 
 using <%=NameSpace%>.Validation;
 #endregion
@@ -210,13 +215,19 @@ namespace <%=NameSpace%>
 		<%if (! cols[x].AllowDBNull && IsCSReferenceDataType(cols[x]) ) {%>
 		/// <exception cref="ArgumentNullException">If you attempt to set to null.</exception>
 		<%}%>
+		<% if(!cols[x].AllowDBNull && IsCSReferenceDataType(cols[x]) && ValidationType == MoM.Templates.ValidationType.EntLib){ %>
+		[NotNullValidator(MessageTemplate="Property does not allow null values.", Tag="<%= cols[x].Name %>")]<% } %>
+		<% if(!cols[x].AllowDBNull && CanCheckLength(cols[x]) && IsCSReferenceDataType(cols[x]) && ValidationType == MoM.Templates.ValidationType.EntLib){ %>
+		[ValidatorComposition(CompositionType.And, Tag="<%= cols[x].Name %>")]<% } %>
+		<% if(CanCheckLength(cols[x]) && ValidationType == MoM.Templates.ValidationType.EntLib){ %>
+		[StringLengthValidator(<%= cols[x].Size %>, MessageTemplate="Maximum length has been exceeded.", Tag="<%= cols[x].Name %>")]<% } %>
 		<% if ( IncludeWCFDataAttributes ) { %>
 		[DataMember]
 		<% } %>
 		<% if ( IncludeXmlAttributes && cols[x].AllowDBNull ) { %>
 		[XmlElement(IsNullable=true)]
 		<% } %>
-		[<%if (cols[x].IsPrimaryKeyMember && (IsIdentityColumn(cols[x]) || IsComputed(cols[x])) ) {%>ReadOnlyAttribute(false)/*, XmlIgnoreAttribute()*/, <%}%>DescriptionAttribute("<%=GetDescriptionAttributeText(cols[x].Description)%>"), System.ComponentModel.Bindable( System.ComponentModel.BindableSupport.Yes)]
+		[<%if (cols[x].IsPrimaryKeyMember && (IsIdentityColumn(cols[x]) || IsComputed(cols[x])) ) {%>ReadOnlyAttribute(false)/*, XmlIgnoreAttribute()*/, <%}%>DescriptionAttribute(@"<%=GetDescriptionAttributeText(cols[x].Description)%>"), System.ComponentModel.Bindable( System.ComponentModel.BindableSupport.Yes)]
 		[DataObjectField(<%= dataObjectFieldParams  %>)<%= defaultValue %>]
 		public <%if (commonColumns.IndexOf(cols[x].Name) != -1) Response.Write ("override "); else Response.Write ("virtual ");%><%= GetCSType(cols[x])%> <%= GetPropertyName(cols[x]) %>
 		{
@@ -313,7 +324,9 @@ WriteRelationshipPropertyString();
 		#endregion Children Collections
 		
 		#endregion
-		
+		<% if(ValidationType == MoM.Templates.ValidationType.NetTiers)
+		{
+		%>
 		#region Validation
 		
 		/// <summary>
@@ -347,6 +360,9 @@ WriteRelationshipPropertyString();
 		%>		
 		}
    		#endregion
+		<%
+		}
+		%>
 		
 		#region Table Meta Data
 		/// <summary>

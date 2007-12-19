@@ -51,6 +51,9 @@
 			CodeTemplates.Add("ValidationRuleHandler.cst", base.CreateTemplate<ValidationRuleHandler>()); this.PerformStep();
 			CodeTemplates.Add("ValidationRuleInfo.cst", base.CreateTemplate<ValidationRuleInfo>()); this.PerformStep();
 			CodeTemplates.Add("ValidationRules.cst", base.CreateTemplate<ValidationRules>()); this.PerformStep();
+			CodeTemplates.Add("PropertyValidator.cst", base.CreateTemplate<PropertyValidator>()); this.PerformStep();
+			CodeTemplates.Add("PropertyValidatorValueAccess.cst", base.CreateTemplate<PropertyValidatorValueAccess>()); this.PerformStep();
+			CodeTemplates.Add("PropertyValidatorValueAccessBuilder.cst", base.CreateTemplate<PropertyValidatorValueAccessBuilder>()); this.PerformStep();
 																															
 			CodeTemplates.Add("Component.cst", base.CreateTemplate<Component>()); this.PerformStep();
 			CodeTemplates.Add("ComponentBase.cst", base.CreateTemplate<ComponentBase>()); this.PerformStep();

@@ -1,4 +1,4 @@
-﻿<%@ CodeTemplate Src="../TemplateLib/CommonSqlCode.cs" Inherits="MoM.Templates.CommonSqlCode" Language="C#" TargetLanguage="Xml" Description="Template description here." Debug="True" ResponseEncoding="UTF-8" NoWarn="0108,0618,1572,1573,1574,0162,2002" %>
+<%@ CodeTemplate Src="../TemplateLib/CommonSqlCode.cs" Inherits="MoM.Templates.CommonSqlCode" Language="C#" TargetLanguage="Xml" Description="Template description here." Debug="True" ResponseEncoding="UTF-8" NoWarn="0108,0618,1572,1573,1574,0162,2002" %>
 
 <%@ Property Name="SourceDatabase" Type="SchemaExplorer.DatabaseSchema" Optional="True" Category="Context" Description="Database that the stored procedures should be based on." %>
 <%@ Property Name="SourceTables" Type="SchemaExplorer.TableSchemaCollection" Category="Context" Description="Tables that the stored procedures should be based on." %>
@@ -50,6 +50,7 @@
 <%@ Property Name="IncludeUnitTest" Type="MoM.Templates.UnitTestStyle" Default="NUnit" Category="General" Description="Indicates type of Unit tests to be generated." %>
 <%@ Property Name="IncludeWCFDataAttributes" Type="System.Boolean" Default="False" Category="02. Framework Generation - Optional" Description="Indicates if the WCF attributes, [DataContract] and [DataMember], should be included on the entity classes." %>
 <%@ Property Name="IncludeDesignTimeSupport" Type="System.Boolean" Default="true" Category="05. WebLibrary - Advanced" Description="Indicates if Visual Studio design-time support should be provided for the Web Library controls." %>
+<%@ Property Name="ValidationType" Type="MoM.Templates.ValidationType" Default="NetTiers" Category="02. Framework Generation - Optional" Description="Choice to either use .netTiers validation framework, or Enterprise Library VAB" %>
 
 <%@ Property Name="SignAssembly" Type="System.Boolean" Category="Option" Description="" Default="false" %>
 <%@ Property Name="LibraryPath" Type="System.String" Default="..\\References" Category="Option" Description="Path of the assembly library directory." %>
@@ -252,6 +253,12 @@
 	<% if ( IncludeDesignTimeSupport ) { %>
     <Reference Include="EnvDTE, Version=8.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a" />
     <Reference Include="EnvDTE80, Version=8.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a" />
+	<% } %>
+	<% if(ValidationType == MoM.Templates.ValidationType.EntLib){ %>
+	<Reference Include="Microsoft.Practices.EnterpriseLibrary.Validation, <%= entlibVersionText %>">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath><%= LibraryPath %>\Microsoft.Practices.EnterpriseLibrary.Validation.dll</HintPath>
+    </Reference>
 	<% } %>
 	<%
 	if (IncludeWinLibrary) {
@@ -735,6 +742,17 @@
 			<Compile Include="<%=BLLSubFolder%>GenericTypeConverter.cs">
 			  <SubType>Code</SubType>
 			</Compile>
+			<% if(ValidationType == MoM.Templates.ValidationType.EntLib){ %>
+			<Compile Include="<%=BLLSubFolder%>Validation\PropertyValidator.cs">
+			  <SubType>Code</SubType>
+			</Compile>
+			<Compile Include="<%=BLLSubFolder%>Validation\PropertyValidatorValueAccess.cs">
+			  <SubType>Code</SubType>
+			</Compile>
+			<Compile Include="<%=BLLSubFolder%>Validation\PropertyValidatorValueAccessBuilder.cs">
+			  <SubType>Code</SubType>
+			</Compile>
+			<% } else { %>
 			<Compile Include="<%=BLLSubFolder%>Validation\BrokenRule.cs">
 			  <SubType>Code</SubType>
 			</Compile>
@@ -756,6 +774,7 @@
 			<Compile Include="<%=BLLSubFolder%>Validation\ValidationRules.cs">
 			  <SubType>Code</SubType>
 			</Compile>
+			<% } %>
 		<% } %>
 		<% 
 		if (IncludeComponents) 
