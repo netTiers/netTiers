@@ -724,7 +724,7 @@ WriteRelationshipPropertyString();
 		/// Determines whether the data has changed from original.
 		/// </summary>
 		/// <returns>
-		/// 	<c>true</c> if [has data changed]; otherwise, <c>false</c>.
+		/// 	<c>true</c> if data has changed; otherwise, <c>false</c>.
 		/// </returns>
 		public bool HasDataChanged()
 		{
@@ -733,8 +733,25 @@ WriteRelationshipPropertyString();
 			result = result || entityData.<%=GetPropertyName(cols[x])%> != _originalData.<%=GetPropertyName(cols[x])%>;
 			<% } %>
 			return result;
-}	
+		}	
 		
+		///<summary>
+		///  Returns a <%=className%> Entity with the original data.
+		///</summary>
+		public <%=className%> GetOriginalEntity()
+		{
+			if (_originalData != null)
+				return Create<%=className%>(
+				<%
+				for (int i = 0;i < colsUpdatable.Count; i++)
+				{%>
+				_originalData.<%=GetPropertyName(colsUpdatable[i])%><%if (i < colsUpdatable.Count-1){%>,<%}%>
+				<%}
+				%>
+				);
+				
+			return (<%=className%>)this.Clone();
+		}
 		#endregion
 	
 	<% if(EqualitySemantics == MoM.Templates.EqualitySemantics.Value) {%>
