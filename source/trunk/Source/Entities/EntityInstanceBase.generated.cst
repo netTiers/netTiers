@@ -99,7 +99,7 @@ namespace <%=NameSpace%>
 	<% } %>
 	[Serializable, DataObject]
 	[CLSCompliant(true)]
-	public abstract partial class <%=abstractClassName%> : EntityBase, <%=interfaceName%>, IEntityId<<%= keyClassName %>>, System.IComparable, System.ICloneable, IEditableObject, IComponent, INotifyPropertyChanged
+	public abstract partial class <%=abstractClassName%> : EntityBase, <%=interfaceName%>, IEntityId<<%= keyClassName %>>, System.IComparable, System.ICloneable, ICloneableEx, IEditableObject, IComponent, INotifyPropertyChanged
 	{		
 		#region Variable Declarations
 		
@@ -524,37 +524,47 @@ WriteRelationshipPropertyString();
 		///<summary>
 		///  Returns a Typed <%=className%> Entity 
 		///</summary>
-		public virtual <%=className%> Copy()
+		protected virtual <%=className%> Copy(IDictionary existingCopies)
 		{
+			if (existingCopies == null)
+			{
+				// This is the root of the tree to be copied!
+				existingCopies = new Hashtable();
+			}
+
 			//shallow copy entity
 			<%=className%> copy = new <%=className%>();
+			existingCopies.Add(this, copy);
 			copy.SuppressEntityEvents = true;
 			<% for (int x=0; x < cols.Count; x++) { %>
-			copy.<%= GetPropertyName(cols[x]) %> = this.<%= GetPropertyName(cols[x]) %>;
-			<% if( cols[x].IsPrimaryKeyMember && !IsIdentityColumn(cols[x]) && !IsComputed(cols[x]) ) { %>
-			copy.<%= GetOriginalPropertyName(cols[x]) %> = this.<%= GetOriginalPropertyName(cols[x]) %>;
-			<% } %>
+				copy.<%= GetPropertyName(cols[x]) %> = this.<%= GetPropertyName(cols[x]) %>;
+				<% if( cols[x].IsPrimaryKeyMember && !IsIdentityColumn(cols[x]) && !IsComputed(cols[x]) ) { %>
+					copy.<%= GetOriginalPropertyName(cols[x]) %> = this.<%= GetOriginalPropertyName(cols[x]) %>;
+				<% } %>
 			<% } %>
 			
 			<% if (IncludeGetListByFK) { %>
-			<%	//Generate a Source property for each foreign key relation
-			System.Collections.ArrayList filled = new System.Collections.ArrayList();
-			foreach(TableKeySchema tableKey in SourceTable.ForeignKeys)
-			{	
-				// related table must be in the selection
-				if (SourceTables.Contains(tableKey.PrimaryKeyTable)) {
-				string fkPropertyName = GetKeysName(tableKey.ForeignKeyMemberColumns);
+				<%	//Generate a Source property for each foreign key relation
+				System.Collections.ArrayList filled = new System.Collections.ArrayList();
+				foreach(TableKeySchema tableKey in SourceTable.ForeignKeys)
+				{	
+					// related table must be in the selection
+					if (SourceTables.Contains(tableKey.PrimaryKeyTable)) {
+						string fkPropertyName = GetKeysName(tableKey.ForeignKeyMemberColumns);
 				
-				if(filled.Contains(fkPropertyName))
-					continue;
+						if(filled.Contains(fkPropertyName))
+							continue;
+						
+						filled.Add(fkPropertyName);
 					
-				filled.Add(fkPropertyName);
-				
-				string pkClassName = GetClassName(tableKey.PrimaryKeyTable);
-			%>
-			copy.<%=fkPropertyName%>Source = MakeCopyOf(this.<%=fkPropertyName%>Source) as <%= pkClassName %>;
-			<%	} //end if in SourceTables
-			} //end for each FK
+						string pkClassName = GetClassName(tableKey.PrimaryKeyTable);
+						%>
+			if (this.<%=fkPropertyName%>Source != null && existingCopies.Contains(this.<%=fkPropertyName%>Source))
+				copy.<%=fkPropertyName%>Source = existingCopies[this.<%=fkPropertyName%>Source] as <%= pkClassName %>;
+			else
+				copy.<%=fkPropertyName%>Source = MakeCopyOf(this.<%=fkPropertyName%>Source, existingCopies) as <%= pkClassName %>;
+			<%		} //end if in SourceTables
+				} //end for each FK
 		  }// IncludeGetListByFK%>	
 		
 		<% 
@@ -571,13 +581,23 @@ WriteRelationshipPropertyString();
 			else
 				typeName = item.CollectionTypeName;
 		%>
-			copy.<%= item.PropertyNameUnique %> = (<%= typeName %>) MakeCopyOf(this.<%=item.PropertyNameUnique %>); 
+			copy.<%= item.PropertyNameUnique %> = (<%= typeName %>) MakeCopyOf(this.<%=item.PropertyNameUnique %>, existingCopies); 
 			<% }//end foreach CollectionInfo
 		}//end if IncludeRelations
 		%>
 			copy.EntityState = this.EntityState;
 			copy.SuppressEntityEvents = false;
 			return copy;
+		}		
+		
+		
+		
+		///<summary>
+		///  Returns a Typed <%=className%> Entity 
+		///</summary>
+		public virtual <%=className%> Copy()
+		{
+			return this.Copy(null);	
 		}
 		
 		///<summary>
@@ -585,7 +605,15 @@ WriteRelationshipPropertyString();
 		///</summary>
 		public object Clone()
 		{
-			return this.Copy();
+			return this.Copy(null);
+		}
+		
+		///<summary>
+		/// ICloneableEx.Clone() Member, returns the Shallow Copy of this entity.
+		///</summary>
+		public object Clone(IDictionary existingCopies)
+		{
+			return this.Copy(existingCopies);
 		}
 		
 		///<summary>
@@ -604,6 +632,29 @@ WriteRelationshipPropertyString();
 			else
 				throw new System.NotSupportedException("Object Does Not Implement the ICloneable Interface.");
 		}
+		
+		///<summary>
+		/// Returns a deep copy of the child collection object passed in.
+		///</summary>
+		public static object MakeCopyOf(object x, IDictionary existingCopies)
+		{
+			if (x == null)
+				return null;
+			
+			if (x is ICloneableEx)
+			{
+				// Return a deep copy of the object
+				return ((ICloneableEx)x).Clone(existingCopies);
+			}
+			else if (x is ICloneable)
+			{
+				// Return a deep copy of the object
+				return ((ICloneable)x).Clone();
+			}
+			else
+				throw new System.NotSupportedException("Object Does Not Implement the ICloneable or IClonableEx Interface.");
+		}
+		
 		
 		///<summary>
 		///  Returns a Typed <%=className%> Entity which is a deep copy of the current entity.
@@ -695,7 +746,8 @@ WriteRelationshipPropertyString();
         ///<returns>true if Object1 is a <see cref="<%=abstractClassName%>"/> and has the same value as this instance; otherwise, false.</returns>
         public override bool Equals(object Object1)
         {
-			if (Object1 is <%=abstractClassName%>)
+			// Cast exception if Object1 is null or DbNull
+			if (Object1 != null && Object1 != DBNull.Value && Object1 is <%=abstractClassName%>)
 				return ValueEquals(this, (<%=abstractClassName%>)Object1);
 			else
 				return false;

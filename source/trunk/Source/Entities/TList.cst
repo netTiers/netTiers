@@ -125,7 +125,17 @@ namespace <%=NameSpace%>
 		///<implements><see cref="ICloneable.Clone"/></implements>
 		public override object Clone()
 		{
-			return this.Copy();
+			return this.Copy(null);
+		}
+		
+		///<summary>
+		/// Creates an exact copy of this <%=listName%>{T} instance.
+		///</summary>
+		///<returns>The <%=listName%>{T} object this method creates, cast as an object.</returns>
+		///<implements><see cref="ICloneableEx.Clone"/></implements>
+		public override object Clone(IDictionary existingCopies)
+		{
+			return this.Copy(existingCopies);
 		}
 	
 		///<summary>
@@ -134,10 +144,26 @@ namespace <%=NameSpace%>
 		///<returns>A new, identical copy of the <%=listName%>{T}.</returns>
 		public virtual <%=listName%><T> Copy()
 		{
+			return this.Copy(null);
+		}
+	
+		///<summary>
+		/// Creates an exact copy of this <%=listName%>{T} object.
+		///</summary>
+		///<returns>A new, identical copy of the <%=listName%>{T}.</returns>
+		public virtual <%=listName%><T> Copy(IDictionary existingCopies)
+		{
+			if (existingCopies == null)
+				existingCopies = new Hashtable();
+				
 			<%=listName%><T> copy = new <%=listName%><T>();
 			foreach (T item in this)
 			{
-				T itemCopy = (T)MakeCopyOf(item);
+				T itemCopy = default(T);
+				if (existingCopies.Contains(item))
+					itemCopy = (T)existingCopies[item];
+				else
+					itemCopy = (T)MakeCopyOf(item, existingCopies);
 				copy.Add(itemCopy);
 			}
 			

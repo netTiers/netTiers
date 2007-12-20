@@ -30,7 +30,7 @@
 	/// </remarks>
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	[Serializable]
-	internal protected class <%=structName%> : ICloneable
+	internal protected class <%=structName%> : ICloneable, ICloneableEx
 	{
 		#region Variable Declarations
 		private EntityState currentEntityState = EntityState.Added;
@@ -180,6 +180,81 @@ if(IncludeRelations)
 			%>
 			if (this.<%=item.FieldName %> != null)
 				_tmp.<%= item.PropertyNameUnique %> = (<%= typeName %>) MakeCopyOf(this.<%=item.PropertyNameUnique %>); 
+				<% }//end foreach CollectionInfo
+			}//end if IncludeRelations
+			%>
+			#endregion Child Collections
+			
+			//EntityState
+			_tmp.EntityState = this.EntityState;
+			
+			return _tmp;
+		}
+		
+		/// <summary>
+		/// Creates a new object that is a copy of the current instance.
+		/// </summary>
+		/// <returns>A new object that is a copy of this instance.</returns>
+		public object Clone(IDictionary existingCopies)
+		{
+			if (existingCopies == null)
+				existingCopies = new Hashtable();
+				
+			<%=structName%> _tmp = new <%=structName%>();
+						
+			<% for(int i=0; i<SourceTable.PrimaryKey.MemberColumns.Count; i++) { %>
+			_tmp.<%=GetPropertyName(SourceTable.PrimaryKey.MemberColumns[i])%> = this.<%=GetPropertyName(SourceTable.PrimaryKey.MemberColumns[i])%>;
+			<% if (!IsIdentityColumn(SourceTable.PrimaryKey.MemberColumns[i]) && !(IsComputed(SourceTable.PrimaryKey.MemberColumns[i]))) {%>
+			_tmp.<%=GetOriginalPropertyName(SourceTable.PrimaryKey.MemberColumns[i])%> = this.<%=GetOriginalPropertyName(SourceTable.PrimaryKey.MemberColumns[i])%>;
+			<% } %>
+			<% } %>
+			
+			<% for (int x=0; x < SourceTable.NonPrimaryKeyColumns.Count; x++) { %>
+			_tmp.<%= GetPropertyName(SourceTable.NonPrimaryKeyColumns[x]) %> = this.<%= GetPropertyName(SourceTable.NonPrimaryKeyColumns[x]) %>;
+			<% } %>
+			
+			#region Source Parent Composite Entities
+			<% if (IncludeGetListByFK) { %>
+			<%	//Generate a Source property for each foreign key relation
+				System.Collections.ArrayList filled = new System.Collections.ArrayList();
+				foreach(TableKeySchema tableKey in SourceTable.ForeignKeys)
+				{	
+					// related table must be in the selection
+					if (SourceTables.Contains(tableKey.PrimaryKeyTable)) {
+					string fkPropertyName = GetKeysName(tableKey.ForeignKeyMemberColumns);
+					
+					if(filled.Contains(fkPropertyName))
+						continue;
+						
+					filled.Add(fkPropertyName);
+					
+				string pkClassName = GetClassName(tableKey.PrimaryKeyTable);
+					
+				%>
+			if (this.<%=fkPropertyName%>Source != null && existingCopies.Contains(this.<%=fkPropertyName%>Source))
+				_tmp.<%=fkPropertyName%>Source = existingCopies[this.<%=fkPropertyName%>Source] as <%= pkClassName %>;
+			else
+				_tmp.<%=fkPropertyName%>Source = MakeCopyOf(this.<%=fkPropertyName%>Source, existingCopies) as <%= pkClassName %>;
+				<%	} //end if in SourceTables
+				} //end for each FK
+		  	}// IncludeGetListByFK%>	
+			#endregion
+		
+			#region Child Collections
+			<% if (IncludeRelations){
+			int ctr = 0;
+			foreach(CollectionInfo item in GetChildrenCollections(SourceTable, SourceTables).Values) { 
+				if (ctr == 0)
+					Response.Write("\t\t\t//deep copy nested objects" + Environment.NewLine);
+				ctr++;
+				
+				string typeName = "";
+				if (item.CollectionRelationshipType == MoM.Templates.CommonSqlCode.RelationshipType.OneToOne)
+					typeName = item.TypeName;
+				else
+					typeName = item.CollectionTypeName;
+			%>
+			_tmp.<%= item.PropertyNameUnique %> = (<%= typeName %>) MakeCopyOf(this.<%=item.PropertyNameUnique %>, existingCopies); 
 				<% }//end foreach CollectionInfo
 			}//end if IncludeRelations
 			%>
@@ -361,5 +436,13 @@ public string GetParsedDefaultValue(int x)
 	}
 }
 </script>
+
+
+
+
+
+
+
+
 
 

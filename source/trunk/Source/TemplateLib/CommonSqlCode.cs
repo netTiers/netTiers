@@ -5526,6 +5526,23 @@ CREATE\s+PROC(?:EDURE)?                               # find the start of the st
 			return result;
 		}
 
+        ///<summary>
+        /// Get's the foreign key columns from a corresponding a m:m relationship to it's corresponding 1:m relationship
+        ///</summary>
+        public ColumnSchemaCollection GetCorrespondingRelationshipKeys(TableKeySchemaCollection fkeys, ColumnSchema col)
+        {
+            //System.Diagnostics.Debugger.Break();
+            for (int j = 0; j < fkeys.Count; j++)
+            {
+                for (int y = 0; y < fkeys[j].ForeignKeyMemberColumns.Count; y++)
+                {
+                    if (fkeys[j].ForeignKeyMemberColumns[y].Name.ToLower()
+                            == col.Name.ToLower())
+                        return (ColumnSchemaCollection)fkeys[j].ForeignKeyMemberColumns;
+                }
+            }
+            return null;
+        }
 
 		private string _currentTable = string.Empty;
 		
