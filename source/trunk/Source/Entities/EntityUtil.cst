@@ -1,4 +1,4 @@
-﻿<%--
+<%--
  * $Id: EntityDataSource.cst,v 1.0 2006/03/19 01:00:00 bdiaz Exp $
  * Last modified by $Author: bdiaz $
  * Last modified at $Date: 2006-03-19 01:00:00 -0600 (Sun, 19 Mar 2006) $
@@ -7,6 +7,8 @@
 <%@ CodeTemplate Language="C#" TargetLanguage="C#" Src="" Inherits="" Debug="False" Description="Generates the EntityUtil class." ResponseEncoding="UTF-8" NoWarn="0108,0618,1572,1573,1574,0162,2002"  %>
 
 <%@ Property Name="NameSpace" Optional="False" Type="System.String" Category="Style" Description="BLL Namespace." %>
+<%@ Property Name="TimeStandard" Type="TimeStandardEnum" Default="UTC" Category="02. Framework Generation - Optional" Description="Standard used for generating DateTime values. If 'UTC' DateTime is generated based on UtcNow. If 'Local' DateTime is generated based on DateTime.Now" %>
+
 
 <%@ Assembly Name="System.Data" %>
 <%@ Import Namespace="System.Data" %>
@@ -457,7 +459,11 @@ namespace <%= NameSpace %>
 
 					if ( prop != null && prop.CanWrite && prop.PropertyType.IsAssignableFrom(typeof(DateTime)) )
 					{
-						prop.SetValue(entity, DateTime.Now, null);
+					   <% if ( TimeStandard == TimeStandardEnum.Utc ) { %>
+						prop.SetValue(entity, DateTime.UtcNow, null);		
+					   <% } else { %>				   
+					   	prop.SetValue(entity, DateTime.Now, null);			   					   
+					   <% } // end if ( IncludeFind ) %>
 					}
 				}
 			}

@@ -1,4 +1,4 @@
-﻿<%@ CodeTemplate Src="TemplateLib/CommonSqlCode.cs" Inherits="MoM.Templates.CommonSqlCode" Language="C#" TargetLanguage="Text" Description="NetTiers main template." Debug="True" ResponseEncoding="UTF-8" NoWarn="0108,0618,1572,1573,1574,0162,2002"%>
+<%@ CodeTemplate Src="TemplateLib/CommonSqlCode.cs" Inherits="MoM.Templates.CommonSqlCode" Language="C#" TargetLanguage="Text" Description="NetTiers main template." Debug="True" ResponseEncoding="UTF-8" NoWarn="0108,0618,1572,1573,1574,0162,2002"%>
 <%@ Assembly Name="SchemaExplorer" %>
 <%@ Assembly Name="System.Design" %>
 <%@ Assembly Name="System.DirectoryServices" %>
@@ -34,6 +34,7 @@
 <%@ Property Name="IncludeXmlAttributes" Type="System.Boolean" Default="False" Category="02. Framework Generation - Optional" Description="Indicates if the Xml attributes, [XmlElement(IsNullable=true)], should be included on the entity classes." %>
 <%@ Property Name="CustomCodeFolderName" Type="System.String" Category="02. Framework Generation - Optional" Description="If specified, indicates the name of a folder that can contains custom classes to dynamically add to each project." Default="App_Code" %>
 <%@ Property Name="EqualitySemantics" Type="MoM.Templates.EqualitySemantics" Default="Value" Category="02. Framework Generation - Optional" Description="Equality semantics used for Entity instances.  If 'Reference', default reference type semantics will be used (based on object identity).  If 'Value', Equals() and GetHashCode() will be overridden to use value semantics (based on object contents)." %>
+<%@ Property Name="TimeStandard" Type="TimeStandardEnum" Default="Local" Category="02. Framework Generation - Optional" Description="Standard used for generating DateTime values. If 'UTC' DateTime is generated based on UtcNow. If 'Local' DateTime is generated based on DateTime.Now" %>
 
 <%-- 3. Namespaces Category --%>
 <%@ Property Name="BusinessLogicLayerNameSpace" Type="System.String" Category="03. Namespaces - Required" Description="The sub namespace that is added to the root namespace for the entities." Default="Entities" Optional="False" %>
@@ -571,6 +572,13 @@
 		Entity,
 		All
 	}
+	
+	public enum TimeStandardEnum
+	{
+		Utc,
+		Local
+	}
+	
 	#endregion Enums
 	
 </script>
@@ -2911,6 +2919,7 @@
 		//----------------------------------------------------------------------------------------------------------------------------------------------
 		XmlElement entityUtilNode = AddFileNode(commonNode, "EntityUtil.cs");
 		this.GetTemplate("EntityUtil.cst").SetProperty("NameSpace", BLLNameSpace);
+		this.GetTemplate("EntityUtil.cst").SetProperty("TimeStandard", TimeStandard);
 		this.GetTemplate("EntityUtil.cst").RenderToFile(rootPathBLL + "\\EntityUtil.cs", true);
 		//AddExecutionTime(entityUtilNode);
 		//----------------------------------------------------------------------------------------------------------------------------------------------
