@@ -1,4 +1,4 @@
-﻿<%@ CodeTemplate Language="C#" TargetLanguage="C#" Src="..\..\TemplateLib\CommonSqlCode.cs" Inherits="MoM.Templates.CommonSqlCode" Debug="False" Description="Generates the EntityProviderBaseCore type." ResponseEncoding="UTF-8"  NoWarn="0108,0618,1572,1573,1574,0162,2002"%>
+<%@ CodeTemplate Language="C#" TargetLanguage="C#" Src="..\..\TemplateLib\CommonSqlCode.cs" Inherits="MoM.Templates.CommonSqlCode" Debug="False" Description="Generates the EntityProviderBaseCore type." ResponseEncoding="UTF-8"  NoWarn="0108,0618,1572,1573,1574,0162,2002"%>
 <%@ Property Name="BLLNameSpace" Optional="False" Type="System.String" Category="Style" Description="Object Namespace." %>
 <%@ Property Name="DALNameSpace" Optional="False" Type="System.String" Category="Style" Description="DAL Namespace." %>
 
@@ -620,14 +620,19 @@ namespace <%= DALNameSpace %>.Bases
 		/// <param name="entities"><%=listName%> of Entity objects to save.</param>
 		public virtual <%=listName%><Entity> <%= MethodNames.Save %>(TransactionManager mgr, <%=listName%><Entity> entities)
 		{
-			foreach ( Entity entity in entities )
-			{
-				<%= MethodNames.Save %>(mgr, entity);
-			}
-
 			foreach ( Entity entity in entities.DeletedItems )
 			{
 				<%= MethodNames.Delete %>(mgr, entity);
+			}
+
+      			foreach ( Entity entity in entities )
+			{
+				if (!entity.IsNew) <%= MethodNames.Save %>(mgr, entity);
+			}
+
+      			foreach ( Entity entity in entities )
+			{
+				if (entity.IsNew) <%= MethodNames.Save %>(mgr, entity);
 			}
 
 			// Clear the items to delete list.
@@ -1211,22 +1216,37 @@ namespace <%= DALNameSpace %>.Bases
 				}
 			}
 			
-			foreach ( Entity entity in entities )
-			{
-				result = <%= MethodNames.DeepSave %>(mgr, entity, deepSaveType, childTypes, innerList);
-				if ( !result )
-				{
-					deepSaveResult = false;
-				}
-			}
-
 			foreach ( Entity entity in entities.DeletedItems )
 			{
+			  result = <%= MethodNames.DeepSave %>(mgr, entity, deepSaveType, childTypes, innerList);
+			  if ( !result )
+			  {
+			    deepSaveResult = false;
+			  }
+			}
+                                            
+			foreach ( Entity entity in entities )
+			{
+		          if (!entity.IsNew)
+		          {
 				result = <%= MethodNames.DeepSave %>(mgr, entity, deepSaveType, childTypes, innerList);
 				if ( !result )
 				{
-					deepSaveResult = false;
+				  deepSaveResult = false;
 				}
+		          }
+			}
+
+			foreach ( Entity entity in entities )
+			{
+		          if (entity.IsNew)
+		          {
+				result = <%= MethodNames.DeepSave %>(mgr, entity, deepSaveType, childTypes, innerList);
+				if ( !result )
+				{
+				  deepSaveResult = false;
+				}
+        		  }
 			}
 
 			entities.DeletedItems.Clear();
