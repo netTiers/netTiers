@@ -1,4 +1,4 @@
-﻿<%--
+﻿	<%--
  * $Id: VList.cst,v 1.2 2006/02/27 22:09:41 bgjohnso Exp $
  * Last modified by $Author: jroland $
  * Last modified at $Date: 2006-03-16 16:53:08 -0600 (Thu, 16 Mar 2006) $
@@ -328,6 +328,57 @@ namespace <%=NameSpace%>
 	        Contains
 	    }
         #endregion Find All By
+		
+		#region Find All Distinct
+        /// <summary>
+        /// Finds all distinct elements for the specified column
+        /// </summary>
+        /// <param name="column">The column.</param>
+        /// <returns></returns>
+        public virtual VList<T> FindAllDistinct(Enum column)
+        {
+            return FindAllDistinct(column.ToString());
+        }
+        /// <summary>
+        /// Finds all distinct elements for the specified column
+        /// </summary>
+        /// <param name="columnName">Name of the column.</param>
+        /// <returns></returns>
+        public virtual VList<T> FindAllDistinct(string columnName)
+        {
+            PropertyDescriptorCollection props = TypeDescriptor.GetProperties(typeof(T));
+            PropertyDescriptor filterBy = props.Find(columnName, true);
+            VList<T> result = new VList<T>();
+
+            object a;
+            object b;
+            bool found;
+
+            foreach (T item in this)
+            {
+                a = filterBy.GetValue(item);
+                found = false;
+
+                foreach (T item2 in result)
+                {
+                    b = filterBy.GetValue(item2);
+                    if ((a == null && b == null) ||
+                        (a != null && b != null && a.Equals(b)))
+                    {
+                        found = true;
+                        break;
+                    }
+                }
+
+                if (!found)
+                {
+                    result.Add(item);
+                }
+            }
+
+            return result;
+        }
+        #endregion Find All Distinct
       #endregion Find
 
    }
