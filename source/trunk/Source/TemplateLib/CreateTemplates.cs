@@ -89,6 +89,7 @@
 			CodeTemplates.Add("ProcessorBase.cst", base.CreateTemplate<ProcessorBase>()); this.PerformStep();
 			CodeTemplates.Add("GenericProcessorResult.cst", base.CreateTemplate<GenericProcessorResult>()); this.PerformStep();
 			CodeTemplates.Add("SecurityContext.cst", base.CreateTemplate<SecurityContext>()); this.PerformStep();														
+			CodeTemplates.Add("SecurityContextBase.cst", base.CreateTemplate<SecurityContextBase>()); this.PerformStep();
 			CodeTemplates.Add("ContextView.cst", base.CreateTemplate<ContextView>()); this.PerformStep();																																													
 																																													
 			CodeTemplates.Add("DataRepository.cst", base.CreateTemplate<DataRepository>()); this.PerformStep();

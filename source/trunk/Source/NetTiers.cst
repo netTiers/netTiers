@@ -1365,11 +1365,23 @@
 		#region Components - Singe File Copy Overs
 		if (ComponentPattern != MoM.Templates.ComponentPatternType.None)
 		{
-			XmlElement iSecurityContextNode = AddFileNode(commonNode, "SecurityContext.cs");
-			this.GetTemplate("SecurityContext.cst").SetProperty("NameSpace", ComponentsNameSpace);
-			this.GetTemplate("SecurityContext.cst").SetProperty("BLLNameSpace", BLLNameSpace);
-			this.GetTemplate("SecurityContext.cst").SetProperty("DALNameSpace", DALNameSpace);
-			this.RenderToFile("SecurityContext.cst", rootPathComponents + "\\SecurityContext.cs", true);
+			//----------------------------------------------------------------------------------------------------------------------------------------------
+			//-- SecurityContext file - generated only once
+			//----------------------------------------------------------------------------------------------------------------------------------------------
+			if (!File.Exists(rootPathComponents + "\\SecurityContext.cs"))
+			{
+				XmlElement iSecurityContextNode = AddFileNode(commonNode, "SecurityContext.cs");
+				this.GetTemplate("SecurityContext.cst").SetProperty("NameSpace", ComponentsNameSpace);
+				this.GetTemplate("SecurityContext.cst").SetProperty("BLLNameSpace", BLLNameSpace);
+				this.GetTemplate("SecurityContext.cst").SetProperty("DALNameSpace", DALNameSpace);
+				this.RenderToFile("SecurityContext.cst", rootPathComponents + "\\SecurityContext.cs", true);
+			}
+
+			XmlElement iSecurityContextBaseNode = AddFileNode(commonNode, "SecurityContextBase.generated.cs");
+			this.GetTemplate("SecurityContextBase.cst").SetProperty("NameSpace", ComponentsNameSpace);
+			this.GetTemplate("SecurityContextBase.cst").SetProperty("BLLNameSpace", BLLNameSpace);
+			this.GetTemplate("SecurityContextBase.cst").SetProperty("DALNameSpace", DALNameSpace);
+			this.RenderToFile("SecurityContextBase.cst", rootPathComponents + "\\SecurityContextBase.generated.cs", true);
 	
 			XmlElement contextViewNode = AddFileNode(commonNode, "ContextView.cs");
 			this.GetTemplate("ContextView.cst").SetProperty("NameSpace", ComponentsNameSpace);
