@@ -9,7 +9,6 @@ using System.Web.UI;
 using System.Web.UI.WebControls;
 using System.Text;
 using System.ComponentModel;
-using System.Collections;
 using <%=RootNameSpace%>;
 #endregion
 
@@ -18,7 +17,7 @@ namespace <%=RootNameSpace%>.Web.UI
     /// <summary>
     /// A specialised Drop Down List that adds extra functionality to the base class.
     /// Features include the ability to add a null item, make the control readonly,
-    /// make the control required, multiple datatext fields and it supports type ahead
+    /// make the control required and it supports type ahead
     /// </summary>
     public class EntityDropDownList : DropDownList
     {
@@ -70,25 +69,6 @@ namespace <%=RootNameSpace%>.Web.UI
                 return (bool)ViewState[ "EnableClientScript" ];
             }
             set { ViewState[ "EnableClientScript" ] = value; }
-        }
-
-        /// <summary>
-        /// Gets or sets a value to the formatting string
-        /// </summary>
-        [Bindable(true),
-        Category("Appearance"),
-        DefaultValue(""), Description("Gets or sets a value to the formatting string")]
-        public string DataTextFieldFormatString
-        {
-            get
-            {
-                if (ViewState["DataTextFieldFormatString"] == null)
-                {
-                    ViewState.Add("DataTextFieldFormatString", String.Empty);
-                }
-                return (string)ViewState["DataTextFieldFormatString"];
-            }
-            set { ViewState["DataTextFieldFormatString"] = value; }
         }
 
         /// <summary>
@@ -288,135 +268,23 @@ namespace <%=RootNameSpace%>.Web.UI
             }
         }
 		
-		/// <summary>
+			/// <summary>
       	/// Raises the <see cref="E:System.Web.UI.Control.DataBinding"></see> event.
       	/// </summary>
       	/// <param name="e">An <see cref="T:System.EventArgs"></see> object that contains the event data.</param>
         protected override void OnDataBinding( EventArgs e )
         {
-            base.Items.Clear();
-
             if ( AppendNullItem )
             {
                 nullItem.Text = NullItemText;
                 nullItem.Value = string.Empty;
                 base.Items.Add( nullItem );
             }
+            
+            base.OnDataBinding( e );
 
-            Object source;
-            if (this.DataSource == null)
-                source = (Object)NamingContainer.FindControl(DataSourceID);
-            else
-                source = this.DataSource;
-
-            IEnumerable resolvedDataSource = GetResolvedDataSource(source, this.DataMember);
-            if (resolvedDataSource != null)
-            {                
-                string dataTextField = DataTextField;
-                string dataValueField = DataValueField;
-
-                ICollection rdsCollection = (ICollection)resolvedDataSource;
-                if (rdsCollection != null)
-                {
-                    Items.Capacity = this.Items.Count + rdsCollection.Count;
-                }
-                bool valid = ((dataTextField.Length >= 0) && (dataValueField.Length >= 0));
-                
-                foreach (Object current in resolvedDataSource)
-                {
-                    
-                    ListItem li = new ListItem();
-                    if (valid)
-                    {
-                        if (dataTextField.Length >= 0)
-                        {
-                            string[] fields = dataTextField.Split(',');
-                            string temp = string.Empty;
-                            if (!String.IsNullOrEmpty(this.DataTextFieldFormatString))
-                            {
-                                int j = 0;
-                                foreach (String s in fields)
-                                {
-                                    temp += DataBinder.GetPropertyValue(current, s.Trim(), null);
-                                    
-                                    if (j < fields.Length-1) 
-                                        temp += "~~~";
-                                    j++;
-                                }
-                                fields = System.Text.RegularExpressions.Regex.Split(temp, "~~~");                                
-                                li.Text = string.Format(this.DataTextFieldFormatString, fields);
-                            }
-                            else
-                            {
-                                li.Text = DataBinder.GetPropertyValue(current, dataTextField, null);
-                            }
-                        }
-                        if (dataValueField.Length >= 0)
-                        {
-                            li.Value = DataBinder.GetPropertyValue(current, dataValueField, null);
-                        }
-                    }
-                    else
-                    {
-                        li.Text = dataTextField.ToString();
-                        li.Value = dataValueField.ToString();
-                    }
-                    Items.Add(li);
-                }
-            }
         }
 
-        /// <summary>
-        /// Helper method to cast datasource object
-        /// to IEnumerable
-        /// </summary>
-        private System.Collections.IEnumerable GetResolvedDataSource(object source, string member)
-        {
-            if (source != null && (source is IListSource || source is Web.Data.IListDataSource))
-            {
-                if (source is Web.Data.IListDataSource)
-                {
-                    Web.Data.IListDataSource listT = (Web.Data.IListDataSource)source;
-                    return listT.GetEntityList();
-                }
-                IListSource src = (IListSource)source;
-                IList list = src.GetList();
-                if (!src.ContainsListCollection)
-                {
-                    return list;
-                }
-                if (list != null && list is ITypedList)
-                {
-                    ITypedList tlist = (ITypedList)list;
-                    PropertyDescriptorCollection pdc = tlist.GetItemProperties(new PropertyDescriptor[0]);
-                    if (pdc != null && pdc.Count > 0)
-                    {
-                        PropertyDescriptor pd = null;
-                        if (member != null && member.Length > 0)
-                        {
-                            pd = pdc.Find(member, true);
-                        }
-                        else
-                        {
-                            pd = pdc[0];
-                        }
-                        if (pd != null)
-                        {
-                            object rv = pd.GetValue(list[0]);
-                            if (rv != null && rv is IEnumerable)
-                            {
-                                return (IEnumerable)rv;
-                            }
-                        }
-                    }
-                }
-            }
-            if (source is IEnumerable)
-            {
-                return (IEnumerable)source;
-            }
-            return null;
-        }
         /// <summary>
         /// Called by the ASP.NET page framework to notify server controls that use composition-based implementation to create any child controls they contain in preparation for posting back or rendering.
         /// </summary>
@@ -538,15 +406,15 @@ namespace <%=RootNameSpace%>.Web.UI
             }
         }
 		
-	/// <summary>
-	/// Calls the validate method on the embedded required validator if permitted
-	/// </summary>
-	public void Validate()
-	{
-		if ( Required && requiredValidator != null )
+		/// <summary>
+		/// Calls the validate method on the embedded required validator if permitted
+		/// </summary>
+		public void Validate()
 		{
-			requiredValidator.Validate();
+			if ( Required && requiredValidator != null )
+			{
+				requiredValidator.Validate();
+			}
 		}
-	}
-    }    
+    }
 }
