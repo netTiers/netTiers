@@ -331,6 +331,57 @@ namespace <%= DALNameSpace %>
 		}
 
 		#endregion Like
+		
+		#region NotLike
+
+		/// <summary>
+		/// Creates a <see cref="SqlComparisonType.NotLike"/> expression.
+		/// </summary>
+		/// <param name="column"></param>
+		/// <param name="value"></param>
+		/// <returns></returns>
+		public static String NotLike(String column, String value)
+		{
+			return NotLike(column, value, false);
+		}
+
+		/// <summary>
+		/// Creates a <see cref="SqlComparisonType.NotLike"/> expression.
+		/// </summary>
+		/// <param name="column"></param>
+		/// <param name="value"></param>
+		/// <param name="ignoreCase"></param>
+		/// <returns></returns>
+		public static String NotLike(String column, String value, bool ignoreCase)
+		{
+			return NotLike(column, value, ignoreCase, true);
+		}
+
+		/// <summary>
+		/// Creates a <see cref="SqlComparisonType.NotLike"/> expression.
+		/// </summary>
+		/// <param name="column"></param>
+		/// <param name="value"></param>
+		/// <param name="ignoreCase"></param>
+		/// <param name="surround"></param>
+		/// <returns></returns>
+		public static String NotLike(String column, String value, bool ignoreCase, bool surround)
+		{
+			if ( String.IsNullOrEmpty(value) ) return IsNull(column);
+			return String.Format(GetNotLikeFormat(ignoreCase, surround), column, Like(value));
+		}
+
+		/// <summary>
+		/// Encodes the value for a <see cref="SqlComparisonType.NotLike"/> expression.
+		/// </summary>
+		/// <param name="value">The value.</param>
+		/// <returns></returns>
+		public static String NotLike(String value)
+		{
+			return String.Format("{0}", Encode(value));
+		}
+
+		#endregion Like
 
 		#region Null/Not Null
 
@@ -448,6 +499,34 @@ namespace <%= DALNameSpace %>
 
 			return ignoreCase ? "UPPER({0}) LIKE UPPER({1})" : "{0} LIKE {1}";
 		}
+		
+		/// <summary>
+		/// Gets the not like format string.
+		/// </summary>
+		/// <param name="ignoreCase">if set to <c>true</c> [ignore case].</param>
+		/// <returns></returns>
+		public static String GetNotLikeFormat(bool ignoreCase)
+		{
+			return GetNotLikeFormat(ignoreCase, true);
+		}
+
+		/// <summary>
+		/// Gets the not like format string.
+		/// </summary>
+		/// <param name="ignoreCase">if set to <c>true</c> [ignore case].</param>
+		/// <param name="surround"></param>
+		/// <returns></returns>
+		public static String GetNotLikeFormat(bool ignoreCase, bool surround)
+		{
+			if ( surround )
+			{
+				return ignoreCase ? "UPPER({0}) NOT LIKE UPPER('{1}')" : "{0} NOT LIKE '{1}'";
+			}
+
+			return ignoreCase ? "UPPER({0}) NOT LIKE UPPER({1})" : "{0} NOT LIKE {1}";
+		}
+		
+		
 
 		/// <summary>
 		/// Gets the equal format string.
@@ -504,7 +583,12 @@ namespace <%= DALNameSpace %>
 		/// <summary>
 		/// Represents LIKE value.
 		/// </summary>
-		Like
+		Like,
+		/// <summary>
+		/// Represents NOT LIKE value.
+		/// </summary>
+		NotLike
+
 	}
 
 	#endregion SqlComparisonType Enum
