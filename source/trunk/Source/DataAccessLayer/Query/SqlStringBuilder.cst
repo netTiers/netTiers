@@ -55,11 +55,15 @@ namespace <%= DALNameSpace %>
       /// </summary>
       AppendRange,
       /// <summary>
+      /// AppendNotRange
+      /// </summary>
+      AppendNotRange,
+      /// <summary>
       /// AppendIsNull
       /// </summary>
       AppendIsNull,
       /// <summary>
-      /// 
+      /// AppendIsNotNull
       /// </summary>
       AppendIsNotNull,
       /// <summary>
@@ -90,6 +94,10 @@ namespace <%= DALNameSpace %>
       /// AppendContains
       /// </summary>
       AppendContains,
+      /// <summary>
+      /// AppendNotContains
+      /// </summary>
+      AppendNotContains,
       /// <summary>
       /// AppendLike
       /// </summary>
@@ -501,6 +509,57 @@ namespace <%= DALNameSpace %>
 		}
 
 		#endregion AppendRange
+		
+		#region AppendNotRange
+
+        /// <summary>
+        /// Appends the specified column and value not in range to the current filter.
+        /// </summary>
+        /// <param name="column"></param>
+        /// <param name="from"></param>
+        /// <param name="to"></param>
+        /// <returns></returns>
+        public virtual SqlStringBuilder AppendNotRange(String column, String from, String to)
+        {
+            return AppendNotRange(this.junction, column, from, to);
+        }
+
+        /// <summary>
+        /// Appends the specified column and value not in range to the current filter.
+        /// </summary>
+        /// <param name="junction"></param>
+        /// <param name="column"></param>
+        /// <param name="from"></param>
+        /// <param name="to"></param>
+        /// <returns></returns>
+        public virtual SqlStringBuilder AppendNotRange(String junction, String column, String from, String to)
+        {
+            if (!String.IsNullOrEmpty(from) || !String.IsNullOrEmpty(to))
+            {
+                StringBuilder sb = new StringBuilder();
+
+                sb.Append("NOT (");
+                if (!String.IsNullOrEmpty(from))
+                {
+                    sb.AppendFormat("{0} >= {1}", column, SqlUtil.Encode(from, true));
+                }
+                if (!String.IsNullOrEmpty(from) && !String.IsNullOrEmpty(to))
+                {
+                    sb.AppendFormat(" {0} ", SqlUtil.AND);
+                }
+                if (!String.IsNullOrEmpty(to))
+                {
+                    sb.AppendFormat("{0} <= {1}", column, SqlUtil.Encode(to, true));
+                }
+                sb.Append(")");
+
+                AppendInternal(junction, sb.ToString());
+            }
+
+            return this;
+        }
+
+        #endregion AppendNotRange
 
 		#region AppendIsNull
 
@@ -714,7 +773,7 @@ namespace <%= DALNameSpace %>
 
       #endregion AppendStartsWith
 
-      #region AppendEndsWith
+      	#region AppendEndsWith
 
       /// <summary>
       /// Appends the specified column and value to the current filter.
@@ -746,39 +805,70 @@ namespace <%= DALNameSpace %>
 
       #endregion AppendEndsWith
 
-      #region AppendContains
+      	#region AppendContains
 
-      /// <summary>
-      /// Appends the specified column and value to the current filter.
-      /// </summary>
-      /// <param name="column"></param>
-      /// <param name="value"></param>
-      /// <returns></returns>
-      public virtual SqlStringBuilder AppendContains(String column, String value)
-      {
-         return AppendContains(this.junction, column, value);
-      }
+        /// <summary>
+        /// Appends the specified column and value to the current filter.
+        /// </summary>
+        /// <param name="column"></param>
+        /// <param name="value"></param>
+        /// <returns></returns>
+        public virtual SqlStringBuilder AppendContains(String column, String value)
+        {
+           return AppendContains(this.junction, column, value);
+        }
 
-      /// <summary>
-      /// Appends the specified column and value to the current filter.
-      /// </summary>
-      /// <param name="junction"></param>
-      /// <param name="column"></param>
-      /// <param name="value"></param>
-      /// <returns></returns>
-      public virtual SqlStringBuilder AppendContains(String junction, String column, String value)
-      {
-         if (!String.IsNullOrEmpty(value))
-         {
-            AppendInternal(junction, SqlUtil.Contains(column, value));
-         }
+        /// <summary>
+        /// Appends the specified column and value to the current filter.
+        /// </summary>
+        /// <param name="junction"></param>
+        /// <param name="column"></param>
+        /// <param name="value"></param>
+        /// <returns></returns>
+        public virtual SqlStringBuilder AppendContains(String junction, String column, String value)
+        {
+           if (!String.IsNullOrEmpty(value))
+           {
+              AppendInternal(junction, SqlUtil.Contains(column, value));
+           }
+  
+           return this;
+        }
 
-         return this;
-      }
+        #endregion AppendContains
+	
+		#region AppendNotContains
 
-      #endregion AppendContains
+        /// <summary>
+        /// Appends the specified column and value to the current filter.
+        /// </summary>
+        /// <param name="column"></param>
+        /// <param name="value"></param>
+        /// <returns></returns>
+        public virtual SqlStringBuilder AppendNotContains(String column, String value)
+        {
+            return AppendNotContains(this.junction, column, value);
+        }
 
-      #region AppendLike
+        /// <summary>
+        /// Appends the specified column and value to the current filter.
+        /// </summary>
+        /// <param name="junction"></param>
+        /// <param name="column"></param>
+        /// <param name="value"></param>
+        /// <returns></returns>
+        public virtual SqlStringBuilder AppendNotContains(String junction, String column, String value)
+        {
+            if (!String.IsNullOrEmpty(value))
+            {
+                AppendInternal(junction, SqlUtil.Contains(column, value));
+            }
+            return this;
+        }
+
+        #endregion AppendNotContains
+
+      	#region AppendLike
 
       /// <summary>
       /// Appends the specified column and value to the current filter.
@@ -1409,6 +1499,36 @@ namespace <%= DALNameSpace %>
 		}
 
 		#endregion AppendRange
+		
+		#region AppendNotRange
+
+        /// <summary>
+        /// Appends the specified column and value not in range to the current filter.
+        /// </summary>
+        /// <param name="column"></param>
+        /// <param name="from"></param>
+        /// <param name="to"></param>
+        /// <returns></returns>
+        public virtual SqlFilterBuilder<EntityColumn> AppendNotRange(EntityColumn column, String from, String to)
+        {
+            return AppendNotRange(this.Junction, column, from, to);
+        }
+
+        /// <summary>
+        /// Appends the specified column and value not in range to the current filter.
+        /// </summary>
+        /// <param name="junction"></param>
+        /// <param name="column"></param>
+        /// <param name="from"></param>
+        /// <param name="to"></param>
+        /// <returns></returns>
+        public virtual SqlFilterBuilder<EntityColumn> AppendNotRange(String junction, EntityColumn column, String from, String to)
+        {
+            AppendNotRange(junction, GetColumnName(column), from, to);
+            return this;
+        }
+
+        #endregion AppendNotRange
 
 		#region AppendGreaterThan
 
@@ -1550,7 +1670,7 @@ namespace <%= DALNameSpace %>
 
       #endregion AppendStartsWith
 
-      #region AppendEndsWith
+      	#region AppendEndsWith
 
       /// <summary>
       /// Appends the specified column and value to the current filter.
@@ -1578,35 +1698,63 @@ namespace <%= DALNameSpace %>
 
       #endregion AppendEndsWith
 
-      #region AppendContains
+      	#region AppendContains
 
-      /// <summary>
-      /// Appends the specified column and value to the current filter.
-      /// </summary>
-      /// <param name="column"></param>
-      /// <param name="value"></param>
-      /// <returns></returns>
-      public virtual SqlFilterBuilder<EntityColumn> AppendContains(EntityColumn column, String value)
-      {
-         return AppendContains(this.Junction, column, value);
-      }
+        /// <summary>
+        /// Appends the specified column and value to the current filter.
+        /// </summary>
+        /// <param name="column"></param>
+        /// <param name="value"></param>
+        /// <returns></returns>
+        public virtual SqlFilterBuilder<EntityColumn> AppendContains(EntityColumn column, String value)
+        {
+           return AppendContains(this.Junction, column, value);
+        }
 
-      /// <summary>
-      /// Appends the specified column and value to the current filter.
-      /// </summary>
-      /// <param name="junction"></param>
-      /// <param name="column"></param>
-      /// <param name="value"></param>
-      /// <returns></returns>
-      public virtual SqlFilterBuilder<EntityColumn> AppendContains(String junction, EntityColumn column, String value)
-      {
-         AppendContains(junction, GetColumnName(column), value);
-         return this;
-      }
+        /// <summary>
+        /// Appends the specified column and value to the current filter.
+        /// </summary>
+        /// <param name="junction"></param>
+        /// <param name="column"></param>
+        /// <param name="value"></param>
+        /// <returns></returns>
+        public virtual SqlFilterBuilder<EntityColumn> AppendContains(String junction, EntityColumn column, String value)
+        {
+           AppendContains(junction, GetColumnName(column), value);
+           return this;
+        }
 
-      #endregion AppendContains
+        #endregion AppendContains
+		
+		#region AppendNotContains
 
-      #region AppendLike
+        /// <summary>
+        /// Appends the specified column and value to the current filter.
+        /// </summary>
+        /// <param name="column"></param>
+        /// <param name="value"></param>
+        /// <returns></returns>
+        public virtual SqlFilterBuilder<EntityColumn> AppendNotContains(EntityColumn column, String value)
+        {
+            return AppendNotContains(this.Junction, column, value);
+        }
+
+        /// <summary>
+        /// Appends the specified column and value to the current filter.
+        /// </summary>
+        /// <param name="junction"></param>
+        /// <param name="column"></param>
+        /// <param name="value"></param>
+        /// <returns></returns>
+        public virtual SqlFilterBuilder<EntityColumn> AppendNotContains(String junction, EntityColumn column, String value)
+        {
+            AppendNotContains(junction, GetColumnName(column), value);
+            return this;
+        }
+
+        #endregion AppendNotContains
+
+      	#region AppendLike
 
       /// <summary>
       /// Appends the specified column and value to the current filter.
@@ -1989,6 +2137,61 @@ namespace <%= DALNameSpace %>
 		}
 
 		#endregion AppendRange
+		
+		#region AppendNotRange
+
+        /// <summary>
+        /// Appends the specified column and value not in range to the current filter.
+        /// </summary>
+        /// <param name="junction"></param>
+        /// <param name="column"></param>
+        /// <param name="from"></param>
+        /// <param name="to"></param>
+        /// <returns></returns>
+        public override SqlFilterBuilder<EntityColumn> AppendNotRange(String junction, EntityColumn column, String from, String to)
+        {
+            _isDirty = true;
+            Parameters.SetCurrentColumn(column);
+            return base.AppendNotRange(junction, column, from, to);
+        }
+
+        /// <summary>
+        /// Appends the specified column and value not in range to the current filter.
+        /// </summary>
+        /// <param name="junction"></param>
+        /// <param name="column"></param>
+        /// <param name="from"></param>
+        /// <param name="to"></param>
+        /// <returns></returns>
+        public override SqlStringBuilder AppendNotRange(String junction, String column, String from, String to)
+        {
+            if (!String.IsNullOrEmpty(from) || !String.IsNullOrEmpty(to))
+            {
+                StringBuilder sb = new StringBuilder();
+
+                sb.Append("NOT (");
+                if (!String.IsNullOrEmpty(from))
+                {
+                    sb.AppendFormat("{0} >= {1}", column, Parameters.GetParameter(from));
+                }
+                if (!String.IsNullOrEmpty(from) && !String.IsNullOrEmpty(to))
+                {
+                    sb.AppendFormat(" {0} ", SqlUtil.AND);
+                }
+                if (!String.IsNullOrEmpty(to))
+                {
+                    sb.AppendFormat("{0} <= {1}", column, Parameters.GetParameter(to));
+                }
+                sb.Append(")");
+
+                _isDirty = true;
+                AppendInternal(junction, sb.ToString());
+            }
+
+            return this;
+        }
+
+        #endregion AppendNotRange
 
 		#region AppendGreaterThan
 
@@ -2175,7 +2378,7 @@ namespace <%= DALNameSpace %>
 
       #endregion AppendStartsWith
 
-      #region AppendEndsWith
+      	#region AppendEndsWith
 
       /// <summary>
       /// Appends the specified column and value to the current filter.
@@ -2212,44 +2415,81 @@ namespace <%= DALNameSpace %>
 
       #endregion AppendEndsWith
 
-      #region AppendContains
+      	#region AppendContains
 
-      /// <summary>
-      /// Appends the specified column and value to the current filter.
-      /// </summary>
-      /// <param name="junction"></param>
-      /// <param name="column"></param>
-      /// <param name="value"></param>
-      /// <returns></returns>
-      public override SqlFilterBuilder<EntityColumn> AppendContains(String junction, EntityColumn column, String value)
-      {
-         _isDirty = true;
-         Parameters.SetCurrentColumn(column);
-         return base.AppendContains(junction, column, value);
-      }
+        /// <summary>
+        /// Appends the specified column and value to the current filter.
+        /// </summary>
+        /// <param name="junction"></param>
+        /// <param name="column"></param>
+        /// <param name="value"></param>
+        /// <returns></returns>
+        public override SqlFilterBuilder<EntityColumn> AppendContains(String junction, EntityColumn column, String value)
+        {
+           _isDirty = true;
+           Parameters.SetCurrentColumn(column);
+           return base.AppendContains(junction, column, value);
+        }
 
-      /// <summary>
-      /// Appends the specified column and value to the current filter.
-      /// </summary>
-      /// <param name="junction"></param>
-      /// <param name="column"></param>
-      /// <param name="value"></param>
-      /// <returns></returns>
-      public override SqlStringBuilder AppendContains(String junction, String column, String value)
-      {
-         if (!String.IsNullOrEmpty(value))
-         {
+        /// <summary>
+        /// Appends the specified column and value to the current filter.
+        /// </summary>
+        /// <param name="junction"></param>
+        /// <param name="column"></param>
+        /// <param name="value"></param>
+        /// <returns></returns>
+        public override SqlStringBuilder AppendContains(String junction, String column, String value)
+        {
+           if (!String.IsNullOrEmpty(value))
+           {
+              _isDirty = true;
+              value = SqlUtil.Contains(value);
+              AppendInternal(junction, column, "LIKE", Parameters.GetParameter(value));
+           }
+
+           return this;
+        }
+
+        #endregion AppendContains
+	
+		#region AppendNotContains
+
+        /// <summary>
+        /// Appends the specified column and value to the current filter.
+        /// </summary>
+        /// <param name="junction"></param>
+        /// <param name="column"></param>
+        /// <param name="value"></param>
+        /// <returns></returns>
+        public override SqlFilterBuilder<EntityColumn> AppendNotContains(String junction, EntityColumn column, String value)
+        {
             _isDirty = true;
-            value = SqlUtil.Contains(value);
-            AppendInternal(junction, column, "LIKE", Parameters.GetParameter(value));
-         }
+            Parameters.SetCurrentColumn(column);
+            return base.AppendNotContains(junction, column, value);
+        }
 
-         return this;
-      }
+        /// <summary>
+        /// Appends the specified column and value to the current filter.
+        /// </summary>
+        /// <param name="junction"></param>
+        /// <param name="column"></param>
+        /// <param name="value"></param>
+        /// <returns></returns>
+        public override SqlStringBuilder AppendNotContains(String junction, String column, String value)
+        {
+            if (!String.IsNullOrEmpty(value))
+            {
+                _isDirty = true;
+                value = SqlUtil.NotContains(value);
+                AppendInternal(junction, column, "NOT LIKE", Parameters.GetParameter(value));
+            }
 
-      #endregion AppendContains
+            return this;
+        }
 
-      #region AppendLike
+        #endregion AppendNotContains
+		
+      	#region AppendLike
 
       /// <summary>
       /// Appends the specified column and value to the current filter.
