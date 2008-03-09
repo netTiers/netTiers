@@ -165,34 +165,53 @@ namespace <%=NameSpace%>.Web.UI
 			get { return m_footerTemplate; }
 			set { m_footerTemplate = value; }
 		}
+		
+		
+		/// <summary>
+        /// Overridden and Empty so that span tags are not written
+        /// </summary>
+        /// <param name="writer"></param>
+        public override void RenderBeginTag(HtmlTextWriter writer)
+        {
+            
+        }
 
-      /// <summary>
-      /// Called by the ASP.NET page framework to notify server controls that use composition-based implementation to create any child controls they contain in preparation for posting back or rendering.
-      /// </summary>
-		protected override void CreateChildControls()
-		{
-			if (ChildControlsCreated)
-			{
-				return;
-			}
-			Controls.Clear();
+        /// <summary>
+        /// Overridden and Empty so that span tags are not written
+        /// </summary>
+        /// <param name="writer"></param>
+        public override void RenderEndTag(HtmlTextWriter writer)
+        {
+                
+        }		
 
-			if (m_headerTemplate != null)
-			{
-				Control headerItem = new Control();
-				m_headerTemplate.InstantiateIn(headerItem);
-				Controls.Add(headerItem);
-			}
-
-			
-			if (m_footerTemplate != null)
-			{
-				Control footerItem = new Control();
-				m_footerTemplate.InstantiateIn(footerItem);
-				Controls.Add(footerItem);
-			}
-			ChildControlsCreated = true;
-		}
+//      /// <summary>
+//      /// Called by the ASP.NET page framework to notify server controls that use composition-based implementation to create any child controls they contain in preparation for posting back or rendering.
+//      /// </summary>
+//		protected override void CreateChildControls()
+//		{
+//			if (ChildControlsCreated)
+//			{
+//				return;
+//			}
+//			Controls.Clear();
+//
+//			if (m_headerTemplate != null)
+//			{
+//				Control headerItem = new Control();
+//				m_headerTemplate.InstantiateIn(headerItem);
+//				Controls.Add(headerItem);
+//			}
+//
+//			
+//			if (m_footerTemplate != null)
+//			{
+//				Control footerItem = new Control();
+//				m_footerTemplate.InstantiateIn(footerItem);
+//				Controls.Add(footerItem);
+//			}
+//			ChildControlsCreated = true;
+//		}
 		
 		/// <summary>
       /// Called by the ASP.NET page framework to notify server controls that use composition-based implementation to create any child controls they contain in preparation for posting back or rendering.
@@ -203,6 +222,14 @@ namespace <%=NameSpace%>.Web.UI
 
          if (dataBinding)
          {
+            //Instantiate the Header template (if exists)
+            if (m_headerTemplate != null)
+            {
+                Control headerItem = new Control();
+                m_headerTemplate.InstantiateIn(headerItem);
+                Controls.Add(headerItem);
+            }
+			
             foreach (object o in dataSource)
             {
 					<%=entityName%> entity = o as <%=entityName%>;
@@ -232,8 +259,16 @@ namespace <%=NameSpace%>.Web.UI
 					container.DataBind();
 					
 					pos++;
-				}
 			}
+            
+			//Instantiate the Footer template (if exists)
+            if (m_footerTemplate != null)
+            {
+                Control footerItem = new Control();
+                m_footerTemplate.InstantiateIn(footerItem);
+                Controls.Add(footerItem);
+            }				
+		 }
 			
 			return pos;
 		}
