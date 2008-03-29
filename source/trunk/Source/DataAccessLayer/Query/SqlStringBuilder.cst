@@ -2852,4 +2852,299 @@ namespace <%= DALNameSpace %>
         /// <returns><see cref="SqlFilterParameterCollection"/> object</returns>
         SqlFilterParameterCollection GetParameters();
     }
+	
+		#region SqlSortBuilder
+
+    /// <summary>
+    /// Allows for building SQL OrderBy expressions using strongly-typed column enumeration values.
+    /// </summary>
+    /// <typeparam name="EntityColumn">An enumeration of entity column names.</typeparam>
+    [CLSCompliant(true)]
+    public class SqlSortBuilder<EntityColumn> : ISortColumnCollection
+    {
+        /// <summary>
+        /// holds key value pair of ScheduledFlight column and sort direction
+        /// </summary>
+        //private Dictionary<EntityColumn, SqlSortDirection> _columns = new Dictionary<EntityColumn, SqlSortDirection>();
+
+        #region Constructors
+
+        /// <summary>
+        /// Initializes a new instance of the SqlFilterBuilder class.
+        /// </summary>
+        public SqlSortBuilder() : base() { }
+
+        #endregion
+
+        #region Append
+
+        /// <summary>
+        /// Appends the specified column and sorts it by the specified SqlSortDirection 
+        /// </summary>
+        /// <param name="column">The column to sort</param>
+        /// <param name="sortDirection">The specified column's sort direction</param>
+        /// <returns></returns>
+        public virtual void  Append(Enum column, SqlSortDirection sortDirection)
+        {
+            AddColumn(column, sortDirection);
+        }
+
+        /// <summary>
+        /// Appends the specified column and sorts it Ascending
+        /// </summary>
+        /// <param name="column">The column to sort</param>
+        /// <returns></returns>
+        public virtual void AppendASC(Enum column)
+        {
+            AddColumn(column, SqlSortDirection.ASC);
+        }
+
+        /// <summary>
+        /// Appends the specified column and sorts it Descending
+        /// </summary>
+        /// <param name="column">The column to sort</param>
+        /// <returns></returns>
+        public virtual void AppendDESC(Enum column)
+        {
+            AddColumn(column, SqlSortDirection.DESC);
+        }
+
+        #endregion
+
+		#region Properties 
+		
+		/// <summary>
+        /// The Sort Columns member variable.
+        /// </summary>
+        private SqlSortColumnCollection sortColumns = new SqlSortColumnCollection();
+
+        private bool _isDirty = true;
+
+        /// <summary>
+        /// Gets or sets the SortColumns property.
+        /// </summary>
+        public virtual SqlSortColumnCollection SortColumns
+        {
+            get
+            {
+                if (_isDirty)
+                    GetSortColumns();
+
+                return sortColumns;
+            }
+            set { sortColumns = value; }
+        }
+		
+		#endregion
+		
+		#region Methods
+		
+		
+        /// <summary>
+        /// Adds a column to the sort builder
+        /// </summary>
+        /// <param name="column">The entity's column to sort by</param>
+        /// <param name="sortDirection">The sort direction</param>
+        private void AddColumn(Enum column, SqlSortDirection sortDirection)
+        {
+            sortColumns.Add(new SqlSortColumn(column, sortDirection));
+        }
+
+        /// <summary>
+        /// Provides the actual SQL sort string.
+        /// </summary>
+        /// <returns></returns>
+        public override string ToString()
+        {
+            StringBuilder sb = new StringBuilder();
+            Int32 count = 1;
+            foreach (SqlSortColumn sc in sortColumns)
+            {
+                //sb.Append(kvp.Key).Append(" ").Append(kvp.Value);
+                sb.Append(String.Format("{0} {1}", sc.Column, sc.SortDirection));
+                if (count++ < sortColumns.Count)
+                {
+                    sb.Append(", ");
+                }
+            }
+            return sb.ToString();
+        }
+
+        /// <summary>
+        /// Gets the column name from the specified column enumeration value.
+        /// </summary>
+        /// <param name="column"></param>
+        /// <returns></returns>
+        protected virtual String GetColumnName(EntityColumn column)
+        {
+            String name = EntityHelper.GetEnumTextValue(column as Enum);
+
+            if (String.IsNullOrEmpty(name))
+            {
+                name = column.ToString();
+            }
+
+            return name;
+        }
+
+        /// <summary>
+        /// Gets the current collection of <see cref="SqlFilterParameter"/> objects and
+        /// also sets the collection's FilterExpression property.
+        /// </summary>
+        /// <returns></returns>
+        public virtual SqlSortColumnCollection GetSortColumns()
+        {
+            _isDirty = false;
+            SortColumns.SortExpression = ToString();
+
+            return SortColumns;
+        }
+        #endregion Methods
+
+		#region IFilterParameterCollection
+	    /// <summary>
+        /// Gets a collection of <see cref="SqlFilterParameter"/> objects 
+        /// </summary>
+        /// <returns></returns>
+        SqlSortColumnCollection ISortColumnCollection.GetSortColumns()
+        {
+            return GetSortColumns();
+        }
+		#endregion
+    }
+	
+	/// <summary>
+	/// A collection of <see cref="SqlSortColumn"/> objects.
+	/// </summary>
+	[Serializable]
+	[CLSCompliant(true)]
+	public class SqlSortColumnCollection : List<SqlSortColumn>, ISortColumnCollection
+	{
+		#region Methods
+
+		/// <summary>
+		/// Sets the CurrentColumn property.
+		/// </summary>
+		/// <param name="column"></param>
+		public void SetCurrentColumn(Object column)
+		{
+			this._currentColumn = (Enum) column;
+		}
+		
+		#endregion Methods
+
+		#region Properties
+
+		/// <summary>
+		/// The CurrentColumn member variable.
+		/// </summary>
+		private Enum _currentColumn;
+
+		/// <summary>
+		/// Gets the CurrentColumn property.
+		/// </summary>
+		public Enum CurrentColumn
+		{
+			get { return _currentColumn; }
+		}
+
+		/// <summary>
+		/// The SortExpression member variable.
+		/// </summary>
+		private String sortExpression;
+
+		/// <summary>
+		/// Gets or sets the SortExpression property.
+		/// </summary>
+		public String SortExpression
+		{
+			get { return sortExpression; }
+			set { sortExpression = value; }
+		}
+
+		#endregion Properties
+	
+		#region IFilterParameterCollection
+	    /// <summary>
+        /// Gets a list of sql parameters for the filter 
+        /// </summary>
+        /// <returns></returns>
+        SqlSortColumnCollection ISortColumnCollection.GetSortColumns()
+        {
+            return this;
+        }
+		#endregion
+	}
+	
+	/// <summary>
+	/// Represents the information of a sorted column.
+	/// </summary>
+	[Serializable]
+	[CLSCompliant(true)]
+	public class SqlSortColumn
+	{
+		#region Constructors
+
+		/// <summary>
+		/// Initializes a new instance of the SqlSortColumn class.
+		/// </summary>
+		/// <param name="column"></param>
+		/// <param name="sortDirection"></param>
+		public SqlSortColumn(Enum column, SqlSortDirection sortDirection)
+		{
+			this._column = column;
+			this._sortDirection = sortDirection;
+		}
+
+		#endregion Constructors
+
+		#region Properties
+
+		/// <summary>
+		/// The Column member variable.
+		/// </summary>
+		private Enum _column;
+
+		/// <summary>
+		/// Gets or sets the Column property.
+		/// </summary>
+		public Enum Column
+		{
+			get { return _column; }
+			set { _column = value; }
+		}
+
+		/// <summary>
+		/// The Value member variable.
+		/// </summary>
+        private SqlSortDirection _sortDirection;
+
+		/// <summary>
+		/// Gets or sets the Value property.
+		/// </summary>
+        public SqlSortDirection SortDirection
+		{
+			get { return _sortDirection; }
+			set { _sortDirection = value; }
+		}
+
+		#endregion Properties
+
+	}
+	
+	///<summary>
+	///  Represents a type which will contain a method to 
+	///  retrieve the A collection of <see cref="SqlSortColumnCollection"/> 
+	///  objects to generate an OrderBy clause.
+	///</summary>
+	public interface ISortColumnCollection
+    {
+		/// <summary>
+        /// Gets a collection of <see cref="SqlSortColumn"/> objects
+        /// </summary>
+        /// <returns><see cref="SqlSortColumnCollection"/> object</returns>
+        SqlSortColumnCollection GetSortColumns();
+    }
+	
+    #endregion
 }
