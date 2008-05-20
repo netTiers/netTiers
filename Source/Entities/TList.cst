@@ -4,16 +4,10 @@
  * Last modified at $Date: 2006-04-05 20:50:13 -0500 (Wed, 05 Apr 2006) $
  * $Revision: 108 $
 --%>
-<%@ CodeTemplate Src="..\TemplateLib\CommonSqlCode.cs" Inherits="MoM.Templates.CommonSqlCode" Language="C#" TargetLanguage="C#" Description="Generate a generic Colelction for our framework." Debug="False"  ResponseEncoding="UTF-8" NoWarn="0108,0618,1572,1573,1574,0162,2002"%>
-<%@ Assembly Name="SchemaExplorer" %>
-<%@ Assembly Name="System.Design" %>
-<%@ Import Namespace="SchemaExplorer" %>
+<%@ CodeTemplate Language="C#" TargetLanguage="C#" Description="Generate a generic Colelction for our framework." ResponseEncoding="UTF-8"  NoWarn="0108,0618,1572,1573,1574,0162,2002" %>
 
 <%@ Property Name="NameSpace" Type="System.String" Category="Data" Description="Object Namespace." %>	
-<%
-	string listName = GetTListName();
 
-%>
 using System;
 using System.Text;
 
@@ -32,20 +26,20 @@ namespace <%=NameSpace%>
 	/// Provides methods to search, sort, and manipulate lists.
 	/// </summary>
 	[Serializable]
-	public class <%=listName%><T> : ListBase<T> where T : IEntity, new()
+	public class TList<T> : ListBase<T> where T : IEntity, new()
    	{
 		
 		/// <summary>
-		/// Initializes a new instance of the <see cref="T:<%=listName%>{T}"/> class.
+		/// Initializes a new instance of the <see cref="T:TList{T}"/> class.
 		/// </summary>
-		public <%=listName%>()
+		public TList()
 		{
 		}
 
 		/// <summary>
-		/// Initializes a new instance of the <see cref="T:<%=listName%>{T}"/> class based on another list.
+		/// Initializes a new instance of the <see cref="T:TList{T}"/> class based on another list.
 		/// </summary>
-		public <%=listName%>(IList existingList)
+		public TList(IList existingList)
 		{
 		    if (existingList != null)
 		    {
@@ -119,51 +113,25 @@ namespace <%=NameSpace%>
 		#region ICloneable
 	
 		///<summary>
-		/// Creates an exact copy of this <%=listName%>{T} instance.
+		/// Creates an exact copy of this TList{T} instance.
 		///</summary>
-		///<returns>The <%=listName%>{T} object this method creates, cast as an object.</returns>
+		///<returns>The TList{T} object this method creates, cast as an object.</returns>
 		///<implements><see cref="ICloneable.Clone"/></implements>
 		public override object Clone()
 		{
-			return this.Copy(null);
-		}
-		
-		///<summary>
-		/// Creates an exact copy of this <%=listName%>{T} instance.
-		///</summary>
-		///<returns>The <%=listName%>{T} object this method creates, cast as an object.</returns>
-		///<implements><see cref="ICloneableEx.Clone"/></implements>
-		public override object Clone(IDictionary existingCopies)
-		{
-			return this.Copy(existingCopies);
+			return this.Copy();
 		}
 	
 		///<summary>
-		/// Creates an exact copy of this <%=listName%>{T} object.
+		/// Creates an exact copy of this TList{T} object.
 		///</summary>
-		///<returns>A new, identical copy of the <%=listName%>{T}.</returns>
-		public virtual <%=listName%><T> Copy()
+		///<returns>A new, identical copy of the TList{T}.</returns>
+		public virtual TList<T> Copy()
 		{
-			return this.Copy(null);
-		}
-	
-		///<summary>
-		/// Creates an exact copy of this <%=listName%>{T} object.
-		///</summary>
-		///<returns>A new, identical copy of the <%=listName%>{T}.</returns>
-		public virtual <%=listName%><T> Copy(IDictionary existingCopies)
-		{
-			if (existingCopies == null)
-				existingCopies = new Hashtable();
-				
-			<%=listName%><T> copy = new <%=listName%><T>();
+			TList<T> copy = new TList<T>();
 			foreach (T item in this)
 			{
-				T itemCopy = default(T);
-				if (existingCopies.Contains(item))
-					itemCopy = (T)existingCopies[item];
-				else
-					itemCopy = (T)MakeCopyOf(item, existingCopies);
+				T itemCopy = (T)MakeCopyOf(item);
 				copy.Add(itemCopy);
 			}
 			
@@ -192,7 +160,7 @@ namespace <%=NameSpace%>
 		/// Adds the data in this collection to another collection
 		/// </summary>
 		/// <param name="copyTo"></param>
-		public virtual void CopyTo(<%=listName%><T> copyTo)
+		public virtual void CopyTo(TList<T> copyTo)
 		{
 			// make sure not to duplicate the item if it's already there
 			ArrayList alreadySeenItem = new ArrayList();
@@ -279,26 +247,8 @@ namespace <%=NameSpace%>
 				return count;
 			}
 		}
-
-		/// <summary>
-        /// Gets all changes count.
-        /// <remarks>
-        /// This is a total of the following counts:
-        ///  IsNewCount
-        ///  IsDirtyCount
-        ///  IsDeletedCount
-        /// </remarks>
-        /// </summary>
-        /// <value>All changes count.</value>
-        public int AllChangesCount
-        {
-            get 
-            { 
-                return this.IsNewCount + this.IsDirtyCount + this.IsDeletedCount; 
-            }
-        }	
 			
-		/// <summary>
+			/// <summary>
 		/// Returns whether all items contained in the list.
 		/// </summary>
 		/// <value>True if all items are valid; otherwise False.</value>
@@ -369,7 +319,7 @@ namespace <%=NameSpace%>
 		/// </summary>
 		/// <param name="list">The list.</param>
 		/// <param name="action">The action.</param>
-		public static void ForEach<U>(<%=listName%><U> list, Action<U> action) where U : IEntity, new()
+		public static void ForEach<U>(TList<U> list, Action<U> action) where U : IEntity, new()
 		{
 			list.ForEach(action);
 		}
@@ -380,14 +330,14 @@ namespace <%=NameSpace%>
 		/// <param name="index">The index.</param>
 		/// <param name="count">The count.</param>
 		/// <returns></returns>
-		public <%=listName%><T> GetRange(int index, int count)
+		public TList<T> GetRange(int index, int count)
 		{
 				if ((index < 0) || (count < 0))
 				{
 					throw new ArgumentOutOfRangeException((index < 0) ? "index" : "count", "ArgumentOutOfRange_NeedNonNegNum");
 				}
 				
-				<%=listName%><T> list1 = new <%=listName%><T>();
+				TList<T> list1 = new TList<T>();
 				for (int i = index; i < index + count && i < this.Count; i++)
 				{
 					list1.Add(this.Items[i]);
@@ -404,7 +354,7 @@ namespace <%=NameSpace%>
 		///</summary>
 		/// <param name="column">Property of the object to search, given as a value of the 'Entity'Columns enum.</param>
 		/// <param name="value">Value to find.</param>
-		public virtual <%=listName%><T> FindAll(System.Enum column, object value)
+		public virtual TList<T> FindAll(System.Enum column, object value)
 		{
 			return FindAll(column.ToString(), value, true);
 		}
@@ -415,7 +365,7 @@ namespace <%=NameSpace%>
 		/// <param name="column">Property of the object to search, given as a value of the 'Entity'Columns enum.</param>
 		/// <param name="value">Value to find.</param>
 		/// <param name="ignoreCase">A Boolean indicating a case-sensitive or insensitive comparison (true indicates a case-insensitive comparison).  String properties only.</param>
-		public virtual <%=listName%><T> FindAll(System.Enum column, object value, bool ignoreCase)
+		public virtual TList<T> FindAll(System.Enum column, object value, bool ignoreCase)
 		{
 			return FindAll(column.ToString(), value, ignoreCase);
 		}
@@ -425,7 +375,7 @@ namespace <%=NameSpace%>
 		///</summary>
 		/// <param name="propertyName">Property of the object to search.</param>
 		/// <param name="value">Value to find.</param>
-		public virtual <%=listName%><T> FindAll(string propertyName, object value)
+		public virtual TList<T> FindAll(string propertyName, object value)
 		{
 			return FindAll(propertyName, value, true);
 		}
@@ -436,12 +386,12 @@ namespace <%=NameSpace%>
 		/// <param name="propertyName">Property of the object to search.</param>
 		/// <param name="value">Value to find.</param>
 		/// <param name="ignoreCase">A Boolean indicating a case-sensitive or insensitive comparison (true indicates a case-insensitive comparison).  String properties only.</param>
-		public virtual <%=listName%><T> FindAll(string propertyName, object value, bool ignoreCase)
+		public virtual TList<T> FindAll(string propertyName, object value, bool ignoreCase)
 		{
 			PropertyDescriptorCollection props = TypeDescriptor.GetProperties(typeof(T));
 			PropertyDescriptor searchBy = props.Find(propertyName, true);
 			
-			<%=listName%><T> result = new <%=listName%><T>();
+			TList<T> result = new TList<T>();
 			
 			int index = 0;
 			
@@ -466,17 +416,17 @@ namespace <%=NameSpace%>
 		/// </summary>
 		/// <param name="match">The <see cref="T:System.Predicate`1"></see> delegate that defines the conditions of the elements to search for.</param>
 		/// <returns>
-		/// A <see cref="T:<%=listName%>{T}"></see> containing all the elements that match the conditions defined by the specified predicate, if found; otherwise, an empty <see cref="T:<%=listName%>{T}"></see>.
+		/// A <see cref="T:TList{T}"></see> containing all the elements that match the conditions defined by the specified predicate, if found; otherwise, an empty <see cref="T:TList{T}"></see>.
 		/// </returns>
 		/// <exception cref="T:System.ArgumentNullException">match is null.</exception>		
-		public new <%=listName%><T> FindAll(Predicate<T> match) 
+		public new TList<T> FindAll(Predicate<T> match) 
 		{
 			if (match == null)
 		    {
 		    	throw new ArgumentNullException("match");
 		    }
 
-			<%=listName%><T> result = new <%=listName%><T>();
+			TList<T> result = new TList<T>();
 			foreach (T item in this.Items)
 			{
 				if (match(item))
@@ -487,63 +437,12 @@ namespace <%=NameSpace%>
 			return result;
 		}
 		
-        #region Find All Distinct
-        /// <summary>
-        /// Finds all distinct elements for the specified column
-        /// </summary>
-        /// <param name="column">The column.</param>
-        /// <returns></returns>
-        public virtual <%=listName%><T> FindAllDistinct( Enum column )
-        {
-            return FindAllDistinct( column.ToString() );
-        }
-        /// <summary>
-        /// Finds all distinct elements for the specified column
-        /// </summary>
-        /// <param name="columnName">Name of the column.</param>
-        /// <returns></returns>
-        public virtual TList<T> FindAllDistinct( string columnName )
-        {
-            PropertyDescriptorCollection props = TypeDescriptor.GetProperties( typeof( T ) );
-            PropertyDescriptor filterBy = props.Find( columnName, true );
-            <%=listName%><T> result = new <%=listName%><T>();
-            
-            object a;
-            object b;
-            bool found;
-
-            foreach ( T item in this )
-            {
-                a = filterBy.GetValue( item );
-                found = false;
-
-                foreach ( T item2 in result )
-                {
-                    b = filterBy.GetValue( item2 );
-                    if ( ( a == null && b == null ) ||
-                        ( a != null && b != null && a.Equals( b ) ) )
-                    {
-                        found = true;
-                        break;
-                    }
-                }
-
-                if ( !found )
-                {
-                    result.Add( item );
-                }
-            }
-
-            return result;
-        }
-        #endregion Find All Distinct
-		
 		/// <summary>
-		/// Determines whether the <see cref="T:<%=listName%>{T}"></see> contains elements that match the conditions defined by the specified predicate.
+		/// Determines whether the <see cref="T:TList{T}"></see> contains elements that match the conditions defined by the specified predicate.
 		/// </summary>
 		/// <param name="match">The <see cref="T:System.Predicate`1"></see> delegate that defines the conditions of the elements to search for.</param>
 		/// <returns>
-		/// true if the <see cref="T:<%=listName%>{T}"></see> contains one or more elements that match the conditions defined by the specified predicate; otherwise, false.
+		/// true if the <see cref="T:TList{T}"></see> contains one or more elements that match the conditions defined by the specified predicate; otherwise, false.
 		/// </returns>
 		/// <exception cref="T:System.ArgumentNullException">match is null.</exception>
 		public bool Exists(Predicate<T> match)
@@ -552,7 +451,7 @@ namespace <%=NameSpace%>
 		}
 		
 		/// <summary>
-		/// Searches for an element that matches the conditions defined by the specified predicate, and returns the zero-based index of the first occurrence within the entire <see cref="T:<%=listName%>{T}"></see>.
+		/// Searches for an element that matches the conditions defined by the specified predicate, and returns the zero-based index of the first occurrence within the entire <see cref="T:TList{T}"></see>.
 		/// </summary>
 		/// <param name="match">The <see cref="T:System.Predicate`1"></see> delegate that defines the conditions of the element to search for.</param>
 		/// <returns>
@@ -565,14 +464,14 @@ namespace <%=NameSpace%>
 		}
 		
 		/// <summary>
-		/// Searches for an element that matches the conditions defined by the specified predicate, and returns the zero-based index of the first occurrence within the range of elements in the <see cref="T:<%=listName%>{T}"></see> that extends from the specified index to the last element.
+		/// Searches for an element that matches the conditions defined by the specified predicate, and returns the zero-based index of the first occurrence within the range of elements in the <see cref="T:TList{T}"></see> that extends from the specified index to the last element.
 		/// </summary>
 		/// <param name="startIndex">The zero-based starting index of the search.</param>
 		/// <param name="match">The <see cref="T:System.Predicate`1"></see> delegate that defines the conditions of the element to search for.</param>
 		/// <returns>
 		/// The zero-based index of the first occurrence of an element that matches the conditions defined by match, if found; otherwise, 1.
 		/// </returns>
-		/// <exception cref="T:System.ArgumentOutOfRangeException">startIndex is outside the range of valid indexes for the <see cref="T:<%=listName%>{T}"></see>.</exception>
+		/// <exception cref="T:System.ArgumentOutOfRangeException">startIndex is outside the range of valid indexes for the <see cref="T:TList{T}"></see>.</exception>
 		/// <exception cref="T:System.ArgumentNullException">match is null.</exception>
 		public int FindIndex(int startIndex, Predicate<T> match)
 		{
@@ -580,7 +479,7 @@ namespace <%=NameSpace%>
 		}
 		
 		/// <summary>
-		/// Searches for an element that matches the conditions defined by the specified predicate, and returns the zero-based index of the first occurrence within the range of elements in the <see cref="T:<%=listName%>{T}"></see> that starts at the specified index and contains the specified number of elements.
+		/// Searches for an element that matches the conditions defined by the specified predicate, and returns the zero-based index of the first occurrence within the range of elements in the <see cref="T:TList{T}"></see> that starts at the specified index and contains the specified number of elements.
 		/// </summary>
 		/// <param name="startIndex">The zero-based starting index of the search.</param>
 		/// <param name="count">The number of elements in the section to search.</param>
@@ -588,7 +487,7 @@ namespace <%=NameSpace%>
 		/// <returns>
 		/// The zero-based index of the first occurrence of an element that matches the conditions defined by match, if found; otherwise, 1.
 		/// </returns>
-		/// <exception cref="T:System.ArgumentOutOfRangeException">startIndex is outside the range of valid indexes for the <see cref="T:<%=listName%>{T}"></see>.-or-count is less than 0.-or-startIndex and count do not specify a valid section in the <see cref="T:<%=listName%>{T}"></see>.</exception>
+		/// <exception cref="T:System.ArgumentOutOfRangeException">startIndex is outside the range of valid indexes for the <see cref="T:TList{T}"></see>.-or-count is less than 0.-or-startIndex and count do not specify a valid section in the <see cref="T:TList{T}"></see>.</exception>
 		/// <exception cref="T:System.ArgumentNullException">match is null.</exception>
 		public int FindIndex(int startIndex, int count, Predicate<T> match)
 		{
@@ -626,7 +525,7 @@ namespace <%=NameSpace%>
         /// <param name="findAllByType"><see cref="FindAllByType" /> Type to easily search by</param>
         /// <param name="column">Property of the object to search, given as a value of the 'Entity'Columns enum.</param>
         /// <param name="value">Value to find.</param>
-        public virtual <%=listName%><T> FindAllBy(FindAllByType findAllByType, System.Enum column, object value)
+        public virtual TList<T> FindAllBy(FindAllByType findAllByType, System.Enum column, object value)
         {
             return FindAllBy(findAllByType, column.ToString(), value, true);
         }
@@ -638,7 +537,7 @@ namespace <%=NameSpace%>
         /// <param name="column">Property of the object to search, given as a value of the 'Entity'Columns enum.</param>
         /// <param name="value">Value to find.</param>
         /// <param name="ignoreCase">A Boolean indicating a case-sensitive or insensitive comparison (true indicates a case-insensitive comparison).  String properties only.</param>
-        public virtual <%=listName%><T> FindAllBy(FindAllByType findAllByType, System.Enum column, object value, bool ignoreCase)
+        public virtual TList<T> FindAllBy(FindAllByType findAllByType, System.Enum column, object value, bool ignoreCase)
         {
             return FindAllBy(findAllByType, column.ToString(), value, ignoreCase);
         }
@@ -649,7 +548,7 @@ namespace <%=NameSpace%>
         /// <param name="findAllByType"><see cref="FindAllByType" /> Type to easily search by</param>
         /// <param name="propertyName">Property of the object to search.</param>
         /// <param name="value">Value to find.</param>
-        public virtual <%=listName%><T> FindAllBy(FindAllByType findAllByType, string propertyName, object value)
+        public virtual TList<T> FindAllBy(FindAllByType findAllByType, string propertyName, object value)
         {
             return FindAllBy(findAllByType, propertyName, value, true);
         }
@@ -661,12 +560,12 @@ namespace <%=NameSpace%>
         /// <param name="propertyName">Property of the object to search.</param>
         /// <param name="value">Value to find.</param>
         /// <param name="ignoreCase">A Boolean indicating a case-sensitive or insensitive comparison (true indicates a case-insensitive comparison).  String properties only.</param>
-        public virtual <%=listName%><T> FindAllBy(FindAllByType findAllByType, string propertyName, object value, bool ignoreCase)
+        public virtual TList<T> FindAllBy(FindAllByType findAllByType, string propertyName, object value, bool ignoreCase)
         {
             PropertyDescriptorCollection props = base.PropertyCollection;
             PropertyDescriptor searchBy = props.Find(propertyName, true);
 
-            <%=listName%><T> result = new <%=listName%><T>();
+            TList<T> result = new TList<T>();
 
             int index = 0;
 

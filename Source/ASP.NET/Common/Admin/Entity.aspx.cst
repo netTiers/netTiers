@@ -40,12 +40,9 @@
 	ColumnSchemaCollection colsUpdatable = new ColumnSchemaCollection();
 	foreach (ColumnSchema column in cols)
 	{
-		if ( ! IsIdentityColumn(column) && ! IsComputed(column)  && IncludeInOutput(SourceTable, column))
+		if ( ! IsIdentityColumn(column) && ! IsComputed(column) )
 			colsUpdatable.Add(column);
 	}
-	
-	//sort the columnschema based on what is in mapping file					
-	colsUpdatable.Sort(new ColumnSchemaComparer("Id",SourceTable,CurrentNetTiersMap));
 	
 	TableKeySchemaCollection fKeysSingle = new TableKeySchemaCollection();
 	foreach(TableKeySchema tableKey in fkeys)
@@ -95,8 +92,8 @@
 					
 					foreach( ColumnSchema column in colsUpdatable)
 					{
-						if (column.IsForeignKeyMember && IncludeRelations && IncludeGetListByFK) 
-						{			
+						if (column.IsForeignKeyMember) 
+						{					
 							string tempDSO = string.Empty;
 							Response.Write(WriteTemplateField(column, 4, out tempDSO, suffix) + "\r\n");
 							entityDSO+=tempDSO;
@@ -107,7 +104,7 @@
 							&& IncludeAtlasToolkit)
 						{
 							string tempDSO = string.Empty;
-							Response.Write(WriteBlobTemplateField(column, suffix) + "\r\n");
+							Response.Write(WriteBlobTemplateField(column) + "\r\n");
 							entityDSO+=tempDSO;
 							suffix++;
 						}
@@ -211,7 +208,7 @@
 			</DeepLoadProperties>
 			<% }
 			else
-				Response.Write("\t\t>\n");
+				Response.Write(">");
 			%>
 			<Parameters>
 				<data:CustomParameter Name="WhereClause" Value="" ConvertEmptyStringToNull="false" />
@@ -246,27 +243,22 @@ public string WriteTemplateField(ColumnSchema column, int tabs, out string entit
 	string pkDisplayField = String.Empty;	
 	string objectDataSource = String.Empty;
 	string pkCSType = String.Empty;
-	string keysName = String.Empty;
-	StringBuilder navigateUrlParms = new StringBuilder();
-	StringBuilder navigateUrlFields = new StringBuilder();
-	StringBuilder headerText = new StringBuilder();
-	
 	TableSchema fkTable = null;
-//Response.WriteLine(keysName);
+
 	foreach (TableKeySchema tableKey in column.Table.ForeignKeys)
 	{
 		//Key Tables must be in SourceTables
 		if (!SourceTables.Contains(tableKey.ForeignKeyTable) || !SourceTables.Contains(tableKey.PrimaryKeyTable))
 			continue;
-		
+			
 		fkTable = tableKey.PrimaryKeyTable;
 		ColumnSchema fKeyColumn = tableKey.ForeignKeyMemberColumns[0];
 		fkPropertyName = GetPropertyName(fKeyColumn);
-		//fkFriendlyName = GetFriendlyName(fKeyColumn);
+		fkFriendlyName = GetFriendlyName(fKeyColumn);
 		fkColumnName = fKeyColumn.Name;
-
+		
 		if ( GetPropertyName(fKeyColumn) == propertyName )
-		{	
+		{
 			pkPropertyName = GetPropertyName(tableKey.PrimaryKeyMemberColumns[0]);	
 			pkColumnName = tableKey.PrimaryKeyMemberColumns[0].Name;
 			
@@ -285,27 +277,6 @@ public string WriteTemplateField(ColumnSchema column, int tabs, out string entit
 
 			if (pkDisplayField == String.Empty )
 				pkDisplayField = pkPropertyName;
-				
-			keysName = GetKeysName(tableKey.ForeignKeyMemberColumns);
-			
-			for(int x = 0; x < tableKey.ForeignKeyMemberColumns.Count; x++)
-			{
-				ColumnSchema fkColumn = tableKey.ForeignKeyMemberColumns[x];
-				//Assume related pk and fk columns are in same order...
-				ColumnSchema pkColumn = tableKey.PrimaryKeyMemberColumns[x];
-				
-				//Form edit url string
-				if (x > 0) navigateUrlParms.Append("&");
-				navigateUrlParms.AppendFormat("{0}={{{1}}}",GetPropertyName(pkColumn), x);
-				
-				//form the navigate url fields
-				if (x > 0) navigateUrlFields.Append(",");
-				navigateUrlFields.Append(GetPropertyName(pkColumn));
-				
-				//Form the header text
-				if (x > 0) headerText.Append(" / ");
-				headerText.Append(GetFriendlyName(fkColumn));
-			}
 
 			break;						
 		}
@@ -314,12 +285,13 @@ public string WriteTemplateField(ColumnSchema column, int tabs, out string entit
 		return s;		
 	
 	return string.Format(_templateField, 
-		/*0*/ headerText.ToString(), 
-		/*1*/ GetClassName(fkTable), 
-		/*2*/ pkDisplayField, 
-		/*3*/ keysName,
-		/*4*/ navigateUrlParms.ToString(),
-		/*5*/ navigateUrlFields.ToString());
+		/*0*/ fkPropertyName, 
+		/*1*/ fkFriendlyName, 
+		/*2*/ pkPropertyName, 
+		/*3*/ GetClassName(fkTable), 
+		/*4*/ fkColumnName, 
+		/*5*/ pkDisplayField, 
+		/*6*/ string.Concat(objectDataSource, "DataSource", suffix.ToString()));
 	
 	/*
 	s += Tab(4) + "<data:BoundEntityDropDownField DataField=\"" + fkPropertyName + "\" HeaderText=\"" + GetPascalSpacedName(fkPropertyName) + "\" SortExpression=\"[" + fkColumnName + "]\"\r\n";
@@ -336,10 +308,10 @@ public string WriteTemplateField(ColumnSchema column, int tabs, out string entit
 	*/
 }
 
-public string WriteBlobTemplateField(ColumnSchema column, int suffix) 
+public string WriteBlobTemplateField(ColumnSchema column) 
 {
 	string propertyName = GetPropertyName(column);
-	return string.Format(_blobTemplate, GetFriendlyName(column), propertyName, GetPropertyName(SourceTable.PrimaryKey.MemberColumns[0]), suffix);
+	return string.Format(_blobTemplate, GetFriendlyName(column), propertyName, GetPropertyName(SourceTable.PrimaryKey.MemberColumns[0]));
 }
 
 public string WriteBoundField(ColumnSchema column, int tabs) {
@@ -350,14 +322,14 @@ public string WriteBoundField(ColumnSchema column, int tabs) {
 
 	if (column.DataType == DbType.Date || column.DataType == DbType.DateTime)
 	{
-		return string.Format("{1}<asp:BoundField DataField=\"{0}\" DataFormatString=\"{{0:d}}\" HtmlEncode=\"False\" HeaderText=\"{4}\" SortExpression=\"[{2}]\" {3} />", propertyName, Tab(tabs), column.Name, (column.IsPrimaryKeyMember)?"ReadOnly":"", GetFriendlyName(column));
+		return string.Format("{1}<asp:BoundField DataField=\"{0}\" DataFormatString=\"{{0:d}}\" HtmlEncode=\"False\" HeaderText=\"{4}\" SortExpression=\"{2}\" {3} />", propertyName, Tab(tabs), column.Name, (column.IsPrimaryKeyMember)?"ReadOnly":"", GetFriendlyName(column));
 	}
 	else if (column.NativeType == "bit") {
 		return string.Format("{1}<data:BoundRadioButtonField DataField=\"{0}\" HeaderText=\"{4}\" SortExpression=\"[{2}]\" {3} />", propertyName, Tab(tabs), column.Name, (column.IsPrimaryKeyMember)?"ReadOnly":"", GetFriendlyName(column));
 	}	
 	else if (column.NativeType != "text" && column.NativeType != "ntext") 
 	{
-		return string.Format("{1}<asp:BoundField DataField=\"{0}\" HeaderText=\"{4}\" SortExpression=\"[{2}]\" {3} />", propertyName, Tab(tabs), column.Name, (column.IsPrimaryKeyMember)?"ReadOnly":"", GetFriendlyName(column));
+		return string.Format("{1}<asp:BoundField DataField=\"{0}\" HeaderText=\"{4}\" SortExpression=\"{2}\" {3} />", propertyName, Tab(tabs), column.Name, (column.IsPrimaryKeyMember)?"ReadOnly":"", GetFriendlyName(column));
 	}
 	/*
 	else 
@@ -370,7 +342,7 @@ public string WriteBoundField(ColumnSchema column, int tabs) {
 	
 }
 
-const string _templateField = @"				<data:HyperLinkField HeaderText=""{0}"" DataNavigateUrlFormatString=""{1}Edit.aspx?{4}"" DataNavigateUrlFields=""{5}"" DataContainer=""{3}Source"" DataTextField=""{2}"" />";
+const string _templateField = @"				<data:HyperLinkField HeaderText=""{1}"" DataNavigateUrlFormatString=""{3}Edit.aspx?{2}={{0}}"" DataNavigateUrlFields=""{2}"" DataContainer=""{0}Source"" DataTextField=""{5}"" />";
 	
 	//	const string _templateField = @"
 	//					<asp:TemplateField HeaderText=""{1}"">
@@ -396,15 +368,15 @@ const string _templateField = @"				<data:HyperLinkField HeaderText=""{0}"" Data
 const string _blobTemplate = @"
 				<asp:templatefield headertext='{0} Preview'>
 				<itemtemplate>
-					<ajaxToolkit:ModalPopupExtender id='ModalPopupExtender{3}' runat='server'
-						TargetControlID='LinkButton{3}' 
+					<ajaxToolkit:ModalPopupExtender id='ModalPopupExtender' runat='server'
+						TargetControlID='LinkButton' 
 						PopupControlID='Panel1' 
 						OkControlID='Button1'
 						BackgroundCssClass='ModalBackground' 
 						DynamicControlID='lblPreview'
 						DynamicContextKey='<%# DataBinder.Eval(Container.DataItem, ""{2}"") %>'
 						DynamicServiceMethod='Get{1}Content' />
-					<asp:LinkButton ID='LinkButton{3}' runat='server' Text='Preview' />
+					<asp:LinkButton ID='LinkButton' runat='server' Text='Preview' />
 				</itemtemplate>
 				</asp:templatefield>
 	";

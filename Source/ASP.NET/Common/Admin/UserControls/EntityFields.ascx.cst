@@ -13,7 +13,6 @@
 <%@ Property Name="SourceDatabase" Type="SchemaExplorer.DatabaseSchema" Optional="False" Category="DataSource" 	Description="Database that the stored procedures should be based on." %>
 <%@ Property Name="IncludeAtlasLibrary" Type="System.Boolean" Default="false" Category="06b. Website - Advanced" Description="Indicates whether to include a reference to the Atlas component library." %>
 <%@ Property Name="IncludeAtlasToolkit" Type="System.Boolean" Default="false" Category="06b. Website - Advanced" Description="Indicates whether to include a reference to the Atlas Control Toolkit. This property is only taken into account when IncludeAtlasLibrary is true." %>
-<%@ Property Name="DateFormat" Type="System.String" Default="MM/dd/yyyy" Category="06b. Website - Advanced" Description="The format to be used when displaying dates in the web site." %>
 <%
 
 	// Collection of all columns in the table.
@@ -39,14 +38,11 @@
 	ColumnSchemaCollection colsUpdatable = new ColumnSchemaCollection();
 	foreach (ColumnSchema column in cols)
 	{	
-		if ( ! IsIdentityColumn(column) && ! IsComputed(column) && IncludeInOutput(SourceTable, column))
+		if ( ! IsIdentityColumn(column) && ! IsComputed(column))
 		{		
 			colsUpdatable.Add(column); 
 		}
 	}
-
-	//sort the columnschema based on what is in mapping file					
-	colsUpdatable.Sort(new ColumnSchemaComparer("Id",SourceTable,CurrentNetTiersMap));
 	
 	TableKeySchemaCollection fKeysSingle = new TableKeySchemaCollection();
 	foreach(TableKeySchema tableKey in fkeys)
@@ -82,17 +78,15 @@
 					{
 						string propertyName = GetPropertyName(column);
 						string editorControl = GetEditorControl(column, "", fkeys);
-            string controlID = GetControlID(column,"");
-            string associatedControlID = GetAssociatedControlID(controlID);
 						if (editorControl == null || editorControl == string.Empty)
 							continue;
-%>
+%>							
 			<tr>
-        <td class="literal"><asp:Label ID="<%= associatedControlID %>" runat="server" Text="<%=GetFriendlyName(column)%>:" AssociatedControlID="<%= controlID %>" /></td>
-        <td>
+				<td class="literal"><%=GetFriendlyName(column)%>:</td>
+				<td>
 					<%= editorControl %>
 				</td>
-			</tr>
+			</tr>				
 <%
 					}							
 		
@@ -101,7 +95,6 @@
 		
 		foreach(TableKeySchema key in SourceTable.PrimaryKeys)
 		{
-				
 			// Check that the key is related to a junction table and that this key relate a PK in this junction table
 			if ( IsJunctionTable(key.ForeignKeyTable) && IsJunctionKey(key))
 			{
@@ -125,40 +118,51 @@
 							}
 						}
 						
-						string primaryPk, secondaryPk, junctionPk, junctionFk, dataSourceId;
+						string primaryPk, secondaryPk, junctionPk, junctionFk;
 						primaryPk = GetPropertyName(keys[0]);
 						secondaryPk = GetPropertyName(secondaryTable.PrimaryKey.MemberColumns[0]);
 						//junctionPk = GetPKPropertyName(keys[0].Name, junctionTable.ForeignKeys);
 						//junctionFk = GetPKPropertyName(secondaryTable.PrimaryKey.MemberColumns[0].Name, junctionTable.ForeignKeys);
 						junctionPk = GetPKPropertyName(keys[0], junctionTable.ForeignKeys);
-						junctionFk = GetPKPropertyName(secondaryTable.PrimaryKey.MemberColumns[0], junctionTableKey);
-						
-						//Check to see if we have an M:M relationship where both sides of the relationship point to the same table
-						//i.e. Person (PersonId)--> RelatedPerson (PersonId, RelatedPersonId) --> Person (PersonId)
-						if (junctionPk == junctionFk) continue;
-						dataSourceId = string.Format("{0}ReferenceDataSource",GetClassName(secondaryTable));
+						junctionFk = GetPKPropertyName(secondaryTable.PrimaryKey.MemberColumns[0], junctionTable.ForeignKeys);
+												
 %>
 			<tr>
 				<td valign="top" class="literal"><%= GetFriendlyName(secondaryTable)%>:</td>
 				<td>
 					<asp:CheckBoxList ID="<%=GetClassName(secondaryTable)%>List" runat="server"
-						DataSourceID="<%=dataSourceId%>"
+						DataSourceID="<%=GetClassName(secondaryTable)%>DataSource"
 						DataTextField="<%=secondaryTextValue%>"
 						DataValueField="<%=secondaryPk%>"
 						RepeatColumns="4"
 					/>				
-					<data:<%=GetClassName(secondaryTable)%>DataSource ID="<%=dataSourceId%>" runat="server" SelectMethod="<%= MethodNames.GetAll %>"/>
+					<data:<%=GetClassName(secondaryTable)%>DataSource ID="<%=GetClassName(secondaryTable)%>DataSource" runat="server"
+						SelectMethod="<%= MethodNames.GetAll %>"
+					/>
 					
-					<data:<%=GetClassName(junctionTableKey.ForeignKeyTable)%>DataSource ID="<%=GetClassName(junctionTableKey.ForeignKeyTable)%>DataSource" runat="server" SelectMethod="GetBy<%=junctionPk%>" >
+					<data:<%=GetClassName(junctionTableKey.ForeignKeyTable)%>DataSource ID="<%=GetClassName(junctionTableKey.ForeignKeyTable)%>DataSource" runat="server"
+						SelectMethod="GetBy<%=junctionPk%>"
+					>
 						<Parameters>							
 							<asp:QueryStringParameter Name="<%=junctionPk%>" QueryStringField="<%=primaryPk%>" Type="String" />
 						</Parameters>
 					</data:<%=GetClassName(junctionTableKey.ForeignKeyTable)%>DataSource>	
 					
 					<data:ManyToManyListRelationship ID="<%=GetClassName(junctionTableKey.ForeignKeyTable)%>Relationship" runat="server">
-						<PrimaryMember runat="server" DataSourceID="<%=entityName%>DataSource" EntityKeyName="<%=primaryPk%>" />
-						<LinkMember runat="server" DataSourceID="<%=GetClassName(junctionTableKey.ForeignKeyTable)%>DataSource" EntityKeyName="<%=junctionPk%>" ForeignKeyName="<%=junctionFk%>" />
-						<ReferenceMember runat="server" DataSourceID="<%=dataSourceId%>" ListControlID="<%=GetClassName(secondaryTable)%>List" EntityKeyName="<%=secondaryPk%>" />
+						<PrimaryMember runat="server"
+							DataSourceID="<%=entityName%>DataSource"
+							EntityKeyName="<%=primaryPk%>"
+						/>
+						<LinkMember runat="server"
+							DataSourceID="<%=GetClassName(junctionTableKey.ForeignKeyTable)%>DataSource"
+							EntityKeyName="<%=junctionPk%>"
+							ForeignKeyName="<%=junctionFk%>"
+						/>
+						<ReferenceMember runat="server"
+							DataSourceID="<%=GetClassName(secondaryTable)%>DataSource"
+							ListControlID="<%=GetClassName(secondaryTable)%>List"
+							EntityKeyName="<%=secondaryPk%>"
+						/>
 					</data:ManyToManyListRelationship>					
 				</td>
 			</tr>			
@@ -187,17 +191,6 @@ private string getParameters(ColumnSchemaCollection keys)
     }
     return s;
 }	
-
-public string GetAssociatedControlID(string controlid)
-{
-  return String.Format("lbl{0}",controlid);
-}
-
-public string GetControlID(ColumnSchema column, string prefix)
-{
-	string propertyName = GetPropertyName(column);
-	return String.Format("data{0}{1}",prefix, propertyName);
-}
 
 public string GetEditorControl(ColumnSchema column, string prefix, TableKeySchemaCollection fkeys)
 {
@@ -384,7 +377,7 @@ public string GetEditorControl(ColumnSchema column, string prefix, TableKeySchem
 				}
 				else {
 					controlDecl +=  String.Format("<asp:ImageButton ID=\"cal_{0}\" runat=\"server\" SkinID=\"CalendarImageButton\" OnClientClick=\"javascript:return false;\" />",controlID);
-					controlDecl += string.Format("<ajaxToolkit:CalendarExtender runat=\"server\" TargetControlID=\"{0}\" CssClass=\"ajaxToolkit-CalendarExtender\" Format=\"{1}\" PopupButtonID=\"cal_{0}\" id=\"calext_{0}\" />", controlID,DateFormat); 
+					controlDecl += string.Format("<ajaxToolkit:CalendarExtender runat=\"server\" TargetControlID=\"{0}\" CssClass=\"ajaxToolkit-CalendarExtender\" Format=\"MM/dd/yyyy\" PopupButtonID=\"cal_{0}\" />", controlID); 
 				}
 				
 				if ( ! column.AllowDBNull )

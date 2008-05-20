@@ -1,4 +1,4 @@
-<%--
+﻿<%--
  * $Id: IEntity.cst,v 1.13 2006/02/27 22:09:40 bgjohnso Exp $
  * Last modified by $Author: bgjohnso $
  * Last modified at $Date: 2006/02/27 22:09:40 $
@@ -11,16 +11,11 @@
 
 <%@ Property Name="NameSpace" Optional="False" Type="System.String" Category="Style" Description="Object Namespace." %>
 <%@ Property Name="BLLNameSpace" Optional="False" Type="System.String" Category="Style" Description="BLL Object Namespace." %>
-<%@ Property Name="ValidationType" Type="MoM.Templates.ValidationType" Default="NetTiers" Category="02. Framework Generation - Optional" Description="Choice to either use .netTiers validation framework, or Enterprise Library VAB" %>
 <%@ Assembly Name="SchemaExplorer" %>
 
 using System;
 using System.ComponentModel;
 using System.Collections.Generic;
-<% if(ValidationType == MoM.Templates.ValidationType.EntLib){%>
-using Microsoft.Practices.EnterpriseLibrary.Validation;
-<%}%>
-
 using <%=BLLNameSpace%>;
 using <%=BLLNameSpace%>.Validation;
 
@@ -31,12 +26,7 @@ namespace <%=NameSpace%>
 	/// </summary>
 	public class ServiceResult
 	{
-		<% if(ValidationType == MoM.Templates.ValidationType.NetTiers){%>
 		private Dictionary<ProcessorBase, BrokenRulesList>  processBrokenRuleLists;
-		<%}%>
-		<% if(ValidationType == MoM.Templates.ValidationType.EntLib){%>
-		private Dictionary<ProcessorBase, ValidationResults>  processBrokenRuleLists;
-		<%}%>
         private Dictionary<ProcessorBase, Exception> exceptionList = null;
 		private List<IProcessorResult> processorResultList = null;
 
@@ -83,22 +73,12 @@ namespace <%=NameSpace%>
 				{
 					if (processorResultList == null)
 						continue;
-					<% if(ValidationType == MoM.Templates.ValidationType.NetTiers){%>
+						
 					foreach(KeyValuePair<Type, BrokenRulesList> kvp in processorResultList[i].BrokenRulesLists)
 					{	
 						if (kvp.Value != null && kvp.Value.Count > 0)
 							sb.Append(kvp.Value.ToString());
 					}
-					<%}%>
-					<% if(ValidationType == MoM.Templates.ValidationType.EntLib){%>
-					foreach(KeyValuePair<Type, ValidationResults> kvp in processorResultList[i].BrokenRulesLists)
-					{	
-						foreach(ValidationResult result in kvp.Value)
-						{
-							sb.Append(result.Message);
-						}
-					}
-					<%}%>
 				}
 				
 				return sb.ToString();
@@ -108,22 +88,12 @@ namespace <%=NameSpace%>
 		/// <summary>
 		///    Provides an aggregated group of BrokenRuleList for each of the executed processes.
 		/// </summary>
-		<% if(ValidationType == MoM.Templates.ValidationType.NetTiers){%>
 		public virtual Dictionary<ProcessorBase, BrokenRulesList> ProcessBrokenRuleLists
-		<%}%>
-		<% if(ValidationType == MoM.Templates.ValidationType.EntLib){%>
-		public virtual Dictionary<ProcessorBase, ValidationResults> ProcessBrokenRuleLists
-		<%}%>
 		{
 			get
 			{
 				if ( processBrokenRuleLists == null )
-				<% if(ValidationType == MoM.Templates.ValidationType.NetTiers){%>
 					processBrokenRuleLists = new Dictionary<ProcessorBase, BrokenRulesList>();
-				<%}%>
-				<% if(ValidationType == MoM.Templates.ValidationType.EntLib){%>
-					processBrokenRuleLists = new Dictionary<ProcessorBase, ValidationResults>();
-				<%}%>
 
 				return processBrokenRuleLists;
 			}
