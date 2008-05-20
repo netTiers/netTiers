@@ -1,0 +1,139 @@
+﻿<%@ CodeTemplate Language="C#" TargetLanguage="XML" Description="Generate a nant build file." Debug="True" ResponseEncoding="UTF-8" NoWarn="0108,0618,1572,1573,1574,0162,2002" %>
+<%@ Property Name="CompanyName" Optional="True" Type="System.String" Category="General" Description="The name of your company." %>
+<%@ Property Name="CompanyURL" Optional="True" Type="System.String" Category="General" Description="The URL of your company." %>
+<%@ Property Name="IncludeBll" Type="System.Boolean" Category="Option" Description="" %>
+<%@ Property Name="IncludeSqlClient" Type="System.Boolean" Category="Option" Description="" %>
+<%@ Property Name="IncludeWebServiceClient" Type="System.Boolean" Category="Option" Description="" %>
+<%@ Property Name="IncludeUnitTest" Type="System.Boolean" Default="true" Category="General" Description="Indicates whether the Unit tests should be generated." %>
+
+<%@ Property Name="NameSpace" Type="System.String" Category="Style" Description="Project Namespace" %>
+<%@ Property Name="BLLNameSpace" Type="System.String" Category="Data" Description="Entities Namespace." %>
+<%@ Property Name="DALNameSpace" Type="System.String" Category="Data" Description="DAL Namespace." %>
+<%@ Property Name="DALSqlNameSpace" Type="System.String" Category="Data" Description="DAL sql Namespace." %>
+<%@ Property Name="DALWSNameSpace" Type="System.String" Category="Data" Description="DAL ws Namespace." %>
+<%@ Property Name="UTNameSpace" Type="System.String" Category="Data" Description="UT Namespace." %>
+<%@ Property Name="WSNameSpace" Type="System.String" Category="Data" Description="WebService Namespace." %>
+
+<%@ Property Name="SingleProject" Type="System.Boolean" Category="General" Description="Indicates if there is just one project." Default="False" %>
+<?xml version="1.0"?>
+<project name="<%=NameSpace%>" default="help" basedir=".">
+	
+	<!-- ================ -->
+	<!--      HELP        -->
+	<!-- ================ -->
+	<target name="help" description="Show some help information about this build file.">
+		<echo message="Available targets are : " />
+		<echo message=" - build : solution compilation." />
+		<% if (IncludeUnitTest) { %><echo message=" - tests : Execute the unit tests." /><%}%>
+		<echo message=" - documentation : generate html and chm documentation." />
+		<echo message=" - complete : build, tests and documentation." />
+	</target>
+	
+	<!-- ================= -->
+	<!--   Complete tasks  -->
+	<!-- ================= -->
+	<target name="complete" description="Do the full integration process.">
+		<echo message="Starting integration process." />
+		<call target="build" />
+		<call target="tests" />
+		<call target="documentation" />
+	</target>
+			
+    
+    <!-- ================ -->
+	<!-- MS Build -->
+	<!-- ================ -->
+	<target name="build" description="Build of the solution using the release configuration.">
+		<property name="msbuild.property" value="OutDir=..\Output\"/>
+		<property name="msbuild.path" value="C:\WINDOWS\Microsoft.NET\Framework\v2.0.50727\"/>
+		<exec program="msbuild.exe" basedir="${msbuild.path}">
+		<arg value="/p:${msbuild.property}" />
+		<arg value="/t:rebuild" />
+		<arg value="/v:m" />
+		</exec>
+	</target>
+    
+    <% if (IncludeUnitTest) { %>
+    <!-- ================ -->
+	<!--    Unit tests    -->
+	<!-- ================ -->
+    <target name="tests" depends="build">    	
+		<nunit2>
+			<formatter type="Plain" usefile="true" extension=".xml"/>
+		<%	if (!SingleProject) { %>
+			<test assemblyname="Output\<%=UTNameSpace%>.dll" appconfig="Output\<%=UTNameSpace%>.dll.config" />
+		<% } else {	%>
+			<test assemblyname="Output\<%=BLLNameSpace %>.dll" appconfig="Output\<%=BLLNameSpace%>.dll.config" />
+			<% } %>
+		</nunit2>
+    </target>
+    <% } %>
+    
+    <!-- ================ -->
+	<!--  DOCUMENTATION   -->
+	<!-- ================ -->
+    <target name="documentation" depends="build">
+		<ndoc failonerror="false">
+			 <assemblies basedir="Output\">
+			<%
+			if (!SingleProject)
+			{
+				%><include name="<%=DALNameSpace%>.dll" /><%
+				
+				if (IncludeSqlClient) { %>
+					<include name="<%=DALSqlNameSpace%>.dll" />
+			<% } if (IncludeBll) { %>
+					<include name="<%=BLLNameSpace%>.dll" />
+			<% } if (IncludeUnitTest) { %>
+					<include name="<%=UTNameSpace%>.dll" />
+			<% }
+			} else {%>
+				<include name="<%=BLLNameSpace%>.dll" />
+			<%}%>
+			</assemblies>			
+			<documenters>
+				<documenter name="MSDN">
+					<property name="OutputDirectory" value="Output\Doc" />
+					<property name="HtmlHelpName" value="Documentation" />
+					<property name="HtmlHelpCompilerFilename" value="hhc.exe" />
+					<property name="IncludeFavorites" value="False" />
+					<property name="Title" value="<%= NameSpace %> .Net documentation" />
+					<property name="SplitTOCs" value="False" />
+					<property name="DefaulTOC" value="" />
+					<property name="ShowVisualBasic" value="True" />
+					<property name="ShowMissingSummaries" value="True" />
+					<property name="ShowMissingRemarks" value="False" />
+					<property name="ShowMissingParams" value="True" />
+					<property name="ShowMissingReturns" value="True" />
+					<property name="ShowMissingValues" value="True" />
+					<property name="DocumentInternals" value="False" />
+					<property name="DocumentProtected" value="True" />
+					<property name="DocumentPrivates" value="False" />
+					<property name="DocumentEmptyNamespaces" value="False" />
+					<property name="IncludeAssemblyVersion" value="True" />
+					<property name="CopyrightText" value="<%=CompanyName%>" />
+					<property name="CopyrightHref" value="<%=CompanyURL%>" />
+					<property name="OutputTarget" value="HtmlHelpAndWeb" />
+					<property name="UseNamespaceDocSummaries" value="True" />
+				 </documenter>				
+			</documenters> 
+		</ndoc>
+	</target>
+	
+	<!-- ================ -->
+    <!--     Gen Code     -->
+    <!-- ================ -->
+    <target name="gencode" description="Generation of the DAL source code using the .NetTiers templates and CodeSmith console.">
+        <property name="nettiers.template" value="c:\program files\NetTiers\Templates\NetTiers.cst" unless="${property::exists('nettiers.path')}"/>
+        <property name="nettiers.propertyset" value="Northwind.xml"/>
+        <property name="codesmith.path" value="c:\Program files\Codesmith\2.6\"/>
+        
+        <exec program="cs" basedir="${codesmith.path}">
+            <arg value="/template:${nettiers.template}" />
+            <arg value="/propertyset:${nettiers.propertyset}" />
+        </exec>
+    </target>
+
+
+	
+</project>

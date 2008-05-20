@@ -1,0 +1,85 @@
+﻿<%--
+	Written By:
+		Rizaullah Mohammed (Riza)
+	Description:
+		This script will create Service layer classes for Views. It requires stored procedures
+		created from the procedure script. So for this code to work properly you need to run
+		the procedure template, the rowobject template, and the rowcollection template on
+		the same table. You can also optionally use the main script which will run them all
+		for you.
+--%>
+<%@ CodeTemplate Src="..\..\TemplateLib\CommonSqlCode.cs" Inherits="MoM.Templates.CommonSqlCode" Language="C#" TargetLanguage="C#" Description="Component Object Class" ResponseEncoding="UTF-8" NoWarn="0108,0618,1572,1573,1574,0162,2002"%>
+<%@ Assembly Name="SchemaExplorer" %>
+<%@ Assembly Name="System.Design" %>
+<%@ Import Namespace="SchemaExplorer" %>
+<%@ Import Namespace="System.Collections" %>
+
+<%@ Property Name="NameSpace" Optional="True" Type="System.String" Category="Style" Description="Object Namespace." %>
+<%@ Property Name="BLLNameSpace" Optional="True" Type="System.String" Category="Style" Description="Component Namespace." %>
+<%@ Property Name="DALNameSpace" Optional="True" Type="System.String" Category="Style" Description="DAL Namespace." %>	
+<%@ Property Name="UsePartialClass" Type="System.Boolean" Default="true" Category="General" Description="Indicates if partial class should be generated." %>
+
+<%@ Property Name="SourceView" Type="SchemaExplorer.ViewSchema" Category="Connection" Description="View Object should be based on." %>
+
+<%@ Property Name="ComponentPattern" Optional="False" Type="MoM.Templates.ComponentPatternType" Category="Pattern" Description="Component Pattern Type." %>
+<%@ Property Name="CustomNonMatchingReturnType" Type="CustomNonMatchingReturnType" Default="DataSet" Category="Options" Description="When using custom stored procedures, if the returned rows do not match the fields in an entity, a DataSet or IDataReader will be returned. Choose One.  This is useful if you've returned more than one resultset in a custom procedure; you can use a ConvertToDataSet(IDataReader) method in the Utility class to convert that to a DataSet." %>
+<%
+	string today = DateTime.Now.ToLongDateString();
+
+	
+	// Name of the Abstract Class
+	string className = GetClassName(SourceView, ClassNameFormat.Service);
+	string typeName = GetClassName(SourceView);
+	string collectionClassName = GetClassName(SourceView, ClassNameFormat.Collection);
+	string abstractClassName = GetClassName(SourceView, ClassNameFormat.AbstractService);
+
+
+	// Collection of all columns in the table.
+	ViewColumnSchemaCollection cols = SourceView.Columns;
+	
+	// Collection of all columns in the table that are not primary keys.
+	//ColumnSchemaCollection nonKeys = SourceView.NonPrimaryKeyColumns;
+	
+	// this array store each Get BY MemberColumns in order to avoid to create doublon Get methods
+	System.Collections.ArrayList getbyKeys = new System.Collections.ArrayList();
+	
+%>
+
+#region Using Directives
+using System;
+using System.ComponentModel;
+using System.Collections;
+using System.Xml.Serialization;
+using System.Data;
+
+using <%=BLLNameSpace%>;
+using <%=BLLNameSpace%>.Validation;
+
+using <%=DALNameSpace%>;
+using Microsoft.Practices.EnterpriseLibrary.Logging;
+
+#endregion
+
+namespace <%=NameSpace%>
+{		
+	
+	///<summary>
+	/// An component type implementation of the '<%=SourceView.Name%>' table.
+	///</summary>
+	/// <remarks>
+	/// All custom implementations should be done here.
+	/// </remarks>
+	[CLSCompliant(true)]
+	public <% if (UsePartialClass) Response.Write("partial "); %>class <%=className%> : <%=NameSpace%>.<%=abstractClassName%>
+	{
+		/// <summary>
+		/// Initializes a new instance of the <%= className %> class.
+		/// </summary>
+		public <%=className%>() : base()
+		{
+		}
+		
+	}//End Class
+
+
+} // end namespace

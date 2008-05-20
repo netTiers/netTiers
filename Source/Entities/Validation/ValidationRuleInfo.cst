@@ -1,0 +1,92 @@
+﻿<%--
+ * $Id: ValidationRuleInfo.cst,v 1.2 2006/02/18 00:04:05 bgjohnso Exp $
+ * Last modified by $Author: jroland $
+ * Last modified at $Date: 2006-03-16 16:53:08 -0600 (Thu, 16 Mar 2006) $
+ * $Revision: 62 $
+--%>
+<%@ CodeTemplate Src="..\..\TemplateLib\CommonSqlCode.cs" Inherits="MoM.Templates.CommonSqlCode" Language="C#" TargetLanguage="C#" Description="BrokenRule class for validation." ResponseEncoding="UTF-8" NoWarn="0108,0618,1572,1573,1574,0162,2002"%>
+<%@ Assembly Name="SchemaExplorer" %>
+<%@ Import Namespace="SchemaExplorer" %>
+<%@ Assembly Name="System.Design" %>
+
+<%@ Property Name="NameSpace" Optional="False" Type="System.String" Category="Style" Description="Object Namespace." %>
+<%@ Assembly Name="SchemaExplorer" %>
+using System;
+using System.Collections.Generic;
+using System.Text;
+
+namespace <%=NameSpace%>.Validation
+{
+   /// <summary>
+   /// Object representing a validation rule for an object
+   /// </summary>
+   internal class ValidationRuleInfo
+   {
+      private object _target;
+      private ValidationRuleHandler _handler;
+      private string _ruleName = String.Empty;
+      private ValidationRuleArgs _args;
+
+      /// <summary>
+      /// Returns a text representation of the rule which is the <see cref="RuleName"/>.
+      /// </summary>
+      public override string ToString()
+      {
+         return _ruleName;
+      }
+
+      /// <summary>
+      /// Gets the name of the rule.
+      /// </summary>
+      /// <remarks>
+      /// The rule's name must be unique and is used
+      /// to identify a broken rule in the <see cref="BrokenRulesList"/>.
+      /// </remarks>
+      public string RuleName
+      {
+         get { return _ruleName; }
+      }
+
+      /// <summary>
+      /// Returns information about the property that is associated with the rule.
+      /// </summary>
+      public ValidationRuleArgs ValidationRuleArgs
+      {
+         get { return _args; }
+      }
+
+      /// <summary>
+      /// Creates and initializes the rule.
+      /// </summary>
+      /// <param name="target">Object reference containing the data to validate.</param>
+      /// <param name="handler">The address of the method implementing <see cref="ValidationRuleHandler"/>.</param>
+      /// <param name="propertyName">The name of the property to which the rule applies.</param>
+      public ValidationRuleInfo(object target, ValidationRuleHandler handler, string propertyName)
+            :this(target, handler, new ValidationRuleArgs(propertyName))
+      {
+      }
+
+      /// <summary>
+      /// Creates and initializes the rule.
+      /// </summary>
+      /// <param name="target">Object reference containing the data to validate.</param>
+      /// <param name="handler">The address of the method implementing <see cref="ValidationRuleHandler"/>.</param>
+      /// <param name="args">A <see cref="ValidationRuleArgs"/> object.</param>
+      public ValidationRuleInfo(object target, ValidationRuleHandler handler, ValidationRuleArgs args)
+      {
+         _target = target;
+         _handler = handler;
+         _args = args;
+         _ruleName = _handler.Method.Name + "!" + _args.ToString();
+      }
+
+      /// <summary>
+      /// Invokes the rule to validate the data.
+      /// </summary>
+      /// <returns>True if the data is valid, False if the data is invalid.</returns>
+      public bool Invoke()
+      {
+         return _handler.Invoke(_target, _args);
+      }
+   }
+}

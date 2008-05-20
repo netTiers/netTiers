@@ -1,0 +1,115 @@
+﻿<%@ CodeTemplate Language="C#" TargetLanguage="C#" Description="Generate a CAB Controller." Debug="True" ResponseEncoding="UTF-8" NoWarn="0108,0618,1572,1573,1574,0162,2002"%>
+<%@ Assembly Name="SchemaExplorer" %>
+<%@ Assembly Name="System.Design" %>
+<%@ Import Namespace="SchemaExplorer" %>
+<%@ Import Namespace="System.Collections" %>
+<%@ Import Namespace="System.Text" %>
+
+<%@ Property Name="EntityName" Type="System.String" Category="Data" Description="Namespace." %>
+<%@ Property Name="EntityNameSpace" Type="System.String" Category="Style" Description="Root Namespace." %>
+<%@ Property Name="WorkItemNameSpace" Type="System.String" Category="Style" Description="Root Namespace." %>
+<%@ Property Name="ViewClassName" Type="System.String" Category="Data" Description="Namespace." %>
+<%@ Property Name="PresenterClassName" Type="System.String" Category="Data" Description="Namespace." %>
+<%@ Property Name="WorkItemClassName" Type="System.String" Category="Data" Description="Namespace." %>
+<%@ Property Name="IsList" Type="System.Boolean" Category="Style" %>
+
+using System;
+using System.Collections.Generic;
+using System.Text;
+
+using Microsoft.Practices.CompositeUI;
+using Microsoft.Practices.CompositeUI.Utility;
+using Microsoft.Practices.CompositeUI.EventBroker;
+using <%=EntityNameSpace%>;
+
+
+namespace <%=WorkItemNameSpace%>
+{
+	/// <summary>
+	///	This class is the presenter (in the MVP) associated to the <see cref="<%=ViewClassName%>"/> view.
+	/// Is is responsible for interaction of the view with the workitem and more generally the application.
+	/// </summary>
+    public class <%=PresenterClassName%> : Controller
+    {
+        #region State injection
+
+				<% if (IsList) { %>
+					
+				/// <summary>
+        /// The State is injected into the controller by the workitem.
+        /// </summary>
+        private TList<<%=EntityName%>> _state = null;
+
+        [State("<%=EntityName%>List")]
+        public TList<<%=EntityName%>> <%=EntityName%>List
+        {
+            set { this._state = value; }
+            get {return this._state;}
+        }
+				 	
+				<% } else { %>
+
+        /// <summary>
+        /// The State is injected into the controller by the workitem.
+        /// </summary>
+        private <%=EntityName%> _state = null;
+
+        [State("<%=EntityName%>")]
+        public <%=EntityName%> <%=EntityName%>
+        {
+            set { this._state = value; }
+            get {return this._state;}
+        }
+        
+      <% } %>
+        
+        #endregion 
+        
+        #region View injection
+        
+        private <%=ViewClassName%> _view;
+        
+        /// <summary>
+				/// Gets or sets the view.
+				/// </summary>
+				/// <value>The view.</value>
+				public <%=ViewClassName%> View
+				{
+					get { return this._view; }
+					set { this._view = value; }
+				}
+				
+				#endregion
+				
+		/// <summary>
+		/// Gets the <see cref="<%=WorkItemClassName%>"/>.
+		/// </summary>
+		/// <value>The work item.</value>
+		public new <%=WorkItemClassName%> WorkItem
+		{
+			get { return base.WorkItem as <%=WorkItemClassName%>; }
+		}       
+       
+        #region Sample EventPublication
+
+        //[EventPublication("event://<%=EntityName%>Updated", PublicationScope.Global)]
+        //public event EventHandler<DataEventArgs<<%=EntityName%>>> <%=EntityName%>Updated;
+
+        #endregion
+        
+        /*
+        /// <summary>
+        /// Saves the <%=EntityName%>.
+        /// </summary>
+        public void Save<%=EntityName%>()
+        {
+        	throw new NotImplementedException();
+            //this._dataService.Save(this._advertisement);
+            if (<%=EntityName%>Updated != null)
+            {
+                <%=EntityName%>Updated(this, new DataEventArgs<<%=EntityName%>>(_<%=EntityName%>));
+            }
+        }
+        */
+    }
+}
