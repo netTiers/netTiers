@@ -1,4 +1,4 @@
-﻿<%--
+<%--
  * $Id: EntityBase.cst,v 1.31 2005/06/27 12:12:42 jroland Exp $
  * Last modified by $Author: jroland $
  * Last modified at $Date: 2005/06/27 12:12:42 $
@@ -13,7 +13,7 @@
 		the same table. You can also optionally use the main script which will run them all
 		for you.
 --%>
-<%@ CodeTemplate Src="..\TemplateLib\CommonSqlCode.cs" Inherits="MoM.Templates.CommonSqlCode" Language="C#" TargetLanguage="C#" Description="Component Object Class" ResponseEncoding="UTF-8" NoWarn="0108,0618,1572,1573,1574,0162,2002"%>
+<%@ CodeTemplate Src="..\TemplateLib\CommonSqlCode.cs" Inherits="MoM.Templates.CommonSqlCode" Language="C#" TargetLanguage="C#" Description="Component Object Class"%>
 <%@ Assembly Name="SchemaExplorer" %>
 <%@ Assembly Name="System.Design" %>
 <%@ Import Namespace="SchemaExplorer" %>
@@ -43,17 +43,16 @@
 <%@ Property Name="UsePartialClass" Type="System.Boolean" Default="true" Category="General" Description="Indicates if partial class should be generated." %>
 	
 <%
-	if (SourceTables == null) 
-		SourceTables = new SchemaExplorer.TableSchemaCollection();
-
+	if (SourceTables == null) SourceTables = new SchemaExplorer.TableSchemaCollection();
+	string name;
 	string today = DateTime.Now.ToLongDateString();
 
 	
 	// Name of the Abstract Class
-	string className = GetClassName(SourceTable, ClassNameFormat.Service);
-	string typeName = GetClassName(SourceTable);
-	string collectionClassName = GetClassName(SourceTable, ClassNameFormat.Collection);
-	string abstractClassName = GetClassName(SourceTable, ClassNameFormat.AbstractService);
+	string className = GetServiceClassName(SourceTable.Name);
+	string typeName = GetClassName(SourceTable.Name);
+	string collectionClassName = GetCollectionClassName(className);
+	string abstractClassName = GetAbstractServiceClassName(SourceTable.Name);
 
 
 	// Collection of all columns in the table.
@@ -105,24 +104,24 @@ using Microsoft.Practices.EnterpriseLibrary.Logging;
 
 namespace <%=NameSpace%>
 {		
-	/// <summary>
+	
+	///<summary>
 	/// An component type implementation of the '<%=SourceTable.Name%>' table.
-	/// </summary>
+	///</summary>
 	/// <remarks>
 	/// All custom implementations should be done here.
 	/// </remarks>
 	[CLSCompliant(true)]
 	public <% if (UsePartialClass) Response.Write("partial "); %>class <%=className%> : <%=NameSpace%>.<%=abstractClassName%>
 	{
-		#region Constructors
 		/// <summary>
 		/// Initializes a new instance of the <%= className %> class.
 		/// </summary>
 		public <%=className%>() : base()
 		{
 		}
-		#endregion Constructors
 		
 	}//End Class
+
 
 } // end namespace

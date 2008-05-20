@@ -1,7 +1,6 @@
-﻿<%@ CodeTemplate Src="..\..\TemplateLib\CommonSqlCode.cs" Inherits="MoM.Templates.CommonSqlCode" Language="C#" TargetLanguage="C#" Description="" Debug="True"  ResponseEncoding="UTF-8" NoWarn="0108,0618,1572,1573,1574,0162,2002"%>
+﻿<%@ CodeTemplate Src="..\..\TemplateLib\CommonSqlCode.cs" Inherits="MoM.Templates.CommonSqlCode" Language="C#" TargetLanguage="C#" Description="" Debug="True"  ResponseEncoding="UTF-8"%>
 <%@ Assembly Name="SchemaExplorer" %>
 <%@ Assembly Name="System.Design" %>
-<%@ Import Namespace="System.Text" %>
 <%@ Import Namespace="SchemaExplorer" %>
 
 <%@ Property Name="SourceTables" Type="SchemaExplorer.TableSchemaCollection" Category="Connection" Description="Tables of the system." %>
@@ -16,9 +15,9 @@
 <%@ Property Name="IncludeManyToMany" Type="System.Boolean" Default="True" Category="Options" Description="If true select statements will be generated for any many to many relationship." %>
 <%@ Property Name="IncludeGetList" Type="System.Boolean" Default="True" Category="Options" Description="If true getlist functions will be generated." %>
 <%@ Property Name="IncludeGetListByFK" Type="System.Boolean" Default="True" Category="Options" Description="If true get functions will be generated." %>
-<%@ Property Name="IncludeRelations" Type="System.Boolean" Default="True" Category="Options" Description="If true DeepSave/Load will have a collection to fill.  There's still a requirement for IncludeByFk && IncludeSave" %>
 <%@ Property Name="IncludeGetListByIX" Type="System.Boolean" Default="True" Category="Options" Description="If true getlist functions will be generated." %>
 <%@ Property Name="IncludeFind" Type="System.Boolean" Default="True" Category="Options" Description="If true find functions will be generated." %>
+<%@ Property Name="IncludeRelations" Type="System.Boolean" Default="True" Category="Options" Description="If true DeepSave/Load will have a collection to fill.  There's still a requirement for IncludeByFk && IncludeSave" %>
 
 <%@ Property Name="NameSpace" Type="System.String" Category="Style" Description="Root Namespace." %>
 <%@ Property Name="DALNameSpace" Type="System.String" Category="Data" Description="DAL Namespace." %>
@@ -50,19 +49,24 @@
 	//Provides information about the indexes contained in the table. 
 	IndexSchemaCollection indexes = SourceTable.Indexes;
 		
-	string className = NameSpace + "." + GetClassName(SourceTable);
-	string entityClassName = GetClassName(SourceTable);
-	string collectionClassName = GetClassName(SourceTable, ClassNameFormat.Collection);
+	string className = NameSpace + "." + GetClassName(SourceTable.Name);
+	string entityClassName = GetClassName(SourceTable.Name);
+	string collectionClassName = NameSpace + "." + GetCollectionClassName(SourceTable.Name);
 	string collectionClassNameForComment = collectionClassName.Replace("<", "&lt;").Replace(">", "&gt;");
-	string baseProviderName = GetClassName(SourceTable, ClassNameFormat.ProviderBase);
-	string iProviderName = GetClassName(SourceTable, ClassNameFormat.ProviderInterface);
-	string keyClassName = NameSpace + "." + GetClassName(SourceTable, ClassNameFormat.Key);
+	string baseProviderName = GetProviderBaseName(SourceTable.Name);
+	string iProviderName = GetIProviderName(SourceTable.Name);
+	string keyClassName = NameSpace + "." + GetKeyClassName(SourceTable.Name);
 	
 	ColumnSchema RowVersion = null;
 	
 	foreach(ColumnSchema column in SourceTable.Columns)
+	{
 		if (column.NativeType.ToLower() == "timestamp")
-			RowVersion = column;	
+		{
+			RowVersion = column;
+		}
+	}
+	
 	
 
 // this array store each Get BY MemberColumns in order to avoid to create doublon Get methods
@@ -77,6 +81,7 @@ using System.Data.Common;
 using System.Collections;
 using System.Collections.Generic;
 
+using System.Diagnostics;
 using <%=NameSpace%>;
 using <%=DALNameSpace%>;
 
@@ -95,26 +100,22 @@ namespace <%=DALNameSpace%>.Bases
 		<%
 		TableSchema primaryTable = SourceTable;
 		
-		System.Collections.Hashtable manyToManyFunctions = new System.Collections.Hashtable();
 		foreach(TableKeySchema key in SourceTable.PrimaryKeys)
 		{
 			// Check that the key is related to a junction table
-			//_sourceTables.Contains(key.ForeignKeyTable.Owner, key.ForeignKeyTable.Name) && 
-			if (IsJunctionTable(key.ForeignKeyTable) && IsJunctionKey(key))
+			if (_sourceTables.Contains(key.ForeignKeyTable.Owner, key.ForeignKeyTable.Name) 
+				&& IsJunctionTable(key.ForeignKeyTable) && IsJunctionKey(key))
 			{
 				TableSchema junctionTable = key.ForeignKeyTable;
 				
 				// Search for the other(s) key(s) of the junction table' primary key
 				foreach(TableKeySchema junctionTableKey in junctionTable.ForeignKeys)
-				{		
-					// _sourceTables.Contains(junctionTableKey.ForeignKeyTable.Owner, junctionTableKey.ForeignKeyTable.Name) && 
-					if (IsJunctionKey(junctionTableKey) && junctionTableKey.Name != key.Name )
+				{				
+					if ( _sourceTables.Contains(junctionTableKey.ForeignKeyTable.Owner, junctionTableKey.ForeignKeyTable.Name) 
+						&& IsJunctionKey(junctionTableKey) && junctionTableKey.Name != key.Name )
 					{
 						TableSchema secondaryTable = junctionTableKey.PrimaryKeyTable;
-						string functionname = GetManyToManyName(junctionTableKey, junctionTable);
-						if (!manyToManyFunctions.ContainsKey(functionname))
-						{
-							manyToManyFunctions.Add(functionname,null);
+						string functionname = GetManyToManyName(junctionTableKey, GetCleanName(junctionTable.Name));
 %>
 		#region GetBy<%=functionname%>
 		
@@ -124,10 +125,10 @@ namespace <%=DALNameSpace%>.Bases
 		///		through the (M:N) relationship defined in the <%=junctionTable.Name%> table.
 		/// </summary>
 	<% for (int i = 0; i < junctionTableKey.ForeignKeyMemberColumns.Count; i++) { %>
-		/// <param name="<%= GetFieldName(junctionTableKey.ForeignKeyMemberColumns[i])%>"><%=GetColumnXmlComment(junctionTableKey.ForeignKeyMemberColumns[i],2)%></param>
+		/// <param name="<%= GetPrivateName(junctionTableKey.ForeignKeyMemberColumns[i].Name)%>"><%=GetColumnXmlComment(junctionTableKey.ForeignKeyMemberColumns[i],2)%></param>
 	<% } %>	
-		/// <returns>Returns a typed collection of <%=GetClassName(primaryTable)%> objects.</returns>
-		public <%=GetClassName(primaryTable, ClassNameFormat.Collection)%> GetBy<%=functionname%>(<%=GetFunctionHeaderParameters(junctionTableKey.ForeignKeyMemberColumns)%>)
+		/// <returns>Returns a typed collection of <%=GetClassName(primaryTable.Name)%> objects.</returns>
+		public <%=GetCollectionClassName(primaryTable.Name)%> GetBy<%=functionname%>(<%=GetFunctionHeaderParameters(junctionTableKey.ForeignKeyMemberColumns)%>)
 		{
 			int count = -1;
 			return GetBy<%=functionname%>(null,<%=GetFunctionCallParameters(junctionTableKey.ForeignKeyMemberColumns)%>, 0, int.MaxValue, out count);
@@ -142,28 +143,28 @@ namespace <%=DALNameSpace%>.Bases
 		/// <param name="start">Row number at which to start reading, the first row is 0.</param>
 		/// <param name="pageLength">Number of rows to return.</param>
 	<% for (int i = 0; i < junctionTableKey.ForeignKeyMemberColumns.Count; i++) { %>
-		/// <param name="<%= GetFieldName(junctionTableKey.ForeignKeyMemberColumns[i])%>"><%=GetColumnXmlComment(junctionTableKey.ForeignKeyMemberColumns[i],2)%></param>
+		/// <param name="<%= GetPrivateName(junctionTableKey.ForeignKeyMemberColumns[i].Name)%>"><%=GetColumnXmlComment(junctionTableKey.ForeignKeyMemberColumns[i],2)%></param>
 	<% } %>
 		/// <remarks></remarks>
-		/// <returns>Returns a TList of <%=GetClassName(primaryTable)%> objects.</returns>
-		public <%=GetClassName(primaryTable, ClassNameFormat.Collection)%> GetBy<%=functionname%>(<%= GetFunctionHeaderParameters(junctionTableKey.ForeignKeyMemberColumns) %>, int start, int pageLength)
+		/// <returns>Returns a TList of <%=GetClassName(primaryTable.Name)%> objects.</returns>
+		public <%=GetCollectionClassName(primaryTable.Name)%> GetBy<%=functionname%>(<%= GetFunctionHeaderParameters(junctionTableKey.ForeignKeyMemberColumns) %>, int start, int pageLength)
 		{
 			int count = -1;
 			return GetBy<%=functionname%>(null, <%= GetFunctionCallParameters(junctionTableKey.ForeignKeyMemberColumns) %>, start, pageLength, out count);
 		}
 		
 		/// <summary>
-		///		Gets <%=GetClassName(primaryTable)%> objects from the datasource by <%=junctionTableKey.ForeignKeyMemberColumns[0].Name%> in the
+		///		Gets <%=GetClassName(primaryTable.Name)%> objects from the datasource by <%=junctionTableKey.ForeignKeyMemberColumns[0].Name%> in the
 		///		<%=junctionTable.Name%> table. Table <%=primaryTable.Name%> is related to table <%=secondaryTable.Name%>
 		///		through the (M:N) relationship defined in the <%=junctionTable.Name%> table.
 		/// </summary>
 		/// <param name="transactionManager"><see cref="TransactionManager"/> object</param>
 	<% for (int i = 0; i < junctionTableKey.ForeignKeyMemberColumns.Count; i++) { %>
-		/// <param name="<%= GetFieldName(junctionTableKey.ForeignKeyMemberColumns[i])%>"><%=GetColumnXmlComment(junctionTableKey.ForeignKeyMemberColumns[i],2)%></param>
+		/// <param name="<%= GetPrivateName(junctionTableKey.ForeignKeyMemberColumns[i].Name)%>"><%=GetColumnXmlComment(junctionTableKey.ForeignKeyMemberColumns[i],2)%></param>
 	<% } %>
 		/// <remarks></remarks>
 		/// <returns>Returns a typed collection of <%=primaryTable.Name%> objects.</returns>
-		public <%=GetClassName(primaryTable, ClassNameFormat.Collection)%> GetBy<%=functionname%>(TransactionManager transactionManager, <%= GetFunctionHeaderParameters(junctionTableKey.ForeignKeyMemberColumns) %>)
+		public <%=GetCollectionClassName(primaryTable.Name)%> GetBy<%=functionname%>(TransactionManager transactionManager, <%= GetFunctionHeaderParameters(junctionTableKey.ForeignKeyMemberColumns) %>)
 		{
 			int count = -1;
 			return GetBy<%=functionname%>(transactionManager, <%= GetFunctionCallParameters(junctionTableKey.ForeignKeyMemberColumns) %>, 0, int.MaxValue, out count);
@@ -171,38 +172,38 @@ namespace <%=DALNameSpace%>.Bases
 		
 		
 		/// <summary>
-		///		Gets <%=GetClassName(primaryTable)%> objects from the datasource by <%=junctionTableKey.ForeignKeyMemberColumns[0].Name%> in the
+		///		Gets <%=GetClassName(primaryTable.Name)%> objects from the datasource by <%=junctionTableKey.ForeignKeyMemberColumns[0].Name%> in the
 		///		<%=junctionTable.Name%> table. Table <%=primaryTable.Name%> is related to table <%=secondaryTable.Name%>
 		///		through the (M:N) relationship defined in the <%=junctionTable.Name%> table.
 		/// </summary>
 		/// <param name="transactionManager"><see cref="TransactionManager"/> object</param>
 	<% for (int i = 0; i < junctionTableKey.ForeignKeyMemberColumns.Count; i++) { %>
-		/// <param name="<%= GetFieldName(junctionTableKey.ForeignKeyMemberColumns[i])%>"><%=GetColumnXmlComment(junctionTableKey.ForeignKeyMemberColumns[i],2)%></param>
+		/// <param name="<%= GetPrivateName(junctionTableKey.ForeignKeyMemberColumns[i].Name)%>"><%=GetColumnXmlComment(junctionTableKey.ForeignKeyMemberColumns[i],2)%></param>
 	<% } %>
 		/// <param name="start">Row number at which to start reading, the first row is 0.</param>
 		///  <param name="pageLength">Number of rows to return.</param>
 		/// <remarks></remarks>
 		/// <returns>Returns a typed collection of <%=primaryTable.Name%> objects.</returns>
-		public <%=GetClassName(primaryTable, ClassNameFormat.Collection)%> GetBy<%=functionname%>(TransactionManager transactionManager, <%= GetFunctionHeaderParameters(junctionTableKey.ForeignKeyMemberColumns) %>,int start, int pageLength)
+		public <%=GetCollectionClassName(primaryTable.Name)%> GetBy<%=functionname%>(TransactionManager transactionManager, <%= GetFunctionHeaderParameters(junctionTableKey.ForeignKeyMemberColumns) %>,int start, int pageLength)
 		{
 			int count = -1;
 			return GetBy<%=functionname%>(transactionManager, <%= GetFunctionCallParameters(junctionTableKey.ForeignKeyMemberColumns) %>, start, pageLength, out count);
 		}
 		
 		/// <summary>
-		///		Gets <%=GetClassName(primaryTable)%> objects from the datasource by <%=junctionTableKey.ForeignKeyMemberColumns[0].Name%> in the
+		///		Gets <%=GetClassName(primaryTable.Name)%> objects from the datasource by <%=junctionTableKey.ForeignKeyMemberColumns[0].Name%> in the
 		///		<%=junctionTable.Name%> table. Table <%=primaryTable.Name%> is related to table <%=secondaryTable.Name%>
 		///		through the (M:N) relationship defined in the <%=junctionTable.Name%> table.
 		/// </summary>
 	<% for (int i = 0; i < junctionTableKey.ForeignKeyMemberColumns.Count; i++) { %>
-		/// <param name="<%= GetFieldName(junctionTableKey.ForeignKeyMemberColumns[i])%>"><%=GetColumnXmlComment(junctionTableKey.ForeignKeyMemberColumns[i],2)%></param>
+		/// <param name="<%= GetPrivateName(junctionTableKey.ForeignKeyMemberColumns[i].Name)%>"><%=GetColumnXmlComment(junctionTableKey.ForeignKeyMemberColumns[i],2)%></param>
 	<% } %>
 		/// <param name="start">Row number at which to start reading, the first row is 0.</param>
 		///  <param name="pageLength">Number of rows to return.</param>
 		/// <param name="count">out parameter to get total records for query</param>
 		/// <remarks></remarks>
 		/// <returns>Returns a typed collection of <%=primaryTable.Name%> objects.</returns>
-		public <%=GetClassName(primaryTable, ClassNameFormat.Collection)%> GetBy<%=functionname%>(<%= GetFunctionHeaderParameters(junctionTableKey.ForeignKeyMemberColumns) %>,int start, int pageLength, out int count)
+		public <%=GetCollectionClassName(primaryTable.Name)%> GetBy<%=functionname%>(<%= GetFunctionHeaderParameters(junctionTableKey.ForeignKeyMemberColumns) %>,int start, int pageLength, out int count)
 		{
 			
 			return GetBy<%=functionname%>(null, <%= GetFunctionCallParameters(junctionTableKey.ForeignKeyMemberColumns) %>, start, pageLength, out count);
@@ -219,16 +220,15 @@ namespace <%=DALNameSpace%>.Bases
 		/// <param name="pageLength">Number of rows to return.</param>
 		/// <param name="count">out parameter to get total records for query</param>
 <% for (int i = 0; i < junctionTableKey.ForeignKeyMemberColumns.Count; i++) { %>
-		/// <param name="<%= GetFieldName(junctionTableKey.ForeignKeyMemberColumns[i])%>"><%=GetColumnXmlComment(junctionTableKey.ForeignKeyMemberColumns[i],2)%></param>
+		/// <param name="<%= GetPrivateName(junctionTableKey.ForeignKeyMemberColumns[i].Name)%>"><%=GetColumnXmlComment(junctionTableKey.ForeignKeyMemberColumns[i],2)%></param>
 <% } %>
 		/// <remarks></remarks>
-		/// <returns>Returns a TList of <%=GetClassName(primaryTable)%> objects.</returns>
-		public abstract <%=GetClassName(primaryTable, ClassNameFormat.Collection)%> GetBy<%=functionname%>(TransactionManager transactionManager,<%=GetFunctionHeaderParameters(junctionTableKey.ForeignKeyMemberColumns)%>, int start, int pageLength, out int count);
+		/// <returns>Returns a TList of <%=GetClassName(primaryTable.Name)%> objects.</returns>
+		public abstract <%=GetCollectionClassName(primaryTable.Name)%> GetBy<%=functionname%>(TransactionManager transactionManager,<%=GetFunctionHeaderParameters(junctionTableKey.ForeignKeyMemberColumns)%>, int start, int pageLength, out int count);
 		
 		#endregion GetBy<%=functionname%>
 		
 					<%
-						}//end if the function has already been created
 					} //end if there is many to many relationship.
 				} //end foreach			
 		 	}// end if(IsJunctionTable(junctionTableKey.ForeignKeyTable)) %>
@@ -247,23 +247,23 @@ namespace <%=DALNameSpace%>.Bases
 		/// <returns>Returns true if operation suceeded.</returns>
 		public override bool <%= MethodNames.Delete %>(TransactionManager transactionManager, <%= keyClassName %> key)
 		{
-			return <%= MethodNames.Delete %>(transactionManager, <%= GetFunctionObjectParameters(pkCols, "key") %><% if(RowVersion != null) {Response.Write(String.Format(", ((key.Entity != null) ? key.Entity.{0} : new byte[0])", GetPropertyName(RowVersion)));}%>);
+			return <%= MethodNames.Delete %>(transactionManager, <%= GetFunctionObjectParameters(pkCols, "key") %><% if(RowVersion != null) {Response.Write(String.Format(", ((key.Entity != null) ? key.Entity.{0} : new byte[0])", GetPropertyName(RowVersion.Name)));}%>);
 		}
 		
 		/// <summary>
 		/// 	Deletes a row from the DataSource.
 		/// </summary>
 		<% for (int i = 0; i < SourceTable.PrimaryKey.MemberColumns.Count; i++) { %>
-		/// <param name="<%= GetFieldName(SourceTable.PrimaryKey.MemberColumns[i])%>"><%=GetColumnXmlComment(SourceTable.PrimaryKey.MemberColumns[i],2)%>. Primary Key.</param>
+		/// <param name="<%= GetPrivateName(SourceTable.PrimaryKey.MemberColumns[i].Name)%>"><%=GetColumnXmlComment(SourceTable.PrimaryKey.MemberColumns[i],2)%>. Primary Key.</param>
 		<% } %>
 		<% if (RowVersion != null){ %>
-		/// <param name="<%=GetFieldName(RowVersion)%>">The timestamp field used for concurrency check.</param>
+		/// <param name="<%=GetPrivateName(RowVersion.Name)%>">The timestamp field used for concurrency check.</param>
 		<% } %>
 		/// <remarks>Deletes based on primary key(s).</remarks>
 		/// <returns>Returns true if operation suceeded.</returns>
-		public bool <%= MethodNames.Delete %>(<%= GetFunctionHeaderParameters(SourceTable.PrimaryKey.MemberColumns) %><% if(RowVersion != null) {Response.Write(", byte[] " + GetFieldName(RowVersion));}%>)
+		public bool <%= MethodNames.Delete %>(<%= GetFunctionHeaderParameters(SourceTable.PrimaryKey.MemberColumns) %><% if(RowVersion != null) {Response.Write(", byte[] " + GetPrivateName(RowVersion.Name));}%>)
 		{
-			return <%= MethodNames.Delete %>(null, <%= GetFunctionCallParameters(SourceTable.PrimaryKey.MemberColumns) %><% if(RowVersion != null) {Response.Write(", " + GetFieldName(RowVersion));}%>);
+			return <%= MethodNames.Delete %>(null, <%= GetFunctionCallParameters(SourceTable.PrimaryKey.MemberColumns) %><% if(RowVersion != null) {Response.Write(", " + GetPrivateName(RowVersion.Name));}%>);
 		}
 		
 		/// <summary>
@@ -271,14 +271,14 @@ namespace <%=DALNameSpace%>.Bases
 		/// </summary>
 		/// <param name="transactionManager"><see cref="TransactionManager"/> object</param>
 		<% for (int i = 0; i < SourceTable.PrimaryKey.MemberColumns.Count; i++) { %>
-		/// <param name="<%= GetFieldName(SourceTable.PrimaryKey.MemberColumns[i])%>"><%=GetColumnXmlComment(SourceTable.PrimaryKey.MemberColumns[i],2)%>. Primary Key.</param>
+		/// <param name="<%= GetPrivateName(SourceTable.PrimaryKey.MemberColumns[i].Name)%>"><%=GetColumnXmlComment(SourceTable.PrimaryKey.MemberColumns[i],2)%>. Primary Key.</param>
 		<% } %>
 		<% if (RowVersion != null){ %>
-		/// <param name="<%=GetFieldName(RowVersion)%>">The timestamp field used for concurrency check.</param>
+		/// <param name="<%=GetPrivateName(RowVersion.Name)%>">The timestamp field used for concurrency check.</param>
 		<% } %>
 		/// <remarks>Deletes based on primary key(s).</remarks>
 		/// <returns>Returns true if operation suceeded.</returns>
-		public abstract bool <%= MethodNames.Delete %>(TransactionManager transactionManager, <%= GetFunctionHeaderParameters(SourceTable.PrimaryKey.MemberColumns) %><% if(RowVersion != null) {Response.Write(", byte[] " + GetFieldName(RowVersion));}%>);		
+		public abstract bool <%= MethodNames.Delete %>(TransactionManager transactionManager, <%= GetFunctionHeaderParameters(SourceTable.PrimaryKey.MemberColumns) %><% if(RowVersion != null) {Response.Write(", byte[] " + GetPrivateName(RowVersion.Name));}%>);		
 		
 		#endregion <%= MethodNames.Delete %> Methods
 		
@@ -299,7 +299,7 @@ namespace <%=DALNameSpace%>.Bases
 		///		<%=fkeys[j].Name%> Description: <%=GetColumnXmlComment(fkeys[j],2)%>
 		/// </summary>
 	<% for (int i = 0; i < fkeys[j].ForeignKeyMemberColumns.Count; i++) { %>
-		/// <param name="<%= GetFieldName(fkeys[j].ForeignKeyMemberColumns[i])%>"><%=GetColumnXmlComment(fkeys[j].ForeignKeyMemberColumns[i],2)%></param>
+		/// <param name="<%= GetPrivateName(fkeys[j].ForeignKeyMemberColumns[i].Name)%>"><%=GetColumnXmlComment(fkeys[j].ForeignKeyMemberColumns[i],2)%></param>
 	<% } %>
 		/// <returns>Returns a typed collection of <%=className%> objects.</returns>
 		public <%=collectionClassName%> GetBy<%=GetKeysName(fkeys[j].ForeignKeyMemberColumns)%>(<%= GetFunctionHeaderParameters(fkeys[j].ForeignKeyMemberColumns) %>)
@@ -314,7 +314,7 @@ namespace <%=DALNameSpace%>.Bases
 		/// </summary>
 		/// <param name="transactionManager"><see cref="TransactionManager"/> object</param>
 	<% for (int i = 0; i < fkeys[j].ForeignKeyMemberColumns.Count; i++) { %>
-		/// <param name="<%= GetFieldName(fkeys[j].ForeignKeyMemberColumns[i])%>"><%=GetColumnXmlComment(fkeys[j].ForeignKeyMemberColumns[i],2)%></param>
+		/// <param name="<%= GetPrivateName(fkeys[j].ForeignKeyMemberColumns[i].Name)%>"><%=GetColumnXmlComment(fkeys[j].ForeignKeyMemberColumns[i],2)%></param>
 	<% } %>
 		/// <returns>Returns a typed collection of <%=className%> objects.</returns>
 		/// <remarks></remarks>
@@ -330,7 +330,7 @@ namespace <%=DALNameSpace%>.Bases
 		/// </summary>
 		/// <param name="transactionManager"><see cref="TransactionManager"/> object</param>
 	<% for (int i = 0; i < fkeys[j].ForeignKeyMemberColumns.Count; i++) { %>
-		/// <param name="<%= GetFieldName(fkeys[j].ForeignKeyMemberColumns[i])%>"><%=GetColumnXmlComment(fkeys[j].ForeignKeyMemberColumns[i],2)%></param>
+		/// <param name="<%= GetPrivateName(fkeys[j].ForeignKeyMemberColumns[i].Name)%>"><%=GetColumnXmlComment(fkeys[j].ForeignKeyMemberColumns[i],2)%></param>
 	<% } %>
 		/// <param name="start">Row number at which to start reading, the first row is 0.</param>
 		///  <param name="pageLength">Number of rows to return.</param>
@@ -344,12 +344,12 @@ namespace <%=DALNameSpace%>.Bases
 		
 		/// <summary>
 		/// 	Gets rows from the datasource based on the <%=fkeys[j].Name%> key.
-		///		<%=GetFieldName(fkeys[j])%> Description: <%=GetColumnXmlComment(fkeys[j],2)%>
+		///		<%=GetPrivateName(fkeys[j].Name)%> Description: <%=GetColumnXmlComment(fkeys[j],2)%>
 		/// </summary>
 		/// <param name="start">Row number at which to start reading, the first row is 0.</param>
 		/// <param name="pageLength">Number of rows to return.</param>
 	<% for (int i = 0; i < fkeys[j].ForeignKeyMemberColumns.Count; i++) { %>
-		/// <param name="<%= GetFieldName(fkeys[j].ForeignKeyMemberColumns[i])%>"><%=GetColumnXmlComment(fkeys[j].ForeignKeyMemberColumns[i],2)%></param>
+		/// <param name="<%= GetPrivateName(fkeys[j].ForeignKeyMemberColumns[i].Name)%>"><%=GetColumnXmlComment(fkeys[j].ForeignKeyMemberColumns[i],2)%></param>
 	<% } %>
 		/// <remarks></remarks>
 		/// <returns>Returns a typed collection of <%=className%> objects.</returns>
@@ -361,12 +361,12 @@ namespace <%=DALNameSpace%>.Bases
 		
 		/// <summary>
 		/// 	Gets rows from the datasource based on the <%=fkeys[j].Name%> key.
-		///		<%=GetFieldName(fkeys[j])%> Description: <%=GetColumnXmlComment(fkeys[j],2)%>
+		///		<%=GetPrivateName(fkeys[j].Name)%> Description: <%=GetColumnXmlComment(fkeys[j],2)%>
 		/// </summary>
 		/// <param name="start">Row number at which to start reading, the first row is 0.</param>
 		/// <param name="pageLength">Number of rows to return.</param>
 	<% for (int i = 0; i < fkeys[j].ForeignKeyMemberColumns.Count; i++) { %>
-		/// <param name="<%= GetFieldName(fkeys[j].ForeignKeyMemberColumns[i])%>"><%=GetColumnXmlComment(fkeys[j].ForeignKeyMemberColumns[i],2)%></param>
+		/// <param name="<%= GetPrivateName(fkeys[j].ForeignKeyMemberColumns[i].Name)%>"><%=GetColumnXmlComment(fkeys[j].ForeignKeyMemberColumns[i],2)%></param>
 	<% } %>
 		/// <param name="count">out parameter to get total records for query</param>
 		/// <remarks></remarks>
@@ -382,7 +382,7 @@ namespace <%=DALNameSpace%>.Bases
 		/// </summary>
 		/// <param name="transactionManager"><see cref="TransactionManager"/> object</param>
 	<% for (int i = 0; i < fkeys[j].ForeignKeyMemberColumns.Count; i++) { %>
-		/// <param name="<%= GetFieldName(fkeys[j].ForeignKeyMemberColumns[i])%>"><%=GetColumnXmlComment(fkeys[j].ForeignKeyMemberColumns[i],2)%></param>
+		/// <param name="<%= GetPrivateName(fkeys[j].ForeignKeyMemberColumns[i].Name)%>"><%=GetColumnXmlComment(fkeys[j].ForeignKeyMemberColumns[i],2)%></param>
 	<% } %>
 		/// <param name="start">Row number at which to start reading, the first row is 0.</param>
 		/// <param name="pageLength">Number of rows to return.</param>
@@ -428,16 +428,20 @@ namespace <%=DALNameSpace%>.Bases
 				}
 				
 				string returnType = collectionClassName;
+				bool isUnique = false;
 				
 				//if (IsPrimaryKey(indexes[j]))
 				if (indexes[j].IsUnique || indexes[j].IsPrimaryKey)
+				{
 					returnType = className;
+					isUnique = true;
+				}
 		%>
 		/// <summary>
 		/// 	Gets rows from the datasource based on the primary key <%=indexes[j].Name%> index.
 		/// </summary>
 	<% for (int i = 0; i < indexes[j].MemberColumns.Count; i++) { %>
-		/// <param name="<%= GetFieldName(indexes[j].MemberColumns[i])%>"><%=GetColumnXmlComment(indexes[j].MemberColumns[i],2)%></param>
+		/// <param name="<%= GetPrivateName(indexes[j].MemberColumns[i].Name)%>"><%=GetColumnXmlComment(indexes[j].MemberColumns[i],2)%></param>
 	<% } %>
 		/// <returns>Returns an instance of the <see cref="<%=returnType.Replace("<", "&lt;").Replace(">", "&gt;")%>"/> class.</returns>
 		public <%= returnType %> GetBy<%=GetKeysName(indexes[j].MemberColumns)%>(<%= GetFunctionHeaderParameters(indexes[j].MemberColumns) %>)
@@ -450,7 +454,7 @@ namespace <%=DALNameSpace%>.Bases
 		/// 	Gets rows from the datasource based on the <%=indexes[j].Name%> index.
 		/// </summary>
 	<% for (int i = 0; i < indexes[j].MemberColumns.Count; i++) { %>
-		/// <param name="<%= GetFieldName(indexes[j].MemberColumns[i])%>"><%=GetColumnXmlComment(indexes[j].MemberColumns[i],2)%></param>
+		/// <param name="<%= GetPrivateName(indexes[j].MemberColumns[i].Name)%>"><%=GetColumnXmlComment(indexes[j].MemberColumns[i],2)%></param>
 	<% } %>
 		/// <param name="start">Row number at which to start reading, the first row is 0.</param>
 		/// <param name="pageLength">Number of rows to return.</param>
@@ -467,7 +471,7 @@ namespace <%=DALNameSpace%>.Bases
 		/// </summary>
 		/// <param name="transactionManager"><see cref="TransactionManager"/> object</param>
 	<% for (int i = 0; i < indexes[j].MemberColumns.Count; i++) { %>
-		/// <param name="<%= GetFieldName(indexes[j].MemberColumns[i])%>"><%=GetColumnXmlComment(indexes[j].MemberColumns[i],2)%></param>
+		/// <param name="<%= GetPrivateName(indexes[j].MemberColumns[i].Name)%>"><%=GetColumnXmlComment(indexes[j].MemberColumns[i],2)%></param>
 	<% } %>
 		/// <remarks></remarks>
 		/// <returns>Returns an instance of the <see cref="<%=returnType.Replace("<", "&lt;").Replace(">", "&gt;")%>"/> class.</returns>
@@ -482,7 +486,7 @@ namespace <%=DALNameSpace%>.Bases
 		/// </summary>
 		/// <param name="transactionManager"><see cref="TransactionManager"/> object</param>
 	<% for (int i = 0; i < indexes[j].MemberColumns.Count; i++) { %>
-		/// <param name="<%= GetFieldName(indexes[j].MemberColumns[i])%>"><%=GetColumnXmlComment(indexes[j].MemberColumns[i],2)%></param>
+		/// <param name="<%= GetPrivateName(indexes[j].MemberColumns[i].Name)%>"><%=GetColumnXmlComment(indexes[j].MemberColumns[i],2)%></param>
 	<% } %>
 		/// <param name="start">Row number at which to start reading, the first row is 0.</param>
 		/// <param name="pageLength">Number of rows to return.</param>
@@ -498,7 +502,7 @@ namespace <%=DALNameSpace%>.Bases
 		/// 	Gets rows from the datasource based on the <%=indexes[j].Name%> index.
 		/// </summary>
 	<% for (int i = 0; i < indexes[j].MemberColumns.Count; i++) { %>
-		/// <param name="<%= GetFieldName(indexes[j].MemberColumns[i])%>"><%=GetColumnXmlComment(indexes[j].MemberColumns[i],2)%></param>
+		/// <param name="<%= GetPrivateName(indexes[j].MemberColumns[i].Name)%>"><%=GetColumnXmlComment(indexes[j].MemberColumns[i],2)%></param>
 	<% } %>
 		/// <param name="start">Row number at which to start reading, the first row is 0.</param>
 		/// <param name="pageLength">Number of rows to return.</param>
@@ -516,7 +520,7 @@ namespace <%=DALNameSpace%>.Bases
 		/// </summary>
 		/// <param name="transactionManager"><see cref="TransactionManager"/> object</param>
 	<% for (int i = 0; i < indexes[j].MemberColumns.Count; i++) { %>
-		/// <param name="<%= GetFieldName(indexes[j].MemberColumns[i])%>"><%=GetColumnXmlComment(indexes[j].MemberColumns[i],2)%></param>
+		/// <param name="<%= GetPrivateName(indexes[j].MemberColumns[i].Name)%>"><%=GetColumnXmlComment(indexes[j].MemberColumns[i],2)%></param>
 	<% } %>
 		/// <param name="start">Row number at which to start reading, the first row is 0.</param>
 		/// <param name="pageLength">Number of rows to return.</param>
@@ -653,7 +657,7 @@ namespace <%=DALNameSpace%>.Bases
 				<%for (int x=0; x < cols.Count;x++)	{ %>
 				<%= GetObjectPropertySetExpression(cols[x], "row", "c", 4) %>;
 				<%if( cols[x].IsPrimaryKeyMember && !IsIdentityColumn(cols[x]) && !IsComputed(cols[x]) ) {%>
-				c.Original<%=GetPropertyName(cols[x])%> = (Convert.IsDBNull(row["<%=cols[x]%>"]))?<%= GetCSDefaultByType(cols[x])%>:(<%=GetCSType(cols[x])%>)row["<%=cols[x]%>"];
+				c.Original<%=GetPropertyName(cols[x].Name)%> = (Convert.IsDBNull(row["<%=cols[x].Name%>"]))?<%= GetCSDefaultByType(cols[x])%>:(<%=GetCSType(cols[x])%>)row["<%=cols[x].Name%>"];
 				<%	}// end if
 				} //end for %>
 				c.AcceptChanges();
@@ -673,68 +677,64 @@ namespace <%=DALNameSpace%>.Bases
 		/// <returns>a <see cref="<%=collectionClassNameForComment%>"/></returns>
 		public static <%=collectionClassName%> Fill(IDataReader reader, <%=collectionClassName%> rows, int start, int pageLength)
 		{
-			NetTiersProvider currentProvider = DataRepository.Provider;
-            bool useEntityFactory = currentProvider.UseEntityFactory;
-            bool enableEntityTracking = currentProvider.EnableEntityTracking;
-            LoadPolicy currentLoadPolicy = currentProvider.CurrentLoadPolicy;
-			
 			// advance to the starting row
 			for (int i = 0; i < start; i++)
 			{
 				if (!reader.Read())
-				return rows; // not enough rows, just return
+					return rows; // not enough rows, just return
 			}
+
 			for (int i = 0; i < pageLength; i++)
 			{
 				if (!reader.Read())
 					break; // we are done
-					
+
 				string key = null;
 				
 				<%=className%> c = null;
-				if (useEntityFactory)
+				if (DataRepository.Provider.UseEntityFactory)
 				{
 					key = new System.Text.StringBuilder("<%= entityClassName %>")<%
-					for (int x=0; x < cols.Count; x++) {
-					if(cols[x].IsPrimaryKeyMember) {%>
-					.Append("|").Append((reader.IsDBNull(((int)<%= NameSpace %>.<%= GetClassName(SourceTable, ClassNameFormat.Column) %>.<%= GetPropertyName(cols[x]) %> - 1))?<%= GetCSDefaultByType(cols[x])%>:(<%=GetCSType(cols[x])%>)reader[((int)<%= NameSpace %>.<%= GetClassName(SourceTable, ClassNameFormat.Column) %>.<%= GetPropertyName(cols[x]) %> - 1)]).ToString())<%
-					}// end if
+					for (int x=0; x < cols.Count; x++) { 
+						if(cols[x].IsPrimaryKeyMember) {%>
+							.Append("|").Append((reader.IsDBNull(reader.GetOrdinal("<%=cols[x].Name%>"))?<%= GetCSDefaultByType(cols[x])%>:(<%=GetCSType(cols[x])%>)reader["<%=cols[x].Name%>"]).ToString())<%
+						}// end if 
 					} //end for each column %>.ToString();
+
 					c = EntityManager.LocateOrCreate<<%=entityClassName%>>(
-					key.ToString(), // EntityTrackingKey
-					"<%=entityClassName%>",  //Creational Type
-					currentProvider.EntityCreationalFactoryType,  //Factory used to create entity
-					currentProvider.EnableEntityTracking); // Track this entity?
+						key.ToString(), // EntityTrackingKey 
+						"<%=entityClassName%>",  //Creational Type
+						DataRepository.Provider.EntityCreationalFactoryType,  //Factory used to create entity
+						DataRepository.Provider.EnableEntityTracking); // Track this entity?
 				}
 				else
 				{
 					c = new <%= className %>();
 				}
 				
-				if (!enableEntityTracking ||
+				if (!DataRepository.Provider.EnableEntityTracking || 
 					c.EntityState == EntityState.Added ||
-					(enableEntityTracking &&
-						(
-							(currentLoadPolicy == LoadPolicy.PreserveChanges && c.EntityState == EntityState.Unchanged) ||
-							(currentLoadPolicy == LoadPolicy.DiscardChanges && (c.EntityState == EntityState.Unchanged || c.EntityState == EntityState.Changed))
-						)
-					))
-				{
+					(DataRepository.Provider.EnableEntityTracking && 
+						((DataRepository.Provider.CurrentLoadPolicy == LoadPolicy.PreserveChanges && c.EntityState == EntityState.Unchanged) ||
+						 (DataRepository.Provider.CurrentLoadPolicy == LoadPolicy.DiscardChanges && (c.EntityState == EntityState.Unchanged || 
+																							 c.EntityState == EntityState.Changed)))))
+                {
 					c.SuppressEntityEvents = true;
-					<%for (int x=0; x < cols.Count;x++) { %>
+				<%for (int x=0; x < cols.Count;x++) { %>
 					<%= GetObjectPropertySetExpression(cols[x], "reader", "c", 5) %>;
-					<% if( cols[x].IsPrimaryKeyMember && !IsIdentityColumn(cols[x]) && !IsComputed(cols[x]) ) {%>
-					c.Original<%=GetPropertyName(cols[x])%> = c.<%=GetPropertyName(cols[x])%>;
-					<% }// end if %>
-					<%} //end for each column %>
+				<% if( cols[x].IsPrimaryKeyMember && !IsIdentityColumn(cols[x]) && !IsComputed(cols[x]) ) {%>
+					c.Original<%=GetPropertyName(cols[x].Name)%> = c.<%=GetPropertyName(cols[x].Name)%>; //(reader.IsDBNull(reader.GetOrdinal("<%=cols[x].Name%>")))?<%= GetCSDefaultByType(cols[x])%>:(<%=GetCSType(cols[x])%>)reader["<%=cols[x].Name%>"];
+				<% }// end if %>
+				<%} //end for each column %>
 					c.EntityTrackingKey = key;
 					c.AcceptChanges();
 					c.SuppressEntityEvents = false;
 				}
 				rows.Add(c);
 			}
-		return rows;
-		}		
+			return rows;
+		}
+		
 		/// <summary>
 		/// Refreshes the <see cref="<%=className%>"/> object from the <see cref="IDataReader"/>.
 		/// </summary>
@@ -790,7 +790,7 @@ namespace <%=DALNameSpace%>.Bases
 		/// <param name="innerList">A collection of child types for easy access.</param>
 	    /// <exception cref="ArgumentNullException">entity or childTypes is null.</exception>
 	    /// <exception cref="ArgumentException">deepLoadType has invalid value.</exception>
-		public override void <%= MethodNames.DeepLoad %>(TransactionManager transactionManager, <%= className %> entity, bool deep, DeepLoadType deepLoadType, System.Type[] childTypes, DeepSession innerList)
+		internal override void <%= MethodNames.DeepLoad %>(TransactionManager transactionManager, <%= className %> entity, bool deep, DeepLoadType deepLoadType, System.Type[] childTypes, DeepSession innerList)
 		{
 			if(entity == null)
 				return;
@@ -803,7 +803,7 @@ namespace <%=DALNameSpace%>.Bases
 				if (SourceTables.Contains(tableKey.PrimaryKeyTable)) 
 				{
 				
-				string pkClassName = GetClassName(tableKey.PrimaryKeyTable);
+				string pkClassName = GetClassName(tableKey.PrimaryKeyTable.Name);
 				string pkProperty = GetKeysName(tableKey.PrimaryKeyMemberColumns);
 				string fkPropertyName = GetKeysName(tableKey.ForeignKeyMemberColumns);
 				string compositePropertyName = fkPropertyName + "Source";
@@ -838,16 +838,13 @@ namespace <%=DALNameSpace%>.Bases
 				if (tmpEntity != null)
 					entity.<%=compositePropertyName%> = tmpEntity;
 				else
-					entity.<%=compositePropertyName%> = DataRepository.<%=GetClassName(tableKey.PrimaryKeyTable, ClassNameFormat.Provider)%>.GetBy<%= pkProperty %>(transactionManager, <%= callParams %>);		
+					entity.<%=compositePropertyName%> = DataRepository.<%= GetProviderName(pkClassName) %>.GetBy<%= pkProperty %>(transactionManager, <%= callParams %>);		
 				
-				#if NETTIERS_DEBUG
-				System.Diagnostics.Debug.WriteLine("- property '<%= compositePropertyName%>' loaded. key " + entity.EntityTrackingKey);
-				#endif 
 				
 				if (deep && entity.<%=compositePropertyName%> != null)
 				{
 					innerList.SkipChildren = true;
-					DataRepository.<%=GetClassName(tableKey.PrimaryKeyTable, ClassNameFormat.Provider)%>.DeepLoad(transactionManager, entity.<%=compositePropertyName%>, deep, deepLoadType, childTypes, innerList);
+					DataRepository.<%=GetProviderClassName(pkClassName)%>.DeepLoad(transactionManager, entity.<%=compositePropertyName%>, deep, deepLoadType, childTypes, innerList);
 					innerList.SkipChildren = false;
 				}
 					
@@ -869,11 +866,12 @@ namespace <%=DALNameSpace%>.Bases
 			Dictionary<string, KeyValuePair<Delegate, object>> deepHandles = new Dictionary<string, KeyValuePair<Delegate, object>>();
 			<% 
 			int ctr = 0;
+			
 			foreach(CollectionInfo item in GetChildrenCollections(SourceTable, SourceTables).Values)
 			{				
 				string listTypeName = item.CollectionTypeName.StartsWith("List") ? item.CollectionTypeName : item.CollectionTypeName.Substring(1);
 				if (ctr == 0)
-					Response.Write("\t\t\t// Deep load child collections  - Call GetBy" + GetKeysName(item.PkColNames) + " methods when available" + Environment.NewLine);
+					Response.Write("\t\t\t// Deep load child collections  - Call GetBy" + String.Join(string.Empty,item.PkColNames) + " methods when available" + Environment.NewLine);
 				ctr++;
 			
 			if (item.CollectionRelationshipType == RelationshipType.ManyToMany) { 
@@ -881,18 +879,18 @@ namespace <%=DALNameSpace%>.Bases
 			
 			#region <%= item.PropertyNameUnique %>
 			// RelationshipType.ManyToMany
-			if (CanDeepLoad(entity, "List<<%=item.SecondaryTable%>>|<%= item.PropertyNameUnique %>", deepLoadType, innerList))
+			if (CanDeepLoad(entity, "List<<%=GetClassName(item.SecondaryTable).Trim()%>>|<%= item.PropertyNameUnique %>", deepLoadType, innerList))
 			{
-				entity.<%=item.PropertyNameUnique %> = DataRepository.<%=GetClassName(item.SecondaryTableSchema, ClassNameFormat.Provider)%>.GetBy<%=item.GetByKeysName%>(transactionManager, <%=item.CallParams%>);			 
-		
+				entity.<%=item.PropertyNameUnique %> = DataRepository.<%=GetProviderClassName(item.SecondaryTable)%>.GetBy<%=item.GetByKeysName%>(transactionManager, <%=item.CallParams%>);			 
+
 				#if NETTIERS_DEBUG
-				System.Diagnostics.Debug.WriteLine("- property '<%=item.PropertyNameUnique%>' loaded. key " + entity.EntityTrackingKey);
+				Debug.WriteLine("- property '<%=item.PropertyNameUnique%>' loaded. key " + entity.EntityTrackingKey);
 				#endif 
 				
 				if (deep && entity.<%=item.PropertyNameUnique%> != null)
 				{
 					deepHandles.Add("<%=item.PropertyNameUnique%>",
-						new KeyValuePair<Delegate, object>((DeepLoadHandle< <%= item.SecondaryTable%> >) DataRepository.<%=GetClassName(item.SecondaryTableSchema, ClassNameFormat.Provider)%>.<%= MethodNames.DeepLoad %>,
+						new KeyValuePair<Delegate, object>((DeepLoadHandle< <%= GetClassName(item.SecondaryTable).Trim() %> >) DataRepository.<%=GetProviderClassName(item.SecondaryTable)%>.<%= MethodNames.DeepLoad %>,
 						new object[] { transactionManager, entity.<%=item.PropertyNameUnique %>, deep, deepLoadType, childTypes, innerList }
 					));
 				}
@@ -905,15 +903,15 @@ namespace <%=DALNameSpace%>.Bases
 			// RelationshipType.OneToOne
 			if (CanDeepLoad(entity, "<%= item.TypeName  %>|<%=item.PropertyNameUnique%>", deepLoadType, innerList))
 			{
-				entity.<%=item.PropertyNameUnique%> = DataRepository.<%=GetClassName(item.SecondaryTableSchema, ClassNameFormat.Provider)%>.<%=item.GetByKeysName%>(transactionManager, <%=item.CallParams%>);
+				entity.<%=item.PropertyNameUnique%> = DataRepository.<%=GetProviderClassName(item.SecondaryTable)%>.<%=item.GetByKeysName%>(transactionManager, <%=item.CallParams%>);
 				#if NETTIERS_DEBUG
-				System.Diagnostics.Debug.WriteLine("- property '<%=item.PropertyNameUnique%>' loaded. key " + entity.EntityTrackingKey);
+				Debug.WriteLine("- property '<%=item.PropertyNameUnique%>' loaded. key " + entity.EntityTrackingKey);
 				#endif 
 
 				if (deep && entity.<%=item.PropertyNameUnique%> != null)
 				{
 					deepHandles.Add("<%=item.PropertyNameUnique%>",
-						new KeyValuePair<Delegate, object>((DeepLoadSingleHandle< <%= item.SecondaryTable %> >) DataRepository.<%=GetClassName(item.SecondaryTableSchema, ClassNameFormat.Provider)%>.<%= MethodNames.DeepLoad %>,
+						new KeyValuePair<Delegate, object>((DeepLoadSingleHandle< <%= GetClassName(item.SecondaryTable).Trim() %> >) DataRepository.<%=GetProviderClassName(item.SecondaryTable)%>.<%= MethodNames.DeepLoad %>,
 						new object[] { transactionManager, entity.<%=item.PropertyNameUnique %>, deep, deepLoadType, childTypes, innerList }
 					));
 				}
@@ -928,15 +926,15 @@ namespace <%=DALNameSpace%>.Bases
 			if (CanDeepLoad(entity, "<%= listTypeName.Trim() %>|<%=item.PropertyNameUnique%>", deepLoadType, innerList)) 
 			{
 				#if NETTIERS_DEBUG
-				System.Diagnostics.Debug.WriteLine("- property '<%=item.PropertyNameUnique%>' loaded. key " + entity.EntityTrackingKey);
+				Debug.WriteLine("- property '<%=item.PropertyNameUnique%>' loaded. key " + entity.EntityTrackingKey);
 				#endif 
 
-				entity.<%=item.PropertyNameUnique%> = DataRepository.<%=GetClassName(item.SecondaryTableSchema, ClassNameFormat.Provider)%>.<%=item.GetByKeysName%>(transactionManager, <%=item.CallParams%>);
+				entity.<%=item.PropertyNameUnique%> = DataRepository.<%=GetProviderClassName(item.SecondaryTable)%>.<%=item.GetByKeysName%>(transactionManager, <%=item.CallParams%>);
 
 				if (deep && entity.<%=item.PropertyNameUnique%>.Count > 0)
 				{
 					deepHandles.Add("<%=item.PropertyNameUnique%>",
-						new KeyValuePair<Delegate, object>((DeepLoadHandle<<%= GetClassName(item.SecondaryTableSchema) %>>) DataRepository.<%=GetClassName(item.SecondaryTableSchema, ClassNameFormat.Provider)%>.<%= MethodNames.DeepLoad %>,
+						new KeyValuePair<Delegate, object>((DeepLoadHandle< <%= GetClassName(item.SecondaryTable).Trim() %> >) DataRepository.<%=GetProviderClassName(item.SecondaryTable)%>.<%= MethodNames.DeepLoad %>,
 						new object[] { transactionManager, entity.<%=item.PropertyNameUnique %>, deep, deepLoadType, childTypes, innerList }
 					));
 				}
@@ -944,7 +942,7 @@ namespace <%=DALNameSpace%>.Bases
 			#endregion 
 			<% } %>	    
 			
-		    <% }//end foreach CollectionInfo%> 
+		    <% }//end foreach CollectionInfo%>
 			
 			//Fire all DeepLoad Items
 			foreach(KeyValuePair<Delegate, object> pair in deepHandles.Values)
@@ -968,7 +966,7 @@ namespace <%=DALNameSpace%>.Bases
 		/// <param name="deepSaveType">DeepSaveType Enumeration to Include/Exclude object property collections from Save.</param>
 		/// <param name="childTypes"><%= className %> Property Collection Type Array To Include or Exclude from Save</param>
 		/// <param name="innerList">A Hashtable of child types for easy access.</param>
-		public override bool <%= MethodNames.DeepSave %>(TransactionManager transactionManager, <%= className %> entity, DeepSaveType deepSaveType, System.Type[] childTypes, DeepSession innerList)
+		internal override bool <%= MethodNames.DeepSave %>(TransactionManager transactionManager, <%= className %> entity, DeepSaveType deepSaveType, System.Type[] childTypes, DeepSession innerList)
 		{	
 			if (entity == null)
 				return false;
@@ -985,7 +983,7 @@ namespace <%=DALNameSpace%>.Bases
 				// related table must be in the selection
 				if (SourceTables.Contains(tableKey.PrimaryKeyTable)) {
 				
-				string pkClassName = GetClassName(tableKey.PrimaryKeyTable);
+				string pkClassName = GetClassName(tableKey.PrimaryKeyTable.Name);
 				string pkProperty = GetKeysName(tableKey.PrimaryKeyMemberColumns);
 				string fkPropertyName = GetKeysName(tableKey.ForeignKeyMemberColumns);
 				string compositePropertyName = fkPropertyName + "Source";		
@@ -1001,7 +999,7 @@ namespace <%=DALNameSpace%>.Bases
 			if (CanDeepSave(entity, "<%=pkClassName.Trim()%>|<%=compositePropertyName%>", deepSaveType, innerList) 
 				&& entity.<%=compositePropertyName%> != null)
 			{
-				DataRepository.<%= GetClassName(tableKey.PrimaryKeyTable, ClassNameFormat.Provider) %>.<%= MethodNames.Save %>(transactionManager, entity.<%=compositePropertyName%>);
+				DataRepository.<%= GetProviderName(pkClassName) %>.<%= MethodNames.Save %>(transactionManager, entity.<%=compositePropertyName%>);
 				<% for(int i = 0; i < tableKey.ForeignKeyMemberColumns.Count; i++) { 
 					ColumnSchema col = tableKey.ForeignKeyMemberColumns[i];
 					ColumnSchema col2 = tableKey.PrimaryKeyMemberColumns[i];
@@ -1016,10 +1014,10 @@ namespace <%=DALNameSpace%>.Bases
 			#endregion Composite Parent Properties
 
 			// Save Root Entity through Provider
-			if (!entity.IsDeleted)
-				this.<%= MethodNames.Save %>(transactionManager, entity);
+			this.<%= MethodNames.Save %>(transactionManager, entity);
 			
 			<%
+			int ctr2 = 0;
 			string[] relations = {"OneToOne", "ManyToMany", "OneToMany", "ManyToOne"};
 			
 			for (int i = 0; i < relations.Length; i++)
@@ -1027,7 +1025,7 @@ namespace <%=DALNameSpace%>.Bases
 				if (i == 0)
 				{ %>
 			//used to hold DeepSave method delegates and fire after all the local children have been saved.
-			Dictionary<string, KeyValuePair<Delegate, object>> deepHandles = new Dictionary<string, KeyValuePair<Delegate, object>>();
+			Dictionary<Delegate, object> deepHandles = new Dictionary<Delegate, object>();
 				  <%  
 				}
 
@@ -1054,14 +1052,14 @@ namespace <%=DALNameSpace%>.Bases
 					<%
 					for(int j=0; j<item.TableKey.ForeignKeyMemberColumns.Count; j++)
 					{
-						Response.Write("\n\t\t\t\t\tentity."+ item.CleanName +"." + GetPropertyName(item.TableKey.ForeignKeyMemberColumns[j]) + " = entity." + GetPropertyName(item.TableKey.PrimaryKeyMemberColumns[j]) + ";" + Environment.NewLine);
+						Response.Write("\n\t\t\t\t\tentity."+ item.CleanName +"." + GetPropertyName(item.TableKey.ForeignKeyMemberColumns[j].Name) + " = entity." + GetPropertyName(item.TableKey.PrimaryKeyMemberColumns[j].Name) + ";" + Environment.NewLine);
 					}
 					%>
-					//DataRepository.<%=GetClassName(item.SecondaryTableSchema, ClassNameFormat.Provider)%>.<%= MethodNames.Save %>(transactionManager, entity.<%=item.PropertyNameUnique%>);
-					deepHandles.Add("<%=item.PropertyNameUnique%>",
-						new KeyValuePair<Delegate, object>((DeepSaveSingleHandle< <%=item.TypeName %> >) DataRepository.<%=GetClassName(item.SecondaryTableSchema, ClassNameFormat.Provider)%>.<%= MethodNames.DeepSave %>,
+					DataRepository.<%=GetProviderClassName(item.SecondaryTable)%>.<%= MethodNames.Save %>(transactionManager, entity.<%=item.PropertyNameUnique%>);
+					deepHandles.Add(
+						(DeepSaveSingleHandle< <%=item.TypeName %> >) DataRepository.<%=GetProviderClassName(item.SecondaryTable)%>.<%= MethodNames.DeepSave %>,
 						new object[] { transactionManager, entity.<%=item.PropertyNameUnique %>, deepSaveType, childTypes, innerList }
-					));
+					);
 				}
 			} 
 			#endregion 
@@ -1072,15 +1070,15 @@ namespace <%=DALNameSpace%>.Bases
 			%>
 
 			#region <%= item.PropertyNameUnique %>>
-			if (CanDeepSave(entity.<%=item.PropertyNameUnique%>, "List<<%=GetClassName(item.SecondaryTableSchema)%>>|<%= item.PropertyNameUnique %>", deepSaveType, innerList))
+			if (CanDeepSave(entity.<%=item.PropertyNameUnique%>, "List<<%=GetClassName(item.SecondaryTable).Trim()%>>|<%= item.PropertyNameUnique %>", deepSaveType, innerList))
 			{
 				if (entity.<%=item.PropertyNameUnique%>.Count > 0 || entity.<%=item.PropertyNameUnique%>.DeletedItems.Count > 0)
 				{
-					DataRepository.<%=GetClassName(item.SecondaryTableSchema, ClassNameFormat.Provider)%>.<%= MethodNames.Save %>(transactionManager, entity.<%=item.PropertyNameUnique %>); 
-					deepHandles.Add("<%=item.PropertyNameUnique%>",
-						new KeyValuePair<Delegate, object>((DeepSaveHandle<<%= GetClassName(item.SecondaryTableSchema) %>>) DataRepository.<%=GetClassName(item.SecondaryTableSchema, ClassNameFormat.Provider)%>.<%= MethodNames.DeepSave %>,
+					DataRepository.<%=GetProviderClassName(item.SecondaryTable)%>.<%= MethodNames.Save %>(transactionManager, entity.<%=item.PropertyNameUnique %>); 
+					deepHandles.Add(
+						(DeepSaveHandle< <%= GetClassName(item.SecondaryTable).Trim() %> >) DataRepository.<%=GetProviderClassName(item.SecondaryTable)%>.<%= MethodNames.DeepSave %>,
 						new object[] { transactionManager, entity.<%=item.PropertyNameUnique %>, deepSaveType, childTypes, innerList }
-					));
+					);
 				}
 			}
 			#endregion 
@@ -1094,75 +1092,59 @@ namespace <%=DALNameSpace%>.Bases
 			%>
 	
 			#region <%= listTypeName %>
-				if (CanDeepSave(entity.<%=item.PropertyNameUnique%>, "<%= listTypeName.Trim() %>|<%=item.PropertyNameUnique %>", deepSaveType, innerList)) 
+				if (CanDeepSave(entity.<%=item.PropertyNameUnique%>, "<%= listTypeName.Trim() %>|<%=item.CollectionName %>", deepSaveType, innerList)) 
 				{	
 					// update each child parent id with the real parent id (mostly used on insert)
 					foreach(<%=item.CleanName%> child in entity.<%= item.PropertyNameUnique %>)
 					{
 						<%
-						
 						System.Collections.ArrayList filled = new System.Collections.ArrayList();
-						StringBuilder sb1 = new StringBuilder();
-						StringBuilder sb2 = new StringBuilder();
-						string fkPropName = GetKeysName(item.TableKey.ForeignKeyMemberColumns);
-						//Many-to-many are handled below
-						if (!IsJunctionTable(item.SecondaryTableSchema))
+						for(int j = 0; j < item.TableKey.ForeignKeyMemberColumns.Count; j++)
 						{
-							for(int j = 0; j < item.TableKey.ForeignKeyMemberColumns.Count; j++)
-							{
-								
-								string currProp = GetPropertyName(item.TableKey.ForeignKeyMemberColumns[j]);
-								
-								sb1.AppendFormat("{0}child.{1} = child.{2}Source.{3};{4}", Tab(7) , GetPropertyName(item.TableKey.ForeignKeyMemberColumns[j]), fkPropName , GetPropertyName(item.TableKey.PrimaryKeyMemberColumns[j]) , Environment.NewLine);
-								sb2.AppendFormat("{0}child.{1} = entity.{2};{3}", Tab(7) , GetPropertyName(item.TableKey.ForeignKeyMemberColumns[j]) , GetPropertyName(item.TableKey.PrimaryKeyMemberColumns[j]) , Environment.NewLine);
-							}
-							
-							
-							Response.Write(string.Format("{0}if(child.{1}Source != null){2}", Tab(6), fkPropName, Environment.NewLine));
-							Response.Write("{0}{{{1}",Tab(6),  Environment.NewLine);
-							Response.Write(sb1.ToString());
-							Response.Write("{0}}}{1}",Tab(6),  Environment.NewLine);
-							Response.Write(string.Format("{0}else{1}", Tab(6),  Environment.NewLine));
-							Response.Write("{0}{{{1}",Tab(6),  Environment.NewLine);
-							Response.Write(sb2.ToString());
-							Response.Write("{0}}}{1}",Tab(6),  Environment.NewLine);
-							Response.WriteLine();
-						}
-
-						System.Collections.Generic.List<string> m2mfilled = new System.Collections.Generic.List<string>();
-						
-						//if key is part of m:m relationship, ensure to automatically sync the saved entity.
-						System.Collections.Hashtable childCollections = GetChildrenCollections(SourceTable, SourceTables);
-						
-						foreach(CollectionInfo m2mItem in childCollections.Values) 
-						{
-							
-							if (!IncludeManyToMany)
-								break;
-							
-							if (m2mItem.CollectionRelationshipType != RelationshipType.ManyToMany)
+							string fkPropertyName = GetKeysName(item.TableKey.ForeignKeyMemberColumns);
+							string currProp = GetPropertyName(item.TableKey.ForeignKeyMemberColumns[j].Name);
+							if(filled.Contains(fkPropertyName))
 								continue;
-								
-							if(GetClassName(m2mItem.JunctionTableSchema) != item.CleanName
-									//|| currProp == GetKeysName(m2mItem.JunctionTablePkColNames)
-									)
-									continue;
-		
-							CreateManyToManySourceAssignments(m2mItem.TableKey,m2mfilled);
-							CreateManyToManySourceAssignments(m2mItem.SecondaryTableKey, m2mfilled);
 							
-	
+							filled.Add(fkPropertyName);
+							
+							Response.Write(string.Format("{0}if(child.{1}Source != null){2}", Tab(6), GetPropertyName(fkPropertyName), Environment.NewLine));
+							Response.Write(string.Format("{0}child.{1} = child.{2}Source.{3};{4}", Tab(7) , GetPropertyName(item.TableKey.ForeignKeyMemberColumns[j].Name), GetPropertyName(fkPropertyName) , GetPropertyName(item.TableKey.PrimaryKeyMemberColumns[j].Name) , Environment.NewLine));
+							Response.Write(string.Format("{0}else{1}", Tab(6),  Environment.NewLine));
+							Response.Write(string.Format("{0}child.{1} = entity.{2};{3}", Tab(7) , GetPropertyName(item.TableKey.ForeignKeyMemberColumns[j].Name) , GetPropertyName(item.TableKey.PrimaryKeyMemberColumns[j].Name) , Environment.NewLine));
+							Response.WriteLine();
+							//if key is part of m:m relationship, ensure to automatically sync the saved entity.
+							foreach(CollectionInfo m2mItem in GetChildrenCollections(SourceTable, SourceTables).Values) 
+							{
+								if (!IncludeManyToMany)
+									break;
+								
+								if (m2mItem.CollectionRelationshipType != RelationshipType.ManyToMany)
+									continue;
+								for(int y=0; y < m2mItem.JunctionTablePkColNames.Length; y++)
+								{
+									//if (m2mItem.PkColNames[0] == item.TableKey.ForeignKeyMemberColumns[0].Name)
+									if(GetClassName(m2mItem.JunctionTable) != item.CleanName
+										|| currProp == GetPropertyName(m2mItem.JunctionTablePkColNames[y]))
+										continue;
+									
+									Response.WriteLine(string.Format("{0}//Handle right table of {1}", Tab(6), m2mItem.PropertyNameUnique));
+									Response.Write(string.Format("{0}if(child.{1}Source != null){2}", Tab(6), GetPropertyName(m2mItem.JunctionTablePkColNames[y]), Environment.NewLine));
+									Response.Write(string.Format("{0}child.{1} = child.{1}Source.{2};{3}", Tab(7), GetPropertyName(m2mItem.JunctionTablePkColNames[y]), GetPropertyName(GetCorrespondingRelationship(m2mItem.JunctionTableSchema.Keys, m2mItem.JunctionTablePkColNames[y])), Environment.NewLine));
+									Response.WriteLine();
+								}
+							}
 						}%>
 					}
 
 					if (entity.<%=item.PropertyNameUnique %>.Count > 0 || entity.<%=item.PropertyNameUnique%>.DeletedItems.Count > 0)
 					{
-						//DataRepository.<%=GetClassName(item.SecondaryTableSchema, ClassNameFormat.Provider)%>.<%= MethodNames.Save %>(transactionManager, entity.<%=item.PropertyNameUnique%>);
+						DataRepository.<%=GetProviderClassName(item.SecondaryTable)%>.<%= MethodNames.Save %>(transactionManager, entity.<%=item.PropertyNameUnique%>);
 						
-						deepHandles.Add("<%=item.PropertyNameUnique%>",
-						new KeyValuePair<Delegate, object>((DeepSaveHandle< <%=item.CleanName%> >) DataRepository.<%=GetClassName(item.SecondaryTableSchema, ClassNameFormat.Provider)%>.<%= MethodNames.DeepSave %>,
+						deepHandles.Add(
+							(DeepSaveHandle< <%=item.CleanName%> >) DataRepository.<%=GetProviderClassName(item.SecondaryTable)%>.<%= MethodNames.DeepSave %>,
 							new object[] { transactionManager, entity.<%=item.PropertyNameUnique%>, deepSaveType, childTypes, innerList }
-						));
+						);
 					}
 				} 
 			#endregion 
@@ -1173,16 +1155,10 @@ namespace <%=DALNameSpace%>.Bases
 			if (i == relations.Length - 1)	{ 
 			%>
 			//Fire all DeepSave Items
-			foreach(KeyValuePair<Delegate, object> pair in deepHandles.Values)
+			foreach(KeyValuePair<Delegate, object> pair in deepHandles)
 		    {
                 pair.Key.DynamicInvoke((object[])pair.Value);
 		    }
-			
-			// Save Root Entity through Provider, if not already saved in delete mode
-			if (entity.IsDeleted)
-				this.<%= MethodNames.Save %>(transactionManager, entity);
-				
-
 			deepHandles = null;
 			<%  } // end if last iteration
 			} //end for each relation
@@ -1208,12 +1184,13 @@ namespace <%=DALNameSpace%>.Bases
 	{ 
 	   //Generate enum for each child type foreign key relation		
 			System.Collections.ArrayList addedList = new System.Collections.ArrayList();
+			bool showOnce = false;			
 			foreach(TableKeySchema tableKey in SourceTable.ForeignKeys)
 			{
 				// related table must be in the selection
 				if (SourceTables.Contains(tableKey.PrimaryKeyTable)) 
 				{
-					string pkClassName = GetClassName(tableKey.PrimaryKeyTable);
+					string pkClassName = GetClassName(tableKey.PrimaryKeyTable.Name);
 					string pkProperty = GetKeysName(tableKey.PrimaryKeyMemberColumns);
 					string fkPropertyName = GetKeysName(tableKey.ForeignKeyMemberColumns);
 					string compositePropertyName =  fkPropertyName + "Source";
@@ -1271,11 +1248,11 @@ namespace <%=DALNameSpace%>.Bases
 	#region <%= entityClassName %>FilterBuilder
 	
 	/// <summary>
-	/// A strongly-typed instance of the <see cref="SqlFilterBuilder&lt;<%= GetClassName(SourceTable, ClassNameFormat.Column) %>&gt;"/> class
+	/// A strongly-typed instance of the <see cref="SqlFilterBuilder&lt;EntityColumn&gt;"/> class
 	/// that is used exclusively with a <see cref="<%= entityClassName %>"/> object.
 	/// </summary>
 	[CLSCompliant(true)]
-	public class <%= entityClassName %>FilterBuilder : SqlFilterBuilder<<%=GetClassName(SourceTable, ClassNameFormat.Column)%>>
+	public class <%= entityClassName %>FilterBuilder : SqlFilterBuilder<<%= entityClassName %>Column>
 	{
 		#region Constructors
 
@@ -1305,11 +1282,11 @@ namespace <%=DALNameSpace%>.Bases
 	#region <%= entityClassName %>ParameterBuilder
 	
 	/// <summary>
-	/// A strongly-typed instance of the <see cref="ParameterizedSqlFilterBuilder&lt;<%= GetClassName(SourceTable, ClassNameFormat.Column) %>&gt;"/> class
+	/// A strongly-typed instance of the <see cref="ParameterizedSqlFilterBuilder&lt;EntityColumn&gt;"/> class
 	/// that is used exclusively with a <see cref="<%= entityClassName %>"/> object.
 	/// </summary>
 	[CLSCompliant(true)]
-	public class <%= entityClassName %>ParameterBuilder : ParameterizedSqlFilterBuilder<<%= GetClassName(SourceTable, ClassNameFormat.Column) %>>
+	public class <%= entityClassName %>ParameterBuilder : ParameterizedSqlFilterBuilder<<%= entityClassName %>Column>
 	{
 		#region Constructors
 
@@ -1335,56 +1312,4 @@ namespace <%=DALNameSpace%>.Bases
 	}
 
 	#endregion <%= entityClassName %>ParameterBuilder
-	
-	#region <%= entityClassName %>SortBuilder
-    
-    /// <summary>
-    /// A strongly-typed instance of the <see cref="SqlSortBuilder&lt;<%= GetClassName(SourceTable, ClassNameFormat.Column) %>&gt;"/> class
-	/// that is used exclusively with a <see cref="<%= entityClassName %>"/> object.
-    /// </summary>
-    [CLSCompliant(true)]
-    public class <%= entityClassName %>SortBuilder : SqlSortBuilder<<%= GetClassName(SourceTable, ClassNameFormat.Column) %>>
-    {
-		#region Constructors
-
-		/// <summary>
-		/// Initializes a new instance of the <%= entityClassName %>SqlSortBuilder class.
-		/// </summary>
-		public <%= entityClassName %>SortBuilder() : base() { }
-
-		#endregion Constructors
-
-    }    
-    #endregion <%= entityClassName %>SortBuilder
-	
 } // end namespace
-<script runat="template">
-private void CreateManyToManySourceAssignments(TableKeySchema tableKey,System.Collections.Generic.List<string> m2mfilled)
-{
-	StringBuilder sb = new StringBuilder();
-	string fkPropertyName = GetKeysName(tableKey.ForeignKeyMemberColumns);
-	
-	if (m2mfilled.Contains(fkPropertyName)) return;
-	
-	m2mfilled.Add(fkPropertyName);
-	for(int y=0; y < tableKey.PrimaryKeyMemberColumns.Count; y++)
-	{
-			
-			sb.AppendFormat("{0}child.{1} = child.{2}Source.{3};{4}", 
-				Tab(8), 
-				GetPropertyName(tableKey.ForeignKeyMemberColumns[y]),
-				fkPropertyName, 
-				GetPropertyName(tableKey.PrimaryKeyMemberColumns[y]),
-				Environment.NewLine);	
-	}
-	
-	Response.Write(string.Format("{0}if(child.{1}Source != null){2}", 
-		Tab(6), 
-		fkPropertyName, 
-		Environment.NewLine));
-	Response.Write("{0}{{{1}",Tab(6),  Environment.NewLine);
-	Response.Write(sb.ToString());
-	Response.Write("{0}}}{1}",Tab(6),  Environment.NewLine);
-	Response.WriteLine();
-}
-</script>

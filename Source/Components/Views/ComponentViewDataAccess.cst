@@ -8,7 +8,7 @@
 		the same table. You can also optionally use the main script which will run them all
 		for you.
 --%>
-<%@ CodeTemplate Src="..\..\TemplateLib\CommonSqlCode.cs" Debug="True" Inherits="MoM.Templates.CommonSqlCode" Language="C#" TargetLanguage="C#" Description="Component Object Class" ResponseEncoding="UTF-8" NoWarn="0108,0618,1572,1573,1574,0162,2002"%>
+<%@ CodeTemplate Src="..\..\TemplateLib\CommonSqlCode.cs" Debug="True" Inherits="MoM.Templates.CommonSqlCode" Language="C#" TargetLanguage="C#" Description="Component Object Class" ResponseEncoding="UTF-8" %>
 <%@ Assembly Name="SchemaExplorer" %>
 <%@ Assembly Name="System.Design" %>
 <%@ Import Namespace="SchemaExplorer" %>
@@ -31,21 +31,26 @@
 
 	#region Template Logic
 	// Name of the Abstract Class
-	string className = GetClassName(SourceView);
-	string collectionClassName = GetClassName(SourceView, ClassNameFormat.ViewCollection);
-	string collectionClassNameComment = GetClassName(SourceView, ClassNameFormat.Collection).Replace("<", "{").Replace(">","}");
-	string keyClassName = GetClassName(SourceView, ClassNameFormat.Key);
-	string entitiesCollectionClassName = GetClassName(SourceView, ClassNameFormat.Collection).Replace("<", "<Entities.");
-	string abstractClassName = GetClassName(SourceView, ClassNameFormat.Abstract);
+	string className = GetClassName(SourceView.Name);
+	string collectionClassName = GetViewCollectionClassName(SourceView.Name);
+	string collectionClassNameComment = GetCollectionClassName(SourceView.Name).Replace("<", "{").Replace(">","}");
+	string keyClassName = GetKeyClassName(className);
+	string entitiesCollectionClassName = GetCollectionClassName(SourceView.Name).Replace("<", "<Entities.");
+	string abstractClassName = GetAbstractClassName(SourceView.Name);
 	string partialClassInternalPrefix = UsePartialClass ? "" : "";
 	string constructorAccessModifier = ""; 
 	string constructorAccessModifierOnMembers = "";
 	string interfaceImplModifier = "";
 	string memberMethodEntity = className + " entity";
+	string memberMethodEntityCall = "entity";
+	
+	bool IsDomainModel = false;
+	bool IsServiceLayer = false;
 	
 	string newCollectionClassName = "";
 	string newCollectionClassNameEnd = "";
 	string newEntityCollectionClassName = "";
+	string newEntityCollectionClassNameEnd = "";	
 		
 	if (ComponentPattern == MoM.Templates.ComponentPatternType.DomainModel)
 	{		
@@ -55,16 +60,20 @@
 		constructorAccessModifier = "public static";
 		constructorAccessModifierOnMembers = "public";
 		interfaceImplModifier = "public static";
+		IsDomainModel = true;
 		// To a typed component list
 		newCollectionClassName = string.Format("new {0} (", collectionClassName);
 		newCollectionClassNameEnd = ")";
 		memberMethodEntity = "";
+		memberMethodEntityCall = "this";
 	
 		//Back to an Entity List
 		newEntityCollectionClassName = string.Format("new {0} (", entitiesCollectionClassName);
+		newEntityCollectionClassNameEnd = ")";
 	}
 	else 
 	{
+		IsServiceLayer = true; 
 		constructorAccessModifier = "public virtual";
 		constructorAccessModifierOnMembers  = constructorAccessModifier;
 		interfaceImplModifier = "public override";
@@ -176,7 +185,7 @@
 				NetTiersProvider dataProvider = ConnectionScope.Current.DataProvider;
 					
 				//Access repository
-				list = <%=newCollectionClassName%>dataProvider.<%= GetClassName(SourceView, ClassNameFormat.Provider) %>.<%= MethodNames.Get %>(transactionManager, whereClause, orderBy, start, pageLength, out totalCount)<%=newCollectionClassNameEnd%>;
+				list = <%=newCollectionClassName%>dataProvider.<%= GetProviderName(className) %>.<%= MethodNames.Get %>(transactionManager, whereClause, orderBy, start, pageLength, out totalCount)<%=newCollectionClassNameEnd%>;
 				
 				//if borrowed tran, leave open for next call
 			}
@@ -231,7 +240,7 @@
 				NetTiersProvider dataProvider = ConnectionScope.Current.DataProvider;					
 
 				//Access repository
-				list = <%=newCollectionClassName%>dataProvider.<%= GetClassName(SourceView, ClassNameFormat.Provider) %>.<%= MethodNames.GetAll %>(transactionManager, start, pageLength, out totalCount)<%=newCollectionClassNameEnd%>;	
+				list = <%=newCollectionClassName%>dataProvider.<%= GetProviderName(className) %>.<%= MethodNames.GetAll %>(transactionManager, start, pageLength, out totalCount)<%=newCollectionClassNameEnd%>;	
 			}
             catch (Exception exc)
             {
@@ -299,7 +308,7 @@
 				NetTiersProvider dataProvider = ConnectionScope.Current.DataProvider;
 					
 				//Access repository
-				list = <%=newCollectionClassName%>dataProvider.<%= GetClassName(SourceView, ClassNameFormat.Provider) %>.<%= MethodNames.GetPaged %>(transactionManager, whereClause, orderBy, start, pageLength, out totalCount)<%=newCollectionClassNameEnd%>;
+				list = <%=newCollectionClassName%>dataProvider.<%= GetProviderName(className) %>.<%= MethodNames.GetPaged %>(transactionManager, whereClause, orderBy, start, pageLength, out totalCount)<%=newCollectionClassNameEnd%>;
 				
 				//if borrowed tran, leave open for next call
 			}
@@ -341,7 +350,7 @@
 		/// </summary>
 		/// <param name="parameters">A collection of <see cref="SqlFilterParameter"/> objects.</param>
 		/// <returns>Returns a typed collection of <c><%= className %></c> objects.</returns>
-		<%= constructorAccessModifier %> <%=collectionClassName%> <%= MethodNames.Find %>(IFilterParameterCollection parameters)
+		<%= constructorAccessModifier %> <%=collectionClassName%> <%= MethodNames.Find %>(SqlFilterParameterCollection parameters)
 		{
 			return <%= MethodNames.Find %>(parameters, null);
 		}
@@ -352,7 +361,7 @@
 		/// <param name="parameters">A collection of <see cref="SqlFilterParameter"/> objects.</param>
 		/// <param name="orderBy">Specifies the sort criteria for the rows in the DataSource (Name ASC; BirthDay DESC, Name ASC);</param>
 		/// <returns>Returns a typed collection of <c><%= className %></c> objects.</returns>
-		<%= constructorAccessModifier %> <%=collectionClassName%> <%= MethodNames.Find %>(IFilterParameterCollection parameters, string orderBy)
+		<%= constructorAccessModifier %> <%=collectionClassName%> <%= MethodNames.Find %>(SqlFilterParameterCollection parameters, string orderBy)
 		{
 			int count = 0;
 			return <%= MethodNames.Find %>(parameters, orderBy, 0, defaultMaxRecords, out count);
@@ -367,7 +376,7 @@
 		/// <param name="pageLength">Number of rows to return.</param>
 		/// <param name="count">out. The number of rows that match this query.</param>
 		/// <returns>Returns a typed collection of <c><%= className %></c> objects.</returns>
-		<%= interfaceImplModifier %> <%=collectionClassName%> <%= MethodNames.Find %>(IFilterParameterCollection parameters, string orderBy, int start, int pageLength, out int count)
+		<%= interfaceImplModifier %> <%=collectionClassName%> <%= MethodNames.Find %>(SqlFilterParameterCollection parameters, string orderBy, int start, int pageLength, out int count)
 		{
 			// throws security exception if not authorized
 			//SecurityContext.IsAuthorized("<%= MethodNames.Find %>");
@@ -384,7 +393,7 @@
 				NetTiersProvider dataProvider = ConnectionScope.Current.DataProvider;
 					
 				//Access repository
-				list = <%=newCollectionClassName%>dataProvider.<%= GetClassName(SourceView, ClassNameFormat.Provider) %>.<%= MethodNames.Find %>(transactionManager, parameters, orderBy, start, pageLength, out count)<%=newCollectionClassNameEnd%>;
+				list = <%=newCollectionClassName%>dataProvider.<%= GetProviderName(className) %>.<%= MethodNames.Find %>(transactionManager, parameters, orderBy, start, pageLength, out count)<%=newCollectionClassNameEnd%>;
 			}
             catch (Exception exc)
             {
@@ -465,12 +474,12 @@
 				bool isBorrowedTransaction = ConnectionScope.Current.HasTransaction;				
 				
 				//since this is a read operation, don't create a tran by default, only use tran if provided to us for custom isolation level
-				transactionManager = ConnectionScope.ValidateOrCreateTransaction(<% if (returnType != "void") { %>noTranByDefault<%}%>);
+				transactionManager = ConnectionScope.ValidateOrCreateTransaction();
 				NetTiersProvider dataProvider = ConnectionScope.Current.DataProvider;
                 
 				//Call Custom Procedure from Repository
-//				<%= returnType != "void" ? "result = " : ""  %><%= newCollection %>dataProvider.<%= GetClassName(SourceView, ClassNameFormat.Provider) %>.<%=methodName%>(transactionManager, start, pageLength <%=TransformStoredProcedureInputsToDataAccess(true, command.InputParameters) + TransformStoredProcedureOutputsToDataAccess(true, command.AllOutputParameters)%>)<%= newCollectionEnd %>;
-				<%= returnType != "void" ? "result = " : ""  %><%= newCollection %>dataProvider.<%= GetClassName(SourceView, ClassNameFormat.Provider) %>.<%=methodName%>(transactionManager, start, pageLength <%=TransformStoredProcedureInputsToDataAccess(true, command.InputParameters) %>)<%= newCollectionEnd %>;
+//				<%= returnType != "void" ? "result = " : ""  %><%= newCollection %>dataProvider.<%= GetProviderName(className) %>.<%=methodName%>(transactionManager, start, pageLength <%=TransformStoredProcedureInputsToDataAccess(true, command.InputParameters) + TransformStoredProcedureOutputsToDataAccess(true, command.AllOutputParameters)%>)<%= newCollectionEnd %>;
+				<%= returnType != "void" ? "result = " : ""  %><%= newCollection %>dataProvider.<%= GetProviderName(className) %>.<%=methodName%>(transactionManager, start, pageLength <%=TransformStoredProcedureInputsToDataAccess(true, command.InputParameters) %>)<%= newCollectionEnd %>;
 	        
 				<% if (returnType == "void") { %>
 				//If success, Commit

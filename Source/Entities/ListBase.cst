@@ -1,10 +1,10 @@
-﻿<%--
+<%--
  * $Id: ListBase.cst,v 1.4 2006/02/27 22:09:40 bgjohnso Exp $
  * Last modified by $Author: goofsr $
  * Last modified at $Date: 2006-04-27 11:41:02 -0500 (Thu, 27 Apr 2006) $
  * $Revision: 140 $
 --%>
-<%@ CodeTemplate Language="C#" TargetLanguage="C#" Description="Generate a generic Colelction for our framework." ResponseEncoding="UTF-8"  NoWarn="0108,0618,1572,1573,1574,0162,2002" %>
+<%@ CodeTemplate Language="C#" TargetLanguage="C#" Description="Generate a generic Colelction for our framework." %>
 
 <%@ Property Name="NameSpace" Type="System.String" Category="Data" Description="Object Namespace." %>	
 
@@ -26,7 +26,7 @@ namespace <%=NameSpace%>
    /// Supports filtering, databinding, searching and sorting.
    /// </summary>
    [Serializable]
-   public abstract class ListBase<T> : BindingList<T>, IBindingListView, IBindingList, IList, ICloneable, ICloneableEx, IListSource, ITypedList, IDisposable, IComponent, IRaiseItemChangedEvents, IDeserializationCallback
+   public abstract class ListBase<T> : BindingList<T>, IBindingListView, IBindingList, IList, ICloneable, IListSource, ITypedList, IDisposable, IComponent, IRaiseItemChangedEvents, IDeserializationCallback
    {
       private List<T> _OriginalList = new List<T>();
 
@@ -48,7 +48,7 @@ namespace <%=NameSpace%>
 	  [NonSerialized]
       private PropertyDescriptorCollection _propertyCollection;
 	  
-	  <% //TODO: Planned on removing %>
+	  //TODO: Planned on removing
 	  //[NonSerialized]
       //private List<PropertyDescriptor> supportsChangeEventsProperties = new List<PropertyDescriptor>();
       
@@ -416,9 +416,9 @@ namespace <%=NameSpace%>
          this.excludedItems.Clear();
 
          // Application du filtre si non vide
-         if (!string.IsNullOrEmpty(this._filterString))
+         if (this._filterString != null & this._filterString.Length > 0)
          {
-            EntityFilter<ListBase<T>, T> MyFilter = new EntityFilter<ListBase<T>, T>(this, this._filterString);
+            Filter<ListBase<T>, T> MyFilter = new Filter<ListBase<T>, T>(this, this._filterString);
          }
 
          // Send a IBindingList list event
@@ -476,7 +476,7 @@ namespace <%=NameSpace%>
       #region BindingList overrides
 
 	/*
-	  <% //TODO: Planned on removing %>
+	  //TODO: Planned on removing 
       
 	  /// <summary>
       /// Inserts the specified item in the list at the specified index.
@@ -493,7 +493,7 @@ namespace <%=NameSpace%>
          base.InsertItem(index, item);
       }
 
-      <% //TODO: Planned on removing %>
+      //TODO: Planned on removing 
 	  /// <summary>
       /// Removes the item at the specified index.
       /// </summary>
@@ -578,15 +578,6 @@ namespace <%=NameSpace%>
       }
 
       ///<summary>
-      /// Creates an exact copy of this instance.
-      ///</summary>
-      ///<implements><see cref="ICloneableEx.Clone"/></implements>
-	  public virtual object Clone(IDictionary existingCopies)
-      {
-         throw new NotImplementedException("Method not implemented.");
-      }
-		
-      ///<summary>
       /// Creates an exact copy of this TList{T} object.
       ///</summary>
       ///<returns>A new, identical copy of the TList{T} casted as object.</returns>
@@ -603,31 +594,7 @@ namespace <%=NameSpace%>
                 System.NotSupportedException("object not cloneable");
          }
       }
-
-	      ///<summary>
-      /// Creates an exact copy of this TList{T} object.
-      ///</summary>
-      ///<returns>A new, identical copy of the TList{T} casted as object.</returns>
-      public static object MakeCopyOf(object x, IDictionary existingCopies)
-      {
-		 if (x is ICloneableEx)
-		 {
-            // Return a deep copy of the object
-            return ((ICloneableEx)x).Clone(existingCopies);
-		 }
-         else if (x is ICloneable)
-         {
-            // Return a deep copy of the object
-            return ((ICloneable)x).Clone();
-         }
-         else
-         {
-            throw new
-                System.NotSupportedException("object not cloneable");
-         }
-      }
-	
-	  #endregion ICloneable
+      #endregion ICloneable
 	  
 	  #region PropertyCollection
 	  /// <summary>
@@ -650,10 +617,10 @@ namespace <%=NameSpace%>
       /// </returns>
       public override string ToString()
       {
-         string s = this.GetType().Name + " Collection" + System.Environment.NewLine;
+         string s = this.GetType().Name + " Collection" + Environment.NewLine;
          foreach (T Item in this)
          {
-            s += Item.ToString() + System.Environment.NewLine;
+            s += Item.ToString() + Environment.NewLine;
          }
          return s;
       }
@@ -664,7 +631,7 @@ namespace <%=NameSpace%>
       /// Raises the ListChanged event indicating that a item in the list has changed.
       /// </summary>
       /// <param name="entity"></param>
-      public void EntityChanged(T entity)
+      internal void EntityChanged(T entity)
       {
          OnListChanged(new ListChangedEventArgs(ListChangedType.ItemChanged, IndexOf(entity)));
       }
@@ -685,8 +652,7 @@ namespace <%=NameSpace%>
             if (_childCollectionProperties == null)
                _childCollectionProperties = new Dictionary<string, PropertyDescriptorCollection>();
 
-				Type relevantType = listAccessors[listAccessors.Length - 1].PropertyType;
-            string typeName = relevantType.FullName;
+            string typeName = listAccessors[0].PropertyType.FullName;
 
             if (_childCollectionProperties.ContainsKey(typeName))
             {
@@ -694,7 +660,7 @@ namespace <%=NameSpace%>
             }
             else
             {
-               PropertyDescriptorCollection props = EntityHelper.GetBindableProperties(relevantType);
+               PropertyDescriptorCollection props = EntityHelper.GetBindableProperties(listAccessors[0].PropertyType);
                _childCollectionProperties.Add(typeName, props);
 
                return props;
@@ -728,7 +694,7 @@ namespace <%=NameSpace%>
       /// </summary>
       public bool ContainsListCollection
       {
-         <% // TODO: Implement nested lists %>
+         // TODO: Implement nested lists
          get { return _containsListCollection; }
          set { _containsListCollection = value; }
       }
@@ -1095,7 +1061,7 @@ namespace <%=NameSpace%>
             //look at current type's props, and if child hold a ref to it, so that you can recursively add the child.
             foreach (PropertyDescriptor prop in props)
             {
-               <% //TODO: Change to custom entity attribute for PK discovery %>
+               //TODO: Change to custom entity attribute for PK discovery
                if (prop.Attributes.Matches(new Attribute[] { new ReadOnlyAttribute(false), new System.ComponentModel.BindableAttribute(true), new DescriptionAttribute() }))
                   primaryKey.Add(dataTable.Columns.Add(prop.Name, prop.PropertyType));
                else if (prop.PropertyType.GetInterface("IList") != null && prop.PropertyType.IsGenericType && (prop.PropertyType.BaseType != null && prop.PropertyType.BaseType.GetGenericTypeDefinition() == typeof(ListBase<>)))

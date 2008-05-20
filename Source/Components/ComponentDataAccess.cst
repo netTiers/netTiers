@@ -1,4 +1,4 @@
-﻿<%@ CodeTemplate Src="..\TemplateLib\CommonSqlCode.cs" Debug="True" Inherits="MoM.Templates.CommonSqlCode" Language="C#" TargetLanguage="C#" Description="Component Object Class" ResponseEncoding="UTF-8" NoWarn="0108,0618,1572,1573,1574,0162,2002"%>
+<%@ CodeTemplate Src="..\TemplateLib\CommonSqlCode.cs" Debug="True" Inherits="MoM.Templates.CommonSqlCode" Language="C#" TargetLanguage="C#" Description="Component Object Class"%>
 <%@ Assembly Name="SchemaExplorer" %>
 <%@ Assembly Name="System.Design" %>
 <%@ Import Namespace="SchemaExplorer" %>
@@ -21,17 +21,16 @@
 <%@ Property Name="UsePartialClass" Type="System.Boolean" Default="true" Category="General" Description="Indicates if partial class should be generated." %>
 <%@ Property Name="RenderOverload" Type="System.Boolean" Default="False" Category="Options" Description="If true the overloaded methods will be generated." %>
 <%@ Property Name="RenderImplementation" Type="System.Boolean" Default="False" Category="Options" Description="If true the implementation methods will be generated." %>
-
 <%
 
 	#region Template Logic
 	// Name of the Abstract Class
-	string className = GetClassName(SourceTable);
-	string collectionClassName = GetClassName(SourceTable, ClassNameFormat.Collection);
-	string collectionClassNameComment = GetClassName(SourceTable, ClassNameFormat.Collection).Replace("<", "{").Replace(">","}");
-	string keyClassName = GetClassName(SourceTable, ClassNameFormat.Key);
-	string entitiesCollectionClassName = GetClassName(SourceTable, ClassNameFormat.Collection).Replace("<", "<Entities.");
-	string abstractClassName = GetClassName(SourceTable, ClassNameFormat.Abstract);
+	string className = GetClassName(SourceTable.Name);
+	string collectionClassName = GetCollectionClassName(SourceTable.Name);
+	string collectionClassNameComment = GetCollectionClassName(SourceTable.Name).Replace("<", "{").Replace(">","}");
+	string keyClassName = GetKeyClassName(className);
+	string entitiesCollectionClassName = GetCollectionClassName(SourceTable.Name).Replace("<", "<Entities.");
+	string abstractClassName = GetAbstractClassName(SourceTable.Name);
 	string partialClassInternalPrefix = UsePartialClass ? "" : "";
 	string constructorAccessModifier = ""; 
 	string constructorAccessModifierOnMembers = "";
@@ -49,6 +48,7 @@
 	
 	if (ComponentPattern == MoM.Templates.ComponentPatternType.DomainModel)
 	{		
+	    collectionClassName = collectionClassName; //.Replace("TList", "TList");
 	    collectionClassNameComment = collectionClassName.Replace("<", "{").Replace(">","}");
 
 		constructorAccessModifier = "public static";
@@ -130,9 +130,9 @@
 
 		#region Fields
 		private static SecurityContext<<%= className %>> securityContext = new SecurityContext<<%= className %>>();
-		//private static readonly string layerExceptionPolicy = "<%= ComponentPattern %>ExceptionPolicy";
-		//private static readonly bool noTranByDefault = false;
-		//private static readonly int defaultMaxRecords = 10000;
+		private static readonly string layerExceptionPolicy = "<%= ComponentPattern %>ExceptionPolicy";
+		private static readonly bool noTranByDefault = false;
+		private static readonly int defaultMaxRecords = 10000;
 		#endregion 
 		
 		#region SecurityContext
@@ -163,10 +163,10 @@
 		%>	
 		/// <summary>
 		/// 	<%= constructorAccessModifier %> method that Gets rows in a <see cref="<%=collectionClassNameComment %>" /> from the datasource based on the <%=fkeys[j].Name%> key.
-		///		<%=fkeys[j].Name%> Description: <%=GetColumnXmlComment(fkeys[j],2)%>
+		///		<%=fkeys[j].Name%> Description: <%=fkeys[j].Description%>
 		/// </summary>
 		<% for (int i = 0; i < fkeys[j].ForeignKeyMemberColumns.Count; i++) { %>
-		/// <param name="<%= GetFieldName(fkeys[j].ForeignKeyMemberColumns[i])%>"><%=GetColumnXmlComment(fkeys[j].ForeignKeyMemberColumns[i],2)%></param>
+		/// <param name="<%= GetPrivateName(fkeys[j].ForeignKeyMemberColumns[i].Name)%>"><%=fkeys[j].ForeignKeyMemberColumns[i].Description%></param>
 		<% } %>
 		/// <returns>Returns a generic collection of <%=className%> objects.</returns>
 		[DataObjectMethod(DataObjectMethodType.Select)]
@@ -178,10 +178,10 @@
 		
 		/// <summary>
 		/// 	<%= constructorAccessModifier %> method that Gets rows in a <see cref="<%=collectionClassNameComment %>" /> from the datasource based on the <%=fkeys[j].Name%> key.
-		///		<%=fkeys[j].Name%> Description: <%=GetColumnXmlComment(fkeys[j],2)%>
+		///		<%=fkeys[j].Name%> Description: <%=fkeys[j].Description%>
 		/// </summary>
 		<% for (int i = 0; i < fkeys[j].ForeignKeyMemberColumns.Count; i++) { %>
-		/// <param name="<%= GetFieldName(fkeys[j].ForeignKeyMemberColumns[i])%>"><%=GetColumnXmlComment(fkeys[j].ForeignKeyMemberColumns[i],2)%></param>
+		/// <param name="<%= GetPrivateName(fkeys[j].ForeignKeyMemberColumns[i].Name)%>"><%=fkeys[j].ForeignKeyMemberColumns[i].Description%></param>
 		<% } %>
 		/// <param name="start">Row number at which to start reading.</param>
 		/// <param name="pageLength">Page length of records you would like to retrieve</param>
@@ -190,32 +190,35 @@
 		[DataObjectMethod(DataObjectMethodType.Select)]
 		<%= constructorAccessModifier %> <%=collectionClassName%> <%=partialClassInternalPrefix%>GetBy<%=GetKeysName(fkeys[j].ForeignKeyMemberColumns)%>(<%= GetFunctionHeaderParameters(fkeys[j].ForeignKeyMemberColumns) %>, int start, int pageLength, out int totalCount)
 		{
-			#region Security check
 			// throws security exception if not authorized
 			SecurityContext.IsAuthorized("GetBy<%=GetKeysName(fkeys[j].ForeignKeyMemberColumns)%>");
-			#endregion Security check
 			
-			#region Initialisation
-			totalCount = -1;
+			// get this data
 			<%= collectionClassName %> list = null;
+			totalCount = -1;
 			TransactionManager transactionManager = null; 
-			NetTiersProvider dataProvider = null;
-			#endregion Initialisation
-			
+
 			try
             {					
-				transactionManager = base.HandleTransactionAndProviderSetup( transactionManager, out dataProvider );
-				list = new <%=collectionClassName%>(dataProvider.<%= GetClassName(SourceTable, ClassNameFormat.Provider) %>.GetBy<%=GetKeysName(fkeys[j].ForeignKeyMemberColumns)%>(transactionManager, <%= GetFunctionCallParameters(fkeys[j].ForeignKeyMemberColumns) %>, start, pageLength, out totalCount));
+				//since this is a read operation, don't create a tran by default, only use tran if provided to us for custom isolation level
+				transactionManager = ConnectionScope.ValidateOrCreateTransaction(noTranByDefault);
+				NetTiersProvider dataProvider = ConnectionScope.Current.DataProvider;
+				
+				//Access repository
+				list = new <%=collectionClassName%>(dataProvider.<%= GetProviderName(className) %>.GetBy<%=GetKeysName(fkeys[j].ForeignKeyMemberColumns)%>(transactionManager, <%= GetFunctionCallParameters(fkeys[j].ForeignKeyMemberColumns) %>, start, pageLength, out totalCount));
+				
+				//intentionally leave transaction open on a read operation.
+				
 			}
             catch (Exception exc)
             {
-				#region Handle transaction rollback and exception
-                base.HandleTransactionRollback( transactionManager );
+				//if open, rollback, it's possible this is part of a larger commit
+                if (transactionManager != null && transactionManager.IsOpen) 
+					transactionManager.Rollback();
 				
 				//Handle exception based on policy
                 if (DomainUtil.HandleException(exc, layerExceptionPolicy)) 
 					throw;
-				#endregion Handle transaction rollback and exception
 			}
 			return list;
 		}
@@ -243,6 +246,7 @@
 			/// The goal is to avoid to create double bet by index function
 			System.Collections.ArrayList indexKeys = new System.Collections.ArrayList();
 			
+			
 			for (int j=0; j < indexes.Count;j++)
 			{
 				//if(indexes[j].IsPrimaryKey)
@@ -269,6 +273,7 @@
 					newCollection = string.Format("new {0}(", collectionClassName);
 					newCollectionEnd = ")";
 				}
+				bool isUnique = false;
 				
 				//if (IsPrimaryKey(indexes[j]))
 				if (indexes[j].IsUnique || indexes[j].IsPrimaryKey)
@@ -277,6 +282,7 @@
 					returnType = className;
 					newCollection = "";
 					newCollectionEnd = " as " + returnType;
+					isUnique = true;
 				}
 				
 				string returnTypeForComment = returnType.Replace("<", "{").Replace(">", "}");
@@ -286,7 +292,7 @@
 		///  method that Gets rows in a <see cref="<%=collectionClassNameComment %>" /> from the datasource based on the primary key <%=indexes[j].Name%> index.
 		/// </summary>
 		<% for (int i = 0; i < indexes[j].MemberColumns.Count; i++) { %>
-		/// <param name="<%= GetFieldName(indexes[j].MemberColumns[i])%>"><%=GetColumnXmlComment( indexes[j].MemberColumns[i],2)%></param>
+		/// <param name="<%= GetPrivateName(indexes[j].MemberColumns[i].Name)%>"><%= indexes[j].MemberColumns[i].Description%></param>
 		<% } %>
 		/// <returns>Returns an instance of the <see cref="<%= returnTypeForComment %>"/> class.</returns>
 		[DataObjectMethod(DataObjectMethodType.Select)]
@@ -300,7 +306,7 @@
 		///  Method that Gets rows in a <see cref="<%=collectionClassNameComment %>" /> from the datasource based on the primary key <%=indexes[j].Name%> index.
 		/// </summary>
 		<% for (int i = 0; i < indexes[j].MemberColumns.Count; i++) { %>
-		/// <param name="<%= GetFieldName(indexes[j].MemberColumns[i])%>"><%= GetColumnXmlComment(indexes[j].MemberColumns[i],2)%></param>
+		/// <param name="<%= GetPrivateName(indexes[j].MemberColumns[i].Name)%>"><%= indexes[j].MemberColumns[i].Description%></param>
 		<% } %>
 		/// <param name="start">Row number at which to start reading.</param>
 		/// <param name="pageLength">Page length of records you would like to retrieve</param>
@@ -309,34 +315,35 @@
 		[DataObjectMethod(DataObjectMethodType.Select)]
 		<%= constructorAccessModifier %> <%=returnType%> <%=partialClassInternalPrefix%>GetBy<%=GetKeysName(indexes[j].MemberColumns)%>(<%= GetFunctionHeaderParameters(indexes[j].MemberColumns) %>, int start, int pageLength, out int totalCount)
 		{
-			#region Security check
 			// throws security exception if not authorized
 			SecurityContext.IsAuthorized("GetBy<%=GetKeysName(indexes[j].MemberColumns)%>");
-			#endregion Security check
-			
-			#region Initialisation
 			totalCount = -1;
+			
 			<%=returnType%> <%= returnTypeVar %> = null;
 			TransactionManager transactionManager = null; 
-			NetTiersProvider dataProvider = null;
-			#endregion Initialisation
 			
 			try
             {	
-				transactionManager = base.HandleTransactionAndProviderSetup( transactionManager, out dataProvider );
-				<%= returnTypeVar %> = <%=newCollection%>dataProvider.<%= GetClassName(SourceTable, ClassNameFormat.Provider) %>.GetBy<%=GetKeysName(indexes[j].MemberColumns)%>(transactionManager, <%= GetFunctionCallParameters(indexes[j].MemberColumns) %>, start, pageLength, out totalCount)  <%=newCollectionEnd%>;
+				//since this is a read operation, don't create a tran by default, only use tran if provided to us for custom isolation level
+				 transactionManager = ConnectionScope.ValidateOrCreateTransaction(noTranByDefault);
+				NetTiersProvider dataProvider = ConnectionScope.Current.DataProvider;					
+				
+				//Access Repository
+				<%= returnTypeVar %> = <%=newCollection%>dataProvider.<%= GetProviderName(className) %>.GetBy<%=GetKeysName(indexes[j].MemberColumns)%>(transactionManager, <%= GetFunctionCallParameters(indexes[j].MemberColumns) %>, start, pageLength, out totalCount)  <%=newCollectionEnd%>;
+			
+				//if borrowed tran, leave open for next call
+				
 			}
             catch (Exception exc)
             {
-				#region Handle transaction rollback and exception
-                base.HandleTransactionRollback( transactionManager );
+				//if open, rollback, it's possible this is part of a larger commit
+                if (transactionManager != null && transactionManager.IsOpen) 
+					transactionManager.Rollback();
 				
 				//Handle exception based on policy
                 if (DomainUtil.HandleException(exc, layerExceptionPolicy)) 
 					throw;
-				#endregion Handle transaction rollback and exception
 			}
-			
 			return <%= returnTypeVar %>;
 		}
 	
@@ -365,32 +372,32 @@
 		/// <returns>a <see cref="<%= collectionClassNameComment %>"/> </returns>
 		<%= constructorAccessModifier %> <%=collectionClassName %> <%=partialClassInternalPrefix%><%= MethodNames.GetAll %>(int start, int pageLength, out int totalCount) 
 		{
-			#region Security check
 			// throws security exception if not authorized
 			SecurityContext.IsAuthorized("<%= MethodNames.GetAll %>");
-			#endregion Security check
 			
-			#region Initialisation
-			totalCount = -1;
+			// get this data
 			<%= collectionClassName %> list = null;
+			totalCount = -1;
 			TransactionManager transactionManager = null; 
-			NetTiersProvider dataProvider = null;
-			#endregion Initialisation
 			
 			try
             {	
-				transactionManager = base.HandleTransactionAndProviderSetup( transactionManager, out dataProvider );
-				list = <%=newCollectionClassName%>dataProvider.<%= GetClassName(SourceTable, ClassNameFormat.Provider) %>.<%= MethodNames.GetAll %>(transactionManager, start, pageLength, out totalCount)<%=newCollectionClassNameEnd%>;	
+				//since this is a read operation, don't create a tran by default, only use tran if provided to us for custom isolation level
+				transactionManager = ConnectionScope.ValidateOrCreateTransaction(noTranByDefault);
+				NetTiersProvider dataProvider = ConnectionScope.Current.DataProvider;					
+
+				//Access repository
+				list = <%=newCollectionClassName%>dataProvider.<%= GetProviderName(className) %>.<%= MethodNames.GetAll %>(transactionManager, start, pageLength, out totalCount)<%=newCollectionClassNameEnd%>;	
 			}
             catch (Exception exc)
             {
-				#region Handle transaction rollback and exception
-                base.HandleTransactionRollback( transactionManager );
+				//if open, rollback, it's possible this is part of a  larger commit
+                if (transactionManager != null && transactionManager.IsOpen) 
+					transactionManager.Rollback();
 				
 				//Handle exception based on policy
                 if (DomainUtil.HandleException(exc, layerExceptionPolicy)) 
 					throw;
-				#endregion Handle transaction rollback and exception
 			}
 			return list;
 		}
@@ -433,32 +440,34 @@
 		/// <returns>Returns a typed collection of <c><%= className %></c> objects.</returns>
 		<%= interfaceImplModifier %> <%=collectionClassName %> <%=partialClassInternalPrefix%><%= MethodNames.GetPaged %>(string whereClause,string orderBy, int start, int pageLength, out int totalCount)
 		{
-			#region Security check
 			// throws security exception if not authorized
 			SecurityContext.IsAuthorized("<%= MethodNames.GetPaged %>");
-			#endregion Security check
 			
-			#region Initialisation
-			totalCount = -1;
+			// get this data
 			<%= collectionClassName %> list = null;
+			totalCount = -1;
 			TransactionManager transactionManager = null; 
-			NetTiersProvider dataProvider = null;
-			#endregion Initialisation
 			
 			try
             {	
-				transactionManager = base.HandleTransactionAndProviderSetup( transactionManager, out dataProvider );
-				list = <%=newCollectionClassName%>dataProvider.<%= GetClassName(SourceTable, ClassNameFormat.Provider) %>.<%= MethodNames.GetPaged %>(transactionManager, whereClause, orderBy, start, pageLength, out totalCount)<%=newCollectionClassNameEnd%>;
+				//since this is a read operation, don't create a tran by default, only use tran if provided to us for custom isolation level
+				transactionManager = ConnectionScope.ValidateOrCreateTransaction(noTranByDefault);
+				NetTiersProvider dataProvider = ConnectionScope.Current.DataProvider;
+					
+				//Access repository
+				list = <%=newCollectionClassName%>dataProvider.<%= GetProviderName(className) %>.<%= MethodNames.GetPaged %>(transactionManager, whereClause, orderBy, start, pageLength, out totalCount)<%=newCollectionClassNameEnd%>;
+				
+				//if borrowed tran, leave open for next call
 			}
             catch (Exception exc)
             {
-				#region Handle transaction rollback and exception
-                base.HandleTransactionRollback( transactionManager );
+				//if open, rollback, it's possible this is part of a larger commit
+                if (transactionManager != null && transactionManager.IsOpen) 
+					transactionManager.Rollback();
 				
 				//Handle exception based on policy
                 if (DomainUtil.HandleException(exc, layerExceptionPolicy)) 
 					throw;
-				#endregion Handle transaction rollback and exception
 			}
 			return list;			
 		}
@@ -509,32 +518,34 @@
 		/// <returns>Returns a typed collection <%=collectionClassNameComment %> of <c><%= className %></c> objects.</returns>
 		<%= interfaceImplModifier %> <%=collectionClassName%> <%= MethodNames.Find %>(string whereClause, int start, int pageLength, out int totalCount)
 		{
-			#region Security check
 			// throws security exception if not authorized
 			SecurityContext.IsAuthorized("<%= MethodNames.Find %>");
-			#endregion Security check
-			
-			#region Initialisation
-			totalCount = -1;
+								
+			// get this data
 			<%= collectionClassName %> list = null;
+			totalCount = -1;
 			TransactionManager transactionManager = null; 
-			NetTiersProvider dataProvider = null;
-			#endregion Initialisation
 			
 			try
             {	
-				transactionManager = base.HandleTransactionAndProviderSetup( transactionManager, out dataProvider );
-				list = <%=newCollectionClassName%>dataProvider.<%= GetClassName(SourceTable, ClassNameFormat.Provider) %>.<%= MethodNames.Find %>(transactionManager, whereClause, start, pageLength, out totalCount)<%=newCollectionClassNameEnd%>;
+				//since this is a read operation, don't create a tran by default, only use tran if provided to us for custom isolation level
+				transactionManager = ConnectionScope.ValidateOrCreateTransaction(noTranByDefault);
+				NetTiersProvider dataProvider = ConnectionScope.Current.DataProvider;
+					
+				//Access repository
+				list = <%=newCollectionClassName%>dataProvider.<%= GetProviderName(className) %>.<%= MethodNames.Find %>(transactionManager, whereClause, start, pageLength, out totalCount)<%=newCollectionClassNameEnd%>;
+				
+				//if borrowed tran, leave open for next call
 			}
             catch (Exception exc)
             {
-				#region Handle transaction rollback and exception
-                base.HandleTransactionRollback( transactionManager );
+				//if open, rollback, it's possible this is part of a larger commit
+                if (transactionManager != null && transactionManager.IsOpen) 
+					transactionManager.Rollback();
 				
 				//Handle exception based on policy
                 if (DomainUtil.HandleException(exc, layerExceptionPolicy)) 
 					throw;
-				#endregion Handle transaction rollback and exception
 			}
 			return list;
 		}
@@ -544,25 +555,14 @@
 		#region Parameterized <%= MethodNames.Find %> Methods
 
 		/// <summary>
-		/// Returns rows from the DataSource that meet the parameter conditions.
+		/// 	Returns rows from the DataSource that meet the parameter conditions.
 		/// </summary>
 		/// <param name="parameters">A collection of <see cref="SqlFilterParameter"/> objects.</param>
 		/// <returns>Returns a typed collection of <c><%= className %></c> objects.</returns>
-		<%= constructorAccessModifier %> <%=collectionClassName%> <%= MethodNames.Find %>(IFilterParameterCollection parameters)
+		<%= constructorAccessModifier %> <%=collectionClassName%> <%= MethodNames.Find %>(SqlFilterParameterCollection parameters)
 		{
-			return <%= MethodNames.Find %>(parameters, (string) null);
+			return <%= MethodNames.Find %>(parameters, null);
 		}
-		
-		/// <summary>
-        /// Returns rows from the DataSource that meet the parameter conditions.
-        /// </summary>
-        /// <param name="parameters">A collection of <see cref="SqlFilterParameter"/> objects.</param>
-        /// <param name="sortColumns">A collection of <see cref="SqlSortColumn"/> objects.</param>
-        /// <returns>Returns a typed collection of <c><%= className %></c> objects.</returns>
-        <%= constructorAccessModifier %> <%=collectionClassName%> <%= MethodNames.Find %>(IFilterParameterCollection parameters, ISortColumnCollection sortColumns)
-        {
-            return <%= MethodNames.Find %>(parameters, sortColumns.ToString());
-        }
 		
 		/// <summary>
 		/// 	Returns rows from the DataSource that meet the parameter conditions.
@@ -570,25 +570,11 @@
 		/// <param name="parameters">A collection of <see cref="SqlFilterParameter"/> objects.</param>
 		/// <param name="orderBy">Specifies the sort criteria for the rows in the DataSource (Name ASC; BirthDay DESC, Name ASC);</param>
 		/// <returns>Returns a typed collection of <c><%= className %></c> objects.</returns>
-		<%= constructorAccessModifier %> <%=collectionClassName%> <%= MethodNames.Find %>(IFilterParameterCollection parameters, string orderBy)
+		<%= constructorAccessModifier %> <%=collectionClassName%> <%= MethodNames.Find %>(SqlFilterParameterCollection parameters, string orderBy)
 		{
 			int count = 0;
 			return <%= MethodNames.Find %>(parameters, orderBy, 0, defaultMaxRecords, out count);
 		}
-		
-		/// <summary>
-        /// Returns rows from the DataSource that meet the parameter conditions.
-        /// </summary>
-        /// <param name="parameters">A collection of <see cref="SqlFilterParameter"/> objects.</param>
-        /// <param name="sortColumns">A collection of <see cref="SqlSortColumn"/> objects.</param>
-        /// <param name="start">Row number at which to start reading.</param>
-        /// <param name="pageLength">Number of rows to return.</param>
-        /// <param name="count">out. The number of rows that match this query.</param>
-        /// <returns>Returns a typed collection of <c><%= className %></c> objects.</returns>
-        <%= constructorAccessModifier %> <%=collectionClassName%> <%= MethodNames.Find %>(IFilterParameterCollection parameters, ISortColumnCollection sortColumns, int start, int pageLength, out int count)
-        {
-            return <%= MethodNames.Find %>(parameters, sortColumns.ToString(), start, pageLength, out count);
-        }
 		
 		/// <summary>
 		/// 	Returns rows from the DataSource that meet the parameter conditions.
@@ -599,34 +585,34 @@
 		/// <param name="pageLength">Number of rows to return.</param>
 		/// <param name="count">out. The number of rows that match this query.</param>
 		/// <returns>Returns a typed collection of <c><%= className %></c> objects.</returns>
-		<%= constructorAccessModifier %> <%=collectionClassName%> <%= MethodNames.Find %>(IFilterParameterCollection parameters, string orderBy, int start, int pageLength, out int count)
+		<%= constructorAccessModifier %> <%=collectionClassName%> <%= MethodNames.Find %>(SqlFilterParameterCollection parameters, string orderBy, int start, int pageLength, out int count)
 		{
-			#region Security check
 			// throws security exception if not authorized
 			SecurityContext.IsAuthorized("<%= MethodNames.Find %>");
-			#endregion Security check
-			
-			#region Initialisation
-			count = -1;
+								
+			// get this data
 			TransactionManager transactionManager = null; 
 			<%= collectionClassName %> list = null;
-			NetTiersProvider dataProvider = null;
-			#endregion Initialisation
+			count = -1;
 			
 			try
             {	
-				transactionManager = base.HandleTransactionAndProviderSetup( transactionManager, out dataProvider );
-				list = <%=newCollectionClassName%>dataProvider.<%= GetClassName(SourceTable, ClassNameFormat.Provider) %>.<%= MethodNames.Find %>(transactionManager, parameters, orderBy, start, pageLength, out count)<%=newCollectionClassNameEnd%>;
+				//since this is a read operation, don't create a tran by default, only use tran if provided to us for custom isolation level
+				transactionManager = ConnectionScope.ValidateOrCreateTransaction(noTranByDefault);
+				NetTiersProvider dataProvider = ConnectionScope.Current.DataProvider;
+					
+				//Access repository
+				list = <%=newCollectionClassName%>dataProvider.<%= GetProviderName(className) %>.<%= MethodNames.Find %>(transactionManager, parameters, orderBy, start, pageLength, out count)<%=newCollectionClassNameEnd%>;
 			}
             catch (Exception exc)
             {
-				#region Handle transaction rollback and exception
-                base.HandleTransactionRollback( transactionManager );
+				//if open, rollback, it's possible this is part of a larger commit
+                if (transactionManager != null && transactionManager.IsOpen) 
+					transactionManager.Rollback();
 				
 				//Handle exception based on policy
                 if (DomainUtil.HandleException(exc, layerExceptionPolicy)) 
 					throw;
-				#endregion Handle transaction rollback and exception
 			}
 			
 			return list;
@@ -667,7 +653,7 @@
 
 		#region <%= action %> Entity
 		/// <summary>
-		/// <%= constructorAccessModifier %> method that <%= action %>s a <%=className%> object into the datasource using a transaction.
+		/// 	<%= constructorAccessModifier %>method that <%= action %>s a <%=className%> object into the datasource using a transaction.
 		/// </summary>
 		<% if (IsServiceLayer) { %>
 		/// <param name="entity"><%=className%> object to <%= action %>.</param>
@@ -683,7 +669,7 @@
 		/// <%= className %> entity = new <%= className %>();
 		<% }
 		else {%>
-		///	<%= className %> entity = <%= (IsServiceLayer ? GetClassName(SourceTable, ClassNameFormat.Service) : className) %>.GetByPrimaryKeyColumn(1234);
+		///	<%= className %> entity = <%= (IsServiceLayer ? GetServiceClassName(className) : className) %>.GetByPrimaryKeyColumn(1234);
 		<%  }%>
 		/// entity.StringProperty = "foo";
 		/// entity.IntProperty = 12;
@@ -694,8 +680,8 @@
 		/// 	tm = ConnectionContext.CreateTransaction();
 		<%if (IsServiceLayer)  {%>
 		///		//<%= action %> Child entity, Then Parent Entity
-		/// 	<%= GetChildObjectTypeServiceName() %>.<%= action %>(entity.ChildObjectSource);
-		///		<%= GetClassName(SourceTable, ClassNameFormat.Service) %>.<%= action %>(entity);
+		/// 	<%= GetServiceClassName("ChildObjectType") %>.<%= action %>(entity.ChildObjectSource);
+		///		<%= GetServiceClassName(className) %>.<%= action %>(entity);
 		<% } %>
 		<% else if (IsDomainModel){%>
 		///		//<%= action %> Child entity, Then Parent Entity
@@ -713,38 +699,41 @@
 		[DataObjectMethod(DataObjectMethodType.<%= methodType %>)]
 		<%= IsServiceLayer ? interfaceImplModifier : constructorAccessModifierOnMembers %> <%= (action != MethodNames.Save ? "bool" : returnEntity) %> <%=partialClassInternalPrefix%><%= action %>(<%= memberMethodEntity %>)
 		{
-			#region Security and validation check
 			// throws security exception if not authorized
 			SecurityContext.IsAuthorized("<%= action %>");
 			
 			if (!<%= memberMethodEntityCall %>.IsValid)
-				throw new EntityNotValidException(<%= memberMethodEntityCall %>, "<%= action %>", <%= memberMethodEntityCall %>.Error);
-			#endregion Security and validation check
+				throw new Entities.EntityNotValidException(<%= memberMethodEntityCall %>, "<%= action %>", <%= memberMethodEntityCall %>.Error);
 			
-			#region Initialisation
+			TransactionManager transactionManager = null; 
 			<% if (action != MethodNames.Save) { %>
 			bool result = false;
 			<% } %>
-			bool isBorrowedTransaction = false;
-			TransactionManager transactionManager = null; 
-			NetTiersProvider dataProvider;
-			#endregion Initialisation
 			
 			try
             {	
-				transactionManager = base.HandleTransactionAndProviderSetup( transactionManager, out isBorrowedTransaction, out dataProvider );
-				<% if (action != MethodNames.Save) { %>result = <% } %>dataProvider.<%= GetClassName(SourceTable, ClassNameFormat.Provider) %>.<%= action %>(transactionManager, <%= memberMethodEntityCall %>); 
-                base.HandleTransactionCommit( transactionManager, isBorrowedTransaction );
+				bool isBorrowedTransaction = ConnectionScope.Current.HasTransaction;
+				
+				//since this is a read operation, don't create a tran by default, only use tran if provided to us for custom isolation level
+				transactionManager = ConnectionScope.ValidateOrCreateTransaction();
+				NetTiersProvider dataProvider = ConnectionScope.Current.DataProvider;
+					
+				//Persist Entity
+				<% if (action != MethodNames.Save) { %>result = <% } %>dataProvider.<%= GetProviderName(className) %>.<%= action %>(transactionManager, <%= memberMethodEntityCall %>); 
+				
+				//if persisted and tran not borrowed, commit
+				if(!isBorrowedTransaction && transactionManager != null && transactionManager.IsOpen)
+					transactionManager.Commit();
 			}
             catch (Exception exc)
             {
-				#region Handle transaction rollback and exception
-                base.HandleTransactionRollback( transactionManager );
+				//if open, rollback
+                if (transactionManager != null && transactionManager.IsOpen) 
+					transactionManager.Rollback();
 				
 				//Handle exception based on policy
                 if (DomainUtil.HandleException(exc, layerExceptionPolicy)) 
 					throw;
-				#endregion Handle transaction rollback and exception
 			}
 			<% if ( action != MethodNames.Save || IsServiceLayer ) { %>
 			
@@ -755,7 +744,7 @@
 		
 		#region <%= action %> Collection
 		/// <summary>
-		/// <%= constructorAccessModifier %> method that <%= action %>s rows in <see cref="<%=collectionClassNameComment %>" /> to the datasource.
+		/// 	<%= constructorAccessModifier %> method that <%= action %>s rows in <see cref="<%=collectionClassNameComment %>" /> to the datasource.
 		/// </summary>
 		/// <param name="entityCollection"><c><%=className%></c> objects in a <see cref="<%=collectionClassNameComment %>" /> object to <%= action %>.</param>
 		/// <remarks>
@@ -778,7 +767,7 @@
 		/// list.Add(entity);
 		/// list.Add(entity2);
 		<%if (IsServiceLayer)  {%>
-		///	<%= GetClassName(SourceTable, ClassNameFormat.Service) %>.<%= action %>(list);
+		///	<%= GetServiceClassName(className) %>.<%= action %>(list);
 		<% } %>
 		<% else if (IsDomainModel){%>
 		///	<%= className %>.<%= action %>(list);
@@ -793,37 +782,40 @@
 		[DataObjectMethod(DataObjectMethodType.<%= methodType %>)]
 		<%= constructorAccessModifier %> <%=collectionClassName%> <%=partialClassInternalPrefix%><%= action %>(<%=collectionClassName%> entityCollection)
 		{
-			#region Security and validation check
 			// throws security exception if not authorized
 			SecurityContext.IsAuthorized("<%= action %>");
 		
 			if (!entityCollection.IsValid)
 			{
-				throw new EntityNotValidException(entityCollection, "<%= action %>", DomainUtil.GetErrorsFromList<<%= className %>>(entityCollection));
+				throw new Entities.EntityNotValidException(entityCollection, "<%= action %>", DomainUtil.GetErrorsFromList<<%= className %>>(entityCollection));
 			}
-			#endregion Security and validation check
-
-			#region Initialisation
-			bool isBorrowedTransaction = false;
+			
 			TransactionManager transactionManager = null; 
-			NetTiersProvider dataProvider = null;
-			#endregion Initialisation
-
 			try
             {
-				transactionManager = base.HandleTransactionAndProviderSetup( transactionManager, out isBorrowedTransaction, out dataProvider );
-				dataProvider.<%= GetClassName(SourceTable, ClassNameFormat.Provider) %>.<%= action %>(transactionManager, <%= newEntityCollectionClassName %>entityCollection<%= newEntityCollectionClassNameEnd %>); 
-                base.HandleTransactionCommit( transactionManager, isBorrowedTransaction );
+				bool isBorrowedTransaction = ConnectionScope.Current.HasTransaction;
+				
+				//since this is a read operation, don't create a tran by default, only use tran if provided to us for custom isolation level
+				transactionManager = ConnectionScope.ValidateOrCreateTransaction();
+				NetTiersProvider dataProvider = ConnectionScope.Current.DataProvider;
+                
+				//Persist <%= action %>
+				dataProvider.<%= GetProviderName(className) %>.<%= action %>(transactionManager, <%= newEntityCollectionClassName %>entityCollection<%= newEntityCollectionClassNameEnd %>); 
+                
+				//If success, Commit
+				if(!isBorrowedTransaction && transactionManager != null && transactionManager.IsOpen)
+					transactionManager.Commit();
+            	
 			}
             catch (Exception exc)
             {
-				#region Handle transaction rollback and exception
-                base.HandleTransactionRollback( transactionManager );
+				//if open, rollback
+                if (transactionManager != null && transactionManager.IsOpen) 
+					transactionManager.Rollback();
 				
 				//Handle exception based on policy
                 if (DomainUtil.HandleException(exc, layerExceptionPolicy)) 
 					throw;
-				#endregion Handle transaction rollback and exception
             }
 			
 			return entityCollection;		
@@ -843,7 +835,7 @@
 		/// <returns>Returns true if operation suceeded.</returns>
 		public bool <%= MethodNames.Delete %>(<%= keyClassName %> key)
 		{
-			return <%= MethodNames.Delete %>(<%= GetFunctionObjectParameters(keys, "key") %> <% if(RowVersion != null) {Response.Write(String.Format(", ((key.Entity != null) ? key.Entity.{0} : new byte[0])", GetPropertyName(RowVersion)));}%>);
+			return <%= MethodNames.Delete %>(<%= GetFunctionObjectParameters(keys, "key") %> <% if(RowVersion != null) {Response.Write(String.Format(", ((key.Entity != null) ? key.Entity.{0} : new byte[0])", GetPropertyName(RowVersion.Name)));}%>);
 		}
 		<% } %>
 		
@@ -854,40 +846,43 @@
 		/// <param name="<%= item.Trim() %>"><%=className%> pk id.</param>
 		<% } %>
 		<% if (RowVersion != null){ %>
-		/// <param name="<%=GetFieldName(RowVersion)%>">The timestamp field used for concurrency check.</param>
+		/// <param name="<%=GetPrivateName(RowVersion.Name)%>">The timestamp field used for concurrency check.</param>
 		<% }  %>
 		/// <remarks>Deletes based on primary key(s).</remarks>
 		/// <returns>Returns true if operation suceeded.</returns>
 		[DataObjectMethod(DataObjectMethodType.Delete)]
-		<%= constructorAccessModifierOnMembers %> bool <%=partialClassInternalPrefix%><%= MethodNames.Delete %>(<%= GetFunctionHeaderParameters(keys) %><% if(RowVersion != null) {Response.Write(", byte[] " + GetFieldName(RowVersion));}%>)
+		<%= constructorAccessModifierOnMembers %> bool <%=partialClassInternalPrefix%><%= MethodNames.Delete %>(<%= GetFunctionHeaderParameters(keys) %><% if(RowVersion != null) {Response.Write(", byte[] " + GetPrivateName(RowVersion.Name));}%>)
 		{
-			#region Security check
 			// throws security exception if not authorized
 			SecurityContext.IsAuthorized("<%= MethodNames.Delete %>");
-			#endregion Security check
 
-			#region Initialisation
 			bool result = false;
-			bool isBorrowedTransaction = false;
 			TransactionManager transactionManager = null; 
-			NetTiersProvider dataProvider;
-			#endregion Initialisation
-			
 			try
             {
-				transactionManager = base.HandleTransactionAndProviderSetup( transactionManager, out isBorrowedTransaction, out dataProvider );
-				result = dataProvider.<%= GetClassName(SourceTable, ClassNameFormat.Provider) %>.<%= MethodNames.Delete %>(transactionManager, <%= GetFunctionCallParameters(keys) %><% if(RowVersion != null) {Response.Write(", " + GetFieldName(RowVersion));}%>);
-                base.HandleTransactionCommit( transactionManager, isBorrowedTransaction );
+				bool isBorrowedTransaction = ConnectionScope.Current.HasTransaction;
+				
+				//since this is a read operation, don't create a tran by default, only use tran if provided to us for custom isolation level
+				transactionManager = ConnectionScope.ValidateOrCreateTransaction();
+				NetTiersProvider dataProvider = ConnectionScope.Current.DataProvider;
+                
+				//Delete
+				result = dataProvider.<%= GetProviderName(className) %>.<%= MethodNames.Delete %>(transactionManager, <%= GetFunctionCallParameters(keys) %><% if(RowVersion != null) {Response.Write(", " + GetPrivateName(RowVersion.Name));}%>);
+	        
+				//If success, Commit
+				if(!isBorrowedTransaction && transactionManager != null && transactionManager.IsOpen)
+					transactionManager.Commit();
+            	
 			}
             catch (Exception exc)
             {
-				#region Handle transaction rollback and exception
-                base.HandleTransactionRollback( transactionManager );
-				
+				//if open, rollback
+                if (transactionManager != null && transactionManager.IsOpen)
+                        transactionManager.Rollback();
+                    
 				//Handle exception based on policy
                 if (DomainUtil.HandleException(exc, layerExceptionPolicy)) 
 					throw;
-				#endregion Handle transaction rollback and exception
             }
 			
 			return result;
@@ -901,7 +896,6 @@
 		<%
 		TableSchema primaryTable = SourceTable;
 		
-		System.Collections.Hashtable manyToManyFunctions = new System.Collections.Hashtable();
 		foreach(TableKeySchema key in SourceTable.PrimaryKeys)
 		{
 			// Check that the key is related to a junction table
@@ -915,10 +909,7 @@
 					if ( IsJunctionKey(junctionTableKey) && junctionTableKey.Name != key.Name )
 					{
 						TableSchema secondaryTable = junctionTableKey.PrimaryKeyTable;
-						string functionname = GetManyToManyName(junctionTableKey, junctionTable);
-						if (!manyToManyFunctions.ContainsKey(functionname))
-						{
-							manyToManyFunctions.Add(functionname,null);
+						string functionname = GetManyToManyName(junctionTableKey, GetCleanName(junctionTable.Name));
 		%>
 		#region GetBy<%=functionname%>
 		/// <summary>
@@ -927,11 +918,11 @@
 		///		through the (M:N) relationship defined in the <%=junctionTable.Name%> table.
 		/// </summary>
 		<% for (int i = 0; i < junctionTableKey.ForeignKeyMemberColumns.Count; i++) { %>
-		/// <param name="<%= GetFieldName(junctionTableKey.ForeignKeyMemberColumns[i])%>"><%=GetColumnXmlComment(junctionTableKey.ForeignKeyMemberColumns[i],2)%></param>
+		/// <param name="<%= GetPrivateName(junctionTableKey.ForeignKeyMemberColumns[i].Name)%>"><%=junctionTableKey.ForeignKeyMemberColumns[i].Description%></param>
 		<% } %>	
-		/// <returns>Returns a typed collection of <%=GetClassName(primaryTable)%> objects.</returns>
+		/// <returns>Returns a typed collection of <%=GetClassName(primaryTable.Name)%> objects.</returns>
 		[DataObjectMethod(DataObjectMethodType.Select)]
-		<%= constructorAccessModifier %> <%=GetClassName(primaryTable, ClassNameFormat.Collection)%> <%=partialClassInternalPrefix%>GetBy<%=functionname%>(<%=GetFunctionHeaderParameters(junctionTableKey.ForeignKeyMemberColumns)%>)
+		<%= constructorAccessModifier %> <%=GetCollectionClassName(primaryTable.Name)%> <%=partialClassInternalPrefix%>GetBy<%=functionname%>(<%=GetFunctionHeaderParameters(junctionTableKey.ForeignKeyMemberColumns)%>)
 		{
 			int totalRecords = -1;
 			return <%=partialClassInternalPrefix%>GetBy<%=functionname%>(<%=GetFunctionCallParameters(junctionTableKey.ForeignKeyMemberColumns)%>, 0, defaultMaxRecords, out totalRecords);
@@ -943,42 +934,42 @@
 		///		through the (M:N) relationship defined in the <%=junctionTable.Name%> table.
 		/// </summary>
 		<% for (int i = 0; i < junctionTableKey.ForeignKeyMemberColumns.Count; i++) { %>
-		/// <param name="<%= GetFieldName(junctionTableKey.ForeignKeyMemberColumns[i])%>"><%=GetColumnXmlComment(junctionTableKey.ForeignKeyMemberColumns[i],2)%></param>
+		/// <param name="<%= GetPrivateName(junctionTableKey.ForeignKeyMemberColumns[i].Name)%>"><%=junctionTableKey.ForeignKeyMemberColumns[i].Description%></param>
 		<% } %>
 		/// <param name="start">Row number at which to start reading.</param>
 		/// <param name="pageLength">Number of rows to return.</param>
 		/// <param name="totalCount">Out param: Total Number of results returned.</param>
 		/// <remarks></remarks>
-		/// <returns>Returns a typed collection of <%=GetClassName(primaryTable)%> objects.</returns>
+		/// <returns>Returns a typed collection of <%=GetClassName(primaryTable.Name)%> objects.</returns>
 		[DataObjectMethod(DataObjectMethodType.Select)]
-		<%= constructorAccessModifier %> <%=GetClassName(primaryTable, ClassNameFormat.Collection)%> <%=partialClassInternalPrefix%>GetBy<%=functionname%>(<%=GetFunctionHeaderParameters(junctionTableKey.ForeignKeyMemberColumns)%>, int start, int pageLength, out int totalCount)
+		<%= constructorAccessModifier %> <%=GetCollectionClassName(primaryTable.Name)%> <%=partialClassInternalPrefix%>GetBy<%=functionname%>(<%=GetFunctionHeaderParameters(junctionTableKey.ForeignKeyMemberColumns)%>, int start, int pageLength, out int totalCount)
 		{
-			#region Security check
 			// throws security exception if not authorized
 			SecurityContext.IsAuthorized("GetBy<%=functionname%>");
-			#endregion Security check
-			
-			#region Initialisation
-			totalCount = -1;
-			<%=GetClassName(primaryTable, ClassNameFormat.Collection)%> list = null;
+			<%=GetCollectionClassName(primaryTable.Name)%> list = null;
 			TransactionManager transactionManager = null; 
-			NetTiersProvider dataProvider = null;
-			#endregion Initialisation
-			
+			totalCount = -1;
 			try
             {	
-				transactionManager = base.HandleTransactionAndProviderSetup( transactionManager, out dataProvider );
-				list = <%= newCollectionClassName %>dataProvider.<%= GetClassName(SourceTable, ClassNameFormat.Provider) %>.GetBy<%=functionname%>(transactionManager, <%=GetFunctionCallParameters(junctionTableKey.ForeignKeyMemberColumns)%>, start,  pageLength, out totalCount)<%=newCollectionClassNameEnd%>;
+				//since this is a read operation, don't create a tran by default, only use tran if provided to us for custom isolation level
+				transactionManager = ConnectionScope.ValidateOrCreateTransaction(noTranByDefault);
+				NetTiersProvider dataProvider = ConnectionScope.Current.DataProvider;
+                
+				//call data provider
+				list = <%= newCollectionClassName %>dataProvider.<%= GetProviderName(className) %>.GetBy<%=functionname%>(transactionManager, <%=GetFunctionCallParameters(junctionTableKey.ForeignKeyMemberColumns)%>, start,  pageLength, out totalCount)<%=newCollectionClassNameEnd%>;
+	        
+				//This is read only transaction, let tran go if open 
+            	
 			}
             catch (Exception exc)
             {
-				#region Handle transaction rollback and exception
-                base.HandleTransactionRollback( transactionManager );
-				
+				//if open, rollback if there was an error.
+                if (transactionManager != null && transactionManager.IsOpen)
+                        transactionManager.Rollback();
+                    
 				//Handle exception based on policy
                 if (DomainUtil.HandleException(exc, layerExceptionPolicy)) 
 					throw;
-				#endregion Handle transaction rollback and exception
             }
 			
 			return list;			
@@ -986,7 +977,6 @@
 		#endregion GetBy<%=functionname%>
 		
 					<%
-						}//end if the function has already been created
 					} //end if there is many to many relationship.
 				} //end foreach			
 			}// end if(IsJunctionTable(junctionTableKey.ForeignKeyTable)) %>
@@ -1045,40 +1035,40 @@
 		/// <returns>A <see cref="<%=returnTypeForComment%>"/> instance.</returns><%}%>
 		<%= constructorAccessModifier %>  <%=returnType%> <%=methodName%>(<%= (parms.Length > 0 ? parms.TrimStart(',') + "," : "") %> int start, int pageLength)
 		{
-			#region Security check
 			// throws security exception if not authorized
 			SecurityContext.IsAuthorized("<%=methodName%>");
-			#endregion Security check
+			
 		
-			#region Initialisation
-			bool isBorrowedTransaction = false;
 			<%=returnType != "void"  ? string.Format("{0} result = null;" , returnType) : "" %> 
 			TransactionManager transactionManager = null; 
-			NetTiersProvider dataProvider = null;
-			#endregion Initialisation
 			
 			try
             {
-				isBorrowedTransaction = ConnectionScope.Current.HasTransaction;				
+				bool isBorrowedTransaction = ConnectionScope.Current.HasTransaction;				
 				
+				//since this is a read operation, don't create a tran by default, only use tran if provided to us for custom isolation level
 				transactionManager = ConnectionScope.ValidateOrCreateTransaction(<% if (returnType != "void") { %>noTranByDefault<%}%>);
-				dataProvider = ConnectionScope.Current.DataProvider;
+				NetTiersProvider dataProvider = ConnectionScope.Current.DataProvider;
                 
-				<%= returnType != "void" ? "result = " : ""  %><%= newCollection %>dataProvider.<%= GetClassName(SourceTable, ClassNameFormat.Provider) %>.<%=methodName%>(transactionManager, start, pageLength <%=TransformStoredProcedureInputsToDataAccess(true, command.InputParameters) + TransformStoredProcedureOutputsToDataAccess(true, command.AllOutputParameters)%>)<%= newCollectionEnd %>;
+				//Call Custom Procedure from Repository
+				<%= returnType != "void" ? "result = " : ""  %><%= newCollection %>dataProvider.<%= GetProviderName(className) %>.<%=methodName%>(transactionManager, start, pageLength <%=TransformStoredProcedureInputsToDataAccess(true, command.InputParameters) + TransformStoredProcedureOutputsToDataAccess(true, command.AllOutputParameters)%>)<%= newCollectionEnd %>;
 	        
 				<% if (returnType == "void") { %>
-				base.HandleTransactionCommit( transactionManager, isBorrowedTransaction );
+				//If success, Commit
+				if(!isBorrowedTransaction && transactionManager != null && transactionManager.IsOpen)
+					transactionManager.Commit();
 				<% } %>
+            	
 			}
             catch (Exception exc)
             {
-				#region Handle transaction rollback and exception
-                base.HandleTransactionRollback( transactionManager );
-				
+				//if open, rollback
+                if (transactionManager != null && transactionManager.IsOpen)
+                        transactionManager.Rollback();
+                    
 				//Handle exception based on policy
                 if (DomainUtil.HandleException(exc, layerExceptionPolicy)) 
 					throw;
-				#endregion Handle transaction rollback and exception
             }
 			
 			return <%= returnType != "void" ? "result" : "" %>;
@@ -1113,12 +1103,14 @@
 				}
 				string returnTypeVar = "list";
 				string returnType = collectionClassName;
+				bool isUnique = false;
 				
 				//if (IsPrimaryKey(indexes[j]))
 				if (indexes[j].IsUnique || indexes[j].IsPrimaryKey)
 				{
 					returnTypeVar = "entity";
 					returnType = className;
+					isUnique = true;
 				}
 				
 				String returnTypeForComment = returnType.Replace("<", "&lt;").Replace(">", "&gt;");
@@ -1129,7 +1121,7 @@
 		/// property collections only N Levels Deep based on the <see cref="DeepLoadType"/>.
 		/// </summary>
 	<% for (int i = 0; i < indexes[j].MemberColumns.Count; i++) { %>
-		/// <param name="<%= GetFieldName(indexes[j].MemberColumns[i])%>"><%=GetColumnXmlComment(indexes[j].MemberColumns[i],2)%></param>
+		/// <param name="<%= GetPrivateName(indexes[j].MemberColumns[i].Name)%>"><%=GetColumnXmlComment(indexes[j].MemberColumns[i],2)%></param>
 	<% } %>
 		/// <param name="deep">Boolean. A flag that indicates whether to recursively save all Property Collection that are descendants of this instance. If True, saves the complete object graph below this object. If False, saves this object only. </param>
 		/// <param name="deepLoadType">DeepLoadType Enumeration to Include/Exclude object property collections from Load.</param>
@@ -1168,7 +1160,7 @@
 		[DataObjectMethod(DataObjectMethodType.Select)]
 		<%= constructorAccessModifier %> void <%=partialClassInternalPrefix%><%= MethodNames.DeepLoad %>(<%= className %> entity)
 		{
-			<%=partialClassInternalPrefix%><%= MethodNames.DeepLoad %>(entity, false, DeepLoadType.ExcludeChildren, System.Type.EmptyTypes);
+			<%=partialClassInternalPrefix%><%= MethodNames.DeepLoad %>(entity, false, DeepLoadType.ExcludeChildren, Type.EmptyTypes);
 		}
 		
 		/// <summary>
@@ -1183,7 +1175,7 @@
 		[DataObjectMethod(DataObjectMethodType.Select)]
 		<%= constructorAccessModifier %> void <%=partialClassInternalPrefix%><%= MethodNames.DeepLoad %>(<%= className %> entity, bool deep)
 		{
-			<%=partialClassInternalPrefix%><%= MethodNames.DeepLoad %>(entity, deep, DeepLoadType.ExcludeChildren, System.Type.EmptyTypes);
+			<%=partialClassInternalPrefix%><%= MethodNames.DeepLoad %>(entity, deep, DeepLoadType.ExcludeChildren, Type.EmptyTypes);
 		}
 			
 		/// <summary>
@@ -1201,30 +1193,31 @@
 		[DataObjectMethod(DataObjectMethodType.Select)]
 		<%= constructorAccessModifier %> void <%=partialClassInternalPrefix%><%= MethodNames.DeepLoad %>(<%= className %> entity, bool deep, DeepLoadType deepLoadType, params System.Type[] childTypes)
 		{
-			#region Security check
 			// throws security exception if not authorized
 			SecurityContext.IsAuthorized("<%= MethodNames.DeepLoad %>");
-			#endregion Security check
-			
-			#region Initialisation
 			TransactionManager transactionManager = null; 
-			NetTiersProvider dataProvider = null;
-			#endregion Initialisation
-			
+
 			try
             {
-				transactionManager = base.HandleTransactionAndProviderSetup( transactionManager, out dataProvider );
-				dataProvider.<%= GetClassName(SourceTable, ClassNameFormat.Provider) %>.<%= MethodNames.DeepLoad %>(transactionManager, entity, deep, deepLoadType, childTypes);
+				//since this is a read operation, don't create a tran by default, only use tran if provided to us for custom isolation level
+				transactionManager = ConnectionScope.ValidateOrCreateTransaction(noTranByDefault);
+				NetTiersProvider dataProvider = ConnectionScope.Current.DataProvider;
+				
+				//Call Deep Load from the Repository
+				dataProvider.<%= GetProviderName(className) %>.<%= MethodNames.DeepLoad %>(transactionManager, entity, deep, deepLoadType, childTypes);
+	        
+				//leave tran open if used
+            	
 			}
             catch (Exception exc)
             {
-				#region Handle transaction rollback and exception
-                base.HandleTransactionRollback( transactionManager );
-				
+				//if open, rollback
+                if (transactionManager != null && transactionManager.IsOpen)
+                        transactionManager.Rollback();
+                    
 				//Handle exception based on policy
                 if (DomainUtil.HandleException(exc, layerExceptionPolicy)) 
 					throw;
-				#endregion Handle transaction rollback and exception
             }
 			return;
 		}
@@ -1242,7 +1235,7 @@
 		[DataObjectMethod(DataObjectMethodType.Select)]
 		<%= constructorAccessModifier %> void <%=partialClassInternalPrefix%><%= MethodNames.DeepLoad %>(<%= collectionClassName %> entityCollection)
 		{
-			<%=partialClassInternalPrefix%><%= MethodNames.DeepLoad %>(entityCollection, false, DeepLoadType.ExcludeChildren, System.Type.EmptyTypes);
+			<%=partialClassInternalPrefix%><%= MethodNames.DeepLoad %>(entityCollection, false, DeepLoadType.ExcludeChildren, Type.EmptyTypes);
 		}
 		
 		/// <summary>
@@ -1256,7 +1249,7 @@
 		[DataObjectMethod(DataObjectMethodType.Select)]
 		<%= constructorAccessModifier %> void <%=partialClassInternalPrefix%><%= MethodNames.DeepLoad %>(<%= collectionClassName %> entityCollection, bool deep)
 		{
-			<%=partialClassInternalPrefix%><%= MethodNames.DeepLoad %>(entityCollection, deep, DeepLoadType.ExcludeChildren, System.Type.EmptyTypes);
+			<%=partialClassInternalPrefix%><%= MethodNames.DeepLoad %>(entityCollection, deep, DeepLoadType.ExcludeChildren, Type.EmptyTypes);
 		}	
 
 		/// <summary>
@@ -1275,30 +1268,30 @@
 		[DataObjectMethod(DataObjectMethodType.Select, false)]
 		<%= interfaceImplModifier %> void <%=partialClassInternalPrefix%><%= MethodNames.DeepLoad %>(<%= collectionClassName %> entityCollection, bool deep, DeepLoadType deepLoadType, params System.Type[] childTypes)
 		{	
-			#region Security check
 			// throws security exception if not authorized
 			SecurityContext.IsAuthorized("<%= MethodNames.DeepLoad %>");
-			#endregion Security check
-			
-			#region Initialisation
 			TransactionManager transactionManager = null; 
-			NetTiersProvider dataProvider = null;
-			#endregion Initialisation
-			
+
 			try
             {
-				transactionManager = base.HandleTransactionAndProviderSetup( transactionManager, out dataProvider );
-				dataProvider.<%= GetClassName(SourceTable, ClassNameFormat.Provider) %>.<%= MethodNames.DeepLoad %>(transactionManager, <%=newEntityCollectionClassName%>entityCollection<%=newEntityCollectionClassNameEnd%>, deep, deepLoadType, childTypes);
+				//since this is a read operation, don't create a tran by default, only use tran if provided to us for custom isolation level
+				transactionManager = ConnectionScope.ValidateOrCreateTransaction(noTranByDefault);
+				NetTiersProvider dataProvider = ConnectionScope.Current.DataProvider;
+				
+				//Call Deep Load from the Repository
+				dataProvider.<%= GetProviderName(className) %>.<%= MethodNames.DeepLoad %>(transactionManager, <%=newEntityCollectionClassName%>entityCollection<%=newEntityCollectionClassNameEnd%>, deep, deepLoadType, childTypes);
+	        
+				//leave transaction open if used, this read is part of a larger transaction
 			}
             catch (Exception exc)
             {
-				#region Handle transaction rollback and exception
-                base.HandleTransactionRollback( transactionManager );
-				
+				//if open, rollback
+                if (transactionManager != null && transactionManager.IsOpen)
+                        transactionManager.Rollback();
+                    
 				//Handle exception based on policy
                 if (DomainUtil.HandleException(exc, layerExceptionPolicy)) 
 					throw;
-				#endregion Handle transaction rollback and exception
             }
 			return;		
 		}
@@ -1319,7 +1312,7 @@
 		[DataObjectMethod(DataObjectMethodType.Update)]
 		<%= IsServiceLayer ? interfaceImplModifier : constructorAccessModifier %> bool <%=partialClassInternalPrefix%><%= MethodNames.DeepSave %>(<%= className %> entity)
 		{
-			return <%=partialClassInternalPrefix%><%= MethodNames.DeepSave %>(entity, DeepSaveType.ExcludeChildren, System.Type.EmptyTypes);
+			return <%=partialClassInternalPrefix%><%= MethodNames.DeepSave %>(entity, DeepSaveType.ExcludeChildren, Type.EmptyTypes);
 		}
 		
 		/// <summary>
@@ -1332,38 +1325,43 @@
 		[DataObjectMethod(DataObjectMethodType.Update)]
 		<%= interfaceImplModifier %> bool <%=partialClassInternalPrefix%><%= MethodNames.DeepSave %>(<%= className %> entity, DeepSaveType deepSaveType, params System.Type[] childTypes)
 		{
-			#region Security and validation check
 			// throws security exception if not authorized
 			SecurityContext.IsAuthorized("<%= MethodNames.DeepSave %>");
 			
 			if (!entity.IsValid)
 			{
-				throw new EntityNotValidException(entity, "<%= MethodNames.DeepSave %>");
+				throw new Entities.EntityNotValidException(entity, "<%= MethodNames.DeepSave %>");
 			}
-			#endregion Security and validation check
 			
-			#region Initialisation
 			bool result = false;
-			bool isBorrowedTransaction = false;
 			TransactionManager transactionManager = null; 
-			NetTiersProvider dataProvider = null;
-			#endregion Initialisation
 			
 			try
             {	
-				transactionManager = base.HandleTransactionAndProviderSetup( transactionManager, out isBorrowedTransaction, out dataProvider );
-				result = dataProvider.<%= GetClassName(SourceTable, ClassNameFormat.Provider) %>.<%= MethodNames.DeepSave %>(transactionManager, entity, deepSaveType, childTypes);
-				base.HandleTransactionCommit( transactionManager, isBorrowedTransaction );
+				bool isBorrowedTransaction = ConnectionScope.Current.HasTransaction;
+				
+				//since this is a read operation, don't create a tran by default, only use tran if provided to us for custom isolation level
+				transactionManager = ConnectionScope.ValidateOrCreateTransaction();
+				NetTiersProvider dataProvider = ConnectionScope.Current.DataProvider;
+				
+				//Save
+				result = dataProvider.<%= GetProviderName(className) %>.<%= MethodNames.DeepSave %>(transactionManager, entity, deepSaveType, childTypes);
+				
+				//If success, Commit
+				if (!isBorrowedTransaction && transactionManager != null && transactionManager.IsOpen)
+					transactionManager.Commit();
+            	
 			}
             catch (Exception exc)
             {
-				#region Handle transaction rollback and exception
-                base.HandleTransactionRollback( transactionManager );
-				
+				//if open, rollback
+                if (transactionManager != null && transactionManager.IsOpen)
+                        transactionManager.Rollback();
+                
 				//Handle exception based on policy
                 if (DomainUtil.HandleException(exc, layerExceptionPolicy)) 
 					throw;
-				#endregion Handle transaction rollback and exception
+
             }
 			return result;		
 		}
@@ -1378,7 +1376,7 @@
 		[DataObjectMethod(DataObjectMethodType.Update)]
 		<%= constructorAccessModifier %> bool <%=partialClassInternalPrefix%><%= MethodNames.DeepSave %>(<%= collectionClassName %> entityCollection)
 		{
-			return <%=partialClassInternalPrefix%><%= MethodNames.DeepSave %>(entityCollection, DeepSaveType.ExcludeChildren, System.Type.EmptyTypes);
+			return <%=partialClassInternalPrefix%><%= MethodNames.DeepSave %>(entityCollection, DeepSaveType.ExcludeChildren, Type.EmptyTypes);
 		}
 		
 		/// <summary>
@@ -1390,39 +1388,41 @@
 		/// <param name="childTypes"><%= className %> Property Collection Type Array To Include or Exclude from Save</param>
 		[DataObjectMethod(DataObjectMethodType.Update)]
 		<%= interfaceImplModifier %> bool <%=partialClassInternalPrefix%><%= MethodNames.DeepSave %>(<%= collectionClassName %> entityCollection, DeepSaveType deepSaveType, params System.Type[] childTypes)
-		{	
-			#region Security and validation check
+		{				
 			// throws security exception if not authorized
 			SecurityContext.IsAuthorized("<%= MethodNames.DeepSave %>");
 			
 			if (!entityCollection.IsValid)
 			{
-				throw new EntityNotValidException(entityCollection, "<%= MethodNames.DeepSave %>");
+				throw new Entities.EntityNotValidException(entityCollection, "<%= MethodNames.DeepSave %>");
 			}
-			#endregion Security and validation check
 			
-			#region Initialisation
 			bool result = false;
-			bool isBorrowedTransaction = false;
 			TransactionManager transactionManager = null; 
-			NetTiersProvider dataProvider = null;
-			#endregion Initialisation
 			
 			try
             {
-				transactionManager = base.HandleTransactionAndProviderSetup( transactionManager, out isBorrowedTransaction, out dataProvider );
-				result = dataProvider.<%= GetClassName(SourceTable, ClassNameFormat.Provider) %>.<%= MethodNames.DeepSave %>(transactionManager, <%= newEntityCollectionClassName %>entityCollection<%= newEntityCollectionClassNameEnd %>,  deepSaveType, childTypes);
-				base.HandleTransactionCommit( transactionManager, isBorrowedTransaction );
+				bool isBorrowedTransaction = ConnectionScope.Current.HasTransaction;
+				
+				//since this is a read operation, don't create a tran by default, only use tran if provided to us for custom isolation level
+				transactionManager = ConnectionScope.ValidateOrCreateTransaction();
+				NetTiersProvider dataProvider = ConnectionScope.Current.DataProvider;
+				result = dataProvider.<%= GetProviderName(className) %>.<%= MethodNames.DeepSave %>(transactionManager, <%= newEntityCollectionClassName %>entityCollection<%= newEntityCollectionClassNameEnd %>,  deepSaveType, childTypes);
+				
+				//If success and not borrowed, Commit
+				if (!isBorrowedTransaction && transactionManager != null && transactionManager.IsOpen)
+					transactionManager.Commit();
 			}
             catch (Exception exc)
             {
-				#region Handle transaction rollback and exception
-                base.HandleTransactionRollback( transactionManager );
+				//if open, rollback
+                if (transactionManager != null && transactionManager.IsOpen)
+                    transactionManager.Rollback();
 				
 				//Handle exception based on policy
                 if (DomainUtil.HandleException(exc, layerExceptionPolicy)) 
 					throw;
-				#endregion Handle transaction rollback and exception
+
             }
 			return result;
 		}

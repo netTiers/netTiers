@@ -1,4 +1,4 @@
-﻿<%@ CodeTemplate Src="..\..\..\TemplateLib\CommonSqlCode.cs" Inherits="MoM.Templates.CommonSqlCode" Language="C#" TargetLanguage="C#" Description="Template description here." Debug="True"  ResponseEncoding="UTF-8" NoWarn="0108,0618,1572,1573,1574,0162,2002"%>
+﻿<%@ CodeTemplate Src="..\..\..\TemplateLib\CommonSqlCode.cs" Inherits="MoM.Templates.CommonSqlCode" Language="C#" TargetLanguage="C#" Description="Template description here." Debug="True"  ResponseEncoding="UTF-8"%>
 <%@ Assembly Name="SchemaExplorer" %>
 <%@ Assembly Name="System.Design" %>
 <%@ Import Namespace="SchemaExplorer" %>
@@ -19,11 +19,11 @@
 	// Collection of all columns in the table.
 	ViewColumnSchemaCollection cols = SourceView.Columns;
 	
-	string className = GetClassName(SourceView);
-	string collectionClassName = GetClassName(SourceView, ClassNameFormat.ViewCollection);
+	string className = GetClassName(SourceView.Name);
+	string collectionClassName = GetViewCollectionClassName(SourceView.Name);
 	string collectionClassNameForComment = collectionClassName.Replace("<", "&lt;").Replace(">", "&gt;");
 	
-	string baseProviderName = GetClassName(SourceView, ClassNameFormat.ProviderBase);
+	string baseProviderName = GetProviderBaseName(SourceView.Name);
 	
 	// this array store each Get BY MemberColumns in order to avoid to create doublon Get methods
 	System.Collections.ArrayList getbyKeys = new System.Collections.ArrayList();
@@ -96,7 +96,7 @@ namespace <%=DALNameSpace%>.Bases
 		/// <returns>A <see cref="<%=returnTypeForComment%>"/> instance.</returns><%}%>
 		public <%=returnType%> <%=methodName%>(TransactionManager transactionManager<%=TransformStoredProcedureInputsToMethod(true, command.InputParameters)%>)
 		{
-			<%= returnKeyword %> <%=methodName%>(transactionManager, 0, int.MaxValue <%=TransformStoredProcedureInputsToDataAccess(true, command.InputParameters)%>);
+			<%= returnKeyword %> <%=methodName%>(0, int.MaxValue <%=TransformStoredProcedureInputsToDataAccess(true, command.InputParameters)%>);
 		}
 		
 		/// <summary>
@@ -199,16 +199,11 @@ namespace <%=DALNameSpace%>.Bases
 					{
 						entity = new <%= className %>();
 					}
-					
-					entity.SuppressEntityEvents = true;
-
 					<%for (int x=0; x < cols.Count;x++) { %>
 					<%= GetObjectPropertySetExpression(cols[x], "reader", "entity", 4) %>;
 					//<%= GetObjectPropertyAccessor(cols[x],"entity")%> = (Convert.IsDBNull(reader["<%=cols[x].Name%>"]))?<%= GetCSDefaultByType(cols[x])%>:(<%=GetCSType(cols[x])%>)reader["<%=cols[x].Name%>"];
 					<% } //end for %>
 					entity.AcceptChanges();
-					entity.SuppressEntityEvents = false;
-					
 					rows.Add(entity);
 					pageLength -= 1;
 				}
@@ -322,26 +317,4 @@ namespace <%=DALNameSpace%>.Bases
 	}
 
 	#endregion <%= className %>ParameterBuilder
-	
-	#region <%= className %>SortBuilder
-    
-    /// <summary>
-    /// A strongly-typed instance of the <see cref="SqlSortBuilder&lt;EntityColumn&gt;"/> class
-	/// that is used exclusively with a <see cref="<%= className %>"/> object.
-    /// </summary>
-    [CLSCompliant(true)]
-    public class <%= className %>SortBuilder : SqlSortBuilder<<%= className %>Column>
-    {
-		#region Constructors
-
-		/// <summary>
-		/// Initializes a new instance of the <%= className %>SqlSortBuilder class.
-		/// </summary>
-		public <%= className %>SortBuilder() : base() { }
-
-		#endregion Constructors
-
-    }    
-    #endregion <%= className %>SortBuilder
-
 } // end namespace

@@ -64,9 +64,12 @@ public class <%=ClassName%> : WebService
 		//bool IsPkeyReadOnly = false;
 		
 		// Name of the table being worked on.
-		string className = NameSpace + "." + GetClassName(SourceTable);
-		string collectionClassName = NameSpace + "." + GetClassName(SourceTable, ClassNameFormat.Collection);
-		string providerName = GetClassName(SourceTable, ClassNameFormat.Provider);
+		string name = SourceTable.Name;
+		string className = NameSpace + "." + GetClassName(SourceTable.Name);
+		string collectionClassName = NameSpace + "." + GetCollectionClassName(SourceTable.Name);
+				
+		string commandStem = GetCleanName(SourceTable.Name);
+		string providerName = GetProviderName(SourceTable.Name);
 		
 		// Collection of all columns in the table.
 		ColumnSchemaCollection cols = SourceTable.Columns;
@@ -110,7 +113,7 @@ public class <%=ClassName%> : WebService
 	#region Get from  Many To Many Relationship Functions
 	<%
 		TableSchema primaryTable = SourceTable;
-		System.Collections.Hashtable manyToManyFunctions = new System.Collections.Hashtable();
+		
 		foreach(TableKeySchema key in SourceTable.PrimaryKeys)
 		{
 			// Check that the key is related to a junction table and that this key relate a PK in this junction table
@@ -124,17 +127,14 @@ public class <%=ClassName%> : WebService
 					if ( IsJunctionKey(junctionTableKey) && junctionTableKey.Name != key.Name )
 					{
 						TableSchema secondaryTable = junctionTableKey.PrimaryKeyTable;
-						string functionname = GetManyToManyName(junctionTableKey, junctionTable);
+						string functionname = GetManyToManyName(junctionTableKey, GetCleanName(junctionTable.Name));
 						methods.Add(providerName + "_GetBy" + functionname);
-						if (!manyToManyFunctions.ContainsKey(functionname))
-						{
-							manyToManyFunctions.Add(functionname,null);
 %>
 
 	#region GetBy<%=functionname%>
 		
 	[WebMethod(Description="Get rows from the table <%=SourceTable.Name%>, through the junction table <%=junctionTable.Name%>.")]
-	public <%=NameSpace + "." + GetClassName(primaryTable, ClassNameFormat.Collection)%> <%=providerName%>_GetBy<%=functionname%>(<%=GetFunctionHeaderParameters(junctionTableKey.ForeignKeyMemberColumns)%>, int start, int pageLength, out int count)
+	public <%=NameSpace + "." + GetCollectionClassName(primaryTable.Name)%> <%=providerName%>_GetBy<%=functionname%>(<%=GetFunctionHeaderParameters(junctionTableKey.ForeignKeyMemberColumns)%>, int start, int pageLength, out int count)
 	{		
 		return <%=DALNameSpace%>.DataRepository.<%=providerName%>.GetBy<%=functionname%>(<%=GetFunctionCallParameters(junctionTableKey.ForeignKeyMemberColumns)%>, start, pageLength, out count);
 	}
@@ -142,7 +142,6 @@ public class <%=ClassName%> : WebService
 	#endregion GetBy<%=functionname%>
 	
 				<%
-					}//end if the function has already been created
 				} //end if there is many to many relationship.
 			} //end foreach			
 	 	}// end if(IsJunctionTable(junctionTableKeyForeignKeyTable)) %>
@@ -159,16 +158,16 @@ public class <%=ClassName%> : WebService
 	/// 	Deletes a row from the DataSource.
 	/// </summary>
 	<% for (int i = 0; i < keys.Count; i++) { %>
-	/// <param name="<%= keys[i].Name%>"><%= GetColumnXmlComment(keys[i],1)%>. Primary Key.</param>	
+	/// <param name="<%= keys[i].Name%>"><%= keys[i].Description%>. Primary Key.</param>	
 	<% } %>
 	/// <param name="transactionManager"><see cref="TransactionManager"/> object</param>
 	/// <param name="connectionString">Connection string to datasource.</param>
 	/// <remarks>Deletes based on primary key(s).</remarks>
 	/// <returns>Returns true if operation suceeded.</returns>
 	[WebMethod(Description="Delete a row from the table <%=SourceTable.Name%>.")]
-	public bool <%=providerName%>_<%= MethodNames.Delete %>(<%= GetFunctionHeaderParameters(keys) %><% if(RowVersion != null) {Response.Write(", byte[] " + GetFieldName(RowVersion));}%>)
+	public bool <%=providerName%>_<%= MethodNames.Delete %>(<%= GetFunctionHeaderParameters(keys) %><% if(RowVersion != null) {Response.Write(", byte[] " + GetPrivateName(RowVersion.Name));}%>)
 	{
-		return <%=DALNameSpace%>.DataRepository.<%=providerName%>.<%= MethodNames.Delete %>(<%= GetFunctionCallParameters(keys) %><% if(RowVersion != null) {Response.Write(", " + GetFieldName(RowVersion));}%>);
+		return <%=DALNameSpace%>.DataRepository.<%=providerName%>.<%= MethodNames.Delete %>(<%= GetFunctionCallParameters(keys) %><% if(RowVersion != null) {Response.Write(", " + GetPrivateName(RowVersion.Name));}%>);
 	}
 	
 	#endregion
@@ -251,12 +250,12 @@ public class <%=ClassName%> : WebService
 	
 	/// <summary>
 	/// 	Gets rows from the datasource based on the <%=fkeys[j].Name%> key.
-	///		<%=fkeys[j].Name%> Description: <%=GetColumnXmlComment(fkeys[j],1)%>
+	///		<%=fkeys[j].Name%> Description: <%=fkeys[j].Description%>
 	/// </summary>
 	/// <param name="start">Row number at which to start reading.</param>
 	/// <param name="pagelen">Number of rows to return.</param>
 <% for (int i = 0; i < fkeys[j].ForeignKeyMemberColumns.Count; i++) { %>
-	/// <param name="<%= fkeys[j].ForeignKeyMemberColumns[i].Name%>"><%=GetColumnXmlComment(fkeys[j].ForeignKeyMemberColumns[i],1)%></param>
+	/// <param name="<%= fkeys[j].ForeignKeyMemberColumns[i].Name%>"><%=fkeys[j].ForeignKeyMemberColumns[i].Description%></param>
 <% } %>
 	/// <param name="count">out parameter to get total records for query</param>	
 	/// <remarks></remarks>
@@ -288,10 +287,12 @@ public class <%=ClassName%> : WebService
 			}
 			
 			string returnType = collectionClassName;
+			bool isUnique = false;
 			
 			if (indexes[j].IsUnique || indexes[j].IsPrimaryKey)
 			{
 				returnType = className;
+				isUnique = true;
 			}
 			
 			methods.Add(providerName + "_GetBy" + GetKeysName(indexes[j].MemberColumns));
@@ -304,7 +305,7 @@ public class <%=ClassName%> : WebService
 	/// <param name="start">Row number at which to start reading.</param>
 	/// <param name="pagelen">Number of rows to return.</param>
 <% for (int i = 0; i < indexes[j].MemberColumns.Count; i++) { %>
-	/// <param name="<%= indexes[j].MemberColumns[i].Name%>"><%= GetColumnXmlComment(indexes[j].MemberColumns[i],1)%></param>
+	/// <param name="<%= indexes[j].MemberColumns[i].Name%>"><%= indexes[j].MemberColumns[i].Description%></param>
 <% } %>
 	/// <param name="count">out parameter to get total records for query</param>	
 	/// <returns>Returns a DataSet.</returns>
@@ -426,9 +427,9 @@ public class <%=ClassName%> : WebService
 	<% foreach(ViewSchema SourceView in SourceViews)
 	{
 		
-		string className = NameSpace + "." + GetClassName(SourceView);
-		string providerName = GetClassName(SourceView, ClassNameFormat.Provider);		
-		string collectionClassName = NameSpace + "." + GetClassName(SourceView, ClassNameFormat.ViewCollection);
+		string className = NameSpace + "." + GetClassName(SourceView.Name);
+		string providerName = GetProviderName(SourceView.Name);		
+		string collectionClassName = NameSpace + "." + GetViewCollectionClassName(SourceView.Name);
 		
 		methods.Add(providerName + "_Get");
 	 	%>
@@ -461,9 +462,9 @@ public class <%=ClassName%> : WebService
 	/// <remarks></remarks>
 	/// <returns>Returns a typed collection of <%=ClassName%> objects.</returns>
 	[WebMethod(Description="Get all rows from the view <%=SourceView.Name%>.")]
-	public <%=collectionClassName%> <%=providerName%>_<%= MethodNames.Get %>(string whereClause, string orderBy, int start, int pageLength, out int count)
+	public <%=collectionClassName%> <%=providerName%>_<%= MethodNames.Get %>(string whereClause, string orderBy, int start, int pageLength)
 	{
-		return <%=DALNameSpace%>.DataRepository.<%=providerName%>.<%= MethodNames.Get %>(whereClause.Length > 0 ? whereClause : null, orderBy.Length > 0 ? orderBy : null, start, pageLength, out count);
+		return <%=DALNameSpace%>.DataRepository.<%=providerName%>.<%= MethodNames.Get %>(whereClause.Length > 0 ? whereClause : null, orderBy.Length > 0 ? orderBy : null, start, pageLength);
 	}
 
 	#endregion <%= MethodNames.Get %> Methods

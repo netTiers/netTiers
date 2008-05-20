@@ -1,4 +1,4 @@
-﻿<%@ CodeTemplate Language="C#" TargetLanguage="XML" Src="..\..\TemplateLib\CommonSqlCode.cs" Inherits="MoM.Templates.CommonSqlCode" Description="" Debug="True" ResponseEncoding="UTF-8" NoWarn="0108,0618,1572,1573,1574,0162,2002" %>
+﻿<%@ CodeTemplate Language="C#" TargetLanguage="XML" Src="..\..\TemplateLib\CommonSqlCode.cs" Inherits="MoM.Templates.CommonSqlCode" Description="" Debug="True" ResponseEncoding="UTF-8" %>
 
 <%@ Property Name="NameSpace" Optional="False" Type="System.String" Category="" Description="Root Namespace." %>
 <%@ Property Name="BLLNameSpace" Optional="False" Type="System.String" Category="" Description="Entity Namespace." %>
@@ -8,20 +8,16 @@
 
 <%@ Property Name="ConnectionString" Optional="False" Type="System.String" Category="" Description="" %>
 <%@ Property Name="IncludeAtlasToolkit" Type="System.Boolean" Default="false" Category="06b. Website - Advanced" Description="Indicates whether to include the Atlas Control Toolkit." %>
-<%@ Property Name="EntLibVersion" Type="MoM.Templates.EntLibVersion" Default="v2" Category="02. Framework Generation - Optional" Description="Indicates the Enterprise Library version to use. Options include v2, v3 and v3.1" %>
 
 <%@ Assembly Name="SchemaExplorer" %>
 <%@ Assembly Name="System.Design" %>
 <%@ Import Namespace="SchemaExplorer" %>
-<%
-string entlibVersionText = GetEntLibVersionSignature(EntLibVersion);
-%>
 <?xml version="1.0"?>
 <configuration>
   <!-- The configSections define a section for ASP.NET Atlas. -->
   <configSections>
     <section name="<%= DALNameSpace %>" type="<%= DALNameSpace %>.Bases.NetTiersServiceSection, <%= DALNameSpace %>" allowDefinition="MachineToApplication" restartOnExternalChanges="true" />
-    <section name="enterpriseLibrary.ConfigurationSource" type="Microsoft.Practices.EnterpriseLibrary.Common.Configuration.ConfigurationSourceSection, Microsoft.Practices.EnterpriseLibrary.Common,  <%= entlibVersionText %>" />
+    <section name="enterpriseLibrary.ConfigurationSource" type="Microsoft.Practices.EnterpriseLibrary.Common.Configuration.ConfigurationSourceSection, Microsoft.Practices.EnterpriseLibrary.Common, Version=2.0.0.0, Culture=neutral, PublicKeyToken=null" />
 	<sectionGroup name="microsoft.web" type="Microsoft.Web.Configuration.MicrosoftWebSectionGroup">
       <section name="converters" type="Microsoft.Web.Configuration.ConvertersSection" requirePermission="false" />
       <section name="webServices" type="Microsoft.Web.Configuration.WebServicesSection" requirePermission="false" />
@@ -90,13 +86,14 @@ string entlibVersionText = GetEntLibVersionSignature(EntLibVersion);
   <system.web>
     <pages styleSheetTheme="default" theme="default">
       <controls>
-		<add tagPrefix="asp" namespace="System.Web.UI" assembly="System.Web.Extensions, Version=1.0.61025.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35"/>
+        <add tagPrefix="atlas" namespace="Microsoft.Web.UI" assembly="Microsoft.Web.Atlas" />
+        <add tagPrefix="atlas" namespace="Microsoft.Web.UI.Controls" assembly="Microsoft.Web.Atlas" />
 		<% if ( IncludeAtlasToolkit ) { %>
-        <add tagPrefix="ajaxToolkit" namespace="AjaxControlToolkit" assembly="AjaxControlToolkit"/>
+        <add tagPrefix="atlasToolkit" namespace="AtlasControlToolkit" assembly="AtlasControlToolkit"/>
 		<% } %>
         <add tagPrefix="data" namespace="<%= WebNameSpace %>.Data" assembly="<%= WebNameSpace %>"/>
         <add tagPrefix="data" namespace="<%= WebNameSpace %>.UI" assembly="<%= WebNameSpace %>"/>
-      </controls>	
+      </controls>
     </pages>
     <!--
          Set compilation debug="true" to insert debugging 
@@ -105,12 +102,9 @@ string entlibVersionText = GetEntLibVersionSignature(EntLibVersion);
          during development.
     -->
     <compilation debug="true">
-      	<buildProviders>
-          	<add extension=".asbx" type="Microsoft.Web.Services.BridgeBuildProvider" />
-      	</buildProviders>
-		<assemblies>
-			<add assembly="System.Web.Extensions, Version=1.0.61025.0, Culture=neutral, PublicKeyToken=31BF3856AD364E35"/>
-		</assemblies>	
+      <buildProviders>
+          <add extension=".asbx" type="Microsoft.Web.Services.BridgeBuildProvider" />
+      </buildProviders>
     </compilation>
     <!--
          ASMX is mapped to a new handler so that proxy javascripts can also be served.
@@ -118,8 +112,6 @@ string entlibVersionText = GetEntLibVersionSignature(EntLibVersion);
     <httpHandlers>
       <remove verb="*" path="*.asmx"/>
       <add verb="*" path="*.asmx" type="Microsoft.Web.Services.ScriptHandlerFactory" validate="false"/>
-      <add verb="*" path="*_AppService.axd" validate="false" type="System.Web.Script.Services.ScriptHandlerFactory, System.Web.Extensions, Version=1.0.61025.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35"/>
-      <add verb="GET,HEAD" path="ScriptResource.axd" type="System.Web.Handlers.ScriptResourceHandler, System.Web.Extensions, Version=1.0.61025.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35" validate="false"/>      
       <!--
            The MultiRequestHandler enables multiple requests to be handled in one
            roundtrip to the server. Its use requires Full Trust.
@@ -139,7 +131,9 @@ string entlibVersionText = GetEntLibVersionSignature(EntLibVersion);
 	  -->
     </httpHandlers>
     <httpModules>
-      <add name="ScriptModule" type="System.Web.Handlers.ScriptModule, System.Web.Extensions, Version=1.0.61025.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35"/>
+      <add name="ScriptModule" type="Microsoft.Web.Services.ScriptModule"/>
+      <add name="BridgeModule" type="Microsoft.Web.Services.BridgeModule"/>
+      <add name="WebResourceCompression" type="Microsoft.Web.Services.WebResourceCompressionModule"/>
 	  <add name="EntityTransactionModule" type="<%= WebNameSpace %>.Data.EntityTransactionModule"/>
     </httpModules>
     <!--
@@ -179,7 +173,7 @@ string entlibVersionText = GetEntLibVersionSignature(EntLibVersion);
   -->
 	<enterpriseLibrary.ConfigurationSource selectedSource="File Configuration Source">
 	  <sources>
-		<add name="File Configuration Source" type="Microsoft.Practices.EnterpriseLibrary.Common.Configuration.FileConfigurationSource, Microsoft.Practices.EnterpriseLibrary.Common,  <%= entlibVersionText %>"
+		<add name="File Configuration Source" type="Microsoft.Practices.EnterpriseLibrary.Common.Configuration.FileConfigurationSource, Microsoft.Practices.EnterpriseLibrary.Common, Version=2.0.0.0, Culture=neutral, PublicKeyToken=null"
 			filePath="entlib.config" />
 	  </sources>
     </enterpriseLibrary.ConfigurationSource>

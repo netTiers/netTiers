@@ -49,15 +49,15 @@ public class LucenePetShopSearchProvider : PetShopSearchProvider
             // add new one
             Document doc = new Document();
 
-            doc.Add(Field.Keyword("ItemId", exItem.ItemId.ToString()));
+            doc.Add(Field.Keyword("ItemId", exItem.ItemId));
             doc.Add(Field.Text("ItemName", exItem.ItemName));
             doc.Add(Field.Text("ItemDescription", exItem.ItemDescription));
             doc.Add(Field.Text("ItemPhoto", exItem.ItemPhoto));
 
-            doc.Add(Field.Keyword("CategoryId", exItem.CategoryId.ToString()));
+            doc.Add(Field.Keyword("CategoryId", exItem.CategoryId));
             doc.Add(Field.Text("CategoryName", exItem.CategoryName));
 
-            doc.Add(Field.Keyword("ProductId", exItem.ProductId.ToString()));
+            doc.Add(Field.Keyword("ProductId", exItem.ProductId));
             doc.Add(Field.Text("ProductName", exItem.ProductName));
             doc.Add(Field.Text("ProductDescription", exItem.ProductDescription));
 
@@ -102,11 +102,11 @@ public class LucenePetShopSearchProvider : PetShopSearchProvider
                 Document doc = hits.Doc(i);
 
                 ExtendedItem item = new ExtendedItem();
-                item.ItemId = new Guid(doc.Get("ItemId"));
+                item.ItemId = doc.Get("ItemId");
                 item.ItemName = doc.Get("ItemName");
                 item.ItemPhoto = doc.Get("ItemPhoto");
                 item.ItemDescription = doc.Get("ItemDescription");
-                item.ProductId = new Guid(doc.Get("ProductId"));
+                item.ProductId = doc.Get("ProductId");
                 
                 results.Add(item);
             }

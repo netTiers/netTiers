@@ -4,6 +4,7 @@
 	<xsl:template match="/NetTiersReport">		
 		<html>
 			<head>
+				<title> <xsl:value-of select="title" /> </title>
                 <link href="http://nettiers.com/common/styles.css" rel="stylesheet" type="text/css"/>
                 <style>
 				      span.executionTime {font-style: italic; color: #55AEED;}
@@ -73,12 +74,12 @@
               <p>To Configure your application to use .netTiers, add the following sections to your App / Web config files.
 			
 			 You can find more information on how to set this up at<br/> 
-			 <a href="http://docs.nettiers.com">.netTiers 2 Install and Configuration Document @ http://docs.netTiers.com</a>
+			 <a href="http://wiki.nettiers.com">.netTiers 2 Install and Configuration Document @ http://wiki.netTiers.com</a>
             </p>
-            <p>1. Add a new section to the configSections</p>
+            <p>1. Add a new section to the configSettings</p>
             
 <pre>
-  &lt;section name="<xsl:value-of select="//NetTiersReport/@DALNameSpace" />"
+  &lt;section name="netTiersService"
 		type="<xsl:value-of select="//NetTiersReport/@DALNameSpace" />.Bases.NetTiersServiceSection, <xsl:value-of select="//NetTiersReport/@DALNameSpace" />"
 		allowDefinition="MachineToApplication"
 		restartOnExternalChanges="true" /&gt;
@@ -91,7 +92,7 @@
 </pre>
          <p>3.  Add the netTierService configuration section to your configuration file. Comment / Uncomment which provider you plan on using / not using</p>
  <pre>
-&lt;<xsl:value-of select="//NetTiersReport/@DALNameSpace" /> defaultProvider="SqlNetTiersProvider"&gt;
+&lt;netTiersService defaultProvider="SqlNetTiersProvider"&gt;
   &lt;providers&gt;
     <!--
     *** SqlClient Provider ***
@@ -105,7 +106,7 @@
 	providerInvariantName="System.Data.SqlClient" 
 	entityFactoryType="<xsl:value-of select="//NetTiersReport/@FactoryType" />"
 	useEntityFactory="true"
-	enableEntityTracking="false"
+	enableEntityTracking="true"
 	enableMethodAuthorization="false"
 	useStoredProcedure="false"
   /&gt;
@@ -119,7 +120,7 @@
       />
     -->
   &lt;/providers&gt;
-&lt;/<xsl:value-of select="//NetTiersReport/@DALNameSpace" />&gt;
+&lt;/netTiersService&gt;
  </pre>
           </div>
           <div id="Documentation" style="display:inline">
@@ -207,7 +208,7 @@ accountsService.DeepSave(myAccountEntity, <font color="blue">false</font>, DeepS
 	
 	<xsl:template name="copyrightinfo">
 		<div align="center">
-			.netTiersOpen Source Group, 2007
+			.netTiersOpen Source Group, 2006
 		</div>
 	</xsl:template>
 	
@@ -236,7 +237,6 @@ accountsService.DeepSave(myAccountEntity, <font color="blue">false</font>, DeepS
 			<xsl:apply-templates select="initialization" />
 			<xsl:apply-templates select="common" />
 			<xsl:apply-templates select="Table" />
-         <xsl:apply-templates select="customStoredProcedures[@includeCustoms='true']" />
 		</ul>
 	</xsl:template>
 	
@@ -297,25 +297,5 @@ accountsService.DeepSave(myAccountEntity, <font color="blue">false</font>, DeepS
 			</xsl:if>-->
 		</li>
 	</xsl:template>
-
-   <xsl:template match="customStoredProcedures">
-      <li>
-         <h3>
-            Custom Stored Procedures
-         </h3>
-         <ul>
-            <xsl:apply-templates />
-         </ul>
-      </li>
-   </xsl:template>
-   
-   <xsl:template match="customStoredProcedure">
-      <li>
-         <span class="file">
-            <xsl:value-of select="@name" /> (applies to <xsl:value-of select="@relatedEntityType"/>: <xsl:value-of select="@relatedEntity"/>)
-         </span>
-      </li>
-      <br/>
-   </xsl:template>
 
 </xsl:stylesheet>

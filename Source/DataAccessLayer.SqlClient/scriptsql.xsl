@@ -10,8 +10,8 @@
 <xsl:output method="text"/>
 
 <xsl:template match="/">
-USE [<xsl:value-of select="/root/database"/>]
-GO
+Use [<xsl:value-of select="/root/database"/>]
+Go
 SET QUOTED_IDENTIFIER ON 
 GO
 SET ANSI_NULLS OFF 
@@ -47,7 +47,7 @@ GO
 </xsl:template>
 
 <xsl:template match="parameter">
-	<xsl:value-of select="@name"/> <xsl:value-of select="@type"/> <xsl:value-of select="@param"/> <xsl:if test="@nulldefault = 'null'"> = null</xsl:if> <xsl:if test="@direction = 'InputOutput' or @direction = 'Output'"> OUTPUT</xsl:if><xsl:if test="last()!=position()">,</xsl:if>
+	<xsl:value-of select="@name"/> <xsl:value-of select="@type"/> <xsl:value-of select="@param"/> <xsl:if test="@nulldefault = 'null'"> = null</xsl:if> <xsl:if test="@direction = 'Output'"> OUTPUT</xsl:if><xsl:if test="last()!=position()">,</xsl:if>
 </xsl:template>
 
 <msxsl:script implements-prefix="sc" language="Javascript">

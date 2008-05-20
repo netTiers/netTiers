@@ -114,7 +114,7 @@ public class PetShopMemberShipProvider : System.Web.Security.MembershipProvider
         // Static Creational Method on the entity itself.
         
         Account account = Account.CreateAccount(
-            Guid.NewGuid()
+            Guid.NewGuid().ToString()
             , null
             , null
             , null

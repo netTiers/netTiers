@@ -4,7 +4,7 @@
  * Last modified at $Date: 2006-03-16 16:53:08 -0600 (Thu, 16 Mar 2006) $
  * $Revision: 62 $
 --%>
-<%@ CodeTemplate Src="..\TemplateLib\CommonSqlCode.cs" Inherits="MoM.Templates.CommonSqlCode" Language="C#" TargetLanguage="C#" Description="Template description here." Debug="False" ResponseEncoding="UTF-8" NoWarn="0108,0618,1572,1573,1574,0162,2002" %>
+<%@ CodeTemplate Src="..\TemplateLib\CommonSqlCode.cs" Inherits="MoM.Templates.CommonSqlCode" Language="C#" TargetLanguage="C#" Description="Template description here." Debug="False" ResponseEncoding="UTF-8"%>
 <%@ Assembly Name="SchemaExplorer" %>
 <%@ Import Namespace="SchemaExplorer" %>
 <%@ Import Namespace="System.Data" %>
@@ -13,23 +13,19 @@
 
 <%@ Property Name="NameSpace" Optional="True" Type="System.String" Category="Style" Description="Object Namespace." %>
 <%@ Property Name="SourceTable" Type="SchemaExplorer.TableSchema" Category="Connection" Description="Table Object should be based on." %>
-<%
-	DataTable datas = SourceTable.GetTableData();
-%>
-
 using System;
 
 namespace <%=NameSpace%>
 {
 	/// <summary>
-	/// <% if(SourceTable.Description.Length == 0 ) {%>An enum representation of the '<%=SourceTable.Name%>' table. [No description found in the database]<%} else {Response.Write(GetColumnXmlComment(SourceTable,1));}%>
+	/// <%=SourceTable.Description%>
 	/// </summary>
 	/// <remark>this enumeration contains the items contained in the table <%=SourceTable.Name%></remark>
-	[Serializable<% if (HasBitField(datas)) Response.Write(", Flags");%>]
-	public enum <%=GetClassName(SourceTable, ClassNameFormat.Enum)%>
+	[Serializable]
+	public enum <%=GetEnumName(SourceTable.Name)%>
 	{
 	<%
-		
+		DataTable datas = SourceTable.GetTableData();
 		for(int i=0; i<datas.Rows.Count; i++)
 		{
 			DataRow row = datas.Rows[i];
@@ -41,7 +37,7 @@ namespace <%=NameSpace%>
 				
 				if ( row[2] != null )
 				{
-					Response.Write("\t\t[EnumTextValue(@\"{0}\")]{1}", GetDescriptionAttributeText(row[2].ToString()), Environment.NewLine);
+					Response.Write("\t\t[EnumTextValue(\"{0}\")]{1}", GetDescriptionAttributeText(row[2].ToString()), Environment.NewLine);
 				}
 			}
 			else

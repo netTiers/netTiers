@@ -1,4 +1,4 @@
-﻿<%@ CodeTemplate Src="..\..\TemplateLib\CommonSqlCode.cs" Debug="True" Inherits="MoM.Templates.CommonSqlCode" Language="C#" TargetLanguage="C#" Description="Component Object Class" ResponseEncoding="UTF-8" NoWarn="0108,0618,1572,1573,1574,0162,2002"%>
+﻿<%@ CodeTemplate Src="..\..\TemplateLib\CommonSqlCode.cs" Debug="True" Inherits="MoM.Templates.CommonSqlCode" Language="C#" TargetLanguage="C#" Description="Component Object Class" ResponseEncoding="UTF-8"%>
 <%@ Assembly Name="SchemaExplorer" %>
 <%@ Assembly Name="System.Design" %>
 <%@ Import Namespace="SchemaExplorer" %>
@@ -26,7 +26,7 @@
 
 	#region Template Logic
 	// Name of the Abstract Class
-	string className = GetClassName(SourceView);
+	string className = GetClassName(SourceView.Name);
 	string collectionClassName = GetCollectionClassName(SourceView.Name);
 	string collectionClassNameComment = GetCollectionClassName(SourceView.Name).Replace("<", "{").Replace(">","}");
 	string keyClassName = GetKeyClassName(className);
@@ -386,13 +386,13 @@
 		
 			<%=returnType != "void"  ? string.Format("{0} result = null;" , returnType) : "" %> 
 			TransactionManager transactionManager = null; 
-
+			
 			try
-         {
+            {
 				bool isBorrowedTransaction = ConnectionScope.Current.HasTransaction;				
 				
 				//since this is a read operation, don't create a tran by default, only use tran if provided to us for custom isolation level
-				transactionManager = ConnectionScope.ValidateOrCreateTransaction(<% if (returnType != "void") { %>noTranByDefault<%}%>);
+				transactionManager = ConnectionScope.ValidateOrCreateTransaction();
 				NetTiersProvider dataProvider = ConnectionScope.Current.DataProvider;
                 
 				//Call Custom Procedure from Repository

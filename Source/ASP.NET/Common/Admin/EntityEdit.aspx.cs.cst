@@ -1,4 +1,4 @@
-﻿<%@ CodeTemplate Src="..\..\..\TemplateLib\CommonSqlCode.cs" Inherits="MoM.Templates.CommonSqlCode" Language="C#" TargetLanguage="C#" Description="Generates code behind edit input screen for an entitiy using EntityDataSource Control." Debug="True" ResponseEncoding="UTF-8" NoWarn="0108,0618,1572,1573,1574,0162,2002"%>
+<%@ CodeTemplate Src="..\..\..\TemplateLib\CommonSqlCode.cs" Inherits="MoM.Templates.CommonSqlCode" Language="C#" TargetLanguage="C#" Description="Generates code behind edit input screen for an entitiy using EntityDataSource Control." Debug="True" %>
 <%@ Assembly Name="SchemaExplorer" %>
 <%@ Assembly Name="System.Design" %>
 <%@ Import Namespace="SchemaExplorer" %>
@@ -60,9 +60,9 @@
 			RowVersion = column;
 	}
 
-	string entityName = GetClassName(SourceTable);
-	string className = NameSpace + "." + GetClassName(SourceTable);
-	string providerName = GetClassName(SourceTable, ClassNameFormat.Provider);
+	string entityName = GetClassName(SourceTable.Name);
+	string className = NameSpace + "." + GetClassName(SourceTable.Name);
+	string providerName = GetProviderName(SourceTable.Name);
 
 	TableSchemaCollection sourceTables = new TableSchemaCollection();
 	
@@ -98,39 +98,53 @@ public partial class <%=entityName%>Edit : System.Web.UI.Page
 			// -- SetDefaultMode checks for one parameter if it exists, so that 
 			// -- it sets the right mode for the FormView
 		%>
-		FormUtil.SetDefaultMode(FormView1, "<%=GetPropertyName(keys[0])%>");
+		FormUtil.SetDefaultMode(FormView1, "<%=GetPropertyName(keys[0].Name)%>");
 	}
 <%
 	// -- check if table is not Junction table
 	if (keys.Count == 1)
 	{
-		System.Collections.Hashtable colls = GetChildrenCollections(SourceTable, SourceTables);
-		foreach(CollectionInfo ci in colls.Values)
-		{
-			TableSchema relatedTable = ci.SecondaryTableSchema; 
+		TableSchemaCollection tablesRelated1 = GetTablesCollectionByFk(SourceTable.PrimaryKey.MemberColumns[0], sourceTables);
+		for (int x = 0; x < tablesRelated1.Count; x++)
+		{  
 			//Related Table must be in SourceTables
-			//Must be OneToMany relation
-			//Must not be a junction table
-			if (!SourceTables.Contains(relatedTable) 
-				|| ci.CollectionRelationshipType != RelationshipType.OneToMany
-				|| IsJunctionTable(relatedTable))
+			if (!SourceTables.Contains(tablesRelated1[x]))
 				continue;
 				
-			string entityRelated = GetClassName(relatedTable);
-			ColumnSchemaCollection keysRelatedCol = relatedTable.PrimaryKey.MemberColumns;
+			string entityRelated = GetClassName(tablesRelated1[x].Name);
+			ColumnSchemaCollection keysRelatedCol = tablesRelated1[x].PrimaryKey.MemberColumns;
 			string keysRelated = GetKeysName(keysRelatedCol);
 			iRelatedCounter++;
-			string gridViewId = string.Format("GridView{0}{1}",entityRelated,iRelatedCounter);
 %>
-	protected void <%=gridViewId%>_SelectedIndexChanged(object sender, EventArgs e)
+	protected void GridView<%=entityRelated%>_SelectedIndexChanged(object sender, EventArgs e)
 	{
-		string urlParams = string.Format(<%=getUrlFk(keysRelatedCol, (entityRelated+iRelatedCounter))%>);
+		string urlParams = string.Format(<%=getUrlFk(keysRelatedCol, entityRelated)%>);
 		Response.Redirect("<%=entityRelated%>Edit.aspx?" + urlParams, true);		
 	}	
 <%							
-		}		
+    }	
+	
+		// -- output Filter Property only if there is related entity 
+		if (iRelatedCounter > 0) 
+		{
+%>	
+	public String <%=GetKeysName(keys)%>
+	{
+		get 
+		{
+			String q = Request.QueryString["<%=GetKeysName(keys)%>"];
+			if (q != null)
+			{
+				return q.ToString();
+			}
+			return string.Empty;
+		}
+	}
+<%
+		}
 	}
 %>
+
 }
 
 
@@ -142,7 +156,7 @@ public partial class <%=entityName%>Edit : System.Web.UI.Page
 		
         for (int x = 0; x < fkeys.Count; x++)
         {			
-            s += string.Format("{0}={{" + x + "}}", GetPropertyName(fkeys[x]));
+            s += string.Format("{0}={{" + x + "}}", GetPropertyName(fkeys[x].Name));
 			g += string.Format("GridView{1}.SelectedDataKey.Values[{0}]", x.ToString(), entityRelated);
             if (x < fkeys.Count - 1)
             {
@@ -171,7 +185,7 @@ public partial class <%=entityName%>Edit : System.Web.UI.Page
 		for (int x = 0; x < 1; x++)  // -- use only first pk
         {
             s += string.Format("{0}='{{" + x + "}}'", keys[x].Name);
-			g += string.Format("Request.QueryString[\"{0}\"].ToString()", GetPropertyName(keys[x]));
+			g += string.Format("Request.QueryString[\"{0}\"].ToString()", GetPropertyName(keys[x].Name));
             
 			/*
 			if (x < keys.Count - 1)
@@ -192,7 +206,7 @@ public partial class <%=entityName%>Edit : System.Web.UI.Page
         //for (int x = 0; x < keys.Count; x++)
 		for (int x = 0; x < 1; x++)
         {
-			g += string.Format("Request.QueryString[\"{0}\"] != null", GetPropertyName(keys[x]));
+			g += string.Format("Request.QueryString[\"{0}\"] != null", GetPropertyName(keys[x].Name));
             
 			/*
 			if (x < keys.Count - 1)

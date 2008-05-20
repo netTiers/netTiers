@@ -4,11 +4,9 @@
  * Last modified at $Date: 2006-03-19 01:00:00 -0600 (Sun, 19 Mar 2006) $
  * $Revision: 1 $
 --%>
-<%@ CodeTemplate Language="C#" TargetLanguage="C#" Src="" Inherits="" Debug="False" Description="Generates the EntityUtil class." ResponseEncoding="UTF-8" NoWarn="0108,0618,1572,1573,1574,0162,2002"  %>
+<%@ CodeTemplate Language="C#" TargetLanguage="C#" Src="" Inherits="" Debug="False" Description="Generates the EntityUtil class." %>
 
 <%@ Property Name="NameSpace" Optional="False" Type="System.String" Category="Style" Description="BLL Namespace." %>
-<%@ Property Name="TimeStandard" Type="TimeStandardEnum" Default="UTC" Category="02. Framework Generation - Optional" Description="Standard used for generating DateTime values. If 'UTC' DateTime is generated based on UtcNow. If 'Local' DateTime is generated based on DateTime.Now" %>
-
 
 <%@ Assembly Name="System.Data" %>
 <%@ Import Namespace="System.Data" %>
@@ -17,7 +15,7 @@ using System;
 using System.Collections;
 using System.Reflection;
 using System.Text;
-using regEx = System.Text.RegularExpressions;
+using System.Text.RegularExpressions;
 #endregion
 
 namespace <%= NameSpace %>
@@ -25,7 +23,7 @@ namespace <%= NameSpace %>
 	/// <summary>
 	/// Provides common utility methods for interacting with objects.
 	/// </summary>
-	public static class EntityUtil
+	public static partial class EntityUtil
 	{
 		/// <summary>
 		/// Creates a new instance of the specified type.
@@ -459,11 +457,7 @@ namespace <%= NameSpace %>
 
 					if ( prop != null && prop.CanWrite && prop.PropertyType.IsAssignableFrom(typeof(DateTime)) )
 					{
-					   <% if ( TimeStandard == TimeStandardEnum.Utc ) { %>
-						prop.SetValue(entity, DateTime.UtcNow, null);		
-					   <% } else { %>				   
-					   	prop.SetValue(entity, DateTime.Now, null);			   					   
-					   <% } // end if ( IncludeFind ) %>
+						prop.SetValue(entity, DateTime.Now, null);
 					}
 				}
 			}
@@ -528,11 +522,7 @@ namespace <%= NameSpace %>
 					}
 				}
 			}
-			if (conversionType.IsInstanceOfType(value))
-         {
-            newValue = value;
-         }
-			else if ( conversionType.IsGenericType )
+			if ( conversionType.IsGenericType )
 			{
 				newValue = ChangeGenericType(value, conversionType, convertBlankToNull);
 			}
@@ -841,12 +831,12 @@ namespace <%= NameSpace %>
 			if ( s == null )
 				throw new ArgumentNullException("s");
 
-			regEx.Regex format = new regEx.Regex(
+			Regex format = new Regex(
 				"^[A-Fa-f0-9]{32}$|" +
 				"^({|\\()?[A-Fa-f0-9]{8}-([A-Fa-f0-9]{4}-){3}[A-Fa-f0-9]{12}(}|\\))?$|" +
 				"^({)?[0xA-Fa-f0-9]{3,10}(, {0,1}[0xA-Fa-f0-9]{3,6}){2}, {0,1}({)([0xA-Fa-f0-9]{3,4}, {0,1}){7}[0xA-Fa-f0-9]{3,4}(}})$");
 			
-			regEx.Match match = format.Match(s);
+			Match match = format.Match(s);
 			
 			if ( match.Success )
 			{
