@@ -50,7 +50,6 @@
 <%@ Property Name="IncludeUnitTest" Type="MoM.Templates.UnitTestStyle" Default="NUnit" Category="General" Description="Indicates type of Unit tests to be generated." %>
 <%@ Property Name="IncludeWCFDataAttributes" Type="System.Boolean" Default="False" Category="02. Framework Generation - Optional" Description="Indicates if the WCF attributes, [DataContract] and [DataMember], should be included on the entity classes." %>
 <%@ Property Name="IncludeDesignTimeSupport" Type="System.Boolean" Default="true" Category="05. WebLibrary - Advanced" Description="Indicates if Visual Studio design-time support should be provided for the Web Library controls." %>
-<%@ Property Name="ValidationType" Type="MoM.Templates.ValidationType" Default="NetTiers" Category="02. Framework Generation - Optional" Description="Choice to either use .netTiers validation framework, or Enterprise Library VAB" %>
 
 <%@ Property Name="SignAssembly" Type="System.Boolean" Category="Option" Description="" Default="false" %>
 <%@ Property Name="LibraryPath" Type="System.String" Default="..\\References" Category="Option" Description="Path of the assembly library directory." %>
@@ -66,8 +65,6 @@
 <%@ Property Name="WebServiceUrl" Type="System.String" Category="WebService" Description="The webservice base URL. The asmx filename will be added programmatically." Default="http://localhost/Services/" %>
 <%@ Property Name="rootPathWS" Type="System.String" Category="WebService" Description="The folder where the webservice code is generated." Default="" %>
 <%@ Property Name="EntLibVersion" Type="MoM.Templates.EntLibVersion" Default="v2" Category="02. Framework Generation - Optional" Description="Indicates the Enterprise Library version to use. Options include v2, v3 and v3.1" %>
-<%@ Property Name="VisualStudioVersion" Type="MoM.Templates.VSNetVersion" Default="v2005" Category="02. Framework Generation - Optional" Description="Indicates the Version of Visual Studio to target. Options include v2005 and v2008" %>
-<%@ Property Name="DotNetVersion" Type="MoM.Templates.DotNetFrameworkVersion" Default="v2" Category="02. Framework Generation - Optional" Description="Indicates the Version of Dot Net to target. Options include v2, v3 and v3.5" %>
 
 <%@ Assembly Name="SchemaExplorer" %>
 <%@ Assembly Name="System.Design" %>
@@ -140,11 +137,11 @@
 	string WinLibSubFolder = string.Empty;
 	
 %>
-<Project DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003" ToolsVersion="3.5">
+<Project DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <PropertyGroup>
     <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
     <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
-    <ProductVersion><%= GetVisualStudioProductVersionString( VisualStudioVersion ) %></ProductVersion>
+    <ProductVersion>8.0.50727</ProductVersion>
     <SchemaVersion>2.0</SchemaVersion>
     <ProjectGuid>{<% if (IncludeBll) Response.Write(BLLGuid); else if (IncludeComponents) Response.Write(ComponentsGuid); else if (IncludeDALBase) Response.Write(DALGuid); else if (IncludeSqlClient) Response.Write(DALSqlGuid); else if (IncludeGenericClient) Response.Write(DALGenericGuid); else if (IncludeUnitTest != MoM.Templates.UnitTestStyle.None) Response.Write(UTGuid); else if (IncludeWebservice) Response.Write(WSGuid);else if (IncludeWebserviceClient) Response.Write(DALWSGuid); else if (IncludeWebLibrary) Response.Write(WebLibGuid); else if (IncludeWinLibrary) Response.Write(WinLibGuid); else if (IncludeWebsite) Response.Write(WebsiteGuid);  %>}</ProjectGuid>
 	<% if ( IncludeWebsite ) { %>
@@ -152,7 +149,6 @@
 	<% } else { %>
     <ProjectType><%if (IncludeWebservice) Response.Write("Web"); else Response.Write("Local"); %></ProjectType>
 	<% } %>
-	<% if (VisualStudioVersion == MoM.Templates.VSNetVersion.v2008) { %><TargetFrameworkVersion>v<%= GetDotNetFrameworkString( DotNetVersion ) %></TargetFrameworkVersion><%}%>
     <OutputType>Library</OutputType>
     <ApplicationIcon>
 	</ApplicationIcon>
@@ -253,12 +249,6 @@
 	<% if ( IncludeDesignTimeSupport ) { %>
     <Reference Include="EnvDTE, Version=8.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a" />
     <Reference Include="EnvDTE80, Version=8.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a" />
-	<% } %>
-	<% if(ValidationType == MoM.Templates.ValidationType.EntLib){ %>
-	<Reference Include="Microsoft.Practices.EnterpriseLibrary.Validation, <%= entlibVersionText %>">
-      <SpecificVersion>False</SpecificVersion>
-      <HintPath><%= LibraryPath %>\Microsoft.Practices.EnterpriseLibrary.Validation.dll</HintPath>
-    </Reference>
 	<% } %>
 	<%
 	if (IncludeWinLibrary) {
@@ -473,7 +463,7 @@
 
 	<!-- Include any user files -->
 	<ItemGroup>	
-		<Compile Include="**\*.user.*" Exclude="**\*.csproj.user;**\.svn\**" >
+		<Compile Include="**\*.user.*" Exclude="**\*.csproj.user" >
           <SubType>Code</SubType>
         </Compile>		
 	</ItemGroup>
@@ -698,12 +688,10 @@
 			<Compile Include="<%=BLLSubFolder%>ListBase.cs">
 			  <SubType>Code</SubType>
 			</Compile>
-			<%string tListName = GetTListName();%>
-			<Compile Include="<%=BLLSubFolder%><%=tListName%>.cs">
+			<Compile Include="<%=BLLSubFolder%>TList.cs">
 			  <SubType>Code</SubType>
 			</Compile>
-			<%string vListName = GetVListName();%>
-			<Compile Include="<%=BLLSubFolder%>Views\<%=vListName%>.cs">
+			<Compile Include="<%=BLLSubFolder%>Views\VList.cs">
 			  <SubType>Code</SubType>
 			</Compile>
 			<Compile Include="<%=BLLSubFolder%>EntityFilter.cs">
@@ -742,17 +730,6 @@
 			<Compile Include="<%=BLLSubFolder%>GenericTypeConverter.cs">
 			  <SubType>Code</SubType>
 			</Compile>
-			<% if(ValidationType == MoM.Templates.ValidationType.EntLib){ %>
-			<Compile Include="<%=BLLSubFolder%>Validation\PropertyValidator.cs">
-			  <SubType>Code</SubType>
-			</Compile>
-			<Compile Include="<%=BLLSubFolder%>Validation\PropertyValidatorValueAccess.cs">
-			  <SubType>Code</SubType>
-			</Compile>
-			<Compile Include="<%=BLLSubFolder%>Validation\PropertyValidatorValueAccessBuilder.cs">
-			  <SubType>Code</SubType>
-			</Compile>
-			<% } else { %>
 			<Compile Include="<%=BLLSubFolder%>Validation\BrokenRule.cs">
 			  <SubType>Code</SubType>
 			</Compile>
@@ -774,7 +751,6 @@
 			<Compile Include="<%=BLLSubFolder%>Validation\ValidationRules.cs">
 			  <SubType>Code</SubType>
 			</Compile>
-			<% } %>
 		<% } %>
 		<% 
 		if (IncludeComponents) 
@@ -828,24 +804,11 @@
 			
 			<Compile Include="<%=ComponentsSubFolder%>SecurityContext.cs">
 			  <SubType>Code</SubType>
-			</Compile>	
-			<Compile Include="<%=ComponentsSubFolder%>SecurityContextBase.generated.cs">
-			  <DependentUpon>SecurityContext.cs</DependentUpon>
-			  <SubType>Code</SubType>
-			</Compile>	
-			<Compile Include="<%=ComponentsSubFolder%>ContextView.cs">
-			  <SubType>Code</SubType>
 			</Compile>		
 			<Compile Include="<%=ComponentsSubFolder%>DomainUtil.cs">
 			  <SubType>Code</SubType>
 			</Compile>
-			<Compile Include="<%=ComponentsSubFolder%>IConnectionScope.cs">
-			  <SubType>Code</SubType>
-			</Compile>
 			<Compile Include="<%=ComponentsSubFolder%>ConnectionScope.cs">
-			  <SubType>Code</SubType>
-			</Compile>
-			<Compile Include="<%=ComponentsSubFolder%>ConnectionScopeBase.cs">
 			  <SubType>Code</SubType>
 			</Compile>
 		<%
@@ -884,16 +847,8 @@
 			<Compile Include="<%=DALSubFolder%>DataRepository.cs">
 			  <SubType>Code</SubType>
 			</Compile>
-
-			<Compile Include="<%=DALSubFolder%>Bases\INetTiersProvider.cs">
-			  <SubType>Code</SubType>
-			</Compile>
 			
 			<Compile Include="<%=DALSubFolder%>Bases\NetTiersProvider.cs">
-			  <SubType>Code</SubType>
-			</Compile>
-			
-			<Compile Include="<%=DALSubFolder%>Bases\NetTiersProviderBase.cs">
 			  <SubType>Code</SubType>
 			</Compile>
 			
@@ -938,9 +893,6 @@
 			</Compile>
 			
 			<Compile Include="<%=DALSubFolder%>Utility.cs">
-			  <SubType>Code</SubType>
-			</Compile>
-			<Compile Include="<%=DALSubFolder%>ITransactionManager.cs">
 			  <SubType>Code</SubType>
 			</Compile>
 			<Compile Include="<%=DALSubFolder%>TransactionManager.cs">
@@ -1192,7 +1144,7 @@
 	
   <Import Project="$(MSBuildBinPath)\Microsoft.CSHARP.Targets" />
   <% if ( IncludeWebsite ) { %>
-  <Import Project="$(MSBuildExtensionsPath)\Microsoft\VisualStudio\v<%= GetMSBuildExtensionsVersionString( VisualStudioVersion ) %>\WebApplications\Microsoft.WebApplication.targets" />
+  <Import Project="$(MSBuildExtensionsPath)\Microsoft\VisualStudio\v8.0\WebApplications\Microsoft.WebApplication.targets" />
   <% } %>
 	<%	if (IncludeBll && SupportsCodesmithBuildTask
 				&& PropertySetFilePath.Length > 0 

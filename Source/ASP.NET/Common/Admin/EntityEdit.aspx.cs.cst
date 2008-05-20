@@ -104,27 +104,21 @@ public partial class <%=entityName%>Edit : System.Web.UI.Page
 	// -- check if table is not Junction table
 	if (keys.Count == 1)
 	{
-		System.Collections.Hashtable colls = GetChildrenCollections(SourceTable, SourceTables);
-		foreach(CollectionInfo ci in colls.Values)
-		{
-			TableSchema relatedTable = ci.SecondaryTableSchema; 
+		TableSchemaCollection tablesRelated1 = GetTablesCollectionByFk(SourceTable.PrimaryKey.MemberColumns[0], sourceTables);
+		for (int x = 0; x < tablesRelated1.Count; x++)
+		{  
 			//Related Table must be in SourceTables
-			//Must be OneToMany relation
-			//Must not be a junction table
-			if (!SourceTables.Contains(relatedTable) 
-				|| ci.CollectionRelationshipType != RelationshipType.OneToMany
-				|| IsJunctionTable(relatedTable))
+			if (!SourceTables.Contains(tablesRelated1[x]))
 				continue;
 				
-			string entityRelated = GetClassName(relatedTable);
-			ColumnSchemaCollection keysRelatedCol = relatedTable.PrimaryKey.MemberColumns;
+			string entityRelated = GetClassName(tablesRelated1[x]);
+			ColumnSchemaCollection keysRelatedCol = tablesRelated1[x].PrimaryKey.MemberColumns;
 			string keysRelated = GetKeysName(keysRelatedCol);
 			iRelatedCounter++;
-			string gridViewId = string.Format("GridView{0}{1}",entityRelated,iRelatedCounter);
 %>
-	protected void <%=gridViewId%>_SelectedIndexChanged(object sender, EventArgs e)
+	protected void GridView<%=entityRelated%>_SelectedIndexChanged(object sender, EventArgs e)
 	{
-		string urlParams = string.Format(<%=getUrlFk(keysRelatedCol, (entityRelated+iRelatedCounter))%>);
+		string urlParams = string.Format(<%=getUrlFk(keysRelatedCol, entityRelated)%>);
 		Response.Redirect("<%=entityRelated%>Edit.aspx?" + urlParams, true);		
 	}	
 <%							

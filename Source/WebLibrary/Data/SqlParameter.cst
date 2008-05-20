@@ -1,4 +1,4 @@
-<%@ CodeTemplate Language="C#" TargetLanguage="C#" Src="" Inherits="" Debug="False" Description="Generates the SqlParameter class." ResponseEncoding="UTF-8"  NoWarn="0108,0618,1572,1573,1574,0162,2002" %>
+﻿<%@ CodeTemplate Language="C#" TargetLanguage="C#" Src="" Inherits="" Debug="False" Description="Generates the SqlParameter class." ResponseEncoding="UTF-8"  NoWarn="0108,0618,1572,1573,1574,0162,2002" %>
 
 <%@ Property Name="BLLNameSpace" Optional="False" Type="System.String" Category="Style" Description="BLL Namespace." %>
 <%@ Property Name="DALNameSpace" Optional="False" Type="System.String" Category="Style" Description="DAL Namespace." %>
@@ -358,10 +358,7 @@ namespace <%= WebNameSpace %>.Data
                             break;
                         case StringBuilderExpression.Append:
                             value = filter.GetFilterValue(control, isCallback);
-                            if (filter.Junction == null)
-                                e = new object[] { filter.Column, string.Format(filter.Format, value) };
-                            else
-                                e = new object[] { filter.Junction, filter.Column, string.Format(filter.Format, value), true };
+                            e = new object[] { filter.Column, string.Format(filter.Format, value) };
                             break;
                         case StringBuilderExpression.AppendIsNotNull:
                         case StringBuilderExpression.AppendIsNull:
@@ -396,7 +393,7 @@ namespace <%= WebNameSpace %>.Data
                     
                     if (filter.GroupState == ExpressionGroupState.Begin)
                     {
-                        EntityUtil.InvokeMethod(sql, "BeginGroup", new object[] { "" });
+                        EntityUtil.InvokeMethod(sql, "BeginGroup");
                         EntityUtil.InvokeMethod(sql, filter.BuilderExpression.ToString(), e);
                     }
                     else if (filter.GroupState == ExpressionGroupState.AndBegin)
@@ -456,7 +453,6 @@ namespace <%= WebNameSpace %>.Data
         /// <summary>
         /// Gets or sets the ControlID property.
         /// </summary>
-		[System.ComponentModel.Bindable(System.ComponentModel.BindableSupport.Yes)]
         public String ControlID
         {
             get { return controlID; }
@@ -546,7 +542,11 @@ namespace <%= WebNameSpace %>.Data
         {
             Object value = null;
 
-            if (!string.IsNullOrEmpty(QueryStringField))
+            if (!string.IsNullOrEmpty(DefaultValue))
+            {
+                value = DefaultValue;
+            }
+            else if (!string.IsNullOrEmpty(QueryStringField))
             {
                 value = HttpContext.Current.Request.QueryString[QueryStringField];
             }
@@ -554,7 +554,7 @@ namespace <%= WebNameSpace %>.Data
             {
                 value = HttpContext.Current.Session[SessionField];
             }
-            else if (!String.IsNullOrEmpty(ControlID))
+            else
             {
                 Control input = FormUtil.FindControl(control, ControlID);
 
@@ -580,10 +580,6 @@ namespace <%= WebNameSpace %>.Data
                         value = FormUtil.GetValue(input, PropertyName);
                     }
                 }
-            }
-            else if (!string.IsNullOrEmpty(DefaultValue))
-            {
-                value = DefaultValue;
             }
             String format = "{0}";
 

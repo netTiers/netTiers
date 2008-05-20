@@ -25,7 +25,6 @@ using System.Web.UI;
 using System.ComponentModel;
 using System.Web.UI.Design.WebControls;
 using System.Web.UI.Design;
-using System.Web.UI.WebControls;
 
 namespace <%=NameSpace%>.Web.UI
 {
@@ -86,7 +85,7 @@ namespace <%=NameSpace%>.Web.UI
 	[Designer(typeof(<%=designerName%>))]
 	[ParseChildren(true)]
 	[ToolboxData("<{0}:<%=repeaterName%> runat=\"server\"></{0}:<%=repeaterName%>>")]
-	public class <%=repeaterName%> : CompositeDataBoundControl, System.Web.UI.INamingContainer
+	public class <%=repeaterName%> : Control, System.Web.UI.INamingContainer
 	{
 	    /// <summary>
         /// Initializes a new instance of the <see cref="T:<%= repeaterName %>"/> class.
@@ -166,115 +165,142 @@ namespace <%=NameSpace%>.Web.UI
 			set { m_footerTemplate = value; }
 		}
 
-//      /// <summary>
-//      /// Called by the ASP.NET page framework to notify server controls that use composition-based implementation to create any child controls they contain in preparation for posting back or rendering.
-//      /// </summary>
-//		protected override void CreateChildControls()
-//      {
-//         if (ChildControlsCreated)
-//         {
-//            return;
-//         }
-
-//         Controls.Clear();
-
-//         //Instantiate the Header template (if exists)
-//         if (m_headerTemplate != null)
-//         {
-//            Control headerItem = new Control();
-//            m_headerTemplate.InstantiateIn(headerItem);
-//            Controls.Add(headerItem);
-//         }
-
-//         //Instantiate the Footer template (if exists)
-//         if (m_footerTemplate != null)
-//         {
-//            Control footerItem = new Control();
-//            m_footerTemplate.InstantiateIn(footerItem);
-//            Controls.Add(footerItem);
-//         }
-//
-//         ChildControlsCreated = true;
-//      }
-	
-		/// <summary>
-        /// Overridden and Empty so that span tags are not written
+        /// <summary>
+        /// Gets or sets the data source ID.
         /// </summary>
-        /// <param name="writer"></param>
-        public override void RenderBeginTag(HtmlTextWriter writer)
-        {
-            
-        }
+        /// <value>The data source ID.</value>
+		[Category("Data")]
+		public virtual string DataSourceID
+		{
+			get
+			{
+				if (ViewState["DataSourceID"] == null)
+				{
+					return string.Empty;
+				}
+				return (string)ViewState["DataSourceID"];
+			}
+			set
+			{
+				ViewState["DataSourceID"] = value;
+			}
+		}
+
+		//[Category("Data")]
+		//public virtual string DataMember
+		//{
+		//    get
+		//    {
+		//        if (ViewState["DataMember"] == null)
+		//        {
+		//            return string.Empty;
+		//        }
+		//        return (string)ViewState["DataMember"];
+		//    }
+		//    set
+		//    {
+		//        ViewState["DataMember"] = value;
+		//    }
+		//}
+
+		//private ProductDataSourceView m_currentView;
+
+		System.Collections.IEnumerable m_currentView;
+        /// <summary>
+        /// Connects to data source view.
+        /// </summary>
+        /// <returns>an IEnumerable of DataSourceView</returns>
+		private System.Collections.IEnumerable ConnectToDataSourceView()
+		{
+			if (m_currentView == null)
+			{
+				<%=entityDataSource%> datasource = null;
+				//First look in the naming container
+            Control ctl = this.NamingContainer.FindControl(DataSourceID);
+            if (ctl == null)
+            {
+               //if not found, look at the page level
+               ctl = this.Page.FindControl(DataSourceID);
+               if (ctl == null)
+               {
+                  throw new System.Web.HttpException("Datasource does not exists");
+               }
+            }
+				datasource = ctl as <%=entityDataSource%>;
+				if (datasource == null)
+				{
+					throw new System.Web.HttpException("Datasource must be data control");
+				}
+				
+				System.Collections.IEnumerable dsv = datasource.GetEntityList(); //this.DataMember);
+				if (dsv == null)
+				{
+					throw new System.Web.HttpException("View not found");
+				}
+				m_currentView = dsv;
+			}
+			return m_currentView;
+		}
 
         /// <summary>
-        /// Overridden and Empty so that span tags are not written
+        /// Called by the ASP.NET page framework to notify server controls that use composition-based implementation to create any child controls they contain in preparation for posting back or rendering.
         /// </summary>
-        /// <param name="writer"></param>
-        public override void RenderEndTag(HtmlTextWriter writer)
-        {
-                
-        }		
-		
-		/// <summary>
-      	/// Called by the ASP.NET page framework to notify server controls that use composition-based implementation to create any child controls they contain in preparation for posting back or rendering.
-      	/// </summary>
-		protected override int CreateChildControls(System.Collections.IEnumerable dataSource, bool dataBinding)
-      	{
-         int pos = 0;
-
-         if (dataBinding)
-         {
-            //Instantiate the Header template (if exists)
-            if (m_headerTemplate != null)
-            {
-                Control headerItem = new Control();
-                m_headerTemplate.InstantiateIn(headerItem);
-                Controls.Add(headerItem);
-            }
-			if (dataSource != null)
+		protected override void CreateChildControls()
+		{
+			if (ChildControlsCreated)
 			{
-				foreach (object o in dataSource)
+				return;
+			}
+			Controls.Clear();
+
+			System.Collections.IEnumerable datas = (System.Collections.IEnumerable)ConnectToDataSourceView();
+
+			if (datas != null)
+			{
+				if (m_headerTemplate != null)
 				{
-						<%=entityName%> entity = o as <%=entityName%>;
-						<%=entityItem%> container = new <%=entityItem%>(entity);
-	
-						if (m_itemTemplate != null && (pos % 2) == 0)
+					Control headerItem = new Control();
+					m_headerTemplate.InstantiateIn(headerItem);
+					Controls.Add(headerItem);
+				}
+
+				int pos = 0;
+				foreach (object o in datas)
+				{
+					<%=entityName%> entity = o as <%=entityName%>;
+					<%=entityItem%> container = new <%=entityItem%>(entity);
+
+					if (m_itemTemplate != null && (pos % 2) == 0)
+					{
+						m_itemTemplate.InstantiateIn(container);
+					}
+					else
+					{
+						if (m_altenateItemTemplate != null)
+						{
+							m_altenateItemTemplate.InstantiateIn(container);
+						}
+						else if (m_itemTemplate != null)
 						{
 							m_itemTemplate.InstantiateIn(container);
 						}
 						else
 						{
-							if (m_altenateItemTemplate != null)
-							{
-								m_altenateItemTemplate.InstantiateIn(container);
-							}
-							else if (m_itemTemplate != null)
-							{
-								m_itemTemplate.InstantiateIn(container);
-							}
-							else
-							{
-								// no template !!!
-							}
+							// no template !!!
 						}
-						Controls.Add(container);
-						
-						container.DataBind();
-						
-						pos++;
+					}
+					Controls.Add(container);
+					pos++;
 				}
-			}
-            //Instantiate the Footer template (if exists)
-            if (m_footerTemplate != null)
-            {
-                Control footerItem = new Control();
-                m_footerTemplate.InstantiateIn(footerItem);
-                Controls.Add(footerItem);
-            }
 
-		}
-			
-			return pos;
+				if (m_footerTemplate != null)
+				{
+					Control footerItem = new Control();
+					m_footerTemplate.InstantiateIn(footerItem);
+					Controls.Add(footerItem);
+				}
+				ChildControlsCreated = true;
+			}
 		}
 
         /// <summary>
