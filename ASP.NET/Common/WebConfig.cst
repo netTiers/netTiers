@@ -1,0 +1,93 @@
+﻿<%@ CodeTemplate Language="C#" TargetLanguage="XML" Src="..\..\CommonSqlCode.cs" Inherits="MoM.Templates.CommonSqlCode" Description="" Debug="True" ResponseEncoding="UTF-8" %>
+
+<%@ Property Name="NameSpace" Optional="False" Type="System.String" Category="" Description="Root Namespace." %>
+<%@ Property Name="BLLNameSpace" Optional="False" Type="System.String" Category="" Description="Entity Namespace." %>
+<%@ Property Name="DALNameSpace" Optional="False" Type="System.String" Category="" Description="Data Namespace." %>
+<%@ Property Name="WebNameSpace" Optional="False" Type="System.String" Category="" Description="Web Namespace." %>
+<%@ Property Name="FactoryType" Type="System.String" Category="Data" Description="The Creational Factory used to create the entities." %>
+
+<%@ Property Name="ConnectionString" Optional="False" Type="System.String" Category="" Description="" %>
+
+<%@ Assembly Name="SchemaExplorer" %>
+<%@ Assembly Name="System.Design" %>
+<%@ Import Namespace="SchemaExplorer" %>
+<?xml version="1.0"?>
+<configuration>
+	<configSections>
+		<section name="<%= DALNameSpace %>" type="<%= DALNameSpace %>.Bases.NetTiersServiceSection, <%= DALNameSpace %>" allowDefinition="MachineToApplication" restartOnExternalChanges="true" />
+    	<section name="enterpriseLibrary.ConfigurationSource" type="Microsoft.Practices.EnterpriseLibrary.Common.Configuration.ConfigurationSourceSection, Microsoft.Practices.EnterpriseLibrary.Common, Version=2.0.0.0, Culture=neutral, PublicKeyToken=null" />
+	</configSections>
+	<appSettings/>
+	<connectionStrings>
+		<add name="<%= DALNameSpace %>.ConnectionString" connectionString="<%= ConnectionString %>" />
+	</connectionStrings>
+	<<%= DALNameSpace %> defaultProvider="SqlNetTiersProvider">
+		<providers>
+			<!--
+				*** SqlClient Provider ***
+					connectionStringName: sqlclient connection string to the db
+					useStoredProcedure: if true, indicates that we use the stored procedures, otherwise, we use parametrized queries that are embedded.
+			-->
+			<add 
+			  name="SqlNetTiersProvider" 
+			  type="<%= DALNameSpace %>.SqlClient.SqlNetTiersProvider, <%= DALNameSpace %>.SqlClient"
+			  connectionStringName="<%= DALNameSpace %>.ConnectionString"
+			  providerInvariantName="System.Data.SqlClient"
+			  entityFactoryType="<%= FactoryType %>"
+			  useEntityFactory="true"
+			  enableEntityTracking="true"
+			  enableMethodAuthorization="false"
+			  useStoredProcedure="false" />
+			<!-- 
+				*** WebserviceClient Provider ***
+				The url parameter indicates the webservices url (ex: http://localhost/<%= NameSpace %>/<%= NameSpace %>Services.aspx)
+				<add 
+					name="WsNetTiersProvider" 
+					type="<%= DALNameSpace %>.WebServiceClient.WsNetTiersProvider, <%= DALNameSpace %>.WebServiceClient"
+					url="/<%= NameSpace %>Services.asmx" />
+			-->
+		</providers>
+	</<%= DALNameSpace %>>
+	<system.web>
+		<pages>
+			<controls>
+				<add tagPrefix="data" namespace="<%= WebNameSpace %>.Data" assembly="<%= WebNameSpace %>"/>
+				<add tagPrefix="data" namespace="<%= WebNameSpace %>.UI" assembly="<%= WebNameSpace %>"/>
+			</controls>
+		</pages>
+		<httpModules>
+			<add name="EntityTransactionModule" type="<%= WebNameSpace %>.Data.EntityTransactionModule"/>
+		</httpModules>
+        <!-- 
+            Set compilation debug="true" to insert debugging 
+            symbols into the compiled page. Because this 
+            affects performance, set this value to true only 
+            during development.
+        -->
+        <compilation debug="true" />
+        <!--
+            The <authentication> section enables configuration 
+            of the security authentication mode used by 
+            ASP.NET to identify an incoming user. 
+        <authentication mode="Windows" />
+        -->
+        <!--
+            The <customErrors> section enables configuration 
+            of what to do if/when an unhandled error occurs 
+            during the execution of a request. Specifically, 
+            it enables developers to configure html error pages 
+            to be displayed in place of a error stack trace.
+
+        <customErrors mode="RemoteOnly" defaultRedirect="GenericErrorPage.htm">
+            <error statusCode="403" redirect="NoAccess.htm" />
+            <error statusCode="404" redirect="FileNotFound.htm" />
+        </customErrors>
+        -->
+    </system.web>
+	<enterpriseLibrary.ConfigurationSource selectedSource="File Configuration Source">
+	  <sources>
+		<add name="File Configuration Source" type="Microsoft.Practices.EnterpriseLibrary.Common.Configuration.FileConfigurationSource, Microsoft.Practices.EnterpriseLibrary.Common, Version=2.0.0.0, Culture=neutral, PublicKeyToken=null"
+			filePath="entlib.config" />
+	  </sources>
+    </enterpriseLibrary.ConfigurationSource>
+</configuration>
