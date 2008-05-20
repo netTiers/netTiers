@@ -1,10 +1,10 @@
-﻿<%--
+<%--
  * $Id: FormUtilBase.cst,v 1.0 2006/03/19 10:00:00 bdiaz Exp $
  * Last modified by $Author: bdiaz $
  * Last modified at $Date: 2006-03-19 10:00:00 -0600 (Sun, 19 Mar 2006) $
  * $Revision: 1 $
 --%>
-<%@ CodeTemplate Language="C#" TargetLanguage="C#" Src="" Inherits="" Debug="False" Description="Generates the FormUtilBase class." ResponseEncoding="UTF-8"  NoWarn="0108,0618,1572,1573,1574,0162,2002" %>
+<%@ CodeTemplate Language="C#" TargetLanguage="C#" Src="" Inherits="" Debug="False" Description="Generates the FormUtilBase class." %>
 
 <%@ Property Name="BLLNameSpace" Optional="False" Type="System.String" Category="Style" Description="BLL Namespace." %>
 <%@ Property Name="DALNameSpace" Optional="False" Type="System.String" Category="Style" Description="DAL Namespace." %>
@@ -25,9 +25,6 @@ using System.Web.UI;
 using System.Web.UI.WebControls;
 using System.Web.UI.WebControls.WebParts;
 using System.Web.UI.HtmlControls;
-using System.IO;
-using System.Text;
-using System.Xml.Serialization;
 using <%= BLLNameSpace %>;
 using <%= WebNameSpace %>.Data;
 #endregion
@@ -41,7 +38,7 @@ namespace <%= WebNameSpace %>.UI
 	public partial class FormUtilBase
 	{
 		private static readonly String ControlCacheKey = "ControlCache";
-		
+
 		#region Request Methods
 
 		#endregion
@@ -263,47 +260,6 @@ namespace <%= WebNameSpace %>.UI
 		}
 
 		/// <summary>
-        /// Redirects the client to a new URL after the ItemDeleted event of
-        /// the <see cref="FormView"/> object has been raised.
-        /// </summary>
-        /// <param name="formView">A <see cref="FormView"/> object.</param>
-        /// <param name="url">The target location.</param>
-        public static void RedirectAfterDelete(FormView formView, String url)
-        {
-            RedirectAfterDelete(formView, url, null);
-        }
-
-        /// <summary>
-        /// Redirects the client to a new URL after the ItemDeleted event of
-        /// the <see cref="FormView"/> object has been raised.
-        /// </summary>
-        /// <param name="formView">A <see cref="FormView"/> object.</param>
-        /// <param name="url">The target location.</param>
-        /// <param name="dataSource">The associated <see cref="ILinkedDataSource"/> object.</param>
-        public static void RedirectAfterDelete(FormView formView, String url, ILinkedDataSource dataSource)
-        {
-            formView.ItemDeleted += new FormViewDeletedEventHandler(
-                delegate(object sender, FormViewDeletedEventArgs e)
-                {
-                    Redirect(url, dataSource, e.Exception);
-                }
-            );
-        }
-
-        /// <summary>
-        /// Redirects the client to a new URL after the ItemDeleted event of
-        /// the <see cref="FormView"/> object has been raised.
-        /// </summary>
-        /// <param name="formView">A <see cref="FormView"/> object.</param>
-        /// <param name="gridView">A <see cref="GridView"/> object.</param>
-        /// <param name="url">The target location.</param>
-        public static void RedirectAfterDelete(FormView formView, GridView gridView, String url)
-        {
-            url = GetRedirectUrl(gridView, url);
-            RedirectAfterDelete(formView, url);
-        }
-		
-		/// <summary>
 		/// Redirects the client to a new URL after the ItemCommand event of
 		/// the <see cref="FormView"/> object has been raised with a CommandName
 		/// of "Cancel".
@@ -437,92 +393,7 @@ namespace <%= WebNameSpace %>.UI
 			RedirectAfterUpdate(formView, url, dataSource);
 			RedirectAfterCancel(formView, url, dataSource);
 		}
-		
-		/// <summary>
-      /// Sets the default value of the control with the specified id parameter when
-      /// the <see cref="FormView"/> is in Insert mode.
-      /// </summary>
-      /// <param name="formView">The form view.</param>
-      /// <param name="controlID">The control ID.</param>
-      /// <param name="value">The value.</param>
-      public static void SetDefaultValue(FormView formView, String controlID, String value)
-      {
-         if (formView != null && formView.CurrentMode == FormViewMode.Insert)
-         {
-            Control control = formView.FindControl(controlID);
 
-            if (control != null)
-            {
-               SetValue(control, value);
-            }
-         }
-      }
-      /// <summary>
-      /// Binds a property's value to a <see cref="FormView" /> child control when the <see cref="FormView"/> is updating.
-      /// </summary>
-      /// <param name="formView">A <see cref="FormView"/> object.</param>
-      /// <param name="propertyName">The name of the property to bind the value to.</param>
-      /// <param name="controlId">The id of child control that contains the desired value.</param>
-      public static void BindOnUpdating(FormView formView, string propertyName, string controlId)
-      {
-         if (formView != null)
-         {
-            formView.ItemUpdating += new FormViewUpdateEventHandler(
-            delegate(object sender, FormViewUpdateEventArgs e)
-            {
-               BindControl(formView, e.NewValues, propertyName, controlId);
-            }
-         );
-         }
-      }
-
-      /// <summary>
-      /// Binds a property's value to a <see cref="FormView" /> child control when the <see cref="FormView"/> is inserting.
-      /// </summary>
-      /// <param name="formView">A <see cref="FormView"/> object.</param>
-      /// <param name="propertyName">The name of the property to bind the value to.</param>
-      /// <param name="controlId">The id of child control that contains the desired value.</param>
-      public static void BindOnInserting(FormView formView, string propertyName, string controlId)
-      {
-         if (formView != null)
-         {
-            formView.ItemInserting += new FormViewInsertEventHandler(
-            delegate(object sender, FormViewInsertEventArgs e)
-            {
-               BindControl(formView, e.Values, propertyName, controlId);
-            }
-         );
-         }
-      }
-
-      /// <summary>
-      /// Binds a property's value to a <see cref="FormView" /> child control when the <see cref="FormView"/> is inserting or updating.
-      /// </summary>
-      /// <param name="formView">A <see cref="FormView"/> object.</param>
-      /// <param name="propertyName">The name of the property to bind the value to.</param>
-      /// <param name="controlId">The id of child control that contains the desired value.</param>
-      public static void BindOnInsertingUpdating(FormView formView, string propertyName, string controlId)
-      {
-         BindOnInserting(formView, propertyName, controlId);
-         BindOnUpdating(formView, propertyName, controlId);
-      }
-
-      /// <summary>
-      /// Binds a controls value to a property of an entity.
-      /// </summary>
-      /// <param name="formView">A <see cref="FormView"/> object.</param>
-      /// <param name="list">The <see cref="IOrderedDictionary"/> containing the values.</param>
-      /// <param name="propertyName">The name of the property to bind the value to.</param>
-      /// <param name="controlId">The id of the control to get the value from.</param>
-      public static void BindControl(FormView formView, IOrderedDictionary list, string propertyName, string controlId)
-      {
-         if (formView != null)
-         {
-            Control control = formView.FindControl(controlId);
-            BindControl(control, list, propertyName);
-         }
-      }
-		
 		#endregion
 
 		#region DetailsView Methods
@@ -1016,25 +887,6 @@ namespace <%= WebNameSpace %>.UI
 		#endregion
 
 		#region Control Methods
-		
-		/// <summary>
-      /// Binds a controls value to a property of an entity.
-      /// </summary>
-      /// <param name="control">The control to get the value from.</param>
-      /// <param name="list">The <see cref="IOrderedDictionary"/> containing the values.</param>
-      /// <param name="propertyName">The name of the property to bind the value to.</param>
-      public static void BindControl(Control control, IOrderedDictionary list, String propertyName)
-      {
-         if (control != null)
-         {
-            if (list.Contains(propertyName))
-            {
-               list.Remove(propertyName);
-            }
-
-            list.Add(propertyName, GetValue(control));
-         }
-      }
 
 		/// <summary>
 		/// Loads an instance of an IBindableTemplate from the specified path.
@@ -1106,7 +958,7 @@ namespace <%= WebNameSpace %>.UI
 		{
 			if ( parent != null && !String.IsNullOrEmpty(buttonId) )
 			{
-				Control btn = parent.FindControl(buttonId) as Control;
+				Button btn = parent.FindControl(buttonId) as Button;
 				if ( btn != null )
 				{
 					btn.Visible = false;
@@ -1289,26 +1141,14 @@ namespace <%= WebNameSpace %>.UI
 			{
 				CommaDelimitedStringCollection values = new CommaDelimitedStringCollection();
 				ListControl list = control as ListControl;
-				
-				ListItem firstItem = null;
+
 				foreach ( ListItem item in list.Items )
 				{
 					if ( item.Selected )
 					{
 						values.Add(item.Value);
 					}
-					
-					if (firstItem == null)
-               {
-                  firstItem = item;
-               }
 				}
-				
-            if (firstItem != null && list is DropDownList && values.Count == 0)
-            {
-               //DropDownList must have one item selected
-               values.Add(firstItem.Value);
-            }
 
 				value = values.ToString();
 			}
@@ -1464,271 +1304,5 @@ namespace <%= WebNameSpace %>.UI
 		}
 
 		#endregion
-		
-        #region Handles the GridViewSearchPanel State
-        /// <summary>
-        /// Handles the state of the GridViewSearchPanel
-        /// </summary>
-        /// <param name="searchPanel">The search panel.</param>
-        public static void HandleGridViewSearchPanelState( GridViewSearchPanel searchPanel )
-        {
-			HandleGridViewSearchPanelState( searchPanel, PersistenceMethod.Session );
-		}
-		
-		/// <summary>
-        /// Handles the state of the GridViewSearchPanel
-        /// </summary>
-        /// <param name="searchPanel">The search panel.</param>
-        /// <param name="persistentCookieExpiryDateTime">The date and time the persistent cookie expires.</param>
-        public static void HandleGridViewSearchPanelState( GridViewSearchPanel searchPanel, DateTime persistentCookieExpiryDateTime )
-        {
-			HandleGridViewSearchPanelState( searchPanel, null, PersistenceMethod.PersistentCookie, persistentCookieExpiryDateTime );
-		}
-		
-		/// <summary>
-        /// Handles the state of the GridViewSearchPanel
-        /// </summary>
-        /// <param name="searchPanel">The search panel.</param>
-        /// <param name="persistenceMethod">The persistence method.</param>
-        public static void HandleGridViewSearchPanelState( GridViewSearchPanel searchPanel, PersistenceMethod persistenceMethod )
-        {
-			HandleGridViewSearchPanelState( searchPanel, null, persistenceMethod, null );
-		}
-		
-        /// <summary>
-        /// Handles the state of the GridViewSearchPanel
-        /// </summary>
-        /// <param name="searchPanel">The search panel.</param>
-        /// <param name="gridView">The grid view.</param>
-        /// <param name="persistenceMethod">The persistence method</param>
-        /// <param name="persistentCookieExpiryDateTime">The date and time the persistent cookie expires</param>
-        public static void HandleGridViewSearchPanelState( GridViewSearchPanel searchPanel, GridView gridView, 
-															PersistenceMethod persistenceMethod, DateTime? persistentCookieExpiryDateTime )
-        {
-			if ( gridView == null )
-			{
-				// try and find the GridView control if it hasn't been explicitly supplied
-	            gridView = FindControl( searchPanel.NamingContainer, searchPanel.GridViewControlID ) as GridView;
-			}
-			
-            if ( gridView != null )
-            {
-                // restore any previously saved state
-                gridView.Page.Load += new EventHandler(
-                    delegate( object sender, EventArgs e )
-                    {
-                        if ( !gridView.Page.IsPostBack )
-                        {
-                            GridViewSearchPanelState controlState = GetGridViewSearchPanelState( GetUniqueGridViewName( gridView ), persistenceMethod );
-                            if ( controlState != null )
-                            {
-                                controlState.RestoreState( ref gridView, ref searchPanel );                                
-                            }
-                        }
-                    }
-                );
-
-                // save state on row command, and rebind searchPanel
-                gridView.RowCommand += new GridViewCommandEventHandler(
-                    delegate(object sender, GridViewCommandEventArgs e)
-                    {
-                        GridViewSearchPanelState controlState = new GridViewSearchPanelState(gridView, searchPanel);
-                        SaveGridViewSearchPanelState(controlState, GetUniqueGridViewName(gridView),
-                                                        persistenceMethod, persistentCookieExpiryDateTime);
-                        searchPanel.DataBind();
-                    }    
-                );
-
-                // save state when page index changes
-                gridView.PageIndexChanged += new EventHandler(
-                    delegate( object sender, EventArgs e )
-                    {
-                        GridViewSearchPanelState controlState = new GridViewSearchPanelState( gridView, searchPanel );
-                        SaveGridViewSearchPanelState( controlState, GetUniqueGridViewName( gridView ), 
-														persistenceMethod, persistentCookieExpiryDateTime );
-                    }
-                );
-
-                // save state when grid is sorted
-                gridView.Sorted += new EventHandler(
-                    delegate( object sender, EventArgs e )
-                    {
-                        GridViewSearchPanelState controlState = new GridViewSearchPanelState( gridView, searchPanel );
-                        SaveGridViewSearchPanelState( controlState, GetUniqueGridViewName( gridView ), 
-														persistenceMethod, persistentCookieExpiryDateTime );
-                        
-                    }
-                );
-
-                if (gridView is EntityGridView)
-                {
-                    // save state when grid's page size changed
-                    ((EntityGridView)gridView).PageSizeChanged += new EventHandler(
-                        delegate(object sender, EventArgs e)
-                        {
-                            GridViewSearchPanelState controlState = new GridViewSearchPanelState(gridView, searchPanel);
-                            SaveGridViewSearchPanelState(controlState, GetUniqueGridViewName(gridView),
-                                                            persistenceMethod, persistentCookieExpiryDateTime);
-                        }
-                    );
-                }
-                // save state when search id done
-                searchPanel.SearchButtonClicked += new EventHandler(
-                    delegate( object sender, EventArgs e )
-                    {
-                        GridViewSearchPanelState controlState = new GridViewSearchPanelState( gridView, searchPanel );
-                        SaveGridViewSearchPanelState( controlState, GetUniqueGridViewName( gridView ), 
-														persistenceMethod, persistentCookieExpiryDateTime );
-                    }
-                );
-
-                // save state when reset is done
-                searchPanel.ResetButtonClicked += new EventHandler(
-                    delegate( object sender, EventArgs e )
-                    {
-                        GridViewSearchPanelState controlState = new GridViewSearchPanelState( gridView, searchPanel );
-                        SaveGridViewSearchPanelState(controlState, GetUniqueGridViewName(gridView),
-                                persistenceMethod, persistentCookieExpiryDateTime);
-                    }
-                );
-            }
-        }
-
-        /// <summary>
-        /// Gets the unique name of the grid view.
-        /// </summary>
-        /// <param name="gridView">The grid view.</param>
-        /// <returns></returns>
-        private static string GetUniqueGridViewName( GridView gridView )
-        {
-            return gridView.Page.Request.Url.AbsoluteUri + gridView.UniqueID;
-        }
-
-        /// <summary>
-        /// Saves the GridViewSearchPanel State.
-        /// </summary>
-        /// <param name="controlState">State of the control.</param>
-        /// <param name="controlStateName">Name of the control state.</param>
-        /// <param name="persistenceMethod">The persistent method.</param>
-        /// <param name="persistentCookieExpiryDateTime">The persistent cookie expiry datetime.</param>
-        public static void SaveGridViewSearchPanelState( GridViewSearchPanelState controlState, string controlStateName, 
-															PersistenceMethod persistenceMethod, DateTime? persistentCookieExpiryDateTime )
-        {
-			switch ( persistenceMethod )
-			{
-				case PersistenceMethod.Session :
-					#region Uses Session state
-					HttpContext.Current.Session[ controlStateName ] = controlState;
-					#endregion
-					break;
-				case PersistenceMethod.Cookie :
-				case PersistenceMethod.PersistentCookie :
-					#region Uses a client cookie
-		            string serializedString = SerializeGridViewSearchPanelState( controlState );
-			        HttpCookie cookie = new HttpCookie( controlStateName, HttpContext.Current.Server.UrlEncode( serializedString ) );
-			        // Determine if this should be persisted longer than just the current session
-			        if ( persistentCookieExpiryDateTime != null )
-			        {
-						cookie.Expires = persistentCookieExpiryDateTime.Value;
-			        }
-					HttpContext.Current.Response.Cookies.Add( cookie );
-
-					#endregion
-					break;
-			}
-        }
-
-        /// <summary>
-        /// Gets the GridViewSearchPanel State from the cookie
-        /// </summary>
-        /// <param name="controlStateName">Name of the control state.</param>
-        /// <param name="persistenceMethod">The persistent method.</param>
-        /// <returns></returns>
-        public static GridViewSearchPanelState GetGridViewSearchPanelState( string controlStateName, PersistenceMethod persistenceMethod )
-        {
-			GridViewSearchPanelState controlState = null;
-			
-			switch ( persistenceMethod )
-			{
-				case PersistenceMethod.Session :
-					#region Uses Session state
-					if ( HttpContext.Current.Session[ controlStateName ] != null )
-					{ 
-						controlState = HttpContext.Current.Session[ controlStateName ] as GridViewSearchPanelState;
-					}
-					#endregion
-					break;
-					
-				case PersistenceMethod.Cookie :
-				case PersistenceMethod.PersistentCookie :
-					#region Uses a client session cookie
-					HttpCookie cookie = HttpContext.Current.Request.Cookies[ controlStateName ];
-
-					if ( cookie != null )
-					{
-						controlState = DeserializeGridViewSearchPanelState( HttpContext.Current.Server.UrlDecode( cookie.Value ) );
-					}
-					#endregion
-
-					break;
-			}
-			
-            return controlState;
-        }
-        
-		/// <summary>
-        /// Serializes the grid view search panel state.
-        /// </summary>
-        /// <param name="controlState">The control state.</param>
-        /// <returns></returns>
-        private static string SerializeGridViewSearchPanelState( GridViewSearchPanelState controlState)
-        {
-            string serializedString = string.Empty;
-
-            using ( StringWriter stringWriter = new StringWriter() )
-            {
-                XmlSerializer serializer = new XmlSerializer( typeof( GridViewSearchPanelState ) );
-                serializer.Serialize( stringWriter, controlState );
-                serializedString = stringWriter.ToString();
-            }
-
-            return serializedString;
-        }
-
-        /// <summary>
-        /// Deserializes the grid view search panel state.
-        /// </summary>
-        /// <param name="serializedString">The serialized string.</param>
-        /// <returns></returns>
-        private static GridViewSearchPanelState DeserializeGridViewSearchPanelState( string serializedString )
-        {
-            GridViewSearchPanelState controlState = null;
-            XmlSerializer serializer = new XmlSerializer( typeof( GridViewSearchPanelState ) );
-            controlState = (GridViewSearchPanelState)serializer.Deserialize( new StringReader( serializedString ) );
-
-            return controlState;
-        }
-        
-        #endregion
-
 	}
-	
-	#region Enums
-	/// <summary>
-	/// used to determine the persistence method
-	/// </summary>
-	public enum PersistenceMethod
-	{
-        /// <summary>
-        /// no persistents
-        /// </summary>
-        None = 0,
-		/// session state will be used
-		Session = 1,
-		/// client cookie will be used
-		Cookie = 2,
-		/// a persistent client cookie will be used
-		PersistentCookie = 3,
-	}
-	#endregion
 }

@@ -117,13 +117,13 @@ public class PetShopSiteMapProvider : StaticSiteMapProvider
     private SiteMapNode CreateSiteMapNodeFromCategory(Category category)
     {
         // Make sure the node ID is unique
-        if (_nodes.ContainsKey(category.Id.ToString()))
+        if (_nodes.ContainsKey(category.Id))
             throw new ProviderException(_errmsg2);
 
         // Get title, URL, description, and roles from the DataReader
-        string id = category.Id.ToString();
+        string id = category.Id;
         string title = category.Name;
-        string url = string.Format("~/Category.aspx?CategoryId={0}", category.Id.ToString());
+        string url = string.Format("~/Category.aspx?CategoryId={0}", category.Id);
         string description = category.Name;
         
         /* useless for us */
@@ -147,11 +147,11 @@ public class PetShopSiteMapProvider : StaticSiteMapProvider
 	private SiteMapNode CreateSiteMapNodeFromProduct(Product product)
     {
         // Make sure the node ID is unique
-        if (_nodes.ContainsKey(product.Id.ToString()))
+        if (_nodes.ContainsKey(product.Id))
             throw new ProviderException(_errmsg2);
 
         // Get title, URL, description, and roles from the DataReader
-        string id = product.Id.ToString();
+        string id = product.Id;
         string title = product.Name;
         string url = string.Format("~/Product.aspx?ProductId={0}", product.Id);
         string description = product.Name;
@@ -176,11 +176,11 @@ public class PetShopSiteMapProvider : StaticSiteMapProvider
 	private SiteMapNode CreateSiteMapNodeFromItem(netTiers.Petshop.Entities.Item item)
     {
         // Make sure the node ID is unique
-        if (_nodes.ContainsKey(item.Id.ToString()))
+        if (_nodes.ContainsKey(item.Id))
             throw new ProviderException(_errmsg2);
 
         // Get title, URL, description, and roles from the DataReader
-        string id = item.Id.ToString();
+        string id = item.Id;
         string title = item.Name;
         string url = string.Format("~/Item.aspx?ItemId={0}", item.Id);
         string description = item.Description;

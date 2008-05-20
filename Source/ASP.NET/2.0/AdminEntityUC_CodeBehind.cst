@@ -1,4 +1,4 @@
-﻿<%-- 
+<%-- 
 * $Id: AdminEntityUC_CodeBehind.cst,v 1.5 2006/01/04 20:14:17 bgjohnso Exp $
  * Last modified by $Author: jroland $
  * Last modified at $Date: 2006-03-16 16:53:08 -0600 (Thu, 16 Mar 2006) $
@@ -11,7 +11,7 @@
 	Remarks:
 		
 --%>
-<%@ CodeTemplate Src="..\..\TemplateLib\CommonSqlCode.cs" Inherits="MoM.Templates.CommonSqlCode" Language="C#" TargetLanguage="C#" Description="Generate a ASP.Net 2.0 user control for administration." Debug="True" ResponseEncoding="UTF-8" NoWarn="0108,0618,1572,1573,1574,0162,2002" %>
+<%@ CodeTemplate Src="..\..\TemplateLib\CommonSqlCode.cs" Inherits="MoM.Templates.CommonSqlCode" Language="C#" TargetLanguage="C#" Description="Generate a ASP.Net 2.0 user control for administration." Debug="True" %>
 <%@ Assembly Name="SchemaExplorer" %>
 <%@ Assembly Name="System.Design" %>
 <%@ Import Namespace="SchemaExplorer" %>
@@ -59,10 +59,10 @@
 			fKeysSingle.Add(tableKey);
 	}
 
-	string entityName = GetClassName(SourceTable);
-	string className = NameSpace + "." + GetClassName(SourceTable);
-	string collectionName = GetClassName(SourceTable, ClassNameFormat.Collection);
-	string providerName = GetClassName(SourceTable, ClassNameFormat.Provider);
+	string entityName = GetClassName(SourceTable.Name);
+	string className = NameSpace + "." + GetClassName(SourceTable.Name);
+	string collectionName = GetCollectionClassName(SourceTable.Name);
+	string providerName = GetProviderName(SourceTable.Name);
 %>
 #region Using directives
 using System;
@@ -205,7 +205,7 @@ public partial class <%=entityName%>UC : System.Web.UI.UserControl
 			
 			if ( (column.DataType == DbType.Date) || (column.DataType == DbType.DateTime) )
 			{
-				string propertyName = GetPropertyName(column);
+				string propertyName = GetPropertyName(column.Name);
 			%>
 		((ImageButton)fvEditor.FindControl("cal_data" + prefix + "<%=propertyName%>")).OnClientClick = String.Format("showCalendarControl(document.getElementById('{0}'));return false;", fvEditor.FindControl("data" + prefix + "<%=propertyName%>").ClientID);
 			<%
@@ -266,7 +266,7 @@ public partial class <%=entityName%>UC : System.Web.UI.UserControl
 					<%
 						if ( column.DataType == System.Data.DbType.DateTime)
 						{
-							string privateName = GetFieldName(column);
+							string privateName = GetPrivateName(column);
 						%>
 						DateTime <%=privateName%>;
 
@@ -335,7 +335,7 @@ public partial class <%=entityName%>UC : System.Web.UI.UserControl
 			<%
 			foreach(ColumnSchema column in cols)
 			{
-				string propertyName = GetPropertyName(column);
+				string propertyName = GetPropertyName(column.Name);
 			%>
 			<%
 				if ( column.AllowDBNull /*&& !IsCSReferenceDataType(column)*/ )
@@ -373,7 +373,7 @@ public partial class <%=entityName%>UC : System.Web.UI.UserControl
 					<%
 					foreach(ColumnSchema column in cols)
 					{
-						string propertyName = GetPropertyName(column);
+						string propertyName = GetPropertyName(column.Name);
 					%>
 					case "<%=propertyName%>":
 					<%
@@ -533,8 +533,8 @@ public partial class <%=entityName%>UC : System.Web.UI.UserControl
 					foreach( TableKeySchema tableKey in fkeys)
 					{
 						string pKeyTableName = tableKey.PrimaryKeyTable.Name;
-						string pKeyClassName = GetClassName(tableKey.PrimaryKeyTable);
-						string pKeyProviderName = GetClassName(tableKey.PrimaryKeyTable, ClassNameFormat.Provider);
+						string pKeyClassName = GetClassName(pKeyTableName);
+						string pKeyProviderName = GetProviderName(pKeyTableName);
 						string pKeyKeysNames = GetKeysName(tableKey.PrimaryKeyMemberColumns);
 						string fkPropertyName = GetKeysName(tableKey.ForeignKeyMemberColumns);
 						
@@ -551,7 +551,7 @@ public partial class <%=entityName%>UC : System.Web.UI.UserControl
 						
 							if ( keyParams != String.Empty ) keyParams += ", ";
 								
-							keyParams +="entity." + GetPropertyName(fColumn) + converter;
+							keyParams +="entity." + GetPropertyName(fColumn.Name) + converter;
 						}
 						
 					%>
@@ -679,7 +679,7 @@ public partial class <%=entityName%>UC : System.Web.UI.UserControl
 					{
 						
 					%>
-                SaveValues(fvEditor, "update", "data", "<%=GetPropertyName(column)%>");
+                SaveValues(fvEditor, "update", "data", "<%=GetPropertyName(column.Name)%>");
 					<%
 					}
 					%>
@@ -689,7 +689,7 @@ public partial class <%=entityName%>UC : System.Web.UI.UserControl
 						if ( ! column.IsPrimaryKeyMember )
 						{
 					%>
-                SaveValues(fvEditor, "update", "data", "<%=GetPropertyName(column)%>");
+                SaveValues(fvEditor, "update", "data", "<%=GetPropertyName(column.Name)%>");
 					<%
 						}
 					}
@@ -705,7 +705,7 @@ public partial class <%=entityName%>UC : System.Web.UI.UserControl
 					{
 						
 					%>
-                SaveValues(fvEditor, "insert", "dataInsert", "<%=GetPropertyName(column)%>");
+                SaveValues(fvEditor, "insert", "dataInsert", "<%=GetPropertyName(column.Name)%>");
 					<%
 					}
 					%>
@@ -813,7 +813,7 @@ public partial class <%=entityName%>UC : System.Web.UI.UserControl
 			foreach(TableKeySchema tableKey in fKeysSingle)
 			{
 				ColumnSchema column = tableKey.ForeignKeyMemberColumns[0];
-				string propertyName = GetPropertyName(column);	
+				string propertyName = GetPropertyName(column.Name);	
 			%>
 			case "<%=propertyName%>":
 				<%
@@ -878,10 +878,10 @@ public partial class <%=entityName%>UC : System.Web.UI.UserControl
 	//For each foreign key, create a datasource control for binding a list
 	foreach ( TableKeySchema tableKey in fKeysSingle)
 	{
-		string pKeyClassName = GetClassName(tableKey.PrimaryKeyTable);
+		string pKeyClassName = GetClassName(tableKey.PrimaryKeyTable.Name);
 		bool fKeyAllowDBNull = tableKey.ForeignKeyMemberColumns[0].AllowDBNull;
-		string fKeyPropertyName = GetPropertyName(tableKey.ForeignKeyMemberColumns[0]);
-		string pKeyCollectionName = GetClassName(tableKey.PrimaryKeyTable, ClassNameFormat.Collection);
+		string fKeyPropertyName = GetPropertyName(tableKey.ForeignKeyMemberColumns[0].Name);
+		string pKeyCollectionName = GetCollectionClassName(tableKey.PrimaryKeyTable.Name);
 	%>
 	#region objDs<%=fKeyPropertyName%> Methods
 	
@@ -903,7 +903,7 @@ public partial class <%=entityName%>UC : System.Web.UI.UserControl
 		foreach(ColumnSchema column in tableKey.PrimaryKeyMemberColumns)
 		{
 		%>
-		entity.<%=GetPropertyName(column)%> = <%=GetCSDefaultByType(column)%>;
+		entity.<%=GetPropertyName(column.Name)%> = <%=GetCSDefaultByType(column)%>;
 		<%
 		}
 		%>

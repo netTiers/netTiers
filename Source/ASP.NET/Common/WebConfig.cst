@@ -1,4 +1,4 @@
-﻿<%@ CodeTemplate Language="C#" TargetLanguage="XML" Src="..\..\TemplateLib\CommonSqlCode.cs" Inherits="MoM.Templates.CommonSqlCode" Description="" Debug="True" ResponseEncoding="UTF-8" NoWarn="0108,0618,1572,1573,1574,0162,2002"%>
+﻿<%@ CodeTemplate Language="C#" TargetLanguage="XML" Src="..\..\TemplateLib\CommonSqlCode.cs" Inherits="MoM.Templates.CommonSqlCode" Description="" Debug="True" ResponseEncoding="UTF-8" %>
 
 <%@ Property Name="NameSpace" Optional="False" Type="System.String" Category="" Description="Root Namespace." %>
 <%@ Property Name="BLLNameSpace" Optional="False" Type="System.String" Category="" Description="Entity Namespace." %>
@@ -7,29 +7,22 @@
 <%@ Property Name="FactoryType" Type="System.String" Category="Data" Description="The Creational Factory used to create the entities." %>
 
 <%@ Property Name="ConnectionString" Optional="False" Type="System.String" Category="" Description="" %>
-<%@ Property Name="NetTiersSqlProvider" Type="System.Boolean" Category="Data" Description="Indicates if we use the SqlClient Provider." %>
-<%@ Property Name="ProviderInvariantName" Type="System.String" Category="Data" Description="The DBProviderFactory name." %>
-<%@ Property Name="EntLibVersion" Type="MoM.Templates.EntLibVersion" Default="v2" Category="02. Framework Generation - Optional" Description="Indicates the Enterprise Library version to use. Options include v2, v3 and v3.1" %>
 
 <%@ Assembly Name="SchemaExplorer" %>
 <%@ Assembly Name="System.Design" %>
 <%@ Import Namespace="SchemaExplorer" %>
-<%
-string entlibVersionText = GetEntLibVersionSignature(EntLibVersion);
-%>
 <?xml version="1.0"?>
 <configuration>
 	<configSections>
 		<section name="<%= DALNameSpace %>" type="<%= DALNameSpace %>.Bases.NetTiersServiceSection, <%= DALNameSpace %>" allowDefinition="MachineToApplication" restartOnExternalChanges="true" />
-    	<section name="enterpriseLibrary.ConfigurationSource" type="Microsoft.Practices.EnterpriseLibrary.Common.Configuration.ConfigurationSourceSection, Microsoft.Practices.EnterpriseLibrary.Common, <%= entlibVersionText %>" />
+    	<section name="enterpriseLibrary.ConfigurationSource" type="Microsoft.Practices.EnterpriseLibrary.Common.Configuration.ConfigurationSourceSection, Microsoft.Practices.EnterpriseLibrary.Common, Version=2.0.0.0, Culture=neutral, PublicKeyToken=null" />
 	</configSections>
 	<appSettings/>
 	<connectionStrings>
 		<add name="<%= DALNameSpace %>.ConnectionString" connectionString="<%= ConnectionString %>" />
 	</connectionStrings>
-	<<%= DALNameSpace %> defaultProvider="<% if (NetTiersSqlProvider) {%>SqlNetTiersProvider<% } else {%>GenericNetTiersProvider<%}%>">
+	<<%= DALNameSpace %> defaultProvider="SqlNetTiersProvider">
 		<providers>
-		<% if (NetTiersSqlProvider) { %>
 			<!--
 				*** SqlClient Provider ***
 					connectionStringName: sqlclient connection string to the db
@@ -42,31 +35,11 @@ string entlibVersionText = GetEntLibVersionSignature(EntLibVersion);
 			  providerInvariantName="System.Data.SqlClient"
 			  entityFactoryType="<%= FactoryType %>"
 			  useEntityFactory="true"
-			  enableEntityTracking="true"
+			  enableEntityTracking="false"
 			  enableMethodAuthorization="false"
 			  useStoredProcedure="false"
 			  defaultCommandTimeout="30"
 			/>
-			<% } else { %>
-        <!--
-    *** GenericClient Provider ***
-    this is the generic DbProviderFactory .netTiers provider
-    	connectionStringName: the connection string to the db
-    	useStoredProcedure: if trueindicates that we use the stored procedures, otherwise, we use parametrized queries that are embedded.
-    	providerInvariantName: indicate the provider you want to use, for the moment only the following list is supported:
-    		- System.Data.SQLite
-    -->
-      <add 
-        name="GenericNetTiersProvider" 
-        type="<%=DALNameSpace%>.GenericClient.GenericNetTiersProvider, <%=DALNameSpace%>.GenericClient"
-        connectionStringName="<%= DALNameSpace %>.ConnectionString"
-        useStoredProcedure="false"
-        providerInvariantName="<%=ProviderInvariantName%>"
-		entityFactoryType="<%= FactoryType %>"
-		enableEntityTracking="true"
-		enableMethodAuthorization="false"
-        />
-    <% } %>  
 			<!-- 
 				*** WebserviceClient Provider ***
 				The url parameter indicates the webservices url (ex: http://localhost/<%= NameSpace %>/<%= NameSpace %>Services.aspx)
@@ -78,7 +51,7 @@ string entlibVersionText = GetEntLibVersionSignature(EntLibVersion);
 		</providers>
 	</<%= DALNameSpace %>>
 	<system.web>
-		<pages styleSheetTheme="default" theme="default">
+		<pages>
 			<controls>
 				<add tagPrefix="data" namespace="<%= WebNameSpace %>.Data" assembly="<%= WebNameSpace %>"/>
 				<add tagPrefix="data" namespace="<%= WebNameSpace %>.UI" assembly="<%= WebNameSpace %>"/>
@@ -115,7 +88,7 @@ string entlibVersionText = GetEntLibVersionSignature(EntLibVersion);
     </system.web>
 	<enterpriseLibrary.ConfigurationSource selectedSource="File Configuration Source">
 	  <sources>
-		<add name="File Configuration Source" type="Microsoft.Practices.EnterpriseLibrary.Common.Configuration.FileConfigurationSource, Microsoft.Practices.EnterpriseLibrary.Common, <%=entlibVersionText%>"
+		<add name="File Configuration Source" type="Microsoft.Practices.EnterpriseLibrary.Common.Configuration.FileConfigurationSource, Microsoft.Practices.EnterpriseLibrary.Common, Version=2.0.0.0, Culture=neutral, PublicKeyToken=null"
 			filePath="entlib.config" />
 	  </sources>
     </enterpriseLibrary.ConfigurationSource>

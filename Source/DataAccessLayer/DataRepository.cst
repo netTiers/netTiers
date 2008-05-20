@@ -1,4 +1,4 @@
-﻿<%@ CodeTemplate Src="..\TemplateLib\CommonSqlCode.cs" Inherits="MoM.Templates.CommonSqlCode" Language="C#" TargetLanguage="C#" Description="Template description here." Debug="True" ResponseEncoding="UTF-8" NoWarn="0108,0618,1572,1573,1574,0162,2002"%>
+<%@ CodeTemplate Src="..\TemplateLib\CommonSqlCode.cs" Inherits="MoM.Templates.CommonSqlCode" Language="C#" TargetLanguage="C#" Description="Template description here." Debug="False"%>
 <%@ Assembly Name="SchemaExplorer" %>
 <%@ Assembly Name="System.Design" %>
 <%@ Import Namespace="SchemaExplorer" %>
@@ -8,7 +8,6 @@
 <%@ Property Name="SourceTables" Type="SchemaExplorer.TableSchemaCollection" Category="Connection" Description="Tables of the system." %>
 <%@ Property Name="SourceViews" Type="SchemaExplorer.ViewSchemaCollection" Category="Connection" Description="Tables of the system." %>
 <%@ Property Name="IncludeDesignTimeSupport" Type="System.Boolean" Default="true" Category="05. WebLibrary - Advanced" Description="Indicates if Visual Studio design-time support should be provided for the Web Library controls." %>
-<%@ Property Name="VisualStudioVersion" Type="MoM.Templates.VSNetVersion" Default="v2005" Category="02. Framework Generation - Optional" Description="Indicates the Version of Visual Studio to target. Options include v2005 and v2008" %>
 #region Using directives
 
 using System;
@@ -239,8 +238,7 @@ namespace <%=DALNameSpace%>
 			String path = null;
 
 			// Get an instance of the currently running Visual Studio IDE.
-			EnvDTE80.DTE2 dte = <%=String.Format("(EnvDTE80.DTE2) System.Runtime.InteropServices.Marshal.GetActiveObject(\"VisualStudio.DTE.{0}\");", GetMSBuildExtensionsVersionString(VisualStudioVersion))%>
-			
+			EnvDTE80.DTE2 dte = (EnvDTE80.DTE2) System.Runtime.InteropServices.Marshal.GetActiveObject("VisualStudio.DTE.8.0");
 			if ( dte != null )
 			{
 				dte.SuppressUI = true;
@@ -248,18 +246,11 @@ namespace <%=DALNameSpace%>
 				EnvDTE.ProjectItem item = dte.Solution.FindProjectItem("web.config");
 				if ( item != null )
 				{
-					if (!item.ContainingProject.FullName.ToLower().StartsWith("http:"))
-               {
-                  System.IO.FileInfo info = new System.IO.FileInfo(item.ContainingProject.FullName);
-                  path = String.Format("{0}\\{1}", info.Directory.FullName, item.Name);
-                  configMap = new ExeConfigurationFileMap();
-                  configMap.ExeConfigFilename = path;
-               }
-               else
-               {
-                  configMap = new ExeConfigurationFileMap();
-                  configMap.ExeConfigFilename = item.get_FileNames(0);
-               }}
+					System.IO.FileInfo info = new System.IO.FileInfo(item.ContainingProject.FullName);
+					path = String.Format("{0}\\{1}", info.Directory.FullName, item.Name);
+					configMap = new ExeConfigurationFileMap();
+					configMap.ExeConfigFilename = path;
+				}
 
 				/*
 				Array projects = (Array) dte2.ActiveSolutionProjects;
@@ -446,18 +437,21 @@ namespace <%=DALNameSpace%>
 		#endregion Connections
 
 		#region Static properties
+		
 		<% foreach(TableSchema SourceTable in SourceTables) { 
-			string className = GetClassName(SourceTable);
-			string providerName = GetClassName(SourceTable, ClassNameFormat.Provider);
-			string providerBaseName = GetClassName(SourceTable, ClassNameFormat.ProviderBase);%>
+			string className = GetClassName(SourceTable.Name);
+			string providerName = GetProviderName(SourceTable.Name);
+			string providerBaseName = GetProviderBaseName(SourceTable.Name);
+		%>
+		
 		
 		#region <%=providerName%>
-
+		
 		///<summary>
 		/// Gets the current instance of the Data Access Logic Component for the <see cref="<%=className%>"/> business entity.
 		/// It exposes CRUD methods as well as selecting on index, foreign keys and custom stored procedures.
 		///</summary>
-		public static <%=providerBaseName%> <%=providerName%>
+		public /*new*/ static <%=providerBaseName%> <%=providerName%>
 		{
 			get 
 			{
@@ -467,12 +461,15 @@ namespace <%=DALNameSpace%>
 		}
 		
 		#endregion
+		
 		<%}%>
 		
 		<% foreach(ViewSchema SourceView in SourceViews) { 
-			string className = GetClassName(SourceView);
-			string providerName = GetClassName(SourceView, ClassNameFormat.Provider);
-			string providerBaseName = GetClassName(SourceView, ClassNameFormat.ProviderBase);%>			
+			string className = GetClassName(SourceView.Name);
+			string providerName = GetProviderName(SourceView.Name);
+			string providerBaseName = GetProviderBaseName(SourceView.Name);
+		%>			
+		
 		
 		#region <%=providerName%>
 		
@@ -480,7 +477,7 @@ namespace <%=DALNameSpace%>
 		/// Gets the current instance of the Data Access Logic Component for the <see cref="<%=className%>"/> business entity.
 		/// It exposes CRUD methods as well as selecting on index, foreign keys and custom stored procedures.
 		///</summary>
-		public static <%=providerBaseName%> <%=providerName%>
+		public /*new*/ static <%=providerBaseName%> <%=providerName%>
 		{
 			get 
 			{
@@ -493,94 +490,6 @@ namespace <%=DALNameSpace%>
 		<%}%>
 		
 		#endregion
-	}
-	
-	#region Query/Filters
-	<% 
-	System.Collections.Generic.List<SchemaObjectBase> tablesAndViews = new System.Collections.Generic.List<SchemaObjectBase>();
-	tablesAndViews.AddRange(SourceTables.ToArray());
-	tablesAndViews.AddRange(SourceViews.ToArray());
-	
-	foreach(SchemaObjectBase entity in tablesAndViews) 
-	{ 
-		string entityClassName = "";
 		
-		if (entity is TableSchema)
-		 entityClassName = GetClassName((TableSchema)entity);
-		else if (entity is ViewSchema)
-		 entityClassName = GetClassName((ViewSchema)entity);
-		
-	%>
-		
-	#region <%= entityClassName %>Filters
-	
-	/// <summary>
-	/// A strongly-typed instance of the <see cref="SqlFilterBuilder&lt;EntityColumn&gt;"/> class
-	/// that is used exclusively with a <see cref="<%= entityClassName %>"/> object.
-	/// </summary>
-	[CLSCompliant(true)]
-	public class <%= entityClassName %>Filters : <%= entityClassName %>FilterBuilder
-	{
-		#region Constructors
-
-		/// <summary>
-		/// Initializes a new instance of the <%= entityClassName %>Filters class.
-		/// </summary>
-		public <%= entityClassName %>Filters() : base() { }
-
-		/// <summary>
-		/// Initializes a new instance of the <%= entityClassName %>Filters class.
-		/// </summary>
-		/// <param name="ignoreCase">Specifies whether to create case-insensitive statements.</param>
-		public <%= entityClassName %>Filters(bool ignoreCase) : base(ignoreCase) { }
-
-		/// <summary>
-		/// Initializes a new instance of the <%= entityClassName %>Filters class.
-		/// </summary>
-		/// <param name="ignoreCase">Specifies whether to create case-insensitive statements.</param>
-		/// <param name="useAnd">Specifies whether to combine statements using AND or OR.</param>
-		public <%= entityClassName %>Filters(bool ignoreCase, bool useAnd) : base(ignoreCase, useAnd) { }
-
-		#endregion Constructors
 	}
-
-	#endregion <%= entityClassName %>Filters
-	
-	#region <%= entityClassName %>Query
-	
-	/// <summary>
-	/// A strongly-typed instance of the <see cref="<%= entityClassName %>ParameterBuilder"/> class
-	/// that is used exclusively with a <see cref="<%= entityClassName %>"/> object.
-	/// </summary>
-	[CLSCompliant(true)]
-	public class <%= entityClassName %>Query : <%= entityClassName %>ParameterBuilder
-	{
-		#region Constructors
-
-		/// <summary>
-		/// Initializes a new instance of the <%= entityClassName %>Query class.
-		/// </summary>
-		public <%= entityClassName %>Query() : base() { }
-
-		/// <summary>
-		/// Initializes a new instance of the <%= entityClassName %>Query class.
-		/// </summary>
-		/// <param name="ignoreCase">Specifies whether to create case-insensitive statements.</param>
-		public <%= entityClassName %>Query(bool ignoreCase) : base(ignoreCase) { }
-
-		/// <summary>
-		/// Initializes a new instance of the <%= entityClassName %>Query class.
-		/// </summary>
-		/// <param name="ignoreCase">Specifies whether to create case-insensitive statements.</param>
-		/// <param name="useAnd">Specifies whether to combine statements using AND or OR.</param>
-		public <%= entityClassName %>Query(bool ignoreCase, bool useAnd) : base(ignoreCase, useAnd) { }
-
-		#endregion Constructors
-	}
-
-	#endregion <%= entityClassName %>Query
-	<%}%>
-	#endregion
-
-	
 }

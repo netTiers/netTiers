@@ -1,4 +1,4 @@
-﻿<%@ CodeTemplate Language="C#" TargetLanguage="C#" Src="..\TemplateLib\CommonSqlCode.cs" Inherits="MoM.Templates.CommonSqlCode" Debug="False" Description="Generates the IEntityProvider type." ResponseEncoding="UTF-8"  NoWarn="0108,0618,1572,1573,1574,0162,2002"%>
+<%@ CodeTemplate Language="C#" TargetLanguage="C#" Src="..\TemplateLib\CommonSqlCode.cs" Inherits="MoM.Templates.CommonSqlCode" Debug="False" Description="Generates the IEntityProvider type." %>
 <%@ Property Name="BLLNameSpace" Optional="False" Type="System.String" Category="Style" Description="Object Namespace." %>
 <%@ Property Name="DALNameSpace" Optional="False" Type="System.String" Category="Style" Description="DAL Namespace." %>
 
@@ -18,11 +18,7 @@
 <%@ Assembly Name="SchemaExplorer" %>
 <%@ Assembly Name="System.Design" %>
 <%
-	bool IncludeDeepLoad = (IncludeRelations && IncludeGetListByFK);
-	bool IncludeDeepSave = (IncludeDeepLoad && IncludeSave);
-	
 	bool HasComponentLayer = (IncludeComponentLayer != MoM.Templates.ComponentPatternType.None);
-	string listName = GetTListName();
 %>
 #region Using directives
 using System;
@@ -64,8 +60,8 @@ namespace <%= DALNameSpace %>
 		<% if (!HasComponentLayer) { %>
 		/// <param name="mgr">A <see cref="TransactionManager"/> object.</param>
 		<% } %>
-		/// <returns>Returns a <%=listName%> of Entity objects.</returns>
-		<%=listName%><Entity> <%= MethodNames.GetAll %>(<% if(!HasComponentLayer){ %>TransactionManager mgr<% } %>);
+		/// <returns>Returns a TList of Entity objects.</returns>
+		TList<Entity> <%= MethodNames.GetAll %>(<% if(!HasComponentLayer){ %>TransactionManager mgr<% } %>);
 
 		/// <summary>
 		/// Gets a page of rows from the DataSource.
@@ -78,8 +74,8 @@ namespace <%= DALNameSpace %>
 		/// <param name="start">Row number at which to start reading.</param>
 		/// <param name="pageLength">Number of rows to return.</param>
 		/// <param name="count">Number of rows in the DataSource.</param>
-		/// <returns>Returns a <%=listName%> of Entity objects.</returns>
-		<%=listName%><Entity> <%= MethodNames.GetPaged %>(<% if(!HasComponentLayer){ %>TransactionManager mgr, <% } %>String whereClause, String orderBy, int start, int pageLength, out int count);
+		/// <returns>Returns a TList of Entity objects.</returns>
+		TList<Entity> <%= MethodNames.GetPaged %>(<% if(!HasComponentLayer){ %>TransactionManager mgr, <% } %>String whereClause, String orderBy, int start, int pageLength, out int count);
 
 		<% } // end if ( IncludeGetList ) %>
 		<% if ( IncludeInsert ) { %>
@@ -118,28 +114,6 @@ namespace <%= DALNameSpace %>
 		bool <%= MethodNames.Delete %>(<% if(!HasComponentLayer){ %>TransactionManager mgr, <% } %>Entity entity);
 
 		<% } // end if ( IncludeDelete ) %>
-		<% if ( IncludeSave ) { %>
-		/// <summary>
-		/// Saves row changes in the DataSource (insert, update ,delete).
-		/// </summary>
-		<% if (!HasComponentLayer) { %>
-		/// <param name="mgr">A <see cref="TransactionManager"/> object.</param>
-		<% } %>
-		/// <param name="entity">The Entity object to save.</param>
-		Entity <%= MethodNames.Save %>(<% if(!HasComponentLayer){ %>TransactionManager mgr, <% } %>Entity entity);
-
-		<% } // end if ( IncludeSave ) { %>
-		<% if ( IncludeDeepSave ) { %>
-		/// <summary>
-		/// Deep Save the Entity object with all of the child property collections only 1 level deep.
-		/// </summary>
-		<% if (!HasComponentLayer) { %>
-		/// <param name="mgr">A <see cref="TransactionManager"/> object.</param>
-		<% } %>
-		/// <param name="entity">The Entity object to save.</param>
-		bool <%= MethodNames.DeepSave %>(<% if(!HasComponentLayer){ %>TransactionManager mgr, <% } %>Entity entity);
-		
-		<% } // end if ( IncludeDeepSave ) { %>
 		#region Full Implementation
 		/*
 		#region Get Methods
@@ -185,42 +159,23 @@ namespace <%= DALNameSpace %>
 		/// <summary>
 		/// Gets all rows from the DataSource.
 		/// </summary>
-		/// <returns>Returns a <%=listName%> of Entity objects.</returns>
-		<%=listName%><Entity> GetAll();
+		/// <returns>Returns a TList of Entity objects.</returns>
+		TList<Entity> GetAll();
 
 		/// <summary>
 		/// Gets all rows from the DataSource.
 		/// </summary>
 		/// <param name="mgr">A <see cref="TransactionManager"/> object.</param>
-		/// <returns>Returns a <%=listName%> of Entity objects.</returns>
-		<%=listName%><Entity> GetAll(TransactionManager mgr);
+		/// <returns>Returns a TList of Entity objects.</returns>
+		TList<Entity> GetAll(TransactionManager mgr);
 
 		/// <summary>
 		/// Gets all rows from the DataSource.
 		/// </summary>
 		/// <param name="start">Row number at which to start reading.</param>
 		/// <param name="pageLength">Number of rows to return.</param>
-		/// <returns>Returns a <%=listName%> of Entity objects.</returns>
-		<%=listName%><Entity> GetAll(int start, int pageLength);
-
-		/// <summary>
-		/// Gets all rows from the DataSource.
-		/// </summary>
-		/// <param name="mgr">A <see cref="TransactionManager"/> object.</param>
-		/// <param name="start">Row number at which to start reading.</param>
-		/// <param name="pageLength">Number of rows to return.</param>
-		/// <param name="count">out. The number of rows that match this query.</param>
-		/// <returns>Returns a <%=listName%> of Entity objects.</returns>
-		<%=listName%><Entity> GetAll(TransactionManager mgr, int start, int pageLength);
-
-		/// <summary>
-		/// Gets all rows from the DataSource.
-		/// </summary>
-		/// <param name="start">Row number at which to start reading.</param>
-		/// <param name="pageLength">Number of rows to return.</param>
-		/// <param name="count">out. The number of rows that match this query.</param>
-		/// <returns>Returns a <%=listName%> of Entity objects.</returns>
-		<%=listName%><Entity> GetAll(int start, int pageLength, out int count);
+		/// <returns>Returns a TList of Entity objects.</returns>
+		TList<Entity> GetAll(int start, int pageLength);
 
 		/// <summary>
 		/// Gets all rows from the DataSource.
@@ -229,8 +184,27 @@ namespace <%= DALNameSpace %>
 		/// <param name="start">Row number at which to start reading.</param>
 		/// <param name="pageLength">Number of rows to return.</param>
 		/// <param name="count">out. The number of rows that match this query.</param>
-		/// <returns>Returns a <%=listName%> of Entity objects.</returns>
-		<%=listName%><Entity> GetAll(TransactionManager mgr, int start, int pageLength, out int count);
+		/// <returns>Returns a TList of Entity objects.</returns>
+		TList<Entity> GetAll(TransactionManager mgr, int start, int pageLength);
+
+		/// <summary>
+		/// Gets all rows from the DataSource.
+		/// </summary>
+		/// <param name="start">Row number at which to start reading.</param>
+		/// <param name="pageLength">Number of rows to return.</param>
+		/// <param name="count">out. The number of rows that match this query.</param>
+		/// <returns>Returns a TList of Entity objects.</returns>
+		TList<Entity> GetAll(int start, int pageLength, out int count);
+
+		/// <summary>
+		/// Gets all rows from the DataSource.
+		/// </summary>
+		/// <param name="mgr">A <see cref="TransactionManager"/> object.</param>
+		/// <param name="start">Row number at which to start reading.</param>
+		/// <param name="pageLength">Number of rows to return.</param>
+		/// <param name="count">out. The number of rows that match this query.</param>
+		/// <returns>Returns a TList of Entity objects.</returns>
+		TList<Entity> GetAll(TransactionManager mgr, int start, int pageLength, out int count);
 
 		#endregion
 
@@ -240,16 +214,16 @@ namespace <%= DALNameSpace %>
 		/// Gets a page of rows from the DataSource.
 		/// </summary>
 		/// <param name="count">Number of rows in the DataSource.</param>
-		/// <returns>Returns a <%=listName%> of Entity objects.</returns>
-		<%=listName%><Entity> GetPaged(out int count);
+		/// <returns>Returns a TList of Entity objects.</returns>
+		TList<Entity> GetPaged(out int count);
 
 		/// <summary>
 		/// Gets a page of rows from the DataSource.
 		/// </summary>
 		/// <param name="mgr">A <see cref="TransactionManager"/> object.</param>
 		/// <param name="count">Number of rows in the DataSource.</param>
-		/// <returns>Returns a <%=listName%> of Entity objects.</returns>
-		<%=listName%><Entity> GetPaged(TransactionManager mgr, out int count);
+		/// <returns>Returns a TList of Entity objects.</returns>
+		TList<Entity> GetPaged(TransactionManager mgr, out int count);
 
 		/// <summary>
 		/// Gets a page of rows from the DataSource.
@@ -257,8 +231,8 @@ namespace <%= DALNameSpace %>
 		/// <param name="start">Row number at which to start reading.</param>
 		/// <param name="pageLength">Number of rows to return.</param>
 		/// <param name="count">Number of rows in the DataSource.</param>
-		/// <returns>Returns a <%=listName%> of Entity objects.</returns>
-		<%=listName%><Entity> GetPaged(int start, int pageLength, out int count);
+		/// <returns>Returns a TList of Entity objects.</returns>
+		TList<Entity> GetPaged(int start, int pageLength, out int count);
 
 		/// <summary>
 		/// Gets a page of rows from the DataSource.
@@ -267,8 +241,8 @@ namespace <%= DALNameSpace %>
 		/// <param name="start">Row number at which to start reading.</param>
 		/// <param name="pageLength">Number of rows to return.</param>
 		/// <param name="count">Number of rows in the DataSource.</param>
-		/// <returns>Returns a <%=listName%> of Entity objects.</returns>
-		<%=listName%><Entity> GetPaged(TransactionManager mgr, int start, int pageLength, out int count);
+		/// <returns>Returns a TList of Entity objects.</returns>
+		TList<Entity> GetPaged(TransactionManager mgr, int start, int pageLength, out int count);
 
 		/// <summary>
 		/// Gets a page of rows from the DataSource.
@@ -278,8 +252,8 @@ namespace <%= DALNameSpace %>
 		/// <param name="start">Row number at which to start reading.</param>
 		/// <param name="pageLength">Number of rows to return.</param>
 		/// <param name="count">Number of rows in the DataSource.</param>
-		/// <returns>Returns a <%=listName%> of Entity objects.</returns>
-		<%=listName%><Entity> GetPaged(String whereClause, String orderBy, int start, int pageLength, out int count);
+		/// <returns>Returns a TList of Entity objects.</returns>
+		TList<Entity> GetPaged(String whereClause, String orderBy, int start, int pageLength, out int count);
 
 		/// <summary>
 		/// Gets a page of rows from the DataSource.
@@ -290,8 +264,8 @@ namespace <%= DALNameSpace %>
 		/// <param name="start">Row number at which to start reading.</param>
 		/// <param name="pageLength">Number of rows to return.</param>
 		/// <param name="count">Number of rows in the DataSource.</param>
-		/// <returns>Returns a <%=listName%> of Entity objects.</returns>
-		<%=listName%><Entity> GetPaged(TransactionManager mgr, String whereClause, String orderBy, int start, int pageLength, out int count);
+		/// <returns>Returns a TList of Entity objects.</returns>
+		TList<Entity> GetPaged(TransactionManager mgr, String whereClause, String orderBy, int start, int pageLength, out int count);
 
 		/// <summary>
 		/// Gets the number of rows in the DataSource that match the specified whereClause.
@@ -332,30 +306,30 @@ namespace <%= DALNameSpace %>
 		/// <summary>
 		/// Inserts rows into the DataSource.
 		/// </summary>
-		/// <param name="entities"><%=listName%> of Entity objects to insert.</param>
+		/// <param name="entities">TList of Entity objects to insert.</param>
 		/// <returns>Returns the number of rows successfully inserted.</returns>
-		int Insert(<%=listName%><Entity> entities);
+		int Insert(TList<Entity> entities);
 
 		/// <summary>
 		/// Inserts rows into the DataSource.
 		/// </summary>
 		/// <param name="mgr">A <see cref="TransactionManager"/> object.</param>
-		/// <param name="entities"><%=listName%> of Entity objects to insert.</param>
+		/// <param name="entities">TList of Entity objects to insert.</param>
 		/// <returns>Returns the number of rows successfully inserted.</returns>
-		int Insert(TransactionManager mgr, <%=listName%><Entity> entities);
+		int Insert(TransactionManager mgr, TList<Entity> entities);
 
 		/// <summary>
 		/// Efficiently inserts multiple rows into the DataSource.
 		/// </summary>
-		/// <param name="entities"><%=listName%> of Entity objects to insert.</param>
-		void BulkInsert(<%=listName%><Entity> entities);
+		/// <param name="entities">TList of Entity objects to insert.</param>
+		void BulkInsert(TList<Entity> entities);
 
 		/// <summary>
 		/// Efficiently inserts multiple rows into the DataSource.
 		/// </summary>
 		/// <param name="mgr">A <see cref="TransactionManager"/> object.</param>
-		/// <param name="entities"><%=listName%> of Entity objects to insert.</param>
-		void BulkInsert(TransactionManager mgr, <%=listName%><Entity> entities);
+		/// <param name="entities">TList of Entity objects to insert.</param>
+		void BulkInsert(TransactionManager mgr, TList<Entity> entities);
 
 		#endregion
 
@@ -379,17 +353,17 @@ namespace <%= DALNameSpace %>
 		/// <summary>
 		/// Updates existing rows in the DataSource.
 		/// </summary>
-		/// <param name="entities"><%=listName%> of Entity objects to update.</param>
+		/// <param name="entities">TList of Entity objects to update.</param>
 		/// <returns>Returns the number of rows successfully updated.</returns>
-		int Update(<%=listName%><Entity> entities);
+		int Update(TList<Entity> entities);
 
 		/// <summary>
 		/// Updates existing rows in the DataSource.
 		/// </summary>
 		/// <param name="mgr">A <see cref="TransactionManager"/> object.</param>
-		/// <param name="entities"><%=listName%> of Entity objects to update.</param>
+		/// <param name="entities">TList of Entity objects to update.</param>
 		/// <returns>Returns the number of rows successfully updated.</returns>
-		int Update(TransactionManager mgr, <%=listName%><Entity> entities);
+		int Update(TransactionManager mgr, TList<Entity> entities);
 
 		#endregion
 
@@ -411,15 +385,15 @@ namespace <%= DALNameSpace %>
 		/// <summary>
 		/// Saves row changes in the DataSource (insert, update ,delete).
 		/// </summary>
-		/// <param name="entities"><%=listName%> of Entity objects to save.</param>
-		void Save(<%=listName%><Entity> entities);
+		/// <param name="entities">TList of Entity objects to save.</param>
+		void Save(TList<Entity> entities);
 
 		/// <summary>
 		/// Saves row changes in the DataSource (insert, update ,delete).
 		/// </summary>
 		/// <param name="mgr">A <see cref="TransactionManager"/> object.</param>
-		/// <param name="entities"><%=listName%> of Entity objects to save.</param>
-		void Save(TransactionManager mgr, <%=listName%><Entity> entities);
+		/// <param name="entities">TList of Entity objects to save.</param>
+		void Save(TransactionManager mgr, TList<Entity> entities);
 
 		#endregion
 
@@ -458,17 +432,17 @@ namespace <%= DALNameSpace %>
 		/// <summary>
 		/// Deletes rows from the DataSource.
 		/// </summary>
-		/// <param name="entities"><%=listName%> of Entity objects to delete.</param>
+		/// <param name="entities">TList of Entity objects to delete.</param>
 		/// <returns>Returns the number of rows successfully deleted.</returns>
-		int Delete(<%=listName%><Entity> entities);
+		int Delete(TList<Entity> entities);
 
 		/// <summary>
 		/// Deletes rows from the DataSource.
 		/// </summary>
 		/// <param name="mgr">A <see cref="TransactionManager"/> object.</param>
-		/// <param name="entities"><%=listName%> of Entity objects to delete.</param>
+		/// <param name="entities">TList of Entity objects to delete.</param>
 		/// <returns>Returns the number of rows successfully deleted.</returns>
-		int Delete(TransactionManager mgr, <%=listName%><Entity> entities);
+		int Delete(TransactionManager mgr, TList<Entity> entities);
 
 		#endregion
 
@@ -502,15 +476,15 @@ namespace <%= DALNameSpace %>
 		/// <summary>
 		/// Deep Load the Entity objects with all of the child property collections only 1 level deep.
 		/// </summary>
-		/// <param name="entities"><%=listName%> of Entity objects to load.</param>
-		void DeepLoad(<%=listName%><Entity> entities);
+		/// <param name="entities">TList of Entity objects to load.</param>
+		void DeepLoad(TList<Entity> entities);
 
 		/// <summary>
 		/// Deep Load the Entity objects with all of the child property collections N levels deep.
 		/// </summary>
-		/// <param name="entities"><%=listName%> of Entity objects to load.</param>
+		/// <param name="entities">TList of Entity objects to load.</param>
 		/// <param name="deep">A flag that indicates whether to recursively load all Property Collections that are descendants of this instance. If True, loads the complete object graph below this object. If False, loads this object only.</param>
-		void DeepLoad(<%=listName%><Entity> entities, bool deep);
+		void DeepLoad(TList<Entity> entities, bool deep);
 
 		/// <summary>
 		/// Deep Load the Entity objects with criteria based on the child types array and the DeepLoadType.
@@ -518,11 +492,11 @@ namespace <%= DALNameSpace %>
 		/// <remarks>
 		/// Use this method with caution as it is possible to DeepLoad with recursion and traverse an entire collection's object graph.
 		/// </remarks>
-		/// <param name="entities"><%=listName%> of Entity objects to load.</param>
+		/// <param name="entities">TList of Entity objects to load.</param>
 		/// <param name="deep">A flag that indicates whether to recursively load all Property Collections that are descendants of this instance. If True, loads the complete object graph below this object. If False, loads this object only.</param>
 		/// <param name="deepLoadType">DeepLoadType Enumeration to Include/Exclude object property collections from Load.</param>
 		/// <param name="childTypes">Entity Property Collection Type Array To Include or Exclude from Load.</param>
-		void DeepLoad(<%=listName%><Entity> entities, bool deep, DeepLoadType deepLoadType, params Type[] childTypes);
+		void DeepLoad(TList<Entity> entities, bool deep, DeepLoadType deepLoadType, params Type[] childTypes);
 
 		#endregion
 
@@ -561,32 +535,32 @@ namespace <%= DALNameSpace %>
 		/// <summary>
 		/// Deep Save the Entity objects with all of the child property collections only 1 level deep.
 		/// </summary>
-		/// <param name="entities"><%=listName%> of Entity objects to save.</param>
-		bool DeepSave(<%=listName%><Entity> entities);
+		/// <param name="entities">TList of Entity objects to save.</param>
+		bool DeepSave(TList<Entity> entities);
 
 		/// <summary>
 		/// Deep Save the Entity objects with all of the child property collections only 1 level deep.
 		/// </summary>
 		/// <param name="mgr">A <see cref="TransactionManager"/> object.</param>
-		/// <param name="entities"><%=listName%> of Entity objects to save.</param>
-		bool DeepSave(TransactionManager mgr, <%=listName%><Entity> entities);
+		/// <param name="entities">TList of Entity objects to save.</param>
+		bool DeepSave(TransactionManager mgr, TList<Entity> entities);
 
 		/// <summary>
 		/// Deep Save the Entity objects with criteria based on the child types array and the DeepSaveType.
 		/// </summary>
-		/// <param name="entities"><%=listName%> of Entity objects to save.</param>
+		/// <param name="entities">TList of Entity objects to save.</param>
 		/// <param name="deepSaveType">DeepSaveType Enumeration to Include/Exclude object property collections from Save.</param>
 		/// <param name="childTypes">Entity Property Collection Type Array To Include or Exclude from Save.</param>
-		bool DeepSave(Northwind.BLL.<%=listName%><Entity> entities, DeepSaveType deepSaveType, params Type[] childTypes);
+		bool DeepSave(Northwind.BLL.TList<Entity> entities, DeepSaveType deepSaveType, params Type[] childTypes);
 
 		/// <summary>
 		/// Deep Save the Entity objects with criteria based on the child types array and the DeepSaveType.
 		/// </summary>
 		/// <param name="mgr">A <see cref="TransactionManager"/> object.</param>
-		/// <param name="entities"><%=listName%> of Entity objects to save.</param>
+		/// <param name="entities">TList of Entity objects to save.</param>
 		/// <param name="deepSaveType">DeepSaveType Enumeration to Include/Exclude object property collections from Save.</param>
 		/// <param name="childTypes">Entity Property Collection Type Array To Include or Exclude from Save.</param>
-		bool DeepSave(TransactionManager mgr, <%=listName%><Entity> entities, DeepSaveType deepSaveType, params Type[] childTypes);
+		bool DeepSave(TransactionManager mgr, TList<Entity> entities, DeepSaveType deepSaveType, params Type[] childTypes);
 
 		#endregion
 		*/

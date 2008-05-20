@@ -1,4 +1,4 @@
-﻿<%@ CodeTemplate Src="..\TemplateLib\CommonSqlCode.cs" Inherits="MoM.Templates.CommonSqlCode" Language="C#" TargetLanguage="C#" Description="Dal utility class" ResponseEncoding="UTF-8" NoWarn="0108,0618,1572,1573,1574,0162,2002" %>
+<%@ CodeTemplate Src="..\TemplateLib\CommonSqlCode.cs" Inherits="MoM.Templates.CommonSqlCode" Language="C#" TargetLanguage="C#" Description="Dal utility class" %>
 <%@ Assembly Name="SchemaExplorer" %>
 <%@ Assembly Name="System.Design" %>
 <%@ Property Name="DALNameSpace" Type="System.String" Category="Data" Description="DAL Namespace." %>
@@ -308,7 +308,7 @@ namespace <%=DALNameSpace%>
 			}
 			if ( String.IsNullOrEmpty(sort) )
 			{
-				sort = String.Format("[{0}]", EntityHelper.GetEnumTextValue((Enum)Enum.Parse(columnEnum, Enum.GetName(columnEnum, 1), true)));
+				sort = String.Format("[{0}]", Enum.GetValues(columnEnum).GetValue(0));
 			}
 
 			return sort;
@@ -404,35 +404,6 @@ namespace <%=DALNameSpace%>
 			<% WriteExecuteMethod(ExecuteType.DataSet, false); %>
 		}
 		#endregion		
-		
-		#region ExecuteScalar
-		/// <summary>
-		/// Executes the <paramref name="dbCommand"/> and returns the scalar object. 
-		/// </summary>
-		/// <param name="transactionManager">The transaction to execute the command within.</param>
-		/// <param name="dbCommand">The command that contains the query to execute.</param>
-		/// <returns>The number of rows affected.</returns>
-		/// <exception cref="System.Exception">The command could not be executed.</exception>
-		/// <exception cref="System.Data.DataException">The <paramref name="transactionManager"/> is not open.</exception>
-		/// <exception cref="System.Data.Common.DbException">The command could not be executed.</exception>
-		public static object ExecuteScalar(TransactionManager transactionManager, DbCommand dbCommand)
-		{
-			<% WriteExecuteMethod(ExecuteType.Scalar, true); %>
-		}
-		
-		/// <summary>
-    /// Executes the <paramref name="dbCommand"/> and returnsthe scalar object. 
-    /// </summary>
-    /// <param name="database">The database to execute the command within.</param>
-    /// <param name="dbCommand">The command that contains the query to execute.</param>
-    /// <returns>A <see cref="DataSet"/> containing the results of the command.</returns>
-    /// <exception cref="System.Exception">The command could not be executed.</exception>
-    /// <exception cref="System.Data.Common.DbException">The command could not be executed.</exception>
-		public static object ExecuteScalar(Database database, DbCommand dbCommand)
-		{
-			<% WriteExecuteMethod(ExecuteType.Scalar, false); %>
-		}
-		#endregion
 		#endregion
 	}
 }
@@ -550,7 +521,7 @@ private void WriteExecuteMethod(ExecuteType executeType, bool useTransactions)
 		case ExecuteType.Scalar:
 			formatParams = new object[]
 				{
-					"Scalar",
+					"Object",
 					RetryMaxAttempts,
 					sleepType,
 					"Object",

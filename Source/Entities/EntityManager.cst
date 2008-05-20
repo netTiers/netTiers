@@ -1,10 +1,10 @@
-﻿<%--
+<%--
  * $Id: EntityHelper.cst,v 1.3 2006/02/09 23:35:10 goofsr Exp $
  * Last modified by $Author: goofsr $
  * Last modified at $Date: 2006/02/09 23:35:10 $
  * $Revision: 1.3 $
 --%>
-<%@ CodeTemplate Language="C#" TargetLanguage="C#" Description="contains a creational factory for entity types." ResponseEncoding="UTF-8"  NoWarn="0108,0618,1572,1573,1574,0162,2002" %>
+<%@ CodeTemplate Language="C#" TargetLanguage="C#" Description="contains a creational factory for entity types." %>
 <%@ Property Name="NameSpace" Type="System.String" Category="Data" Description="The project root Namespace." %>
 
 using System;
@@ -27,33 +27,7 @@ namespace <%=NameSpace%>
         private static object syncObject = new object();
         private static Dictionary<string, IEntityFactory> entityFactoryList = new Dictionary<string, IEntityFactory>();
         private static EntityLocator entityLocator = new EntityLocator();
-		private static TrackingPolicy trackingPolicy = TrackingPolicy.TrackingUnchanged | TrackingPolicy.TrackingChanged;
         #endregion
-		
-		#region Properties
-		
-	    /// <summary>
-	    /// Get or set whether an entity should stop being tracked if it is modified or not.
-	    /// If true entities are tracked until saved even if modified. If false entities are
-	    /// stopped being tracked when they are modified.
-	    /// </summary>
-		public static bool TrackChangedEntities
-		{
-			get { return (trackingPolicy & TrackingPolicy.TrackingChanged) == TrackingPolicy.TrackingChanged; }
-		    set
-		    {
-		        if (value)
-		        {
-		            trackingPolicy |= TrackingPolicy.TrackingChanged;
-		        }
-		        else
-		        {
-		            trackingPolicy = TrackingPolicy.TrackingUnchanged;
-		        }
-		    }
-		}
-		
-		#endregion
 
         #region LocateOrCreate<Entity>
         /// <summary>
@@ -89,57 +63,48 @@ namespace <%=NameSpace%>
             if (entityFactoryType == null)
                 throw new ArgumentException("entityFactoryType");
             #endregion 
-			
-			Entity entity = default(Entity);
-			
-			lock (syncObject) //This is here because most of the classes in ObjectBuilder are NOT thread-safe
-			{
-				//Generated Table Entities Type
-				Type defaultType = typeof(Entity);
-				bool isCacheable = defaultType.GetInterface("IEntityCacheItem") != null;
-	
-				//see if entity is cachable, if IEntityCacheItem
-				//retrieve from cache.
-				if (isCacheable)
-					entity = EntityCache.GetItem<Entity>(key.ToString());
-	
-				if (entity != null)
-					return entity;
+
+            Entity entity = default(Entity);
             
-				IEntityFactory factory = null;
-				lock (syncObject)
-				{
-					if (EntityFactories.ContainsKey(entityFactoryType.FullName))
-						factory = EntityFactories[entityFactoryType.FullName];
-					else
-						factory = TryAddEntityFactory(entityFactoryType);
-				}
-	
-				
-				//attempt to locate
-				if (key != null && isLocatorEnabled)
-				{
-					lock (syncObject)
-					{
-						if (EntityLocator.Contains(key))
-						{
-							entity = EntityLocator.Get(key) as Entity;
-						}
-					}
-				}
-	
-				//if not found try create from factory
-				if (entity == null)
-					entity = factory.CreateEntity(typeString, defaultType) as Entity;
-	
-				//add to locator and start tracking.
-				if (!entity.IsEntityTracked)
-					StartTracking(key, entity, isLocatorEnabled);
-	
-				//add entity to Cache if IEntityCacheItem
-				if (entity.GetType().GetInterface("IEntityCacheItem") != null)
-					EntityCache.AddCache(key, entity);
-			}
+            //Generated Table Entities Type
+            Type defaultType = typeof(Entity);
+            bool isCacheable = defaultType.GetInterface("IEntityCacheItem") != null;
+
+            //see if entity is cachable, if IEntityCacheItem
+            //retrieve from cache.
+            if (isCacheable)
+                entity = EntityCache.GetItem<Entity>(key.ToString());
+
+            if (entity != null)
+                return entity;
+            
+            IEntityFactory factory = null;
+            if (EntityFactories.ContainsKey(entityFactoryType.FullName))
+                factory = EntityFactories[entityFactoryType.FullName];
+            else
+                factory = TryAddEntityFactory(entityFactoryType);
+
+            
+            //attempt to locate
+            if (key != null && isLocatorEnabled)
+            {
+                if (EntityLocator.Contains(key))
+                {
+                    entity = EntityLocator.Get(key) as Entity;
+                }
+            }
+
+            //if not found try create from factory
+            if (entity == null)
+                entity = factory.CreateEntity(typeString, defaultType) as Entity;
+
+            //add to locator and start tracking.
+            if (!entity.IsEntityTracked)
+                StartTracking(key, entity, isLocatorEnabled);
+
+            //add entity to Cache if IEntityCacheItem
+            if (entity.GetType().GetInterface("IEntityCacheItem") != null)
+                EntityCache.AddCache(key, entity);
 
             return entity;
         }
@@ -170,14 +135,10 @@ namespace <%=NameSpace%>
 
             
             IEntityFactory factory = null;
-			
-			lock (syncObject)
-			{
-            	if (EntityFactories.ContainsKey(entityFactoryType.FullName))
-                	factory = EntityFactories[entityFactoryType.FullName];
-            	else
-                	factory = TryAddEntityFactory(entityFactoryType);
-			}
+            if (EntityFactories.ContainsKey(entityFactoryType.FullName))
+                factory = EntityFactories[entityFactoryType.FullName];
+            else
+                factory = TryAddEntityFactory(entityFactoryType);
          
             entity = factory.CreateViewEntity(typeString, defaultType) as Entity;
             
@@ -200,13 +161,10 @@ namespace <%=NameSpace%>
 			//attempt to locate
             if (key != null && isLocatorEnabled)
             {
-				lock (syncObject)
-				{
-                	if (EntityLocator.Contains(key))
-                	{
-                    	entity = EntityLocator.Get(key) as Entity;
-                	}
-				}
+                if (EntityLocator.Contains(key))
+                {
+                    entity = EntityLocator.Get(key) as Entity;
+                }
             }
 			return entity;
 		}
@@ -441,23 +399,4 @@ namespace <%=NameSpace%>
 		}
 	}
 	#endregion 
-	
-	/// <summary>
-	/// Determines what entities are tracked with respect to Entity.EntityState.
-	/// </summary>
-	/// <remarks>TrackingPolicy is marked with Flags to allow future extensions, for example tracking of inserted items.</remarks>
-	[Flags]
-	public enum TrackingPolicy
-	{ 
-		/// <summary>
-		/// Track unchanged entities (default). 
-		/// </summary>
-		TrackingUnchanged = 1,
-		
-		/// <summary>
-		/// Track changed entities. 
-		/// </summary>
-		/// <remarks>Normally an entity stops being tracked when it is modified unless TrackingChanged is specified.</remarks>
-		TrackingChanged = 2,
-	}
 }

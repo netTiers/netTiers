@@ -1,4 +1,4 @@
-﻿<%@ CodeTemplate Language="C#" TargetLanguage="C#" Src="..\TemplateLib\CommonSqlCode.cs" Inherits="MoM.Templates.CommonSqlCode" Description="" ResponseEncoding="UTF-8"  NoWarn="0108,0618,1572,1573,1574,0162,2002"%>
+<%@ CodeTemplate Language="C#" TargetLanguage="C#" Src="..\TemplateLib\CommonSqlCode.cs" Inherits="MoM.Templates.CommonSqlCode" Description="" %>
 
 <%@ Property Name="BLLNameSpace" Type="System.String" Category="Data" Description="BLL Namespace." %>
 <%@ Property Name="DALNameSpace" Type="System.String" Category="Data" Description="DAL Namespace." %>
@@ -28,11 +28,8 @@ namespace <%=DALNameSpace%>.SqlClient
 	public sealed class StoredProcedureProvider
 	{
 		private ArrayList procedures;
-		private Hashtable shortNameProcedures;
-		private Hashtable longNameProcedures;
 		private static StoredProcedureProvider current = null;
-		private static object syncRoot = new object();
-		
+
 		/// <summary>
 		/// Creates a new <see cref="StoredProcedureProvider"/> instance.
 		/// </summary>
@@ -51,7 +48,7 @@ namespace <%=DALNameSpace%>.SqlClient
 			{
 				if (current == null)
 				{
-					lock(syncRoot)
+					lock(typeof(StoredProcedureProvider))
 					{
 						if (current == null)
 						{
@@ -78,7 +75,6 @@ namespace <%=DALNameSpace%>.SqlClient
 			set
 			{
 				procedures = value;
-				InitializeProcedureLookupTables();
 			}
 		}
 
@@ -91,20 +87,14 @@ namespace <%=DALNameSpace%>.SqlClient
 		{
 			get
 			{
-				lock(syncRoot)
+				foreach(Procedure procedure in procedures)
 				{
-					if (longNameProcedures == null)
-						InitializeProcedureLookupTables();
+					if(procedure.Name == name || procedure.Owner + "." + procedure.Name == name)
+					{
+						return procedure;
+					}
 				}
-				
-				Procedure result = null;
-				
-				result = longNameProcedures[name] as Procedure;
-				if (result == null)
-				{
-					result = shortNameProcedures[name] as Procedure;
-				}
-				return result;
+				return null;
 			}
 		}
 		
@@ -158,7 +148,7 @@ namespace <%=DALNameSpace%>.SqlClient
 
 		#endregion
 		
-		#region Embedded XML Queries
+		#region "Embedded xml queries"
 		
 		/// <summary>
 	    /// Get the query text from the embedded xml file.
@@ -214,7 +204,6 @@ namespace <%=DALNameSpace%>.SqlClient
 		public static DbCommand GetCommandWrapper(Database database, String commandName, Type columnEnum, SqlFilterParameterCollection parameters, String orderBy, int start, int pageLength)
 		{
 			String query = StoredProcedureProvider.GetProcedureBodyFromEmbeddedResource(commandName);
-			//query = query.Replace(SqlUtil.PAGE_INDEX, string.Concat(SqlUtil.PAGE_INDEX, Guid.NewGuid().ToString("N").Substring(0,8)));
 			String sortExpression = Utility.ParseSortExpression(columnEnum, orderBy);
 			String whereClause = String.Empty;
 
@@ -232,22 +221,6 @@ namespace <%=DALNameSpace%>.SqlClient
 		}
 		
 		#endregion
-		
-		private void InitializeProcedureLookupTables()
-		{
-			lock (syncRoot)
-            {
-	
-				shortNameProcedures = Hashtable.Synchronized(new Hashtable());
-				longNameProcedures = Hashtable.Synchronized(new Hashtable());
-	
-				foreach (Procedure procedure in procedures)
-				{
-					shortNameProcedures[procedure.Name] = procedure;
-					longNameProcedures[procedure.Owner + "." + procedure.Name] = procedure;
-				}
-			}
-		}
 	}
 
 	/// <summary>
