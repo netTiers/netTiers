@@ -10,23 +10,21 @@
 <xsl:output method="text"/>
 
 <xsl:template match="/">
-USE [<xsl:value-of select="/root/database"/>]
-GO
+Use [<xsl:value-of select="/root/database"/>]
+Go
 SET QUOTED_IDENTIFIER ON 
 GO
 SET ANSI_NULLS OFF 
 GO
-<xsl:apply-templates select="//procedures/procedure[not(@skip)]"/>
+<xsl:apply-templates select="//procedures/procedure"/>
 </xsl:template>
 
 <xsl:template match="procedure">
-	
-<xsl:if test="/root/database[@includeDrop='true']">
 -- Drop the <xsl:value-of select="@owner"/>.<xsl:value-of select="@name"/> procedure
 IF EXISTS (SELECT * FROM dbo.sysobjects WHERE id = object_id(N'<xsl:value-of select="@owner"/>.<xsl:value-of select="@name"/>') AND OBJECTPROPERTY(id, N'IsProcedure') = 1)
 DROP PROCEDURE <xsl:value-of select="@owner"/>.<xsl:value-of select="@name"/>
 GO
-</xsl:if>
+
 <xsl:value-of select="comment"/>
 
 CREATE PROCEDURE <xsl:value-of select="@owner"/>.<xsl:value-of select="@name"/>
@@ -47,7 +45,7 @@ GO
 </xsl:template>
 
 <xsl:template match="parameter">
-	<xsl:value-of select="@name"/> <xsl:value-of select="@type"/> <xsl:value-of select="@param"/> <xsl:if test="@nulldefault = 'null'"> = null</xsl:if> <xsl:if test="@direction = 'InputOutput' or @direction = 'Output'"> OUTPUT</xsl:if><xsl:if test="last()!=position()">,</xsl:if>
+	<xsl:value-of select="@name"/> <xsl:value-of select="@type"/> <xsl:value-of select="@param"/> <xsl:if test="@nulldefault = 'null'"> = null</xsl:if> <xsl:if test="@direction = 'Output'"> OUTPUT</xsl:if><xsl:if test="last()!=position()">,</xsl:if>
 </xsl:template>
 
 <msxsl:script implements-prefix="sc" language="Javascript">

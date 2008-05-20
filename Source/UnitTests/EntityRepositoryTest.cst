@@ -1,10 +1,10 @@
-﻿<%--
- * $Id: EntityRepositoryTest.cst,v 1.3 2006/02/09 23:35:11 bgjohnso Exp $
- * Last modified by $Author: goofsr $
- * Last modified at $Date: 2006-04-09 20:53:51 -0500 (Sun, 09 Apr 2006) $
- * $Revision: 120 $
+<%--
+ * $Id: EntityRepositoryTest.cst,v 1.2 2005/11/17 08:23:41 jroland Exp $
+ * Last modified by $Author$
+ * Last modified at $Date$
+ * $Revision$
 --%>
-<%@ CodeTemplate Src="..\TemplateLib\CommonSqlCode.cs" Inherits="MoM.Templates.CommonSqlCode" Language="C#" TargetLanguage="C#" Description="Generate nUnit test for the entity." Debug="False"  ResponseEncoding="UTF-8" NoWarn="0108,0618,1572,1573,1574,0162,2002"%>
+<%@ CodeTemplate Src="..\CommonSqlCode.cs" Inherits="MoM.Templates.CommonSqlCode" Language="C#" TargetLanguage="C#" Description="Generate nUnit test for the entity." Debug="False" %>
 
 <%@ Assembly Name="SchemaExplorer" %>
 <%@ Assembly Name="System.Design" %>
@@ -24,15 +24,12 @@
 <%@ Property Name="IncludeManyToMany" Type="System.Boolean" Default="True" Category="Options" Description="If true many2many functions will be generated." %>
 <%@ Property Name="IncludeGetListByFK" Type="System.Boolean" Default="True" Category="CRUD Options" Description="If true get statements will be generated." %>
 <%@ Property Name="IncludeGetListByIX" Type="System.Boolean" Default="True" Category="CRUD Options" Description="If true get statements will be generated." %>
-<%@ Property Name="IncludeRelations" Type="System.Boolean" Default="True" Category="CRUD Options" Description="If true deep load will be tested" %>
-
-<%@ Property Name="IncludeUnitTest" Type="MoM.Templates.UnitTestStyle" Default="NUnit" Category="General" Description="Indicates type of Unit tests to be generated." %>
 
 <%
-	string className = GetClassName(SourceTable);
-	string collectionClassName = GetClassName(SourceTable, ClassNameFormat.Collection);
-	string providerName = GetClassName(SourceTable, ClassNameFormat.Provider);
-	string unitTestClassName = GetClassName(SourceTable, ClassNameFormat.UnitTest);
+	string className = GetClassName(SourceTable.Name);
+	string collectionClassName = GetCollectionClassName(SourceTable.Name);
+	string providerName = GetProviderClassName(SourceTable.Name);
+	string unitTestClassName = GetRepositoryTestClassName(SourceTable.Name);
 %>
 
 <%
@@ -41,8 +38,6 @@
 	
 	// Collection of all columns in the table that are not primary keys.
 	ColumnSchemaCollection nonKeys = SourceTable.NonPrimaryKeyColumns;
-	
-	bool isJunctionTable = IsJunctionTable(SourceTable);
 	
 	// Collection of all primary key columns.
 	ColumnSchemaCollection keys = SourceTable.PrimaryKey.MemberColumns;
@@ -61,18 +56,13 @@
 	// this array store each Get BY MemberColumns in order to avoid to create doublon Get methods
 	System.Collections.ArrayList getbyKeys = new System.Collections.ArrayList();
 %>
-
-<%
-	string TestAssemblyNameSpace = (IncludeUnitTest == MoM.Templates.UnitTestStyle.NUnit) ? "NUnit.Framework" : "Microsoft.VisualStudio.TestTools.UnitTesting";
-	string TestFixtureAttr = (IncludeUnitTest == MoM.Templates.UnitTestStyle.NUnit) ? "TestFixture" : "TestClass";
-	string TestAttr = (IncludeUnitTest == MoM.Templates.UnitTestStyle.NUnit) ? TestAssemblyNameSpace + ".Test" : "TestMethod";
-%>
 #region Using directives
 
 using System;
+using System.IO;
 using System.Xml;
 using System.Xml.Serialization;
-using <%=TestAssemblyNameSpace%>;
+using NUnit.Framework;
 using <%=NameSpace%>;
 using <%=DALNameSpace%>;
 
@@ -83,137 +73,149 @@ namespace <%=UTNameSpace%>
     /// <summary>
     /// Provides tests for the and <see cref="<%=className%>"/> objects (entity, collection and repository).
     /// </summary>
-	/// <remarks>
-	/// This file is generated once and will never be overwritten.
-	/// </remarks>
-    [<%=TestFixtureAttr%>]
-    public partial class <%=unitTestClassName%>
-    {    	
+    [TestFixture]
+    public class <%=unitTestClassName%>
+    {
+    	// the <%=className%> instance used to test the repository.
+		private <%=className%> mock;
+		
+		// the <%=collectionClassName%> instance used to test the repository.
+		<%=collectionClassName%> mockCollection;
+		
+		TransactionManager transactionManager = null;
+		
 		/// <summary>
 		/// Creates a new <see cref="<%=unitTestClassName%>"/> instance.
 		/// </summary>	
 		public <%=unitTestClassName%>()
-		{				
+		{			
+			this.mock = (<%=className%>)CreateMockInstance();						
 		}
-      
-		<% if (IncludeUnitTest == MoM.Templates.UnitTestStyle.VSTS) { %>
-		private TestContext testContextInstance;
-
-		///<summary>
-		///Gets or sets the test context which provides
-		///information about and functionality for the current test run.
-		///</summary>
-		public TestContext TestContext
-		{
-			get
-			{
-				return testContextInstance;
-			}
-			set
-			{
-				testContextInstance = value;
-			}
-		}
-		<% } %>
-		
-		/// <summary>
+        
+        /// <summary>
 		/// This method is used to construct the test environment prior to running the tests.
-		/// </summary>        
-		<% if (IncludeUnitTest == MoM.Templates.UnitTestStyle.NUnit) { %>
-		[TestFixtureSetUp]
-		public void Init()
-		<% } else { // VSTS Unit tests %>
-		[ClassInitialize]
-        static public void Init(TestContext context)
-		<% } %>
+		/// </summary>
+        [TestFixtureSetUp]
+        public void Init()
         {
-			Init_Generated();
-			// Add your initialization here
+        	if (DataRepository.Current.IsTransactionSupported)
+			{
+				transactionManager = DataRepository.Current.CreateTransaction();
+				transactionManager.BeginTransaction();
+			}
+			
+			System.Console.WriteLine(new String('-', 75));
+			System.Console.WriteLine("-- Testing the <%=className%> Entity with the {0} --", <%=DALNameSpace%>.Configuration.Current.DefaultDataProvider);
+			System.Console.WriteLine(new String('-', 75));
         }
     
     	/// <summary>
 		/// This method is used to restore the environment after the tests are completed.
 		/// </summary>
-		<% if (IncludeUnitTest == MoM.Templates.UnitTestStyle.NUnit) { %>
-		[TestFixtureTearDown]
+        [TestFixtureTearDown]
         public void Dispose()
-		<% } else { // VSTS Unit tests %>
-		[ClassCleanup]
-		static public void CleanUp()
-		<% } %>
         {   
-        	CleanUp_Generated();
-			// Add you clean up here
+        	if (DataRepository.Current.IsTransactionSupported && transactionManager!=null && transactionManager.IsOpen)
+			{
+				transactionManager.Rollback();
+			}
+			
+			System.Console.WriteLine();
+			System.Console.WriteLine();
         }
     
     
-		<% if (IncludeInsert && !isJunctionTable) { %>
+		<% if (IncludeInsert) { %>
 		/// <summary>
 		/// Inserts a mock <%=className%> entity into the database.
 		/// </summary>
-		[<%=TestAttr%>]
+		[Test]
 		public void Step_01_Insert()
 		{
-			// Establish additional pre-conditions here
-			Step_01_Insert_Generated();			
-			// Add additional verification here
+			Assert.IsTrue(DataRepository.<%=providerName%>.Insert(transactionManager, this.mock), "Insert failed");
+									
+			System.Console.WriteLine("DataRepository.<%=providerName%>.Insert(this.mock):");			
+			System.Console.WriteLine(this.mock);			
 		}
 		<% } %>
 		
 		
 		<% if (IncludeGetList) { %>
 		/// <summary>
-		/// Selects a sample of  <%=className%> objects of the database.
+		/// Selects all <%=className%> objects of the database.
 		/// </summary>
-		[<%=TestAttr%>]
+		[Test]
 		public void Step_02_SelectAll()
 		{
-			// Establish additional pre-conditions here
-			Step_02_SelectAll_Generated();
-			// Add additional verification here
+			mockCollection = DataRepository.<%=providerName%>.GetAll(transactionManager);
+			Assert.IsTrue(mockCollection.Count > 0, "No records returned.");
+			System.Console.WriteLine("DataRepository.<%=providerName%>.GetAll():");			
+			System.Console.WriteLine(mockCollection);
+					
+			
+			// get paged
+			int count = 0;
+			DataRepository.<%=providerName%>.GetPaged(transactionManager, 0, 10, out count);
+			System.Console.WriteLine("#get paged count: " + count.ToString());
 		}
 		<% } %>
 		
 		
 		
-		<% if (IncludeRelations && IncludeGetListByFK) { %>
+		<% if (IncludeGetListByFK) { %>
 		
 		/// <summary>
 		/// Deep load all <%=className%> children.
 		/// </summary>
-		[<%=TestAttr%>]
+		[Test]
 		public void Step_03_DeepLoad()
 		{
-			// Establish additional pre-conditions here
-			Step_03_DeepLoad_Generated();
-			// Add additional verification here
+			if (mockCollection.Count > 0)
+			{
+				mockCollection.Shuffle();			
+				DataRepository.<%=providerName%>.DeepLoad(mockCollection[0]);
+				System.Console.WriteLine("<%=className%> instance correctly deep loaded at 1 level.");
+								
+				//mockCollection.Shuffle();
+				//DataRepository.<%=providerName%>.DeepLoad(mockCollection[0], true);
+				//System.Console.WriteLine("<%=className%> instance correctly deep loaded at N level.");
+				
+				mockCollection.Add(this.mock);
+				DataRepository.<%=providerName%>.DeepSave(transactionManager, mockCollection);
+				
+			}			
 		}
 		<% } %>
 		
-		<% if (IncludeUpdate && !isJunctionTable) { %>
+		<% if (IncludeUpdate) { %>
 		/// <summary>
 		/// Updates a mock <%=className%> entity into the database.
 		/// </summary>
-		[<%=TestAttr%>]
+		[Test]
 		public void Step_04_Update()
 		{
-			// Establish additional pre-conditions here
-			Step_04_Update_Generated();
-			// Add additional verification here
+			this.mock = UpdateMockInstance(this.mock);
+			Assert.IsTrue(DataRepository.<%=providerName%>.Update(transactionManager, this.mock), "Update failed.");			
+		
+			// TODO : select sur l'id
+			// TODO : verif si l'object recup? est egal
+			
+			System.Console.WriteLine("DataRepository.<%=providerName%>.Update(this.mock):");			
+			System.Console.WriteLine(this.mock);
 		}
 		<% } %>
 		
 		
-		<% if (IncludeDelete && !isJunctionTable) { %>
+		<% if (IncludeDelete) { %>
 		/// <summary>
 		/// Delete the mock <%=className%> entity into the database.
 		/// </summary>
-		[<%=TestAttr%>]
+		[Test]
 		public void Step_05_Delete()
 		{
-			// Establish additional pre-conditions here
-			Step_05_Delete_Generated();
-			// Add additional verification here
+			Assert.IsTrue(DataRepository.<%=providerName%>.Delete(transactionManager, this.mock), "Delete failed.");
+			System.Console.WriteLine("DataRepository.<%=providerName%>.Delete(this.mock):");			
+			System.Console.WriteLine(this.mock);
 		}
 		<% } %>
 		
@@ -222,109 +224,234 @@ namespace <%=UTNameSpace%>
 		/// <summary>
 		/// Serialize the mock <%=className%> entity into a temporary file.
 		/// </summary>
-		[<%=TestAttr%>]
+		[Test]
 		public void Step_06_SerializeEntity()
 		{
-			// Establish additional pre-conditions here
-			Step_06_SerializeEntity_Generated();
-			// Add additional verification here
+			string fileName = "temp_<%=className%>.xml";
+		
+			//XmlSerializer mySerializer = new XmlSerializer(typeof(<%=className%>)); 
+			//StreamWriter myWriter = new StreamWriter(fileName); 
+			//mySerializer.Serialize(myWriter, this.mock); 
+			//myWriter.Close();
+			EntityHelper.SerializeXml(this.mock, fileName);
+			System.Console.WriteLine("this.mock correctly serialized to a temporary file.");			
 		}
 		
 		/// <summary>
 		/// Deserialize the mock <%=className%> entity from a temporary file.
 		/// </summary>
-		[<%=TestAttr%>]
+		[Test]
 		public void Step_07_DeserializeEntity()
 		{
-			// Establish additional pre-conditions here
-			Step_07_DeserializeEntity_Generated();
-			// Add additional verification here
+			string fileName = "temp_<%=className%>.xml";
+		
+			//XmlSerializer mySerializer = new XmlSerializer(typeof(<%=className%>)); 
+			//FileStream myFileStream = new FileStream(fileName,  FileMode.Open); 
+			//this.mock = (<%=className%>) mySerializer.Deserialize(myFileStream);
+			//myFileStream.Close();
+			StreamReader sr = File.OpenText(fileName);
+			object item = EntityHelper.DeserializeXml(sr.ReadToEnd(), typeof(<%=className%>));
+			sr.Close();
+			File.Delete(fileName);
+			
+			System.Console.WriteLine("this.mock correctly deserialized from a temporary file.");
 		}
 		
 		/// <summary>
 		/// Serialize a <%=className%> collection into a temporary file.
 		/// </summary>
-		[<%=TestAttr%>]
+		[Test]
 		public void Step_08_SerializeCollection()
 		{
-			// Establish additional pre-conditions here
-			Step_08_SerializeCollection_Generated();
-			// Add additional verification here
+			string fileName = "temp_<%=collectionClassName%>.xml";
+		
+			<%=collectionClassName%> mockCollection = new <%=collectionClassName%>();
+			mockCollection.Add(this.mock);
+		
+			XmlSerializer mySerializer = new XmlSerializer(typeof(<%=collectionClassName%>)); 
+			StreamWriter myWriter = new StreamWriter(fileName); 
+			mySerializer.Serialize(myWriter, mockCollection); 
+			myWriter.Close();
+			
+			System.Console.WriteLine("<%=collectionClassName%> correctly serialized to a temporary file.");					
 		}
 		
 		
 		/// <summary>
 		/// Deserialize a <%=className%> collection from a temporary file.
 		/// </summary>
-		[<%=TestAttr%>]
+		[Test]
 		public void Step_09_DeserializeCollection()
 		{
-			// Establish additional pre-conditions here
-			Step_09_DeserializeCollection_Generated();
-			// Add additional verification here
+			string fileName = "temp_<%=collectionClassName%>.xml";
+		
+			XmlSerializer mySerializer = new XmlSerializer(typeof(<%=collectionClassName%>)); 
+			FileStream myFileStream = new FileStream(fileName,  FileMode.Open); 
+			<%=collectionClassName%> mockCollection = (<%=collectionClassName%>) mySerializer.Deserialize(myFileStream);
+			myFileStream.Close();
+			File.Delete(fileName);
+			System.Console.WriteLine("<%=collectionClassName%> correctly deserialized from a temporary file.");	
 		}
 		#endregion
 		
 		
-		<% if (IncludeGetListByFK && !isJunctionTable) { %>
+		<% if (IncludeGetListByFK) { %>
 		
 		/// <summary>
 		/// Check the foreign key dal methods.
 		/// </summary>
-		[<%=TestAttr%>]
+		[Test]
 		public void Step_10_FK()
 		{
-			// Establish additional pre-conditions here
-			Step_10_FK_Generated();
-			// Add additional verification here
+			<%=className%> entity = mockCollection[0].Clone() as <%=className%>;
+			
+			<% for (int j=0; j < fkeys.Count;j++)
+			{
+				bool skipkey = false;
+				foreach(IndexSchema i in indexes)
+				{
+					if(i.MemberColumns.Equals(fkeys[j].ForeignKeyMemberColumns))
+						skipkey = true;	
+				}
+				if(skipkey)
+					continue;
+					
+				getbyKeys.Add(GetKeysName(fkeys[j].ForeignKeyMemberColumns));
+			%>
+			<%=collectionClassName%> t<%=j%> = DataRepository.<%=providerName%>.GetBy<%=GetKeysName( fkeys[j].ForeignKeyMemberColumns)%>(transactionManager, <%= GetFunctionEntityParameters(fkeys[j].ForeignKeyMemberColumns) %>, 0, 10);
+			<% } // endfor %>	
 		}
 		<% } %>
 		
-		<% if (IncludeGetListByIX && !isJunctionTable) { %>
+		<% if (IncludeGetListByIX) { %>
 		
 		/// <summary>
 		/// Check the indexes dal methods.
 		/// </summary>
-		[<%=TestAttr%>]
+		[Test]
 		public void Step_11_IX()
 		{
-			// Establish additional pre-conditions here
-			Step_11_IX_Generated();
-			// Add additional verification here
+			<%=className%> entity = mockCollection[0].Clone() as <%=className%>;
+			
+			<%	
+			/// this array store each Get BY index
+			/// The goal is to avoid to create double bet by index function
+			//System.Collections.ArrayList indexKeys = new System.Collections.ArrayList();
+			
+			for (int j=0; j < indexes.Count; j++)
+			{
+				//if(indexes[j].IsPrimaryKey)
+					//continue;
+				
+				// Check if this key is not already generated
+				if(getbyKeys.IndexOf(GetKeysName(indexes[j].MemberColumns)) >=0 )
+				{
+					continue;
+				}
+				else
+				{
+					// add this key to the index list
+					getbyKeys.Add(GetKeysName(indexes[j].MemberColumns));
+				}
+				
+				string returnType = collectionClassName;
+				//bool isUnique = false;
+					
+				//if (IsPrimaryKey(indexes[j]))
+				if (indexes[j].IsUnique || indexes[j].IsPrimaryKey)
+				{
+					returnType = className;
+					//isUnique = true;
+				}
+		%>
+			<%=returnType%> t<%=j%> = DataRepository.<%=providerName%>.GetBy<%=GetKeysName(indexes[j].MemberColumns)%>(transactionManager, <%= GetFunctionEntityParameters(indexes[j].MemberColumns) %>);
+		<% } //end for %>
 		}
 		<% } %>
 		
 		/// <summary>
 		/// Test methods exposed by the EntityHelper class.
 		/// </summary>
-		[<%=TestAttr%>]
+		[Test]
 		public void Step_20_TestEntityHelper()
 		{
-			Step_20_TestEntityHelper_Generated();
+			<%=className%> entity = this.mock.Copy() as <%=className%>;
+			//Assert.IsTrue(EntityHelper.AreObjectsEqual(entity, mock), "Copy is working");
+
+			entity = (<%=className%>)this.mock.Clone();
+			//Assert.IsTrue(EntityHelper.AreObjectsEqual(entity, mock), "Clone is working");
+			
+			Assert.IsTrue(entity.Equals(mock), "Clone is working");
+
+
+			//Assert.IsTrue(EntityHelper.AreObjectsEqual(mockCollection[0], mockCollection[0]), "AreObjectEqual");
+		}
+		
+		
+						
+		#region Mock Instance
+		///<summary>
+		///  Returns a Typed <%=className%> Entity with mock values.
+		///</summary>
+		public <%=className%> CreateMockInstance()
+		{		
+			<%=className%> mock = new <%=className%>();
+						
+			<% for (int x=0; x < cols.Count; x++)
+			{ %>
+			<% if ( !cols[x].IsForeignKeyMember && !IsIdentityColumn(cols[x]) && !IsComputed(cols[x]) )
+			{ %>
+			mock.<%= GetPropertyName(cols[x].Name) %> = <%= GetCSMockValueByType(cols[x], RandomString(cols[x], false), false, Guid.NewGuid(), RandomNumber(1, 250), DateTime.Now) %>;
+			<% } %>
+			<% } %>
+			<% for (int x=0; x < fkeys.Count; x++){ if (SourceTables.Contains(fkeys[x].PrimaryKeyTable)) { %>
+			<%=GetCollectionClassName(fkeys[x].PrimaryKeyTable.Name) %> _collection<%=x%> = DataRepository.<%=GetProviderClassName(fkeys[x].PrimaryKeyTable.Name)%>.GetAll(transactionManager, 0, 10);
+			_collection<%=x%>.Shuffle();
+			if (_collection<%=x%>.Count > 0)
+			{
+				<% for (int y=0;y<fkeys[x].ForeignKeyMemberColumns.Count; y++) { %>
+				mock.<%= GetPropertyName(fkeys[x].ForeignKeyMemberColumns[y].Name) %> = _collection<%=x%>[0].<%=GetPropertyName(fkeys[x].PrimaryKeyMemberColumns[y].Name)%>;
+				<% } %>
+			}
+			<% } //end if 
+		} // end for fkeys %>
+		
+			// create a temporary collection and add the item to it
+			<%=collectionClassName%> tempMockCollection = new <%=collectionClassName%>();
+			tempMockCollection.Add(mock);
+			tempMockCollection.Remove(mock);
+			
+		
+		   return (<%=className%>)mock;
+		}
+		
+		
+		///<summary>
+		///  Update the Typed <%=className%> Entity with modified mock values.
+		///</summary>
+		public <%=className%> UpdateMockInstance(<%=className%> mock)
+		{
+			<% for (int x=0; x < cols.Count; x++)
+			{ %>
+			<% if ( !cols[x].IsForeignKeyMember && !IsIdentityColumn(cols[x]) && !IsComputed(cols[x]) )
+			{ %>
+			mock.<%= GetPropertyName(cols[x].Name) %> = <%= GetCSMockValueByType(cols[x], RandomString(cols[x], false) + "2", true, Guid.NewGuid(), RandomNumber(1, 250), DateTime.Now) %>;
+			<% } %>
+			<% } %>
+			<% for (int x=0; x < fkeys.Count; x++){ if (SourceTables.Contains(fkeys[x].PrimaryKeyTable)) { %>
+			<%=GetCollectionClassName(fkeys[x].PrimaryKeyTable.Name) %> _collection<%=x%> = DataRepository.<%=GetProviderClassName(fkeys[x].PrimaryKeyTable.Name)%>.GetAll(transactionManager, 0, 10);
+			_collection<%=x%>.Shuffle();
+			if (_collection<%=x%>.Count > 0)
+			{
+				<% for (int y=0;y<fkeys[x].ForeignKeyMemberColumns.Count; y++) { %>
+				mock.<%= GetPropertyName(fkeys[x].ForeignKeyMemberColumns[y].Name) %> = _collection<%=x%>[0].<%=GetPropertyName(fkeys[x].PrimaryKeyMemberColumns[y].Name)%>;
+				<% } %>
+			}
+			<% } // end if in tables
+			} // end for %>
+		   return (<%=className%>)mock;
 		}
 
-        ///<summary>
-        ///  Returns a Typed <%=className%> Entity with mock values.
-        ///</summary>
-        static public <%=className%> CreateMockInstance(TransactionManager tm)
-        {
-            // get the default mock instance
-            <%=className%> mock = <%=unitTestClassName%>.CreateMockInstance_Generated(tm);
-            // make any alterations necessary 
-            // (i.e. for DB check constraints, special test cases, etc.)
-			
-            // return the modified object
-            return mock;
-        }
-
-        ///<summary>
-        ///  Update the Typed <%=className%> Entity with modified mock values.
-        ///</summary>
-        static public void UpdateMockInstance(TransactionManager tm, <%=className%> mock)
-        {
-            <%=unitTestClassName%>.UpdateMockInstance_Generated(tm, mock);
-            // make any alterations necessary 
-            // (i.e. for DB check constraints, special test cases, etc.)
-        }
+		#endregion
     }
 }

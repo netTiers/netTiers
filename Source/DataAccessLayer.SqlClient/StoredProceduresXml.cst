@@ -1,13 +1,12 @@
-﻿<%@ CodeTemplate Src="..\TemplateLib\CommonSqlCode.cs" Debug="true" Inherits="MoM.Templates.CommonSqlCode" Language="C#" TargetLanguage="T-SQL"
-	Description="Generates SELECT/INSERT/UPDATE/DELETE stored procedures based on one or more selected tables, or an entire database schema." ResponseEncoding="UTF-8" NoWarn="0108,0618,1572,1573,1574,0162,2002"%>
+﻿<%@ CodeTemplate Src="..\CommonSqlCode.cs" Debug="true" Inherits="MoM.Templates.CommonSqlCode" Language="C#" TargetLanguage="T-SQL"
+	Description="Generates SELECT/INSERT/UPDATE/DELETE stored procedures based on one or more selected tables, or an entire database schema." ResponseEncoding="UTF-8"%>
 
 <%@ Property Name="CompanyName" Optional="True" Type="System.String" Category="General" Description="The name of your company." %>
 <%@ Property Name="CompanyURL" Optional="True" Type="System.String" Category="General" Description="The URL of your company." %>
 
 <%@ Property Name="SourceViews" Type="SchemaExplorer.ViewSchemaCollection" Optional="True" Category="Context" Description="Views that the stored procedures should be based on." %>
 <%@ Property Name="SourceTables" Type="SchemaExplorer.TableSchemaCollection" Category="Context" Description="Tables that the stored procedures should be based on." %>
-<%@ Property Name="IncludeDrop" Type="System.Boolean" Default="True" Category="07. CRUD - Advanced" Description="If True then drop statements will be generated in accordance with the DropStyle. If False then no procedures will be droppped" %>
-<%@ Property Name="DropStyle" Type="DropStyleEnum" Default="Entity" Category="07. CRUD - Advanced" Description="If Entity then drop statements will be generated to drop existing stored procedures for procedures being generated. If All then all existing netTiers procedures that match the ProcedurePrefix (one must be specified) and do not match the CustomProceduresStartsWith will be droppped." %>
+<%@ Property Name="IncludeDrop" Type="System.Boolean" Default="True" Category="Options" Description="If true drop statements will be generated to drop existing stored procedures." %>
 <%@ Property Name="IncludeInsert" Type="System.Boolean" Default="True" Category="Options" Description="If true insert procedures will be generated." %>
 <%@ Property Name="IncludeUpdate" Type="System.Boolean" Default="True" Category="Options" Description="If true update procedures will be generated." %>
 <%@ Property Name="IncludeDelete" Type="System.Boolean" Default="True" Category="Options" Description="If true delete procedures will be generated." %>
@@ -18,7 +17,6 @@
 <%@ Property Name="IncludeGetListByIX" Type="System.Boolean" Default="True" Category="Options" Description="If true getlist statements will be generated." %>
 <%@ Property Name="IncludeFind" Type="System.Boolean" Default="True" Category="Options" Description="If true find statements will be generated." %>
 <%@ Property Name="IncludeManyToMany" Type="System.Boolean" Default="True" Category="Options" Description="If true select statements will be generated for any many to many relationship." %>
-<%@ Property Name="IncludeDatabaseFeatures" Type="MoM.Templates.DatabaseType" Category="02. Framework Generation - Optional" Description="Indicates which database specific features to generate." Default="None" %>
 
 <%@ Property Name="IsolationLevel" Type="TransactionIsolationLevelEnum" Default="None" Category="Options" Description="Isolation level to use in generated procedures." %>
 <%@ Property Name="ExcludeFields" Type="System.String[]" Optional="True" Category="Options" Description="Enter a list of fields to exclude from parameter generation" %>
@@ -29,9 +27,8 @@
 <%@ Property Name="SelectSuffix" Type="System.String" Default="_Get" Category="Style" Description="Suffix to use for all generated SELECT stored procedures." %>
 <%@ Property Name="SelectAllSuffix" Type="System.String" Default="List" Category="Style" Description="Suffix to use for all generated SELECT stored procedures." %>
 <%@ Property Name="FindSuffix" Type="System.String" Default="_Find" Category="Style" Description="Suffix to use for all generated selective SELECT stored procedures." %>
-<%@ Property Name="GrantReadUser" Type="System.String" Category="Style" Description="Optional user or role to GRANT EXEC Procedure permissions to" Default="" Optional="True" %>
-<%@ Property Name="GrantWriteUser" Type="System.String" Category="Style" Description="Optional user or role to GRANT EXEC Procedure permissions to" Default="" Optional="True" %>
-
+<%@ Property Name="ProcedurePrefix" Type="System.String" Default="" Category="Style" Optional="True" Description="prefix to use for all generated stored procedures." %>
+<%@ Property Name="GrantUser" Type="System.String" Category="Style" Description="Optional user or role to GRANT EXEC Procedure permissions to" Default="" Optional="True" %>
 	
 <%@ Assembly Name="SchemaExplorer" %>
 <%@ Assembly Name="System.Design" %>
@@ -39,100 +36,17 @@
 <%@ Import Namespace="System.Text" %>
 <%@ Import Namespace="System.Text.RegularExpressions" %>
 <%@ Import Namespace="System.Collections" %>
-<%
-	/* Added to support the Grant[Read|Write]User functionality */
-	bool hasGrantReadUser = !string.IsNullOrEmpty(GrantReadUser); 
-	bool hasGrantWriteUser = !string.IsNullOrEmpty(GrantWriteUser);
-	bool hasGrantUser = hasGrantReadUser || hasGrantWriteUser; 
-	string grantUser = string.Empty;
-	
-	if (hasGrantReadUser && hasGrantWriteUser)
-	{
-		grantUser = string.Format("{0},{1}", GrantReadUser, GrantWriteUser);
-	}
-	else if (hasGrantReadUser)
-	{
-		grantUser = GrantReadUser;
-	}
-	else if (hasGrantWriteUser)
-	{
-		grantUser = GrantWriteUser;
-	}
-	
-%>
 <?xml version="1.0" encoding="utf-8" ?>
 <?xml-stylesheet type='text/xsl' href="scriptsql.xsl"?>
 <root xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
-<database includeDrop="<%=this.IncludeDrop.ToString().ToLower()%>"><%=(SourceTables.Count > 0 ? SourceTables[0].Database.Name : SourceViews[0].Database.Name)%></database>
+<database><%=SourceTables[0].Database.Name%></database>
 <procedures>
 <%
-if ( IncludeDrop &&
-		DropStyle == DropStyleEnum.All &&
-		!string.IsNullOrEmpty( ProcedurePrefix ) )
-{
-%>
-<procedure owner="dbo" name="<%=ProcedurePrefix%>DropAllProcedures">
-<comment>-- Drops all existing netTiers stored procedures</comment>
-<parameters/>
-
-<body><![CDATA[
-BEGIN
-DECLARE @procedureName SYSNAME
-DECLARE c CURSOR FOR
-SELECT name FROM sysobjects WHERE type = 'P' AND objectproperty(id, 'IsMSShipped') = 0 
-AND name LIKE '<%=ProcedurePrefix%>%' 
-<%
-//Exclude all custom stored procs for tables
-foreach(TableSchema table in SourceTables)
-{
-	System.Collections.IDictionary procs = GetCustomProcedures(table);
-	
-	foreach(DictionaryEntry item in procs)
-	{  
-		SchemaExplorer.CommandSchema command = (SchemaExplorer.CommandSchema) item.Value;
-%>
-AND name <> '<%=command.Name%>'
-<%
-	}
-}
-//Exclude all custom stored procs for views
-foreach(ViewSchema view in SourceViews)
-{
-	System.Collections.IDictionary procs = GetCustomProcedures(view);
-	
-	foreach(DictionaryEntry item in procs)
-	{  
-		SchemaExplorer.CommandSchema command = (SchemaExplorer.CommandSchema) item.Value;
-%>
-AND name <> '<%=command.Name%>'
-<%
-	}
-}
-%>
-OPEN c
-FETCH NEXT FROM c INTO @procedureName
-WHILE @@FETCH_STATUS = 0
-BEGIN
-EXEC('DROP PROC ' + @procedureName)
-FETCH NEXT FROM c INTO @procedureName
-END
-CLOSE c
-DEALLOCATE c
-END
-GO
-
-EXEC dbo.<%=ProcedurePrefix%>DropAllProcedures
-GO
-]]></body>
-</procedure>
-<%
-}
 	for (int st = 0; st < SourceTables.Count; st++)
 	{
 		TableSchema SourceTable = SourceTables[st];
 		//Set table properties
-		string owner = GetOwnerName(SourceTable);
-		string fqTableName = string.Format("[{0}].[{1}]", GetOwnerName(SourceTable), SourceTable.Name);
+		string owner = GetOwner(SourceTable);
 		string name = GetSafeName(SourceTable);
 		string commandStem = GetCleanName(SourceTable);
 		string tableComment = SourceTable.Description;
@@ -169,7 +83,7 @@ GO
 		
 		foreach (ColumnSchema column in cols)
 		{
-			if ( ! IsIdentityColumn(column) && ! IsComputed(column) && ! IsRowGuidColumn(column) )
+			if ( ! IsIdentityColumn(column) && ! IsComputed(column) )
 				colsUpdatable.Add(column);
 				
 			if (column.NativeType.ToLower() == "timestamp")
@@ -187,12 +101,24 @@ GO
 		// this array store each Get BY MemberColumns in order to avoid to create doublon Get methods
 		System.Collections.ArrayList getbyKeys = new System.Collections.ArrayList();
 
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
 		// -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- 
 		// GetList
 		if (IncludeGetList)
 		{%>
 		
-		<procedure owner="<%=owner%>" name="<%= ProcedurePrefix + commandStem + SelectSuffix + SelectAllSuffix %>" <%if (hasGrantUser) {%>grant="<%=grantUser%>"<%}%>>
+		<procedure owner="<%=SourceTable.Owner%>" name="<%= ProcedurePrefix + commandStem + SelectSuffix + SelectAllSuffix %>" <%if (GrantUser != "") {%>grant="<%=GrantUser%>"<%}%>>
 			<comment><![CDATA[<%= GetProcSqlComment(string.Format("Gets all records from the {0} table", name), tableComment) %>]]></comment>
 			<parameters/>
 			<body><![CDATA[
@@ -202,9 +128,8 @@ GO
 					[<%= cols[i].Name %>]<% if (i < cols.Count - 1) { %>,<% } %>
 					<% } %>
 				FROM
-					<%=fqTableName%>
+					<%=owner%>[<%= SourceTable.Name %>]
 					
-				SELECT @@ROWCOUNT
 			]]></body>
 		</procedure>
 		
@@ -212,7 +137,7 @@ GO
 		if (SourceTable.PrimaryKey != null) {
 		%>
 		
-		<procedure owner="<%=owner%>" name="<%= ProcedurePrefix + commandStem + SelectSuffix %>Paged" <%if (hasGrantUser) {%>grant="<%=grantUser%>"<%}%>>
+		<procedure owner="<%=SourceTable.Owner%>" name="<%= ProcedurePrefix + commandStem + SelectSuffix %>Paged" <%if (GrantUser != "") {%>grant="<%=GrantUser%>"<%}%>>
 			<comment><![CDATA[<%= GetProcSqlComment(string.Format("Gets records from the {0} table passing page index and page count parameters", name), tableComment) %>]]></comment>
 			<parameters>
 				<parameter name="@WhereClause" type="varchar" direction="Input" size="2000" precision="0" scale="0" param="(2000)" />
@@ -225,49 +150,16 @@ GO
 				BEGIN
 				DECLARE @PageLowerBound int
 				DECLARE @PageUpperBound int
+				DECLARE @RowsToReturn int
+				
+				-- First set the rowcount
+				SET @RowsToReturn = @PageSize * (@PageIndex + 1)
+				--SET ROWCOUNT @RowsToReturn
 				
 				-- Set the page bounds
 				SET @PageLowerBound = @PageSize * @PageIndex
 				SET @PageUpperBound = @PageLowerBound + @PageSize
-
-<% if ( IncludeDatabaseFeatures == MoM.Templates.DatabaseType.SQLServer2005 ) { %>
-				IF (@OrderBy IS NULL OR LEN(@OrderBy) < 1)
-				BEGIN
-					-- default order by to first column
-					SET @OrderBy = '[<%= cols[0].Name %>]'
-				END
-
-				-- SQL Server 2005 Paging
-				DECLARE @SQL AS nvarchar(4000)
-				SET @SQL = 'WITH PageIndex AS ('
-				SET @SQL = @SQL + ' SELECT'
-				IF @PageSize > 0
-				BEGIN
-					SET @SQL = @SQL + ' TOP ' + CONVERT(nvarchar, @PageUpperBound)
-				END
-				SET @SQL = @SQL + ' ROW_NUMBER() OVER (ORDER BY ' + @OrderBy + ') as RowIndex'
-				<% for (int i = 0; i < cols.Count; i++) { %>
-				SET @SQL = @SQL + ', [<%= cols[i].Name %>]'
-				<% } %>
-				SET @SQL = @SQL + ' FROM <%=fqTableName%>'
-				IF LEN(@WhereClause) > 0
-				BEGIN
-					SET @SQL = @SQL + ' WHERE ' + @WhereClause
-				END
-				SET @SQL = @SQL + ' ) SELECT'
-				<% for (int i = 0; i < cols.Count; i++) { %>
-				SET @SQL = @SQL + ' [<%= cols[i].Name %>]<% if (i < cols.Count - 1) { %>,<% } %>'
-				<% } %>
-				SET @SQL = @SQL + ' FROM PageIndex'
-				SET @SQL = @SQL + ' WHERE RowIndex > ' + CONVERT(nvarchar, @PageLowerBound)
-				IF @PageSize > 0
-				BEGIN
-					SET @SQL = @SQL + ' AND RowIndex <= ' + CONVERT(nvarchar, @PageUpperBound)
-				END
-				SET @SQL = @SQL + ' ORDER BY ' + @OrderBy
-				EXEC sp_executesql @SQL
 				
-<% } else { %>
 				-- Create a temp table to store the select results
 				CREATE TABLE #PageIndex
 				(
@@ -276,54 +168,48 @@ GO
 				)
 				
 				-- Insert into the temp table
-				DECLARE @SQL AS nvarchar(4000)
-				SET @SQL = 'INSERT INTO #PageIndex (<% for(int i=0; i<SourceTable.PrimaryKey.MemberColumns.Count; i++) { Response.Write("[" + SourceTable.PrimaryKey.MemberColumns[i].Name + "]"); if (i < SourceTable.PrimaryKey.MemberColumns.Count-1) {Response.Write(", ");} } %>)'
-				SET @SQL = @SQL + ' SELECT'
-				IF @PageSize > 0
-				BEGIN
-					SET @SQL = @SQL + ' TOP ' + CONVERT(nvarchar, @PageUpperBound)
-				END
-				SET @SQL = @SQL + ' <% for(int i=0; i<SourceTable.PrimaryKey.MemberColumns.Count; i++) { Response.Write("[" + SourceTable.PrimaryKey.MemberColumns[i].Name + "]"); if (i < SourceTable.PrimaryKey.MemberColumns.Count-1) {Response.Write(", ");} } %>'
-				SET @SQL = @SQL + ' FROM <%=fqTableName%>'
+				declare @SQL as nvarchar(3500)
+				SET @SQL = 'INSERT INTO #PageIndex (<% for(int i=0; i<SourceTable.PrimaryKey.MemberColumns.Count; i++) { Response.Write(GetPropertyName(SourceTable.PrimaryKey.MemberColumns[i].Name)); if (i < SourceTable.PrimaryKey.MemberColumns.Count-1) {Response.Write(", ");} } %>)'
+				SET @SQL = @SQL + ' SELECT <% for(int i=0; i<SourceTable.PrimaryKey.MemberColumns.Count; i++) { Response.Write("[" + SourceTable.PrimaryKey.MemberColumns[i].Name + "]"); if (i < SourceTable.PrimaryKey.MemberColumns.Count-1) {Response.Write(", ");} } %>'
+				SET @SQL = @SQL + ' FROM <%=owner%>[<%= SourceTable.Name %>]'
 				IF LEN(@WhereClause) > 0
 				BEGIN
 					SET @SQL = @SQL + ' WHERE ' + @WhereClause
 				END
+				 
 				IF LEN(@OrderBy) > 0
 				BEGIN
 					SET @SQL = @SQL + ' ORDER BY ' + @OrderBy
 				END
 				
 				-- Populate the temp table
-				EXEC sp_executesql @SQL
-
+				exec sp_executesql @SQL
+				
+				-- Return total count
+				SELECT @@ROWCOUNT
+				
+				--Set RowCount After Total Rows is determined
+				SET ROWCOUNT @RowsToReturn
+				
 				-- Return paged results
 				SELECT <% for (int i = 0; i < cols.Count; i++) { %>O.[<%= cols[i].Name %>]<% if (i < cols.Count - 1) { %>, <% }} %>
 				FROM
-				    <%=fqTableName%> O,
+				    <%=owner%>[<%= SourceTable.Name %>] O,
 				    #PageIndex PageIndex
 				WHERE
-				    PageIndex.IndexId > @PageLowerBound
 					<%
 					foreach (ColumnSchema column in SourceTable.PrimaryKey.MemberColumns)
 					{
-						Response.Write("\t\t\t\t\tAND O.[" + column.Name + "] = PageIndex.[" + column.Name + "]" + Environment.NewLine);
+						Response.Write("O.[" + column.Name + "] = PageIndex.[" + column.Name + "] AND ");
 					}
 					%>
+				    PageIndex.IndexID > @PageLowerBound AND
+				    PageIndex.IndexID <= @PageUpperBound
 				ORDER BY
-				    PageIndex.IndexId
+				    PageIndex.IndexID
 				
-<% } // end if ( IncludeDatabaseFeatures ) %>
-				-- get row count
-				SET @SQL = 'SELECT COUNT(*) AS TotalRowCount'
-				SET @SQL = @SQL + ' FROM <%=fqTableName%>'
-				IF LEN(@WhereClause) > 0
-				BEGIN
-					SET @SQL = @SQL + ' WHERE ' + @WhereClause
 				END
-				EXEC sp_executesql @SQL
 			
-				END
 			]]></body>
 		</procedure>
 		
@@ -345,7 +231,7 @@ GO
 		// Insert
 		if (IncludeInsert)
 		{%>
-		<procedure owner="<%=owner%>" name="<%= ProcedurePrefix + commandStem + InsertSuffix %>" <%if (GrantWriteUser != "") {%>grant="<%=GrantWriteUser%>"<%}%>>
+		<procedure owner="<%=SourceTable.Owner%>" name="<%= ProcedurePrefix + commandStem + InsertSuffix %>" <%if (GrantUser != "") {%>grant="<%=GrantUser%>"<%}%>>
 			<comment><![CDATA[<%= GetProcSqlComment(string.Format("Inserts a record into the {0} table", name), tableComment) %>]]></comment>
 			<parameters>
 				<% 
@@ -359,20 +245,20 @@ GO
 			</parameters>
 			<body><![CDATA[
 				<%= GetSetTransactionIsolationLevelStatement() %>	
-				INSERT INTO <%=fqTableName%>
+				INSERT INTO <%=owner + "[" + SourceTable.Name %>]
 					(
 					<% for (int i = 0; i < colsUpdatable.Count; i++) { %>[<%= colsUpdatable[i].Name %>]<% if (i < colsUpdatable.Count - 1) { %>
 					,<% } } %>
 					)
 				VALUES
 					(
-					<% for (int i = 0; i < colsUpdatable.Count; i++) { %>@<%= GetPropertyName(colsUpdatable[i]) %><% if (i < colsUpdatable.Count - 1) { %>
+					<% for (int i = 0; i < colsUpdatable.Count; i++) { %>@<%= GetPropertyName(colsUpdatable[i].Name) %><% if (i < colsUpdatable.Count - 1) { %>
 					,<% } } %>
 					)
 				
 				<% for (int i = 0; i < cols.Count; i++) { if (IsIdentityColumn(cols[i])) { %>
 				-- Get the identity value
-				SET @<%= GetPropertyName(cols[i]) %> = SCOPE_IDENTITY()
+				SET @<%= GetPropertyName(cols[i].Name) %> = SCOPE_IDENTITY()
 				<% } } %>
 									
 				<% if (countComputedColumns > 0) {%>
@@ -384,13 +270,13 @@ GO
 					{
 						if (IsComputed(cols[i]))
 						{
-							tempParams += string.Format(", @{0} = [{1}]{2}", GetPropertyName(cols[i]), cols[i].Name, Environment.NewLine) ;
+							tempParams += string.Format(", @{0} = [{1}]{2}", GetPropertyName(cols[i].Name), cols[i].Name, Environment.NewLine) ;
 						}
 					}
 					Response.Write(tempParams.TrimStart(','));
 				%>
 				FROM
-					<%=fqTableName%>
+					<%=owner + "[" + SourceTable.Name %>]
 				WHERE
 				<%
 					tempParams = string.Empty;
@@ -398,7 +284,7 @@ GO
 					{
 						//if (IsIdentityColumn(SourceTable.PrimaryKey.MemberColumns[i]) || IsComputed(SourceTable.PrimaryKey.MemberColumns[i]))
 						//{
-							tempParams += string.Format("AND [{1}] = @{0} {2}", GetPropertyName(SourceTable.PrimaryKey.MemberColumns[i]), SourceTable.PrimaryKey.MemberColumns[i].Name, Environment.NewLine) ;
+							tempParams += string.Format("AND [{1}] = @{0} {2}", GetPropertyName(SourceTable.PrimaryKey.MemberColumns[i].Name), SourceTable.PrimaryKey.MemberColumns[i].Name, Environment.NewLine) ;
 						//}
 					}
 					if(tempParams.Length > 4)
@@ -416,7 +302,7 @@ GO
 		// -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- 
 		if (IncludeUpdate) 
 		{%>
-		<procedure owner="<%=owner%>" name="<%= ProcedurePrefix + commandStem + UpdateSuffix %>" <%if (GrantWriteUser != "") {%>grant="<%=GrantWriteUser%>"<%}%>>
+		<procedure owner="<%=SourceTable.Owner%>" name="<%= ProcedurePrefix + commandStem + UpdateSuffix %>" <%if (GrantUser != "") {%>grant="<%=GrantUser%>"<%}%>>
 			<comment><![CDATA[<%= GetProcSqlComment(string.Format("Updates a record in the {0} table", name), tableComment) %>]]></comment>
 			<parameters>
 				<% 
@@ -427,7 +313,7 @@ GO
 					
 					if (cols[i].IsPrimaryKeyMember && !IsComputed(cols[i]) && !IsIdentityColumn(cols[i]) && cols[i] != RowVersion)
 					{
-						Response.Write("\t\t\t\t" + GetSqlParameterXmlNode(cols[i], "Original" + GetPropertyName(cols[i]), false) + Environment.NewLine);
+						Response.Write("\t\t\t\t" + GetSqlParameterXmlNode(cols[i], "Original" + cols[i].Name, false) + Environment.NewLine);
 					}
 		
 					if (IsComputed(cols[i]))
@@ -436,7 +322,7 @@ GO
 				}
 				if (RowVersion != null)
 				{
-					Response.Write("\t\t\t\t" + GetSqlParameterXmlNode(RowVersion, "Returned" + GetPropertyName(RowVersion), true) + Environment.NewLine);
+					Response.Write("\t\t\t\t" + GetSqlParameterXmlNode(RowVersion, "Returned" + GetPropertyName(RowVersion.Name), true) + Environment.NewLine);
 				}
 				%>
 			</parameters>
@@ -445,9 +331,9 @@ GO
 				
 				-- Modify the updatable columns
 				UPDATE
-					<%=fqTableName%>
+					<%=owner + "[" + SourceTable.Name %>]
 				SET
-					<% for (int i = 0; i < colsUpdatable.Count; i++) { %>[<%= colsUpdatable[i].Name %>] = @<%= GetPropertyName(colsUpdatable[i]) %><% if (i < colsUpdatable.Count - 1) { %>
+					<% for (int i = 0; i < colsUpdatable.Count; i++) { %>[<%= colsUpdatable[i].Name %>] = @<%= GetPropertyName(colsUpdatable[i].Name) %><% if (i < colsUpdatable.Count - 1) { %>
 					,<% } } %>
 				WHERE
 				<%
@@ -459,7 +345,7 @@ GO
 						if (!IsComputed(SourceTable.PrimaryKey.MemberColumns[i]) && !IsIdentityColumn(SourceTable.PrimaryKey.MemberColumns[i]) && SourceTable.PrimaryKey.MemberColumns[i] != RowVersion)
 							prefix = "Original";
 						
-						tempParams += string.Format("AND [{1}] = @{0} {2}", prefix + GetPropertyName(SourceTable.PrimaryKey.MemberColumns[i]), SourceTable.PrimaryKey.MemberColumns[i].Name, Environment.NewLine) ;
+						tempParams += string.Format("AND [{1}] = @{0} {2}", prefix + GetPropertyName(SourceTable.PrimaryKey.MemberColumns[i].Name), SourceTable.PrimaryKey.MemberColumns[i].Name, Environment.NewLine) ;
 					}
 					if(tempParams.Length > 4)
 					{
@@ -467,7 +353,7 @@ GO
 					}
 					if (RowVersion != null)
 					{
-						Response.Write("AND [" + RowVersion.Name + "] = @" + GetPropertyName(RowVersion) );
+						Response.Write("AND [" + RowVersion.Name + "] = @" + GetPropertyName(RowVersion.Name) );
 					} 
 				%>
 				
@@ -481,26 +367,25 @@ GO
 					{
 						if (IsComputed(cols[i]) && cols[i] != RowVersion)
 						{
-							tempParams += string.Format(", @{0} = [{1}]{2}", GetPropertyName(cols[i]), cols[i].Name, Environment.NewLine) ;
+							tempParams += string.Format(", @{0} = [{1}]{2}", GetPropertyName(cols[i].Name), cols[i].Name, Environment.NewLine) ;
 						}
 					}
 					if (RowVersion != null)
 					{
-						tempParams += string.Format(", @Returned{0} = [{1}]{2}", 
-						GetPropertyName(RowVersion), GetPropertyName(RowVersion), Environment.NewLine) ;
+						tempParams += string.Format(", @Returned{0} = [{1}]{2}", GetPropertyName(RowVersion.Name), RowVersion.Name, Environment.NewLine) ;		
 					} 
 					
 					Response.Write(tempParams.TrimStart(','));
 					
 				%>
 				FROM
-					<%=fqTableName%>
+					<%=owner + "[" + SourceTable.Name %>]
 				WHERE
 				<%
 					tempParams = string.Empty;
 					for (int i = 0; i < SourceTable.PrimaryKey.MemberColumns.Count; i++)
 					{
-						tempParams += string.Format("AND [{1}] = @{0} {2}", GetPropertyName(SourceTable.PrimaryKey.MemberColumns[i]), SourceTable.PrimaryKey.MemberColumns[i].Name, Environment.NewLine) ;
+						tempParams += string.Format("AND [{1}] = @{0} {2}", GetPropertyName(SourceTable.PrimaryKey.MemberColumns[i].Name), SourceTable.PrimaryKey.MemberColumns[i].Name, Environment.NewLine) ;
 					}
 					if(tempParams.Length > 4)
 					{
@@ -516,7 +401,7 @@ GO
 		// -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- 
 		if (IncludeDelete && SourceTable.PrimaryKey != null) 
 		{%>
-		<procedure owner="<%=owner%>" name="<%= ProcedurePrefix + commandStem + DeleteSuffix %>" <%if (GrantWriteUser != "") {%>grant="<%=GrantWriteUser%>"<%}%>>
+		<procedure owner="<%=SourceTable.Owner%>" name="<%= ProcedurePrefix + commandStem + DeleteSuffix %>" <%if (GrantUser != "") {%>grant="<%=GrantUser%>"<%}%>>
 			<comment><![CDATA[<%= GetProcSqlComment(string.Format("Deletes a record in the {0} table", name), tableComment) %>]]></comment>
 			<parameters>
 			<% 
@@ -532,14 +417,14 @@ GO
 			%>
 			</parameters>
 			<body><![CDATA[
-				DELETE FROM <%=fqTableName%> WITH (ROWLOCK) 
+				DELETE FROM <%=owner%>[<%= SourceTable.Name %>] WITH (ROWLOCK) 
 				WHERE
 					<% for (int i = 0; i < SourceTable.PrimaryKey.MemberColumns.Count; i++) { %>			
-					<% if (i > 0) { %>AND <% } %>[<%= SourceTable.PrimaryKey.MemberColumns[i].Name %>] = @<%= GetPropertyName(SourceTable.PrimaryKey.MemberColumns[i]) %>
+					<% if (i > 0) { %>AND <% } %>[<%= SourceTable.PrimaryKey.MemberColumns[i].Name %>] = @<%= GetPropertyName(SourceTable.PrimaryKey.MemberColumns[i].Name) %>
 					<% } 
 					if (RowVersion != null)
 					{
-						Response.Write("\tAND [" + RowVersion.Name + "] = @" + GetPropertyName(RowVersion) );
+						Response.Write("\tAND [" + RowVersion.Name + "] = @" + GetPropertyName(RowVersion.Name) );
 					} %>
 					
 			]]></body>
@@ -557,14 +442,22 @@ GO
 		// -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- 
 		if (IncludeGetListByFK)
 		{ 
-			for (int j=0; j < fkeys.Count;j++)
-			{	
-				if(IsForeignKeyCoveredByIndex(fkeys[j]) && IncludeGetListByIX)
+			for (int j=0; j < fkeys.Count; j++) 
+			{ 
+				bool skipkey = false;
+				foreach(IndexSchema i in indexes)
+				{
+					/*if(i.MemberColumns.Contains(fkeys[j].ForeignKeyMemberColumns[0]))
+						skipkey = true;	*/
+					if(i.MemberColumns.Equals(fkeys[j].ForeignKeyMemberColumns))
+						skipkey = true;		
+				}
+				if(skipkey)
 					continue;
 					
 				getbyKeys.Add(GetKeysName(fkeys[j].ForeignKeyMemberColumns));
 %>
-		<procedure owner="<%=owner%>" name="<%= GetProcNameForGetByIX(ProcedurePrefix + commandStem + SelectSuffix + "By", fkeys[j].ForeignKeyMemberColumns) %>" <%if (hasGrantUser) {%>grant="<%=grantUser%>"<%}%>>
+		<procedure owner="<%=SourceTable.Owner%>" name="<%= ProcedurePrefix + commandStem + SelectSuffix + "By" + FKColumnName(fkeys[j]) %>" <%if (GrantUser != "") {%>grant="<%=GrantUser%>"<%}%>>
 			<comment><![CDATA[<%= GetProcSqlComment(string.Format("Select records from the {0} table through a foreign key", SourceTable.Name), "") %>]]></comment>
 			<parameters>
 			<% 
@@ -575,21 +468,18 @@ GO
   			%>
 			</parameters>
 			<body><![CDATA[
-				SET ANSI_NULLS OFF
 				<%= GetSetTransactionIsolationLevelStatement() %>
 				SELECT
 					<% for (int i = 0; i < cols.Count; i++) { %>
 					[<%= cols[i].Name %>]<% if (i < cols.Count - 1) { %>,<% } %>
 					<% } %>
 				FROM
-					<%= fqTableName%>
+					<%= owner %>[<%= SourceTable.Name %>]
 				WHERE
 					<% for (int i = 0; i < fkeys[j].ForeignKeyMemberColumns.Count; i++) { %>
-					<% if (i > 0) { %>AND <% } %>[<%= fkeys[j].ForeignKeyMemberColumns[i].Name %>] = @<%= GetPropertyName(fkeys[j].ForeignKeyMemberColumns[i]) %>
+					<% if (i > 0) { %>AND <% } %>[<%= fkeys[j].ForeignKeyMemberColumns[i].Name %>] = @<%= GetPropertyName(fkeys[j].ForeignKeyMemberColumns[i].Name) %>
 					<% } %>
-				
-				SELECT @@ROWCOUNT
-				SET ANSI_NULLS ON
+					
 			]]></body>
 		</procedure>
 <%
@@ -613,13 +503,15 @@ GO
 					getbyKeys.Add(GetKeysName(indexes[j].MemberColumns));
 				}
 %>
-		<procedure owner="<%=owner%>" name="<%= GetProcNameForGetByIX(ProcedurePrefix + commandStem + SelectSuffix + "By", indexes[j].MemberColumns) %>" <%if (hasGrantUser) {%>grant="<%=grantUser%>"<%}%>>
+		<procedure owner="<%=SourceTable.Owner%>" name="<%= ProcedurePrefix + commandStem + SelectSuffix + "By" + IXColumnName(indexes[j]) %>" <%if (GrantUser != "") {%>grant="<%=GrantUser%>"<%}%>>
 			<comment><![CDATA[<%= GetProcSqlComment(string.Format("Select records from the {0} table through an index", SourceTable.Name), "") %>]]></comment>
 			<parameters>
-			<%	for (int i = 0; i < indexes[j].MemberColumns.Count; i++) 
+			<% 
+				for (int i = 0; i < indexes[j].MemberColumns.Count; i++) 
   				{
   					Response.Write("\t\t\t\t" + GetSqlParameterXmlNode(indexes[j].MemberColumns[i], false) + Environment.NewLine);
-  				}%>
+  				}
+  			%>
 			</parameters>
 			<body><![CDATA[
 				SELECT
@@ -627,12 +519,11 @@ GO
 					[<%= cols[i].Name %>]<% if (i < cols.Count - 1) { %>,<% } %>
 					<% } %>
 				FROM
-					<%= fqTableName%>
+					<%= owner %>[<%= SourceTable.Name %>]
 				WHERE
 					<% for (int i = 0; i < indexes[j].MemberColumns.Count; i++) { %>
-					<% if (i > 0) { %>AND <% } %>[<%= indexes[j].MemberColumns[i].Name %>] = @<%= GetPropertyName(indexes[j].MemberColumns[i]) %>
+					<% if (i > 0) { %>AND <% } %>[<%= indexes[j].MemberColumns[i].Name %>] = @<%= GetPropertyName(indexes[j].MemberColumns[i].Name) %>
 					<% } %>
-				SELECT @@ROWCOUNT
 					
 			]]></body>
 			
@@ -651,13 +542,13 @@ GO
 		if(IncludeManyToMany)
 		{
 			TableSchema primaryTable = SourceTable;
+		
 			foreach(TableKeySchema key in SourceTable.PrimaryKeys)
 			{
 				// Check that the key is related to a junction table
 				if ( IsJunctionTable(key.ForeignKeyTable) )
 				{
 					TableSchema junctionTable = key.ForeignKeyTable;
-					string junctionOwner = GetOwnerName(junctionTable, true);
 					
 					// Search for the other(s) key(s) of the junction table' primary key
 					foreach(TableKeySchema junctionTableKey in junctionTable.ForeignKeys)
@@ -666,11 +557,11 @@ GO
 						{
 							TableSchema secondaryTable = junctionTableKey.PrimaryKeyTable;
 																			
-							string functionname = GetManyToManyName(junctionTableKey, junctionTable);
+							string functionname = GetManyToManyName(junctionTableKey, GetCleanName(junctionTable.Name));
 													
 							// here query
 %>
-		<procedure owner="<%=owner%>" name="<%= ProcedurePrefix + commandStem + SelectSuffix + "By" + functionname %>" <%if (hasGrantUser) {%>grant="<%=grantUser%>"<%}%>>
+		<procedure owner="<%=SourceTable.Owner%>" name="<%= ProcedurePrefix + commandStem + SelectSuffix + "By" + functionname %>" <%if (GrantUser != "") {%>grant="<%=GrantUser%>"<%}%>>
 			<comment><![CDATA[<%= GetProcSqlComment("Gets records through a junction table", "") %>]]></comment>
 			<parameters>
 			<% 
@@ -683,14 +574,14 @@ GO
 			<body><![CDATA[
 SELECT <% for (int i = 0; i < primaryTable.Columns.Count; i++)
           { if (i > 0) { %>
-       ,<% } %><%=GetOwnerName(primaryTable, true)%>[<%=primaryTable.Name%>].[<%= primaryTable.Columns[i].Name %>]<%
+       ,<% } %><%=owner%>[<%=primaryTable.Name%>].[<%= primaryTable.Columns[i].Name %>]<%
           } // for %>
-  FROM <%=GetOwnerName(primaryTable, true)%>[<%=primaryTable.Name%>]
+  FROM <%=owner%>[<%=primaryTable.Name%>]
  WHERE EXISTS (SELECT 1
-                 FROM <%= junctionOwner %>[<%=junctionTable.Name%>] 
+                 FROM <%=owner%>[<%=junctionTable.Name%>] 
                 WHERE <% 
 				for (int i = 0; i < junctionTableKey.ForeignKeyMemberColumns.Count; i++) {
-					%><%=junctionOwner%>[<%=junctionTable.Name%>].[<%=junctionTableKey.ForeignKeyMemberColumns[i].Name%>] = @<%=GetPropertyName(junctionTableKey.ForeignKeyMemberColumns[i])%>
+					%><%=owner%>[<%=junctionTable.Name%>].[<%=junctionTableKey.ForeignKeyMemberColumns[i].Name%>] = @<%=GetPropertyName(junctionTableKey.ForeignKeyMemberColumns[i].Name)%>
                   <%if(i < junctionTableKey.ForeignKeyMemberColumns.Count-1) {%>AND <%}
 				} // for
 				// find the ForeignKey that points to the current table
@@ -700,15 +591,12 @@ SELECT <% for (int i = 0; i < primaryTable.Columns.Count; i++)
 					{
 						%>AND <%
 						for (int i = 0; i < primaryTableKey.ForeignKeyMemberColumns.Count; i++) {
-							%><%=junctionOwner%>[<%=primaryTableKey.ForeignKeyTable.Name%>].[<%=primaryTableKey.ForeignKeyMemberColumns[i].Name%>] = <%=GetOwnerName(primaryTableKey.PrimaryKeyTable, true)%>[<%=primaryTableKey.PrimaryKeyTable.Name %>].[<%=primaryTableKey.PrimaryKeyMemberColumns[i].Name%>]
+							%><%=owner%>[<%=primaryTableKey.ForeignKeyTable.Name%>].[<%=primaryTableKey.ForeignKeyMemberColumns[i].Name%>] = <%=owner%>[<%=primaryTableKey.PrimaryKeyTable.Name %>].[<%=primaryTableKey.PrimaryKeyMemberColumns[i].Name%>]
                   <%if(i < primaryTableKey.ForeignKeyMemberColumns.Count-1) {%>AND <%}
 						} // for
 					} // if
 				} // foreach
-				
-				%>)
-				SELECT @@ROWCOUNT			
-				]]></body>
+				%>)]]></body>
 		</procedure>
 <%						
 						}// //end if there is many to many relationship.
@@ -724,196 +612,41 @@ SELECT <% for (int i = 0; i < primaryTable.Columns.Count; i++)
 		// -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- 
 		if(IncludeFind)
 		{%>
-		<procedure owner="<%=owner%>" name="<%= ProcedurePrefix + commandStem + FindSuffix %>" <%if (hasGrantUser) {%>grant="<%=grantUser%>"<%}%>>
+		<procedure owner="<%=SourceTable.Owner%>" name="<%= ProcedurePrefix + commandStem + FindSuffix %>" <%if (GrantUser != "") {%>grant="<%=GrantUser%>"<%}%>>
 			<comment><![CDATA[<%= GetProcSqlComment(string.Format("Finds records in the {0} table passing nullable parameters", name), tableComment) %>]]></comment>
 			<parameters>
-				<parameter name="@SearchUsingOR" type="bit" direction="Input" size="0" precision="1" scale="0" param="" nulldefault="null"/>
 				<% 
 				for (int i = 0; i < cols.Count; i++)
 				{
-					Response.Write("\t\t\t\t" + GetSqlParameterXmlNode(cols[i], false, true) + Environment.NewLine);
+					Response.Write("\t\t\t\t" + GetSqlParameterXmlNode(cols[i], cols[i].Name, false, true) + Environment.NewLine);
 				}%>
 			</parameters>
 			<body><![CDATA[
 				<%= GetSetTransactionIsolationLevelStatement() %>
-  IF ISNULL(@SearchUsingOR, 0) <> 1
-  BEGIN
-    SELECT
-	<%= BuildColList(SourceTable) %>
-    FROM
-	<%=fqTableName%>
-    WHERE 
-					<% 
-					string tmpWhere = "\t";
-						
-					for (int i = 0; i < cols.Count; i++)
-					{
-						if (IsColumnFindable(cols[i]))
-						{ 
-						tmpWhere  += string.Format("\tAND ([{0}] = @{2} OR @{2} IS NULL){1}", cols[i].Name, Environment.NewLine, GetPropertyName(cols[i])) ;
-						}
-					}
-					if (tmpWhere.Length > 5)
-					{
-						Response.Write("\t" + tmpWhere.Remove(0,5));
-					}
-					%>					
-						
-  END
-  ELSE
-  BEGIN
-    SELECT
-	<%= BuildColList(SourceTable) %>
-    FROM
-	<%=fqTableName%>
-    WHERE 
-					<% 
-					tmpWhere = "\t";
-						
-					for (int i = 0; i < cols.Count; i++)
-					{
-						if (IsColumnFindable(cols[i]))
-						{ 
-						tmpWhere  += string.Format("\tOR ([{0}] = @{2} AND @{2} is not null){1}", cols[i].Name, Environment.NewLine, GetPropertyName(cols[i])) ;
-						}
-					}
-					if (tmpWhere.Length > 4)
-					{
-						Response.Write("\t" + tmpWhere.Remove(0,4));
-					}
-					%>					
-	SELECT @@ROWCOUNT			
-  END
-				]]></body>
-		</procedure>
-
-		<% if ( SourceTable.PrimaryKey != null ) { %>
-		
-		<procedure owner="<%=owner%>" name="<%= ProcedurePrefix + commandStem + FindSuffix %>_Dynamic" <%if (hasGrantUser) {%>grant="<%=grantUser%>"<%}%> skip="true">
-			<comment><![CDATA[<%= GetProcSqlComment(string.Format("Gets records from the {0} table using a dynamically generated query.", name), tableComment) %>]]></comment>
-			<parameters/>
-			<body><![CDATA[
-				<%= GetSetTransactionIsolationLevelStatement() %>
-				BEGIN
 				
-				<% if ( IncludeDatabaseFeatures == MoM.Templates.DatabaseType.SQLServer2005 ) { %>
-				WITH PageIndex AS (
-					SELECT TOP {3} row_number() over (order by {1}) AS RowIndex
-					<% for (int i = 0; i < cols.Count; i++) { %>
-					, [<%= cols[i].Name %>]
-					<% } %>
-					FROM <%=fqTableName%> {0}
-				)
-				SELECT
-				<% for (int i = 0; i < cols.Count; i++) { %>
-				       [<%= cols[i].Name %>]<% if (i < cols.Count - 1) { %>,<% } %>
-				<% } %>
-				  FROM PageIndex
-				 WHERE RowIndex > {2}
-				   AND RowIndex <= {3};
-				
-				<% } else { // SQL 2000 %>
-				-- Create a temp table to store the select results
-				CREATE TABLE #PageIndex
-				(
-				    [IndexId] int IDENTITY (1, 1) NOT NULL,
-				    <%= GetPagedHelper(SourceTable.PrimaryKey.MemberColumns) %> 
-				)
-				
-				-- Insert into the temp table
-				INSERT INTO #PageIndex ( <% for(int i=0; i<SourceTable.PrimaryKey.MemberColumns.Count; i++) { Response.Write("[" + SourceTable.PrimaryKey.MemberColumns[i].Name + "]"); if (i < SourceTable.PrimaryKey.MemberColumns.Count-1) {Response.Write(", ");} } %> )
-				SELECT TOP {3} <% for(int i=0; i<SourceTable.PrimaryKey.MemberColumns.Count; i++) { Response.Write("[" + SourceTable.PrimaryKey.MemberColumns[i].Name + "]"); if (i < SourceTable.PrimaryKey.MemberColumns.Count-1) {Response.Write(", ");} } %>
-				FROM <%= fqTableName%> {0}
-				ORDER BY {1}
-				
-				-- Return paged results
-				SELECT <% for (int i = 0; i < cols.Count; i++) { %>O.[<%= cols[i].Name %>]<% if (i < cols.Count - 1) { %>, <% }} %>
+				SELECT <%= BuildColList(SourceTable) %>
 				FROM
-				    <%= fqTableName%> O,
-				    #PageIndex PageIndex
-				WHERE
-				    PageIndex.IndexId > {2}
-					<% foreach ( ColumnSchema column in SourceTable.PrimaryKey.MemberColumns ) { %>
-				    AND O.[<%= column.Name %>] = PageIndex.[<%= column.Name %>]
-					<% } %>
-				ORDER BY
-				    PageIndex.IndexId
-				
-				<% } // end if ( IncludeDatabaseFeatures ) %>
-
-				-- get total count
-				SELECT COUNT(*) AS TotalRowCount FROM <%= fqTableName%> {0};
-				
-				<% if ( IncludeDatabaseFeatures != MoM.Templates.DatabaseType.SQLServer2005 ) { %>
-				DROP TABLE #PageIndex
-				<%}%>
-				END
-			]]></body>
-		</procedure>
-		
-		<% } // end if HasPrimaryKey %>
-		<%} //end if(IncludeFind)
-
-		// -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- 
-		// [ab] NOTE: the following is very MS SQL specific. Also the whole step of reading custom procs from DB
-		//	will eventually be replaced by reading an external xml definition file.
-		if(IncludeCustoms)
-		{
-			System.Collections.IDictionary procs = GetCustomProcedures(SourceTable);
-				
-			foreach(DictionaryEntry item in procs)
-			{  
-				SchemaExplorer.CommandSchema command = (SchemaExplorer.CommandSchema) item.Value;
-				%>
-				
-		<procedure owner="<%=GetOwnerName(command)%>" name="<%=command.Name %>" <%if (hasGrantUser) {%>grant="<%=grantUser%>"<%}%> skip="true">
-			<comment><![CDATA[<%
-					Regex rx = new Regex(@"^CREATE\s+PROC(?:EDURE)?(.+?\n)*^AS", RegexOptions.Multiline | RegexOptions.IgnoreCase);
-					
-					Match rxm = rx.Match(command.CommandText);
-					string sp_body = String.Empty;
-					if (rxm.Success)
-					{
-						// get any comments that precede "CREATE PROCEDURE"
-						string comments = command.CommandText.Substring(0, rxm.Index);
-						// TODO: no validation as to whether this is a valid comment block
-						Response.Write(comments);
-						// Remove DDL Statement from the top of the custom sp 
-						sp_body = command.CommandText.Substring(rxm.Index+rxm.Length);
-					}
-					else
-					{
-						throw new ApplicationException(string.Format("Custom sp {0} is not in the expected format.", command.Name ));						
-					}
-			
-			%>]]></comment>
-			<parameters>
+					<%=owner%>[<%= SourceTable.Name %>]
+				WHERE 
 				<% 
-
-				for (int i = 0; i < command.Parameters.Count; i++)
+				string tmpWhere = string.Empty;
+					
+				for (int i=0; i < cols.Count; i++)
 				{
-					if (! (command.Parameters[i].Name.TrimStart('@').ToUpper() == "RETURN_VALUE"  && 
-						command.Parameters[i].Direction == ParameterDirection.ReturnValue) )
-					{
-						Response.Write("\t\t\t\t" + GetSqlParameterXmlNode(command.Parameters[i]) + Environment.NewLine);
+					if (IsColumnFindable(cols[i]))
+					{ 
+						tmpWhere  += string.Format("AND ([{0}] = @{2} OR @{2} is null){1}", cols[i].Name, Environment.NewLine, GetPropertyName(cols[i].Name)) ;
 					}
 				}
-					
-				%>
-			</parameters>
-			<body><![CDATA[
-				
-					<%
-					// Debugger.Break();
-					Response.Write(sp_body);
-					%>
-
+				if (tmpWhere.Length > 4)
+				{
+					Response.Write(tmpWhere.Remove(0,4));
+				}
+				%>					
+																
 			]]></body>
-					</procedure>
-			<% } // end foreach(DictionaryEntry item in procs)
-
-		  } // end if(IncludeCustoms)
-
+		</procedure>
+		<%} //end if(IncludeFind)
 	} // end for each Table
 	// -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- 
 	// -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- 
@@ -926,17 +659,15 @@ SELECT <% for (int i = 0; i < primaryTable.Columns.Count; i++)
 	for (int vi = 0; vi < SourceViews.Count; vi++)
 	{
 		ViewSchema SourceView = SourceViews[vi];
-		ViewColumnSchemaCollection cols = SourceView.Columns;
 		
-		string owner = GetOwnerName(SourceView);
-		string fqTableName = string.Format("[{0}].[{1}]", GetOwnerName(SourceView), SourceView.Name);
+		string owner = GetOwner(SourceView);
 		string name = GetSafeName(SourceView);
 		string commandStem = GetCleanName(SourceView);
 		string tableComment = SourceView.Description;
 		
 		if (IncludeGetList) 
 		{%>
-		<procedure owner="<%=owner%>" name="<%= ProcedurePrefix + commandStem + SelectSuffix + SelectAllSuffix %>" <%if (hasGrantUser) {%>grant="<%=grantUser%>"<%}%>>
+		<procedure owner="<%=SourceView.Owner%>" name="<%= ProcedurePrefix + commandStem + SelectSuffix + SelectAllSuffix %>" <%if (GrantUser != "") {%>grant="<%=GrantUser%>"<%}%>>
 			<comment><![CDATA[<%= GetProcSqlComment(string.Format("Gets all records from the {0} view", name), tableComment) %>]]></comment>
 			<parameters/>
 			<body><![CDATA[
@@ -946,145 +677,43 @@ SELECT <% for (int i = 0; i < primaryTable.Columns.Count; i++)
 					[<%= SourceView.Columns[i].Name %>]<% if (i < SourceView.Columns.Count - 1) { %>,<% } %>
 					<% } %>
 				FROM
-					<%=fqTableName%>
-					
-				SELECT @@ROWCOUNT			
+					<%=owner%>[<%= SourceView.Name %>]
+										
 			]]></body>
 		</procedure>
 		
-		<procedure owner="<%=owner%>" name="<%= ProcedurePrefix + commandStem + SelectSuffix %>" <%if (hasGrantUser) {%>grant="<%=grantUser%>"<%}%>>
+		<procedure owner="<%=SourceView.Owner%>" name="<%= ProcedurePrefix + commandStem + SelectSuffix %>" <%if (GrantUser != "") {%>grant="<%=GrantUser%>"<%}%>>
 			<comment><![CDATA[<%= GetProcSqlComment(string.Format("Gets records from the {0} view passing page index and page count parameters", name), tableComment) %>]]></comment>
 			<parameters>
 				<parameter name="@WhereClause" type="varchar" direction="Input" size="2000" precision="0" scale="0" param="(2000)" />
 				<parameter name="@OrderBy" type="varchar" direction="Input" size="2000" precision="0" scale="0" param="(2000)"/>			
-				<% if ( IncludeDatabaseFeatures == MoM.Templates.DatabaseType.SQLServer2005 ) { %>
-				<parameter name="@PageIndex" type="int" direction="Input" size="0" precision="10" scale="0" />
-				<parameter name="@PageSize" type="int" direction="Input" size="0" precision="10" scale="0" /> 
-				<% } %>
 			</parameters>
 			<body><![CDATA[
 				<%= GetSetTransactionIsolationLevelStatement() %>
 				BEGIN
 
-<% if ( IncludeDatabaseFeatures == MoM.Templates.DatabaseType.SQLServer2005 ) { %>
-				DECLARE @PageLowerBound int
-				DECLARE @PageUpperBound int
-				
-				-- Set the page bounds
-				SET @PageLowerBound = @PageSize * @PageIndex
-				SET @PageUpperBound = @PageLowerBound + @PageSize
-
-				IF (@OrderBy IS NULL OR LEN(@OrderBy) < 1)
-				BEGIN
-					-- default order by to first column
-					SET @OrderBy = '[<%= cols[0].Name %>]'
-				END
-
-				-- SQL Server 2005 Paging
-				DECLARE @SQL AS nvarchar(4000)
-				SET @SQL = 'WITH PageIndex AS ('
-				SET @SQL = @SQL + ' SELECT'
-				IF @PageSize > 0
-				BEGIN
-					SET @SQL = @SQL + ' TOP ' + CONVERT(nvarchar, @PageUpperBound)
-				END
-				SET @SQL = @SQL + ' ROW_NUMBER() OVER (ORDER BY ' + @OrderBy + ') as RowIndex'
-				<% for (int i = 0; i < cols.Count; i++) { %>
-				SET @SQL = @SQL + ', [<%= cols[i].Name %>]'
-				<% } %>
-				SET @SQL = @SQL + ' FROM <%=fqTableName%>'
-				IF LEN(@WhereClause) > 0
-				BEGIN
-					SET @SQL = @SQL + ' WHERE ' + @WhereClause
-				END
-				SET @SQL = @SQL + ' ) SELECT'
-				<% for (int i = 0; i < cols.Count; i++) { %>
-				SET @SQL = @SQL + ' [<%= cols[i].Name %>]<% if (i < cols.Count - 1) { %>,<% } %>'
-				<% } %>
-				SET @SQL = @SQL + ' FROM PageIndex'
-				SET @SQL = @SQL + ' WHERE RowIndex > ' + CONVERT(nvarchar, @PageLowerBound)
-				IF @PageSize > 0
-				BEGIN
-					SET @SQL = @SQL + ' AND RowIndex <= ' + CONVERT(nvarchar, @PageUpperBound)
-				END
-				EXEC sp_executesql @SQL
-
-				-- get row count
-				SET @SQL = 'SELECT COUNT(*) AS TotalRowCount'
-				SET @SQL = @SQL + ' FROM <%=fqTableName%>'
-				IF LEN(@WhereClause) > 0
-				BEGIN
-					SET @SQL = @SQL + ' WHERE ' + @WhereClause
-				END
-				EXEC sp_executesql @SQL
-				
-<% } else { %>
 				-- Build the sql query
-				DECLARE @SQL AS nvarchar(4000)
-				SET @SQL = ' SELECT * FROM <%=fqTableName%>'
+				declare @SQL as nvarchar(4000)
+				SET @SQL = ' SELECT * FROM <%=owner%>[<%= SourceView.Name %>]'
 				IF LEN(@WhereClause) > 0
 				BEGIN
 					SET @SQL = @SQL + ' WHERE ' + @WhereClause
 				END
+				 
 				IF LEN(@OrderBy) > 0
 				BEGIN
 					SET @SQL = @SQL + ' ORDER BY ' + @OrderBy
 				END
 				
 				-- Execution the query
-				EXEC sp_executesql @SQL
-				
-				-- Return total count
-				SELECT @@ROWCOUNT AS TotalRowCount
-				
-<% } // end if ( IncludeDatabaseFeatures ) %>
+				exec sp_executesql @SQL
+								
 				END
+								
 			]]></body>
 		</procedure>
 		
 		<%} //end if(IncludeGetList)
-		
-		if ( IncludeFind ) { %>
-		
-		<procedure owner="<%=owner%>" name="<%= ProcedurePrefix + commandStem + FindSuffix %>_Dynamic" <%if (hasGrantUser) {%>grant="<%=grantUser%>"<%}%> skip="true">
-			<comment><![CDATA[<%= GetProcSqlComment(string.Format("Gets records from the {0} table using a dynamically generated query.", name), tableComment) %>]]></comment>
-			<parameters/>
-			<body><![CDATA[
-				<%= GetSetTransactionIsolationLevelStatement() %>
-				BEGIN
-				
-				<% if ( IncludeDatabaseFeatures == MoM.Templates.DatabaseType.SQLServer2005 ) { %>
-				WITH PageIndex AS (
-					SELECT TOP {3} row_number() OVER (ORDER BY {1}) AS RowIndex
-					<% for (int i = 0; i < cols.Count; i++) { %>
-					, [<%= cols[i].Name %>]
-					<% } %>
-					FROM <%=fqTableName%> {0}
-				)
-				SELECT
-				<% for (int i = 0; i < cols.Count; i++) { %>
-				       [<%= cols[i].Name %>]<% if (i < cols.Count - 1) { %>,<% } %>
-				<% } %>
-				  FROM PageIndex
-				 WHERE RowIndex > {2}
-				   AND RowIndex <= {3};
-
-				-- get total count
-				SELECT COUNT(*) AS TotalRowCount FROM <%= fqTableName%> {0};
-				
-				<% } else { // SQL 2000 %>
-				SELECT * FROM <%= fqTableName%> {0}
-				ORDER BY {1}
-
-				-- get total count
-				SELECT @@ROWCOUNT AS TotalRowCount;
-				
-				<% } // end if ( IncludeDatabaseFeatures ) %>
-				END
-			]]></body>
-		</procedure>
-		
-		<% } // end if ( IncludeFind ) {
 		
 	} // end for each View
 %>
@@ -1100,14 +729,6 @@ public enum TransactionIsolationLevelEnum
 	RepeatableRead,
 	Serializable
 }
-
-// Used to determine the style of drop statement to be used (if any)
-public enum DropStyleEnum
-{
-	Entity,
-	All
-}
-	
 public string GetSetTransactionIsolationLevelStatement()
 {
 	switch (IsolationLevel)
@@ -1133,10 +754,7 @@ public string GetProcSqlComment(string purpose, string tableComment)
 	StringBuilder sqlComment = new StringBuilder();
 	sqlComment.AppendFormat("/*{0}", Environment.NewLine);
 	sqlComment.AppendFormat("{0}{1}", new String('-', 100), Environment.NewLine); 
-	if (IncludeGeneratedDate)
-	{
-		sqlComment.AppendFormat("-- Date Created: {0}{1}", DateTime.Now.ToLongDateString(), Environment.NewLine);
-	}
+	sqlComment.AppendFormat("-- Date Created: {0}{1}", DateTime.Now.ToLongDateString(), Environment.NewLine);
 	sqlComment.AppendFormat("\r\n-- Created By: " + CompanyName + " (" + CompanyURL + ")" + Environment.NewLine);
 	sqlComment.AppendFormat("-- Purpose: {0}{1}", purpose, Environment.NewLine);
 	//if the tableComment is not empty, prefix it with a label

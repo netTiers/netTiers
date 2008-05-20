@@ -1,44 +1,49 @@
-﻿<%--
- * $Id: EntityView.cst,v 1.2 2006/01/23 13:08:05 jroland Exp $
- * Last modified by $Author: jroland $
- * Last modified at $Date: 2006-03-16 16:53:08 -0600 (Thu, 16 Mar 2006) $
- * $Revision: 62 $
+<%--
+ * $Id: EntityView.cst,v 1.1 2005/11/04 07:09:39 jroland Exp $
+ * Last modified by $Author$
+ * Last modified at $Date$
+ * $Revision$
 --%>
-<%@ CodeTemplate Language="C#" TargetLanguage="C#" Src="..\..\TemplateLib\CommonSqlCode.cs" Inherits="MoM.Templates.CommonSqlCode" Description="Business Object template."  ResponseEncoding="UTF-8"  NoWarn="0108,0618,1572,1573,1574,0162,2002"%>
+<%@ CodeTemplate Language="C#" TargetLanguage="C#" Src="..\..\CommonSqlCode.cs" Inherits="MoM.Templates.CommonSqlCode" Description="Business Object template." %>
 <%@ Assembly Name="SchemaExplorer" %>
 <%@ Assembly Name="System.Design" %>
-<%@ Import Namespace="SchemaExplorer" %>
 <%@ Property Name="NameSpace" Type="System.String" Category="Data" Description="Object Namespace." %>
 <%@ Property Name="SourceView" Type="SchemaExplorer.ViewSchema" Category="Data" Description="View Object should be based on." %>
+<%@ Property Name="UsePartialClass" Type="System.Boolean" Default="false" Category="General" Description="Indicates if partial class should be generated." %>
 <%
-	string className = GetClassName(SourceView);
-	string abstractClassName = GetClassName(SourceView, ClassNameFormat.Abstract);
+	string className = GetClassName(SourceView.Name);
+	string abstractClassName = UsePartialClass ? className : GetAbstractClassName(SourceView.Name);
 %>
 #region Using directives
 
 using System;
+using System.ComponentModel;
+using System.Collections;
+using System.Xml.Serialization;
 
 #endregion
 
 namespace <%=NameSpace%>
 {	
 	///<summary>
-	/// <% if(SourceView.Description.Length == 0 ) {%>An object representation of the '<%=SourceView.Name%>' view. [No description found in the database]<%} else {Response.Write(GetColumnXmlComment(SourceView,1));}%>	
+	/// <% if(SourceView.Description.Length == 0 ) {%>An object representation of the '<%=SourceView.Name%>' view. [No description for this table in the database]<%} else {Response.Write(GetColumnXmlComment(SourceView,1));}%>	
 	///</summary>
 	/// <remarks>
-	/// This file is generated once and will never be overwritten.
-	/// </remarks>	
-	[Serializable]
-	[CLSCompliant(true)]
-	public partial class <%=className%> : <%=abstractClassName%>
+	/// Inherits from the <see cref="<%=abstractClassName%>"/> class.
+	/// Sorting and interfaces implementations are part of the <see cref="<%=abstractClassName%>"/> class.
+    /// Only custom implementations are done in this class.
+    /// </remarks>
+	<% if (!UsePartialClass) { %>[Serializable]<%}%>
+	public <% if (UsePartialClass) Response.Write("partial "); %>class <%=className%><% if (!UsePartialClass) { %> : <%=abstractClassName%><% } %>
 	{
-		#region Constructors
-
+		<% if (!UsePartialClass) { %>
 		///<summary>
-		/// Creates a new <see cref="<%=className%>"/> instance.
+		/// Initializes a new instance of the <see cref="<%=className%>"/> class.
 		///</summary>
-		public <%=className%>():base(){}	
-		
-		#endregion
+		public <%=className%>() : base()
+		{
+		}
+				
+		<% } %>
 	}
 }

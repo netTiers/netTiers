@@ -1,8 +1,8 @@
-﻿<%-- 
-* $Id: AdminEntityUC_CodeBehind.cst,v 1.5 2006/01/04 20:14:17 bgjohnso Exp $
- * Last modified by $Author: jroland $
- * Last modified at $Date: 2006-03-16 16:53:08 -0600 (Thu, 16 Mar 2006) $
- * $Revision: 62 $
+<%-- 
+* $Id: AdminEntityUC_CodeBehind.cst,v 1.3 2005/12/01 00:27:10 bgjohnso Exp $
+ * Last modified by $Author$
+ * Last modified at $Date$
+ * $Revision$
 
 	Written By:
 		Ben Johnson
@@ -11,7 +11,7 @@
 	Remarks:
 		
 --%>
-<%@ CodeTemplate Src="..\..\TemplateLib\CommonSqlCode.cs" Inherits="MoM.Templates.CommonSqlCode" Language="C#" TargetLanguage="C#" Description="Generate a ASP.Net 2.0 user control for administration." Debug="True" ResponseEncoding="UTF-8" NoWarn="0108,0618,1572,1573,1574,0162,2002" %>
+<%@ CodeTemplate Src="..\..\CommonSqlCode.cs" Inherits="MoM.Templates.CommonSqlCode" Language="C#" TargetLanguage="C#" Description="Generate a ASP.Net 2.0 user control for administration." Debug="True" %>
 <%@ Assembly Name="SchemaExplorer" %>
 <%@ Assembly Name="System.Design" %>
 <%@ Import Namespace="SchemaExplorer" %>
@@ -59,10 +59,9 @@
 			fKeysSingle.Add(tableKey);
 	}
 
-	string entityName = GetClassName(SourceTable);
-	string className = NameSpace + "." + GetClassName(SourceTable);
-	string collectionName = GetClassName(SourceTable, ClassNameFormat.Collection);
-	string providerName = GetClassName(SourceTable, ClassNameFormat.Provider);
+	string entityName = GetClassName(SourceTable.Name);
+	string className = NameSpace + "." + GetClassName(SourceTable.Name);
+	string collectionName = GetCollectionClassName(SourceTable.Name);
 %>
 #region Using directives
 using System;
@@ -181,10 +180,6 @@ public partial class <%=entityName%>UC : System.Web.UI.UserControl
                 {
                     saveValue = ((System.Web.UI.WebControls.Label)ctrl).Text;
                 }
-                else if (ctrl is System.Web.UI.WebControls.HiddenField)
-                {
-                    saveValue = ((System.Web.UI.WebControls.HiddenField)ctrl).Value;
-                }
                 
                 hfSave.Value = saveValue;
             }
@@ -205,7 +200,7 @@ public partial class <%=entityName%>UC : System.Web.UI.UserControl
 			
 			if ( (column.DataType == DbType.Date) || (column.DataType == DbType.DateTime) )
 			{
-				string propertyName = GetPropertyName(column);
+				string propertyName = GetPropertyName(column.Name);
 			%>
 		((ImageButton)fvEditor.FindControl("cal_data" + prefix + "<%=propertyName%>")).OnClientClick = String.Format("showCalendarControl(document.getElementById('{0}'));return false;", fvEditor.FindControl("data" + prefix + "<%=propertyName%>").ClientID);
 			<%
@@ -260,28 +255,10 @@ public partial class <%=entityName%>UC : System.Web.UI.UserControl
 					<%
 					foreach(ColumnSchema column in cols)
 					{
-						string propertyName = GetPropertyName(column);
 					%>
-					case "<%=propertyName%>":
+					case "<%=GetPropertyName(column.Name)%>":
 					<%
-						if ( column.DataType == System.Data.DbType.DateTime)
-						{
-							string privateName = GetFieldName(column);
-						%>
-						DateTime <%=privateName%>;
-
-                  if (!DateTime.TryParse(values["<%=propertyName%>"].ToString(), out <%=privateName%>))
-                  {
-                     values[key] = DateTime.MinValue;
-                     nullFound = true;
-                  }
-                  else
-                  {
-                     values["<%=propertyName%>"] = <%=privateName%>;
-                  }
-						<%
-						}
-						else if ( column.AllowDBNull )
+						if ( column.AllowDBNull )
 						{
 						%>
 						//This field allows nulls, convert to default value
@@ -335,13 +312,13 @@ public partial class <%=entityName%>UC : System.Web.UI.UserControl
 			<%
 			foreach(ColumnSchema column in cols)
 			{
-				string propertyName = GetPropertyName(column);
+				string propertyName = GetPropertyName(column.Name);
 			%>
 			<%
-				if ( column.AllowDBNull /*&& !IsCSReferenceDataType(column)*/ )
+				if ( column.AllowDBNull && !IsCSReferenceDataType(column) )
 				{
 				%>
-			if (_nullFields.ContainsKey("<%=propertyName%>"))entity.<%=propertyName%> = null;
+			if (_nullFields.ContainsKey("<%=propertyName%>"))entity.Set<%=propertyName%>Null();
 				<%
 				}
 				%>
@@ -373,15 +350,15 @@ public partial class <%=entityName%>UC : System.Web.UI.UserControl
 					<%
 					foreach(ColumnSchema column in cols)
 					{
-						string propertyName = GetPropertyName(column);
+						string propertyName = GetPropertyName(column.Name);
 					%>
 					case "<%=propertyName%>":
 					<%
-						if ( column.AllowDBNull /*&& !IsCSReferenceDataType(column)*/ )
+						if ( column.AllowDBNull && !IsCSReferenceDataType(column) )
 						{
 					%>
 					
-						if (entity.<%=propertyName%> == null)
+						if (entity.Is<%=propertyName%>Null())
 						{
 							rtn = string.Empty;
 						}
@@ -466,25 +443,7 @@ public partial class <%=entityName%>UC : System.Web.UI.UserControl
 
 #endregion
 
-#region Public Methods
-
-    public object BindWithNull(object value, object nullValue)
-    {
-        if (value == null)
-            return nullValue;
-        else
-            return value;
-    }
-
-    #endregion
-
 	 #region objDsList Events
-	
-    protected void objDsList_ObjectCreating(object sender, ObjectDataSourceEventArgs e)
-    {
-        e.ObjectInstance = DataRepository.<%=providerName%>;
-    }
-	
     protected void objDsList_Selecting(object sender, ObjectDataSourceSelectingEventArgs e)
     {
         if (e.ExecutingSelectCount)
@@ -533,25 +492,17 @@ public partial class <%=entityName%>UC : System.Web.UI.UserControl
 					foreach( TableKeySchema tableKey in fkeys)
 					{
 						string pKeyTableName = tableKey.PrimaryKeyTable.Name;
-						string pKeyClassName = GetClassName(tableKey.PrimaryKeyTable);
-						string pKeyProviderName = GetClassName(tableKey.PrimaryKeyTable, ClassNameFormat.Provider);
+						string pKeyClassName = GetClassName(pKeyTableName);
+						string pKeyProviderName = GetProviderName(pKeyTableName);
 						string pKeyKeysNames = GetKeysName(tableKey.PrimaryKeyMemberColumns);
 						string fkPropertyName = GetKeysName(tableKey.ForeignKeyMemberColumns);
 						
 						string keyParams = String.Empty;
-						string converter = String.Empty;
-						
-						for (int i = 0; i < tableKey.ForeignKeyMemberColumns.Count;i++)
+						foreach ( ColumnSchema column in tableKey.ForeignKeyMemberColumns )
 						{
-							ColumnSchema fColumn = tableKey.ForeignKeyMemberColumns[i];
-							
-							//If the FK allows nulls and it's not a reference type,
-							//use the GetValueOrDefault method to ensure the correct data type is returned.
-							converter = (fColumn.AllowDBNull  && !(IsCSReferenceDataType(fColumn)))? ".GetValueOrDefault(" + GetCSDefaultByType(fColumn) + ")" : String.Empty;
-						
-							if ( keyParams != String.Empty ) keyParams += ", ";
+								if ( keyParams != String.Empty ) keyParams += ", ";
 								
-							keyParams +="entity." + GetPropertyName(fColumn) + converter;
+								keyParams += "entity." + GetPropertyName(column.Name);
 						}
 						
 					%>
@@ -583,11 +534,6 @@ public partial class <%=entityName%>UC : System.Web.UI.UserControl
     #endregion
 	
 	#region objDsEdit Events
-	
-	protected void objDsEdit_ObjectCreating(object sender, ObjectDataSourceEventArgs e)
-    {
-        e.ObjectInstance = DataRepository.<%=providerName%>;
-    }
 	
 	protected void objDsEdit_Updating(object sender, ObjectDataSourceMethodEventArgs e)
 	{
@@ -679,7 +625,7 @@ public partial class <%=entityName%>UC : System.Web.UI.UserControl
 					{
 						
 					%>
-                SaveValues(fvEditor, "update", "data", "<%=GetPropertyName(column)%>");
+                SaveValues(fvEditor, "update", "data", "<%=GetPropertyName(column.Name)%>");
 					<%
 					}
 					%>
@@ -689,7 +635,7 @@ public partial class <%=entityName%>UC : System.Web.UI.UserControl
 						if ( ! column.IsPrimaryKeyMember )
 						{
 					%>
-                SaveValues(fvEditor, "update", "data", "<%=GetPropertyName(column)%>");
+                SaveValues(fvEditor, "update", "data", "<%=GetPropertyName(column.Name)%>");
 					<%
 						}
 					}
@@ -705,7 +651,7 @@ public partial class <%=entityName%>UC : System.Web.UI.UserControl
 					{
 						
 					%>
-                SaveValues(fvEditor, "insert", "dataInsert", "<%=GetPropertyName(column)%>");
+                SaveValues(fvEditor, "insert", "dataInsert", "<%=GetPropertyName(column.Name)%>");
 					<%
 					}
 					%>
@@ -761,7 +707,7 @@ public partial class <%=entityName%>UC : System.Web.UI.UserControl
 								{
 									string propertyName = GetPropertyName(column);
 							%>
-							if ( entity.<%=propertyName%> == null ) SetControlNullDisplay(fv.FindControl("data<%=propertyName%>"));
+							if ( entity.Is<%=propertyName%>Null() ) SetControlNullDisplay(fv.FindControl("data<%=propertyName%>"));
 							<%
 								}
 							}
@@ -783,20 +729,6 @@ public partial class <%=entityName%>UC : System.Web.UI.UserControl
 	{
 		//Custom Validation
 		System.Collections.Specialized.OrderedDictionary values = (System.Collections.Specialized.OrderedDictionary)e.Values;
-		
-		<%
-		foreach ( ColumnSchema column in keys )
-		{
-			if ( IsGuidColumn(column) )
-			{
-				string propertyName = GetPropertyName(column);
-		%>
-		if (values["<%=propertyName%>"].ToString() == string.Empty) values["<%=propertyName%>"] = Guid.NewGuid();
-		<%
-			}
-		}
-		%>
-		
 		CheckForNulls(values);
 	}	
 	
@@ -813,7 +745,7 @@ public partial class <%=entityName%>UC : System.Web.UI.UserControl
 			foreach(TableKeySchema tableKey in fKeysSingle)
 			{
 				ColumnSchema column = tableKey.ForeignKeyMemberColumns[0];
-				string propertyName = GetPropertyName(column);	
+				string propertyName = GetPropertyName(column.Name);	
 			%>
 			case "<%=propertyName%>":
 				<%
@@ -878,17 +810,12 @@ public partial class <%=entityName%>UC : System.Web.UI.UserControl
 	//For each foreign key, create a datasource control for binding a list
 	foreach ( TableKeySchema tableKey in fKeysSingle)
 	{
-		string pKeyClassName = GetClassName(tableKey.PrimaryKeyTable);
+		string pKeyClassName = GetClassName(tableKey.PrimaryKeyTable.Name);
 		bool fKeyAllowDBNull = tableKey.ForeignKeyMemberColumns[0].AllowDBNull;
-		string fKeyPropertyName = GetPropertyName(tableKey.ForeignKeyMemberColumns[0]);
-		string pKeyCollectionName = GetClassName(tableKey.PrimaryKeyTable, ClassNameFormat.Collection);
+		string fKeyPropertyName = GetPropertyName(tableKey.ForeignKeyMemberColumns[0].Name);
+		string pKeyCollectionName = GetCollectionClassName(tableKey.PrimaryKeyTable.Name);
 	%>
 	#region objDs<%=fKeyPropertyName%> Methods
-	
-	protected void objDs<%=fKeyPropertyName%>_ObjectCreating(object sender, ObjectDataSourceEventArgs e)
-    {
-        e.ObjectInstance = DataRepository.<%=pKeyClassName%>Provider;
-    }
 	
 	<%
 		if ( fKeyAllowDBNull )
@@ -903,7 +830,7 @@ public partial class <%=entityName%>UC : System.Web.UI.UserControl
 		foreach(ColumnSchema column in tableKey.PrimaryKeyMemberColumns)
 		{
 		%>
-		entity.<%=GetPropertyName(column)%> = <%=GetCSDefaultByType(column)%>;
+		entity.<%=GetPropertyName(column.Name)%> = <%=GetCSDefaultByType(column)%>;
 		<%
 		}
 		%>
@@ -912,7 +839,7 @@ public partial class <%=entityName%>UC : System.Web.UI.UserControl
 	<%
 		}
 	%>
-
+	
 	#endregion
 	
 	<%
@@ -934,7 +861,7 @@ public string GetFormatStatement(ColumnSchema column)
 	switch ( column.DataType )
 	{
 		case DbType.Boolean:
-			formatString = string.Format("entity.{0} == true ?\"Yes\":\"No\"", propertyName);
+			formatString = string.Format("entity.{0}?\"Yes\":\"No\"", propertyName);
 			break;
 		case DbType.AnsiString:
 		case DbType.AnsiStringFixedLength:
@@ -1002,5 +929,4 @@ public string GetFormatStatement(ColumnSchema column)
 	
 	return formatString;
 }
-
 </script>
