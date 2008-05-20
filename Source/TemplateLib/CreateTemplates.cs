@@ -51,9 +51,6 @@
 			CodeTemplates.Add("ValidationRuleHandler.cst", base.CreateTemplate<ValidationRuleHandler>()); this.PerformStep();
 			CodeTemplates.Add("ValidationRuleInfo.cst", base.CreateTemplate<ValidationRuleInfo>()); this.PerformStep();
 			CodeTemplates.Add("ValidationRules.cst", base.CreateTemplate<ValidationRules>()); this.PerformStep();
-			CodeTemplates.Add("PropertyValidator.cst", base.CreateTemplate<PropertyValidator>()); this.PerformStep();
-			CodeTemplates.Add("PropertyValidatorValueAccess.cst", base.CreateTemplate<PropertyValidatorValueAccess>()); this.PerformStep();
-			CodeTemplates.Add("PropertyValidatorValueAccessBuilder.cst", base.CreateTemplate<PropertyValidatorValueAccessBuilder>()); this.PerformStep();
 																															
 			CodeTemplates.Add("Component.cst", base.CreateTemplate<Component>()); this.PerformStep();
 			CodeTemplates.Add("ComponentBase.cst", base.CreateTemplate<ComponentBase>()); this.PerformStep();
@@ -71,9 +68,7 @@
 			
 			
 			CodeTemplates.Add("IComponentEntity.cst", base.CreateTemplate<IComponentEntity>()); this.PerformStep();
-			CodeTemplates.Add("IConnectionScope.cst", base.CreateTemplate<IConnectionScope>()); this.PerformStep();
 			CodeTemplates.Add("ConnectionScope.cst", base.CreateTemplate<ConnectionScope>()); this.PerformStep();
-			CodeTemplates.Add("ConnectionScopeBase.cst", base.CreateTemplate<ConnectionScopeBase>()); this.PerformStep();
 			CodeTemplates.Add("DomainUtil.cst", base.CreateTemplate<DomainUtil>()); this.PerformStep();
 			CodeTemplates.Add("IComponentService.cst", base.CreateTemplate<IComponentService>()); this.PerformStep();
 			CodeTemplates.Add("ServiceBase.cst", base.CreateTemplate<ServiceBase>()); this.PerformStep();
@@ -89,20 +84,15 @@
 			CodeTemplates.Add("ProcessorBase.cst", base.CreateTemplate<ProcessorBase>()); this.PerformStep();
 			CodeTemplates.Add("GenericProcessorResult.cst", base.CreateTemplate<GenericProcessorResult>()); this.PerformStep();
 			CodeTemplates.Add("SecurityContext.cst", base.CreateTemplate<SecurityContext>()); this.PerformStep();														
-			CodeTemplates.Add("SecurityContextBase.cst", base.CreateTemplate<SecurityContextBase>()); this.PerformStep();
-			CodeTemplates.Add("ContextView.cst", base.CreateTemplate<ContextView>()); this.PerformStep();																																													
+																															
 																																													
 			CodeTemplates.Add("DataRepository.cst", base.CreateTemplate<DataRepository>()); this.PerformStep();
 			CodeTemplates.Add("Utility.cst", base.CreateTemplate<Utility>()); this.PerformStep();
-			CodeTemplates.Add("ITransactionManager.cst", base.CreateTemplate<ITransactionManager>()); this.PerformStep();
 			CodeTemplates.Add("TransactionManager.cst", base.CreateTemplate<TransactionManager>()); this.PerformStep();
 			CodeTemplates.Add("IEntityProvider.cst", base.CreateTemplate<IEntityProvider>()); this.PerformStep();
 			CodeTemplates.Add("IEntityViewProvider.cst", base.CreateTemplate<IEntityViewProvider>()); this.PerformStep();
-
-			CodeTemplates.Add("INetTiersProvider.cst", base.CreateTemplate<INetTiersProvider>()); this.PerformStep();							
+																																													
 			CodeTemplates.Add("NetTiersProvider.cst", base.CreateTemplate<NetTiersProvider>()); this.PerformStep();							
-			CodeTemplates.Add("NetTiersProviderBase.cst", base.CreateTemplate<NetTiersProviderBase>()); this.PerformStep();							
-		
 			CodeTemplates.Add("NetTiersProviderCollection.cst", base.CreateTemplate<NetTiersProviderCollection>()); this.PerformStep();							
 			CodeTemplates.Add("NetTiersServiceSection.cst", base.CreateTemplate<NetTiersServiceSection>()); this.PerformStep();							
 																	

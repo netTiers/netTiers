@@ -1,4 +1,4 @@
-﻿<%@ CodeTemplate Language="C#" TargetLanguage="Text" Description="" Debug="True" ResponseEncoding="UTF-8"  NoWarn="0108,0618,1572,1573,1574,0162,2002" %>
+﻿<%@ CodeTemplate Language="C#" TargetLanguage="Text" Description="" Debug="True" ResponseEncoding="UTF-8" %>
 <%@ Property Name="RootNameSpace" Type="System.String" Category="Data" Description="Website Namespace." %>
 <%@ Property Name="BLLNameSpace" Type="System.String" Category="Data" Description="BLL Namespace." %>
 #region Using directives
@@ -312,7 +312,7 @@ namespace <%=RootNameSpace%>.Web.UI
         /// <summary>
         /// Total Records Count being assigned the value in the DataSource_Selected event
         /// </summary>
-        public int RecordsCount
+        protected int RecordsCount
         {
             get
             {
@@ -326,27 +326,6 @@ namespace <%=RootNameSpace%>.Web.UI
                 ViewState["_recordsCount"] = value;
             }
         }
-
-		/// <summary>
-		/// Get or Set whether an empty grid should be shown instead of the EmptyDataTemplate.
-		/// </summary>
-		[
-		Description("Whether an empty grid should be shown instead of the EmptyDataTemplate"),
-		Category("Misc"),
-		DefaultValue("false"),
-		]
-		public bool ShowGridOnEmptyData
-		{
-			get
-			{
-				object o = ViewState["ShowGridOnEmptyData"];
-				return (o != null ? (bool)o : false);
-			}
-			set
-			{
-				ViewState["ShowGridOnEmptyData"] = value;
-			}
-		}
         #endregion
 
         #region Life Cycle
@@ -359,20 +338,18 @@ namespace <%=RootNameSpace%>.Web.UI
         {
             base.OnInit(e);
 
-            if (!String.IsNullOrEmpty(this.DataSourceID))
+            if (Page.IsPostBack == false)
             {
-                if (Page.IsPostBack == false && base.DesignMode == false)
-                {
-                    this.Sort(DefaultSortColumnName, _defaultSortDirection);
-                }
-
-                DataSourceControl dsc = (DataSourceControl)this.NamingContainer.FindControl(this.DataSourceID);
-
-                System.Reflection.EventInfo eventInfo = dsc.GetType().GetEvent("Selected");
-                Delegate d = Delegate.CreateDelegate(eventInfo.EventHandlerType, this, "dsc_Selected");
-
-                eventInfo.AddEventHandler(dsc, d);
+                this.Sort(DefaultSortColumnName, _defaultSortDirection);
             }
+
+            DataSourceControl dsc = (DataSourceControl)this.Parent.FindControl(string.Format("{0}", this.DataSourceID));
+
+            System.Reflection.EventInfo eventInfo = dsc.GetType().GetEvent("Selected");
+            Delegate d = Delegate.CreateDelegate(eventInfo.EventHandlerType, this, "dsc_Selected");
+
+            eventInfo.AddEventHandler(dsc, d);
+
         }
 
         /// <summary>
@@ -389,18 +366,6 @@ namespace <%=RootNameSpace%>.Web.UI
 
         /// <summary>
         /// Retrieves data from the underlying data storage by calling the method that is identified by the 
-        /// SelectMethod property with the parameters in the SelectParameters collection.        
-        /// </summary>
-        /// <remarks>
-        /// Occurs when a Select operation has completed.
-        /// </remarks>
-        void dsc_Selected(object sender, Web.Data.EntityDataSourceMethodEventArgs e)
-        {
-            RecordsCount = e.AffectedRows;
-        }
-
-        /// <summary>
-        /// Retrieves data from the underlying data storage by calling the method that is identified by the 
         /// SelectMethod property with the parameters in the SelectParameters collection.       
         /// </summary>
         /// <remarks>
@@ -408,8 +373,7 @@ namespace <%=RootNameSpace%>.Web.UI
         /// </remarks>
         void dsc_Selected(object sender, ObjectDataSourceStatusEventArgs e)
         {            
-            if (e.AffectedRows == 0
-				&& ShowGridOnEmptyData)
+            if (e.AffectedRows == 0)
             {
                 // check if gridview bound to typed object data source 
                 if (sender is Web.Data.IListDataSource)
@@ -475,11 +439,7 @@ namespace <%=RootNameSpace%>.Web.UI
 
             if (this.RecordsCount > 0 && this.AllowPaging)
             {
-                // handle case when pager section is suppressed
-                if (this.PagerSettings != null && this.PagerSettings.Visible)
-                {
-                    _gridPagerRow.Visible = true;
-                }
+                _gridPagerRow.Visible = true;
             }
         }
         #endregion

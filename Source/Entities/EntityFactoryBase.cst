@@ -1,4 +1,4 @@
-﻿<%@ CodeTemplate Language="C#" TargetLanguage="C#" Description="contains a creational factory for entity types." ResponseEncoding="UTF-8" NoWarn="0108,0618,1572,1573,1574,0162,2002" %>
+<%@ CodeTemplate Language="C#" TargetLanguage="C#" Description="contains a creational factory for entity types." ResponseEncoding="UTF-8" %>
 <%@ Property Name="NameSpace" Type="System.String" Category="Data" Description="The project root Namespace." %>
 using System;
 using System.Collections.Generic;
@@ -164,12 +164,9 @@ namespace <%=NameSpace%>
         public static T Create<T>() where T : IEntity, new()
         {
             Type type = typeof(T);
-			
-			lock (syncRoot)
-            {
-            	if (!internalTypeCache.ContainsValue(type))
-                	internalTypeCache.Add(type.FullName, type);
-			}
+
+            if (!internalTypeCache.ContainsValue(type))
+                internalTypeCache.Add(type.FullName, type);
 
             //fire pre creating event
             OnEntityCreating(type);
@@ -247,11 +244,8 @@ namespace <%=NameSpace%>
 
             typeString = string.Format("{0}.{1}", currentEntityAssemblyNamespace, typeString);
 
-			lock (syncRoot)
-            {
-            	if (internalTypeCache.ContainsKey(typeString))
-                	return CoreCreate(internalTypeCache[typeString]);
-			}
+            if (internalTypeCache.ContainsKey(typeString))
+                return CoreCreate(internalTypeCache[typeString]);
 
             // resolve the type
             Type targetType = ResolveType(typeString);
@@ -276,10 +270,10 @@ namespace <%=NameSpace%>
         /// <returns>created object</returns>
         private static object CoreCreate(Type type)
         {
-			lock (syncRoot)
+            if (!internalTypeCache.ContainsValue(type))
             {
-            	if (!internalTypeCache.ContainsValue(type))
-            	{
+                lock (syncRoot)
+                {
                     internalTypeCache.Add(type.FullName, type);
                 }
             }

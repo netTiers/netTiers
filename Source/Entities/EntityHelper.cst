@@ -1,14 +1,5 @@
-﻿<%@ CodeTemplate Src="..\TemplateLib\CommonSqlCode.cs" Inherits="MoM.Templates.CommonSqlCode" Language="C#" TargetLanguage="C#" Description="Contains usefull tool to manipulate IEntity instances." Debug="False"  ResponseEncoding="UTF-8" NoWarn="0108,0618,1572,1573,1574,0162,2002"%>
-<%@ Assembly Name="SchemaExplorer" %>
-<%@ Assembly Name="System.Design" %>
-<%@ Import Namespace="SchemaExplorer" %>
-
+<%@ CodeTemplate Language="C#" TargetLanguage="C#" Description="Contains usefull tool to manipulate IEntity instances." ResponseEncoding="UTF-8" %>
 <%@ Property Name="NameSpace" Type="System.String" Category="Data" Description="The project root Namespace." %>
-<%
-	string listName = GetTListName();
-	string vListName = GetVListName();
-
-%>
 using System;
 using System.Collections;
 using System.Collections.Generic;
@@ -121,12 +112,12 @@ namespace <%=NameSpace%>
 		}
 		
         /// <summary>
-        /// Serializes the <see cref="T:<%=listName%>{T}"/> of IEntity to XML
+        /// Serializes the <see cref="T:TList{T}"/> of IEntity to XML
         /// </summary>
         /// <typeparam name="T">type to return, type must implement IEntity</typeparam>
-        /// <param name="entityCollection"><%=listName%> of T type to return</param>
+        /// <param name="entityCollection">TList of T type to return</param>
         /// <returns>string of serialized XML</returns>
-        public static string SerializeXml<T>(<%=listName%><T> entityCollection)  where T : IEntity, new()
+        public static string SerializeXml<T>(TList<T> entityCollection)  where T : IEntity, new()
         {
             XmlSerializer ser = new XmlSerializer(entityCollection.GetType());
             StringBuilder sb = new StringBuilder();
@@ -154,7 +145,7 @@ namespace <%=NameSpace%>
 		/// </summary>
 		/// <param name="entityCollection">The Entity collection to serialize.</param>
 		/// <param name="path">The Path to the destination file.</param>
-		public static void SerializeXml<T>(<%=listName%><T> entityCollection, string path) where T : IEntity, new()
+		public static void SerializeXml<T>(TList<T> entityCollection, string path) where T : IEntity, new()
 		{
 			XmlSerializer ser = new XmlSerializer(entityCollection.GetType());
 			StreamWriter sw = new StreamWriter(path);
@@ -163,12 +154,12 @@ namespace <%=NameSpace%>
 		}
 		
 		/// <summary>
-      /// Serializes the <see cref="T:<%=vListName%>{T}"/> of view entities to XML
+      /// Serializes the <see cref="T:VList{T}"/> of view entities to XML
       /// </summary>
       /// <typeparam name="T">type to return</typeparam>
-      /// <param name="entityCollection"><%=vListName%> of T type to return</param>
+      /// <param name="entityCollection">VList of T type to return</param>
       /// <returns>string of serialized XML</returns>
-      public static string SerializeXml<T>(<%=vListName%><T> entityCollection)
+      public static string SerializeXml<T>(VList<T> entityCollection)
       {
          XmlSerializer ser = new XmlSerializer(entityCollection.GetType());
          StringBuilder sb = new StringBuilder();
@@ -183,7 +174,7 @@ namespace <%=NameSpace%>
       /// </summary>
       /// <param name="entityCollection">The Entity View collection to serialize.</param>
       /// <param name="path">The Path to the destination file.</param>
-      public static void SerializeXml<T>(<%=vListName%><T> entityCollection, string path)
+      public static void SerializeXml<T>(VList<T> entityCollection, string path)
       {
          XmlSerializer ser = new XmlSerializer(entityCollection.GetType());
          StreamWriter sw = new StreamWriter(path);
@@ -243,15 +234,15 @@ namespace <%=NameSpace%>
         /// <summary>
         /// 
         /// </summary>
-        /// <typeparam name="T"><see cref="T:<%=listName%>{T}"/> where T : IEntity, new()</typeparam>
-        /// <param name="data">string of serialized <%=listName%> of T xml</param>
-        /// <returns><see cref="T:<%=listName%>{T}"/> where T : IEntity, new()</returns>
-        public static <%=listName%><T> DeserializeListXml<T>(string data) where T : IEntity, new()
+        /// <typeparam name="T"><see cref="T:TList{T}"/> where T : IEntity, new()</typeparam>
+        /// <param name="data">string of serialized TList of T xml</param>
+        /// <returns><see cref="T:TList{T}"/> where T : IEntity, new()</returns>
+        public static TList<T> DeserializeListXml<T>(string data) where T : IEntity, new()
         {
-            XmlSerializer serializer = new XmlSerializer(typeof(<%=listName%><T>));
+            XmlSerializer serializer = new XmlSerializer(typeof(TList<T>));
             TextReader reader = new StringReader(data);
-            <%=listName%><T> toReturn;
-            toReturn = (<%=listName%><T>)serializer.Deserialize(reader);
+            TList<T> toReturn;
+            toReturn = (TList<T>)serializer.Deserialize(reader);
             reader.Close();
             return toReturn;
         }
@@ -275,15 +266,15 @@ namespace <%=NameSpace%>
 		/// <summary>
 		/// Deserialize a list of view entity objects from an Xml string
 		/// </summary>
-		/// <typeparam name="T"><see cref="T:<%=vListName%>{T}"/> where T is a view entity class</typeparam>
-		/// <param name="data">string of serialized <%=vListName%> of T xml</param>
-		/// <returns><see cref="T:<%=vListName%>{T}"/></returns>
-		public static <%=vListName%><T> DeserializeVListXml<T>(string data)
+		/// <typeparam name="T"><see cref="T:VList{T}"/> where T is a view entity class</typeparam>
+		/// <param name="data">string of serialized VList of T xml</param>
+		/// <returns><see cref="T:VList{T}"/></returns>
+		public static VList<T> DeserializeVListXml<T>(string data)
 		{
-			XmlSerializer serializer = new XmlSerializer(typeof(<%=vListName%><T>));
+			XmlSerializer serializer = new XmlSerializer(typeof(VList<T>));
 			TextReader reader = new StringReader(data);
-			<%=vListName%><T> toReturn;
-			toReturn = (<%=vListName%><T>)serializer.Deserialize(reader);
+			VList<T> toReturn;
+			toReturn = (VList<T>)serializer.Deserialize(reader);
 			reader.Close();
 			return toReturn;
 		}
@@ -392,7 +383,7 @@ namespace <%=NameSpace%>
 			// create a filter so we only return the properties that have been designated as bindable
 			Attribute[] attrs = new Attribute[] { new System.ComponentModel.BindableAttribute(true) };
 			
-			//If the type is a generic type (<%=listName%> or <%=vListName%>), we need to get the properties of the inner type
+			//If the type is a generic type (TList or VList), we need to get the properties of the inner type
 			if (type.IsGenericType)
 			{
          	type = type.GetGenericArguments()[0];
@@ -495,7 +486,7 @@ namespace <%=NameSpace%>
 
 	    }
 		#endregion	
-			
+		
 		<%
 		if (false)
 		{

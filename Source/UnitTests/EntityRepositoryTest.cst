@@ -4,7 +4,7 @@
  * Last modified at $Date: 2006-04-09 20:53:51 -0500 (Sun, 09 Apr 2006) $
  * $Revision: 120 $
 --%>
-<%@ CodeTemplate Src="..\TemplateLib\CommonSqlCode.cs" Inherits="MoM.Templates.CommonSqlCode" Language="C#" TargetLanguage="C#" Description="Generate nUnit test for the entity." Debug="False"  ResponseEncoding="UTF-8" NoWarn="0108,0618,1572,1573,1574,0162,2002"%>
+<%@ CodeTemplate Src="..\TemplateLib\CommonSqlCode.cs" Inherits="MoM.Templates.CommonSqlCode" Language="C#" TargetLanguage="C#" Description="Generate nUnit test for the entity." Debug="False"  ResponseEncoding="UTF-8"%>
 
 <%@ Assembly Name="SchemaExplorer" %>
 <%@ Assembly Name="System.Design" %>
@@ -41,8 +41,6 @@
 	
 	// Collection of all columns in the table that are not primary keys.
 	ColumnSchemaCollection nonKeys = SourceTable.NonPrimaryKeyColumns;
-	
-	bool isJunctionTable = IsJunctionTable(SourceTable);
 	
 	// Collection of all primary key columns.
 	ColumnSchemaCollection keys = SourceTable.PrimaryKey.MemberColumns;
@@ -147,7 +145,7 @@ namespace <%=UTNameSpace%>
         }
     
     
-		<% if (IncludeInsert && !isJunctionTable) { %>
+		<% if (IncludeInsert) { %>
 		/// <summary>
 		/// Inserts a mock <%=className%> entity into the database.
 		/// </summary>
@@ -190,7 +188,7 @@ namespace <%=UTNameSpace%>
 		}
 		<% } %>
 		
-		<% if (IncludeUpdate && !isJunctionTable) { %>
+		<% if (IncludeUpdate) { %>
 		/// <summary>
 		/// Updates a mock <%=className%> entity into the database.
 		/// </summary>
@@ -204,7 +202,7 @@ namespace <%=UTNameSpace%>
 		<% } %>
 		
 		
-		<% if (IncludeDelete && !isJunctionTable) { %>
+		<% if (IncludeDelete) { %>
 		/// <summary>
 		/// Delete the mock <%=className%> entity into the database.
 		/// </summary>
@@ -266,7 +264,7 @@ namespace <%=UTNameSpace%>
 		#endregion
 		
 		
-		<% if (IncludeGetListByFK && !isJunctionTable) { %>
+		<% if (IncludeGetListByFK) { %>
 		
 		/// <summary>
 		/// Check the foreign key dal methods.
@@ -280,7 +278,7 @@ namespace <%=UTNameSpace%>
 		}
 		<% } %>
 		
-		<% if (IncludeGetListByIX && !isJunctionTable) { %>
+		<% if (IncludeGetListByIX) { %>
 		
 		/// <summary>
 		/// Check the indexes dal methods.
@@ -306,10 +304,10 @@ namespace <%=UTNameSpace%>
         ///<summary>
         ///  Returns a Typed <%=className%> Entity with mock values.
         ///</summary>
-        static public <%=className%> CreateMockInstance(TransactionManager tm)
+        static public <%=className%> CreateMockInstance()
         {
             // get the default mock instance
-            <%=className%> mock = <%=unitTestClassName%>.CreateMockInstance_Generated(tm);
+            <%=className%> mock = <%=unitTestClassName%>.CreateMockInstance_Generated();
             // make any alterations necessary 
             // (i.e. for DB check constraints, special test cases, etc.)
 			
@@ -320,9 +318,9 @@ namespace <%=UTNameSpace%>
         ///<summary>
         ///  Update the Typed <%=className%> Entity with modified mock values.
         ///</summary>
-        static public void UpdateMockInstance(TransactionManager tm, <%=className%> mock)
+        static public void UpdateMockInstance(<%=className%> mock)
         {
-            <%=unitTestClassName%>.UpdateMockInstance_Generated(tm, mock);
+            <%=unitTestClassName%>.UpdateMockInstance_Generated(mock);
             // make any alterations necessary 
             // (i.e. for DB check constraints, special test cases, etc.)
         }

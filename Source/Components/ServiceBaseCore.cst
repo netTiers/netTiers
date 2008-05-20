@@ -4,7 +4,7 @@
  * Last modified at $Date: 2006/02/27 22:09:40 $
  * $Revision: 1.13 $
 --%>
-<%@ CodeTemplate Src="..\TemplateLib\CommonSqlCode.cs" Inherits="MoM.Templates.CommonSqlCode" Language="C#" TargetLanguage="C#" Description="The interface that each business object of the domain implements." ResponseEncoding="UTF-8" NoWarn="0108,0618,1572,1573,1574,0162,2002"%>
+<%@ CodeTemplate Src="..\TemplateLib\CommonSqlCode.cs" Inherits="MoM.Templates.CommonSqlCode" Language="C#" TargetLanguage="C#" Description="The interface that each business object of the domain implements." ResponseEncoding="UTF-8"%>
 <%@ Assembly Name="SchemaExplorer" %>
 <%@ Import Namespace="SchemaExplorer" %>
 <%@ Assembly Name="System.Design" %>
@@ -19,26 +19,17 @@
 <%@ Property Name="IncludeGetListByFK" Type="System.Boolean" Default="True" Category="Options" Description="If true get functions will be generated." %>
 <%@ Property Name="IncludeGetListByIX" Type="System.Boolean" Default="True" Category="Options" Description="If true getlist functions will be generated." %>
 <%@ Property Name="IncludeFind" Type="System.Boolean" Default="True" Category="Options" Description="If true find functions will be generated." %>
-<%@ Property Name="ComponentPattern" Optional="False" Type="MoM.Templates.ComponentPatternType" Category="Pattern" Description="Component Pattern Type." %>
-<%@ Property Name="ValidationType" Type="MoM.Templates.ValidationType" Default="NetTiers" Category="02. Framework Generation - Optional" Description="Choice to either use .netTiers validation framework, or Enterprise Library VAB" %>
 
 <%@ Property Name="NameSpace" Optional="False" Type="System.String" Category="Style" Description="Object Namespace." %>
 <%@ Property Name="BLLNameSpace" Optional="False" Type="System.String" Category="Style" Description="BLL Object Namespace." %>
 <%@ Property Name="DALNameSpace" Optional="False" Type="System.String" Category="Style" Description="DAL Object Namespace." %>
 <%@ Assembly Name="SchemaExplorer" %>
-
-<%
-	string listName = GetTListName();
-%>
 #region Using Directives
 using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Diagnostics;
-<% if(ValidationType == MoM.Templates.ValidationType.EntLib){%>
-using Microsoft.Practices.EnterpriseLibrary.Validation;
-<%}%>
 using <%=BLLNameSpace%>;
 using <%=BLLNameSpace%>.Validation;
 using <%=DALNameSpace%>;
@@ -56,81 +47,124 @@ namespace <%=NameSpace%>
 		where Entity : IEntityId<EntityKey>, new() 
 		where EntityKey : IEntityKey, new()
 	{
-		#region Fields
-		
-		#endregion Fields
-		
-		#region Properties
-		#region Protected properties
-		// the following 3 properties were fields but have been promoted to properties so they only have
-		// to be defined once and can be overriden by sub-classes.
-		
-        /// <summary>
-        /// Gets the layer exception policy.
-        /// </summary>
-        /// <value>The layer exception policy.</value>
-		protected static string layerExceptionPolicy 
-		{ 
-			get { return "<%= ComponentPattern %>ExceptionPolicy"; } 
-		}
-		
-        /// <summary>
-        /// Gets a value indicating whether to use a transaction by default.
-        /// </summary>
-        /// <value><c>true</c> if no transaction by default; otherwise, <c>false</c>.</value>
-        protected static bool noTranByDefault 
-		{ 
-			get { return false; } 
-		}
-
-		/// <summary>
-        /// Gets the default max records.
-        /// </summary>
-        /// <value>The default max records.</value>
-        protected static int defaultMaxRecords 
-		{ 
-			get { return 10000; }    
-		}
-		#endregion Protected properties
 		
 		private IList<IProcessor> processorList = new List<IProcessor>();
+		private ServiceResult serviceResult = null;
+		private bool abortOnFailure = true;
+		private int currentProcessorIndex = 0;
+		
+		/// <summary>
+		///	Provides the beginning
+		/// </summary>
+		///<value>A list of business rule processors to execute</value>
+		public virtual ServiceResult Execute()
+		{
+			return Execute(false);
+		}
+		
+		/// <summary>
+		///	Provides the beginning
+		/// </summary>
+		///<value>A list of business rule processors to execute</value>
+		public virtual ServiceResult Execute(bool abortIfFailure)
+		{
+			AbortOnFailure = abortIfFailure;
+			ServiceResult result = ServiceProcessResult;
+		
+		
+			for(int i=0; i < ProcessorList.Count; i++)
+			{
+				currentProcessorIndex = i;
+				
+				if (ProcessorList[i] == null)
+					throw new ArgumentNullException(string.Format("The process located at index {0} of the ProcessorList is null.", i));
+					
+				//Fire Process Starting Event
+				OnProcessStarting((ProcessorBase)ProcessorList[i]);
+				
+				ProcessorList[i].ChangeProcessorState(ProcessorState.Running);
+				IProcessorResult processResult = null;
+				
+				try
+				{
+					//Begin Process
+					processResult = ProcessorList[i].Process();
+				}
+				catch(Exception exc)
+				{
+					Logger.Write(exc);
+					result.ExceptionList.Add((ProcessorBase)ProcessorList[i], exc);
+					ProcessorList[i].ChangeProcessorState(ProcessorState.Stopped);
+				}
+				
+				//if the processor didn't do cleanup, cleanup by default.
+				if (ProcessorList[i].CurrentProcessorState == ProcessorState.Running)
+					ProcessorList[i].ChangeProcessorState(processResult.Result ? ProcessorState.Completed : ProcessorState.Stopped);
+
+				if (processResult != null)
+				{
+					//Add to Processor Result List
+					result.ProcessorResultList.Add(processResult);
+	
+					//Add To Aggregated Broken Rules List
+ 					foreach(BrokenRulesList list in processResult.BrokenRulesLists.Values)
+                        result.ProcessBrokenRuleLists.Add((ProcessorBase)ProcessorList[i], list);				
+				}
+				
+				//Fire Process Ending Event
+				OnProcessEnded(ProcessorList[i] as ProcessorBase);
+
+				if ((processResult == null || !processResult.Result) && AbortOnFailure)
+					return result;
+
+			}
+			return result;
+		}
+		
 		/// <summary>
 		///	Provides a List of Processors to execute external business process logic in.
 		/// </summary>
 		///<value>A list of business rule processors to execute</value>
 		public virtual IList<IProcessor> ProcessorList 
 		{
-			get	{ return processorList;	} 
-			set { processorList = value; }
+			get
+				{
+					return processorList;
+				} 
+			set
+				{
+					processorList = value;
+				}
 		}
 
-		private ServiceResult serviceResult = null;
 		/// <summary>
 		///	Provides a Notification Pattern of Process Results.
 		/// </summary>
 		///<value>A list of business rule processors to execute</value>
 		public virtual ServiceResult ServiceProcessResult
 		{
-			get
-			{
+			get{
 				if (serviceResult == null)
-				{
 					serviceResult = new ServiceResult();
-				}
 				
 				return serviceResult;
 			}
 		}
 
-		private bool abortOnFailure = true;
 		/// <summary>
 		///	Provides a way to terminate the Processor calls upon an exception. 
 		/// </summary>
 		///<value>bool value determining to stop once an exceptions been thrown. </value>		
 		public virtual bool AbortOnFailure 
 		{
-			get { return abortOnFailure; } 
-			set	{ abortOnFailure = value; } 
+			get
+			{
+				return abortOnFailure;
+			} 
+			set
+			{
+				abortOnFailure = value;
+			} 
 		}
 
 		/// <summary>
@@ -138,15 +172,12 @@ namespace <%=NameSpace%>
 		/// </summary>
 		public virtual string CurrentProcessor
 		{
-			get 
-			{
-				if (ProcessorList.Count > CurrentProcessorIndex)
-				{
-					return ProcessorList[CurrentProcessorIndex].ProcessName;
-				}
-				
-				return null;
-			}	
+			get {
+					if (ProcessorList.Count > CurrentProcessorIndex)
+						return ProcessorList[CurrentProcessorIndex].ProcessName;
+					
+					return null;
+				}	
 		}
 
 		/// <summary>
@@ -157,7 +188,6 @@ namespace <%=NameSpace%>
 			get {return currentProcessorIndex + 1;}
 		}
 		
-		private int currentProcessorIndex = 0;
 		/// <summary>
 		/// Current index of the processor currently or last executed 
 		/// </summary>
@@ -173,7 +203,6 @@ namespace <%=NameSpace%>
 		{
 			get {return ProcessorList.Count;}		
 		}
-		#endregion Properties
 		
 		#region Events
 		/// <summary>
@@ -182,9 +211,7 @@ namespace <%=NameSpace%>
 		public virtual void OnProcessStarting(ProcessorBase processor)
 		{
 			if (ProcessStarting != null)
-			{
 				ProcessStarting(this, new ProcessorEventArgs(processor));
-			}
 		}
 
 		/// <summary>
@@ -193,9 +220,7 @@ namespace <%=NameSpace%>
 		public virtual void OnProcessEnded(ProcessorBase processor)
 		{
 			if (ProcessEnded != null)
-			{
 				ProcessEnded(this, new ProcessorEventArgs(processor));
-			}
 		}
 		
 		/// <summary>
@@ -211,89 +236,6 @@ namespace <%=NameSpace%>
 		public event ProcessEndedHandler ProcessEnded;
 	
 		#endregion Events	
-
-		#region Execute methods
-		/// <summary>
-		///	Provides the beginning
-		/// <remarks>
-		/// If no AbortIfFailure parameter is passed then the process will not abort if there is a failure
-		/// </remarks>
-		/// </summary>
-		///<value>A list of business rule processors to execute</value>
-		public virtual ServiceResult Execute()
-		{
-			return Execute(false);
-		}
-		
-		/// <summary>
-		///	Executes the processors in the processor list
-		/// <remarks>
-		/// If abortIfFailure is set to true then the execution will halt on the first failure
-		///</remarks>
-		/// </summary>
-		public virtual ServiceResult Execute(bool abortIfFailure)
-		{
-			AbortOnFailure = abortIfFailure;
-			ServiceResult result = ServiceProcessResult;
-		
-			for(int i=0; i < ProcessorList.Count; i++)
-			{
-				currentProcessorIndex = i;
-				
-				if (ProcessorList[i] == null)
-				{
-					throw new ArgumentNullException(string.Format("The process located at index {0} of the ProcessorList is null.", i));
-				}
-					
-				OnProcessStarting((ProcessorBase)ProcessorList[i]);	//Fire Process Starting Event
-				ProcessorList[i].ChangeProcessorState(ProcessorState.Running);
-				IProcessorResult processResult = null;
-				
-				try
-				{
-					processResult = ProcessorList[i].Process();	//Begin Process
-				}
-				catch(Exception exc)
-				{
-					Logger.Write(exc);
-					result.ExceptionList.Add((ProcessorBase)ProcessorList[i], exc);
-					ProcessorList[i].ChangeProcessorState(ProcessorState.Stopped);
-				}
-				
-				//if the processor didn't do cleanup, cleanup by default.
-				if (ProcessorList[i].CurrentProcessorState == ProcessorState.Running)
-				{
-					ProcessorList[i].ChangeProcessorState(processResult.Result ? ProcessorState.Completed : ProcessorState.Stopped);
-				}
-
-				if (processResult != null)
-				{
-					//Add to Processor Result List
-					result.ProcessorResultList.Add(processResult);
-	
-					//Add To Aggregated Broken Rules List
- 					<% if(ValidationType == MoM.Templates.ValidationType.NetTiers){%>
- 					foreach(BrokenRulesList list in processResult.BrokenRulesLists.Values)
-                        result.ProcessBrokenRuleLists.Add((ProcessorBase)ProcessorList[i], list);
-					<%}%>
-					<% if(ValidationType == MoM.Templates.ValidationType.EntLib){%>
-					foreach(ValidationResults results in processResult.BrokenRulesLists.Values)
-						result.ProcessBrokenRuleLists.Add((ProcessorBase)ProcessorList[i], results);
-					<%}%>
-				}
-				
-				OnProcessEnded(ProcessorList[i] as ProcessorBase);	//Fire Process Ending Event
-
-				if ((processResult == null || !processResult.Result) && 
-						AbortOnFailure)
-				{
-					return result;
-				}
-			}
-			
-			return result;
-		}
-		#endregion Execute methods
 
 		#region IEntityProvider Implementation
 		
@@ -312,8 +254,8 @@ namespace <%=NameSpace%>
 		/// <summary>
 		/// Gets all rows from the DataSource.
 		/// </summary>
-		/// <returns>Returns a <%=listName%> of Entity objects.</returns>
-		public virtual <%=listName%><Entity> <%= MethodNames.GetAll %>()
+		/// <returns>Returns a TList of Entity objects.</returns>
+		public virtual TList<Entity> <%= MethodNames.GetAll %>()
 		{
 			throw new NotImplementedException();
 		}
@@ -330,8 +272,8 @@ namespace <%=NameSpace%>
 		/// <param name="start">Row number at which to start reading.</param>
 		/// <param name="pageLength">Number of rows to return.</param>
 		/// <param name="count">Number of rows in the DataSource.</param>
-		/// <returns>Returns a <%=listName%> of Entity objects.</returns>
-		public virtual <%=listName%><Entity> <%= MethodNames.GetPaged %>(string whereClause, string orderBy, int start, int pageLength, out int count)
+		/// <returns>Returns a TList of Entity objects.</returns>
+		public virtual TList<Entity> <%= MethodNames.GetPaged %>(string whereClause, string orderBy, int start, int pageLength, out int count)
 		{
 			throw new NotImplementedException();
 		}
@@ -351,7 +293,7 @@ namespace <%=NameSpace%>
 		/// <param name="count">out parameter to get total records for query</param>
 		/// <remarks>Operators must be capitalized (OR, AND)</remarks>
 		/// <returns>Returns a typed collection of Entity objects.</returns>
-		public virtual <%=listName%><Entity> <%= MethodNames.Find %>(string whereClause, int start, int pageLength, out int count)
+		public virtual TList<Entity> <%= MethodNames.Find %>(string whereClause, int start, int pageLength, out int count)
 		{
 			throw new NotImplementedException();
 		}
@@ -375,8 +317,8 @@ namespace <%=NameSpace%>
 		/// <summary>
 		/// Efficiently inserts multiple rows into the DataSource.
 		/// </summary>
-		/// <param name="entities"><%=listName%> of Entity objects to insert.</param>
-		public virtual void <%= MethodNames.BulkInsert %>(<%=listName%><Entity> entities)
+		/// <param name="entities">TList of Entity objects to insert.</param>
+		public virtual void <%= MethodNames.BulkInsert %>(TList<Entity> entities)
 		{
 			throw new NotImplementedException("The <%= MethodNames.BulkInsert %> method has not been implemented.");
 		}
@@ -449,17 +391,17 @@ namespace <%=NameSpace%>
 		#region <%= MethodNames.DeepLoad %> Entity Collection
 
 		/// <summary>
-		/// Deep Loads the entire <see cref="<%=listName%>{Entity}" /> object with criteria based of the child 
+		/// Deep Loads the entire <see cref="TList{Entity}" /> object with criteria based of the child 
 		/// property collections only N Levels Deep based on the DeepLoadType.
 		/// </summary>
 		/// <remarks>
 		/// Use this method with caution as it is possible to DeepLoad with Recursion and traverse an entire collection's object graph.
 		/// </remarks>
-		/// <param name="entities"><%=listName%> of Entity objects to load.</param>
+		/// <param name="entities">TList of Entity objects to load.</param>
 		/// <param name="deep">A flag that indicates whether to recursively load all Property Collections that are descendants of this instance. If True, loads the complete object graph below this object. If False, loads this object only.</param>
 		/// <param name="deepLoadType">DeepLoadType Enumeration to Include/Exclude object property collections from Load.</param>
 		/// <param name="childTypes">Entity Property Collection Type Array To Include or Exclude from Load.</param>
-		public virtual void <%= MethodNames.DeepLoad %>(<%=listName%><Entity> entities, bool deep, DeepLoadType deepLoadType, params System.Type[] childTypes)
+		public virtual void <%= MethodNames.DeepLoad %>(TList<Entity> entities, bool deep, DeepLoadType deepLoadType, params System.Type[] childTypes)
 		{
 			throw new NotImplementedException();
 		}
@@ -526,10 +468,10 @@ namespace <%=NameSpace%>
 		/// <summary>
 		/// Deep Save the Entity objects with criteria based on the child types array and the DeepSaveType.
 		/// </summary>
-		/// <param name="entities"><%=listName%> of Entity objects to save.</param>
+		/// <param name="entities">TList of Entity objects to save.</param>
 		/// <param name="deepSaveType">DeepSaveType Enumeration to Include/Exclude object property collections from Save.</param>
 		/// <param name="childTypes">Entity Property Collection Type Array To Include or Exclude from Save.</param>
-		public virtual bool <%= MethodNames.DeepSave %>(<%=listName%><Entity> entities, DeepSaveType deepSaveType, params System.Type[] childTypes)
+		public virtual bool <%= MethodNames.DeepSave %>(TList<Entity> entities, DeepSaveType deepSaveType, params System.Type[] childTypes)
 		{
 			// check if borrowed transaction
 			/*
@@ -546,124 +488,8 @@ namespace <%=NameSpace%>
 		
 		<% } // end if ( IncludeSave ) %>
 		#endregion IEntityProvider Implementation
-		
-		#region Transaction helper methods
-        /// <summary>
-        /// Handles the transaction and provider setup.
-		/// <remarks>
-		/// No transaction manager is created if it doesn't already exist
-		/// </remarks>
-        /// </summary>
-        /// <param name="transactionManager">The transaction manager.</param>
-        /// <param name="dataProvider">The data provider.</param>
-        /// <returns></returns>
-		protected virtual TransactionManager HandleTransactionAndProviderSetup( TransactionManager transactionManager, 
-																					out NetTiersProvider dataProvider )
-        {
-			bool isBorrowedTransaction = false;
-			return HandleTransactionAndProviderSetup( transactionManager, noTranByDefault, out isBorrowedTransaction, out dataProvider );
-		}
-		
-		/// <summary>
-        /// Handles the transaction and provider setup.
-		/// <remarks>
-		/// Creates a transaction if it does not already exist
-		/// </remarks>
-        /// </summary>
-        /// <param name="transactionManager">The transaction manager.</param>
-        /// <param name="isBorrowedTransaction">if set to <c>true</c> [is borrowed transaction].</param>
-        /// <param name="dataProvider">The data provider.</param>
-        /// <returns></returns>
-		protected virtual TransactionManager HandleTransactionAndProviderSetup( TransactionManager transactionManager, 
-																					out bool isBorrowedTransaction, 
-																					out NetTiersProvider dataProvider )
-        {
-            return HandleTransactionAndProviderSetup( transactionManager, true, out isBorrowedTransaction, out dataProvider );
-        }
-		
-        /// <summary>
-        /// Handles the transaction and provider setup.
-        /// </summary>
-        /// <param name="transactionManager">The transaction manager.</param>
-		/// <param name="createTransaction">Determines if a transaction should be created if it does not already exist</param>
-        /// <param name="isBorrowedTransaction">if set to <c>true</c> [is borrowed transaction].</param>
-        /// <param name="dataProvider">The data provider.</param>
-        /// <returns></returns>
-		protected virtual TransactionManager HandleTransactionAndProviderSetup( TransactionManager transactionManager, 
-																					bool createTransaction,
-																					out bool isBorrowedTransaction, 
-																					out NetTiersProvider dataProvider )
-        {
-            dataProvider = ConnectionScope.Current.DataProvider;
-			
-            return HandleTransactionSetup( transactionManager, createTransaction, out isBorrowedTransaction );
-        }
-
-		/// <summary>
-        /// Handles the transaction setup.
-		/// <remarks>
-		/// Creates a transaction manager if none currently exists
-		/// </remarks>
-        /// </summary>
-        /// <param name="transactionManager">The transaction manager.</param>
-        /// <param name="isBorrowedTransaction">if set to <c>true</c> [is borrowed transaction].</param>
-        /// <returns></returns>
-		protected virtual TransactionManager HandleTransactionSetup( TransactionManager transactionManager, 
-																		out bool isBorrowedTransaction )
-        {
-			return HandleTransactionSetup( transactionManager, true, out isBorrowedTransaction );
-		}
-		
-		/// <summary>
-        /// Handles the transaction setup.
-        /// </summary>
-        /// <param name="transactionManager">The transaction manager.</param>
-		/// <param name="createTransaction">Determines if a transaction should be created if it does not already exist</param>
-        /// <param name="isBorrowedTransaction">if set to <c>true</c> [is borrowed transaction].</param>
-        /// <returns></returns>
-		protected virtual TransactionManager HandleTransactionSetup( TransactionManager transactionManager, 
-																		bool createTransaction, 
-																		out bool isBorrowedTransaction )
-        {
-            isBorrowedTransaction = ConnectionScope.Current.HasTransaction;
-            transactionManager = ConnectionScope.ValidateOrCreateTransaction( createTransaction );
-			
-            return transactionManager;
-        }
-		
-		/// <summary>
-        /// Handles the transaction commit.
-        /// </summary>
-        /// <param name="transactionManager">The transaction manager.</param>
-        /// <param name="isBorrowedTransaction">if set to <c>true</c> [is borrowed transaction].</param>
-        protected virtual void HandleTransactionCommit( TransactionManager transactionManager, bool isBorrowedTransaction )
-        {
-            // If success, Commit
-            if ( !isBorrowedTransaction &&
-                    transactionManager != null && 
-					transactionManager.IsOpen )
-            {
-                transactionManager.Commit();
-            }
-        }
-		
-		/// <summary>
-        /// Handles the transaction rollback.
-        /// </summary>
-        /// <param name="transactionManager">The transaction manager.</param>
-        protected virtual void HandleTransactionRollback( TransactionManager transactionManager )
-        {
-            // if open, rollback
-            if ( transactionManager != null && 
-					transactionManager.IsOpen )
-			{
-                transactionManager.Rollback();
-			}
-        }
-		#endregion Transaction helper methods
 	}
 
-	#region Process delegates
 	/// <summary>
 	/// ProcessStartingHandler
 	/// </summary>
@@ -677,12 +503,9 @@ namespace <%=NameSpace%>
 	/// <param name="sender"></param>
 	/// <param name="args"></param>
 	public delegate void ProcessEndedHandler(object sender, ProcessorEventArgs args);
-
-	#endregion Process delegates
 	
-	#region Event arguments
 	/// <summary>
-	/// Processor Event Args
+	/// ProcessorEventArgs
 	/// </summary>
 	public class ProcessorEventArgs : EventArgs
 	{
@@ -707,5 +530,4 @@ namespace <%=NameSpace%>
 	        set { processor = value; }
 	    }
 	}
-	#endregion Event arguments	
 }

@@ -1,7 +1,7 @@
 ﻿<%--
 	Template for the table entity base class.
 --%>
-<%@ CodeTemplate Src="..\TemplateLib\CommonSqlCode.cs" Debug="True" Inherits="MoM.Templates.CommonSqlCode" Language="C#" TargetLanguage="C#" Description="Business object base class"  ResponseEncoding="UTF-8" NoWarn="0108,0618,1572,1573,1574,0162,2002"%>
+<%@ CodeTemplate Src="..\TemplateLib\CommonSqlCode.cs" Debug="True" Inherits="MoM.Templates.CommonSqlCode" Language="C#" TargetLanguage="C#" Description="Business object base class"  ResponseEncoding="UTF-8"%>
 <%@ Assembly Name="SchemaExplorer" %>
 <%@ Assembly Name="System.Design" %>
 <%@ Import Namespace="SchemaExplorer" %>
@@ -19,8 +19,6 @@
 <%@ Property Name="NameSpace" Optional="True" Type="System.String" Category="Style" Description="Object Namespace." %>
 	
 <%@ Property Name="UsePartialClass" Type="System.Boolean" Default="true" Category="General" Description="Indicates if partial class should be generated." %>
-<%@ Property Name="EqualitySemantics" Type="MoM.Templates.EqualitySemantics" Default="Value" Category="02. Framework Generation - Optional" Description="Equality semantics used for Entity instances.  If 'Reference', default reference type semantics will be used (based on object identity).  If 'Value', Equals() and GetHashCode() will be overridden to use value semantics (based on object contents)." %>
-<%@ Property Name="ValidationType" Type="MoM.Templates.ValidationType" Default="NetTiers" Category="02. Framework Generation - Optional" Description="Choice to either use .netTiers validation framework, or Enterprise Library VAB" %>
 
 <%-- When debugging, you must include this section of code 
 <%@ Register Name="EntityData" Template="EntityData.cst" MergeProperties="False" ExcludeProperties="" %>
@@ -37,7 +35,6 @@
 	string structName = GetClassName(SourceTable, ClassNameFormat.Struct);
 	string abstractClassName = GetClassName(SourceTable, ClassNameFormat.Abstract);
 	string keyClassName = GetClassName(SourceTable, ClassNameFormat.Key);
-	string interfaceName = GetClassName(SourceTable, ClassNameFormat.Interface);
 
 	string constructorAccessModifier = UsePartialClass ? "public" : "protected";
 	
@@ -76,17 +73,13 @@
 */
 
 #region using directives
+
 using System;
 using System.ComponentModel;
 using System.Collections;
 using System.Xml.Serialization;
 using System.Runtime.Serialization;
-<% if(ValidationType == MoM.Templates.ValidationType.EntLib){%>
-using Microsoft.Practices.EnterpriseLibrary.Validation.Validators;
-using Microsoft.Practices.EnterpriseLibrary.Validation;
-<%}%>
 
-using <%=NameSpace%>.Validation;
 #endregion
 
 namespace <%=NameSpace%>
@@ -99,7 +92,7 @@ namespace <%=NameSpace%>
 	<% } %>
 	[Serializable, DataObject]
 	[CLSCompliant(true)]
-	public abstract partial class <%=abstractClassName%> : EntityBase, <%=interfaceName%>, IEntityId<<%= keyClassName %>>, System.IComparable, System.ICloneable, ICloneableEx, IEditableObject, IComponent, INotifyPropertyChanged
+	public abstract partial class <%=abstractClassName%> : EntityBase, <%=NameSpace%>.I<%= className %>, IEntityId<<%= keyClassName %>>, System.IComparable, System.ICloneable, IEditableObject, IComponent, INotifyPropertyChanged
 	{		
 		#region Variable Declarations
 		
@@ -128,7 +121,7 @@ namespace <%=NameSpace%>
 		/// </summary>
 		/// <remark>Mostly used for databinding</remark>
 		[NonSerialized]
-		private <%=collectionClassName%> parentCollection;
+		private TList<<%=className%>> parentCollection;
 		
 		private bool inTxn = false;
 		
@@ -215,22 +208,13 @@ namespace <%=NameSpace%>
 		<%if (! cols[x].AllowDBNull && IsCSReferenceDataType(cols[x]) ) {%>
 		/// <exception cref="ArgumentNullException">If you attempt to set to null.</exception>
 		<%}%>
-		<% if(!cols[x].AllowDBNull && IsCSReferenceDataType(cols[x]) && ValidationType == MoM.Templates.ValidationType.EntLib){ %>
-		[NotNullValidator(MessageTemplate="Property does not allow null values.", Tag="<%= cols[x].Name %>")]<% } %>
-		<% if(!cols[x].AllowDBNull && CanCheckLength(cols[x]) && IsCSReferenceDataType(cols[x]) && ValidationType == MoM.Templates.ValidationType.EntLib){ %>
-		[ValidatorComposition(CompositionType.And, Tag="<%= cols[x].Name %>")]<% } %>
-		<% if(cols[x].AllowDBNull && CanCheckLength(cols[x]) && IsCSReferenceDataType(cols[x]) && ValidationType == MoM.Templates.ValidationType.EntLib){%>
-		[NotNullValidator(Negated=true, Tag="<%= cols[x].Name %>")]
-		[ValidatorComposition(CompositionType.Or, Tag="<%= cols[x].Name %>")]<% } %>
-		<% if(CanCheckLength(cols[x]) && ValidationType == MoM.Templates.ValidationType.EntLib){ %>
-		[StringLengthValidator(<%= cols[x].Size %>, MessageTemplate="Maximum length has been exceeded.", Tag="<%= cols[x].Name %>")]<% } %>
 		<% if ( IncludeWCFDataAttributes ) { %>
 		[DataMember]
 		<% } %>
 		<% if ( IncludeXmlAttributes && cols[x].AllowDBNull ) { %>
 		[XmlElement(IsNullable=true)]
 		<% } %>
-		[<%if (cols[x].IsPrimaryKeyMember && (IsIdentityColumn(cols[x]) || IsComputed(cols[x])) ) {%>ReadOnlyAttribute(false)/*, XmlIgnoreAttribute()*/, <%}%>DescriptionAttribute(@"<%=GetDescriptionAttributeText(cols[x].Description)%>"), System.ComponentModel.Bindable( System.ComponentModel.BindableSupport.Yes)]
+		[<%if (cols[x].IsPrimaryKeyMember && (IsIdentityColumn(cols[x]) || IsComputed(cols[x])) ) {%>ReadOnlyAttribute(false)/*, XmlIgnoreAttribute()*/, <%}%>DescriptionAttribute("<%=GetDescriptionAttributeText(cols[x].Description)%>"), System.ComponentModel.Bindable( System.ComponentModel.BindableSupport.Yes)]
 		[DataObjectField(<%= dataObjectFieldParams  %>)<%= defaultValue %>]
 		public <%if (commonColumns.IndexOf(cols[x].Name) != -1) Response.Write ("override "); else Response.Write ("virtual ");%><%= GetCSType(cols[x])%> <%= GetPropertyName(cols[x]) %>
 		{
@@ -327,9 +311,7 @@ WriteRelationshipPropertyString();
 		#endregion Children Collections
 		
 		#endregion
-		<% if(ValidationType == MoM.Templates.ValidationType.NetTiers)
-		{
-		%>
+		
 		#region Validation
 		
 		/// <summary>
@@ -348,24 +330,23 @@ WriteRelationshipPropertyString();
 			if (! cols[x].AllowDBNull && IsCSReferenceDataType(cols[x])) 
 			{
 				%>
-			ValidationRules.AddRule( CommonRules.NotNull,
-				new ValidationRuleArgs("<%=propertyName%>", "<%=friendlyName%>"));
+			ValidationRules.AddRule(
+				Validation.CommonRules.NotNull,
+				new Validation.ValidationRuleArgs("<%=propertyName%>", "<%=friendlyName%>"));
 				<%							
 			}
 			
 			if (CanCheckLength(cols[x]))
 			{%>
-			ValidationRules.AddRule( CommonRules.StringMaxLength, 
-				new CommonRules.MaxLengthRuleArgs("<%=propertyName%>", "<%=friendlyName%>", <%=cols[x].Size%>));
+			ValidationRules.AddRule(
+				Validation.CommonRules.StringMaxLength, 
+				new Validation.CommonRules.MaxLengthRuleArgs("<%=propertyName%>", "<%=friendlyName%>", <%=cols[x].Size%>));
 			<%
 			}			
 		}
 		%>		
 		}
    		#endregion
-		<%
-		}
-		%>
 		
 		#region Table Meta Data
 		/// <summary>
@@ -502,7 +483,7 @@ WriteRelationshipPropertyString();
 	        }
 	        set 
 	        {
-	            this.parentCollection = value as <%=collectionClassName%>;
+	            this.parentCollection = value as TList<<%=className%>>;
 	        }
 	    }
 	    
@@ -524,47 +505,37 @@ WriteRelationshipPropertyString();
 		///<summary>
 		///  Returns a Typed <%=className%> Entity 
 		///</summary>
-		protected virtual <%=className%> Copy(IDictionary existingCopies)
+		public virtual <%=className%> Copy()
 		{
-			if (existingCopies == null)
-			{
-				// This is the root of the tree to be copied!
-				existingCopies = new Hashtable();
-			}
-
 			//shallow copy entity
 			<%=className%> copy = new <%=className%>();
-			existingCopies.Add(this, copy);
 			copy.SuppressEntityEvents = true;
 			<% for (int x=0; x < cols.Count; x++) { %>
-				copy.<%= GetPropertyName(cols[x]) %> = this.<%= GetPropertyName(cols[x]) %>;
-				<% if( cols[x].IsPrimaryKeyMember && !IsIdentityColumn(cols[x]) && !IsComputed(cols[x]) ) { %>
-					copy.<%= GetOriginalPropertyName(cols[x]) %> = this.<%= GetOriginalPropertyName(cols[x]) %>;
-				<% } %>
+			copy.<%= GetPropertyName(cols[x]) %> = this.<%= GetPropertyName(cols[x]) %>;
+			<% if( cols[x].IsPrimaryKeyMember && !IsIdentityColumn(cols[x]) && !IsComputed(cols[x]) ) { %>
+			copy.<%= GetOriginalPropertyName(cols[x]) %> = this.<%= GetOriginalPropertyName(cols[x]) %>;
+			<% } %>
 			<% } %>
 			
 			<% if (IncludeGetListByFK) { %>
-				<%	//Generate a Source property for each foreign key relation
-				System.Collections.ArrayList filled = new System.Collections.ArrayList();
-				foreach(TableKeySchema tableKey in SourceTable.ForeignKeys)
-				{	
-					// related table must be in the selection
-					if (SourceTables.Contains(tableKey.PrimaryKeyTable)) {
-						string fkPropertyName = GetKeysName(tableKey.ForeignKeyMemberColumns);
+			<%	//Generate a Source property for each foreign key relation
+			System.Collections.ArrayList filled = new System.Collections.ArrayList();
+			foreach(TableKeySchema tableKey in SourceTable.ForeignKeys)
+			{	
+				// related table must be in the selection
+				if (SourceTables.Contains(tableKey.PrimaryKeyTable)) {
+				string fkPropertyName = GetKeysName(tableKey.ForeignKeyMemberColumns);
 				
-						if(filled.Contains(fkPropertyName))
-							continue;
-						
-						filled.Add(fkPropertyName);
+				if(filled.Contains(fkPropertyName))
+					continue;
 					
-						string pkClassName = GetClassName(tableKey.PrimaryKeyTable);
-						%>
-			if (this.<%=fkPropertyName%>Source != null && existingCopies.Contains(this.<%=fkPropertyName%>Source))
-				copy.<%=fkPropertyName%>Source = existingCopies[this.<%=fkPropertyName%>Source] as <%= pkClassName %>;
-			else
-				copy.<%=fkPropertyName%>Source = MakeCopyOf(this.<%=fkPropertyName%>Source, existingCopies) as <%= pkClassName %>;
-			<%		} //end if in SourceTables
-				} //end for each FK
+				filled.Add(fkPropertyName);
+				
+				string pkClassName = GetClassName(tableKey.PrimaryKeyTable);
+			%>
+			copy.<%=fkPropertyName%>Source = MakeCopyOf(this.<%=fkPropertyName%>Source) as <%= pkClassName %>;
+			<%	} //end if in SourceTables
+			} //end for each FK
 		  }// IncludeGetListByFK%>	
 		
 		<% 
@@ -581,23 +552,13 @@ WriteRelationshipPropertyString();
 			else
 				typeName = item.CollectionTypeName;
 		%>
-			copy.<%= item.PropertyNameUnique %> = (<%= typeName %>) MakeCopyOf(this.<%=item.PropertyNameUnique %>, existingCopies); 
+			copy.<%= item.PropertyNameUnique %> = (<%= typeName %>) MakeCopyOf(this.<%=item.PropertyNameUnique %>); 
 			<% }//end foreach CollectionInfo
 		}//end if IncludeRelations
 		%>
 			copy.EntityState = this.EntityState;
 			copy.SuppressEntityEvents = false;
 			return copy;
-		}		
-		
-		
-		
-		///<summary>
-		///  Returns a Typed <%=className%> Entity 
-		///</summary>
-		public virtual <%=className%> Copy()
-		{
-			return this.Copy(null);	
 		}
 		
 		///<summary>
@@ -605,15 +566,7 @@ WriteRelationshipPropertyString();
 		///</summary>
 		public object Clone()
 		{
-			return this.Copy(null);
-		}
-		
-		///<summary>
-		/// ICloneableEx.Clone() Member, returns the Shallow Copy of this entity.
-		///</summary>
-		public object Clone(IDictionary existingCopies)
-		{
-			return this.Copy(existingCopies);
+			return this.Copy();
 		}
 		
 		///<summary>
@@ -634,29 +587,6 @@ WriteRelationshipPropertyString();
 		}
 		
 		///<summary>
-		/// Returns a deep copy of the child collection object passed in.
-		///</summary>
-		public static object MakeCopyOf(object x, IDictionary existingCopies)
-		{
-			if (x == null)
-				return null;
-			
-			if (x is ICloneableEx)
-			{
-				// Return a deep copy of the object
-				return ((ICloneableEx)x).Clone(existingCopies);
-			}
-			else if (x is ICloneable)
-			{
-				// Return a deep copy of the object
-				return ((ICloneable)x).Clone();
-			}
-			else
-				throw new System.NotSupportedException("Object Does Not Implement the ICloneable or IClonableEx Interface.");
-		}
-		
-		
-		///<summary>
 		///  Returns a Typed <%=className%> Entity which is a deep copy of the current entity.
 		///</summary>
 		public virtual <%=className%> DeepCopy()
@@ -668,7 +598,7 @@ WriteRelationshipPropertyString();
 		#region Methods	
 			
 		///<summary>
-		/// Revert all changes and restore original values.
+		///  Revert all changes and restore original values.
 		///</summary>
 		public override void CancelChanges()
 		{
@@ -676,10 +606,7 @@ WriteRelationshipPropertyString();
 			obj.CancelEdit();
 
 			this.entityData = null;
-			if (this._originalData != null)
-			{
-				this.entityData = this._originalData.Clone() as <%=structName%>;
-			}
+			this.entityData = this._originalData.Clone() as <%=structName%>;
 		}	
 		
 		/// <summary>
@@ -724,7 +651,7 @@ WriteRelationshipPropertyString();
 		/// Determines whether the data has changed from original.
 		/// </summary>
 		/// <returns>
-		/// 	<c>true</c> if data has changed; otherwise, <c>false</c>.
+		/// 	<c>true</c> if [has data changed]; otherwise, <c>false</c>.
 		/// </returns>
 		public bool HasDataChanged()
 		{
@@ -733,39 +660,19 @@ WriteRelationshipPropertyString();
 			result = result || entityData.<%=GetPropertyName(cols[x])%> != _originalData.<%=GetPropertyName(cols[x])%>;
 			<% } %>
 			return result;
-		}	
+}	
 		
-		///<summary>
-		///  Returns a <%=className%> Entity with the original data.
-		///</summary>
-		public <%=className%> GetOriginalEntity()
-		{
-			if (_originalData != null)
-				return Create<%=className%>(
-				<%
-				for (int i = 0;i < colsUpdatable.Count; i++)
-				{%>
-				_originalData.<%=GetPropertyName(colsUpdatable[i])%><%if (i < colsUpdatable.Count-1){%>,<%}%>
-				<%}
-				%>
-				);
-				
-			return (<%=className%>)this.Clone();
-		}
 		#endregion
-	
-	<% if(EqualitySemantics == MoM.Templates.EqualitySemantics.Value) {%>
-	#region Value Semantics Instance Equality
+
         ///<summary>
-        /// Returns a value indicating whether this instance is equal to a specified object using value semantics.
+        /// Returns a value indicating whether this instance is equal to a specified object.
         ///</summary>
         ///<param name="Object1">An object to compare to this instance.</param>
         ///<returns>true if Object1 is a <see cref="<%=abstractClassName%>"/> and has the same value as this instance; otherwise, false.</returns>
         public override bool Equals(object Object1)
         {
-			// Cast exception if Object1 is null or DbNull
-			if (Object1 != null && Object1 != DBNull.Value && Object1 is <%=abstractClassName%>)
-				return ValueEquals(this, (<%=abstractClassName%>)Object1);
+			if (Object1 is <%=abstractClassName%>)
+				return Equals(this, (<%=abstractClassName%>)Object1);
 			else
 				return false;
         }
@@ -798,7 +705,7 @@ WriteRelationshipPropertyString();
         }
 		
 		///<summary>
-		/// Returns a value indicating whether this instance is equal to a specified object using value semantics.
+		/// Returns a value indicating whether this instance is equal to a specified object.
 		///</summary>
 		///<param name="toObject">An object to compare to this instance.</param>
 		///<returns>true if toObject is a <see cref="<%=abstractClassName%>"/> and has the same value as this instance; otherwise, false.</returns>
@@ -806,18 +713,17 @@ WriteRelationshipPropertyString();
 		{
 			if (toObject == null)
 				return false;
-			return ValueEquals(this, toObject);
+			return Equals(this, toObject);
 		}
-		#endregion
-		<% } %>
+		
 		
 		///<summary>
-		/// Determines whether the specified <see cref="<%=abstractClassName%>"/> instances are considered equal using value semantics.
+		/// Determines whether the specified <see cref="<%=abstractClassName%>"/> instances are considered equal.
 		///</summary>
 		///<param name="Object1">The first <see cref="<%=abstractClassName%>"/> to compare.</param>
 		///<param name="Object2">The second <see cref="<%=abstractClassName%>"/> to compare. </param>
 		///<returns>true if Object1 is the same instance as Object2 or if both are null references or if objA.Equals(objB) returns true; otherwise, false.</returns>
-		public static bool ValueEquals(<%=abstractClassName%> Object1, <%=abstractClassName%> Object2)
+		public static bool Equals(<%=abstractClassName%> Object1, <%=abstractClassName%> Object2)
 		{
 			// both are null
 			if (Object1 == null && Object2 == null)
@@ -1112,7 +1018,7 @@ WriteRelationshipPropertyString();
 		/// Raises the <see cref="ColumnChanging" /> event.
 		/// </summary>
 		/// <param name="column">The <see cref="<%= GetClassName(SourceTable, ClassNameFormat.Column) %>"/> which has raised the event.</param>
-		public virtual void OnColumnChanging(<%= GetClassName(SourceTable, ClassNameFormat.Column) %> column)
+		public void OnColumnChanging(<%= GetClassName(SourceTable, ClassNameFormat.Column) %> column)
 		{
 			OnColumnChanging(column, null);
 			return;
@@ -1122,7 +1028,7 @@ WriteRelationshipPropertyString();
 		/// Raises the <see cref="ColumnChanged" /> event.
 		/// </summary>
 		/// <param name="column">The <see cref="<%= GetClassName(SourceTable, ClassNameFormat.Column) %>"/> which has raised the event.</param>
-		public virtual void OnColumnChanged(<%= GetClassName(SourceTable, ClassNameFormat.Column) %> column)
+		public void OnColumnChanged(<%= GetClassName(SourceTable, ClassNameFormat.Column) %> column)
 		{
 			OnColumnChanged(column, null);
 			return;
@@ -1134,7 +1040,7 @@ WriteRelationshipPropertyString();
 		/// </summary>
 		/// <param name="column">The <see cref="<%= GetClassName(SourceTable, ClassNameFormat.Column) %>"/> which has raised the event.</param>
 		/// <param name="value">The changed value.</param>
-		public virtual void OnColumnChanging(<%= GetClassName(SourceTable, ClassNameFormat.Column) %> column, object value)
+		public void OnColumnChanging(<%= GetClassName(SourceTable, ClassNameFormat.Column) %> column, object value)
 		{
 			if(IsEntityTracked && EntityState != EntityState.Added && !EntityManager.TrackChangedEntities)
 				EntityManager.StopTracking(entityTrackingKey);
@@ -1154,7 +1060,7 @@ WriteRelationshipPropertyString();
 		/// </summary>
 		/// <param name="column">The <see cref="<%= GetClassName(SourceTable, ClassNameFormat.Column) %>"/> which has raised the event.</param>
 		/// <param name="value">The changed value.</param>
-		public virtual void OnColumnChanged(<%= GetClassName(SourceTable, ClassNameFormat.Column) %> column, object value)
+		public void OnColumnChanged(<%= GetClassName(SourceTable, ClassNameFormat.Column) %> column, object value)
 		{
 			if (!SuppressEntityEvents)
 			{

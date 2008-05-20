@@ -1,6 +1,6 @@
-﻿<%@ CodeTemplate Language="C#" TargetLanguage="Text" Src="..\..\TemplateLib\CommonSqlCode.cs" Inherits="MoM.Templates.CommonSqlCode" Description="" Debug="True" ResponseEncoding="UTF-8" %>
+﻿<%@ CodeTemplate Language="C#" TargetLanguage="Text" Description="" Debug="True" ResponseEncoding="UTF-8" %>
 <%@ Property Name="RootNameSpace" Type="System.String" Category="Data" Description="Website Namespace." %>
-<%@ Property Name="BusinessLogicLayerNameSpace" Type="System.String" Category="03. Namespaces - Required" Description="The sub namespace that is added to the root namespace for the entities." Default="Entities" Optional="False"  NoWarn="0108,0618,1572,1573,1574,0162,2002" %>
+<%@ Property Name="BusinessLogicLayerNameSpace" Type="System.String" Category="03. Namespaces - Required" Description="The sub namespace that is added to the root namespace for the entities." Default="Entities" Optional="False" %>
 
 #region Using directives
 
@@ -446,14 +446,14 @@ namespace <%=RootNameSpace%>.Web.UI
 
             if (!base.DesignMode)
             {
-                GridView1 = (GridView)this.NamingContainer.FindControl(this.GridViewControlID);
-                TypedDataSource = (DataSourceControl)this.NamingContainer.FindControl(GridView1.DataSourceID);
+                GridView1 = (GridView)this.Parent.FindControl(this.GridViewControlID);
+                TypedDataSource = (DataSourceControl)this.Parent.FindControl(GridView1.DataSourceID);
 
                 Type[] typeArguments = TypedDataSource.GetType().BaseType.GetGenericArguments();
                 _businessEntityType = typeArguments[0].FullName;
 
                 #region Set up the fields drop down list using the list of table columns
-                Type enumType = EntityUtil.GetType(string.Format("<%= this.ColumnClassNameFormat %>", _businessEntityType));
+                Type enumType = EntityUtil.GetType(_businessEntityType + "Column");
 
                 Array c = Enum.GetValues(enumType);
                 for (int i = 0; i < c.Length; i++)

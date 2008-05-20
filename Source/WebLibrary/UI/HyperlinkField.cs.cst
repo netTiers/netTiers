@@ -1,4 +1,4 @@
-﻿<%@ CodeTemplate Language="C#" TargetLanguage="Text" Description="" Debug="True" ResponseEncoding="UTF-8"  NoWarn="0108,0618,1572,1573,1574,0162,2002" %>
+﻿<%@ CodeTemplate Language="C#" TargetLanguage="Text" Description="" Debug="True" ResponseEncoding="UTF-8" %>
 <%@ Property Name="RootNameSpace" Type="System.String" Category="Data" Description="Website Namespace." %>
 
 #region Using directives
@@ -14,15 +14,14 @@ using System.Web.UI.WebControls;
 
 namespace <%=RootNameSpace%>.Web.UI
 {
-/// <summary>
-    /// Represents a field that is displayed as a hyperlink in a data-bound control. 
-    /// Supports complex objects via DataContainer property.
+    /// <summary>
+    /// Represents a field that is displayed as a hyperlink in a data-bound control. Supports complex objects via DataContainer property.
     /// </summary>
     public class HyperLinkField : DataControlField
     {
         #region class members
+        PropertyDescriptor textProperty;
         PropertyDescriptor[] urlProperties;
-        PropertyDescriptor[] dataTextFieldProperties;
         static string[] emptyFields;
         #endregion /* class members */
 
@@ -217,18 +216,18 @@ namespace <%=RootNameSpace%>.Web.UI
         }
 
         /// <summary>
-        /// Virtual. Formats Text using FormatDataTextValue
+        /// Virtual. Formats Url based using DataTextFormatString
         /// </summary>
-        /// <param name="dataTextValues"></param>
+        /// <param name="dataTextValue"></param>
         /// <returns></returns>
-        protected virtual string FormatDataTextValue(object[] dataTextValues)
+        protected virtual string FormatDataTextValue(object dataTextValue)
         {
-            if (dataTextValues == null || dataTextValues.Length == 0)
+            if (DataTextFormatString.Length > 0)
+                return string.Format(DataTextFormatString, dataTextValue);
+            else if (dataTextValue == null)
                 return string.Empty;
-            else if (DataTextFormatString.Length > 0)
-                return string.Format(DataTextFormatString, dataTextValues);
             else
-                return dataTextValues[0].ToString();
+                return dataTextValue.ToString();
         }
 
         /// <summary>
@@ -248,20 +247,16 @@ namespace <%=RootNameSpace%>.Web.UI
             {
                 //string[] values = DataTextField.Split(new char[] { '.' });
                 item = DataBinder.Eval(item, this.DataContainer);
-		        if (item == null) return;
+		if (item == null) return;
             }
 
             if (DataTextField.Length > 0)
             {
-                if (dataTextFieldProperties == null)
+                if (textProperty == null)
                 {
                     SetupProperties(item);
                 }
-                object[] dataTextValues = new object[DataTextField.Split(',').Length];
-
-                for (int n = 0; n < dataTextValues.Length; n++)
-                    dataTextValues[n] = dataTextFieldProperties[n].GetValue(item);
-                link.Text = FormatDataTextValue(dataTextValues);
+                link.Text = FormatDataTextValue(textProperty.GetValue(item));
             }
 
             string[] urlFields = DataNavigateUrlFields;
@@ -288,19 +283,10 @@ namespace <%=RootNameSpace%>.Web.UI
             PropertyDescriptorCollection props = TypeDescriptor.GetProperties(controlContainer);
 
             if (DataTextField.Length > 0)
-            {
-                string[] dataFields = DataTextField.Split(',');
-                if (dataFields.Length > 0)
-                {
-                    dataTextFieldProperties = new PropertyDescriptor[dataFields.Length];
-                    for (int n = 0; n < dataFields.Length; n++)
-                    {
-                        PropertyDescriptor prop = props[dataFields[n]];
-                        if (prop == null)
-                            throw new InvalidOperationException(string.Format("Property '{0}' not found in object of type {1}", dataFields[n], controlContainer.GetType()));
-                        dataTextFieldProperties[n] = prop;
-                    }
-                }
+            {                
+                textProperty = props[DataTextField];
+                if (textProperty == null)
+                    throw new InvalidOperationException(string.Format("Property '{0}' not found in object of type {1}", DataTextField, controlContainer.GetType()));
             }
 
             string[] urlFields = DataNavigateUrlFields;
@@ -381,6 +367,6 @@ namespace <%=RootNameSpace%>.Web.UI
         {
         }
         #endregion /* overrides */
-    }    
+    }
 }
 

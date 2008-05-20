@@ -1,15 +1,14 @@
-﻿<%--
+<%--
  * $Id: EntityDataSource.cst,v 1.0 2006/03/19 01:00:00 bdiaz Exp $
  * Last modified by $Author: bdiaz $
  * Last modified at $Date: 2006-03-19 01:00:00 -0600 (Sun, 19 Mar 2006) $
  * $Revision: 1 $
 --%>
-<%@ CodeTemplate Language="C#" TargetLanguage="C#" Src="..\..\TemplateLib\CommonSqlCode.cs" Inherits="MoM.Templates.CommonSqlCode" Debug="False" Description="Generates the EntityDataSource class." ResponseEncoding="UTF-8"  NoWarn="0108,0618,1572,1573,1574,0162,2002" %>
+<%@ CodeTemplate Language="C#" TargetLanguage="C#" Src="..\..\TemplateLib\CommonSqlCode.cs" Inherits="MoM.Templates.CommonSqlCode" Debug="False" Description="Generates the EntityDataSource class." ResponseEncoding="UTF-8" %>
 
 <%@ Property Name="BLLNameSpace" Optional="False" Type="System.String" Category="Style" Description="BLL Namespace." %>
 <%@ Property Name="DALNameSpace" Optional="False" Type="System.String" Category="Style" Description="DAL Namespace." %>
 <%@ Property Name="WebNameSpace" Optional="False" Type="System.String" Category="Style" Description="Web Namespace." %>
-<%@ Property Name="DataSourceEnableTransactionDefault" Type="System.Boolean" Default="true" Category="05. WebLibrary - Advanced" Description="Sets the default for the EnableTransaction property on the data source controls." %>
 
 <%@ Assembly Name="SchemaExplorer" %>
 <%@ Assembly Name="System.Design" %>
@@ -842,7 +841,7 @@ namespace <%= WebNameSpace %>.Data
 			private Type _entityKeyType;
 			private Object _provider;
 			private bool _enableRecursiveDeepLoad;
-			private bool _enableTransaction = <%=DataSourceEnableTransactionDefault.ToString().ToLower()%>;
+			private bool _enableTransaction = true;
 			private bool _enablePaging;
 			private bool _enableSorting;
 			private bool _isDeepLoaded;
@@ -1657,17 +1656,12 @@ namespace <%= WebNameSpace %>.Data
 				return args;
 			}
 
-			/// <summary>
-            /// Gets the types.
-            /// </summary>
-            /// <param name="types">The types.</param>
-            /// <returns></returns>
 			private Type[] GetTypes(params Type[] types)
 			{
 				if ( EnableTransaction )
 				{
 					Type[] newTypes = new Type[types.Length + 1];
-					newTypes[0] = typeof(ITransactionManager);
+					newTypes[0] = typeof(TransactionManager);
 
 					if ( types.Length > 0 )
 					{

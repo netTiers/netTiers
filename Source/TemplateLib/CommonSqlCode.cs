@@ -43,10 +43,6 @@ namespace MoM.Templates
 		private string unitTestFormat		= "{0}Test";
 		private string enumFormat 			= "{0}List";
 		private string manyToManyFormat		= "{0}From{1}";
-		private string columnClassNameFormat = "{0}Column";
-		private string comparerClassNameFormat = "{0}Comparer";
-		private string eventHandlerClassNameFormat = "{0}EventHandler";
-		private string eventArgsClassNameFormat = "{0}EventArgs";
 		private string strippedTablePrefixes		= "tbl;tbl_";
 		private string strippedTableSuffixes		= "_t";
 		private string serviceClassNameFormat = "{0}Service";
@@ -412,67 +408,7 @@ namespace MoM.Templates
 				this.serviceClassNameFormat = value;
 			}
 		}
-		
-		[Category("09. Code style - Advanced")]
-		[Description("The format used by the Column ClassNameFormat. Parameter {0} is replaced by the original class name.")]
-		public string ColumnClassNameFormat
-		{
-			get {return this.columnClassNameFormat;}
-			set
-			{
-				if (value.IndexOf("{0}") == -1) 
-				{
-					throw new ArgumentException("This parameter must contains the pattern {0} to be valid.", "ColumnClassNameFormat");
-				}
-				this.columnClassNameFormat = value;
-			}
-		}
-		
-		[Category("09. Code style - Advanced")]
-		[Description("The format used by the Comparer ClassNameFormat. Parameter {0} is replaced by the original class name.")]
-		public string ComparerClassNameFormat
-		{
-			get {return this.comparerClassNameFormat;}
-			set
-			{
-				if (value.IndexOf("{0}") == -1) 
-				{
-					throw new ArgumentException("This parameter must contains the pattern {0} to be valid.", "ComparerClassNameFormat");
-				}
-				this.comparerClassNameFormat = value;
-			}
-		}
-		
-		[Category("09. Code style - Advanced")]
-		[Description("The format used by the EventHandler ClassNameFormat. Parameter {0} is replaced by the original class name.")]
-		public string EventHandlerClassNameFormat
-		{
-			get {return this.eventHandlerClassNameFormat;}
-			set
-			{
-				if (value.IndexOf("{0}") == -1) 
-				{
-					throw new ArgumentException("This parameter must contains the pattern {0} to be valid.", "EventHandlerClassNameFormat");
-				}
-				this.eventHandlerClassNameFormat = value;
-			}
-		}
-		
-		[Category("09. Code style - Advanced")]
-		[Description("The format used by the EventHandler ClassNameFormat. Parameter {0} is replaced by the original class name.")]
-		public string EventArgsClassNameFormat
-		{
-			get {return this.eventArgsClassNameFormat;}
-			set
-			{
-				if (value.IndexOf("{0}") == -1) 
-				{
-					throw new ArgumentException("This parameter must contains the pattern {0} to be valid.", "EventArgsClassNameFormat");
-				}
-				this.eventArgsClassNameFormat = value;
-			}
-		}
-		
+				
 		[Category("07. CRUD - Advanced")]
 		[Description("If set to true, attempts to parse the Default Value of your column and set it for the default value of the property on initialization.")]
 		public bool ParseDbColDefaultVal
@@ -632,7 +568,7 @@ namespace MoM.Templates
         public string GetPascalCaseNameStyle1(string name)
         {
 			string[] splitNames;
-			name = Regex.Replace( name, "^[^a-zA-Z]+", string.Empty ).Trim();
+			name = name.Trim();
 			if (ChangeUnderscoreToPascalCase)
 			{
 				char[] splitter = {'_', ' '};
@@ -1120,150 +1056,6 @@ namespace MoM.Templates
 			return GetName(col, ReturnFields.FriendlyName);
 		}
 		
-		/// <summary>
-		///  Gets the name to be used for the TList class
-		/// </summary>
-		public string GetTListName()
-		{
-			string listName = GetFormattedClassName(" ",ClassNameFormat.Collection);
-			//Remove the generic portion of the name (i.e <Entity>)
-			
-			return listName.Remove(listName.IndexOf("<"));
-			
-		}
-		
-		/// <summary>
-		///  Gets the name to be used for the VList class
-		/// </summary>
-		public string GetVListName()
-		{
-			string listName = GetFormattedClassName(" ",ClassNameFormat.ViewCollection);
-			//Remove the generic portion of the name (i.e <Entity>)
-			
-			return listName.Remove(listName.IndexOf("<"));
-		}
-		
-				/// <summary>
-        /// Determine if a table column should be included in generated output
-        /// </summary>
-        /// <param name="table">The table.</param>
-        /// <param name="column">The column.</param>
-        /// <returns>the value of the IncludeInOutput property defined in mapping file for the table and column</returns>       	
-		public bool IncludeInOutput(TableSchema table, ColumnSchema column){
-			
-			if (CurrentNetTiersMap != null)			
-			{
-				foreach(TableMetaData mappedTable in CurrentNetTiersMap.Tables)
-				{
-					if(mappedTable.Id == table.Name)
-					{
-						foreach(ColumnMetaData mappedColumn in mappedTable.Columns)
-						{						
-							if (mappedColumn.Id == column.Name)
-							{
-								return (bool)GetPropertyValue(mappedColumn, ReturnFields.IncludeInOutput.ToString());
-							}
-						}
-					}
-				}
-			}
-			
-			return true; //assumes mapping file not specified\available or mapping file does not contain information for the specified Table\Column
-		}	
-		
-		#region ColumnSchemaComparer
-		
-		public class ColumnSchemaComparer : IComparer {
-	
-			private string _sortBy;
-			private SchemaExplorer.TableSchema _table;
-			private bool _tableFound = false;
-			private NetTiers.NetTiersMap _currentNettiersMap;
-	
-			public ColumnSchemaComparer() {				
-			}
-	
-			public ColumnSchemaComparer(string sortBy, SchemaExplorer.TableSchema table, NetTiers.NetTiersMap currentNettiersMap) {
-				if (currentNettiersMap == null)			
-				{
-					throw new Exception("There is no mapping file currently available");
-				}
-				
-				_sortBy = sortBy;
-				_table = table;
-				_currentNettiersMap = currentNettiersMap;
-			}
-	
-			public string SortBy {
-				get {
-					return _sortBy;
-				}
-				set {
-					_sortBy = value;
-				}
-			}
-	
-			/// <summary>
-			/// The Compare method should compare the obj to the current instance. 
-			/// 1. Return a value less than zero if pFirstObject is less than pObjectToCompare. 
-			/// 2. Return 0 if pFirstObject is equal to pObjectToCompare. 
-			/// 3. Return a value larger than zero if pFirstObject is greater than pObjectToCompare.
-			/// </summary>
-			/// <param name="pFirstObject"></param>
-			/// <param name="pObjectToCompare"></param>
-			/// <returns></returns>
-			
-			public Int32 Compare(Object firstObject, Object objectToCompare) {
-				if(firstObject is ColumnSchema) {
-					
-					switch(this._sortBy) {
-						
-						case "Id":      
-							return(FindIndexOfColumn(_table, (ColumnSchema)firstObject, _currentNettiersMap) - FindIndexOfColumn(_table, (ColumnSchema)objectToCompare,_currentNettiersMap));
-							
-							break;
-						default:
-							return 0;
-					}
-				}
-				else
-					return 0;
-			}
-		}
-		#endregion
-		
-		/// <summary>
-		/// Find the index of a column in the mapping file
-		/// </summary>		
-		/// <returns></returns>
-		public static int FindIndexOfColumn(TableSchema table, ColumnSchema column, NetTiers.NetTiersMap currentNettiersMap)
-		{
-			int index;
-			
-			if (currentNettiersMap != null)			
-			{
-				foreach(TableMetaData mappedTable in currentNettiersMap.Tables)
-				{
-					if(mappedTable.Id == table.Name)
-					{
-						index = 0;
-						
-						foreach(ColumnMetaData mappedColumn in mappedTable.Columns)
-						{						
-							if (mappedColumn.Id == column.Name)
-							{
-								return index;
-							}
-							
-							index++;
-						}
-					}
-				}
-			}
-			
-			return -1; //will occur if no mapping file provided or table\column cannot be found in mapping file
-		}
-		
 		public enum ReturnFields
 		{
 			EntityName,
@@ -1271,8 +1063,7 @@ namespace MoM.Templates
 			FieldName,
 			Id,
 			CSType,
-			FriendlyName,
-			IncludeInOutput
+			FriendlyName
 		}
 		
 		public enum ClassNameFormat
@@ -1317,30 +1108,29 @@ namespace MoM.Templates
 			switch (format)
 			{
 				case ClassNameFormat.None:
-					return string.Format(entityFormat, name);
-					//return name;
+					return name;
 				
 				case ClassNameFormat.Base:
 				case ClassNameFormat.Abstract:
 					return string.Format(baseClassFormat, name);
 				
 				case ClassNameFormat.Interface:
-					return string.Format(interfaceFormat, name);
+					return string.Format("I{0}", name);
 					
 				case ClassNameFormat.Key:
-					return string.Format(this.entityKeyFormat, name);
+					return string.Format(entityKeyFormat, name);
 				
 				case ClassNameFormat.Column:
-					return string.Format(this.columnClassNameFormat, GetFormattedClassName(name, ClassNameFormat.None));
+					return string.Format("{0}Column", name);
 				
 				case ClassNameFormat.Comparer:
-					return string.Format(this.comparerClassNameFormat, name);
+					return string.Format("{0}Comparer", name);
 				
 				case ClassNameFormat.EventHandler:
-					return string.Format(this.eventHandlerClassNameFormat, name);
+					return string.Format("{0}EventHandler", name);
 				
 				case ClassNameFormat.EventArgs:
-					return string.Format(this.eventArgsClassNameFormat, name);
+					return string.Format("{0}EventArgs", name);
 				
 				case ClassNameFormat.Partial:
 					return string.Format("{0}.generated", name);
@@ -1376,7 +1166,7 @@ namespace MoM.Templates
 					return string.Format(entityDataFormat, name);
 				
 				case ClassNameFormat.Collection:
-					return string.Format(genericListFormat, GetFormattedClassName(name, ClassNameFormat.None));
+					return string.Format(genericListFormat, name);
 				
 				case ClassNameFormat.AbstractCollection:
 					return GetFormattedClassName( GetFormattedClassName(name, ClassNameFormat.Collection), ClassNameFormat.Abstract);
@@ -1385,11 +1175,11 @@ namespace MoM.Templates
 					return string.Format(collectionFormat, name);
 				
 				case ClassNameFormat.ViewCollection:
-					return string.Format(genericViewFormat, GetFormattedClassName(name, ClassNameFormat.None));
+					return string.Format(genericViewFormat, name);
 				
 				case ClassNameFormat.Provider:
 				case ClassNameFormat.Repository:
-					return string.Format(providerFormat, GetFormattedClassName(name, ClassNameFormat.None));
+					return string.Format(providerFormat, name);
 					
 				case ClassNameFormat.AbstractRepository:
 					return GetFormattedClassName( GetFormattedClassName(name, ClassNameFormat.Repository), ClassNameFormat.Abstract);
@@ -1509,7 +1299,7 @@ namespace MoM.Templates
 							return GetPascalCaseName(name); // class and property names are pascal-cased
 						case ReturnFields.FieldName:
 							name = GetCSharpSafeName(name);
-							return "_" + GetCamelCaseName(name); // fields (private member variables) are camel-cased and prefixed with an underscore
+							return GetCamelCaseName(name); // fields (private member variables) are camel-cased
 						case ReturnFields.FriendlyName:
 							return PascalToSpaced(GetPascalCaseName(name)); // just return the pascal name with spaces
 						case ReturnFields.Id:
@@ -1888,41 +1678,21 @@ namespace MoM.Templates
 		/// <remarks>This method should not append the trailing semicolon.</remarks>
 		public string GetObjectPropertySetExpression(ColumnSchema column, string containerName, string objectName, int indent)
 		{
-			//if ( column.AllowDBNull )
-			//{
-			//	return string.Format("{2} = {1}.IsDBNull({1}.GetOrdinal(\"{0}\")) ? null : ({3}){1}[\"{0}\"]",
-			//	/*0*/column.Name,
-			//	/*1*/containerName,
-			//	/*2*/GetObjectPropertyAccessor(column,objectName),
-			//	/*3*/GetCSType(column));
-			//}
-			//else
-			//{
-			//	return string.Format("{2} = ({3}){1}[\"{0}\"]",
-			//	/*0*/column.Name,
-			//	/*1*/containerName,
-			//	/*2*/GetObjectPropertyAccessor(column,objectName),
-			//	/*3*/GetCSType(column));
-			//}
 			if ( column.AllowDBNull )
 			{
-				return string.Format("{2} = ({1}.IsDBNull(((int){4}.{0} - 1)))?null:({3}){1}[((int){4}.{0} - 1)]",
-				/*0*/GetPropertyName(column),
+				return string.Format("{2} = {1}.IsDBNull({1}.GetOrdinal(\"{0}\")) ? null : ({3}){1}[\"{0}\"]",
+				/*0*/column.Name,
 				/*1*/containerName,
 				/*2*/GetObjectPropertyAccessor(column,objectName),
-				/*3*/GetCSType(column),
-				/*4*/GetClassName(column.Table, ClassNameFormat.Column));
+				/*3*/GetCSType(column));
 			}
 			else
 			{
-				// regular NOT NULL data types, set to default value for type if null
-				return string.Format("{2} = ({3}){1}[((int){5}.{0} - 1)]",
-				/*0*/GetPropertyName(column),
+				return string.Format("{2} = ({3}){1}[\"{0}\"]",
+				/*0*/column.Name,
 				/*1*/containerName,
 				/*2*/GetObjectPropertyAccessor(column,objectName),
-				/*3*/GetCSType(column),
-				/*4*/GetCSDefaultByType(column),
-				/*5*/GetClassName(column.Table, ClassNameFormat.Column));
+				/*3*/GetCSType(column));
 			}
 		}
 				
@@ -1996,43 +1766,23 @@ namespace MoM.Templates
 		/// <remarks>This method should not append the trailing semicolon.</remarks>
 		public string GetObjectPropertySetExpression(ViewColumnSchema column, string containerName, string objectName, int indent)
 		{
-			//if ( column.AllowDBNull )
-			//{
-			//	// nullable reference types (strings), set to null if null retrieved from database
-			//	return string.Format("{2} = {1}.IsDBNull({1}.GetOrdinal(\"{0}\")) ? null : ({3}){1}[\"{0}\"]",
-			//		/*0*/column.Name,
-			//		/*1*/containerName,
-			//		/*2*/GetObjectPropertyAccessor(column,objectName),
-			//		/*3*/GetCSType(column));
-			//}
-			//else
-			//{
-			//	// regular NOT NULL data types, set to default value for type if null
-			//	return string.Format("{2} = ({3}){1}[\"{0}\"]",
-			//		/*0*/column.Name,
-			//		/*1*/containerName,
-			//		/*2*/GetObjectPropertyAccessor(column,objectName),
-			//		/*3*/GetCSType(column));
-			//}
 			if ( column.AllowDBNull )
 			{
-				return string.Format("{2} = ({1}.IsDBNull(((int){4}Column.{0})))?null:({3}){1}[((int){4}Column.{0})]",
-				/*0*/GetPropertyName(column),
-				/*1*/containerName,
-				/*2*/GetObjectPropertyAccessor(column,objectName),
-				/*3*/GetCSType(column),
-				/*4*/GetClassName(column.View));
+				// nullable reference types (strings), set to null if null retrieved from database
+				return string.Format("{2} = {1}.IsDBNull({1}.GetOrdinal(\"{0}\")) ? null : ({3}){1}[\"{0}\"]",
+					/*0*/column.Name,
+					/*1*/containerName,
+					/*2*/GetObjectPropertyAccessor(column,objectName),
+					/*3*/GetCSType(column));
 			}
 			else
 			{
 				// regular NOT NULL data types, set to default value for type if null
-				return string.Format("{2} = ({3}){1}[((int){5}Column.{0})]",
-				/*0*/GetPropertyName(column),
-				/*1*/containerName,
-				/*2*/GetObjectPropertyAccessor(column,objectName),
-				/*3*/GetCSType(column),
-				/*4*/GetCSDefaultByType(column),
-				/*5*/GetClassName(column.View));
+				return string.Format("{2} = ({3}){1}[\"{0}\"]",
+					/*0*/column.Name,
+					/*1*/containerName,
+					/*2*/GetObjectPropertyAccessor(column,objectName),
+					/*3*/GetCSType(column));
 			}
 		}
 
@@ -2317,22 +2067,15 @@ namespace MoM.Templates
 		{
 			foreach (TableKeySchema key in fkeys)
 			{
-				string name = GetPKPropertyName(pk,key);
-				if (!string.IsNullOrEmpty(name)) return name;
-			}
-			return "//TODO: UNKNOWN, COULD NOT FIND FK COLUMN PROPERTY NAME\t ";
-		}
-		public string GetPKPropertyName(SchemaExplorer.ColumnSchema pk, TableKeySchema fkey)
-		{
-			foreach (ColumnSchema col in fkey.PrimaryKeyMemberColumns)
-			{
-				if (col.Name == pk.Name && col.Table.FullName == pk.Table.FullName)
+				foreach (ColumnSchema col in key.PrimaryKeyMemberColumns)
 				{
-					return GetPropertyName(fkey.ForeignKeyMemberColumns[0]);
+					if (col.Name == pk.Name && col.Table.FullName == pk.Table.FullName)
+					{
+						return GetPropertyName(key.ForeignKeyMemberColumns[0]);
+					}
 				}
 			}
-			
-			return string.Empty;
+			return "//TODO: UNKNOWN, COULD NOT FIND FK COLUMN PROPERTY NAME\t ";
 		}
 		#endregion 
 
@@ -2589,21 +2332,6 @@ namespace MoM.Templates
 		{
 			return column.SystemType.ToString() == typeof(System.Guid).ToString();
 		}
-		
-		/// <summary>
-		/// Check if a column is a rowguid column for replication
-		/// </summary>
-		/// <param name="column">DB table column to be checked</param>
-		/// <returns>Identity?</returns>
-		public bool IsRowGuidColumn(ColumnSchema column)
-		{
-			if (column.ExtendedProperties["CS_IsRowGuidCol"] != null)
-				return (bool)column.ExtendedProperties["CS_IsRowGuidCol"].Value;
-			
-			return false;
-		}
-
-
 /*
 		/// <summary>
 		/// Get the owner of a table.
@@ -3592,6 +3320,7 @@ CREATE\s+PROC(?:EDURE)?                               # find the start of the st
 			{
 				//Get Default Value 
 				defaultValue = defaultValueProperty.Value.ToString();
+				
 				if (defaultValue == null || defaultValue.Trim().Length == 0)
 					return null;
 				
@@ -3602,10 +3331,10 @@ CREATE\s+PROC(?:EDURE)?                               # find the start of the st
 					defaultValue = defaultValue.Substring(1);
 					defaultValue = defaultValue.Substring(0, defaultValue.Length - 1);
 				}
-
+				
 				if (IsNumericType(column as ColumnSchema))
 					defaultValue = defaultValue.TrimEnd('.');
-
+					
 				if (defaultValueProperty.DataType == DbType.String)
 				{
 					// probably a char type.  Let's remove the quotes so parsing is happy
@@ -3621,29 +3350,12 @@ CREATE\s+PROC(?:EDURE)?                               # find the start of the st
 						if ( defaultValue.ToLower() == "getdate()" )
 							defaultValue = "DateTime.Now";
 						else if ( defaultValue.ToLower() == "newid()" )
-							defaultValue = "Guid.NewGuid()";
+							defaultValue = "new Guid()";
 						else if ( defaultValue.ToLower() == "getutcdate()" )
 							defaultValue = "DateTime.UtcNow";
 						else
 							return null;
 					}
-					else if ( defaultValue.ToLower().Contains("create default") )
-					{
-						// match CREATE DEFAULT statements
-						Regex regex = new Regex(
-							@"(?:as)(?:\s*)(?:'?)(?<defaultValue>[^';]*)(?:'?)(?:;?)",
-							RegexOptions.IgnoreCase
-							| RegexOptions.CultureInvariant
-							| RegexOptions.IgnorePatternWhitespace
-							| RegexOptions.Compiled
-						);
-						defaultValue = regex.Match(defaultValue).Groups["defaultValue"].Value;
-					}
-					else if (string.IsNullOrEmpty(defaultValue))
-					{
-						return null;
-					}
-						
 				}
 
 				if (column.NativeType.ToLower() == "real")
@@ -3657,7 +3369,6 @@ CREATE\s+PROC(?:EDURE)?                               # find the start of the st
 				else
 				{
 					DbType dataType = column.DataType;
-
 					switch (dataType)
 					{
 						case DbType.AnsiString:
@@ -3702,7 +3413,7 @@ CREATE\s+PROC(?:EDURE)?                               # find the start of the st
 								return null;
 			
 						case DbType.Guid:
-							if (defaultValue == "new Guid()"|| defaultValue == "Guid.NewGuid()")
+							if (defaultValue == "new Guid()")
 								return defaultValue;
 								
 							guidConvert = new Guid(defaultValue);
@@ -3980,7 +3691,7 @@ CREATE\s+PROC(?:EDURE)?                               # find the start of the st
 				return numValue.ToString() + "F";
 			else if (column.NativeType.ToLower() == "xml")
 			{
-				return "\"" + "<test></test>" + "\"";
+				return "\"" + "<TEST></TEST>" + "\"";
 			}	
 			else
 			{
@@ -4108,8 +3819,6 @@ CREATE\s+PROC(?:EDURE)?                               # find the start of the st
 
 		public string RandomString(ColumnSchema column, bool lowerCase)
 		{
-			
-			
 			//Debugger.Break();
 			int size = 2; // default size
 			
@@ -4137,12 +3846,7 @@ CREATE\s+PROC(?:EDURE)?                               # find the start of the st
 				}
 			}
 			
-			string result = RandomString((size/2) -1, lowerCase);
-			
-			if (column.IsPrimaryKeyMember && !IsIdentityColumn(column) && !IsComputed(column))
-				return string.Concat(result, Guid.NewGuid().ToString("N").Substring(0,2));
-			
-			return result;	
+			return RandomString((size/2) -1, lowerCase);
 		}
 		
 		/// <summary>
@@ -5119,7 +4823,6 @@ CREATE\s+PROC(?:EDURE)?                               # find the start of the st
 							collectionInfo.SecondaryTablePkColNames = GetColumnNames(junctionTableKey.PrimaryKeyTable.PrimaryKey.MemberColumns);
 							collectionInfo.JunctionTableSchema = junctionTable;
 							collectionInfo.SecondaryTableSchema = junctionTableKey.PrimaryKeyTable;
-							collectionInfo.SecondaryTableKey = junctionTableKey;
 							collectionInfo.PrimaryTableSchema = table;
 							collectionInfo.JunctionTableSchema = junctionTable;
 							collectionInfo.JunctionTable = GetClassName(junctionTable);
@@ -5135,10 +4838,10 @@ CREATE\s+PROC(?:EDURE)?                               # find the start of the st
 							collectionInfo.PkIdxName = junctionTableKey.Name;
 							
 							// Property Name
-							collectionInfo.PropertyName =  string.Format("{2}{0}_From_{1}", GetClassName(collectionInfo.SecondaryTableSchema, ClassNameFormat.CollectionProperty), GetClassName(collectionInfo.JunctionTableSchema),GetKeysName(junctionTableKey.ForeignKeyMemberColumns)); 
+							collectionInfo.PropertyName = string.Format("{0}_From_{1}", GetClassName(collectionInfo.SecondaryTableSchema, ClassNameFormat.CollectionProperty), GetClassName(collectionInfo.JunctionTableSchema)); 
 
 							// Uninque Property Name, in case of conflict
-							collectionInfo.PropertyNameUnique =   string.Format("{2}{0}_From_{1}", GetClassName( collectionInfo.SecondaryTableSchema, ClassNameFormat.CollectionProperty), GetClassName(collectionInfo.JunctionTableSchema),GetKeysName(junctionTableKey.ForeignKeyMemberColumns)); 
+							collectionInfo.PropertyNameUnique = string.Format("{0}_From_{1}", GetClassName( collectionInfo.SecondaryTableSchema, ClassNameFormat.CollectionProperty), GetClassName(collectionInfo.JunctionTableSchema)); 
 
 							// Field Variable String
 							collectionInfo.FieldName = GetCamelCaseName(collectionInfo.PropertyNameUnique);
@@ -5216,7 +4919,6 @@ CREATE\s+PROC(?:EDURE)?                               # find the start of the st
 			public string GetByKeysName = string.Empty;
 			public RelationshipType CollectionRelationshipType;	
 			public TableKeySchema TableKey = null;
-			public TableKeySchema SecondaryTableKey = null;
 		}
 		#endregion
 			
@@ -5381,7 +5083,7 @@ CREATE\s+PROC(?:EDURE)?                               # find the start of the st
 					if((i.IsUnique || i.IsPrimaryKey) && (keyschema.ForeignKeyMemberColumns.Count == i.MemberColumns.Count))
 					{
 						//The index must contain the same column
-						if(i.MemberColumns.Contains(column.Name)) //&& (!IsJunctionTable(keyschema.ForeignKeyTable)))
+						if(i.MemberColumns.Contains(column.Name) && (!IsJunctionTable(keyschema.ForeignKeyTable)))
 						{
 							columnIsUnique = true;
 						}
@@ -5526,23 +5228,6 @@ CREATE\s+PROC(?:EDURE)?                               # find the start of the st
 			return result;
 		}
 
-        ///<summary>
-        /// Get's the foreign key columns from a corresponding a m:m relationship to it's corresponding 1:m relationship
-        ///</summary>
-        public ColumnSchemaCollection GetCorrespondingRelationshipKeys(TableKeySchemaCollection fkeys, ColumnSchema col)
-        {
-            //System.Diagnostics.Debugger.Break();
-            for (int j = 0; j < fkeys.Count; j++)
-            {
-                for (int y = 0; y < fkeys[j].ForeignKeyMemberColumns.Count; y++)
-                {
-                    if (fkeys[j].ForeignKeyMemberColumns[y].Name.ToLower()
-                            == col.Name.ToLower())
-                        return (ColumnSchemaCollection)fkeys[j].ForeignKeyMemberColumns;
-                }
-            }
-            return null;
-        }
 
 		private string _currentTable = string.Empty;
 		
@@ -5634,74 +5319,7 @@ CREATE\s+PROC(?:EDURE)?                               # find the start of the st
 			return _tbChild;
 		}
 		#endregion 
-	
-		#region EntLibVersion
-		///<summary>
-		/// Gets the enterprise library version assembly signature
-		///</summary>
-		public string GetEntLibVersionSignature(EntLibVersion version)
-		{
-			string entlibVersionText = "";
-	
-			switch (version)
-			{
-				case MoM.Templates.EntLibVersion.v2 :
-					entlibVersionText = "Version=2.0.0.0, Culture=neutral, PublicKeyToken=null";
-					break;
-				case MoM.Templates.EntLibVersion.v3 :
-					entlibVersionText = "Version=3.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a";
-					break;
-				case MoM.Templates.EntLibVersion.v3_1 :
-					entlibVersionText = "Version=3.1.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a";
-					break;
-			}	
-			return entlibVersionText;
-		}
-		#endregion
 		
-		public string GetMSBuildExtensionsVersionString( VSNetVersion version )
-		{
-			string versionNumber = "8.0";
-			
-			switch ( version )
-			{
-				case ( VSNetVersion.v2008 ) :
-					versionNumber = "9.0";
-					break;
-			}
-		
-			return versionNumber;
-		}
-		
-		public string GetVisualStudioProductVersionString( VSNetVersion version )
-		{
-			string versionNumber = "8.0.50727";
-			
-			switch ( version )
-			{
-				case ( VSNetVersion.v2008 ) :
-					versionNumber = "9.0.21022";
-					break;
-			}
-		
-			return versionNumber;
-		}
-		
-		public string GetDotNetFrameworkString( DotNetFrameworkVersion version )
-		{
-			string versionNumber = "2.0";
-			switch ( version )
-			{
-				case ( DotNetFrameworkVersion.v3 ) :
-					versionNumber = "3.0";
-					break;
-				case ( DotNetFrameworkVersion.v3_5 ) :
-					versionNumber = "3.5";
-				break;
-			}
-		
-			return versionNumber;
-		}
 	}
 
 	#region Retry
@@ -5792,43 +5410,6 @@ CREATE\s+PROC(?:EDURE)?                               # find the start of the st
 		/// <summary>A Domain Model Pattern Generation should be included.</summary>
 		DomainModel
 	}
-	#endregion
-	
-	#region Entity Equality Semantics
-	public enum EqualitySemantics
-	{
-		/// <summary>Uses default implementation of Equals() and GetHashCode() (Reference - type Semantics, based on object identity)</summary>
-		Reference,
-		/// <summary>Override Entity Equals() and GetHashCode() to use value - type semantics (Equality based on object contents)</summary>
-		Value
-	}
-	#endregion
-	
-	#region Validation Option Entlib or NetTiers
-	public enum ValidationType
-	{
-		NetTiers,
-		EntLib
-	}
-	#endregion
-	
-	#region VS and Dot Net Version
-		
-	public enum VSNetVersion
-	{
-		v2005
-		,v2008
-	}
-	
-	public enum DotNetFrameworkVersion
-	{
-		/// <summary> version 2.0 </summary>
-		v2,
-		/// <summary> version 3.0 </summary>
-		v3,
-		/// <summary> version 3.5 </summary>
-		v3_5
-	}	
 	#endregion
 	
 	#region DatabaseType
@@ -6102,7 +5683,7 @@ CREATE\s+PROC(?:EDURE)?                               # find the start of the st
 	
 	#endregion MethodNamesProperty
 	
-	#region Archived Deprecated
+	#region Archived Depricated
 	/*
 	///<summary>
 	/// returns true all primary key columns have is a foreign key relationship
