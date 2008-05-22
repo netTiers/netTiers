@@ -60,7 +60,18 @@ namespace <%=DALNameSpace%>.Bases
 			string methodName  = item.Key.ToString();		
 			string returnType = GetReturnCustomProcReturnType(CustomNonMatchingReturnType, SourceView, command);
 			string returnTypeForComment = returnType.Replace("<", "&lt;").Replace(">", "&gt;");
-			string returnKeyword = (returnType != "void" ? "return" : string.Empty);	
+			string returnKeyword = (returnType != "void" ? "return" : string.Empty);
+
+			//Go ahead and gather the strings necessary for Input / Output Parms.  These are used in multiple places
+			//and cuts down on the number of times these items have to be transformed
+			string inputParmsMethodComment = TransformStoredProcedureInputsToMethodComments(command.InputParameters);
+			string outputParmsMethodComment = TransformStoredProcedureOutputsToMethodComments(command.AllOutputParameters);
+
+			string methodParms = TransformStoredProcedureInputsToMethod(false, command.InputParameters) + 
+								 TransformStoredProcedureOutputsToMethod(command.InputParameters.Count > 0, command.AllOutputParameters);
+			
+			string inputParmsDataAccess = TransformStoredProcedureInputsToDataAccess(true, command.InputParameters);
+			string outputParmsDataAccess = TransformStoredProcedureOutputsToDataAccess(true, command.AllOutputParameters);
 
 	%>
 		
@@ -68,48 +79,49 @@ namespace <%=DALNameSpace%>.Bases
 		
 		/// <summary>
 		///	This method wrap the '<%=command.Name%>' stored procedure. 
-		/// </summary><%=TransformStoredProcedureInputsToMethodComments(command.InputParameters)%>
+		/// </summary><%=inputParmsMethodComment + outputParmsMethodComment%>
 		/// <remark>This method is generate from a stored procedure.</remark><% if (returnType != "void") {%>
 		/// <returns>A <see cref="<%=returnTypeForComment%>"/> instance.</returns><%}%>
-		public <%=returnType%> <%=methodName%>(<%=TransformStoredProcedureInputsToMethod(false, command.InputParameters)%>)
+		public <%=returnType%> <%=methodName%>(<%=methodParms%>)
 		{
-			<%= returnKeyword %> <%=methodName%>(null, 0, int.MaxValue <%=TransformStoredProcedureInputsToDataAccess(true, command.InputParameters)%>);
+			<%= returnKeyword %> <%=methodName%>(null, 0, int.MaxValue <%=inputParmsDataAccess + outputParmsDataAccess%>);
 		}
 		
 		/// <summary>
 		///	This method wrap the '<%=command.Name%>' stored procedure. 
-		/// </summary><%=TransformStoredProcedureInputsToMethodComments(command.InputParameters)%>
+		/// </summary><%=inputParmsMethodComment + outputParmsMethodComment%>
 		/// <param name="start">Row number at which to start reading.</param>
 		/// <param name="pageLength">Number of rows to return.</param>
 		/// <remark>This method is generate from a stored procedure.</remark><% if (returnType != "void") {%>
 		/// <returns>A <see cref="<%=returnTypeForComment%>"/> instance.</returns><%}%>
-		public <%=returnType%> <%=methodName%>(int start, int pageLength<%=TransformStoredProcedureInputsToMethod(true, command.InputParameters)%>)
+		public <%=returnType%> <%=methodName%>(int start, int pageLength, <%=methodParms%>)
 		{
-			<%= returnKeyword %> <%=methodName%>(null, start, pageLength <%=TransformStoredProcedureInputsToDataAccess(true, command.InputParameters)%>);
+			<%= returnKeyword %> <%=methodName%>(null, start, pageLength <%=inputParmsDataAccess + outputParmsDataAccess%>);
 		}
 				
 		/// <summary>
 		///	This method wrap the '<%=command.Name%>' stored procedure. 
-		/// </summary><%=TransformStoredProcedureInputsToMethodComments(command.InputParameters)%>
+		/// </summary><%=inputParmsMethodComment + outputParmsMethodComment%>
 		/// <remark>This method is generate from a stored procedure.</remark><% if (returnType != "void") {%>
 		/// <param name="transactionManager"><see cref="TransactionManager"/> object</param>
 		/// <returns>A <see cref="<%=returnTypeForComment%>"/> instance.</returns><%}%>
-		public <%=returnType%> <%=methodName%>(TransactionManager transactionManager<%=TransformStoredProcedureInputsToMethod(true, command.InputParameters)%>)
+		public <%=returnType%> <%=methodName%>(TransactionManager transactionManager, <%=methodParms%>)
 		{
-			<%= returnKeyword %> <%=methodName%>(transactionManager, 0, int.MaxValue <%=TransformStoredProcedureInputsToDataAccess(true, command.InputParameters)%>);
+			<%= returnKeyword %> <%=methodName%>(transactionManager, 0, int.MaxValue <%=inputParmsDataAccess + outputParmsDataAccess%>);
 		}
 		
 		/// <summary>
 		///	This method wrap the '<%=command.Name%>' stored procedure. 
-		/// </summary><%=TransformStoredProcedureInputsToMethodComments(command.InputParameters)%>
+		/// </summary><%=inputParmsMethodComment + outputParmsMethodComment%>
 		/// <param name="start">Row number at which to start reading.</param>
 		/// <param name="pageLength">Number of rows to return.</param>
 		/// <param name="transactionManager"><see cref="TransactionManager"/> object</param>
 		/// <remark>This method is generate from a stored procedure.</remark><% if (returnType != "void") {%>
 		/// <returns>A <see cref="<%=returnTypeForComment%>"/> instance.</returns><%}%>
-		public abstract <%=returnType%> <%=methodName%>(TransactionManager transactionManager, int start, int pageLength <%=TransformStoredProcedureInputsToMethod(true, command.InputParameters)%>);
+		public abstract <%=returnType%> <%=methodName%>(TransactionManager transactionManager, int start, int pageLength, <%=methodParms%>);
 		
 		#endregion
+
 <%
 		}	//end foreach command
 %>

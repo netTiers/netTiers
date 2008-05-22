@@ -2627,12 +2627,34 @@
 		this.GetTemplate(projectTemplate).SetProperty("IncludeAtlasToolkit", IncludeAtlasToolkit);
 		this.GetTemplate(projectTemplate).SetProperty("EntLibVersion", EntLibVersion);
 		this.GetTemplate(projectTemplate).SetProperty("ValidationType", ValidationType);
-			
+		
+		//This is the path to the References Folder
 		string rootPath = Path.GetFullPath(Path.Combine(OutputDirectory, LibraryPath));
-		string otherPath = Path.GetFullPath(Directory.GetDirectories(OutputDirectory)[0]);
-		string libRelPath = RelativePathTo(otherPath, rootPath);
+
+		bool pathFound = false;
+		string otherPath = "";
+		
+		//We will default the path to the Directory below the library path if no other path is found
+		string libRelPath = "..\\" + LibraryPath;
+		
+		//Find the first path that is not the Reference Folder
+		foreach(string directory in Directory.GetDirectories(OutputDirectory))
+		{
+			if(directory.ToUpper() != rootPath.ToUpper())
+			{
+				otherPath = Path.GetFullPath(Path.Combine(OutputDirectory, directory));
+				pathFound = true;
+				break;
+			}
+		}
+		
+		if(pathFound)
+		{
+			libRelPath = RelativePathTo(otherPath, rootPath); 
+		}
+
 		this.GetTemplate(projectTemplate).SetProperty("LibraryPath", libRelPath);
-				
+
 		#endregion Common project properties	
 		
 		#region Components project

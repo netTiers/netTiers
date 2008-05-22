@@ -423,10 +423,11 @@
 				newCollectionEnd = newCollectionClassNameEnd;
 			}
 			
-			string returnTypeForComment = returnType.Replace("<", "{").Replace(">", "}");		
-			string overloadParms = TransformStoredProcedureInputsToMethod(false, command.InputParameters);
-			string overloadCall = TransformStoredProcedureInputsToDataAccess(true, command.InputParameters);
-			string parms = TransformStoredProcedureInputsToMethod(true, command.InputParameters);
+			string returnTypeForComment = returnType.Replace("<", "{").Replace(">", "}");
+			string methodParms = TransformStoredProcedureInputsToMethod(false, command.InputParameters) + TransformStoredProcedureOutputsToMethod(command.InputParameters.Count > 0, command.AllOutputParameters);
+			string overloadCall = TransformStoredProcedureInputsToDataAccess(true, command.InputParameters) + TransformStoredProcedureOutputsToDataAccess(true, command.AllOutputParameters);
+			string parmsMethodComment = TransformStoredProcedureInputsToMethodComments(command.InputParameters) + TransformStoredProcedureInputsToMethodComments(command.AllOutputParameters);
+			
 			string returnKeyword = (returnType != "void" ? "return" : string.Empty);	
 
 		%>
@@ -434,24 +435,22 @@
 		#region <%=command.Name%>
 		/// <summary>
 		///	This method wrap the '<%=command.Name%>' stored procedure. 
-<%--	/// </summary><%=TransformStoredProcedureInputsToMethodComments(command.InputParameters) + TransformStoredProcedureOutputsToMethodComments(command.AllOutputParameters)%> --%>
-		/// </summary><%=TransformStoredProcedureInputsToMethodComments(command.InputParameters) %>
+		/// </summary><%=parmsMethodComment %>
 		/// <remark>This method is generate from a stored procedure.</remark><% if (returnType != "void") {%>
 		/// <returns>A <see cref="<%=returnTypeForComment%>"/> instance.</returns><%}%>
-		<%= constructorAccessModifier %> <%=returnType%> <%=methodName%>(<%= overloadParms %>)
+		<%= constructorAccessModifier %> <%=returnType%> <%=methodName%>(<%= methodParms %>)
 		{
 			<%= returnKeyword %> <%=methodName%>(<%= overloadCall.Length > 0 ? overloadCall.TrimStart(',') + "," : "" %> 0, defaultMaxRecords );
 		}
 	
 		/// <summary>
 		///	This method wrap the '<%=command.Name%>' stored procedure. 
-<%--	/// </summary><%=TransformStoredProcedureInputsToMethodComments(command.InputParameters) + TransformStoredProcedureOutputsToMethodComments(command.AllOutputParameters)%> --%>
-		/// </summary><%=TransformStoredProcedureInputsToMethodComments(command.InputParameters) %>
+		/// </summary><%=parmsMethodComment %>
 		/// <param name="start">Row number at which to start reading.</param>
 		/// <param name="pageLength">Number of rows to return.</param>
 		/// <remark>This method is generate from a stored procedure.</remark><% if (returnType != "void") {%>
 		/// <returns>A <see cref="<%=returnTypeForComment%>"/> instance.</returns><%}%>
-		<%= constructorAccessModifier %> <%=returnType%> <%=methodName%>(<%= (parms.Length > 0 ? parms.TrimStart(',') + "," : "") %> int start, int pageLength)
+		<%= constructorAccessModifier %> <%=returnType%> <%=methodName%>(<%= (methodParms.Length > 0 ? methodParms + ", " : "") %>int start, int pageLength)
 		{
 			// throws security exception if not authorized
 			//SecurityContext.IsAuthorized("<%=methodName%>");
@@ -469,8 +468,7 @@
 				NetTiersProvider dataProvider = ConnectionScope.Current.DataProvider;
                 
 				//Call Custom Procedure from Repository
-//				<%= returnType != "void" ? "result = " : ""  %><%= newCollection %>dataProvider.<%= GetClassName(SourceView, ClassNameFormat.Provider) %>.<%=methodName%>(transactionManager, start, pageLength <%=TransformStoredProcedureInputsToDataAccess(true, command.InputParameters) + TransformStoredProcedureOutputsToDataAccess(true, command.AllOutputParameters)%>)<%= newCollectionEnd %>;
-				<%= returnType != "void" ? "result = " : ""  %><%= newCollection %>dataProvider.<%= GetClassName(SourceView, ClassNameFormat.Provider) %>.<%=methodName%>(transactionManager, start, pageLength <%=TransformStoredProcedureInputsToDataAccess(true, command.InputParameters) %>)<%= newCollectionEnd %>;
+				<%= returnType != "void" ? "result = " : ""  %><%= newCollection %>dataProvider.<%= GetClassName(SourceView, ClassNameFormat.Provider) %>.<%=methodName%>(transactionManager, start, pageLength <%=overloadCall%>)<%= newCollectionEnd %>;
 	        
 				<% if (returnType == "void") { %>
 				//If success, Commit
