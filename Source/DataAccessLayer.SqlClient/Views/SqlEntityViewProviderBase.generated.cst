@@ -29,6 +29,9 @@
 <%
 	// Name of the table being worked on.
 	string name = SourceView.Name;
+
+	//Get the owner of the table
+	string owner = GetOwnerName(SourceView, true);		
 		
 	string className = GetClassName(SourceView);
 	string abstractRepositoryClassName = "Sql" + GetClassName(SourceView, ClassNameFormat.ProviderBase);
@@ -160,7 +163,7 @@ public abstract partial class <%=providerBaseName%> : <%=GetClassName(SourceView
 	public override <%=collectionClassName%> <%= MethodNames.GetAll %>(TransactionManager transactionManager, int start, int pageLength, out int count)
 	{
 		SqlDatabase database = new SqlDatabase(this._connectionString);
-		DbCommand commandWrapper = StoredProcedureProvider.GetCommandWrapper(database, "<%=ProcedurePrefix + GetCleanName(name) + SelectSuffix + SelectAllSuffix%>", _useStoredProcedure);
+		DbCommand commandWrapper = StoredProcedureProvider.GetCommandWrapper(database, "<%=owner + ProcedurePrefix + GetCleanName(name) + SelectSuffix + SelectAllSuffix%>", _useStoredProcedure);
 		
 		IDataReader reader = null;
 		//Create Collection
@@ -214,7 +217,7 @@ public abstract partial class <%=providerBaseName%> : <%=GetClassName(SourceView
 	public override <%=collectionClassName%> <%= MethodNames.Get %>(TransactionManager transactionManager, string whereClause, string orderBy, int start, int pageLength, out int count)
 	{
 		SqlDatabase database = new SqlDatabase(this._connectionString);
-		DbCommand commandWrapper = StoredProcedureProvider.GetCommandWrapper(database, "<%=ProcedurePrefix + GetCleanName(name) + SelectSuffix%>", _useStoredProcedure);
+		DbCommand commandWrapper = StoredProcedureProvider.GetCommandWrapper(database, "<%=owner + ProcedurePrefix + GetCleanName(name) + SelectSuffix%>", _useStoredProcedure);
 
 		database.AddInParameter(commandWrapper, "@WhereClause", DbType.String, whereClause);
 		database.AddInParameter(commandWrapper, "@OrderBy", DbType.String, orderBy);
@@ -289,7 +292,7 @@ public abstract partial class <%=providerBaseName%> : <%=GetClassName(SourceView
 			filter = parameters.GetParameters();
 			
 		SqlDatabase database = new SqlDatabase(this._connectionString);
-		DbCommand commandWrapper = StoredProcedureProvider.GetCommandWrapper(database, "<%= ProcedurePrefix + GetCleanName(name) + FindSuffix %>_Dynamic", typeof(<%= className %>Column), filter, orderBy, start, pageLength);
+		DbCommand commandWrapper = StoredProcedureProvider.GetCommandWrapper(database, "<%=owner + ProcedurePrefix + GetCleanName(name) + FindSuffix %>_Dynamic", typeof(<%= className %>Column), filter, orderBy, start, pageLength);
 		
 		SqlFilterParameter param;
 

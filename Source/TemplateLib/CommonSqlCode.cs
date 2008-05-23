@@ -5654,6 +5654,10 @@ CREATE\s+PROC(?:EDURE)?                               # find the start of the st
 				case MoM.Templates.EntLibVersion.v3_1 :
 					entlibVersionText = "Version=3.1.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a";
 					break;
+				case MoM.Templates.EntLibVersion.v4 :
+					entlibVersionText = "Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a";
+					break;
+				
 			}	
 			return entlibVersionText;
 		}
@@ -5740,7 +5744,9 @@ CREATE\s+PROC(?:EDURE)?                               # find the start of the st
 		/// <summary>Use Enterprise Library version 3.0.</summary>
 		v3,
 		/// <summary>Use Enterprise Library version 3.1.</summary>
-		v3_1
+		v3_1,
+		/// <summary>Use Enterprise Library versoin 4.0</summary>
+		v4
 	}
 	
 	#endregion
