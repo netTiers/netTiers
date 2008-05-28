@@ -119,6 +119,8 @@
 	private string _WebServiceOutputPath = String.Empty; 
 	private string _WebServiceUrl = String.Empty; 
 	private string _ApplicationName = String.Empty;
+    private string _VisualStudioRefVersion = String.Empty;
+
 	private MoM.Templates.ValidationType _ValidationType = MoM.Templates.ValidationType.NetTiers;
 	
 	private TableSchemaCollection templateSourceTables;
@@ -1142,11 +1144,7 @@
 		SafeCopyFile(this.CodeTemplateInfo.DirectoryName + "\\References\\" + entLibSubDir + "\\Microsoft.Practices.EnterpriseLibrary.Common.dll", libPath + "\\Microsoft.Practices.EnterpriseLibrary.Common.dll");
 		SafeCopyFile(this.CodeTemplateInfo.DirectoryName + "\\References\\" + entLibSubDir + "\\Microsoft.Practices.EnterpriseLibrary.Data.dll", libPath+ "\\Microsoft.Practices.EnterpriseLibrary.Data.dll");
 		
-		if(EntLibVersion == MoM.Templates.EntLibVersion.v4) {
-			SafeCopyFile(this.CodeTemplateInfo.DirectoryName + "\\References\\" + entLibSubDir + "\\Microsoft.Practices.ObjectBuilder2.dll", libPath +  "\\Microsoft.Practices.ObjectBuilder2.dll");
-		} else {
-			SafeCopyFile(this.CodeTemplateInfo.DirectoryName + "\\References\\" + entLibSubDir + "\\Microsoft.Practices.ObjectBuilder.dll", libPath +  "\\Microsoft.Practices.ObjectBuilder.dll");
-		}
+		SafeCopyFile(this.CodeTemplateInfo.DirectoryName + "\\References\\" + entLibSubDir + "\\Microsoft.Practices." + GetEntLibOBClassName(EntLibVersion) + ".dll", libPath +  "\\Microsoft.Practices." + GetEntLibOBClassName(EntLibVersion) + ".dll");
 			
 		SafeCopyFile(this.CodeTemplateInfo.DirectoryName + "\\References\\" + entLibSubDir + "\\Microsoft.Practices.EnterpriseLibrary.Caching.dll", libPath +  "\\Microsoft.Practices.EnterpriseLibrary.Caching.dll");
 		SafeCopyFile(this.CodeTemplateInfo.DirectoryName + "\\References\\" + entLibSubDir + "\\Microsoft.Practices.EnterpriseLibrary.Caching.Cryptography.dll", libPath + "\\Microsoft.Practices.EnterpriseLibrary.Caching.Cryptography.dll");
@@ -1269,6 +1267,7 @@
 		//----------------------------------------------------------------------------------------------------------------------------------------------
 		XmlElement iEntityLocatorNode = AddFileNode(commonNode, "EntityLocator.cs");
 		this.GetTemplate("EntityLocator.cst").SetProperty("NameSpace", BLLNameSpace);
+		this.GetTemplate("EntityLocator.cst").SetProperty("ObjectBuilderClass", GetEntLibOBClassName(EntLibVersion));
 		this.RenderToFile("EntityLocator.cst", rootPathBLL + "\\EntityLocator.cs", true);
 		
 		//----------------------------------------------------------------------------------------------------------------------------------------------
@@ -1276,6 +1275,7 @@
 		//----------------------------------------------------------------------------------------------------------------------------------------------
 		XmlElement iEntityManagerNode = AddFileNode(commonNode, "EntityManager.cs");
 		this.GetTemplate("EntityManager.cst").SetProperty("NameSpace", BLLNameSpace);
+		this.GetTemplate("EntityManager.cst").SetProperty("ObjectBuilderClass", GetEntLibOBClassName(EntLibVersion));
 		this.RenderToFile("EntityManager.cst", rootPathBLL + "\\EntityManager.cs", true);
 		#endregion Entity Classes 1
 		
@@ -1814,6 +1814,7 @@
 			this.GetTemplate("EntityProviderBaseCoreClass.generated.cst").SetProperty("BLLNameSpace", BLLNameSpace);
 			this.GetTemplate("EntityProviderBaseCoreClass.generated.cst").SetProperty("DALNameSpace", DALNameSpace);
 			this.GetTemplate("EntityProviderBaseCoreClass.generated.cst").SetProperty("IncludeDatabaseFeatures", IncludeDatabaseFeatures);
+			this.GetTemplate("EntityProviderBaseCoreClass.generated.cst").SetProperty("ObjectBuilderClass", GetEntLibOBClassName(EntLibVersion));
 			this.RenderToFile("EntityProviderBaseCoreClass.generated.cst", rootPathDAL + "\\Bases\\EntityProviderBaseCore.generated.cs", true);
 	
 			if ( !File.Exists(rootPathDAL + "\\Bases\\EntityViewProviderBase.cs") )
@@ -2904,12 +2905,14 @@
 			if (!File.Exists(OutputDirectory + "\\" + NameSpace + ".vsmdi"))
 			{
 				AddFileNode(commonNode, NameSpace + ".vsmdi");
+				this.GetTemplate(vsmdiTemplate).SetProperty("VisualStudioVersion", VisualStudioVersion);
 				this.RenderToFile(vsmdiTemplate, OutputDirectory + "\\" + NameSpace + ".vsmdi", true);
 			}
 			
 			if (!File.Exists(OutputDirectory + "\\" + "localtestrun.testrunconfig"))
 			{
 				AddFileNode(commonNode, "localtestrun.testrunconfig");
+				this.GetTemplate(testrunconfigTemplate).SetProperty("VisualStudioVersion", VisualStudioVersion);
 				this.RenderToFile(testrunconfigTemplate, OutputDirectory + "\\" + "localtestrun.testrunconfig", true);
 			}
 		}
@@ -3255,7 +3258,9 @@
 						this.GetTemplate("OrderedEntityViewRepositoryTestList.cst").SetProperty("IncludeUnitTest", IncludeUnitTest);
 						
 						this.GetTemplate("OrderedEntityViewRepositoryTestList.cst").SetProperty("RootPathUT", rootPathUT);
-									
+						
+						this.GetTemplate("OrderedEntityViewRepositoryTestList.cst").SetProperty("VisualStudioVersion", VisualStudioVersion);
+		
 						this.RenderToFile("OrderedEntityViewRepositoryTestList.cst", rootPathUT + "\\Views\\" + GetClassName(SourceView, ClassNameFormat.UnitTest) + ".orderedtest", true);
 						AddExecutionTime(testNode);
 					}					
@@ -3768,6 +3773,8 @@
 							this.GetTemplate("OrderedEntityRepositoryTestList.cst").SetProperty("IncludeUnitTest", IncludeUnitTest);
 							
 							this.GetTemplate("OrderedEntityRepositoryTestList.cst").SetProperty("RootPathUT", rootPathUT);
+							
+							this.GetTemplate("OrderedEntityRepositoryTestList.cst").SetProperty("VisualStudioVersion", VisualStudioVersion);
 							
 							this.RenderToFile("OrderedEntityRepositoryTestList.cst", rootPathUT + "\\" + GetClassName(SourceTable, ClassNameFormat.UnitTest) + ".orderedtest", true);
 							AddExecutionTime(testNode);
