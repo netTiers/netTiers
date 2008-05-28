@@ -4,13 +4,19 @@
  * Last modified at $Date: 2006/02/09 23:35:10 $
  * $Revision: 1.3 $
 --%>
-<%@ CodeTemplate Language="C#" TargetLanguage="C#" Description="contains a creational factory for entity types." ResponseEncoding="UTF-8"  NoWarn="0108,0618,1572,1573,1574,0162,2002" %>
+<%@ CodeTemplate Src="../TemplateLib/CommonSqlCode.cs" Inherits="MoM.Templates.CommonSqlCode" Language="C#" TargetLanguage="Xml" Description="Template description here." Debug="True" ResponseEncoding="UTF-8" NoWarn="0108,0618,1572,1573,1574,0162,2002" %>
+<%@ CodeTemplate Language="C#" TargetLanguage="C#" Description="contans a creational factory for entity types." ResponseEncoding="UTF-8"  NoWarn="0108,0618,1572,1573,1574,0162,2002" %>
 <%@ Property Name="NameSpace" Type="System.String" Category="Data" Description="The project root Namespace." %>
+<%@ Property Name="ObjectBuilderClass" Type="System.String" Default="ObjectBuilder" Category="02. Framework Generation - Optional" Description="Name of the ObjectBuilder class to use." %>
+<%@ Property Name="EntLibVersion" Type="MoM.Templates.EntLibVersion" Default="v2" Category="02. Framework Generation - Optional" Description="Indicates the Enterprise Library version to use. Options include v2, v3, v3.1 and v4" %>
+
+<%@ Assembly Name="SchemaExplorer" %>
+<%@ Assembly Name="System.Design" %>
 
 using System;
 using System.Collections.Generic;
 using System.Text;
-using Microsoft.Practices.ObjectBuilder;
+using Microsoft.Practices.<%= ObjectBuilderClass %>;
 
 
 namespace <%=NameSpace%>
@@ -18,7 +24,7 @@ namespace <%=NameSpace%>
     /// <summary>
     /// Provides a means to weak reference and already created and untouched locate entities.
     /// </summary>	
-    public class EntityLocator : Microsoft.Practices.ObjectBuilder.Locator 
+    public class EntityLocator : Microsoft.Practices.<%= ObjectBuilderClass %>.Locator 
     {
         /// <summary>
         /// Initializes a new instance of the <see cref="EntityLocator"/> class.
@@ -39,7 +45,8 @@ namespace <%=NameSpace%>
             base.Add(key as object, value);
         }
 
-
+		<% // EntLibv4 ObjectBuilder2 does not include the SearchMode parameter %>
+		<% if (EntLibVersion < MoM.Templates.EntLibVersion.v4) { // EntLib < 4 version %>
         /// <summary>
         /// Determines whether [contains] [the specified key].
         /// </summary>
@@ -92,6 +99,59 @@ namespace <%=NameSpace%>
             <% //TODO: Add an List specific logic %>
             return Get(key as object, SearchMode.Local) as EntityList;
         }
+		<% } else { // EntLibv4 version %>
+        /// <summary>
+        /// Determines whether [contains] [the specified key].
+        /// </summary>
+        /// <param name="key">The key.</param>
+        /// <returns>
+        /// 	<c>true</c> if [contains] [the specified key]; otherwise, <c>false</c>.
+        /// </returns>
+        public bool Contains(string key)
+        {
+            <% //TODO: Add an Entity specific logic %>
+            return base.Contains(key);
+        }
+
+
+        /// <summary>
+        /// Gets the specified key of any object.
+        /// </summary>
+        /// <param name="key">The key.</param>
+        /// <returns>object if available, else null </returns>
+        public override object Get(object key)
+        {
+            return base.Get(key);
+        }
+
+        /// <summary>
+        /// Get's an Entity from the Tracking Locator
+        /// </summary>
+        /// <typeparam name="Entity">A type that implements IEntity</typeparam>
+        /// <param name="key">locator list key to fetch, best used 
+        /// if it's the (TypeName or TableName) + EntityKey of the this entity</param>
+        /// <returns>Entity from Locator if available.</returns>
+        public Entity GetEntity<Entity>(string key) where Entity : EntityBase, new()
+        {
+            <% //TODO: Add an Entity specific logic %>
+            return Get(key as object) as Entity;
+        }
+
+        /// <summary>
+        /// Get's a List of Entities from the Tracking Locator
+        /// </summary>
+        /// <typeparam name="EntityList"> a type that implements ListBase&lt;IEntity&gt;</typeparam>
+        /// <param name="key">locator list key to fetch, best used 
+        /// if it's like the criteria of the method used to populate this list
+        /// </param>
+        /// <returns>ListBase&lt;IEntity&gt; if available</returns>
+        public EntityList GetList<EntityList>(string key) where EntityList : ListBase<IEntity>, new()
+        {
+            <% //TODO: Add an List specific logic %>
+            return Get(key as object) as EntityList;
+        }
+		
+		<% } %>
 		
         /// <summary>
         /// Re-Creates the key based on primary key values.

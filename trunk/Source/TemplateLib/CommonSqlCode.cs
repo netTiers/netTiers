@@ -5661,6 +5661,55 @@ CREATE\s+PROC(?:EDURE)?                               # find the start of the st
 			}	
 			return entlibVersionText;
 		}
+		
+		///<summary>
+		/// Gets the enterprise library ObjectBuilder version assembly signature
+		///</summary>
+		public string GetEntLibOBVersionSignature(EntLibVersion version)
+		{
+			string entlibOBVersionText = "";
+	
+			switch (version)
+			{
+				case MoM.Templates.EntLibVersion.v2 :
+					entlibOBVersionText = "Version=1.0.51205.0, Culture=neutral, PublicKeyToken=null";
+					break;
+				case MoM.Templates.EntLibVersion.v3 :
+					entlibOBVersionText = "Version=1.0.51206.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a";
+					break;
+				case MoM.Templates.EntLibVersion.v3_1 :
+					entlibOBVersionText = "Version=1.0.51206.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a";
+					break;
+				case MoM.Templates.EntLibVersion.v4 :
+					entlibOBVersionText = "Version=2.1.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a";
+					break;
+				
+			}	
+			return entlibOBVersionText;
+		}
+
+		///<summary>
+		/// Gets the enterprise library ObjectBuilder class name
+		///</summary>
+		public string GetEntLibOBClassName(EntLibVersion version)
+		{
+			string entlibOBClassName = "";
+	
+			switch (version)
+			{
+				case MoM.Templates.EntLibVersion.v2 :
+				case MoM.Templates.EntLibVersion.v3 :
+				case MoM.Templates.EntLibVersion.v3_1 :
+					entlibOBClassName = "ObjectBuilder";
+					break;
+				case MoM.Templates.EntLibVersion.v4 :
+					entlibOBClassName = "ObjectBuilder2";
+					break;
+				
+			}	
+			return entlibOBClassName;
+		}
+
 		#endregion
 		
 		public string GetMSBuildExtensionsVersionString( VSNetVersion version )
@@ -5691,6 +5740,20 @@ CREATE\s+PROC(?:EDURE)?                               # find the start of the st
 			return versionNumber;
 		}
 		
+		public string GetVisualStudioGeneralVersionString( VSNetVersion version ) 
+		{
+			// Default to VS2005 version number
+			string versionNumber = "8.0.0.0";
+			
+			switch ( version )
+			{
+				case ( VSNetVersion.v2008 ) :
+					versionNumber = "9.0.0.0";
+					break;
+			}
+		
+			return versionNumber;
+		}
 		public string GetDotNetFrameworkString( DotNetFrameworkVersion version )
 		{
 			string versionNumber = "2.0";
