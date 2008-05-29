@@ -69,6 +69,13 @@ namespace <%=DALNameSpace%>.Bases
 
 			string methodParms = TransformStoredProcedureInputsToMethod(false, command.InputParameters) + 
 								 TransformStoredProcedureOutputsToMethod(command.InputParameters.Count > 0, command.AllOutputParameters);
+			string methodParmsWithComma = string.Empty;
+			
+			//If there are parameters, add a comma to it for methods that have other parameters
+			if(methodParms.Length > 0)
+			{
+				methodParmsWithComma = ", " + methodParms;
+			}
 			
 			string inputParmsDataAccess = TransformStoredProcedureInputsToDataAccess(true, command.InputParameters);
 			string outputParmsDataAccess = TransformStoredProcedureOutputsToDataAccess(true, command.AllOutputParameters);
@@ -94,7 +101,7 @@ namespace <%=DALNameSpace%>.Bases
 		/// <param name="pageLength">Number of rows to return.</param>
 		/// <remark>This method is generate from a stored procedure.</remark><% if (returnType != "void") {%>
 		/// <returns>A <see cref="<%=returnTypeForComment%>"/> instance.</returns><%}%>
-		public <%=returnType%> <%=methodName%>(int start, int pageLength, <%=methodParms%>)
+		public <%=returnType%> <%=methodName%>(int start, int pageLength<%=methodParmsWithComma%>)
 		{
 			<%= returnKeyword %> <%=methodName%>(null, start, pageLength <%=inputParmsDataAccess + outputParmsDataAccess%>);
 		}
@@ -105,7 +112,7 @@ namespace <%=DALNameSpace%>.Bases
 		/// <remark>This method is generate from a stored procedure.</remark><% if (returnType != "void") {%>
 		/// <param name="transactionManager"><see cref="TransactionManager"/> object</param>
 		/// <returns>A <see cref="<%=returnTypeForComment%>"/> instance.</returns><%}%>
-		public <%=returnType%> <%=methodName%>(TransactionManager transactionManager, <%=methodParms%>)
+		public <%=returnType%> <%=methodName%>(TransactionManager transactionManager<%=methodParmsWithComma%>)
 		{
 			<%= returnKeyword %> <%=methodName%>(transactionManager, 0, int.MaxValue <%=inputParmsDataAccess + outputParmsDataAccess%>);
 		}
@@ -118,7 +125,7 @@ namespace <%=DALNameSpace%>.Bases
 		/// <param name="transactionManager"><see cref="TransactionManager"/> object</param>
 		/// <remark>This method is generate from a stored procedure.</remark><% if (returnType != "void") {%>
 		/// <returns>A <see cref="<%=returnTypeForComment%>"/> instance.</returns><%}%>
-		public abstract <%=returnType%> <%=methodName%>(TransactionManager transactionManager, int start, int pageLength, <%=methodParms%>);
+		public abstract <%=returnType%> <%=methodName%>(TransactionManager transactionManager, int start, int pageLength<%=methodParmsWithComma%>);
 		
 		#endregion
 

@@ -367,7 +367,11 @@ public abstract partial class <%=providerBaseName%> : <%=GetClassName(SourceView
 
 			string methodParms = TransformStoredProcedureInputsToMethod(false, command.InputParameters) + 
 								 TransformStoredProcedureOutputsToMethod(command.InputParameters.Count > 0, command.AllOutputParameters);			
-			
+			//Only append a comma if we got parameters back.
+			if(methodParms.Length > 0)
+			{
+				methodParms = ", " + methodParms;	
+			}
 %>
 
 	#region <%=command.Name%>
@@ -380,7 +384,7 @@ public abstract partial class <%=providerBaseName%> : <%=GetClassName(SourceView
 	/// <param name="transactionManager"><see cref="TransactionManager"/> object</param>
 	/// <remark>This method is generate from a stored procedure.</remark><% if (returnType != "void") {%>
 	/// <returns>A <see cref="<%=returnTypeForComment%>"/> instance.</returns><%}%>
-	public override <%=returnType%> <%=methodName%>(TransactionManager transactionManager, int start, int pageLength, <%=methodParms%>)
+	public override <%=returnType%> <%=methodName%>(TransactionManager transactionManager, int start, int pageLength<%=methodParms%>)
 	{
 		SqlDatabase database = new SqlDatabase(this._connectionString);
 		DbCommand commandWrapper = StoredProcedureProvider.GetCommandWrapper(database, "<%= GetOwnerName(command, true) %><%=GetSafeName(command.Name)%>", _useStoredProcedure);
