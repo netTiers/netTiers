@@ -1,4 +1,4 @@
-<%@ CodeTemplate Language="C#" TargetLanguage="C#" Src="" Inherits="" Debug="False" Description="Generates the SqlParameter class." ResponseEncoding="UTF-8"  NoWarn="0108,0618,1572,1573,1574,0162,2002" %>
+﻿<%@ CodeTemplate Language="C#" TargetLanguage="C#" Src="" Inherits="" Debug="False" Description="Generates the SqlParameter class." ResponseEncoding="UTF-8"  NoWarn="0108,0618,1572,1573,1574,0162,2002" %>
 
 <%@ Property Name="BLLNameSpace" Optional="False" Type="System.String" Category="Style" Description="BLL Namespace." %>
 <%@ Property Name="DALNameSpace" Optional="False" Type="System.String" Category="Style" Description="DAL Namespace." %>
@@ -49,7 +49,7 @@ namespace <%= WebNameSpace %>.Data
         private IList filters;
 
         /// <summary>
-        /// Gets or sets the Filters property.
+        /// Gets or Sets the Filters property.
         /// </summary>
         [PersistenceMode(PersistenceMode.InnerProperty)]
         public IList Filters
@@ -71,7 +71,7 @@ namespace <%= WebNameSpace %>.Data
         private String callbackControlID;
 
         /// <summary>
-        /// Gets or sets the CallbackControlID property.
+        /// Gets or Sets the CallbackControlID property.
         /// </summary>
         public String CallbackControlID
         {
@@ -85,7 +85,7 @@ namespace <%= WebNameSpace %>.Data
         private bool useParameterizedFilters = true;
 
         /// <summary>
-        /// Gets or sets the UseParameterizedFilters property.
+        /// Gets or Sets the UseParameterizedFilters property.
         /// </summary>
         public bool UseParameterizedFilters
         {
@@ -142,7 +142,6 @@ namespace <%= WebNameSpace %>.Data
         #endregion Evaluate
     }
 
-
     #region SqlExpressionBuilder<EntityColumn>
     /// <summary>
     /// Provides SQL filter expressions for the <see cref="SqlParameter"/> class.
@@ -152,7 +151,7 @@ namespace <%= WebNameSpace %>.Data
     public abstract class SqlExpressionBuilder<EntityColumn> : SqlFilter<EntityColumn>
     {
 
-        #region props
+        #region Public Properties
 
         /// <summary>
         /// The ExpressionGroupState member variable.
@@ -196,6 +195,23 @@ namespace <%= WebNameSpace %>.Data
                 base.ComparisionType = value;
             }
         }
+		
+        /// <summary>
+        /// Gets or Sets the FilterType member variable.
+        /// </summary>
+        [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
+        public override SqlFilterType FilterType
+        {
+            get
+            {
+                return base.FilterType;
+            }
+            set
+            {
+                base.FilterType = value;
+            }
+        }
+		
         /// <summary>
         /// Occurs when the filter expression is to be created.
         /// </summary>
@@ -233,7 +249,7 @@ namespace <%= WebNameSpace %>.Data
 
         //private 
         /// <summary>
-        /// Gets or sets the BuilderExpression property.
+        /// Gets or Sets the BuilderExpression property.
         /// </summary>
         public StringBuilderExpression BuilderExpression
         {
@@ -440,7 +456,7 @@ namespace <%= WebNameSpace %>.Data
         private EntityColumn column;
 
         /// <summary>
-        /// Gets or sets the Column property.
+        /// Gets or Sets the Column property.
         /// </summary>
         public EntityColumn Column
         {
@@ -454,7 +470,7 @@ namespace <%= WebNameSpace %>.Data
         private String controlID;
 
         /// <summary>
-        /// Gets or sets the ControlID property.
+        /// Gets or Sets the ControlID property.
         /// </summary>
 		[System.ComponentModel.Bindable(System.ComponentModel.BindableSupport.Yes)]
         public String ControlID
@@ -487,9 +503,14 @@ namespace <%= WebNameSpace %>.Data
         /// The DefaultValue member variable.
         /// </summary>
         private String defaultValue;
+		
+        /// <summary>
+        /// The FilterType member variable.
+        /// </summary>
+        private SqlFilterType filterType;		
 
         /// <summary>
-        /// The QueryStringField member variable.
+        /// Gets or Sets the QueryStringField member variable.
         /// </summary>
         public virtual String QueryStringField
         {
@@ -498,7 +519,7 @@ namespace <%= WebNameSpace %>.Data
         }
 
         /// <summary>
-        /// The SessionField member variable.
+        /// Gets or Sets the SessionField member variable.
         /// </summary>
         public virtual String SessionField
         {
@@ -507,7 +528,7 @@ namespace <%= WebNameSpace %>.Data
         }
 
         /// <summary>
-        /// Gets or sets the PropertyName property.
+        /// Gets or Sets the PropertyName property.
         /// </summary>
         public virtual String PropertyName
         {
@@ -516,7 +537,7 @@ namespace <%= WebNameSpace %>.Data
         }
 
         /// <summary>
-        /// Gets or sets the DefaultValue property.
+        /// Gets or Sets the DefaultValue property.
         /// </summary>
         public virtual String DefaultValue
         {
@@ -525,12 +546,21 @@ namespace <%= WebNameSpace %>.Data
         }
 
         /// <summary>
-        /// Gets or sets the ComparisionType property.
+        /// Gets or Sets the ComparisionType property.
         /// </summary>
         public virtual SqlComparisonType ComparisionType
         {
             get { return comparisonType; }
             set { comparisonType = value; }
+        }
+		
+        /// <summary>
+        /// Gets or Sets the FilterType property.
+        /// </summary>
+        public virtual SqlFilterType FilterType
+        {
+            get { return filterType; }
+            set { filterType = value; }
         }
 
         #endregion Properties
@@ -599,12 +629,9 @@ namespace <%= WebNameSpace %>.Data
         /// <param name="isCallback">Indicates whether this is a callback request.</param>
         protected virtual void ApplyFilters(SqlFilterBuilder<EntityColumn> sql, Control control, IList filters, bool isCallback)
         {
-            String value;
-            String format;
-
             foreach (SqlFilter<EntityColumn> filter in filters)
             {
-                value = filter.GetFilterValue(control, isCallback);
+                String value = filter.GetFilterValue(control, isCallback);
 
                 if (filter.ApplyFilter != null)
                 {
@@ -613,21 +640,17 @@ namespace <%= WebNameSpace %>.Data
                 }
                 else
                 {
-                    format = "{0}";
+                    String format = "{0}";
                     if (filter.ComparisionType == SqlComparisonType.Contains)
-                    {
-                        format = "%{0}%";
-                    }
+                        format = "%{0}%"; 
                     else if (filter.ComparisionType == SqlComparisonType.StartsWith)
-                    {
                         format = "{0}%";
-                    }
                     else if (filter.ComparisionType == SqlComparisonType.EndsWith)
-                    {
                         format = "%{0}";
-                    }
+                    if (filter.FilterType == SqlFilterType.Phrase)
+                        format = string.Format("\"{0}\"", format);
                     sql.Append(filter.Column, string.Format(format, value));
-                }
+				}
             }
         }
 
@@ -730,7 +753,7 @@ namespace <%= WebNameSpace %>.Data
         private SqlFilterBuilder<EntityColumn> filterBuilder;
 
         /// <summary>
-        /// Gets or sets the FilterBuilder property.
+        /// Gets the FilterBuilder property.
         /// </summary>
         public SqlFilterBuilder<EntityColumn> FilterBuilder
         {
@@ -743,7 +766,7 @@ namespace <%= WebNameSpace %>.Data
         private EntityColumn column;
 
         /// <summary>
-        /// Gets or sets the Column property.
+        /// Gets the Column property.
         /// </summary>
         public EntityColumn Column
         {
@@ -756,7 +779,7 @@ namespace <%= WebNameSpace %>.Data
         private String filter;
 
         /// <summary>
-        /// Gets or sets the Filter property.
+        /// Gets the Filter property.
         /// </summary>
         public String Filter
         {
