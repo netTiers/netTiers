@@ -163,6 +163,8 @@ GO
 		// [ab 012605] nonKeys/cols sans computed/read-only columns. This is for Insert/Update operations
 		ColumnSchemaCollection colsUpdatable = new ColumnSchemaCollection(cols.Count);
 		ColumnSchemaCollection nonKeysUpdatable = new ColumnSchemaCollection(nonKeys.Count);
+		
+		ColumnSchemaCollection colsIdentityRowGuids = new ColumnSchemaCollection();
 
 		// Holds the RowVersion column is there's any
 		ColumnSchema RowVersion = null;
@@ -174,6 +176,9 @@ GO
 				
 			if (column.NativeType.ToLower() == "timestamp")
 				RowVersion = column;
+
+			if (IsIdentityRowGuidColumn(column))
+				colsIdentityRowGuids.Add(column);
 		}
 		
 		foreach (ColumnSchema column in nonKeys)
@@ -358,19 +363,29 @@ GO
 				}%>
 			</parameters>
 			<body><![CDATA[
-				<%= GetSetTransactionIsolationLevelStatement() %>	
+				<%= GetSetTransactionIsolationLevelStatement() %>
+				<% if (colsIdentityRowGuids.Count > 0) { %>
+				Declare @IdentityRowGuids table (<% for (int i = 0; i < colsIdentityRowGuids.Count; i++) {%><%= GetPropertyName(colsIdentityRowGuids[i]) %> <%= GetSqlDataType(colsIdentityRowGuids[i]) %><% if (i < colsIdentityRowGuids.Count - 1) { %>,<% } } %>	)
+				<%}%>				
 				INSERT INTO <%=fqTableName%>
 					(
 					<% for (int i = 0; i < colsUpdatable.Count; i++) { %>[<%= colsUpdatable[i].Name %>]<% if (i < colsUpdatable.Count - 1) { %>
 					,<% } } %>
 					)
+					<% if (colsIdentityRowGuids.Count > 0) { %>
+						OUTPUT <% for (int i = 0; i < colsIdentityRowGuids.Count; i++) {%>Inserted.<%= GetPropertyName(colsIdentityRowGuids[i]) %><% if (i < colsIdentityRowGuids.Count - 1) { %>,<% } } %> into @IdentityRowGuids
+					
+					<%}%>					
 				VALUES
 					(
 					<% for (int i = 0; i < colsUpdatable.Count; i++) { %>@<%= GetPropertyName(colsUpdatable[i]) %><% if (i < colsUpdatable.Count - 1) { %>
 					,<% } } %>
 					)
 				
-				<% for (int i = 0; i < cols.Count; i++) { if (IsIdentityColumn(cols[i])) { %>
+				<% if (colsIdentityRowGuids.Count > 0) { %>
+				select <% for (int i = 0; i < colsIdentityRowGuids.Count; i++) {%>@<%= GetPropertyName(colsIdentityRowGuids[i]) %>=<%= GetPropertyName(colsIdentityRowGuids[i]) %><% if (i < colsIdentityRowGuids.Count - 1) { %>,<% } } %>	 from @IdentityRowGuids
+				<%}%>
+				<% for (int i = 0; i < cols.Count; i++) { if (IsIdentityColumn(cols[i]) && !(IsIdentityRowGuidColumn(cols[i]))) { %>
 				-- Get the identity value
 				SET @<%= GetPropertyName(cols[i]) %> = SCOPE_IDENTITY()
 				<% } } %>
