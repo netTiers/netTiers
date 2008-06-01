@@ -226,6 +226,9 @@
 			CodeTemplates.Add("TableGridView.cst", base.CreateTemplate<TableGridView>()); this.PerformStep();
 			CodeTemplates.Add("TableGridViewBase.cst", base.CreateTemplate<TableGridViewBase>()); this.PerformStep();
 			CodeTemplates.Add("TypedDataSource.cst", base.CreateTemplate<TypedDataSource>()); this.PerformStep();
+			CodeTemplates.Add("EntityMembershipProvider.cst", base.CreateTemplate<EntityMembershipProvider>()); this.PerformStep();
+			CodeTemplates.Add("EntityMembershipUser.cst", base.CreateTemplate<EntityMembershipUser>()); this.PerformStep();
+			CodeTemplates.Add("EntityMembershipProperty.cst", base.CreateTemplate<EntityMembershipProperty>()); this.PerformStep();
 	
 		#endregion 
 			
