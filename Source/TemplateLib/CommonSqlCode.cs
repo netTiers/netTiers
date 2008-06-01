@@ -5655,7 +5655,7 @@ CREATE\s+PROC(?:EDURE)?                               # find the start of the st
 					entlibVersionText = "Version=3.1.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a";
 					break;
 				case MoM.Templates.EntLibVersion.v4 :
-					entlibVersionText = "Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a";
+					entlibVersionText = "Version=4.0.0.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35";
 					break;
 				
 			}	
