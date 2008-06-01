@@ -2448,6 +2448,11 @@ namespace MoM.Templates
 		public bool IsIdentityColumn(ColumnSchema column)
 		{
 			// for sql server
+			// Added by Andy Digital Example LLC 12/10/2007
+			// Trace.WriteLine("IsIdentityRowGuid Eval for Column " + column.Table.Name + "." + column.Name);
+			if (IsIdentityRowGuidColumn(column))
+				return true;
+		
 			if (column.ExtendedProperties["CS_IsIdentity"] != null)
 				return (bool)column.ExtendedProperties["CS_IsIdentity"].Value;
 			
@@ -2463,6 +2468,70 @@ namespace MoM.Templates
 			//Autoincrement: 
 			//return (bool)column.ExtendedProperties["CS_IsIdentity"].Value;
 		} 
+		
+		// Added by Andrew DeVries Digital Example LLC 12/10/2007
+ 		/// <summary>
+		/// returns True is the Column Type is Guid and the Default Valus is newid() or newsequentialid()
+		/// </summary>
+		/// <param name="column">DB table column to be checked</param>
+		/// <returns>string representation of the default value</returns>
+		public bool IsIdentityRowGuidColumn(ColumnSchema column)
+		{
+			if (column == null)
+				return false;
+			if (IsGuidColumn(column) == false)
+			{
+				//Trace.WriteLine("IsIdentityRowGuid Not a Guid Column Returning False");
+				return false;
+			}
+
+			ExtendedProperty defaultValueProperty = column.ExtendedProperties["CS_Default"];
+			if (defaultValueProperty == null)
+				return false;			
+				
+			string defaultValue = null;
+			
+	
+			try
+			{
+				//Get Default Value 
+				defaultValue = defaultValueProperty.Value.ToString();
+				if (defaultValue == null || defaultValue.Trim().Length == 0)
+				{
+					//Trace.WriteLine("IsIdentityRowGuid DefaultValue is null Returning False");
+					return false;
+				}
+				
+				// trim off the surrounding ()'s if they exist (SQL Server)
+				while (defaultValue.StartsWith("(") && defaultValue.EndsWith(")") 
+					|| defaultValue.StartsWith("\"") && defaultValue.EndsWith("\""))
+				{
+					defaultValue = defaultValue.Substring(1);
+					defaultValue = defaultValue.Substring(0, defaultValue.Length - 1);
+				}
+
+				
+
+				if ( defaultValue.ToLower() == "newid()" || defaultValue.ToLower() == "newsequentialid()" )
+				{
+					// Trace.WriteLine("IsIdentityRowGuid Returning True defaultValue=" + defaultValue.ToLower());
+					return true;
+				
+				}
+				else
+				{
+					// Trace.WriteLine("IsIdentityRowGuid Default Value is not newid() or newsequentialid() Returning False");
+					return false;
+				}
+				
+			}
+			catch{}
+				//Trace.WriteLine("IsIdentityRowGuid Catch Returning False");
+				return false;	
+			
+			
+			
+		}
 		
 		/// <summary>
 		/// Get's the default value of a column
@@ -2730,7 +2799,58 @@ namespace MoM.Templates
 			return param.ToString();
 		}
 		
-		
+		// Added by Andrew DeVries Digital Example, LLC
+		/// <summary>
+		/// Get a SqlParameter statement for a column
+		/// </summary>
+		/// <param name="column">Column for which to get the Sql parameter statement</param>
+		/// <param name="isOutput">Is this an output parameter?</param>
+		/// <returns>Sql Parameter statement</returns>
+		public string GetSqlDataType(ColumnSchema column)
+		{
+			StringBuilder param = new StringBuilder();
+			param.AppendFormat("{0}", column.NativeType);
+			
+			// user defined data types do not need size components
+			if ( ! IsUserDefinedType(column) )
+			{
+			switch (column.DataType)
+			{
+				case DbType.Decimal:
+				{
+					if (column.NativeType != "real")
+						param.AppendFormat("({0}, {1})", column.Precision, column.Scale);
+				
+					break;
+				}
+				// [ab 022205] now handles xxxbinary data type
+				case DbType.Binary:
+				// 
+				case DbType.AnsiString:
+				case DbType.AnsiStringFixedLength:
+				case DbType.String:
+				case DbType.StringFixedLength:
+				{
+					if (column.NativeType != "text" && 
+						column.NativeType != "ntext" && 
+						column.NativeType != "timestamp" &&
+						column.NativeType != "image"
+						)
+
+					{
+						if (column.Size > 0)
+						{
+							param.AppendFormat("({0})", column.Size);
+						}
+					}
+					break;
+				}
+			}
+			}
+			
+			return param.ToString();
+		}
+
 		public bool IsColumnFindable(ColumnSchema column)
 		{
 			if (column.DataType == DbType.Binary || column.NativeType == "text" || 
@@ -3620,7 +3740,7 @@ CREATE\s+PROC(?:EDURE)?                               # find the start of the st
 					{
 						if ( defaultValue.ToLower() == "getdate()" )
 							defaultValue = "DateTime.Now";
-						else if ( defaultValue.ToLower() == "newid()" )
+						else if ( defaultValue.ToLower() == "newid()" || defaultValue.ToLower() == "newsequentialid()" )
 							defaultValue = "Guid.NewGuid()";
 						else if ( defaultValue.ToLower() == "getutcdate()" )
 							defaultValue = "DateTime.UtcNow";
