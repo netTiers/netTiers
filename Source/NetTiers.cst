@@ -452,9 +452,80 @@
 	#endif
 	#endregion 
 	
+	private bool _generateWebSecurity = true;
+			
+	[Category("10. WebLibrary.Security - Optional")]
+	[Description("Indicates if the Web.Security library should be generated. This contains the EntityMembershipProvider class and other classes helpful to ASP.NET Membership services.")]
+	[CodeTemplateProperty(CodeTemplatePropertyOption.Optional)]
+	public bool GenerateWebSecurity
+	{
+		get 
+		{
+			return _generateWebSecurity;
+		}
+		set
+		{
+			_generateWebSecurity = value;	
+		}
+	}
+	
+	private ColumnSchema _entityMembershipUserPKCol = null;
+
+	[Category("10. WebLibrary.Security - Optional")]
+	[Description("Primary key column from the table that will become the EntityMembershipUser's user entity.")]
+	[CodeTemplateProperty(CodeTemplatePropertyOption.Optional)]
+	public ColumnSchema EntityMembershipUserPKCol
+	{
+		get
+		{
+			return this._entityMembershipUserPKCol;
+		}
+		set
+		{
+			_entityMembershipUserPKCol = value;	
+		}
+	}
+
+	private string _membershipUserMapFile;
+
+	[Editor(typeof(System.Windows.Forms.Design.FileNameEditor), typeof(System.Drawing.Design.UITypeEditor))] 
+	[Category("10. WebLibrary.Security - Optional")]
+	[Description("Optional File Path to a MembershipUserProperty/EntityProperty alias file")]
+	[CodeTemplateProperty(CodeTemplatePropertyOption.Optional)]
+	public string MembershipUserMapFile
+	{
+		get
+		{
+			return this._membershipUserMapFile;
+		}
+		set
+		{
+			_membershipUserMapFile = value;	
+		}
+	}
+
+	private bool _membershipUseMD5 = false;
+
+	[Category("10. WebLibrary.Security - Optional")]
+	[Description("Use MD5 hash for passwords. False defaults to SHA1.")]
+	[CodeTemplateProperty(CodeTemplatePropertyOption.Optional)]
+	public bool UseMD5Hash
+	{
+		get
+		{
+			return this._membershipUseMD5;
+		}
+		set
+		{
+			_membershipUseMD5 = value;
+		}
+	}
+	
 	#region Properties used by the wizard to report progression
 	
 	private int _counter = 0;
+	
+	
 	[Browsable(false)]
 	public int Counter
 	{
@@ -709,7 +780,6 @@
 		string DALNameSpace = NameSpace + "." + (DataAccessLayerNameSpace.Length>0 ? GetCleanName(DataAccessLayerNameSpace) : "DataAccessLayer");
 		string DALSqlNameSpace = DALNameSpace  + ".SqlClient";
 		string DALGenericNameSpace = DALNameSpace  + ".GenericClient";
-		
 		string DALWSNameSpace = DALNameSpace  + ".WebServiceClient";
 		string UTNameSpace = NameSpace + "." + (UnitTestsNameSpace.Length>0 ? GetCleanName(UnitTestsNameSpace) : "UnitTests");
 		string WSNameSpace = DALNameSpace + ".WebService";
@@ -717,11 +787,12 @@
 		string WebsiteNameSpace = NameSpace + ".Website";
 		string WinLibNameSpace = NameSpace + ".Windows.Forms";
 		string SQLNamespace = NameSpace + "." +  (SQLFolderName.Length > 0 ?  SQLFolderName : "SQL");
-		
+		string WebSecurityLibNameSpace = WebLibNameSpace + ".Security";
 		string factoryType = (ComponentPattern == MoM.Templates.ComponentPatternType.DomainModel ? string.Format("{0}.{1}", ComponentsNameSpace, "ComponentEntityFactory") : string.Format("{0}.{1}", BLLNameSpace, "EntityFactory")); 
 		#endregion Build Namespaces
 	
 		#region Build output paths
+		
 		string rootPathBLL = OutputDirectory + "\\" + BLLNameSpace;
 		string rootPathComponents = OutputDirectory + "\\" +  ComponentsNameSpace;
 		string rootPathDAL = OutputDirectory + "\\" + DALNameSpace;
@@ -729,11 +800,11 @@
 		string rootPathDALGeneric = OutputDirectory + "\\" + DALGenericNameSpace;
 		string rootPathDALWS = OutputDirectory + "\\" + DALWSNameSpace;
 		string rootPathWebLib = OutputDirectory + "\\" + WebLibNameSpace;
+		string rootPathWebSecurityLib = OutputDirectory + "\\" + WebLibNameSpace + ".Security";
 		string rootPathWinLib = OutputDirectory + "\\" + WinLibNameSpace;
 		string rootPathWebsite = OutputDirectory + "\\" + WebsiteNameSpace;
 		string rootPathUT = OutputDirectory + "\\" + UTNameSpace;
 		string rootPathSQL = OutputDirectory + "\\" + SQLNamespace;
-		
 		string rootPathWS  = WebServiceOutputPath; 
 		string specialPath = vsnetIntegration == VSNetIntegration.SeparatedProjects ? ((IncludeUnitTest != MoM.Templates.UnitTestStyle.None) ? rootPathUT : rootPathDAL) : OutputDirectory;
 	
@@ -801,6 +872,16 @@
 		DebugWriteLine("Current Phase: "+_CurrentPhase);
 		
 		XmlElement parametersNode = AddMessageNode(initNode, 0, "Validating parameters.", false);
+		
+		if ( GenerateWebSecurity )
+		{
+			// make sure MembershipUser primary key column is selected
+			if ( EntityMembershipUserPKCol == null )
+			{
+				AddMessageNode(parametersNode, 1, "EntityMembershipUserPKCol has not been specified, so the Web.Security library will not be generated.", true);
+				GenerateWebSecurity = false;
+			}
+		}
 		
 		#region Build the correct list of used tables (filtering tables without primary key)
 		_CurrentPhase = "Check datasource";
@@ -900,9 +981,9 @@
 				AddMessageNode(initNode, 2, "Could not load mapping, mapping feature skipped.", true);	
 		}
 		base.CurrentNetTiersMap = netTiersMap;
-		#endregion 
+		#endregion  Entity Mapping
 		
-		SetProgress(templateSourceTables.Count + templateSourceViews.Count + (167 * 2) /*167 templates or so 1 for compiling, 1 for property setting */ );
+		SetProgress(templateSourceTables.Count + templateSourceViews.Count + (167 * 2));  /*167 templates or so 1 for compiling, 1 for property setting */
 		
 		#region Load templates
 		XmlElement templatesNode = AddMessageNode(initNode, 0, "Loading templates.", false);
@@ -1087,6 +1168,13 @@
 			}
 		}
 		#endregion Set up web library directories
+		
+		#region Set up web security library directory
+		if (GenerateWebSecurity)
+		{
+			SafeCreateDirectory(rootPathWebSecurityLib);
+		}
+		#endregion Set up web security library directory
 		
 		#region Set up website directories
 		if (GenerateWebsite)
@@ -2296,6 +2384,36 @@
 			
 			#endregion Generated strongly typed repeater
 			
+			if ( GenerateWebSecurity )
+			{
+				AddFileNode(commonNode, "EntityMembershipProvider.cs");
+				this.GetTemplate("EntityMembershipProvider.cst").SetProperty("BLLNameSpace", BLLNameSpace);
+				this.GetTemplate("EntityMembershipProvider.cst").SetProperty("DALNameSpace", DALNameSpace);
+				this.GetTemplate("EntityMembershipProvider.cst").SetProperty("WebNameSpace", WebLibNameSpace);
+				this.GetTemplate("EntityMembershipProvider.cst").SetProperty("EntityMembershipUserPKCol", EntityMembershipUserPKCol);
+				this.GetTemplate("EntityMembershipProvider.cst").SetProperty("MembershipUserMapFile", MembershipUserMapFile);
+				this.GetTemplate("EntityMembershipProvider.cst").SetProperty("UseMD5Hash", UseMD5Hash);
+				this.RenderToFile("EntityMembershipProvider.cst", rootPathWebSecurityLib + "\\EntityMembershipProvider.cs", true);
+	
+				AddFileNode(commonNode, "EntityMembershipUser.cs");
+				this.GetTemplate("EntityMembershipUser.cst").SetProperty("BLLNameSpace", BLLNameSpace);
+				this.GetTemplate("EntityMembershipUser.cst").SetProperty("DALNameSpace", DALNameSpace);
+				this.GetTemplate("EntityMembershipUser.cst").SetProperty("WebNameSpace", WebLibNameSpace);
+				this.GetTemplate("EntityMembershipUser.cst").SetProperty("EntityMembershipUserPKCol", EntityMembershipUserPKCol);
+				this.GetTemplate("EntityMembershipUser.cst").SetProperty("MembershipUserMapFile", MembershipUserMapFile);
+				this.GetTemplate("EntityMembershipUser.cst").SetProperty("UseMD5Hash", UseMD5Hash);
+				this.RenderToFile("EntityMembershipUser.cst", rootPathWebSecurityLib + "\\EntityMembershipUser.cs", true);
+	
+				AddFileNode(commonNode, "EntityMembershipProperty.cs");
+				this.GetTemplate("EntityMembershipProperty.cst").SetProperty("BLLNameSpace", BLLNameSpace);
+				this.GetTemplate("EntityMembershipProperty.cst").SetProperty("DALNameSpace", DALNameSpace);
+				this.GetTemplate("EntityMembershipProperty.cst").SetProperty("WebNameSpace", WebLibNameSpace);
+				this.GetTemplate("EntityMembershipProperty.cst").SetProperty("EntityMembershipUserPKCol", EntityMembershipUserPKCol);
+				this.GetTemplate("EntityMembershipProperty.cst").SetProperty("MembershipUserMapFile", MembershipUserMapFile);
+				this.GetTemplate("EntityMembershipProperty.cst").SetProperty("UseMD5Hash", UseMD5Hash);
+				this.RenderToFile("EntityMembershipProperty.cst", rootPathWebSecurityLib + "\\EntityMembershipProperty.cs", true);
+			}
+			
 		}
 		
 		#endregion Web Library Classes
@@ -2516,6 +2634,7 @@
 		#endregion Generate Win Library
 		
 		#region Set Guids
+		
 		// Hard coded Guid make it easier to maintain solution when regenerating projects
 		// It may be intersting to put those value in global properties
 		string bllGuid = "20E43088-4618-4F4A-B8AD-FC31B50D94CD"; //Guid.NewGuid().ToString();
@@ -2529,16 +2648,21 @@
 		string websiteGuid = "1DCAB031-308A-4581-AFA8-BD29F45A1357";
 		string componentGuid = "794327CE-DC0A-4381-89EE-4C00AFB08D5A"; 
 		string winLibGuid = "43FE3BE8-3E46-47CA-8494-473315867DD0"; //Guid.NewGuid().ToString();
+		string websecurityGuid = "417D82D0-4E13-4836-99A2-13062B945C49"; // ADDED BY CHARLIE
+		
 		#endregion Set Guids
 	
 		#region Set solution and project template names
+		
 		string projectTemplate = "vsnet2005.project.cst";
 		string solutionTemplate = "vsnet2005.solution.cst";
 		string vsmdiTemplate = "vsnet2005.vsmdi.cst";
 		string testrunconfigTemplate = "vsnet2005.localtestrun.testrunconfig.cst";
+		
 		#endregion Set solution and project template names
 		
 		#region Generate VS.Net solution
+		
 		if (!File.Exists(OutputDirectory + "\\" + NameSpace + ".sln"))
 		{
 			AddFileNode(commonNode,  NameSpace + ".sln");
@@ -2552,6 +2676,7 @@
 			this.GetTemplate(solutionTemplate).SetProperty("WebLibNameSpace", WebLibNameSpace);
 			this.GetTemplate(solutionTemplate).SetProperty("WinLibNameSpace", WinLibNameSpace);
 			this.GetTemplate(solutionTemplate).SetProperty("WebsiteNameSpace", WebsiteNameSpace);
+			this.GetTemplate(solutionTemplate).SetProperty("WebSecurityLibNameSpace", WebSecurityLibNameSpace);
 			this.GetTemplate(solutionTemplate).SetProperty("UTNameSpace", UTNameSpace);
 			this.GetTemplate(solutionTemplate).SetProperty("WSNameSpace", WSNameSpace);
 			this.GetTemplate(solutionTemplate).SetProperty("BLLGuid", bllGuid);
@@ -2564,6 +2689,7 @@
 			this.GetTemplate(solutionTemplate).SetProperty("WebLibGuid", webLibGuid);
 			this.GetTemplate(solutionTemplate).SetProperty("WebsiteGuid", websiteGuid);
 			this.GetTemplate(solutionTemplate).SetProperty("WinLibGuid", winLibGuid);
+			this.GetTemplate(solutionTemplate).SetProperty("WebSecurityLibGuid", websecurityGuid);
 			this.GetTemplate(solutionTemplate).SetProperty("ComponentsGuid", componentGuid);
 			this.GetTemplate(solutionTemplate).SetProperty("ComponentPattern", IncludeComponentLayer);
 			this.GetTemplate(solutionTemplate).SetProperty("ComponentLayerNameSpace", ComponentsNameSpace);
@@ -2575,6 +2701,7 @@
 			this.GetTemplate(solutionTemplate).SetProperty("IncludeWebservice", GenerateWebservice);
 			this.GetTemplate(solutionTemplate).SetProperty("IncludeWebserviceClient", GenerateWebservice);
 			this.GetTemplate(solutionTemplate).SetProperty("IncludeWebLibrary", GenerateWebLibrary);
+			this.GetTemplate(solutionTemplate).SetProperty("IncludeWebSecurity", GenerateWebSecurity);
 			this.GetTemplate(solutionTemplate).SetProperty("IncludeWebsite", GenerateWebsite);
 			this.GetTemplate(solutionTemplate).SetProperty("IncludeUnitTest", IncludeUnitTest);
 			this.GetTemplate(solutionTemplate).SetProperty("UseWebAppProject", UseWebAppProject);
@@ -2609,6 +2736,7 @@
 		this.GetTemplate(projectTemplate).SetProperty("UTGuid", utGuid);
 		this.GetTemplate(projectTemplate).SetProperty("WSGuid", wsGuid);
 		this.GetTemplate(projectTemplate).SetProperty("WebLibGuid", webLibGuid);
+		this.GetTemplate(projectTemplate).SetProperty("WebSecurityLibGuid", websecurityGuid);
 		this.GetTemplate(projectTemplate).SetProperty("WinLibGuid", winLibGuid);
 		this.GetTemplate(projectTemplate).SetProperty("WebsiteGuid", websiteGuid);
 		this.GetTemplate(projectTemplate).SetProperty("ComponentsGuid", componentGuid);
@@ -2622,6 +2750,7 @@
 		this.GetTemplate(projectTemplate).SetProperty("DALGenericNameSpace", DALGenericNameSpace);
 		this.GetTemplate(projectTemplate).SetProperty("DALWSNameSpace", DALWSNameSpace);
 		this.GetTemplate(projectTemplate).SetProperty("WebLibNameSpace", WebLibNameSpace);
+		this.GetTemplate(projectTemplate).SetProperty("WebSecurityLibNameSpace", WebSecurityLibNameSpace);
 		this.GetTemplate(projectTemplate).SetProperty("WinLibNameSpace", WinLibNameSpace);
 		this.GetTemplate(projectTemplate).SetProperty("WebsiteNameSpace", WebsiteNameSpace);
 		this.GetTemplate(projectTemplate).SetProperty("UTNameSpace", UTNameSpace);
@@ -2676,6 +2805,7 @@
 			this.GetTemplate(projectTemplate).SetProperty("IncludeWebservice", false);
 			this.GetTemplate(projectTemplate).SetProperty("IncludeWebserviceClient", false);
 			this.GetTemplate(projectTemplate).SetProperty("IncludeWebLibrary", false);
+			this.GetTemplate(projectTemplate).SetProperty("IncludeWebSecurity", false);
 			this.GetTemplate(projectTemplate).SetProperty("IncludeWinLibrary", false);
 			this.GetTemplate(projectTemplate).SetProperty("IncludeWebsite", false);
 			this.GetTemplate(projectTemplate).SetProperty("IncludeComponents", true);
@@ -2699,6 +2829,7 @@
 			this.GetTemplate(projectTemplate).SetProperty("IncludeWebservice", false);
 			this.GetTemplate(projectTemplate).SetProperty("IncludeWebserviceClient", false);
 			this.GetTemplate(projectTemplate).SetProperty("IncludeWebLibrary", false);
+			this.GetTemplate(projectTemplate).SetProperty("IncludeWebSecurity", false);
 			this.GetTemplate(projectTemplate).SetProperty("IncludeWinLibrary", false);
 			this.GetTemplate(projectTemplate).SetProperty("IncludeWebsite", false);
 			this.GetTemplate(projectTemplate).SetProperty("IncludeComponents", false);
@@ -2728,6 +2859,7 @@
 			this.GetTemplate(projectTemplate).SetProperty("IncludeWebservice", false);
 			this.GetTemplate(projectTemplate).SetProperty("IncludeWebserviceClient", false);
 			this.GetTemplate(projectTemplate).SetProperty("IncludeWebLibrary", false);
+			this.GetTemplate(projectTemplate).SetProperty("IncludeWebSecurity", false);
 			this.GetTemplate(projectTemplate).SetProperty("IncludeWebsite", false);
 			this.GetTemplate(projectTemplate).SetProperty("IncludeWinLibrary", false);
 			this.GetTemplate(projectTemplate).SetProperty("IncludeComponents", false);
@@ -2751,6 +2883,7 @@
 				this.GetTemplate(projectTemplate).SetProperty("IncludeWebserviceClient", false);
 				this.GetTemplate(projectTemplate).SetProperty("IncludeComponents", false);
 				this.GetTemplate(projectTemplate).SetProperty("IncludeWebLibrary", false);
+				this.GetTemplate(projectTemplate).SetProperty("IncludeWebSecurity", false);
 				this.GetTemplate(projectTemplate).SetProperty("IncludeWebsite", false);
 				this.GetTemplate(projectTemplate).SetProperty("IncludeUnitTest", MoM.Templates.UnitTestStyle.None);			
 				this.GetTemplate(projectTemplate).SetProperty("IncludeWCFDataAttributes", false);
@@ -2773,6 +2906,7 @@
 				this.GetTemplate(projectTemplate).SetProperty("IncludeWebserviceClient", false);
 				this.GetTemplate(projectTemplate).SetProperty("IncludeComponents", false);
 				this.GetTemplate(projectTemplate).SetProperty("IncludeWebLibrary", false);
+				this.GetTemplate(projectTemplate).SetProperty("IncludeWebSecurity", false);
 				this.GetTemplate(projectTemplate).SetProperty("IncludeWebsite", false);
 				this.GetTemplate(projectTemplate).SetProperty("IncludeUnitTest", MoM.Templates.UnitTestStyle.None);			
 				this.GetTemplate(projectTemplate).SetProperty("IncludeWCFDataAttributes", false);
@@ -2795,6 +2929,7 @@
 				this.GetTemplate(projectTemplate).SetProperty("IncludeWebserviceClient", true);
 				this.GetTemplate(projectTemplate).SetProperty("IncludeComponents", false);
 				this.GetTemplate(projectTemplate).SetProperty("IncludeWebLibrary", false);
+				this.GetTemplate(projectTemplate).SetProperty("IncludeWebSecurity", false);
 				this.GetTemplate(projectTemplate).SetProperty("IncludeWebsite", false);
 				this.GetTemplate(projectTemplate).SetProperty("IncludeUnitTest", MoM.Templates.UnitTestStyle.None);			
 				this.GetTemplate(projectTemplate).SetProperty("IncludeWCFDataAttributes", false);
@@ -2821,6 +2956,7 @@
 			this.GetTemplate(projectTemplate).SetProperty("IncludeWebserviceClient", false);
 			this.GetTemplate(projectTemplate).SetProperty("IncludeComponents", false);
 			this.GetTemplate(projectTemplate).SetProperty("IncludeWebLibrary", false);
+			this.GetTemplate(projectTemplate).SetProperty("IncludeWebSecurity", false);
 			this.GetTemplate(projectTemplate).SetProperty("IncludeWinLibrary", true);
 			this.GetTemplate(projectTemplate).SetProperty("IncludeWebsite", false);
 			this.GetTemplate(projectTemplate).SetProperty("IncludeUnitTest", MoM.Templates.UnitTestStyle.None);
@@ -2830,6 +2966,30 @@
 			this.RenderToFile(projectTemplate, rootPathWinLib + "\\" + WinLibNameSpace + ".csproj", true);
 		}
 		#endregion Win Library project
+		
+		#region Web.Security  Library Library project file
+		if (GenerateWebSecurity)
+		{
+			AddFileNode(commonNode, WebSecurityLibNameSpace + ".csproj");
+
+			this.GetTemplate(projectTemplate).SetProperty("IncludeBll", false);
+			this.GetTemplate(projectTemplate).SetProperty("IncludeDALBase", false);	
+			this.GetTemplate(projectTemplate).SetProperty("IncludeSqlClient", false);
+			this.GetTemplate(projectTemplate).SetProperty("IncludeGenericClient", false);
+			this.GetTemplate(projectTemplate).SetProperty("IncludeWebservice", false);
+			this.GetTemplate(projectTemplate).SetProperty("IncludeWebserviceClient", false);
+			this.GetTemplate(projectTemplate).SetProperty("IncludeComponents", false);
+			this.GetTemplate(projectTemplate).SetProperty("IncludeWebLibrary", false);
+			this.GetTemplate(projectTemplate).SetProperty("IncludeWebSecurity", true);
+			this.GetTemplate(projectTemplate).SetProperty("IncludeWinLibrary", false);
+			this.GetTemplate(projectTemplate).SetProperty("IncludeWebsite", false);
+			this.GetTemplate(projectTemplate).SetProperty("IncludeUnitTest", MoM.Templates.UnitTestStyle.None);
+			this.GetTemplate(projectTemplate).SetProperty("IncludeWCFDataAttributes", false);
+			this.GetTemplate(projectTemplate).SetProperty("IncludeDesignTimeSupport", false);
+
+			this.RenderToFile(projectTemplate, rootPathWebSecurityLib + "\\" + WebSecurityLibNameSpace + ".csproj", true);
+		}
+		#endregion Web.Security  Library Library project file
 		
 		#region Web Library project
 		if (GenerateWebLibrary)
@@ -2844,6 +3004,7 @@
 			this.GetTemplate(projectTemplate).SetProperty("IncludeWebserviceClient", false);
 			this.GetTemplate(projectTemplate).SetProperty("IncludeComponents", false);
 			this.GetTemplate(projectTemplate).SetProperty("IncludeWebLibrary", true);
+			this.GetTemplate(projectTemplate).SetProperty("IncludeWebSecurity", false);
 			this.GetTemplate(projectTemplate).SetProperty("IncludeWinLibrary", false);
 			this.GetTemplate(projectTemplate).SetProperty("IncludeWebsite", false);
 			this.GetTemplate(projectTemplate).SetProperty("IncludeUnitTest", MoM.Templates.UnitTestStyle.None);

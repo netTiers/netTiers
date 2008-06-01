@@ -1,0 +1,321 @@
+<%-- 
+Name:
+Author: Charlie Kilian
+Description: 
+
+--%>
+<%@ CodeTemplate Language="C#" TargetLanguage="C#" Src="./CommonMembershipCode.cs" Inherits="MoM.Templates.CommonMembershipCode" Debug="True" Description="Generates the EntityMembershipUser class." %>
+<%@ Assembly Name="System.Data" %>
+<%@ Assembly Name="System.Design" %>
+<%@ Assembly Name="SchemaExplorer" %>
+<%@ Import Namespace="System.Data" %>
+<%@ Import Namespace="System.IO" %>
+<%@ Import Namespace="System.Collections" %>
+<%@ Import Namespace="SchemaExplorer" %>
+
+<%@ Property Name="BLLNameSpace" Optional="False" Type="System.String" Category="Style" Description="BLL Namespace." %>
+<%@ Property Name="DALNameSpace" Optional="False" Type="System.String" Category="Style" Description="DAL Namespace." %>
+<%@ Property Name="WebNameSpace" Optional="False" Type="System.String" Category="Style" Description="Web Namespace." %>
+#region Using Directives
+using System;
+using System.Collections.Generic;
+using System.IO;
+using System.Runtime.Serialization;
+using System.Text;
+using System.Web.Security;
+using <%= BLLNameSpace %>;
+using <%= DALNameSpace %>;
+#endregion
+
+namespace <%= WebNameSpace %>.Security
+{
+	/// <summary>
+	/// Exposes and updates membership user information in the membership data store.
+	/// </summary>
+	[Serializable]
+	public class EntityMembershipUser : MembershipUser, ISerializable
+	{
+		#region Private Declarations
+			/// <summary>
+			/// Stores the <%= EntityClass %> entity that this instance of EntityMembershipUser uses to store its properties in.
+			/// </summary>
+			<%= EntityClass %> user;
+		#endregion
+
+		#region Public Constructors
+		
+		/// <summary>
+		/// Creates a new instance of an EntityMembershipUser object with default properties.
+		/// </summary>
+		public EntityMembershipUser()
+		{
+			user = new <%= EntityClass %>();
+		}
+
+		/// <summary>
+		/// Creates a new instance of an EntityMembershipUser object with the specified property values.
+		/// </summary>
+		/// <param name="providerName">The ProviderName string for the membership user.</param>
+		/// <param name="name">The Username string for the membership user.</param>
+		/// <param name="providerUserKey">The ProviderUserKey identifier for the membership user.</param>
+		/// <param name="email">The Email string for the membership user.</param>
+		/// <param name="passwordQuestion">The PasswordQuestion string for the membership user.</param>
+		/// <param name="comment">The Comment string for the membership user.</param>
+		/// <param name="isApproved">The IsApproved value for the membership user.</param>
+		/// <param name="isLockedOut">true to lock out the membership user; otherwise, false.</param>
+		/// <param name="creationDate">The CreationDateDateTime object for the membership user.</param>
+		/// <param name="lastLoginDate">The LastLoginDateDateTime object for the membership user.</param>
+		/// <param name="lastActivityDate">The LastActivityDateDateTime object for the membership user.</param>
+		/// <param name="lastPasswordChangedDate">The LastPasswordChangedDateDateTime object for the membership user.</param>
+		/// <param name="lastLockoutDate">The LastLockoutDateDateTime object for the membership user.</param>
+		public EntityMembershipUser(
+		    string providerName,
+		    string name,
+		    Object providerUserKey,
+		    string email,
+		    string passwordQuestion,
+		    string comment,
+		    bool isApproved,
+		    bool isLockedOut,
+		    DateTime creationDate,
+		    DateTime lastLoginDate,
+		    DateTime lastActivityDate,
+		    DateTime lastPasswordChangedDate,
+		    DateTime lastLockoutDate)
+		{
+			if ( providerName != ProviderName )
+				throw new MembershipCreateUserException( "Provider must be EntityMembershipProvider to create a EntityMembershipUser" );
+
+			if ( !(providerUserKey is <%= GetPKType("Membership") %>) )
+				throw new MembershipCreateUserException( "ProviderUserKey must be of type <%= GetPKType("Membership") %>" );
+
+			user = new <%= EntityClass %>();
+			user.<%= GetMappedColumn("Username") %> = name;
+			user.<%= GetMappedColumn("ProviderUserKey") %> = (<%= GetPKType("Membership") %>) providerUserKey;
+			user.<%= GetMappedColumn("Email") %> = email;
+			user.<%= GetMappedColumn("PasswordQuestion") %> = passwordQuestion;
+			user.<%= GetMappedColumn("Comment") %> = comment;
+			user.<%= GetMappedColumn("IsApproved") %> = <%=GetBoolExp(IsApprovedType, "isApproved")%>;
+			user.<%= GetMappedColumn("IsLockedOut") %> = <%=GetBoolExp(IsLockedOutType, "isLockedOut")%>;
+			user.<%= GetMappedColumn("CreationDate") %> = creationDate;
+			user.<%= GetMappedColumn("LastLoginDate") %> = lastLoginDate;
+			user.<%= GetMappedColumn("LastActivityDate") %> = lastActivityDate;
+			user.<%= GetMappedColumn("LastPasswordChangedDate") %> = lastPasswordChangedDate;
+			user.<%= GetMappedColumn("LastLockoutDate") %> = lastLockoutDate;
+			user.AcceptChanges();
+		}
+
+		/// <summary>
+		/// Creates a new instance of an EntityMembershipUser object from the specified <%= EntityClass %> object.
+		/// </summary>
+		/// <param name="user">The <%= EntityClass %> object from which to create an EntityMembershipUser</param>
+		public EntityMembershipUser(<%= EntityClass %> user)
+		{
+			this.user = user;
+		}
+
+		#endregion
+
+		#region Public Properties
+		
+		/// <summary>
+		/// Returns the <%= EntityClass %> object that this instance of EntityMembershipUser uses to store its values.
+		/// </summary>
+		public <%= EntityClass %> UserEntity
+		{
+			get { return user; }
+			set { user = value; }
+		}
+
+		/// <summary>
+		/// Gets or sets application-specific information for the membership user. 
+		/// </summary>
+		public override string Comment
+		{
+			get { return user.<%= GetMappedColumn("Comment") %>; }
+			set { user.<%= GetMappedColumn("Comment") %> = value; }
+		}
+
+		/// <summary>
+		/// Gets the date and time when the user was added to the membership data store. 
+		/// </summary>
+		public override DateTime CreationDate
+		{
+			get { return (DateTime)user.<%= GetMappedColumn("CreationDate") %>; }
+		}
+
+		/// <summary>
+		/// Gets or sets the e-mail address for the membership user. 
+		/// </summary>
+		public override string Email
+		{
+			get { return user.<%= GetMappedColumn("Email") %>; }
+			set { user.<%= GetMappedColumn("Email") %> = value; }
+		}
+
+		/// <summary>
+		/// Gets or sets whether the membership user can be authenticated. 
+		/// </summary>
+		public override bool IsApproved
+		{
+			get { return user.<%= GetMappedColumn("IsApproved") %> == <%=GetBoolExp(IsApprovedType, true)%>; }
+			set { user.<%= GetMappedColumn("IsApproved") %> = <%=GetBoolExp(IsApprovedType, "value")%>; }
+		}
+
+		/// <summary>
+		/// Gets a value indicating whether the membership user is locked out and unable to be validated. 
+		/// </summary>
+		public override bool IsLockedOut
+		{
+			get { return user.<%= GetMappedColumn("IsLockedOut") %> == <%=GetBoolExp(IsLockedOutType, true)%>; }
+		}
+
+		/// <summary>
+		/// Gets or sets the date and time when the membership user was last authenticated or accessed the application. 
+		/// </summary>
+		public override DateTime LastActivityDate
+		{
+			get 
+			{ 
+				if ( user.<%= GetMappedColumn("LastActivityDate") %> == null )
+					return (DateTime)user.<%= GetMappedColumn("CreationDate") %>;
+				return (DateTime)user.<%= GetMappedColumn("LastActivityDate") %>.Value;
+			}
+			set 
+			{ 
+				user.<%= GetMappedColumn("LastActivityDate") %> = value; 
+			}
+		}
+
+		/// <summary>
+		/// Gets the most recent date and time that the membership user was locked out. 
+		/// </summary>
+		public override DateTime LastLockoutDate
+		{
+			get 
+			{
+				if ( user.<%= GetMappedColumn("LastLockoutDate") %> == null )
+					return DateTime.MinValue;
+				return (DateTime)user.<%= GetMappedColumn("LastLockoutDate") %>.Value;
+			}
+		}
+
+		/// <summary>
+		/// Gets or sets the date and time when the user was last authenticated. 
+		/// </summary>
+		public override DateTime LastLoginDate
+		{
+			get 
+			{
+				if ( user.<%= GetMappedColumn("LastLoginDate") %> == null )
+					return (DateTime)user.<%= GetMappedColumn("CreationDate") %>;
+				return (DateTime)user.<%= GetMappedColumn("LastLoginDate") %>.Value; 
+			}
+			set 
+			{ 
+				user.<%= GetMappedColumn("LastLoginDate") %> = value; 
+			}
+		}
+
+		/// <summary>
+		/// Gets the date and time when the membership user's password was last updated. 
+		/// </summary>
+		public override DateTime LastPasswordChangedDate
+		{
+			get 
+			{ 
+				if ( user.<%= GetMappedColumn("LastPasswordChangedDate") %> == null )
+					return (DateTime)user.<%= GetMappedColumn("CreationDate") %>;
+				return (DateTime)user.<%= GetMappedColumn("LastPasswordChangedDate") %>.Value;
+			}
+		}
+
+		/// <summary>
+		/// Gets the password question for the membership user. 
+		/// </summary>
+		public override string PasswordQuestion
+		{
+			get { return user.<%= GetMappedColumn("PasswordQuestion") %>; }
+		}
+
+		/// <summary>
+		/// Gets the name of the membership provider that stores and retrieves user information for the membership user. 
+		/// Always returns the string "EntityMembershipProvider".
+		/// </summary>
+		public override string ProviderName
+		{
+			get
+			{
+				return "EntityMembershipProvider";
+			}
+		}
+
+		/// <summary>
+		/// Gets the user identifier from the membership data source for the user. 
+		/// </summary>
+		public override object ProviderUserKey
+		{
+			get
+			{
+				return user.<%= GetMappedColumn("ProviderUserKey") %>;
+			}
+		}
+
+		/// <summary>
+		/// Gets the logon name of the membership user. 
+		/// </summary>
+		public override string UserName
+		{
+			get { return user.<%= GetMappedColumn("UserName") %>; }
+		}
+
+
+		#endregion
+
+		#region Public Methods
+
+		/// <summary>
+		/// Clears the locked-out state of the user so that the membership user can be validated.
+		/// </summary>
+		/// <returns>true if the user was successfully unlocked; otherwise false.</returns>
+		public override bool UnlockUser()
+		{
+			try
+			{
+				user.<%= GetMappedColumn("IsLockedOut") %> = <%=GetBoolExp(IsLockedOutType, false)%>;
+				DataRepository.<%= EntityClass %>Provider.Save(user);
+				return true;
+			}
+			catch ( Exception )
+			{
+				return false;
+			}
+		}
+
+		#endregion
+
+		#region ISerializable
+
+		/// <summary>
+		/// Constructor used during deserialization.
+		/// </summary>
+		/// <param name="info">A SerializationInfo object containing the information required to serialize the EntityMembershipUser.</param>
+		/// <param name="ctxt">A StreamingContext object containing the source and destination of the serialized stream associated with the EntityMembershipUser.</param>
+		protected EntityMembershipUser(SerializationInfo info, StreamingContext ctxt)
+		{
+			user = (<%= EntityClass %>) info.GetValue( "User", typeof( <%= EntityClass %> ) );
+		}
+		        
+		/// <summary>
+		/// Populates a SerializationInfo with the data needed to serialize the EntityMembershipUser object.
+		/// </summary>
+		/// <param name="info">The SerializationInfo to populate with data.</param>
+		/// <param name="ctxt">The destination (see StreamingContext) for this serialization.</param>
+		public void GetObjectData(SerializationInfo info, StreamingContext ctxt)
+		{
+			info.AddValue( "User", user );
+		}		
+
+		#endregion
+	}
+}
