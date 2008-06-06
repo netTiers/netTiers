@@ -130,9 +130,9 @@
 
 		#region Fields
 		private static SecurityContext<<%= className %>> securityContext = new SecurityContext<<%= className %>>();
-		//private static readonly string layerExceptionPolicy = "<%= ComponentPattern %>ExceptionPolicy";
-		//private static readonly bool noTranByDefault = false;
-		//private static readonly int defaultMaxRecords = 10000;
+		private static readonly string layerExceptionPolicy = "<%= ComponentPattern %>ExceptionPolicy";
+		private static readonly bool noTranByDefault = false;
+		private static readonly int defaultMaxRecords = 10000;
 		#endregion 
 		
 		#region SecurityContext
@@ -204,13 +204,16 @@
 			
 			try
             {					
-				transactionManager = base.HandleTransactionAndProviderSetup( transactionManager, out dataProvider );
+				transactionManager = ConnectionScope.ValidateOrCreateTransaction(noTranByDefault);
+				dataProvider = ConnectionScope.Current.DataProvider;
+				
 				list = new <%=collectionClassName%>(dataProvider.<%= GetClassName(SourceTable, ClassNameFormat.Provider) %>.GetBy<%=GetKeysName(fkeys[j].ForeignKeyMemberColumns)%>(transactionManager, <%= GetFunctionCallParameters(fkeys[j].ForeignKeyMemberColumns) %>, start, pageLength, out totalCount));
 			}
             catch (Exception exc)
             {
 				#region Handle transaction rollback and exception
-                base.HandleTransactionRollback( transactionManager );
+                if (transactionManager != null && transactionManager.IsOpen) 
+					transactionManager.Rollback();
 				
 				//Handle exception based on policy
                 if (DomainUtil.HandleException(exc, layerExceptionPolicy)) 
@@ -323,13 +326,16 @@
 			
 			try
             {	
-				transactionManager = base.HandleTransactionAndProviderSetup( transactionManager, out dataProvider );
+				transactionManager = ConnectionScope.ValidateOrCreateTransaction(noTranByDefault);
+				dataProvider = ConnectionScope.Current.DataProvider;
+				
 				<%= returnTypeVar %> = <%=newCollection%>dataProvider.<%= GetClassName(SourceTable, ClassNameFormat.Provider) %>.GetBy<%=GetKeysName(indexes[j].MemberColumns)%>(transactionManager, <%= GetFunctionCallParameters(indexes[j].MemberColumns) %>, start, pageLength, out totalCount)  <%=newCollectionEnd%>;
 			}
             catch (Exception exc)
             {
 				#region Handle transaction rollback and exception
-                base.HandleTransactionRollback( transactionManager );
+                if (transactionManager != null && transactionManager.IsOpen) 
+					transactionManager.Rollback();
 				
 				//Handle exception based on policy
                 if (DomainUtil.HandleException(exc, layerExceptionPolicy)) 
@@ -379,13 +385,16 @@
 			
 			try
             {	
-				transactionManager = base.HandleTransactionAndProviderSetup( transactionManager, out dataProvider );
+				transactionManager = ConnectionScope.ValidateOrCreateTransaction(noTranByDefault);
+				dataProvider = ConnectionScope.Current.DataProvider;
+
 				list = <%=newCollectionClassName%>dataProvider.<%= GetClassName(SourceTable, ClassNameFormat.Provider) %>.<%= MethodNames.GetAll %>(transactionManager, start, pageLength, out totalCount)<%=newCollectionClassNameEnd%>;	
 			}
             catch (Exception exc)
             {
 				#region Handle transaction rollback and exception
-                base.HandleTransactionRollback( transactionManager );
+                if (transactionManager != null && transactionManager.IsOpen) 
+					transactionManager.Rollback();
 				
 				//Handle exception based on policy
                 if (DomainUtil.HandleException(exc, layerExceptionPolicy)) 
@@ -447,13 +456,16 @@
 			
 			try
             {	
-				transactionManager = base.HandleTransactionAndProviderSetup( transactionManager, out dataProvider );
+				transactionManager = ConnectionScope.ValidateOrCreateTransaction(noTranByDefault);
+				dataProvider = ConnectionScope.Current.DataProvider;
+
 				list = <%=newCollectionClassName%>dataProvider.<%= GetClassName(SourceTable, ClassNameFormat.Provider) %>.<%= MethodNames.GetPaged %>(transactionManager, whereClause, orderBy, start, pageLength, out totalCount)<%=newCollectionClassNameEnd%>;
 			}
             catch (Exception exc)
             {
 				#region Handle transaction rollback and exception
-                base.HandleTransactionRollback( transactionManager );
+                if (transactionManager != null && transactionManager.IsOpen) 
+					transactionManager.Rollback();
 				
 				//Handle exception based on policy
                 if (DomainUtil.HandleException(exc, layerExceptionPolicy)) 
@@ -523,13 +535,16 @@
 			
 			try
             {	
-				transactionManager = base.HandleTransactionAndProviderSetup( transactionManager, out dataProvider );
+				transactionManager = ConnectionScope.ValidateOrCreateTransaction(noTranByDefault);
+				dataProvider = ConnectionScope.Current.DataProvider;
+
 				list = <%=newCollectionClassName%>dataProvider.<%= GetClassName(SourceTable, ClassNameFormat.Provider) %>.<%= MethodNames.Find %>(transactionManager, whereClause, start, pageLength, out totalCount)<%=newCollectionClassNameEnd%>;
 			}
             catch (Exception exc)
             {
 				#region Handle transaction rollback and exception
-                base.HandleTransactionRollback( transactionManager );
+                if (transactionManager != null && transactionManager.IsOpen) 
+					transactionManager.Rollback();
 				
 				//Handle exception based on policy
                 if (DomainUtil.HandleException(exc, layerExceptionPolicy)) 
@@ -615,13 +630,16 @@
 			
 			try
             {	
-				transactionManager = base.HandleTransactionAndProviderSetup( transactionManager, out dataProvider );
+				transactionManager = ConnectionScope.ValidateOrCreateTransaction(noTranByDefault);
+				dataProvider = ConnectionScope.Current.DataProvider;
+
 				list = <%=newCollectionClassName%>dataProvider.<%= GetClassName(SourceTable, ClassNameFormat.Provider) %>.<%= MethodNames.Find %>(transactionManager, parameters, orderBy, start, pageLength, out count)<%=newCollectionClassNameEnd%>;
 			}
             catch (Exception exc)
             {
 				#region Handle transaction rollback and exception
-                base.HandleTransactionRollback( transactionManager );
+                if (transactionManager != null && transactionManager.IsOpen) 
+					transactionManager.Rollback();
 				
 				//Handle exception based on policy
                 if (DomainUtil.HandleException(exc, layerExceptionPolicy)) 
@@ -732,14 +750,19 @@
 			
 			try
             {	
-				transactionManager = base.HandleTransactionAndProviderSetup( transactionManager, out isBorrowedTransaction, out dataProvider );
+				transactionManager = ConnectionScope.ValidateOrCreateTransaction(noTranByDefault);
+				dataProvider = ConnectionScope.Current.DataProvider;
+
 				<% if (action != MethodNames.Save) { %>result = <% } %>dataProvider.<%= GetClassName(SourceTable, ClassNameFormat.Provider) %>.<%= action %>(transactionManager, <%= memberMethodEntityCall %>); 
-                base.HandleTransactionCommit( transactionManager, isBorrowedTransaction );
+				
+				if (!isBorrowedTransaction && transactionManager != null && transactionManager.IsOpen)
+					transactionManager.Commit();
 			}
             catch (Exception exc)
             {
 				#region Handle transaction rollback and exception
-                base.HandleTransactionRollback( transactionManager );
+                if (transactionManager != null && transactionManager.IsOpen) 
+					transactionManager.Rollback();
 				
 				//Handle exception based on policy
                 if (DomainUtil.HandleException(exc, layerExceptionPolicy)) 
@@ -811,14 +834,19 @@
 
 			try
             {
-				transactionManager = base.HandleTransactionAndProviderSetup( transactionManager, out isBorrowedTransaction, out dataProvider );
+				transactionManager = ConnectionScope.ValidateOrCreateTransaction(noTranByDefault);
+				dataProvider = ConnectionScope.Current.DataProvider;
+
 				dataProvider.<%= GetClassName(SourceTable, ClassNameFormat.Provider) %>.<%= action %>(transactionManager, <%= newEntityCollectionClassName %>entityCollection<%= newEntityCollectionClassNameEnd %>); 
-                base.HandleTransactionCommit( transactionManager, isBorrowedTransaction );
+
+				if (!isBorrowedTransaction && transactionManager != null && transactionManager.IsOpen)
+					transactionManager.Commit();                
 			}
             catch (Exception exc)
             {
 				#region Handle transaction rollback and exception
-                base.HandleTransactionRollback( transactionManager );
+                if (transactionManager != null && transactionManager.IsOpen) 
+					transactionManager.Rollback();
 				
 				//Handle exception based on policy
                 if (DomainUtil.HandleException(exc, layerExceptionPolicy)) 
@@ -875,14 +903,22 @@
 			
 			try
             {
-				transactionManager = base.HandleTransactionAndProviderSetup( transactionManager, out isBorrowedTransaction, out dataProvider );
+				isBorrowedTransaction = ConnectionScope.Current.HasTransaction;
+				
+				//since this is a read operation, don't create a tran by default, only use tran if provided to us for custom isolation level
+				transactionManager = ConnectionScope.ValidateOrCreateTransaction();
+				dataProvider = ConnectionScope.Current.DataProvider;
+
 				result = dataProvider.<%= GetClassName(SourceTable, ClassNameFormat.Provider) %>.<%= MethodNames.Delete %>(transactionManager, <%= GetFunctionCallParameters(keys) %><% if(RowVersion != null) {Response.Write(", " + GetFieldName(RowVersion));}%>);
-                base.HandleTransactionCommit( transactionManager, isBorrowedTransaction );
+				
+				if (!isBorrowedTransaction && transactionManager != null && transactionManager.IsOpen)
+					transactionManager.Commit();
 			}
             catch (Exception exc)
             {
 				#region Handle transaction rollback and exception
-                base.HandleTransactionRollback( transactionManager );
+                if (transactionManager != null && transactionManager.IsOpen) 
+					transactionManager.Rollback();
 				
 				//Handle exception based on policy
                 if (DomainUtil.HandleException(exc, layerExceptionPolicy)) 
@@ -967,13 +1003,16 @@
 			
 			try
             {	
-				transactionManager = base.HandleTransactionAndProviderSetup( transactionManager, out dataProvider );
+				transactionManager = ConnectionScope.ValidateOrCreateTransaction(noTranByDefault);
+				dataProvider = ConnectionScope.Current.DataProvider;
+
 				list = <%= newCollectionClassName %>dataProvider.<%= GetClassName(SourceTable, ClassNameFormat.Provider) %>.GetBy<%=functionname%>(transactionManager, <%=GetFunctionCallParameters(junctionTableKey.ForeignKeyMemberColumns)%>, start,  pageLength, out totalCount)<%=newCollectionClassNameEnd%>;
 			}
             catch (Exception exc)
             {
 				#region Handle transaction rollback and exception
-                base.HandleTransactionRollback( transactionManager );
+                if (transactionManager != null && transactionManager.IsOpen) 
+					transactionManager.Rollback();
 				
 				//Handle exception based on policy
                 if (DomainUtil.HandleException(exc, layerExceptionPolicy)) 
@@ -1067,13 +1106,15 @@
 				<%= returnType != "void" ? "result = " : ""  %><%= newCollection %>dataProvider.<%= GetClassName(SourceTable, ClassNameFormat.Provider) %>.<%=methodName%>(transactionManager, start, pageLength <%=TransformStoredProcedureInputsToDataAccess(true, command.InputParameters) + TransformStoredProcedureOutputsToDataAccess(true, command.AllOutputParameters)%>)<%= newCollectionEnd %>;
 	        
 				<% if (returnType == "void") { %>
-				base.HandleTransactionCommit( transactionManager, isBorrowedTransaction );
+				if (!isBorrowedTransaction && transactionManager != null && transactionManager.IsOpen)
+					transactionManager.Commit();
 				<% } %>
 			}
             catch (Exception exc)
             {
 				#region Handle transaction rollback and exception
-                base.HandleTransactionRollback( transactionManager );
+                if (transactionManager != null && transactionManager.IsOpen) 
+					transactionManager.Rollback();
 				
 				//Handle exception based on policy
                 if (DomainUtil.HandleException(exc, layerExceptionPolicy)) 
@@ -1213,13 +1254,16 @@
 			
 			try
             {
-				transactionManager = base.HandleTransactionAndProviderSetup( transactionManager, out dataProvider );
+				transactionManager = ConnectionScope.ValidateOrCreateTransaction(noTranByDefault);
+				dataProvider = ConnectionScope.Current.DataProvider;
+
 				dataProvider.<%= GetClassName(SourceTable, ClassNameFormat.Provider) %>.<%= MethodNames.DeepLoad %>(transactionManager, entity, deep, deepLoadType, childTypes);
 			}
             catch (Exception exc)
             {
 				#region Handle transaction rollback and exception
-                base.HandleTransactionRollback( transactionManager );
+                if (transactionManager != null && transactionManager.IsOpen) 
+					transactionManager.Rollback();
 				
 				//Handle exception based on policy
                 if (DomainUtil.HandleException(exc, layerExceptionPolicy)) 
@@ -1287,13 +1331,16 @@
 			
 			try
             {
-				transactionManager = base.HandleTransactionAndProviderSetup( transactionManager, out dataProvider );
+				transactionManager = ConnectionScope.ValidateOrCreateTransaction(noTranByDefault);
+				dataProvider = ConnectionScope.Current.DataProvider;
+
 				dataProvider.<%= GetClassName(SourceTable, ClassNameFormat.Provider) %>.<%= MethodNames.DeepLoad %>(transactionManager, <%=newEntityCollectionClassName%>entityCollection<%=newEntityCollectionClassNameEnd%>, deep, deepLoadType, childTypes);
 			}
             catch (Exception exc)
             {
 				#region Handle transaction rollback and exception
-                base.HandleTransactionRollback( transactionManager );
+                if (transactionManager != null && transactionManager.IsOpen) 
+					transactionManager.Rollback();
 				
 				//Handle exception based on policy
                 if (DomainUtil.HandleException(exc, layerExceptionPolicy)) 
@@ -1351,14 +1398,22 @@
 			
 			try
             {	
-				transactionManager = base.HandleTransactionAndProviderSetup( transactionManager, out isBorrowedTransaction, out dataProvider );
+				isBorrowedTransaction = ConnectionScope.Current.HasTransaction;
+				
+				//since this is a read operation, don't create a tran by default, only use tran if provided to us for custom isolation level
+				transactionManager = ConnectionScope.ValidateOrCreateTransaction();
+				dataProvider = ConnectionScope.Current.DataProvider;
+				
 				result = dataProvider.<%= GetClassName(SourceTable, ClassNameFormat.Provider) %>.<%= MethodNames.DeepSave %>(transactionManager, entity, deepSaveType, childTypes);
-				base.HandleTransactionCommit( transactionManager, isBorrowedTransaction );
+								
+				if (!isBorrowedTransaction && transactionManager != null && transactionManager.IsOpen)
+					transactionManager.Commit();
 			}
             catch (Exception exc)
             {
 				#region Handle transaction rollback and exception
-                base.HandleTransactionRollback( transactionManager );
+                if (transactionManager != null && transactionManager.IsOpen) 
+					transactionManager.Rollback();
 				
 				//Handle exception based on policy
                 if (DomainUtil.HandleException(exc, layerExceptionPolicy)) 
@@ -1410,14 +1465,22 @@
 			
 			try
             {
-				transactionManager = base.HandleTransactionAndProviderSetup( transactionManager, out isBorrowedTransaction, out dataProvider );
+				isBorrowedTransaction = ConnectionScope.Current.HasTransaction;
+				
+				//since this is a read operation, don't create a tran by default, only use tran if provided to us for custom isolation level
+				transactionManager = ConnectionScope.ValidateOrCreateTransaction();
+				dataProvider = ConnectionScope.Current.DataProvider;
+
 				result = dataProvider.<%= GetClassName(SourceTable, ClassNameFormat.Provider) %>.<%= MethodNames.DeepSave %>(transactionManager, <%= newEntityCollectionClassName %>entityCollection<%= newEntityCollectionClassNameEnd %>,  deepSaveType, childTypes);
-				base.HandleTransactionCommit( transactionManager, isBorrowedTransaction );
+								
+				if (!isBorrowedTransaction && transactionManager != null && transactionManager.IsOpen)
+					transactionManager.Commit();
 			}
             catch (Exception exc)
             {
 				#region Handle transaction rollback and exception
-                base.HandleTransactionRollback( transactionManager );
+                if (transactionManager != null && transactionManager.IsOpen) 
+					transactionManager.Rollback();
 				
 				//Handle exception based on policy
                 if (DomainUtil.HandleException(exc, layerExceptionPolicy)) 
