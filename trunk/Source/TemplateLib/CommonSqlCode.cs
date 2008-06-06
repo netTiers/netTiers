@@ -4570,7 +4570,7 @@ CREATE\s+PROC(?:EDURE)?                               # find the start of the st
 			
 			try
 			{
-				if (command.CommandResults.Count == 0)
+				if (command.CommandResults.Count != 1)
 					return false;
 					
 				if (command.CommandResults[0].Columns.Count != table.Columns.Count)
@@ -4622,7 +4622,7 @@ CREATE\s+PROC(?:EDURE)?                               # find the start of the st
 			
 			try
 			{
-				if (command.CommandResults.Count == 0)
+				if (command.CommandResults.Count != 1)
 					return false;
 					
 				if (command.CommandResults[0].Columns.Count != view.Columns.Count)
