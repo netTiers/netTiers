@@ -66,6 +66,7 @@ namespace MoM.Templates
 		private bool includeGeneratedDate = false;
 		private NameConversionType nameConversion = NameConversionType.None;
 		private string safeNamePrefix = "SafeName_";
+		private MoM.Templates.DatabaseType includeDatabaseFeatures = DatabaseType.None;
 		
 		#region CSharpKeywords
 		
@@ -184,6 +185,15 @@ namespace MoM.Templates
 		{
 			get {return nameConversion;}
 			set	{nameConversion = value;}
+		}
+		
+		[Category("02. Framework Generation - Optional")]
+		[Description("Indicates which database specific features to generate.")]
+		[DefaultValue("None")]	
+		public MoM.Templates.DatabaseType IncludeDatabaseFeatures
+		{
+			get {return includeDatabaseFeatures;}
+			set	{includeDatabaseFeatures = value;}
 		}
 		
 		#endregion 
@@ -2450,7 +2460,7 @@ namespace MoM.Templates
 			// for sql server
 			// Added by Andy Digital Example LLC 12/10/2007
 			// Trace.WriteLine("IsIdentityRowGuid Eval for Column " + column.Table.Name + "." + column.Name);
-			if (IsIdentityRowGuidColumn(column))
+			if (IsIdentityRowGuidColumn(column) && IncludeDatabaseFeatures == MoM.Templates.DatabaseType.SQLServer2005)
 				return true;
 		
 			if (column.ExtendedProperties["CS_IsIdentity"] != null)
