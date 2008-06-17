@@ -18,7 +18,6 @@
 <%@ Property Name="IncludeGetListByIX" Type="System.Boolean" Default="True" Category="Options" Description="If true getlist statements will be generated." %>
 <%@ Property Name="IncludeFind" Type="System.Boolean" Default="True" Category="Options" Description="If true find statements will be generated." %>
 <%@ Property Name="IncludeManyToMany" Type="System.Boolean" Default="True" Category="Options" Description="If true select statements will be generated for any many to many relationship." %>
-<%@ Property Name="IncludeDatabaseFeatures" Type="MoM.Templates.DatabaseType" Category="02. Framework Generation - Optional" Description="Indicates which database specific features to generate." Default="None" %>
 
 <%@ Property Name="IsolationLevel" Type="TransactionIsolationLevelEnum" Default="None" Category="Options" Description="Isolation level to use in generated procedures." %>
 <%@ Property Name="ExcludeFields" Type="System.String[]" Optional="True" Category="Options" Description="Enter a list of fields to exclude from parameter generation" %>
@@ -364,7 +363,7 @@ GO
 			</parameters>
 			<body><![CDATA[
 				<%= GetSetTransactionIsolationLevelStatement() %>
-				<% if (colsIdentityRowGuids.Count > 0) { %>
+				<% if (colsIdentityRowGuids.Count > 0 && IncludeDatabaseFeatures == MoM.Templates.DatabaseType.SQLServer2005) { %>
 				Declare @IdentityRowGuids table (<% for (int i = 0; i < colsIdentityRowGuids.Count; i++) {%><%= GetPropertyName(colsIdentityRowGuids[i]) %> <%= GetSqlDataType(colsIdentityRowGuids[i]) %><% if (i < colsIdentityRowGuids.Count - 1) { %>,<% } } %>	)
 				<%}%>				
 				INSERT INTO <%=fqTableName%>
@@ -372,7 +371,7 @@ GO
 					<% for (int i = 0; i < colsUpdatable.Count; i++) { %>[<%= colsUpdatable[i].Name %>]<% if (i < colsUpdatable.Count - 1) { %>
 					,<% } } %>
 					)
-					<% if (colsIdentityRowGuids.Count > 0) { %>
+					<% if (colsIdentityRowGuids.Count > 0 && IncludeDatabaseFeatures == MoM.Templates.DatabaseType.SQLServer2005) { %>
 						OUTPUT <% for (int i = 0; i < colsIdentityRowGuids.Count; i++) {%>Inserted.<%= GetPropertyName(colsIdentityRowGuids[i]) %><% if (i < colsIdentityRowGuids.Count - 1) { %>,<% } } %> into @IdentityRowGuids
 					
 					<%}%>					
@@ -382,7 +381,7 @@ GO
 					,<% } } %>
 					)
 				
-				<% if (colsIdentityRowGuids.Count > 0) { %>
+				<% if (colsIdentityRowGuids.Count > 0 && IncludeDatabaseFeatures == MoM.Templates.DatabaseType.SQLServer2005) { %>
 				select <% for (int i = 0; i < colsIdentityRowGuids.Count; i++) {%>@<%= GetPropertyName(colsIdentityRowGuids[i]) %>=<%= GetPropertyName(colsIdentityRowGuids[i]) %><% if (i < colsIdentityRowGuids.Count - 1) { %>,<% } } %>	 from @IdentityRowGuids
 				<%}%>
 				<% for (int i = 0; i < cols.Count; i++) { if (IsIdentityColumn(cols[i]) && !(IsIdentityRowGuidColumn(cols[i]))) { %>
