@@ -14,15 +14,15 @@
 				<table width="100%" border="0" cellspacing="2" cellpadding="2">
 					<tr>
                         <td width="700">
-                            <a href="http://nettiers.com/download.aspx" target="_blank"><img border="0" src="http://nettiers.com/img/netTiersLogo2.0_small.gif" alt=".netTiers 2.0"  /></a>
+                            <a href="http://code.google.com/p/nettiers/downloads/" target="_blank"><img border="0" src="http://nettiers.com/img/netTiersLogo2.0_small.gif" alt=".netTiers 2.2"  /></a>
                             <hr /><div>
                               <a href="http://nettiers.com/">Website</a>
                              &#160;&#160; | &#160;&#160; 
                              <a href="http://community.codesmithtools.com/forums/default.aspx?GroupID=11/">Forums</a>
                              &#160;&#160; | &#160;&#160; 
-                             <a href="http://sourceforge.net/projects/nettiers/">Sourceforge</a>
+                             <a href="http://code.google.com/p/nettiers/">Google Code</a>
                              &#160;&#160; | &#160;&#160; 
-                             <a href="https://www.nettiers.com/download.aspx">Downloads</a>
+                             <a href="http://code.google.com/p/nettiers/downloads/">Downloads</a>
                             </div>
                            <hr />
                         <h2>Generation Report</h2>
@@ -200,21 +200,21 @@ accountsService.DeepSave(myAccountEntity, <font color="blue">false</font>, DeepS
 		</tr>
 	</table>
 	<xsl:call-template name="copyrightinfo"/>
-	<xsl:call-template name="sourceforgeLogo"/>
+	<xsl:call-template name="googleCodeLogo"/>
 	</body>
 	</html>
 	</xsl:template>
 	
 	<xsl:template name="copyrightinfo">
 		<div align="center">
-			.netTiersOpen Source Group, 2007
+			.netTiers Open Source Group, 2008
 		</div>
 	</xsl:template>
 	
-	<xsl:template name="sourceforgeLogo">
+	<xsl:template name="googleCodeLogo">
 		<div align="center">
-         <a href="http://sourceforge.net">
-                <img src="http://sourceforge.net/sflogo.php?group_id=118735" width="88" height="31" border="0" alt="SourceForge Logo" />
+         <a href="http://code.google.com/p/nettiers/">
+                <img src="http://code.google.com/hosting/images/code_sm.png" border="0" alt="Google Code Logo" />
               </a>
 		</div>
 	</xsl:template>
