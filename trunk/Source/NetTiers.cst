@@ -15,7 +15,7 @@
 <%@ Import NameSpace="System.Xml.XPath" %> 
 
 <%-- 1. Datasource --%>
-<%@ Property Name="ChooseSourceDatabase" Type="SchemaExplorer.DatabaseSchema" Optional="False" Category="01. Getting Started - Required" Description="Database that the tables views, and stored procedures should be based on. IMPORTANT!!! If SourceTables and SourceViews are left blank, the Entire Database will then be generated." %>
+<%@ Property Name="ChooseSourceDatabase" Type="SchemaExplorer.DatabaseSchema" DeepLoad="True" Optional="False" Category="01. Getting Started - Required" Description="Database that the tables views, and stored procedures should be based on. IMPORTANT!!! If SourceTables and SourceViews are left blank, the Entire Database will then be generated." %>
 
 <%-- 2. Framework Generation Category --%>
 <%@ Property Name="ExecuteSql" Type="System.Boolean" Default="False" Category="02. Framework Generation - Optional" Description="If true the stored procedures are installed on the sql server. (The SQL file is generated in all case)" %>
@@ -688,6 +688,16 @@
 	}
 
 	#region Template related methods
+	protected override void OnInit()
+	{
+		#if CodeSmith50
+		this.SetPropertyAttribute("SourceTables", "DeepLoad", "True");
+		this.SetPropertyAttribute("EnumTables", "DeepLoad", "True");
+		this.SetPropertyAttribute("SourceViews", "DeepLoad", "True");
+		#endif
+		base.OnInit();
+	}
+	
 	public void RenderToFile(string templateName, string path, bool overwrite)
 	{
 		this._CurrentFileName = path;
