@@ -101,12 +101,14 @@ public partial class <%=entityName%> : System.Web.UI.Page
 							&& IncludeAtlasToolkit);
 			if (!isBlobField)
 				continue;
+				
 			string keyType = GetCSType(SourceTable.PrimaryKey.MemberColumns[0]);	
 			string propertyName = GetPropertyName(col);
 			string parse = "TryParse";
 			
 			if (keyType.ToLower().Contains("guid"))
 				parse = string.Format("{0}.{1}.EntityUtil.GuidTryParse", WebProjectNameSpace, BLLNameSpace);
+				
 	%>
 	
 	[System.Web.Script.Services.ScriptMethod]
@@ -117,8 +119,12 @@ public partial class <%=entityName%> : System.Web.UI.Page
 		<%= keyType %> key = contextKey;
 		<% }else { %>
 		<%= keyType %> key;
+		<% if (keyType.ToLower().Contains("guid")) {%>
+		<%= parse %>(contextKey, out key);
+		<% } else {%>
 		<%= keyType %>.<%= parse %>(contextKey, out key);
-		<% } %>
+		<% } // if (keyType.ToLower().Contains("guid")) %>
+		<% } // if (keyType.ToLower().Contains("string")) %>
         
         <%=WebProjectNameSpace%>.<%=BLLNameSpace%>.<%=entityName%> content 
 			= <%=WebProjectNameSpace%>.<%=DALNameSpace%>.DataRepository.<%=entityName%>Provider.GetBy<%= GetKeysName(SourceTable.PrimaryKey.MemberColumns) %>(key);
