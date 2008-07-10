@@ -29,7 +29,7 @@
 	// Name of the table being worked on.
 	string name = SourceView.Name;
 
-	//Get the owner of the table
+	// Get the owner of the table
 	string owner = GetOwnerName(SourceView, true);		
 		
 	string className = GetClassName(SourceView);
@@ -38,7 +38,7 @@
 	string providerBaseName = "Sql" + GetClassName(SourceView, ClassNameFormat.ProviderBase);
 	string collectionClassName = GetClassName(SourceView, ClassNameFormat.ViewCollection);
 		
-	// this array store each Get BY MemberColumns in order to avoid to create doublon Get methods
+	// This array store each Get BY MemberColumns in order to avoid to create doublon Get methods
 	System.Collections.ArrayList getbyKeys = new System.Collections.ArrayList();
 %>
 /*
@@ -98,7 +98,7 @@ public abstract partial class <%=providerBaseName%> : <%=GetClassName(SourceView
 	/// Uses connection string to connect to datasource.
 	/// </summary>
 	/// <param name="connectionString">The connection string to the database.</param>
-	/// <param name="useStoredProcedure">A boolean value that indicates if we use the stored procedures or embedded queries.</param>
+	/// <param name="useStoredProcedure">A boolean value that indicates if we use stored procedures or embedded queries.</param>
 	/// <param name="providerInvariantName">Name of the invariant provider use by the DbProviderFactory.</param>
 	public <%=providerBaseName%>(string connectionString, bool useStoredProcedure, string providerInvariantName)
 	{
@@ -123,7 +123,7 @@ public abstract partial class <%=providerBaseName%> : <%=GetClassName(SourceView
 	/// <summary>
     /// Gets or sets a value indicating whether to use stored procedures.
     /// </summary>
-    /// <value><c>true</c> if we choose to use use stored procedures; otherwise, <c>false</c>.</value>
+    /// <value><c>true</c> if we choose to use stored procedures; otherwise, <c>false</c>.</value>
 	public bool UseStoredProcedure
 	{
 		get {return this._useStoredProcedure;}
@@ -151,12 +151,12 @@ public abstract partial class <%=providerBaseName%> : <%=GetClassName(SourceView
 	#region <%= MethodNames.GetAll %> Methods
 	
 	/// <summary>
-	/// 	Gets All rows from the DataSource.
+	/// Gets All rows from the DataSource.
 	/// </summary>
-	/// <param name="transactionManager"><see cref="TransactionManager"/> object</param>
+	/// <param name="transactionManager"><see cref="TransactionManager"/> object.</param>
 	/// <param name="start">Row number at which to start reading.</param>
 	/// <param name="pageLength">Number of rows to return.</param>
-	/// <param name="count">The total number of rows in the data source</param>
+	/// <param name="count">The total number of rows in the data source.</param>
 	/// <remarks></remarks>
 	/// <returns>Returns a typed collection of <%=className%> objects.</returns>
 	public override <%=collectionClassName%> <%= MethodNames.GetAll %>(TransactionManager transactionManager, int start, int pageLength, out int count)
@@ -209,7 +209,7 @@ public abstract partial class <%=providerBaseName%> : <%=GetClassName(SourceView
 	/// <param name="orderBy">Specifies the sort criteria for the rows in the DataSource (Name ASC; BirthDay DESC, Name ASC);</param>
 	/// <param name="start">Row number at which to start reading.</param>
 	/// <param name="pageLength">Number of rows to return.</param>
-	/// <param name="count">The total number of rows in the data source</param>
+	/// <param name="count">The total number of rows in the data source.</param>
 	/// <param name="transactionManager"><see cref="TransactionManager"/> object</param>
 	/// <remarks></remarks>
 	/// <returns>Returns a typed collection of <%=className%> objects.</returns>
@@ -272,7 +272,7 @@ public abstract partial class <%=providerBaseName%> : <%=GetClassName(SourceView
 	#region Parameterized <%= MethodNames.Find %> Methods
 	
 	/// <summary>
-	/// 	Returns rows from the DataSource that meet the parameter conditions.
+	/// Returns rows from the DataSource that meet the parameter conditions.
 	/// </summary>
 	/// <param name="transactionManager"><see cref="TransactionManager"/> object</param>
 	/// <param name="parameters">A collection of <see cref="SqlFilterParameter"/> objects.</param>
@@ -359,14 +359,14 @@ public abstract partial class <%=providerBaseName%> : <%=GetClassName(SourceView
 			string returnType = GetReturnCustomProcReturnType(CustomNonMatchingReturnType, SourceView, command);
 			string returnTypeForComment = returnType.Replace("<", "&lt;").Replace(">", "&gt;");
 			
-						//Go ahead and gather the strings necessary for Input / Output Parms.  These are used in multiple places
-			//and cuts down on the number of times these items have to be transformed
+			// Go ahead and gather the strings necessary for Input / Output Parms.  These are used in multiple places
+			// and cuts down on the number of times these items have to be transformed
 			string parmsMethodComment = TransformStoredProcedureInputsToMethodComments(command.InputParameters) + 
 										TransformStoredProcedureOutputsToMethodComments(command.AllOutputParameters);
 
 			string methodParms = TransformStoredProcedureInputsToMethod(false, command.InputParameters) + 
 								 TransformStoredProcedureOutputsToMethod(command.InputParameters.Count > 0, command.AllOutputParameters);			
-			//Only append a comma if we got parameters back.
+			// Only append a comma if we got parameters back.
 			if(methodParms.Length > 0)
 			{
 				methodParms = ", " + methodParms;	
@@ -376,17 +376,17 @@ public abstract partial class <%=providerBaseName%> : <%=GetClassName(SourceView
 	#region <%=command.Name%>
 	
 	/// <summary>
-	///	This method wrap the '<%=command.Name%>' stored procedure. 
+	///	This method wraps the '<%=command.Name%>' stored procedure. 
 	/// </summary><%=parmsMethodComment%>
 	/// <param name="start">Row number at which to start reading.</param>
 	/// <param name="pageLength">Number of rows to return.</param>
 	/// <param name="transactionManager"><see cref="TransactionManager"/> object</param>
-	/// <remark>This method is generate from a stored procedure.</remark><% if (returnType != "void") {%>
+	/// <remark>This method is generated from a stored procedure.</remark><% if (returnType != "void") {%>
 	/// <returns>A <see cref="<%=returnTypeForComment%>"/> instance.</returns><%}%>
 	public override <%=returnType%> <%=methodName%>(TransactionManager transactionManager, int start, int pageLength<%=methodParms%>)
 	{
 		SqlDatabase database = new SqlDatabase(this._connectionString);
-		DbCommand commandWrapper = StoredProcedureProvider.GetCommandWrapper(database, "<%= GetOwnerName(command, true) %><%=GetSafeName(command.Name)%>", _useStoredProcedure);
+		DbCommand commandWrapper = StoredProcedureProvider.GetCommandWrapper(database, "<%= GetOwnerName(command, true) %><%=GetSafeName(command.Name)%>", true);
 		
 		<% foreach(ParameterSchema col in command.InputParameters)	{ %>
 		database.AddInParameter(commandWrapper, "<%=col.Name%>", <%=GetDbType(col)%>,  <%=GetFieldName(col)%> );
@@ -463,7 +463,7 @@ public abstract partial class <%=providerBaseName%> : <%=GetClassName(SourceView
 				reader = Utility.ExecuteReader(database, commandWrapper);
 			}			
 			
-			//Create Collection
+			// Create Collection
 			<% if (returnType == collectionClassName) {%>
 				<%=collectionClassName%> rows = new <%=collectionClassName%>();
 				try
@@ -485,7 +485,7 @@ public abstract partial class <%=providerBaseName%> : <%=GetClassName(SourceView
 				{
 					reader.Read();
 					tmp = (<%=returnType%>)reader[0];
-				}finally {reader.Close();}
+				} finally {reader.Close();}
 				
 				<%=outputValues.ToString()%>
 				
@@ -495,7 +495,7 @@ public abstract partial class <%=providerBaseName%> : <%=GetClassName(SourceView
 		}
 		catch(SqlException ex)
 		{
-			throw new DataException("An data access error occured, please check inner SqlException.", ex);
+			throw new DataException("A data access error occured, please check inner SqlException.", ex);
 		}
 	}
 	#endregion
