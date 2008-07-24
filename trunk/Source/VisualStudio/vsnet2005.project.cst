@@ -42,8 +42,8 @@
 <%@ Property Name="IncludeWinLibrary" Type="System.Boolean" Category="Option" Description="" default="false" %>
 
 <%@ Property Name="IncludeDALBase" Type="System.Boolean" Category="Option" Description="" %>
-<%@ Property Name="IncludeSqlClient" Type="System.Boolean" Category="Option" Description="" %>
-<%@ Property Name="IncludeGenericClient" Type="System.Boolean" Category="Option" Description="" %>
+<%@ Property Name="IncludeDatabaseClient" Type="System.Boolean" Category="Option" Description="" %>
+<%@ Property Name="SchemaProviderName" Type="System.String" Category="Option" Description="" %>
 <%@ Property Name="IncludeWebLibrary" Type="System.Boolean" Category="Option" Description="" %>
 <%@ Property Name="IncludeWebSecurity" Type="System.Boolean" Category="Option" Description="" %>
 <%@ Property Name="IncludeWebsite" Type="System.Boolean" Category="Option" Description="" %>
@@ -91,11 +91,11 @@
 	{
 		fileName = DALNameSpace;
 	}
-	else if (IncludeSqlClient) 
+	else if (IncludeDatabaseClient && SchemaProviderName == "SqlSchemaProvider") 
 	{
 		fileName = DALSqlNameSpace; 
 	}
-	else if (IncludeGenericClient)
+	else if (IncludeDatabaseClient && SchemaProviderName != "SqlSchemaProvider")
 	{
 		fileName = DALGenericNameSpace; 
 	} 
@@ -154,7 +154,7 @@
     <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
     <ProductVersion><%= GetVisualStudioProductVersionString( VisualStudioVersion ) %></ProductVersion>
     <SchemaVersion>2.0</SchemaVersion>
-    <ProjectGuid>{<% if (IncludeBll) Response.Write(BLLGuid); else if (IncludeComponents) Response.Write(ComponentsGuid); else if (IncludeDALBase) Response.Write(DALGuid); else if (IncludeSqlClient) Response.Write(DALSqlGuid); else if (IncludeGenericClient) Response.Write(DALGenericGuid); else if (IncludeUnitTest != MoM.Templates.UnitTestStyle.None) Response.Write(UTGuid); else if (IncludeWebservice) Response.Write(WSGuid);else if (IncludeWebserviceClient) Response.Write(DALWSGuid); else if (IncludeWebLibrary) Response.Write(WebLibGuid); else if (IncludeWebSecurity) Response.Write(WebSecurityLibGuid); else if (IncludeWinLibrary) Response.Write(WinLibGuid); else if (IncludeWebsite) Response.Write(WebsiteGuid);  %>}</ProjectGuid>
+    <ProjectGuid>{<% if (IncludeBll) Response.Write(BLLGuid); else if (IncludeComponents) Response.Write(ComponentsGuid); else if (IncludeDALBase) Response.Write(DALGuid); else if (IncludeDatabaseClient && SchemaProviderName == "SqlSchemaProvider") Response.Write(DALSqlGuid); else if (IncludeDatabaseClient && SchemaProviderName != "SqlSchemaProvider") Response.Write(DALGenericGuid); else if (IncludeUnitTest != MoM.Templates.UnitTestStyle.None) Response.Write(UTGuid); else if (IncludeWebservice) Response.Write(WSGuid);else if (IncludeWebserviceClient) Response.Write(DALWSGuid); else if (IncludeWebLibrary) Response.Write(WebLibGuid); else if (IncludeWebSecurity) Response.Write(WebSecurityLibGuid); else if (IncludeWinLibrary) Response.Write(WinLibGuid); else if (IncludeWebsite) Response.Write(WebsiteGuid);  %>}</ProjectGuid>
 	<% if ( IncludeWebsite ) { %>
     <ProjectTypeGuids>{349c5851-65df-11da-9384-00065b846f21};{fae04ec0-301f-11d3-bf4b-00c04f79efbc}</ProjectTypeGuids>
 	<% } else { %>
@@ -325,7 +325,7 @@
 	</Reference>
 	<%}%>
 	<%	}  // END If IncludeBLL || IncludeComponents 
-	else if (IncludeDALBase || IncludeSqlClient || IncludeGenericClient || IncludeWebserviceClient) {%>    
+	else if (IncludeDALBase || IncludeDatabaseClient || IncludeWebserviceClient) {%>    
     <Reference Include="Microsoft.Practices.EnterpriseLibrary.Common, <%= entlibVersionText %>">
       <SpecificVersion>False</SpecificVersion>
       <HintPath><%= LibraryPath %>\Microsoft.Practices.EnterpriseLibrary.Common.dll</HintPath>
@@ -361,7 +361,7 @@
     </ProjectReference>
 	<%}%>
 	
-	<% if (IncludeSqlClient || IncludeGenericClient || IncludeWebserviceClient || IncludeWebLibrary || IncludeWebSecurity) { %>
+	<% if (IncludeDatabaseClient || IncludeWebserviceClient || IncludeWebLibrary || IncludeWebSecurity) { %>
     <ProjectReference Include="..\<%=DALNameSpace%>\<%=DALNameSpace%>.csproj">
         <Name><%=DALNameSpace%></Name>
         <Project>{<%=DALGuid%>}</Project>
@@ -375,14 +375,14 @@
         <Project>{<%=DALGuid%>}</Project>
         <Package>{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}"</Package>
     </ProjectReference>
-	<% if ( IncludeSqlClient ) { %>
+	<% if ( IncludeDatabaseClient && SchemaProviderName == "SqlSchemaProvider" ) { %>
 	<ProjectReference Include="..\<%=DALSqlNameSpace%>\<%=DALSqlNameSpace%>.csproj">
         <Name><%=DALSqlNameSpace%></Name>
         <Project>{<%=DALSqlGuid%>}</Project>
         <Package>{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}</Package>
     </ProjectReference>
 	<% } %>
-	<% if ( IncludeGenericClient ) { %>
+	<% if ( IncludeDatabaseClient && SchemaProviderName != "SqlSchemaProvider" ) { %>
 	<ProjectReference Include="..\<%=DALGenericNameSpace%>\<%=DALGenericNameSpace%>.csproj">
         <Name><%=DALGenericNameSpace%></Name>
         <Project>{<%=DALGenericGuid%>}</Project>
@@ -520,7 +520,7 @@
 			</Compile>
 		<%}
 				
-		if (IncludeSqlClient)
+		if (IncludeDatabaseClient && SchemaProviderName == "SqlSchemaProvider")
 		{%>
 			<Compile Include="<%=SqlClientSubFolder%>Views\Sql<%=GetClassName(SourceViews[i], ClassNameFormat.Provider)%>.cs">
 			  <SubType>Code</SubType>
@@ -633,7 +633,7 @@
 			</Compile>
 		<%}
 		
-		if (IncludeSqlClient)
+		if (IncludeDatabaseClient && SchemaProviderName == "SqlSchemaProvider")
 		{%>
 			<Compile Include="<%=SqlClientSubFolder%>Sql<%=GetClassName(SourceTables[i], ClassNameFormat.Provider)%>.cs">
 			  <SubType>Code</SubType>
@@ -645,7 +645,7 @@
 			</Compile>
 		<%}
 					
-		if (IncludeGenericClient)
+		if (IncludeDatabaseClient && SchemaProviderName != "SqlSchemaProvider")
 		{%>
 		
 			<Compile Include="<%=GenericClientSubFolder%>Generic<%=GetClassName(SourceTables[i], ClassNameFormat.Provider)%>.cs">
@@ -973,7 +973,7 @@
 			</Compile>
 			
 		<% } %>
-		<% if (IncludeSqlClient) {%>
+		<% if (IncludeDatabaseClient && SchemaProviderName == "SqlSchemaProvider") {%>
 			<Compile Include="<%=SqlClientSubFolder%>SqlNetTiersProvider.cs">
 			  <SubType>Code</SubType>
 			</Compile>
@@ -991,7 +991,7 @@
 			</Compile>			
 		<%}%>
 		
-		<% if (IncludeGenericClient) {%>
+		<% if (IncludeDatabaseClient && SchemaProviderName == "Sqlite3SchemaProvider") {%>
 			<Compile Include="<%=GenericClientSubFolder%>GenericNetTiersProvider.cs">
 			  <SubType>Code</SubType>
 			</Compile>
@@ -1001,6 +1001,20 @@
 			</Compile>
 			
 			<EmbeddedResource Include="<%=GenericClientSubFolder%>System.Data.SQLite.Procedures.xml">
+		      <SubType>EmbeddedResource</SubType>
+		    </EmbeddedResource>
+		<%}%>
+		
+		<% if (IncludeDatabaseClient && SchemaProviderName == "OracleSchemaProvider") {%>
+			<Compile Include="<%=GenericClientSubFolder%>GenericNetTiersProvider.cs">
+			  <SubType>Code</SubType>
+			</Compile>
+			
+			<Compile Include="<%=GenericClientSubFolder%>DbCommandManager.cs">
+			  <SubType>Code</SubType>
+			</Compile>
+
+			<EmbeddedResource Include="<%=GenericClientSubFolder%>System.Data.OracleClient.Procedures.xml">
 		      <SubType>EmbeddedResource</SubType>
 		    </EmbeddedResource>
 		<%}%>
