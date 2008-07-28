@@ -147,7 +147,7 @@
 																															
 			CodeTemplates.Add("ServiceLayer.WebService.cst", base.CreateTemplate<ServiceLayerWebService>()); this.PerformStep();
 			CodeTemplates.Add("WebService.cst", base.CreateTemplate<WebService>()); this.PerformStep();
-			CodeTemplates.Add("WebInfo.cst", base.CreateTemplate<WebInfo>()); this.PerformStep();
+			//CodeTemplates.Add("WebInfo.cst", base.CreateTemplate<WebInfo>()); this.PerformStep();
 																	
 			CodeTemplates.Add("WsNetTiersProvider.cst", base.CreateTemplate<WsNetTiersProvider>()); this.PerformStep();
 			CodeTemplates.Add("WsEntityProvider.cst", base.CreateTemplate<WsEntityProvider>()); this.PerformStep();
