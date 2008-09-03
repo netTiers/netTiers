@@ -144,7 +144,7 @@
 			CodeTemplates.Add("System.Data.SQLite.Procedures.cst", base.CreateTemplate<SystemDataSQLiteProcedures>()); this.PerformStep();
 			CodeTemplates.Add("System.Data.OleDb.Procedures.cst", base.CreateTemplate<SystemDataOleDbProcedures>()); this.PerformStep();
 																															
-																															
+			CodeTemplates.Add("System.Data.Oracle.Procedures.cst", base.CreateTemplate<SystemDataOracleProcedures>()); this.PerformStep();
 			CodeTemplates.Add("ServiceLayer.WebService.cst", base.CreateTemplate<ServiceLayerWebService>()); this.PerformStep();
 			CodeTemplates.Add("WebService.cst", base.CreateTemplate<WebService>()); this.PerformStep();
 			//CodeTemplates.Add("WebInfo.cst", base.CreateTemplate<WebInfo>()); this.PerformStep();

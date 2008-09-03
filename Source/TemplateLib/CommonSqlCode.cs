@@ -68,6 +68,17 @@ namespace MoM.Templates
 		private string safeNamePrefix = "SafeName_";
 		private MoM.Templates.DatabaseType includeDatabaseFeatures = DatabaseType.None;
 		
+		#region Oracle
+		
+		private static string _parameterPrefix = "@";
+		public static string ParameterPrefix 
+		{
+			get {return _parameterPrefix;}
+			set {_parameterPrefix=value;}
+		}
+		
+		#endregion
+		
 		#region CSharpKeywords
 		
 		protected string[] csharpKeywords = new string[77] 
@@ -2224,8 +2235,8 @@ namespace MoM.Templates
 		private string GetColumnXmlComment(string description, int indentLevel)
 		{
 			string linePrefix = new string('\t', indentLevel) + "/// ";
-			
-			description = description.Replace("\r\n", string.Format("\r\n{0}", linePrefix));
+			description = description.Replace("\n", "");
+			description = description.Replace("\r", string.Format("\r\n{0}", linePrefix));
 			return description.Replace(Environment.NewLine, Environment.NewLine + linePrefix);
 		}
 		#endregion GetColumnXmlComment

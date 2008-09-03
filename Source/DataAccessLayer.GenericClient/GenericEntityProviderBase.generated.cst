@@ -243,7 +243,7 @@ namespace <%=DALNameSpace%>.GenericClient
 			DbCommand commandWrapper = DbCommandProvider.GetCommandWrapper(database, "<%=owner + ProcedurePrefix + commandStem + SelectSuffix + "By" + functionname%>", _useStoredProcedure, _providerInvariantName);
 			
 			<% foreach(ColumnSchema col in junctionTableKey.ForeignKeyMemberColumns) { %>
-			database.AddInParameter(commandWrapper, "@<%=GetPropertyName(col)%>", DbType.<%=col.DataType.ToString()%>, <%=GetFieldName(col)%>);
+			database.AddInParameter(commandWrapper, "<%=ParameterPrefix + GetPropertyName(col)%>", DbType.<%=col.DataType.ToString()%>, <%=GetFieldName(col)%>);
 			<% } %>
 			
 			IDataReader reader = null;
@@ -308,10 +308,10 @@ namespace <%=DALNameSpace%>.GenericClient
 			<% for(int i = 0; i < SourceTable.PrimaryKey.MemberColumns.Count; i++) { 
 				ColumnSchema col = SourceTable.PrimaryKey.MemberColumns[i];
 			%>
-			database.AddInParameter(commandWrapper, "@<%=GetPropertyName(col)%>", DbType.<%=col.DataType%>, <%=GetFieldName(col)%>);
+			database.AddInParameter(commandWrapper, "<%=ParameterPrefix + GetPropertyName(col)%>", DbType.<%=col.DataType%>, <%=GetFieldName(col)%>);
 			<% } %>
 			<% if (RowVersion != null){ %>
-			database.AddInParameter(commandWrapper, "@<%=GetPropertyName(RowVersion)%>", DbType.<%= RowVersion.DataType.ToString() %>, <%= GetFieldName(RowVersion) %>);
+			database.AddInParameter(commandWrapper, "<%=ParameterPrefix + GetPropertyName(RowVersion)%>", DbType.<%= RowVersion.DataType.ToString() %>, <%= GetFieldName(RowVersion) %>);
 			<% } %>
 			
 			int results = 0;
@@ -382,10 +382,10 @@ namespace <%=DALNameSpace%>.GenericClient
 		if (whereClause.IndexOf("OR") > 0) // did they want to do "a=b OR c=d OR..."?
 			searchUsingOR = true;
 		
-		database.AddInParameter(commandWrapper, "@SearchUsingOR", DbType.Boolean, searchUsingOR);
+		database.AddInParameter(commandWrapper, "<%=ParameterPrefix%>SearchUsingOR", DbType.Boolean, searchUsingOR);
 		
 	<% foreach(ColumnSchema column in SourceTable.Columns) {%>
-		database.AddInParameter(commandWrapper, "@<%=GetPropertyName(column)%>", DbType.<%=column.DataType%>, DBNull.Value);
+		database.AddInParameter(commandWrapper, "<%=ParameterPrefix + GetPropertyName(column)%>", DbType.<%=column.DataType%>, DBNull.Value);
 	<% } %>
 	
 			// replace all instances of 'AND' and 'OR' because we already set searchUsingOR
@@ -406,7 +406,7 @@ namespace <%=DALNameSpace%>.GenericClient
 				<% columnName = column.Name.ToLower();
 				      columnNameSpace = columnName + " ";
 				      columnNameEqual = columnName + "=";
-				      columnNameParam = "@" + column.Name;
+				      columnNameParam = ParameterPrefix + column.Name;
 				%>
 				if (clause.Trim().StartsWith("<%=columnNameSpace%>") || clause.Trim().StartsWith("<%=columnNameEqual%>"))
 				{
@@ -611,10 +611,10 @@ namespace <%=DALNameSpace%>.GenericClient
 			GenericDatabase database = new GenericDatabase(this._connectionString, _providerFactory);
 			DbCommand commandWrapper = DbCommandProvider.GetCommandWrapper(database, "<%=owner + ProcedurePrefix + commandStem + SelectSuffix + "Paged"%>", _useStoredProcedure, _providerInvariantName, whereClause, orderBy);
 			
-			database.AddInParameter(commandWrapper, "@WhereClause", DbType.String, whereClause);
-			database.AddInParameter(commandWrapper, "@OrderBy", DbType.String, orderBy);
-			database.AddInParameter(commandWrapper, "@PageIndex", DbType.Int32, start);
-			database.AddInParameter(commandWrapper, "@PageSize", DbType.Int32, pageLength);
+			database.AddInParameter(commandWrapper, "<%=ParameterPrefix%>WhereClause", DbType.String, whereClause);
+			database.AddInParameter(commandWrapper, "<%=ParameterPrefix%>OrderBy", DbType.String, orderBy);
+			database.AddInParameter(commandWrapper, "<%=ParameterPrefix%>PageIndex", DbType.Int32, start);
+			database.AddInParameter(commandWrapper, "<%=ParameterPrefix%>PageSize", DbType.Int32, pageLength);
 		
 			IDataReader reader = null;
 			bool commitTransaction = false;
@@ -663,8 +663,8 @@ namespace <%=DALNameSpace%>.GenericClient
 			
 			// now we get the count
 			DbCommand commandWrapperCount = DbCommandProvider.GetCommandWrapper(database, "<%=owner + ProcedurePrefix + commandStem + SelectSuffix + "PagedCount"%>", _useStoredProcedure, _providerInvariantName, whereClause, orderBy);
-			database.AddInParameter(commandWrapperCount, "@WhereClause", DbType.String, whereClause);
-			database.AddInParameter(commandWrapperCount, "@OrderBy", DbType.String, orderBy);
+			database.AddInParameter(commandWrapperCount, "<%=ParameterPrefix%>WhereClause", DbType.String, whereClause);
+			database.AddInParameter(commandWrapperCount, "<%=ParameterPrefix%>OrderBy", DbType.String, orderBy);
 			
 			object tmp = Utility.ExecuteScalar(transactionManager, commandWrapperCount);
 			count = Convert.ToInt32(tmp);
@@ -720,7 +720,7 @@ namespace <%=DALNameSpace%>.GenericClient
 			DbCommand commandWrapper = DbCommandProvider.GetCommandWrapper(database, "<%=owner + ProcedurePrefix + commandStem + SelectSuffix + "By" + GetKeysName(fkeys[j].ForeignKeyMemberColumns)%>", _useStoredProcedure, _providerInvariantName);
 			
 			<% foreach(ColumnSchema col in fkeys[j].ForeignKeyMemberColumns) { %>
-				database.AddInParameter(commandWrapper, "@<%=GetPropertyName(col)%>", DbType.<%=col.DataType%>, <%=GetFieldName(col)%>);
+				database.AddInParameter(commandWrapper, "<%=ParameterPrefix + GetPropertyName(col)%>", DbType.<%=col.DataType%>, <%=GetFieldName(col)%>);
 			<% } %>
 			
 			IDataReader reader = null;
@@ -819,7 +819,7 @@ namespace <%=DALNameSpace%>.GenericClient
 			DbCommand commandWrapper = DbCommandProvider.GetCommandWrapper(database, "<%=owner + ProcedurePrefix + commandStem + SelectSuffix + "By" + GetKeysName(indexes[j].MemberColumns)%>", _useStoredProcedure, _providerInvariantName);
 			
 			<% foreach(ColumnSchema col in indexes[j].MemberColumns) { %>
-				database.AddInParameter(commandWrapper, "@<%=GetPropertyName(col)%>", DbType.<%=col.DataType%>, <%=GetFieldName(col)%>);
+				database.AddInParameter(commandWrapper, "<%=ParameterPrefix + GetPropertyName(col)%>", DbType.<%=col.DataType%>, <%=GetFieldName(col)%>);
 			<% } %>
 			
 			IDataReader reader = null;
@@ -989,9 +989,9 @@ namespace <%=DALNameSpace%>.GenericClient
 					if (cols[i].AllowDBNull && !IsCSReferenceDataType(cols[i])  )
 					{ 
 			// String types are nullable, but all other types are value types %>
-			database.AddInParameter(commandWrapper, "@<%=GetPropertyName(cols[i])%>", DbType.<%= cols[i].DataType.ToString() %>, (entity.<%=GetPropertyName(cols[i])%>.HasValue ? (object) entity.<%=GetPropertyName(cols[i])%>  : System.DBNull.Value));
+			database.AddInParameter(commandWrapper, "<%=ParameterPrefix + GetPropertyName(cols[i])%>", DbType.<%= cols[i].DataType.ToString() %>, (entity.<%=GetPropertyName(cols[i])%>.HasValue ? (object) entity.<%=GetPropertyName(cols[i])%>  : System.DBNull.Value));
 					<% } else {%>
-			database.AddInParameter(commandWrapper, "@<%=GetPropertyName(cols[i])%>", <%= GetDbType(cols[i]) %>, entity.<%=GetPropertyName(cols[i])%> );
+			database.AddInParameter(commandWrapper, "<%=ParameterPrefix + GetPropertyName(cols[i])%>", <%= GetDbType(cols[i]) %>, entity.<%=GetPropertyName(cols[i])%> );
 				<% }
 				}		
 			} // end for 
@@ -1103,12 +1103,12 @@ namespace <%=DALNameSpace%>.GenericClient
 				{
 					if (cols[i].NativeType == "numeric" )
 					{%>
-			database.AddParameter(commandWrapper, "@<%=GetPropertyName(cols[i])%>", SqlDbType.<%= cols[i].DataType.ToString() %>, <%= cols[i].Size.ToString() %>, ParameterDirection.Output, true, <%= cols[i].Precision.ToString() %>, <%= cols[i].Scale.ToString() %>, null, DataRowVersion.Default, null);
+			database.AddParameter(commandWrapper, "<%=ParameterPrefix + GetPropertyName(cols[i])%>", SqlDbType.<%= cols[i].DataType.ToString() %>, <%= cols[i].Size.ToString() %>, ParameterDirection.Output, true, <%= cols[i].Precision.ToString() %>, <%= cols[i].Scale.ToString() %>, null, DataRowVersion.Default, null);
 			<%
 					}
 					else
 					{%>
-			database.AddOutParameter(commandWrapper, "@<%=GetPropertyName(cols[i])%>", DbType.<%= cols[i].DataType.ToString() %>, <%= cols[i].Size.ToString() %>);
+			database.AddOutParameter(commandWrapper, "<%=ParameterPrefix + GetPropertyName(cols[i])%>", DbType.<%= cols[i].DataType.ToString() %>, <%= cols[i].Size.ToString() %>);
 			
 				<%	}
 				}
@@ -1117,22 +1117,22 @@ namespace <%=DALNameSpace%>.GenericClient
 					if (cols[i].AllowDBNull && !IsCSReferenceDataType(cols[i])  )
 					{ 
 						// String types are nullable, but all other types are value types%>
-			database.AddInParameter(commandWrapper, "@<%=GetPropertyName(cols[i])%>", DbType.<%= cols[i].DataType.ToString() %>, (entity.<%=GetPropertyName(cols[i])%>.HasValue ? (object) entity.<%=GetPropertyName(cols[i])%> : System.DBNull.Value) );
+			database.AddInParameter(commandWrapper, "<%=ParameterPrefix + GetPropertyName(cols[i])%>", DbType.<%= cols[i].DataType.ToString() %>, (entity.<%=GetPropertyName(cols[i])%>.HasValue ? (object) entity.<%=GetPropertyName(cols[i])%> : System.DBNull.Value) );
 					<%}
 					else				
 				{%>
-			database.AddInParameter(commandWrapper, "@<%=GetPropertyName(cols[i])%>", <%=GetDbType(cols[i]) %>, entity.<%=GetPropertyName(cols[i])%> );
+			database.AddInParameter(commandWrapper, "<%=ParameterPrefix + GetPropertyName(cols[i])%>", <%=GetDbType(cols[i]) %>, entity.<%=GetPropertyName(cols[i])%> );
 				<%}
 				}
 				if (cols[i].IsPrimaryKeyMember && !IsComputed(cols[i]) && !IsIdentityColumn(cols[i]) && cols[i] != RowVersion)
 				{%>
-			database.AddInParameter(commandWrapper, "@Original<%=GetPropertyName(cols[i])%>", DbType.<%= cols[i].DataType.ToString() %>, entity.Original<%=GetPropertyName(cols[i])%>);
+			database.AddInParameter(commandWrapper, "<%=ParameterPrefix%>Original<%=GetPropertyName(cols[i])%>", DbType.<%= cols[i].DataType.ToString() %>, entity.Original<%=GetPropertyName(cols[i])%>);
 				<%}
 			}
 			
 			if (RowVersion != null)
 			{%>
-			database.AddOutParameter(commandWrapper, "@Returned<%=GetPropertyName(RowVersion)%>", DbType.<%= RowVersion.DataType.ToString() %>, 8);
+			database.AddOutParameter(commandWrapper, "<%=ParameterPrefix%>Returned<%=GetPropertyName(RowVersion)%>", DbType.<%= RowVersion.DataType.ToString() %>, 8);
 			<%}%>
 			
 			int results = 0;
@@ -1159,7 +1159,7 @@ namespace <%=DALNameSpace%>.GenericClient
 				throw new DBConcurrencyException("Concurrency exception");
 			}
 		
-			entity.<%=GetPropertyName(RowVersion)%> = (<%=RowVersion.SystemType.ToString()%>)database.GetParameterValue(commandWrapper, "@Returned<%=GetPropertyName(RowVersion)%>");
+			entity.<%=GetPropertyName(RowVersion)%> = (<%=RowVersion.SystemType.ToString()%>)database.GetParameterValue(commandWrapper, "<%=ParameterPrefix%>Returned<%=GetPropertyName(RowVersion)%>");
 		<%} %>
 		
 			// get the updatable columns
@@ -1167,7 +1167,7 @@ namespace <%=DALNameSpace%>.GenericClient
 			DbCommand commandWrapper2 = DbCommandProvider.GetCommandWrapper(database, "<%= ProcedurePrefix + commandStem + SelectSuffix + "By" + GetKeysName(SourceTable.PrimaryKey.MemberColumns) %>", _useStoredProcedure, _providerInvariantName);
 			<% for(int j=0; j<SourceTable.PrimaryKey.MemberColumns.Count; j++)
 			{%>
-			database.AddInParameter(commandWrapper2, "@<%=GetPropertyName(SourceTable.PrimaryKey.MemberColumns[j])%>", DbType.<%= SourceTable.PrimaryKey.MemberColumns[j].DataType.ToString() %>, entity.<%=GetPropertyName(SourceTable.PrimaryKey.MemberColumns[j])%>);
+			database.AddInParameter(commandWrapper2, "<%=ParameterPrefix + GetPropertyName(SourceTable.PrimaryKey.MemberColumns[j])%>", DbType.<%= SourceTable.PrimaryKey.MemberColumns[j].DataType.ToString() %>, entity.<%=GetPropertyName(SourceTable.PrimaryKey.MemberColumns[j])%>);
 			<%}%>
 
 			DbDataReader reader = (DbDataReader)Utility.ExecuteReader(transactionManager, commandWrapper2);
@@ -1261,11 +1261,11 @@ namespace <%=DALNameSpace%>.GenericClient
 			DbCommand commandWrapper = database.GetStoredProcCommand("<%=command.Name%>");
 			
 			<% foreach(ParameterSchema col in command.InputParameters)	{%>			
-				database.AddInParameter(commandWrapper, "@<%=GetPropertyName(col)%>", <%=GetDbType(col)%>,  <%=GetFieldName(col)%> );
+				database.AddInParameter(commandWrapper, "<%=ParameterPrefix + GetPropertyName(col)%>", <%=GetDbType(col)%>,  <%=GetFieldName(col)%> );
 			<%}%>
 	
 			<% foreach(ParameterSchema col in command.AllOutputParameters)	{ %>
-				database.AddParameter(commandWrapper, "@<%=GetPropertyName(col)%>", DbType.<%=col.DataType.ToString()%>, ParameterDirection.InputOutput, "", DataRowVersion.Current,<%=GetFieldName(col)%>);
+				database.AddParameter(commandWrapper, "<%=ParameterPrefix + GetPropertyName(col)%>", DbType.<%=col.DataType.ToString()%>, ParameterDirection.InputOutput, "", DataRowVersion.Current,<%=GetFieldName(col)%>);
 			<%}%>
 			
 			<%
@@ -1274,7 +1274,7 @@ namespace <%=DALNameSpace%>.GenericClient
 			
 			foreach(ParameterSchema outParam in command.AllOutputParameters)
 			{
-				outputValues.AppendFormat("\t\t\t{0} =  Utility.GetParameterValue<{1}>(commandWrapper.Parameters[\"@{2}\"]);\n",GetFieldName(outParam), GetCSType(outParam), GetPropertyName(outParam)); 
+				outputValues.AppendFormat("\t\t\t{0} =  Utility.GetParameterValue<{1}>(commandWrapper.Parameters[\"{3}{2}\"]);\n",GetFieldName(outParam), GetCSType(outParam), GetPropertyName(outParam), ParameterPrefix); 
 			}
 			%>
 			<% if (returnType == "DataSet") { %>
