@@ -96,9 +96,10 @@ namespace <%=NameSpace%>
 	///</summary>
 	<% if ( IncludeWCFDataAttributes ) { %>
 	[DataContract]
+	<% } else { %>
+	[Serializable]
 	<% } %>
-	[Serializable, DataObject]
-	[CLSCompliant(true)]
+	[DataObject, CLSCompliant(true)]
 	public abstract partial class <%=abstractClassName%> : EntityBase, <%=interfaceName%>, IEntityId<<%= keyClassName %>>, System.IComparable, System.ICloneable, ICloneableEx, IEditableObject, IComponent, INotifyPropertyChanged
 	{		
 		#region Variable Declarations
@@ -106,11 +107,17 @@ namespace <%=NameSpace%>
 		/// <summary>
 		///  Hold the inner data of the entity.
 		/// </summary>
+		<% if (IncludeWCFDataAttributes ) { %>
+		[DataMember]
+		<% } %>
 		private <%=structName%> entityData;
 		
 		/// <summary>
 		/// 	Hold the original data of the entity, as loaded from the repository.
 		/// </summary>
+		<% if (IncludeWCFDataAttributes ) { %>
+		[DataMember]
+		<% } %>
 		private <%=structName%> _originalData;
 		
 		/// <summary>
@@ -127,21 +134,27 @@ namespace <%=NameSpace%>
 		/// 	Hold the parent TList&lt;entity&gt; in which this entity maybe contained.
 		/// </summary>
 		/// <remark>Mostly used for databinding</remark>
+		<% if (!IncludeWCFDataAttributes) { %>
 		[NonSerialized]
+		<% } %>
 		private <%=collectionClassName%> parentCollection;
 		
 		private bool inTxn = false;
 		
 		/// <summary>
 		/// Occurs when a value is being changed for the specified column.
-		/// </summary>	
+		/// </summary>
+		<% if (!IncludeWCFDataAttributes) { %>
 		[field:NonSerialized]
+		<% } %>
 		public event <%= GetClassName(SourceTable, ClassNameFormat.EventHandler) %> ColumnChanging;		
 		
 		/// <summary>
 		/// Occurs after a value has been changed for the specified column.
 		/// </summary>
+		<% if (!IncludeWCFDataAttributes) { %>
 		[field:NonSerialized]
+		<% } %>
 		public event <%= GetClassName(SourceTable, ClassNameFormat.EventHandler) %> ColumnChanged;
 		
 		#endregion Variable Declarations
@@ -224,9 +237,6 @@ namespace <%=NameSpace%>
 		[ValidatorComposition(CompositionType.Or, Tag="<%= cols[x].Name %>")]<% } %>
 		<% if(CanCheckLength(cols[x]) && ValidationType == MoM.Templates.ValidationType.EntLib){ %>
 		[StringLengthValidator(<%= cols[x].Size %>, MessageTemplate="Maximum length has been exceeded.", Tag="<%= cols[x].Name %>")]<% } %>
-		<% if ( IncludeWCFDataAttributes ) { %>
-		[DataMember]
-		<% } %>
 		<% if ( IncludeXmlAttributes && cols[x].AllowDBNull ) { %>
 		[XmlElement(IsNullable=true)]
 		<% } %>
@@ -270,7 +280,7 @@ namespace <%=NameSpace%>
 		<% if ( IncludeXmlAttributes && cols[x].AllowDBNull ) { %>
 		[XmlElement(IsNullable=true)]
 		<% } %>
-		[BrowsableAttribute(false)/*, XmlIgnoreAttribute()*/<% if ( IncludeWCFDataAttributes ) { %>, DataMember	<% } %>]
+		[BrowsableAttribute(false)/*, XmlIgnoreAttribute()*/]
 		public  virtual <%= GetCSType(cols[x])%> <%= GetOriginalPropertyName(cols[x]) %>
 		{
 			get { return this.entityData.<%= GetOriginalPropertyName(cols[x]) %>; }
@@ -1069,6 +1079,7 @@ WriteRelationshipPropertyString();
 			this.CopyPropertiesTo(template);
 			template.SetProperty("SourceTables", _sourceTables);
 			template.SetProperty("SerializeEntityState", SerializeEntityState);
+			template.SetProperty("IncludeWCFDataAttributes", IncludeWCFDataAttributes);
 			
 			Response.Write(template.RenderToString());
 		%>
@@ -1481,7 +1492,7 @@ protected static string MANY_TO_MANY = @"
 		///	Holds a collection of {3} objects
 		///	which are related to this object through the junction table {2}
 		/// </summary>	
-		[System.ComponentModel.Bindable(System.ComponentModel.BindableSupport.Yes){4}]
+		[System.ComponentModel.Bindable(System.ComponentModel.BindableSupport.Yes)]
 		public virtual {1} {0}
 		{{
 			get {{ return entityData.{0}; }}
@@ -1497,7 +1508,7 @@ protected static string ONE_TO_ONE = @"
 		///	Holds a {0} object
 		///	which is related to this object through the relation {1}
 		/// </summary>
-		[System.ComponentModel.Bindable(System.ComponentModel.BindableSupport.Yes){2}]
+		[System.ComponentModel.Bindable(System.ComponentModel.BindableSupport.Yes)]
 		public virtual {0} {0}
 		{{
 			get {{ return entityData.{0}; }}
@@ -1513,7 +1524,7 @@ protected static string ONE_TO_MANY = @"
 		///	Holds a collection of {2} objects
 		///	which are related to this object through the relation {1}
 		/// </summary>	
-		[System.ComponentModel.Bindable(System.ComponentModel.BindableSupport.Yes){4}]
+		[System.ComponentModel.Bindable(System.ComponentModel.BindableSupport.Yes)]
 		public virtual {0} {3}
 		{{
 			get {{ return entityData.{3}; }}
@@ -1537,8 +1548,7 @@ private void WriteRelationshipPropertyString()
 			case (int)RelationshipType.OneToOne:								
 				object[] oneToOneParams = {
 							item.PropertyNameUnique,
-							item.TypeName,
-							IncludeWCFDataAttributes ? ", DataMember" : string.Empty
+							item.TypeName
 				};
 				item.PropertyName = string.Format(ONE_TO_ONE, oneToOneParams);
 				break;
@@ -1551,7 +1561,6 @@ private void WriteRelationshipPropertyString()
 						, item.PkIdxName
 						, item.SecondaryTable
 						, item.PropertyNameUnique
-						, IncludeWCFDataAttributes ? ", DataMember" : string.Empty
 				};
 			item.PropertyName = string.Format(ONE_TO_MANY, oneToManyParams);
 			break;
@@ -1563,7 +1572,6 @@ private void WriteRelationshipPropertyString()
 						,	item.TypeName
 						,	item.JunctionTable
 						, 	item.CleanName
-						, 	IncludeWCFDataAttributes ? ", DataMember" : string.Empty
 				};
 				item.PropertyName = string.Format(MANY_TO_MANY, manyToManyParams);
 				break;
