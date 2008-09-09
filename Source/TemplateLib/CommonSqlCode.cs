@@ -67,6 +67,7 @@ namespace MoM.Templates
 		private NameConversionType nameConversion = NameConversionType.None;
 		private string safeNamePrefix = "SafeName_";
 		private MoM.Templates.DatabaseType includeDatabaseFeatures = DatabaseType.None;
+		private bool allowCustomProcMultipleResults = false;
 		
 		#region Oracle
 		
@@ -581,6 +582,18 @@ namespace MoM.Templates
 			DataSet,
 			IDataReader
 		}
+		#endregion
+
+		#region "07. CRUD - Advanced Properties"
+		
+		[Category("07. CRUD - Advanced")]
+		[Description("If False, Custom procedures with Multiple results will return a the CustomNonMatchingReturnType, if True, it will attempt to match the Table / View.")]
+		public bool AllowCustomProcMultipleResults
+		{
+			get { return allowCustomProcMultipleResults; }
+			set { allowCustomProcMultipleResults = value; }
+		}
+		
 		#endregion
 
 		/// <summary>
@@ -4591,7 +4604,9 @@ CREATE\s+PROC(?:EDURE)?                               # find the start of the st
 			
 			try
 			{
-				if (command.CommandResults.Count != 1)
+				//If allowCustomProcMultipleResults, then there just needs to be a result
+				//If !allowCustomProcMultipleResults, then there can only be 1 result.
+				if ((!allowCustomProcMultipleResults && command.CommandResults.Count != 1) || (allowCustomProcMultipleResults && command.CommandResults.Count == 0))
 					return false;
 					
 				if (command.CommandResults[0].Columns.Count != table.Columns.Count)
@@ -4643,7 +4658,9 @@ CREATE\s+PROC(?:EDURE)?                               # find the start of the st
 			
 			try
 			{
-				if (command.CommandResults.Count != 1)
+				//If allowCustomProcMultipleResults, then there just needs to be a result
+				//If !allowCustomProcMultipleResults, then there can only be 1 result.
+				if ((!allowCustomProcMultipleResults && command.CommandResults.Count != 1) || (allowCustomProcMultipleResults && command.CommandResults.Count == 0))
 					return false;
 					
 				if (command.CommandResults[0].Columns.Count != view.Columns.Count)
