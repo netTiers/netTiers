@@ -134,6 +134,9 @@
 																															
 			CodeTemplates.Add("SqlEntityViewProviderBase.generated.cst", base.CreateTemplate<SqlEntityViewProviderBaseGenerated>()); this.PerformStep();
 			CodeTemplates.Add("SqlEntityViewProvider.cst", base.CreateTemplate<SqlEntityViewProvider>()); this.PerformStep();
+												
+			CodeTemplates.Add("GenericEntityViewProviderBase.generated.cst", base.CreateTemplate<GenericEntityViewProviderBaseGenerated>()); this.PerformStep();
+			CodeTemplates.Add("GenericEntityViewProvider.cst", base.CreateTemplate<GenericEntityViewProvider>()); this.PerformStep();																												
 																															
 			CodeTemplates.Add("GenericNetTiersProvider.cst", base.CreateTemplate<GenericNetTiersProvider>()); this.PerformStep();
 			CodeTemplates.Add("GenericEntityProviderBase.generated.cst", base.CreateTemplate<GenericEntityProviderBaseGenerated>()); this.PerformStep();
