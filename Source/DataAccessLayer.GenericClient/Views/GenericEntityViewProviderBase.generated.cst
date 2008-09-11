@@ -33,9 +33,9 @@
 	string owner = GetOwnerName(SourceView, true);		
 		
 	string className = GetClassName(SourceView);
-	string abstractRepositoryClassName = "Sql" + GetClassName(SourceView, ClassNameFormat.ProviderBase);
+	string abstractRepositoryClassName = "Generic" + GetClassName(SourceView, ClassNameFormat.ProviderBase);
 	string providerName = GetClassName(SourceView, ClassNameFormat.Provider);
-	string providerBaseName = "Sql" + GetClassName(SourceView, ClassNameFormat.ProviderBase);
+	string providerBaseName = "Generic" + GetClassName(SourceView, ClassNameFormat.ProviderBase);
 	string collectionClassName = GetClassName(SourceView, ClassNameFormat.ViewCollection);
 		
 	// This array store each Get BY MemberColumns in order to avoid to create doublon Get methods
@@ -82,6 +82,7 @@ public abstract partial class <%=providerBaseName%> : <%=GetClassName(SourceView
 	string _connectionString;
     bool _useStoredProcedure;
     string _providerInvariantName;
+	DbProviderFactory _providerFactory;
 		
 	#region Constructors
 	
@@ -105,6 +106,7 @@ public abstract partial class <%=providerBaseName%> : <%=GetClassName(SourceView
 		this._connectionString = connectionString;
 		this._useStoredProcedure = useStoredProcedure;
 		this._providerInvariantName = providerInvariantName;
+		this._providerFactory = DbProviderFactories.GetFactory(this._providerInvariantName);
 	}
 			
 	#endregion 
@@ -161,7 +163,7 @@ public abstract partial class <%=providerBaseName%> : <%=GetClassName(SourceView
 	/// <returns>Returns a typed collection of <%=className%> objects.</returns>
 	public override <%=collectionClassName%> <%= MethodNames.GetAll %>(TransactionManager transactionManager, int start, int pageLength, out int count)
 	{
-		SqlDatabase database = new SqlDatabase(this._connectionString);
+		GenericDatabase database = new GenericDatabase(this._connectionString, _providerFactory);
 		DbCommand commandWrapper = DbCommandProvider.GetCommandWrapper(database, "<%=owner + ProcedurePrefix + GetCleanName(name) + SelectSuffix + SelectAllSuffix%>", _useStoredProcedure, _providerInvariantName);
 		
 		IDataReader reader = null;
@@ -215,7 +217,7 @@ public abstract partial class <%=providerBaseName%> : <%=GetClassName(SourceView
 	/// <returns>Returns a typed collection of <%=className%> objects.</returns>
 	public override <%=collectionClassName%> <%= MethodNames.Get %>(TransactionManager transactionManager, string whereClause, string orderBy, int start, int pageLength, out int count)
 	{
-		SqlDatabase database = new SqlDatabase(this._connectionString);
+		GenericDatabase database = new GenericDatabase(this._connectionString, _providerFactory);
 		DbCommand commandWrapper = DbCommandProvider.GetCommandWrapper(database, "<%=owner + ProcedurePrefix + GetCleanName(name) + SelectSuffix%>", _useStoredProcedure, _providerInvariantName);
 
 		database.AddInParameter(commandWrapper, "@WhereClause", DbType.String, whereClause);
@@ -290,8 +292,8 @@ public abstract partial class <%=providerBaseName%> : <%=GetClassName(SourceView
 		else 
 			filter = parameters.GetParameters();
 			
-		SqlDatabase database = new SqlDatabase(this._connectionString);
-		DbCommand commandWrapper = DbCommandProvider.GetCommandWrapper(database, "<%=owner + ProcedurePrefix + GetCleanName(name) + FindSuffix %>_Dynamic", typeof(<%= className %>Column), filter, orderBy, start, pageLength);
+		GenericDatabase database = new GenericDatabase(this._connectionString, _providerFactory);
+		DbCommand commandWrapper = DbCommandProvider.GetCommandWrapper(database, "<%=owner + ProcedurePrefix + GetCleanName(name) + FindSuffix %>_Dynamic", typeof(<%= className %>Column), filter, orderBy, start, pageLength, _providerInvariantName);
 		
 		SqlFilterParameter param;
 
@@ -385,7 +387,7 @@ public abstract partial class <%=providerBaseName%> : <%=GetClassName(SourceView
 	/// <returns>A <see cref="<%=returnTypeForComment%>"/> instance.</returns><%}%>
 	public override <%=returnType%> <%=methodName%>(TransactionManager transactionManager, int start, int pageLength<%=methodParms%>)
 	{
-		SqlDatabase database = new SqlDatabase(this._connectionString);
+		GenericDatabase database = new GenericDatabase(this._connectionString, _providerFactory);
 		DbCommand commandWrapper = DbCommandProvider.GetCommandWrapper(database, "<%= GetOwnerName(command, true) %><%=GetSafeName(command.Name)%>", true, _providerInvariantName);
 		
 		<% foreach(ParameterSchema col in command.InputParameters)	{ %>
