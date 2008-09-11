@@ -767,7 +767,7 @@
 		string _providerInvariantName = "System.Data.SqlClient";
 		
 		SchemaExplorer.IDbSchemaProvider schemaProvider = SourceDatabase.Provider;
-		if (SourceDatabase.Provider.Name != "SqlSchemaProvider")
+		if (SourceDatabase.Provider.Name != "SqlSchemaProvider" )
 		{
 			_netTiersSqlProvider = false;
 			if (SourceDatabase.Provider.Name == "Sqlite3SchemaProvider")
@@ -783,6 +783,12 @@
 				_providerInvariantName = "System.Data.OracleClient";
 				ParameterPrefix = ":";
 			} 
+			// Temp fix...
+			//else if(SourceDatabase.Provider.Name == "VistaDB Schema Provider")
+			//{
+			//	_providerInvariantName = "System.Data.OracleClient";
+			//	ParameterPrefix = ":";
+			//} 
 		}
 		
 		#endregion
@@ -1749,6 +1755,10 @@
 				{			
 					xmlTemplateName = "System.Data.Oracle.Procedures.cst";
 					xmlOutputName = "System.Data.OracleClient.Procedures.xml";
+				}
+				else
+				{
+					throw new System.Exception("This provider is not supported.");
 				}
 			
 				XmlElement queriesNode = AddFileNode(commonNode, xmlOutputName);
@@ -3266,41 +3276,41 @@
 			}
 			else if (_netTiersSqlProvider == false)
 			{
-								//----------------------------------------------------------------------------------------------------------------------------------------------
+				//----------------------------------------------------------------------------------------------------------------------------------------------
 				//	base provider class
 				//----------------------------------------------------------------------------------------------------------------------------------------------
-				XmlElement dalcViewBaseNode = AddFileNode(tableNode, "Sql"+ GetClassName(SourceView, ClassNameFormat.PartialProviderBase) + ".cs");
-				this.GetTemplate("SqlEntityViewProviderBase.generated.cst").SetProperty("IncludeDatabaseFeatures", IncludeDatabaseFeatures);
-				this.GetTemplate("SqlEntityViewProviderBase.generated.cst").SetProperty("IncludeCustoms", IncludeCustoms);
-				this.GetTemplate("SqlEntityViewProviderBase.generated.cst").SetProperty("IncludeGetList", IncludeGetList);
-				this.GetTemplate("SqlEntityViewProviderBase.generated.cst").SetProperty("IncludeGetListByIX", IncludeGetListByIX);
-				this.GetTemplate("SqlEntityViewProviderBase.generated.cst").SetProperty("IncludeFind", IncludeFind);
-				this.GetTemplate("SqlEntityViewProviderBase.generated.cst").SetProperty("SourceView", SourceView);
-				this.GetTemplate("SqlEntityViewProviderBase.generated.cst").SetProperty("CustomNonMatchingReturnType", CustomNonMatchingReturnType);
-				this.GetTemplate("SqlEntityViewProviderBase.generated.cst").SetProperty("NameSpace", BLLNameSpace);
-				this.GetTemplate("SqlEntityViewProviderBase.generated.cst").SetProperty("DALNameSpace", DALNameSpace);
-				this.GetTemplate("SqlEntityViewProviderBase.generated.cst").SetProperty("SelectSuffix", SelectSuffix);
-				this.GetTemplate("SqlEntityViewProviderBase.generated.cst").SetProperty("SelectAllSuffix", SelectAllSuffix);
-				this.GetTemplate("SqlEntityViewProviderBase.generated.cst").SetProperty("ProcedurePrefix", ProcedurePrefix);
+				XmlElement dalcViewBaseNode = AddFileNode(tableNode, "Generic"+ GetClassName(SourceView, ClassNameFormat.PartialProviderBase) + ".cs");
+				this.GetTemplate("GenericEntityViewProviderBase.generated.cst").SetProperty("IncludeDatabaseFeatures", IncludeDatabaseFeatures);
+				this.GetTemplate("GenericEntityViewProviderBase.generated.cst").SetProperty("IncludeCustoms", IncludeCustoms);
+				this.GetTemplate("GenericEntityViewProviderBase.generated.cst").SetProperty("IncludeGetList", IncludeGetList);
+				this.GetTemplate("GenericEntityViewProviderBase.generated.cst").SetProperty("IncludeGetListByIX", IncludeGetListByIX);
+				this.GetTemplate("GenericEntityViewProviderBase.generated.cst").SetProperty("IncludeFind", IncludeFind);
+				this.GetTemplate("GenericEntityViewProviderBase.generated.cst").SetProperty("SourceView", SourceView);
+				this.GetTemplate("GenericEntityViewProviderBase.generated.cst").SetProperty("CustomNonMatchingReturnType", CustomNonMatchingReturnType);
+				this.GetTemplate("GenericEntityViewProviderBase.generated.cst").SetProperty("NameSpace", BLLNameSpace);
+				this.GetTemplate("GenericEntityViewProviderBase.generated.cst").SetProperty("DALNameSpace", DALNameSpace);
+				this.GetTemplate("GenericEntityViewProviderBase.generated.cst").SetProperty("SelectSuffix", SelectSuffix);
+				this.GetTemplate("GenericEntityViewProviderBase.generated.cst").SetProperty("SelectAllSuffix", SelectAllSuffix);
+				this.GetTemplate("GenericEntityViewProviderBase.generated.cst").SetProperty("ProcedurePrefix", ProcedurePrefix);
+				
 						
-				this.RenderToFile("SqlEntityViewProviderBase.generated.cst", rootPathDALGeneric + "\\Views\\Sql" + GetClassName(SourceView, ClassNameFormat.PartialProviderBase) + ".cs", true);
+				this.RenderToFile("GenericEntityViewProviderBase.generated.cst", rootPathDALGeneric + "\\Views\\Generic" + GetClassName(SourceView, ClassNameFormat.PartialProviderBase) + ".cs", true);
 				
 				//----------------------------------------------------------------------------------------------------------------------------------------------
 				
 				//----------------------------------------------------------------------------------------------------------------------------------------------
 				//	provider class
 				//----------------------------------------------------------------------------------------------------------------------------------------------
-				if (!File.Exists(rootPathDALSql + "\\Views\\Sql" + GetClassName(SourceView, ClassNameFormat.Provider) + ".cs"))
+				if (!File.Exists(rootPathDALSql + "\\Views\\Generic" + GetClassName(SourceView, ClassNameFormat.Provider) + ".cs"))
 				{
 					XmlElement sqlDalcNode = AddFileNode(tableNode, rootPathDALGeneric + "\\Views\\"+ GetClassName(SourceView, ClassNameFormat.Provider) + ".cs");
-					//Response.WriteLine("Building concrete SqlClient Repository class : SqlClient\\" + GetProviderName(SourceTable.Name));
-					this.GetTemplate("SqlEntityViewProvider.cst").SetProperty("NameSpace", BLLNameSpace);
-					this.GetTemplate("SqlEntityViewProvider.cst").SetProperty("DALNameSpace", DALNameSpace);
-					this.GetTemplate("SqlEntityViewProvider.cst").SetProperty("ClassName", GetClassName(SourceView));
-					this.GetTemplate("SqlEntityViewProvider.cst").SetProperty("ProviderName", "Sql" + GetClassName(SourceView, ClassNameFormat.Provider));
-					this.GetTemplate("SqlEntityViewProvider.cst").SetProperty("ProviderBaseName", "Sql" + GetClassName(SourceView, ClassNameFormat.ProviderBase));
+					this.GetTemplate("GenericEntityViewProvider.cst").SetProperty("NameSpace", BLLNameSpace);
+					this.GetTemplate("GenericEntityViewProvider.cst").SetProperty("DALNameSpace", DALNameSpace);
+					this.GetTemplate("GenericEntityViewProvider.cst").SetProperty("ClassName", GetClassName(SourceView));
+					this.GetTemplate("GenericEntityViewProvider.cst").SetProperty("ProviderName", "Generic" + GetClassName(SourceView, ClassNameFormat.Provider));
+					this.GetTemplate("GenericEntityViewProvider.cst").SetProperty("ProviderBaseName", "Generic" + GetClassName(SourceView, ClassNameFormat.ProviderBase));
 					
-					this.RenderToFile("SqlEntityViewProvider.cst", rootPathDALGeneric + "\\Views\\Sql" + GetClassName(SourceView, ClassNameFormat.Provider) + ".cs", false);
+					this.RenderToFile("GenericEntityViewProvider.cst", rootPathDALGeneric + "\\Views\\Generic" + GetClassName(SourceView, ClassNameFormat.Provider) + ".cs", false);
 					//AddExecutionTime(sqlDalcNode);
 				}
 			}
