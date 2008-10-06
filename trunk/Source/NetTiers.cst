@@ -781,7 +781,7 @@
 			else if (SourceDatabase.Provider.Name == "OracleSchemaProvider")
 			{
 				_providerInvariantName = "System.Data.OracleClient";
-				ParameterPrefix = ":";
+				ParameterPrefix = "";
 			} 
 			else if(SourceDatabase.Provider.Name == "VistaDB Schema Provider")
 			{
@@ -1643,60 +1643,114 @@
 		#region Stored procedures
 		if (GenerateSql)
 		{
-			if (_netTiersSqlProvider)
+			string xmlTemplateName = "";
+			string xmlOutputName = "";
+			
+			if(_netTiersSqlProvider)
 			{
-			XmlElement spNode = AddFileNode(commonNode, "StoredProcedures.sql");
-			this.GetTemplate("StoredProceduresXml.cst").SetProperty("SourceViews", templateSourceViews);
-			this.GetTemplate("StoredProceduresXml.cst").SetProperty("SourceTables", templateSourceTables);
+				//SQL
+				xmlTemplateName = "StoredProceduresXml.cst";
+				xmlOutputName = "Procedures.xml";
+			}
+			else if (_providerInvariantName == "System.Data.SQLite")
+			{	
+				xmlTemplateName = "System.Data.SQLite.Procedures.cst";
+				xmlOutputName = "System.Data.SQLite.Procedures.xml";
+			}
+			else if (_providerInvariantName == "System.Data.OleDb")
+			{
+				xmlTemplateName = "System.Data.OleDb.Procedures.cst";
+				xmlOutputName = "System.Data.OleDb.Procedures.xml";
+			}
+			else if (_providerInvariantName == "System.Data.OracleClient")
+			{			
+				xmlTemplateName = "System.Data.Oracle.Procedures.cst";
+				xmlOutputName = "System.Data.OracleClient.Procedures.xml";
+			}
+			else
+			{
+				throw new System.Exception("This provider is not supported.");
+			}
+		
+			XmlElement queriesNode = AddFileNode(commonNode, xmlOutputName);
 			
-			this.GetTemplate("StoredProceduresXml.cst").SetProperty("IncludeCustoms", IncludeCustoms);		
-			this.GetTemplate("StoredProceduresXml.cst").SetProperty("CustomProcedureStartsWith", CustomProcedureStartsWith);				
-				
-			this.GetTemplate("StoredProceduresXml.cst").SetProperty("IncludeDrop", IncludeDrop);
-			this.GetTemplate("StoredProceduresXml.cst").SetProperty("IncludeInsert", IncludeInsert);
-			this.GetTemplate("StoredProceduresXml.cst").SetProperty("IncludeUpdate", IncludeUpdate);
-			this.GetTemplate("StoredProceduresXml.cst").SetProperty("IncludeManyToMany", IncludeManyToMany);
-			this.GetTemplate("StoredProceduresXml.cst").SetProperty("IncludeDelete", IncludeDelete);
-			this.GetTemplate("StoredProceduresXml.cst").SetProperty("IncludeUpdate", IncludeUpdate);
-			this.GetTemplate("StoredProceduresXml.cst").SetProperty("IncludeGetList", IncludeGetList);
-			this.GetTemplate("StoredProceduresXml.cst").SetProperty("IncludeGetListByFK", IncludeGetListByFK);
-			this.GetTemplate("StoredProceduresXml.cst").SetProperty("IncludeGetListByIX", IncludeGetListByIX);
-			this.GetTemplate("StoredProceduresXml.cst").SetProperty("IncludeFind", IncludeFind);
-			this.GetTemplate("StoredProceduresXml.cst").SetProperty("IncludeDatabaseFeatures", IncludeDatabaseFeatures);
+			//SQL Specific
+			if(_netTiersSqlProvider)
+			{
+				this.GetTemplate(xmlTemplateName).SetProperty("IncludeCustoms", IncludeCustoms);		
+				this.GetTemplate(xmlTemplateName).SetProperty("CustomProcedureStartsWith", CustomProcedureStartsWith);				
+			}
+			this.GetTemplate(xmlTemplateName).SetProperty("SourceViews", templateSourceViews);
+			this.GetTemplate(xmlTemplateName).SetProperty("SourceTables", templateSourceTables);
 			
-			this.GetTemplate("StoredProceduresXml.cst").SetProperty("IsolationLevel", IsolationLevel);
-			//this.GetTemplate("StoredProceduresXml.cst").SetProperty("ExcludeFields", ExcludeFields);
-			this.GetTemplate("StoredProceduresXml.cst").SetProperty("InsertSuffix", InsertSuffix);
-			this.GetTemplate("StoredProceduresXml.cst").SetProperty("UpdateSuffix", UpdateSuffix);
-			this.GetTemplate("StoredProceduresXml.cst").SetProperty("DeleteSuffix", DeleteSuffix);
-			this.GetTemplate("StoredProceduresXml.cst").SetProperty("SelectSuffix", SelectSuffix);
-			this.GetTemplate("StoredProceduresXml.cst").SetProperty("SelectAllSuffix", SelectAllSuffix);
-			this.GetTemplate("StoredProceduresXml.cst").SetProperty("FindSuffix", FindSuffix);
+			this.GetTemplate(xmlTemplateName).SetProperty("IncludeDrop", IncludeDrop);
+			this.GetTemplate(xmlTemplateName).SetProperty("IncludeInsert", IncludeInsert);
+			this.GetTemplate(xmlTemplateName).SetProperty("IncludeUpdate", IncludeUpdate);
+			this.GetTemplate(xmlTemplateName).SetProperty("IncludeManyToMany", IncludeManyToMany);
+			this.GetTemplate(xmlTemplateName).SetProperty("IncludeDelete", IncludeDelete);
+			this.GetTemplate(xmlTemplateName).SetProperty("IncludeUpdate", IncludeUpdate);
+			this.GetTemplate(xmlTemplateName).SetProperty("IncludeGetList", IncludeGetList);
+			this.GetTemplate(xmlTemplateName).SetProperty("IncludeGetListByFK", IncludeGetListByFK);
+			this.GetTemplate(xmlTemplateName).SetProperty("IncludeGetListByIX", IncludeGetListByIX);
+			this.GetTemplate(xmlTemplateName).SetProperty("IncludeFind", IncludeFind);
+			this.GetTemplate(xmlTemplateName).SetProperty("IncludeDatabaseFeatures", IncludeDatabaseFeatures);
 			
-			this.GetTemplate("StoredProceduresXml.cst").SetProperty("GrantReadUser", GrantReadUser);
-			this.GetTemplate("StoredProceduresXml.cst").SetProperty("GrantWriteUser", GrantUser);
+			this.GetTemplate(xmlTemplateName).SetProperty("IsolationLevel", IsolationLevel);
+			this.GetTemplate(xmlTemplateName).SetProperty("InsertSuffix", InsertSuffix);
+			this.GetTemplate(xmlTemplateName).SetProperty("UpdateSuffix", UpdateSuffix);
+			this.GetTemplate(xmlTemplateName).SetProperty("DeleteSuffix", DeleteSuffix);
+			this.GetTemplate(xmlTemplateName).SetProperty("SelectSuffix", SelectSuffix);
+			this.GetTemplate(xmlTemplateName).SetProperty("SelectAllSuffix", SelectAllSuffix);
+			this.GetTemplate(xmlTemplateName).SetProperty("FindSuffix", FindSuffix);
+			
+			this.GetTemplate(xmlTemplateName).SetProperty("GrantReadUser", GrantReadUser);
+			this.GetTemplate(xmlTemplateName).SetProperty("GrantWriteUser", GrantUser);
 					
-			this.GetTemplate("StoredProceduresXml.cst").SetProperty("CompanyName", CompanyName);
-			this.GetTemplate("StoredProceduresXml.cst").SetProperty("CompanyURL", CompanyURL);
+			this.GetTemplate(xmlTemplateName).SetProperty("CompanyName", CompanyName);
+			this.GetTemplate(xmlTemplateName).SetProperty("CompanyURL", CompanyURL);
 			
-			this.GetTemplate("StoredProceduresXml.cst").SetProperty("ProcedurePrefix", ProcedurePrefix.Replace(" ", ""));
+			this.GetTemplate(xmlTemplateName).SetProperty("ProcedurePrefix", ProcedurePrefix.Replace(" ", ""));
 	
-			this.RenderToFile("StoredProceduresXml.cst", rootPathDALSql + "\\Procedures.xml", true);
-			
-			//AddMessageNode(spNode, 0, "Stored Procedures file created on the file system.");
+			if(_netTiersSqlProvider)
+			{
+				this.RenderToFile(xmlTemplateName, rootPathDALSql + "\\" + xmlOutputName, true);
+			}
+			else
+			{
+				this.RenderToFile(xmlTemplateName, rootPathDALGeneric + "\\" + xmlOutputName, true);
+			}
 			
 			// Create the SQL File from the XML file
 			XslTransform xslt = new XslTransform();
-			xslt.Load(this.CodeTemplateInfo.DirectoryName + "\\DataAccessLayer.SqlClient\\scriptsql.xsl");               
+			
+			if(_netTiersSqlProvider)
+			{
+				xslt.Load(this.CodeTemplateInfo.DirectoryName + "\\DataAccessLayer.SqlClient\\scriptsql.xsl");
+			}
+			else if(_providerInvariantName == "System.Data.OracleClient")
+			{
+				xslt.Load(this.CodeTemplateInfo.DirectoryName + "\\DataAccessLayer.GenericClient\\ScriptOracleSql.xsl");
+			}
+			             
 			TextWriter writer = null;
+			XPathDocument mydata = null;
 			
 			try
 			{
-				writer = new StreamWriter(rootPathSQL + "\\procedures.sql");
-			
-				//Create a new XPathDocument and load the XML data to be transformed.
-				XPathDocument mydata = new XPathDocument(rootPathDALSql + "\\Procedures.xml");
-				
+				if(_netTiersSqlProvider)
+				{
+					writer = new StreamWriter(rootPathSQL + "\\procedures.sql");
+					//Create a new XPathDocument and load the XML data to be transformed.
+					mydata = new XPathDocument(rootPathDALSql + "\\" + xmlOutputName);
+				}
+				else
+				{
+					writer = new StreamWriter(rootPathSQL + "\\procedures.sql");
+					
+					//Create a new XPathDocument and load the XML data to be transformed.
+					mydata = new XPathDocument(rootPathDALGeneric + "\\" + xmlOutputName);
+				}
+		
 				xslt.Transform(mydata, null, writer, null);
 				writer.Close();
 			}
@@ -1716,88 +1770,18 @@
 			if (ExecuteSql)
 			{
 				try
-				{				
+				{
 					ExecuteSqlInFile(rootPathSQL + "\\procedures.sql", SourceDatabase.ConnectionString );
-					//AddMessageNode(spNode, 0, "Stored Procedures created on the database.");
 				}
 				catch(System.Data.SqlClient.SqlException sex)
 				{
-					AddMessageNode(spNode, 2, string.Format("Error while execution Sql file. {0}", sex), true);
+					AddMessageNode(queriesNode, 2, string.Format("Error while execution Sql file. {0}", sex), true);
 				}
 				catch(Exception ex)
 				{
-					AddMessageNode(spNode, 2, string.Format("Error while execution Sql file. {0}", ex), true);
+					AddMessageNode(queriesNode, 2, string.Format("Error while execution Sql file. {0}", ex), true);
 				}			
 			}
-			}
-					
-			
-			//AddExecutionTime(spNode);
-			
-			#region generation Xml procedures files for the Generic client, depending of the DbProviderFactory ProviderInvariantName
-			
-			if (_netTiersSqlProvider == false)
-			{
-				string xmlTemplateName = "";
-				string xmlOutputName = "";
-			
-				if (_providerInvariantName == "System.Data.SQLite")
-				{	
-					xmlTemplateName = "System.Data.SQLite.Procedures.cst";
-					xmlOutputName = "System.Data.SQLite.Procedures.xml";
-				}
-				else if (_providerInvariantName == "System.Data.OleDb")
-				{
-					xmlTemplateName = "System.Data.OleDb.Procedures.cst";
-					xmlOutputName = "System.Data.OleDb.Procedures.xml";
-				}
-				else if (_providerInvariantName == "System.Data.OracleClient")
-				{			
-					xmlTemplateName = "System.Data.Oracle.Procedures.cst";
-					xmlOutputName = "System.Data.OracleClient.Procedures.xml";
-				}
-				else
-				{
-					throw new System.Exception("This provider is not supported.");
-				}
-			
-				XmlElement queriesNode = AddFileNode(commonNode, xmlOutputName);
-				this.GetTemplate(xmlTemplateName).SetProperty("SourceViews", templateSourceViews);
-				this.GetTemplate(xmlTemplateName).SetProperty("SourceTables", templateSourceTables);
-				
-				this.GetTemplate(xmlTemplateName).SetProperty("IncludeDrop", IncludeDrop);
-				this.GetTemplate(xmlTemplateName).SetProperty("IncludeInsert", IncludeInsert);
-				this.GetTemplate(xmlTemplateName).SetProperty("IncludeUpdate", IncludeUpdate);
-				this.GetTemplate(xmlTemplateName).SetProperty("IncludeManyToMany", IncludeManyToMany);
-				this.GetTemplate(xmlTemplateName).SetProperty("IncludeDelete", IncludeDelete);
-				this.GetTemplate(xmlTemplateName).SetProperty("IncludeUpdate", IncludeUpdate);
-				this.GetTemplate(xmlTemplateName).SetProperty("IncludeGetList", IncludeGetList);
-				this.GetTemplate(xmlTemplateName).SetProperty("IncludeGetListByFK", IncludeGetListByFK);
-				this.GetTemplate(xmlTemplateName).SetProperty("IncludeGetListByIX", IncludeGetListByIX);
-				this.GetTemplate(xmlTemplateName).SetProperty("IncludeFind", IncludeFind);
-				this.GetTemplate(xmlTemplateName).SetProperty("IncludeDatabaseFeatures", IncludeDatabaseFeatures);
-				
-				this.GetTemplate(xmlTemplateName).SetProperty("IsolationLevel", IsolationLevel);
-				this.GetTemplate(xmlTemplateName).SetProperty("InsertSuffix", InsertSuffix);
-				this.GetTemplate(xmlTemplateName).SetProperty("UpdateSuffix", UpdateSuffix);
-				this.GetTemplate(xmlTemplateName).SetProperty("DeleteSuffix", DeleteSuffix);
-				this.GetTemplate(xmlTemplateName).SetProperty("SelectSuffix", SelectSuffix);
-				this.GetTemplate(xmlTemplateName).SetProperty("SelectAllSuffix", SelectAllSuffix);
-				this.GetTemplate(xmlTemplateName).SetProperty("FindSuffix", FindSuffix);
-				
-				this.GetTemplate(xmlTemplateName).SetProperty("GrantReadUser", GrantReadUser);
-				this.GetTemplate(xmlTemplateName).SetProperty("GrantWriteUser", GrantUser);
-						
-				this.GetTemplate(xmlTemplateName).SetProperty("CompanyName", CompanyName);
-				this.GetTemplate(xmlTemplateName).SetProperty("CompanyURL", CompanyURL);
-				
-				this.GetTemplate(xmlTemplateName).SetProperty("ProcedurePrefix", ProcedurePrefix.Replace(" ", ""));
-		
-				this.RenderToFile(xmlTemplateName, rootPathDALGeneric + "\\" + xmlOutputName, true);
-			
-			}
-			
-			#endregion
 		}
 		#endregion Stored procedures
 		
