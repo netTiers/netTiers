@@ -2448,8 +2448,8 @@ namespace MoM.Templates
 				command.CommandType = CommandType.StoredProcedure;
 				command.Connection = new SqlConnection(database.ConnectionString);
 	   
-				command.Parameters.Add("@typename", SqlDbType.NVarChar, 517);
-				command.Parameters.Add("@flags", SqlDbType.NVarChar, 10);
+				command.Parameters.Add( ParameterPrefix + "typename", SqlDbType.NVarChar, 517);
+				command.Parameters.Add( ParameterPrefix + "flags", SqlDbType.NVarChar, 10);
 
 				command.Parameters[0].Value = System.DBNull.Value;
 				command.Parameters[1].Value = "uddt";  // look in user defined datatypes
@@ -2787,7 +2787,7 @@ namespace MoM.Templates
 		public string GetSqlParameterStatement(ColumnSchema column, bool isOutput)
 		{
 			StringBuilder param = new StringBuilder();
-			param.AppendFormat("@{0} {1}", GetPropertyName(column), column.NativeType);
+			param.AppendFormat("{3}{0} {1}", GetPropertyName(column), column.NativeType, ParameterPrefix);
 			
 			// user defined data types do not need size components
 			if ( ! IsUserDefinedType(column) )
@@ -3009,14 +3009,28 @@ namespace MoM.Templates
 		/// <returns>the xml Sql Parameter statement</returns>
 		public string GetSqlParameterXmlNode(ParameterSchema parameter)
 		{
-			return GetSqlParameterXmlNode(	parameter.Name.TrimStart('@'),
-											parameter.NativeType, 
-											parameter.Direction.ToString(), 
-											parameter.Size, 
-											parameter.Precision, 
-											parameter.Scale, 
-											(string.Compare(parameter.NativeType, "real", true) == 0) ? string.Empty : GetSqlParameterParam<ParameterSchema>(parameter), 
-											parameter.AllowDBNull);
+			if ( ParameterPrefix != "@")
+			{
+				return GetSqlParameterXmlNode(	parameter.Name,
+												parameter.NativeType, 
+												parameter.Direction.ToString(), 
+												parameter.Size, 
+												parameter.Precision, 
+												parameter.Scale, 
+												(string.Compare(parameter.NativeType, "real", true) == 0) ? string.Empty : GetSqlParameterParam<ParameterSchema>(parameter), 
+												parameter.AllowDBNull);
+			}
+			else
+			{
+				return GetSqlParameterXmlNode(	parameter.Name.TrimStart('@'),
+												parameter.NativeType, 
+												parameter.Direction.ToString(), 
+												parameter.Size, 
+												parameter.Precision, 
+												parameter.Scale, 
+												(string.Compare(parameter.NativeType, "real", true) == 0) ? string.Empty : GetSqlParameterParam<ParameterSchema>(parameter), 
+												parameter.AllowDBNull);
+			}
 		}
 		
 		/// <summary>
@@ -3033,10 +3047,21 @@ namespace MoM.Templates
 		/// <returns>the xml Sql Parameter statement</returns>
 		private string GetSqlParameterXmlNode(string name, string nativeType, string direction, int size, byte precision, int scale, string param, bool allowNull)
 		{
-			return string.Format(	"<parameter name=\"@{0}\" type=\"{1}\" direction=\"{2}\" size=\"{3}\" precision=\"{4}\" scale=\"{5}\" param=\"{6}\" nulldefault=\"{7}\"/>", 
-									name, nativeType, direction, size, 
-									precision, scale, param, 
-									allowNull ? "null" : string.Empty );
+			//Temp Oracle Fix.
+			if(string.IsNullOrEmpty(ParameterPrefix))
+			{
+				return string.Format(	"<parameter name=\"{6}{0}\" type=\"{1}\" direction=\"{2}\"  precision=\"{3}\" scale=\"{4}\" nulldefault=\"{5}\"/>", 
+										name, nativeType, direction, 
+										precision, scale, 
+										allowNull ? "null" : string.Empty, ParameterPrefix );
+			}
+			else
+			{
+				return string.Format(	"<parameter name=\"{8}{0}\" type=\"{1}\" direction=\"{2}\" size=\"{3}\" precision=\"{4}\" scale=\"{5}\" param=\"{6}\" nulldefault=\"{7}\"/>", 
+										name, nativeType, direction, size, 
+										precision, scale, param, 
+										allowNull ? "null" : string.Empty, ParameterPrefix );
+			}
 		}
 
 		/// <summary>
@@ -3109,7 +3134,7 @@ namespace MoM.Templates
 		{
 			Hashtable paramComments = new Hashtable();
 			//Get parameter names and comments
-			string pattern = @"(?<param>@\w*)[^@]*--(?<comment>.*)";
+			string pattern = string.Format( @"(?<param>{0}\w*)[^{0}]*--(?<comment>.*)", ParameterPrefix);
 			//loop through the matches and extract the parameter and the comment, ignoring duplicates
 			foreach (Match match in Regex.Matches(commandText, pattern))
 				if (!paramComments.ContainsKey(match.Groups["param"].Value))
@@ -3212,7 +3237,7 @@ namespace MoM.Templates
 			StringBuilder temp = new StringBuilder();
 			for(int i=0; i<inputParameters.Count; i++)
 			{
-				temp.AppendFormat("{2}\t\t/// <param name=\"{0}\"> A <c>{1}</c> instance.</param>", GetFieldName(inputParameters[i]).Replace("@", ""), GetCSType(inputParameters[i]).Replace("<", "&lt;").Replace(">", "&gt;"), "\r\n");
+				temp.AppendFormat("{2}\t\t/// <param name=\"{0}\"> A <c>{1}</c> instance.</param>", GetFieldName(inputParameters[i]).Replace(ParameterPrefix, ""), GetCSType(inputParameters[i]).Replace("<", "&lt;").Replace(">", "&gt;"), "\r\n");
 			}
 			
 			return temp.ToString();
@@ -3230,7 +3255,7 @@ namespace MoM.Templates
 			}
 			for(int i=0; i<command.InputOutputParameters.Count; i++)
 			{
-				temp += string.Format("{2}\t\t\t/// <param name=\"{0}\"> An output  <c>{1}</c> instance.</param>", GetFieldName(command.InputOutputParameters[i]).Replace("@", ""), GetCSType(command.InputOutputParameters[i]), Environment.NewLine);
+				temp += string.Format("{2}\t\t\t/// <param name=\"{0}\"> An output  <c>{1}</c> instance.</param>", GetFieldName(command.InputOutputParameters[i]).Replace(ParameterPrefix, ""), GetCSType(command.InputOutputParameters[i]), Environment.NewLine);
 			}
 			
 			return temp;
@@ -3313,7 +3338,7 @@ namespace MoM.Templates
 			StringBuilder temp = new StringBuilder();
 			for(int i=0; i<outputParameters.Count; i++)
 			{
-				temp.AppendFormat("{2}\t\t\t/// <param name=\"{0}\"> A <c>{1}</c> instance.</param>", GetFieldName(outputParameters[i]).Replace("@", ""), GetCSType(outputParameters[i]).Replace("<", "&lt;").Replace(">", "&gt;"), Environment.NewLine);
+				temp.AppendFormat("{2}\t\t\t/// <param name=\"{0}\"> A <c>{1}</c> instance.</param>", GetFieldName(outputParameters[i]).Replace(ParameterPrefix, ""), GetCSType(outputParameters[i]).Replace("<", "&lt;").Replace(">", "&gt;"), Environment.NewLine);
 			}
 			
 			return temp.ToString();
