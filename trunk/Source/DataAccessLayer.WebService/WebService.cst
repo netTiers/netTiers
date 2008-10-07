@@ -390,7 +390,12 @@ public class <%=ClassName%> : WebService
 		if (methods.Contains(providerName + "_" + methodName))
 			uniqueMethodName = methodName + "Custom";
 			
+		string overloadParms = TransformStoredProcedureInputsToMethod(true, command.InputParameters) + TransformStoredProcedureOutputsToMethod(true, command.AllOutputParameters);
+		string overloadCall = TransformStoredProcedureInputsToDataAccess(true, command.InputParameters) + TransformStoredProcedureOutputsToDataAccess(true, command.AllOutputParameters);
+		string parms = TransformStoredProcedureInputsToMethod(true, command.InputParameters) + TransformStoredProcedureOutputsToMethod(true, command.AllOutputParameters);
+
 		string returnType = GetReturnCustomProcReturnType(CustomNonMatchingReturnType, SourceTable, command);
+		string returnTypeForComment = returnType.Replace("<", "{").Replace(">", "}");
 		string returnKeyword = returnType == "void" ? "" : "return ";
 		if (returnType == "IDataReader")
 			returnType = "DataSet"; 
@@ -399,14 +404,16 @@ public class <%=ClassName%> : WebService
 	
 	/// <summary>
 	///	This method wrap the <%=command.Name%> stored procedure. 
-	/// </summary>
+	/// </summary><%=TransformStoredProcedureInputsToMethodComments(command.InputParameters) + TransformStoredProcedureOutputsToMethodComments(command.AllOutputParameters)%>
+	/// <remark>This method is generate from a stored procedure.</remark><% if (returnType != "void") {%>
+	/// <returns>A <see cref="<%=returnTypeForComment%>"/> instance.</returns><%}%>
 	[WebMethod(Description="This method wrap the <%=command.Name%> stored procedure.")]
-	public <%=returnType%> <%=providerName%>_<%=uniqueMethodName%>(int start, int pageLength <%=TransformStoredProcedureInputsToMethod(true, command.InputParameters) + TransformStoredProcedureOutputsToMethod(true, command.AllOutputParameters)%>)
+	public <%=returnType%> <%=providerName%>_<%=uniqueMethodName%>(int start, int pageLength<%=overloadParms%>)
 	{
 	    <% if (returnType == "DataSet") { %>
-		    <%= returnKeyword %> <% if (CustomNonMatchingReturnType.ToString() == "IDataReader" ) { %><%=DALNameSpace%>.Utility.ConvertDataReaderToDataSet(<%}%><%=DALNameSpace%>.DataRepository.<%=providerName%>.<%=methodName%>(start, pageLength <%=TransformStoredProcedureInputsToDataAccess(true, command.InputParameters) + TransformStoredProcedureOutputsToDataAccess(true, command.AllOutputParameters)%>)<% if (CustomNonMatchingReturnType.ToString() == "IDataReader" ) { %>)<%}%>;
+		<%= returnKeyword %> <% if (CustomNonMatchingReturnType.ToString() == "IDataReader" ) { %><%=DALNameSpace%>.Utility.ConvertDataReaderToDataSet(<%}%><%=DALNameSpace%>.DataRepository.<%=providerName%>.<%=methodName%>(start, pageLength <%=overloadCall%>)<% if (CustomNonMatchingReturnType.ToString() == "IDataReader" ) { %>)<%}%>;
 	    <% } else { %>
-		    <%= returnKeyword %> <%=DALNameSpace%>.DataRepository.<%=providerName%>.<%=methodName%>(start, pageLength <%=TransformStoredProcedureInputsToDataAccess(true, command.InputParameters) + TransformStoredProcedureOutputsToDataAccess(true, command.AllOutputParameters) %>);
+		<%= returnKeyword %> <%=DALNameSpace%>.DataRepository.<%=providerName%>.<%=methodName%>(start, pageLength<%=overloadCall %>);
 	    <% } %>
 	}
 		
@@ -484,8 +491,13 @@ public class <%=ClassName%> : WebService
 		//can't duplicate method names in webservices
 		if (methods.Contains(providerName + "_" + methodName))
 			continue;
-			
+
+    	string overloadParms = TransformStoredProcedureInputsToMethod(true, command.InputParameters) + TransformStoredProcedureOutputsToMethod(true, command.AllOutputParameters);
+		string overloadCall = TransformStoredProcedureInputsToDataAccess(true, command.InputParameters) + TransformStoredProcedureOutputsToDataAccess(true, command.AllOutputParameters);
+		string parms = TransformStoredProcedureInputsToMethod(true, command.InputParameters) + TransformStoredProcedureOutputsToMethod(true, command.AllOutputParameters);
+
 		string returnType = GetReturnCustomProcReturnType(CustomNonMatchingReturnType, SourceView, command);
+		string returnTypeForComment = returnType.Replace("<", "{").Replace(">", "}");
 		string returnKeyword = returnType == "void" ? "" : "return ";
 		if (returnType == "IDataReader")
 			returnType = "DataSet"; 
@@ -493,15 +505,16 @@ public class <%=ClassName%> : WebService
 	
 	/// <summary>
 	///	This method wrap the <%=command.Name%> stored procedure. 
-	/// </summary>
+	/// </summary><%=TransformStoredProcedureInputsToMethodComments(command.InputParameters) + TransformStoredProcedureOutputsToMethodComments(command.AllOutputParameters)%>
+	/// <remark>This method is generate from a stored procedure.</remark><% if (returnType != "void") {%>
+	/// <returns>A <see cref="<%=returnTypeForComment%>"/> instance.</returns><%}%>
 	[WebMethod(Description="This method wrap the <%=command.Name%> stored procedure.")]
-	public <%=returnType%> <%=providerName%>_<%=methodName%>(int start, int pageLength <%=TransformStoredProcedureInputsToMethod(true, command.InputParameters)%>)
+	public <%=returnType%> <%=providerName%>_<%=methodName%>(int start, int pageLength<%=overloadParms%>)
 	{
 		<% if (returnType == "DataSet") { %>
-		    //<%= returnKeyword %> <% if (CustomNonMatchingReturnType.ToString() == "IDataReader" ) { %><%=DALNameSpace%>.Utility.ConvertDataReaderToDataSet(<%}%><%=DALNameSpace%>.DataRepository.<%=providerName%>.<%=methodName%>(start, pageLength <%=TransformStoredProcedureInputsToDataAccess(true, command.InputParameters) + TransformStoredProcedureOutputsToDataAccess(true, command.AllOutputParameters)%>)<% if (CustomNonMatchingReturnType.ToString() == "IDataReader" ) { %>)<%}%>;
-		    <%= returnKeyword %> <% if (CustomNonMatchingReturnType.ToString() == "IDataReader" ) { %><%=DALNameSpace%>.Utility.ConvertDataReaderToDataSet(<%}%><%=DALNameSpace%>.DataRepository.<%=providerName%>.<%=methodName%>(start, pageLength <%=TransformStoredProcedureInputsToDataAccess(true, command.InputParameters) %>)<% if (CustomNonMatchingReturnType.ToString() == "IDataReader" ) { %>)<%}%>;
+		<%= returnKeyword %> <% if (CustomNonMatchingReturnType.ToString() == "IDataReader" ) { %><%=DALNameSpace%>.Utility.ConvertDataReaderToDataSet(<%}%><%=DALNameSpace%>.DataRepository.<%=providerName%>.<%=methodName%>(start, pageLength<%=overloadCall%>)<% if (CustomNonMatchingReturnType.ToString() == "IDataReader" ) { %>)<%}%>;
 	    <% } else { %>
-			<%= returnKeyword %> <%=DALNameSpace%>.DataRepository.<%=providerName%>.<%=methodName%>(start, pageLength <%=TransformStoredProcedureInputsToDataAccess(true, command.InputParameters)%>);
+		<%= returnKeyword %> <%=DALNameSpace%>.DataRepository.<%=providerName%>.<%=methodName%>(start, pageLength<%=overloadCall%>);
 		<% } %>
 		
 	}
