@@ -677,6 +677,7 @@ namespace <%=DALNameSpace%>.Bases
             bool useEntityFactory = currentProvider.UseEntityFactory;
             bool enableEntityTracking = currentProvider.EnableEntityTracking;
             LoadPolicy currentLoadPolicy = currentProvider.CurrentLoadPolicy;
+			Type entityCreationFactoryType = currentProvider.EntityCreationalFactoryType;
 			
 			// advance to the starting row
 			for (int i = 0; i < start; i++)
@@ -697,14 +698,14 @@ namespace <%=DALNameSpace%>.Bases
 					key = new System.Text.StringBuilder("<%= entityClassName %>")<%
 					for (int x=0; x < cols.Count; x++) {
 					if(cols[x].IsPrimaryKeyMember) {%>
-					.Append("|").Append((reader.IsDBNull(((int)<%= NameSpace %>.<%= GetClassName(SourceTable, ClassNameFormat.Column) %>.<%= GetPropertyName(cols[x]) %> - 1))?<%= GetCSDefaultByType(cols[x])%>:(<%=GetCSType(cols[x])%>)reader[((int)<%= NameSpace %>.<%= GetClassName(SourceTable, ClassNameFormat.Column) %>.<%= GetPropertyName(cols[x]) %> - 1)]).ToString())<%
+					.Append("|").Append(<%= string.Format("({0})reader[((int){1}.{2} - 1)]", GetCSType(cols[x]), GetClassName(cols[x].Table, ClassNameFormat.Column), GetPropertyName(cols[x]))%>)<%
 					}// end if
 					} //end for each column %>.ToString();
 					c = EntityManager.LocateOrCreate<<%=entityClassName%>>(
 					key.ToString(), // EntityTrackingKey
 					"<%=entityClassName%>",  //Creational Type
-					currentProvider.EntityCreationalFactoryType,  //Factory used to create entity
-					currentProvider.EnableEntityTracking); // Track this entity?
+					entityCreationFactoryType,  //Factory used to create entity
+					enableEntityTracking); // Track this entity?
 				}
 				else
 				{
@@ -714,9 +715,10 @@ namespace <%=DALNameSpace%>.Bases
 				if (!enableEntityTracking ||
 					c.EntityState == EntityState.Added ||
 					(enableEntityTracking &&
+					
 						(
 							(currentLoadPolicy == LoadPolicy.PreserveChanges && c.EntityState == EntityState.Unchanged) ||
-							(currentLoadPolicy == LoadPolicy.DiscardChanges && (c.EntityState == EntityState.Unchanged || c.EntityState == EntityState.Changed))
+							(currentLoadPolicy == LoadPolicy.DiscardChanges && c.EntityState != EntityState.Unchanged)
 						)
 					))
 				{
