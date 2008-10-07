@@ -238,6 +238,11 @@ namespace <%= WebNameSpace %>.Data
 		protected override IList<<%= className %>> GetSelectData(out int count)
 		{
 			Hashtable values = CollectionsUtil.CreateCaseInsensitiveHashtable(GetParameterValues());
+			
+			<% if ( IncludeCustoms ) { %>
+			Hashtable customOutput = CollectionsUtil.CreateCaseInsensitiveHashtable();
+			<% } // end if ( IncludeCustoms ) { %>
+			
 			IList<<%= className %>> results = null;
 			// <%= className %> item;
 			count = 0;
@@ -276,6 +281,15 @@ namespace <%= WebNameSpace %>.Data
 			if ( results != null && count < 1 )
 			{
 				count = results.Count;
+				if ( !String.IsNullOrEmpty(CustomMethodRecordCountParamName) )
+				{
+					object objCustomCount = EntityUtil.ChangeType(customOutput[CustomMethodRecordCountParamName], typeof(Int32));
+					
+					if ( objCustomCount != null )
+					{
+						count = (int) objCustomCount;
+					}
+				}				
 			}
 			
 			return results;
@@ -502,6 +516,14 @@ private string WriteCustomSelectStatements(ViewSchema view, IList methods, bool 
 //							(isServiceLayer && (command.InputParameters.Count > 0) ? ", " : ""),
 							(isServiceLayer ? pagingParams : methodParams),
 							Environment.NewLine);
+			// keep track of custom output values
+			foreach ( ParameterSchema param in command.AllOutputParameters )
+			{
+				sb.AppendFormat("\t\t\t\t\tcustomOutput.Add(\"{0}\", {1});{2}",
+								GetPropertyName(param),
+								GetCustomVariableName(param.Name, command),
+								Environment.NewLine);
+			}							
 			sb.Append(WriteBreakStatement());
 		}
 	}
