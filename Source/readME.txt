@@ -28,7 +28,7 @@ Codesmith 3.2+
 Microsoft SQL Server2000+ 
 Microsoft .Net 2.0 
 Enterprise Library 2.0 (Optional, Recommended) 
-nUnit or Visual Studio Team System (Optional
+nUnit or Visual Studio Team System (Optional)
 
 Installing .netTiers
 --------------------
