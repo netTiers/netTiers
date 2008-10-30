@@ -3518,8 +3518,7 @@ namespace MoM.Templates
 		}
 		
 		#if CodeSmith40
-		public static readonly CodeSmith.Engine.MapCollection CSharpTypes 
-			= CodeSmith.Engine.Map.Load(System.IO.Path.Combine(CodeSmith.Engine.ConfigurationBase<CodeSmith.Engine.Configuration>.Instance.CodeSmithMapsDirectory , "System-CSharpAlias.csmap"));
+		public static readonly CodeSmith.Engine.MapCollection CSharpTypes = CodeSmith.Engine.Map.Load(System.IO.Path.Combine(CodeSmith.Engine.Configuration.Instance.CodeSmithMapsDirectory , "System-CSharpAlias.csmap"));
 		#endif
 
 		/// <summary>
