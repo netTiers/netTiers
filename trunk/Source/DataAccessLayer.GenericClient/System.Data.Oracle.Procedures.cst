@@ -1,5 +1,5 @@
 ﻿<%@ CodeTemplate Src="..\TemplateLib\CommonSqlCode.cs" Debug="true" Inherits="MoM.Templates.CommonSqlCode" Language="C#" TargetLanguage="T-SQL"
-	Description="Generates SELECT/INSERT/UPDATE/DELETE stored procedures based on one or more selected tables, or an entire database schema." ResponseEncoding="UTF-8" NoWarn="0108,0618,1572,1573,1574,0162,2002"%>
+	Description="Generates SELECT/INSERT/UPDATE/DELETE stored procedures based on one or more selected tables, or an entire database schema." ResponseEncoding="UTF-8"%>
 
 <%@ Property Name="CompanyName" Optional="True" Type="System.String" Category="General" Description="The name of your company." %>
 <%@ Property Name="CompanyURL" Optional="True" Type="System.String" Category="General" Description="The URL of your company." %>
@@ -130,9 +130,10 @@ end;
 		
 		<procedure owner="<%=owner%>" name="<%= ProcedurePrefix + commandStem + SelectSuffix + SelectAllSuffix %>" >
 			<comment><![CDATA[<%= GetProcSqlComment(string.Format("Gets all records from the {0} table", name), tableComment) %>]]></comment>
-			<parameters/>
+			<parameters>
+				<parameter name="p_cursor" type="types.cursorType" direction="InputOutput" />
+			</parameters>
 			<body><![CDATA[
-				p_cursor in out types.cursorType)
 				IS
 				BEGIN
 				
@@ -144,7 +145,7 @@ end;
 					<%= cols[i].Name %><% if (i < cols.Count - 1) { %>,<% } %>
 					<% } %>
 				FROM
-					<%=fqTableName%>;
+					<%=owner%>.<%= SourceTable.Name %>;
 			]]></body>
 		</procedure>
 		
@@ -152,6 +153,74 @@ end;
 		if (SourceTable.PrimaryKey != null) {
 		%>
 		
+		//GetPaged
+		<procedure owner="<%=owner%>" name="<%= ProcedurePrefix + commandStem + SelectSuffix + "Paged" %>" >
+			<comment><![CDATA[<%= GetProcSqlComment(string.Format("Gets records from the {0} table passing page index and page count parameters", name), tableComment) %>]]></comment>
+			<parameters>
+				<parameter name="WhereClause" type="varchar2" direction="Input" precision="0" scale="0" />
+				<parameter name="OrderBy" type="varchar2" direction="Input" precision="0" scale="0" />				
+				<parameter name="PageIndex" type="NUMBER" direction="Input" precision="10" scale="0" />
+				<parameter name="PageSize" type="NUMBER" direction="Input" precision="10" scale="0" /> 
+				<parameter name="p_cursor" type="types.cursorType" direction="InputOutput" />
+			</parameters>
+			<body><![CDATA[
+				IS
+				
+				dynamicSQL nvarchar2(8000);
+				
+				BEGIN
+				
+				dynamicSQL := 'SELECT <% for (int i = 0; i < cols.Count; i++) { %><%= cols[i].Name %><% if (i < cols.Count - 1) { %>,<% } %><% } %>';
+				dynamicSQL := dynamicSQL + ' FROM ';
+				dynamicSQL := dynamicSQL + '    (SELECT <% for (int i = 0; i < cols.Count; i++) { %> <%= cols[i].Name %>,	<% } %> rownum rnum ';
+				dynamicSQL := dynamicSQL + '     FROM <%=owner%>.<%= SourceTable.Name %> ';
+				dynamicSQL := dynamicSQL + '     WHERE rownum BETWEEN (PageSize * PageIndex) AND (PageSize * PageIndex + PageSize) ) ';
+				
+				IF length(WhereClause) > 0 THEN
+					dynamicSQL := dynamicSQL + ' WHERE ' + WhereClause;
+				END IF;
+				IF length(OrderBy) > 0 THEN
+					dynamicSQL := dynamicSQL + ' ORDER BY ' + OrderBy;
+				END IF;
+				
+				dynamicSQL := dynamicSQL + ' ; ';
+				
+				-- Execution the query
+				OPEN p_cursor FOR  '' USING dynamicSQL;
+				
+			]]></body>
+		</procedure>
+		
+		<procedure owner="<%=owner%>" name="<%= ProcedurePrefix + commandStem + SelectSuffix + "PagedCount" %>" >
+			<parameters>
+				<parameter name="WhereClause" type="varchar2" direction="Input" precision="0" scale="0" />
+				<parameter name="OrderBy" type="varchar2" direction="Input" precision="0" scale="0" />
+				<parameter name="p_cursor" type="types.cursorType" direction="InputOutput" />
+			</parameters>
+			<body><![CDATA[
+				IS
+				
+				dynamicSQL nvarchar2(4000);
+				
+				BEGIN
+			
+				IF length(WhereClause) > 0 THEN
+					dynamicSQL := dynamicSQL + ' WHERE ' + WhereClause;
+				END IF;
+				IF length(OrderBy) > 0 THEN
+					dynamicSQL := dynamicSQL + ' ORDER BY ' + OrderBy;
+				END IF;
+				
+				dynamicSQL := dynamicSQL + ' ; ';
+				
+				-- Execution the query
+				OPEN p_cursor FOR 'SELECT COUNT(1) <%=owner%>.<%= SourceTable.Name %>' using dynamicSQL;
+				
+			]]></body>
+		</procedure>
+		
+		<%
+		} // end if (paged)
 		} // end if (IncludeGetList) 
 		
 		// -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- 
@@ -171,12 +240,11 @@ end;
 				}%>
 			</parameters>
 			<body><![CDATA[
-				)
 				IS
 				BEGIN
 				
 				<%= GetSetTransactionIsolationLevelStatement() %>
-				INSERT INTO <%=fqTableName%>
+				INSERT INTO <%=owner%>.<%= SourceTable.Name %>
 					(
 					<% for (int i = 0; i < colsUpdatable.Count; i++) { %><%= colsUpdatable[i].Name %><% if (i < colsUpdatable.Count - 1) { %>
 					,<% } } %>
@@ -208,7 +276,7 @@ end;
 					Response.Write(tempParams.TrimStart(','));
 				%>
 				FROM
-					<%=fqTableName%>
+					<%=owner%>.<%= SourceTable.Name %>
 				WHERE
 				<%
 					tempParams = string.Empty;
@@ -259,14 +327,13 @@ end;
 				%>
 			</parameters>
 			<body><![CDATA[
-				)
 				IS
 				BEGIN
 				
 				<%= GetSetTransactionIsolationLevelStatement() %>
 				
 				-- Modify the updatable columns
-				UPDATE <%=fqTableName%>
+				UPDATE <%=owner%>.<%= SourceTable.Name %>
 				SET <% for (int i = 0; i < colsUpdatable.Count; i++) { %><%= colsUpdatable[i].Name %> = <%= GetPropertyName(colsUpdatable[i]) %><% if (i < colsUpdatable.Count - 1) { %>
 					,<% } } %>
 				WHERE
@@ -314,7 +381,7 @@ end;
 					
 				%>
 				FROM
-					<%=fqTableName%>
+					<%=owner%>.<%= SourceTable.Name %>
 				WHERE
 				<%
 					tempParams = string.Empty;
@@ -352,11 +419,10 @@ end;
 			%>
 			</parameters>
 			<body><![CDATA[
-				)
 				IS
 				BEGIN
 				
-				DELETE FROM <%=fqTableName%> 
+				DELETE FROM <%=owner%>.<%= SourceTable.Name %> 
 				WHERE
 					<% for (int i = 0; i < SourceTable.PrimaryKey.MemberColumns.Count; i++) { %>			
 					<% if (i > 0) { %>AND <% } %><%= SourceTable.PrimaryKey.MemberColumns[i].Name %> = <%= GetPropertyName(SourceTable.PrimaryKey.MemberColumns[i]) %>;
@@ -389,21 +455,9 @@ end;
   					Response.Write("\t\t\t\t" + GetSqlParameterXmlNode(fkeys[j].ForeignKeyMemberColumns[i], false) + Environment.NewLine);
   				}
   			%>
+				<parameter name="p_cursor" type="types.cursorType" direction="InputOutput" />
 			</parameters>
 			<body><![CDATA[
-				<% 
-				if(fkeys[j].ForeignKeyMemberColumns.Count > 0) 
-  				{%>
-				,p_cursor in out types.cursorType)
-				<%
-  				}
-				else
-				{%>
-				p_cursor in out types.cursorType)
-				<%
-				}
-  				%>
-				
 				IS
 				BEGIN
 				
@@ -415,7 +469,7 @@ end;
 					<%= cols[i].Name %><% if (i < cols.Count - 1) { %>,<% } %>
 					<% } %>
 				FROM
-					<%= fqTableName%>
+					<%=owner%>.<%= SourceTable.Name %>
 				WHERE
 					<% for (int i = 0; i < fkeys[j].ForeignKeyMemberColumns.Count; i++) { %>
 					<% if (i > 0) { %>AND <% } %><%= fkeys[j].ForeignKeyMemberColumns[i].Name %> = <%= GetPropertyName(fkeys[j].ForeignKeyMemberColumns[i]) %>;
@@ -452,20 +506,9 @@ end;
   				{
   					Response.Write("\t\t\t\t" + GetSqlParameterXmlNode(indexes[j].MemberColumns[i], false) + Environment.NewLine);
   				}%>
+				<parameter name="p_cursor" type="types.cursorType" direction="InputOutput" />
 			</parameters>
 			<body><![CDATA[
-								<% 
-				if(indexes[j].MemberColumns.Count > 0) 
-  				{%>
-				,p_cursor in out types.cursorType)
-				<%
-  				}
-				else
-				{%>
-				p_cursor in out types.cursorType)
-				<%
-				}
-  				%>
 				IS
 				BEGIN
 				
@@ -476,7 +519,7 @@ end;
 					<%= cols[i].Name %><% if (i < cols.Count - 1) { %>,<% } %>
 					<% } %>
 				FROM
-					<%= fqTableName%>
+					<%=owner%>.<%= SourceTable.Name %>
 				WHERE
 					<% for (int i = 0; i < indexes[j].MemberColumns.Count; i++) { %>
 					<% if (i > 0) { %>AND <% } %><%= indexes[j].MemberColumns[i].Name %> = <%= GetPropertyName(indexes[j].MemberColumns[i]) %>;
@@ -520,21 +563,9 @@ end;
   					Response.Write("\t\t\t\t" + GetSqlParameterXmlNode(junctionTableKey.ForeignKeyMemberColumns[i], false) + Environment.NewLine);
   				}
   			%>
+				<parameter name="p_cursor" type="types.cursorType" direction="InputOutput" />
 			</parameters>
 			<body><![CDATA[
-			
-				<% 
-				if(junctionTableKey.ForeignKeyMemberColumns.Count > 0) 
-  				{%>
-				,p_cursor in out types.cursorType)
-				<%
-  				}
-				else
-				{%>
-				p_cursor in out types.cursorType)
-				<%
-				}
-  				%>
 				IS
 				BEGIN
 					
@@ -574,8 +605,98 @@ SELECT <% for (int i = 0; i < primaryTable.Columns.Count; i++)
 				} // end if(IsJunctionTable(junctionTableKey.ForeignKeyTable))
 			} //end foreach pkey
 		} //end if(IncludeManyToMany)
+		// -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- 
+		if(IncludeFind)
+		{%>
+		<procedure owner="<%=owner%>" name="<%= ProcedurePrefix + commandStem + FindSuffix %>" >
+			<comment><![CDATA[<%= GetProcSqlComment(string.Format("Finds records in the {0} table passing nullable parameters", name), tableComment) %>]]></comment>
+			<parameters>
+				<parameter name="SearchUsingOR" type="NUMBER" direction="Input" />
+				<% 
+				for (int i = 0; i < cols.Count; i++)
+				{
+					Response.Write("\t\t\t\t" + GetSqlParameterXmlNode(cols[i], GetPropertyName(cols[i]), false, false) + Environment.NewLine);
+				}%>
+				<parameter name="p_cursor" type="types.cursorType" direction="InputOutput" />
+			</parameters>
+			<body><![CDATA[
+				IS
+				BEGIN
+				
+				open p_cursor for
+				
+				SELECT
+				<%= BuildColList(SourceTable) %>
+				FROM
+				<%=owner%>.<%= SourceTable.Name %>
+				WHERE 
+					<% 
+					string tmpWhere = "\t";
+					for (int i = 0; i < cols.Count; i++)
+					{
+						if (IsColumnFindable(cols[i]))
+						{ 
+							tmpWhere  += string.Format("\tAND {0} = {2} OR {2} is null {1}", cols[i].Name, Environment.NewLine, GetPropertyName(cols[i])) ;
+						}
+					}
+					if (tmpWhere.Length > 5)
+						{
+						Response.Write(tmpWhere.Remove(0,5) + "AND SearchUsingOR = 0");
+						}
+					%>					
+									
+				UNION
+					SELECT
+					<%= BuildColList(SourceTable) %>
+					FROM
+					<%=owner%>.<%= SourceTable.Name %>
+					WHERE 
+						<% 
+						tmpWhere = "\t";
+							
+						for (int i = 0; i < cols.Count; i++)
+						{
+							if (IsColumnFindable(cols[i]))
+							{ 
+							tmpWhere  += string.Format("\tOR {0} = {2} AND {2} is not null {1}", cols[i].Name, Environment.NewLine, GetPropertyName(cols[i]));
+							}
+						}					
+						if (tmpWhere.Length > 4)
+						{
+							Response.Write(tmpWhere.Remove(0,4)+ "AND SearchUsingOR = 1;");
+						}
+						else
+						{
+							Response.Write(";");
+						}
+						%>					
+			]]></body>
+		</procedure>
+
+		<% if ( SourceTable.PrimaryKey != null ) { %>
 		
-	}
+		<procedure owner="<%=owner%>" name="<%= ProcedurePrefix + commandStem + FindSuffix + "_Dynamic" %>_Dynamic" skip="true" >
+			<comment><![CDATA[<%= GetProcSqlComment(string.Format("Gets records from the {0} table using a dynamically generated query.", name), tableComment) %>]]></comment>
+			<parameters>
+				<parameter name="p_cursor" type="types.cursorType" direction="InputOutput" />
+			</parameters>
+			<body><![CDATA[
+				IS
+				BEGIN
+				
+				open p_cursor for
+				
+				select
+				<% for (int i = 0; i < cols.Count; i++) { %>
+				       <%= cols[i].Name %><% if (i < cols.Count - 1) { %>,<% } %>
+				<% } %>
+				  from <%=owner%>.<%= SourceTable.Name %>
+			]]></body>
+		</procedure>
+		
+		<% } // end if HasPrimaryKey %>
+		<%} //end if(IncludeFind)
+
 	} // end for each Table
 	// -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- 
 	// -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- 
@@ -589,7 +710,6 @@ SELECT <% for (int i = 0; i < primaryTable.Columns.Count; i++)
 		ViewColumnSchemaCollection cols = SourceView.Columns;
 		
 		string owner = GetOwnerName(SourceView);
-		string fqTableName = string.Format("{0}.{1}", GetOwnerName(SourceView), SourceView.Name);
 		string name = GetSafeName(SourceView);
 		string commandStem = GetCleanName(SourceView);
 		string tableComment = SourceView.Description;
@@ -598,9 +718,10 @@ SELECT <% for (int i = 0; i < primaryTable.Columns.Count; i++)
 		{%>
 		<procedure owner="<%=owner%>" name="<%= ProcedurePrefix + commandStem + SelectSuffix + SelectAllSuffix %>" >
 			<comment><![CDATA[<%= GetProcSqlComment(string.Format("Gets all records from the {0} view", name), tableComment) %>]]></comment>
-			<parameters/>
+			<parameters>
+				<parameter name="p_cursor" type="types.cursorType" direction="InputOutput" />
+			</parameters>
 			<body><![CDATA[
-				p_cursor in out types.cursorType)
 				IS
 				BEGIN
 				
@@ -612,7 +733,7 @@ SELECT <% for (int i = 0; i < primaryTable.Columns.Count; i++)
 					<%= SourceView.Columns[i].Name %><% if (i < SourceView.Columns.Count - 1) { %>,<% } %>
 					<% } %>
 				FROM
-					<%=fqTableName%>;
+					<%=owner%>.<%= SourceView.Name %>;
 					
 						
 			]]></body>
@@ -622,31 +743,29 @@ SELECT <% for (int i = 0; i < primaryTable.Columns.Count; i++)
 			<comment><![CDATA[<%= GetProcSqlComment(string.Format("Gets records from the {0} view passing page index and page count parameters", name), tableComment) %>]]></comment>
 			<parameters>
 				<parameter name="WhereClause" type="varchar2" direction="Input" precision="0" scale="0"  />
-				<parameter name="OrderBy" type="varchar2" direction="Input" precision="0" scale="0" />			
+				<parameter name="OrderBy" type="varchar2" direction="Input" precision="0" scale="0" />
+				<parameter name="p_cursor" type="types.cursorType" direction="InputOutput" />
 			</parameters>
 			<body><![CDATA[
-				,p_cursor in out types.cursorType)
 				IS
+				
+				dynamicSQL nvarchar2(4000);
+				
 				BEGIN
-				
-				open p_cursor for
-				
-				
+			
 				<%= GetSetTransactionIsolationLevelStatement() %>
 				-- Build the sql query
-				DECLARE SQL AS nvarchar2(4000);
-				SQL := ' SELECT * FROM <%=fqTableName%>'
-				IF LEN(WhereClause) > 0
-				BEGIN
-					SQL := SQL + ' WHERE ' + WhereClause
-				END
-				IF LEN(OrderBy) > 0
-				BEGIN
-					SQL := SQL + ' ORDER BY ' + OrderBy
-				END;
+				IF length(WhereClause) > 0 THEN
+					dynamicSQL := dynamicSQL + ' WHERE ' + WhereClause;
+				END IF;
+				IF length(OrderBy) > 0 THEN
+					dynamicSQL := dynamicSQL + ' ORDER BY ' + OrderBy;
+				END IF;
+				
+				dynamicSQL := dynamicSQL + ' ; ';
 				
 				-- Execution the query
-				EXECUTE IMMEDIATE SQL;
+				OPEN p_cursor FOR 'SELECT * FROM <%=owner%><%= SourceView.Name %>' using dynamicSQL;
 			]]></body>
 		</procedure>
 		
@@ -656,16 +775,17 @@ SELECT <% for (int i = 0; i < primaryTable.Columns.Count; i++)
 		
 		<procedure owner="<%=owner%>" name="<%= ProcedurePrefix + commandStem + FindSuffix %>_Dynamic" skip="true">
 			<comment><![CDATA[<%= GetProcSqlComment(string.Format("Gets records from the {0} table using a dynamically generated query.", name), tableComment) %>]]></comment>
-			<parameters/>
+			<parameters>
+				<parameter name="p_cursor" type="types.cursorType" direction="InputOutput" />
+			</parameters>
 			<body><![CDATA[
-				p_cursor in out types.cursorType)
 				IS
 				BEGIN
 				
 				open p_cursor for
 				
 				<%= GetSetTransactionIsolationLevelStatement() %>
-				SELECT * FROM <%= fqTableName%> {0}
+				SELECT * FROM <%=owner%>.<%= SourceView.Name %> {0}
 				ORDER BY {1};
 				
 			]]></body>
