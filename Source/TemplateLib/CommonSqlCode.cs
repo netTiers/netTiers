@@ -1780,7 +1780,7 @@ namespace MoM.Templates
 		/// belonging to the runtime type having the specified name.
 		/// </summary>
 		/// <param name="type">The runtime type.</param>
-		/// <param name="propertyName">The property name.</param>
+		/// <param name="name">The property name.</param>
 		/// <returns>A <see cref="PropertyInfo"/> object, or null if the runtime
 		/// type does not have a property with the specified name.</returns>
 		public static PropertyInfo GetPropertyInfo(Type type, string name)
@@ -1880,8 +1880,8 @@ namespace MoM.Templates
         /// <summary>
         /// Returns ColumnSchema of tables by a fk
         /// </summary>
-        /// <param name="col"></param>
-        /// <param name="sourceTables"></param>
+        /// <param name="cols"></param>
+        /// <param name="sourceTable"></param>
         /// <returns></returns>
         public ColumnSchemaCollection GetRelationshipColumnByFk(ColumnSchemaCollection cols, TableSchema sourceTable)
         {
@@ -2074,9 +2074,7 @@ namespace MoM.Templates
 		/// Gets the expression used to set the property value in an entity.  Specificly used to handle nullable columns.
 		/// </summary>
 		/// <param name="column">The column object </param>
-		/// <param name="containerName">The object that has a string indexer for the column (DataRow, IDataReader, etc)</param>
 		/// <param name="objectName">The object instance name.</param>
-		/// <param name="indent">How tabs should the code be indented</param>
 		/// <returns>An expression that sets a temporary variable with a null value if possible.</returns>
 		/// <remarks>This method should not append the trailing semicolon.</remarks>
 		public string GetKeyIfNullable(ColumnSchema column, string objectName)
@@ -2988,7 +2986,7 @@ namespace MoM.Templates
 		/// <param name="column">Column for which to get the Sql parameter statement</param>
 		/// <param name="parameterName">the name of the parameter?</param>
 		/// <param name="isOutput">indicates the direction</param>
-		/// <param name ="nullDefaults">indicates whether to give each parameter a null or empty default.  (used mainly for Find sp's)</param>
+		/// <param name="allowNull">indicates whether to give each parameter a null or empty default.  (used mainly for Find sp's)</param>
 		/// <returns>the xml Sql Parameter statement</returns>
 		public string GetSqlParameterXmlNode(ColumnSchema column, string parameterName, bool isOutput, bool allowNull)
 		{
@@ -3065,11 +3063,10 @@ namespace MoM.Templates
 		}
 
 		/// <summary>
-		/// 	[ab] This is a somewhat generic :) version of the singly typed GetSqlParameterParam
+		/// 	Generic version of the singly typed GetSqlParameterParam.
 		/// </summary>
-		/// <param name="column"></param>
+		/// <param name="schemaItem"></param>
 		/// <remarks>
-		///	
 		/// </remarks>
 		public string GetSqlParameterParam<TSchemaType>(TSchemaType schemaItem) where TSchemaType : SchemaExplorer.DataObjectBase
 		{
