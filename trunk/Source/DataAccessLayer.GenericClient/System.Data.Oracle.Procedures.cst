@@ -166,27 +166,25 @@ end;
 			<body><![CDATA[
 				IS
 				
-				dynamicSQL nvarchar2(8000);
+				dynamicSQL varchar2(8000);
 				
 				BEGIN
 				
 				dynamicSQL := 'SELECT <% for (int i = 0; i < cols.Count; i++) { %><%= cols[i].Name %><% if (i < cols.Count - 1) { %>,<% } %><% } %>';
-				dynamicSQL := dynamicSQL + ' FROM ';
-				dynamicSQL := dynamicSQL + '    (SELECT <% for (int i = 0; i < cols.Count; i++) { %> <%= cols[i].Name %>,	<% } %> rownum rnum ';
-				dynamicSQL := dynamicSQL + '     FROM <%=owner%>.<%= SourceTable.Name %> ';
-				dynamicSQL := dynamicSQL + '     WHERE rownum BETWEEN (PageSize * PageIndex) AND (PageSize * PageIndex + PageSize) ) ';
+				dynamicSQL := dynamicSQL || ' FROM ';
+				dynamicSQL := dynamicSQL || '    (SELECT <% for (int i = 0; i < cols.Count; i++) { %> <%= cols[i].Name %>,	<% } %> rownum rnum ';
+				dynamicSQL := dynamicSQL || '     FROM <%=owner%>.<%= SourceTable.Name %> ';
+				dynamicSQL := dynamicSQL || '     WHERE rownum BETWEEN (:PageSize * :PageIndex) AND (:PageSize * :PageIndex + :PageSize) ) ';
 				
 				IF length(WhereClause) > 0 THEN
-					dynamicSQL := dynamicSQL + ' WHERE ' + WhereClause;
+					dynamicSQL := dynamicSQL || ' WHERE ' + WhereClause;
 				END IF;
 				IF length(OrderBy) > 0 THEN
-					dynamicSQL := dynamicSQL + ' ORDER BY ' + OrderBy;
+					dynamicSQL := dynamicSQL || ' ORDER BY ' + OrderBy;
 				END IF;
 				
-				dynamicSQL := dynamicSQL + ' ; ';
-				
 				-- Execution the query
-				OPEN p_cursor FOR  '' USING dynamicSQL;
+				OPEN p_cursor FOR dynamicSQL USING PageSize, PageIndex, PageSize, PageIndex, PageSize;
 				
 			]]></body>
 		</procedure>
@@ -200,9 +198,11 @@ end;
 			<body><![CDATA[
 				IS
 				
-				dynamicSQL nvarchar2(4000);
+				dynamicSQL varchar2(4000);
 				
 				BEGIN
+				
+		        dynamicSQL := 'SELECT COUNT(1) FROM <%=owner%>.<%= SourceTable.Name %>';
 			
 				IF length(WhereClause) > 0 THEN
 					dynamicSQL := dynamicSQL + ' WHERE ' + WhereClause;
@@ -211,10 +211,8 @@ end;
 					dynamicSQL := dynamicSQL + ' ORDER BY ' + OrderBy;
 				END IF;
 				
-				dynamicSQL := dynamicSQL + ' ; ';
-				
 				-- Execution the query
-				OPEN p_cursor FOR 'SELECT COUNT(1) <%=owner%>.<%= SourceTable.Name %>' using dynamicSQL;
+				OPEN p_cursor FOR dynamicSQL;
 				
 			]]></body>
 		</procedure>
