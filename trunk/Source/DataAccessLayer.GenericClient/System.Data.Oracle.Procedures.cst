@@ -63,7 +63,6 @@ end;
 		TableSchema SourceTable = SourceTables[st];
 		//Set table properties
 		string owner = GetOwnerName(SourceTable);
-		string fqTableName = string.Format("{0}.{1}", GetOwnerName(SourceTable), SourceTable.Name);
 		string name = GetSafeName(SourceTable);
 		string commandStem = GetCleanName(SourceTable);
 		string tableComment = SourceTable.Description;
@@ -177,10 +176,10 @@ end;
 				dynamicSQL := dynamicSQL || '     WHERE rownum BETWEEN (:PageSize * :PageIndex) AND (:PageSize * :PageIndex + :PageSize) ) ';
 				
 				IF length(WhereClause) > 0 THEN
-					dynamicSQL := dynamicSQL || ' WHERE ' + WhereClause;
+					dynamicSQL := dynamicSQL || ' WHERE ' || WhereClause;
 				END IF;
 				IF length(OrderBy) > 0 THEN
-					dynamicSQL := dynamicSQL || ' ORDER BY ' + OrderBy;
+					dynamicSQL := dynamicSQL || ' ORDER BY ' || OrderBy;
 				END IF;
 				
 				-- Execution the query
@@ -205,10 +204,10 @@ end;
 		        dynamicSQL := 'SELECT COUNT(1) FROM <%=owner%>.<%= SourceTable.Name %>';
 			
 				IF length(WhereClause) > 0 THEN
-					dynamicSQL := dynamicSQL + ' WHERE ' + WhereClause;
+					dynamicSQL := dynamicSQL || ' WHERE ' || WhereClause;
 				END IF;
 				IF length(OrderBy) > 0 THEN
-					dynamicSQL := dynamicSQL + ' ORDER BY ' + OrderBy;
+					dynamicSQL := dynamicSQL || ' ORDER BY ' || OrderBy;
 				END IF;
 				
 				-- Execution the query
@@ -256,7 +255,7 @@ end;
 				<% for (int i = 0; i < cols.Count; i++) { if (IsIdentityColumn(cols[i]) && !(IsIdentityRowGuidColumn(cols[i]))) { %>
 				-- Get the identity value
 				--TODO FIX THIS
-				<%= GetPropertyName(cols[i]) %> := SCOPE_IDENTITY()
+				<%= GetPropertyName(cols[i]) %> := <%=owner%>.<%= SourceTable.Name %>.seq.CURRVAL
 				<% } } %>
 									
 				<% if (countComputedColumns > 0) {%>
@@ -747,20 +746,18 @@ SELECT <% for (int i = 0; i < primaryTable.Columns.Count; i++)
 			<body><![CDATA[
 				IS
 				
-				dynamicSQL nvarchar2(4000);
+				dynamicSQL nvarchar2(8000);
 				
 				BEGIN
 			
 				<%= GetSetTransactionIsolationLevelStatement() %>
 				-- Build the sql query
 				IF length(WhereClause) > 0 THEN
-					dynamicSQL := dynamicSQL + ' WHERE ' + WhereClause;
+					dynamicSQL := dynamicSQL || ' WHERE ' || WhereClause;
 				END IF;
 				IF length(OrderBy) > 0 THEN
-					dynamicSQL := dynamicSQL + ' ORDER BY ' + OrderBy;
+					dynamicSQL := dynamicSQL || ' ORDER BY ' || OrderBy;
 				END IF;
-				
-				dynamicSQL := dynamicSQL + ' ; ';
 				
 				-- Execution the query
 				OPEN p_cursor FOR 'SELECT * FROM <%=owner%><%= SourceView.Name %>' using dynamicSQL;
