@@ -5836,6 +5836,9 @@ CREATE\s+PROC(?:EDURE)?                               # find the start of the st
 				case MoM.Templates.EntLibVersion.v4 :
 					entlibVersionText = "Version=4.0.0.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35";
 					break;
+                case MoM.Templates.EntLibVersion.v4_1 :
+                    entlibVersionText = "Version=4.1.0.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35";
+                    break;
 				
 			}	
 			return entlibVersionText;
@@ -5862,6 +5865,9 @@ CREATE\s+PROC(?:EDURE)?                               # find the start of the st
 				case MoM.Templates.EntLibVersion.v4 :
 					entlibOBVersionText = "Version=2.1.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a";
 					break;
+                case MoM.Templates.EntLibVersion.v4_1 :
+                    entlibOBVersionText = "Version=2.2.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a";
+                    break;
 				
 			}	
 			return entlibOBVersionText;
@@ -5882,7 +5888,8 @@ CREATE\s+PROC(?:EDURE)?                               # find the start of the st
 					entlibOBClassName = "ObjectBuilder";
 					break;
 				case MoM.Templates.EntLibVersion.v4 :
-					entlibOBClassName = "ObjectBuilder2";
+                case MoM.Templates.EntLibVersion.v4_1 :
+                    entlibOBClassName = "ObjectBuilder2";
 					break;
 				
 			}	
@@ -5987,8 +5994,10 @@ CREATE\s+PROC(?:EDURE)?                               # find the start of the st
 		v3,
 		/// <summary>Use Enterprise Library version 3.1.</summary>
 		v3_1,
-		/// <summary>Use Enterprise Library versoin 4.0</summary>
-		v4
+		/// <summary>Use Enterprise Library version 4.0</summary>
+		v4,
+		/// <summary>Use Enterprise Library version 4.1</summary>
+		v4_1
 	}
 	
 	#endregion
