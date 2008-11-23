@@ -337,6 +337,9 @@
       <SpecificVersion>False</SpecificVersion>
       <HintPath><%= LibraryPath %>\Microsoft.Practices.<%= GetEntLibOBClassName(EntLibVersion)%>.dll</HintPath>
     </Reference>
+		<% if (SourceDatabase.Provider.Name == "OracleSchemaProvider") {%>
+	<Reference Include="System.Data.OracleClient" />
+		<%}%>
     <%}%>
 	<% if ( IncludeWebsite && IncludeAtlasLibrary ) { %>
 	
@@ -430,6 +433,12 @@
 	<ProjectReference Include="..\<%=DALNameSpace + ".SqlClient" %>\<%=DALNameSpace + ".SqlClient" %>.csproj">
         <Name><%=DALNameSpace + ".SqlClient" %></Name>
         <Project>{<%=DALSqlGuid%>}</Project>
+        <Package>{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}</Package>
+    </ProjectReference>
+	<% } else if (SourceDatabase.Provider.Name == "OracleSchemaProvider") { %>
+		<ProjectReference Include="..\<%=DALNameSpace + ".OracleClient" %>\<%=DALNameSpace + ".OracleClient" %>.csproj">
+        <Name><%=DALNameSpace + ".OracleClient" %></Name>
+        <Project>{<%=DALGenericGuid%>}</Project>
         <Package>{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}</Package>
     </ProjectReference>
 	<% } else { %>
@@ -532,6 +541,17 @@
 		
 		if (IncludeGenericClient)
 		{%>
+			<% if(SourceDatabase.Provider.Name == "OracleSchemaProvider"){ %>
+			<Compile Include="<%=SqlClientSubFolder%>Views\Oracle<%=GetClassName(SourceViews[i], ClassNameFormat.Provider)%>.cs">
+			  <SubType>Code</SubType>
+			</Compile>
+			<Compile Include="<%=SqlClientSubFolder%>Views\Oracle<%=GetClassName(SourceViews[i], ClassNameFormat.PartialProviderBase)%>.cs">
+			   <DependentUpon>Generic<%=GetClassName(SourceViews[i], ClassNameFormat.Provider)%>.cs</DependentUpon>
+			   <SubType>Code</SubType>
+			</Compile>
+			<%}
+			else
+			{%>
 			<Compile Include="<%=SqlClientSubFolder%>Views\Generic<%=GetClassName(SourceViews[i], ClassNameFormat.Provider)%>.cs">
 			  <SubType>Code</SubType>
 			</Compile>
@@ -539,6 +559,7 @@
 			   <DependentUpon>Generic<%=GetClassName(SourceViews[i], ClassNameFormat.Provider)%>.cs</DependentUpon>
 			   <SubType>Code</SubType>
 			</Compile>
+			<%}%>
 		<%}
 		
 		if (IncludeWebserviceClient)
@@ -657,7 +678,18 @@
 					
 		if (IncludeGenericClient)
 		{%>
-		
+			<% if(SourceDatabase.Provider.Name == "OracleSchemaProvider"){ %>
+			<Compile Include="<%=GenericClientSubFolder%>Oracle<%=GetClassName(SourceTables[i], ClassNameFormat.Provider)%>.cs">
+			  <SubType>Code</SubType>
+			</Compile>
+			
+			<Compile Include="<%=GenericClientSubFolder%>Oracle<%=GetClassName(SourceTables[i], ClassNameFormat.PartialProviderBase)%>.cs">
+			  <DependentUpon>Oracle<%=GetClassName(SourceTables[i], ClassNameFormat.Provider)%>.cs</DependentUpon>
+			  <SubType>Code</SubType>
+			</Compile>
+			<%}
+			else
+			{%>
 			<Compile Include="<%=GenericClientSubFolder%>Generic<%=GetClassName(SourceTables[i], ClassNameFormat.Provider)%>.cs">
 			  <SubType>Code</SubType>
 			</Compile>
@@ -665,7 +697,8 @@
 			<Compile Include="<%=GenericClientSubFolder%>Generic<%=GetClassName(SourceTables[i], ClassNameFormat.PartialProviderBase)%>.cs">
 			  <DependentUpon>Generic<%=GetClassName(SourceTables[i], ClassNameFormat.Provider)%>.cs</DependentUpon>
 			  <SubType>Code</SubType>
-			</Compile>					
+			</Compile>			
+			<%}%>
 		<%}
 		
 		if ((IncludeUnitTest != MoM.Templates.UnitTestStyle.None) /* && !IsJunctionTable(SourceTables[i]) */) { %>
@@ -1002,6 +1035,13 @@
 		<%}%>
 		
 		<% if (IncludeGenericClient) {%>
+			<% if(SourceDatabase.Provider.Name == "OracleSchemaProvider"){ %>
+			<Compile Include="<%=GenericClientSubFolder%>OracleNetTiersProvider.cs">
+			  <SubType>Code</SubType>
+			</Compile>
+			<%}
+			else
+			{%>
 			<Compile Include="<%=GenericClientSubFolder%>GenericNetTiersProvider.cs">
 			  <SubType>Code</SubType>
 			</Compile>
@@ -1009,6 +1049,7 @@
 			<Compile Include="<%=GenericClientSubFolder%>DbCommandManager.cs">
 			  <SubType>Code</SubType>
 			</Compile>
+			<%}%>
 			
 			<% if (SourceDatabase.Provider.Name == "Sqlite3SchemaProvider") {%>
 				<EmbeddedResource Include="<%=GenericClientSubFolder%>System.Data.SQLite.Procedures.xml">

@@ -146,8 +146,6 @@
 																	
 			CodeTemplates.Add("System.Data.SQLite.Procedures.cst", base.CreateTemplate<SystemDataSQLiteProcedures>()); this.PerformStep();
 			CodeTemplates.Add("System.Data.OleDb.Procedures.cst", base.CreateTemplate<SystemDataOleDbProcedures>()); this.PerformStep();
-																															
-			CodeTemplates.Add("System.Data.Oracle.Procedures.cst", base.CreateTemplate<SystemDataOracleProcedures>()); this.PerformStep();
 			CodeTemplates.Add("ServiceLayer.WebService.cst", base.CreateTemplate<ServiceLayerWebService>()); this.PerformStep();
 			CodeTemplates.Add("WebService.cst", base.CreateTemplate<WebService>()); this.PerformStep();
 			//CodeTemplates.Add("WebInfo.cst", base.CreateTemplate<WebInfo>()); this.PerformStep();
@@ -233,5 +231,12 @@
 			CodeTemplates.Add("EntityMembershipUser.cst", base.CreateTemplate<EntityMembershipUser>()); this.PerformStep();
 			CodeTemplates.Add("EntityMembershipProperty.cst", base.CreateTemplate<EntityMembershipProperty>()); this.PerformStep();
 	
+			CodeTemplates.Add("OracleNetTiersProvider.cst", base.CreateTemplate<OracleNetTiersProvider>()); this.PerformStep();
+			CodeTemplates.Add("OracleEntityProvider.cst", base.CreateTemplate<OracleEntityProvider>()); this.PerformStep();
+			CodeTemplates.Add("OracleEntityProviderBase.generated.cst", base.CreateTemplate<OracleEntityProviderBaseGenerated>()); this.PerformStep();
+			CodeTemplates.Add("OracleEntityViewProvider.cst", base.CreateTemplate<OracleEntityViewProvider>()); this.PerformStep();
+			CodeTemplates.Add("OracleEntityViewProviderBase.generated.cst", base.CreateTemplate<OracleEntityViewProviderBaseGenerated>()); this.PerformStep();
+			CodeTemplates.Add("System.Data.Oracle.Procedures.cst", base.CreateTemplate<SystemDataOracleProcedures>()); this.PerformStep();
+			
 		#endregion 
 			

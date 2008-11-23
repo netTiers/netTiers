@@ -799,7 +799,8 @@
 		string ComponentsNameSpace = NameSpace + (this.ComponentLayerNameSpace.Length> 0 ? "." + GetCleanName(ComponentLayerNameSpace) : string.Empty);
 		string DALNameSpace = NameSpace + "." + (DataAccessLayerNameSpace.Length>0 ? GetCleanName(DataAccessLayerNameSpace) : "DataAccessLayer");
 		string DALSqlNameSpace = DALNameSpace  + ".SqlClient";
-		string DALGenericNameSpace = DALNameSpace  + ".GenericClient";
+		string DALOracleNameSpace = DALNameSpace + ".OracleClient";
+		string DALGenericNameSpace = DALNameSpace + ".GenericClient";
 		string DALWSNameSpace = DALNameSpace  + ".WebServiceClient";
 		string UTNameSpace = NameSpace + "." + (UnitTestsNameSpace.Length>0 ? GetCleanName(UnitTestsNameSpace) : "UnitTests");
 		string WSNameSpace = DALNameSpace + ".WebService";
@@ -817,6 +818,7 @@
 		string rootPathComponents = OutputDirectory + "\\" +  ComponentsNameSpace;
 		string rootPathDAL = OutputDirectory + "\\" + DALNameSpace;
 		string rootPathDALSql = OutputDirectory + "\\" + DALSqlNameSpace;
+		string rootPathDALOracle = OutputDirectory + "\\" + DALOracleNameSpace;
 		string rootPathDALGeneric = OutputDirectory + "\\" + DALGenericNameSpace;
 		string rootPathDALWS = OutputDirectory + "\\" + DALWSNameSpace;
 		string rootPathWebLib = OutputDirectory + "\\" + WebLibNameSpace;
@@ -1097,7 +1099,18 @@
 				{
 					SafeCreateDirectory(rootPathDALSql + "\\" + CustomCodeFolderName);
 				}
-			}		
+			}
+			// Generic implementation
+			else if(_providerInvariantName == "System.Data.OracleClient")
+			{
+				SafeCreateDirectory(rootPathDALOracle);
+				SafeCreateDirectory(rootPathDALOracle + "\\Views");
+	
+				if ( HasCustomCode )
+				{
+					SafeCreateDirectory(rootPathDALOracle + "\\" + CustomCodeFolderName);
+				}
+			}
 			// Generic implementation
 			else
 			{
@@ -1715,6 +1728,10 @@
 			{
 				this.RenderToFile(xmlTemplateName, rootPathDALSql + "\\" + xmlOutputName, true);
 			}
+			else if(_providerInvariantName == "System.Data.OracleClient")
+			{
+				this.RenderToFile(xmlTemplateName, rootPathDALOracle + "\\" + xmlOutputName, true);
+			}
 			else
 			{
 				this.RenderToFile(xmlTemplateName, rootPathDALGeneric + "\\" + xmlOutputName, true);
@@ -1729,7 +1746,7 @@
 			}
 			else if(_providerInvariantName == "System.Data.OracleClient")
 			{
-				xslt.Load(this.CodeTemplateInfo.DirectoryName + "\\DataAccessLayer.GenericClient\\ScriptOracleSql.xsl");
+				xslt.Load(this.CodeTemplateInfo.DirectoryName + "\\DataAccessLayer.OracleClient\\ScriptOracleSql.xsl");
 			}
 			             
 			TextWriter writer = null;
@@ -1742,6 +1759,13 @@
 					writer = new StreamWriter(rootPathSQL + "\\procedures.sql");
 					//Create a new XPathDocument and load the XML data to be transformed.
 					mydata = new XPathDocument(rootPathDALSql + "\\" + xmlOutputName);
+				}
+				else if(_providerInvariantName == "System.Data.OracleClient")
+				{
+					writer = new StreamWriter(rootPathSQL + "\\procedures.sql");
+					
+					//Create a new XPathDocument and load the XML data to be transformed.
+					mydata = new XPathDocument(rootPathDALOracle + "\\" + xmlOutputName);
 				}
 				else
 				{
@@ -1830,7 +1854,6 @@
 				this.RenderToFile(configFile, rootPathWS + "\\Web.config", true);
 			}
 			
-				
 			AddFileNode(commonNode, "Utility.cs");
 			this.GetTemplate("Utility.cst").SetProperty("DALNameSpace", DALNameSpace);
 			this.GetTemplate("Utility.cst").SetProperty("NameSpace", BLLNameSpace);
@@ -1972,6 +1995,22 @@
 				this.GetTemplate("StoredProcedureProvider.cst").SetProperty("DALNameSpace", DALNameSpace);
 				this.GetTemplate("StoredProcedureProvider.cst").SetProperty("IncludeDatabaseFeatures", IncludeDatabaseFeatures);
 				this.RenderToFile("StoredProcedureProvider.cst", rootPathDALSql + "\\StoredProcedureProvider.cs", true);
+			}
+			else if(_providerInvariantName == "System.Data.OracleClient")
+			{
+				AddFileNode(commonNode, "OracleClient\\GenericNetTiersProvider.cs");
+				this.GetTemplate("OracleNetTiersProvider.cst").SetProperty("NameSpace", BLLNameSpace);
+				this.GetTemplate("OracleNetTiersProvider.cst").SetProperty("DALNameSpace", DALNameSpace);
+				this.GetTemplate("OracleNetTiersProvider.cst").SetProperty("SourceTables", templateSourceTables);
+				this.GetTemplate("OracleNetTiersProvider.cst").SetProperty("SourceViews", templateSourceViews);
+				this.RenderToFile("OracleNetTiersProvider.cst", rootPathDALOracle + "\\OracleNetTiersProvider.cs", true);
+				
+				//AddFileNode(commonNode, "OracleClient\\DbCommandManager.cs");
+				//this.GetTemplate("DbCommandManager.cst").SetProperty("BLLNameSpace", BLLNameSpace);
+				//this.GetTemplate("DbCommandManager.cst").SetProperty("DALNameSpace", DALNameSpace);
+				//this.GetTemplate("DbCommandManager.cst").SetProperty("ProviderInvariantName", _providerInvariantName);
+				//this.GetTemplate("DbCommandManager.cst").SetProperty("IncludeDatabaseFeatures", IncludeDatabaseFeatures);
+				//this.RenderToFile("DbCommandManager.cst", rootPathDALOracle + "\\DbCommandManager.cs", true);
 			}
 			else
 			{
@@ -2476,6 +2515,7 @@
 						this.GetTemplate("Entity.aspx.cst").SetProperty("SourceTables", templateSourceTables);
 						this.GetTemplate("Entity.aspx.cst").SetProperty("NameSpace", RootNameSpace);
 						this.GetTemplate("Entity.aspx.cst").SetProperty("BLLNameSpace", BusinessLogicLayerNameSpace);
+						this.GetTemplate("Entity.aspx.cst").SetProperty("ProviderInvariantName", _providerInvariantName);
 						this.GetTemplate("Entity.aspx.cst").SetProperty("IncludeAtlasLibrary", IncludeAtlasLibrary);
 						this.GetTemplate("Entity.aspx.cst").SetProperty("IncludeAtlasToolkit", IncludeAtlasToolkit);
 						this.GetTemplate("Entity.aspx.cst").SetProperty("IncludeGetListByFK", IncludeGetListByFK);
@@ -2493,6 +2533,7 @@
 						this.GetTemplate("Entity.aspx.cs.cst").SetProperty("NameSpace", RootNameSpace);
 						this.GetTemplate("Entity.aspx.cs.cst").SetProperty("WebProjectNameSpace", RootNameSpace);
 						this.GetTemplate("Entity.aspx.cs.cst").SetProperty("BLLNameSpace", BusinessLogicLayerNameSpace);
+						this.GetTemplate("Entity.aspx.cs.cst").SetProperty("ProviderInvariantName", _providerInvariantName);
 						this.GetTemplate("Entity.aspx.cs.cst").SetProperty("DALNameSpace", DataAccessLayerNameSpace);
 						this.GetTemplate("Entity.aspx.cs.cst").SetProperty("IncludeAtlasLibrary", IncludeAtlasLibrary);
 						this.GetTemplate("Entity.aspx.cs.cst").SetProperty("IncludeAtlasToolkit", IncludeAtlasToolkit);
@@ -2507,6 +2548,7 @@
 						this.GetTemplate("EntityEdit.aspx.cst").SetProperty("NameSpace", RootNameSpace);
 						this.GetTemplate("EntityEdit.aspx.cst").SetProperty("SourceDatabase", SourceDatabase);
 						this.GetTemplate("EntityEdit.aspx.cst").SetProperty("BLLNameSpace", BusinessLogicLayerNameSpace);
+						this.GetTemplate("EntityEdit.aspx.cst").SetProperty("ProviderInvariantName", _providerInvariantName);
 						this.GetTemplate("EntityEdit.aspx.cst").SetProperty("IncludeAtlasLibrary", IncludeAtlasLibrary);
 						this.GetTemplate("EntityEdit.aspx.cst").SetProperty("IncludeAtlasToolkit", IncludeAtlasToolkit);
 						this.GetTemplate("EntityEdit.aspx.cst").SetProperty("IncludeGetListByFK", IncludeGetListByFK);
@@ -2522,6 +2564,7 @@
 						this.GetTemplate("EntityEdit.aspx.cs.cst").SetProperty("NameSpace", RootNameSpace);
 						this.GetTemplate("EntityEdit.aspx.cs.cst").SetProperty("SourceDatabase", SourceDatabase);
 						this.GetTemplate("EntityEdit.aspx.cs.cst").SetProperty("BLLNameSpace", BusinessLogicLayerNameSpace);
+						this.GetTemplate("EntityEdit.aspx.cs.cst").SetProperty("ProviderInvariantName", _providerInvariantName);
 						this.GetTemplate("EntityEdit.aspx.cs.cst").SetProperty("IncludeAtlasLibrary", IncludeAtlasLibrary);
 						this.GetTemplate("EntityEdit.aspx.cs.cst").SetProperty("IncludeAtlasToolkit", IncludeAtlasToolkit);
 						
@@ -2655,6 +2698,8 @@
 			this.GetTemplate(solutionTemplate).SetProperty("DALNameSpace", DALNameSpace);
 			this.GetTemplate(solutionTemplate).SetProperty("BLLNameSpace", BLLNameSpace);
 			this.GetTemplate(solutionTemplate).SetProperty("DALSqlNameSpace", DALSqlNameSpace);
+			this.GetTemplate(solutionTemplate).SetProperty("DALOracleNameSpace", DALOracleNameSpace);
+			this.GetTemplate(solutionTemplate).SetProperty("ProviderInvariantName", _providerInvariantName);
 			this.GetTemplate(solutionTemplate).SetProperty("DALGenericNameSpace", DALGenericNameSpace);
 			this.GetTemplate(solutionTemplate).SetProperty("DALWSNameSpace", DALWSNameSpace);
 			this.GetTemplate(solutionTemplate).SetProperty("WebLibNameSpace", WebLibNameSpace);
@@ -2854,9 +2899,10 @@
 			this.RenderToFile(projectTemplate, rootPathDAL + "\\" + DALNameSpace + ".csproj", true);
 			#endregion Data Access Layer base
 			
-			#region Sql client
 			if (_netTiersSqlProvider == true)
 			{
+				#region Sql client
+				
 				AddFileNode(commonNode, BLLNameSpace + "."+DataAccessLayerNameSpace+".SqlClient.csproj");
 		
 				this.GetTemplate(projectTemplate).SetProperty("IncludeBll", false);
@@ -2874,12 +2920,37 @@
 				this.GetTemplate(projectTemplate).SetProperty("IncludeDesignTimeSupport", false);
 				
 				this.RenderToFile(projectTemplate, rootPathDALSql + "\\" + DALSqlNameSpace + ".csproj", true);
-			}
-			#endregion Sql client
 			
-			#region Generic client
-			if (_netTiersSqlProvider == false)
+				#endregion Sql client
+			}
+			else if(_providerInvariantName == "System.Data.OracleClient")
 			{
+				#region Oracle Client
+				
+				AddFileNode(commonNode, BLLNameSpace + "."+DataAccessLayerNameSpace+".OracleClient.csproj");
+		
+				this.GetTemplate(projectTemplate).SetProperty("IncludeBll", false);
+				this.GetTemplate(projectTemplate).SetProperty("IncludeDALBase", false);	
+				this.GetTemplate(projectTemplate).SetProperty("IncludeSqlClient", false);			
+				this.GetTemplate(projectTemplate).SetProperty("IncludeGenericClient", true);	
+				this.GetTemplate(projectTemplate).SetProperty("IncludeWebservice", false);
+				this.GetTemplate(projectTemplate).SetProperty("IncludeWebserviceClient", false);
+				this.GetTemplate(projectTemplate).SetProperty("IncludeComponents", false);
+				this.GetTemplate(projectTemplate).SetProperty("IncludeWebLibrary", false);
+				this.GetTemplate(projectTemplate).SetProperty("IncludeWebSecurity", false);
+				this.GetTemplate(projectTemplate).SetProperty("IncludeWebsite", false);
+				this.GetTemplate(projectTemplate).SetProperty("IncludeUnitTest", MoM.Templates.UnitTestStyle.None);			
+				this.GetTemplate(projectTemplate).SetProperty("IncludeWCFDataAttributes", false);
+				this.GetTemplate(projectTemplate).SetProperty("IncludeDesignTimeSupport", false);
+			
+				this.RenderToFile(projectTemplate, rootPathDALOracle + "\\" + DALOracleNameSpace + ".csproj", true);
+			
+				#endregion
+			}
+			else
+			{
+				#region Generic client
+			
 				AddFileNode(commonNode, BLLNameSpace + "."+DataAccessLayerNameSpace+".GenericClient.csproj");
 		
 				this.GetTemplate(projectTemplate).SetProperty("IncludeBll", false);
@@ -2897,8 +2968,9 @@
 				this.GetTemplate(projectTemplate).SetProperty("IncludeDesignTimeSupport", false);
 			
 				this.RenderToFile(projectTemplate, rootPathDALGeneric + "\\" + DALGenericNameSpace + ".csproj", true);
-			}
-			#endregion Generic client		
+				
+				#endregion Generic client
+			}		
 			
 			#region	Web Service Client
 			if (GenerateWebservice)
@@ -3259,7 +3331,45 @@
 					//AddExecutionTime(sqlDalcNode);
 				}
 			}
-			else if (_netTiersSqlProvider == false)
+			else if(_providerInvariantName == "System.Data.OracleClient")
+			{
+				//----------------------------------------------------------------------------------------------------------------------------------------------
+				//	base provider class
+				//----------------------------------------------------------------------------------------------------------------------------------------------
+				XmlElement dalcViewBaseNode = AddFileNode(tableNode, "Oracle"+ GetClassName(SourceView, ClassNameFormat.PartialProviderBase) + ".cs");
+				this.GetTemplate("OracleEntityViewProviderBase.generated.cst").SetProperty("IncludeDatabaseFeatures", IncludeDatabaseFeatures);
+				this.GetTemplate("OracleEntityViewProviderBase.generated.cst").SetProperty("IncludeCustoms", IncludeCustoms);
+				this.GetTemplate("OracleEntityViewProviderBase.generated.cst").SetProperty("IncludeGetList", IncludeGetList);
+				this.GetTemplate("OracleEntityViewProviderBase.generated.cst").SetProperty("IncludeGetListByIX", IncludeGetListByIX);
+				this.GetTemplate("OracleEntityViewProviderBase.generated.cst").SetProperty("IncludeFind", IncludeFind);
+				this.GetTemplate("OracleEntityViewProviderBase.generated.cst").SetProperty("SourceView", SourceView);
+				this.GetTemplate("OracleEntityViewProviderBase.generated.cst").SetProperty("CustomNonMatchingReturnType", CustomNonMatchingReturnType);
+				this.GetTemplate("OracleEntityViewProviderBase.generated.cst").SetProperty("NameSpace", BLLNameSpace);
+				this.GetTemplate("OracleEntityViewProviderBase.generated.cst").SetProperty("DALNameSpace", DALNameSpace);
+				this.GetTemplate("OracleEntityViewProviderBase.generated.cst").SetProperty("SelectSuffix", SelectSuffix);
+				this.GetTemplate("OracleEntityViewProviderBase.generated.cst").SetProperty("SelectAllSuffix", SelectAllSuffix);
+				this.GetTemplate("OracleEntityViewProviderBase.generated.cst").SetProperty("ProcedurePrefix", ProcedurePrefix);
+				
+						
+				this.RenderToFile("OracleEntityViewProviderBase.generated.cst", rootPathDALOracle + "\\Views\\Oracle" + GetClassName(SourceView, ClassNameFormat.PartialProviderBase) + ".cs", true);
+				
+				//----------------------------------------------------------------------------------------------------------------------------------------------
+				//	provider class
+				//----------------------------------------------------------------------------------------------------------------------------------------------
+				if (!File.Exists(rootPathDALOracle + "\\Views\\Oracle" + GetClassName(SourceView, ClassNameFormat.Provider) + ".cs"))
+				{
+					XmlElement sqlDalcNode = AddFileNode(tableNode, rootPathDALOracle + "\\Views\\"+ GetClassName(SourceView, ClassNameFormat.Provider) + ".cs");
+					this.GetTemplate("OracleEntityViewProvider.cst").SetProperty("NameSpace", BLLNameSpace);
+					this.GetTemplate("OracleEntityViewProvider.cst").SetProperty("DALNameSpace", DALNameSpace);
+					this.GetTemplate("OracleEntityViewProvider.cst").SetProperty("ClassName", GetClassName(SourceView));
+					this.GetTemplate("OracleEntityViewProvider.cst").SetProperty("ProviderName", "Oracle" + GetClassName(SourceView, ClassNameFormat.Provider));
+					this.GetTemplate("OracleEntityViewProvider.cst").SetProperty("ProviderBaseName", "Oracle" + GetClassName(SourceView, ClassNameFormat.ProviderBase));
+					
+					this.RenderToFile("OracleEntityViewProvider.cst", rootPathDALOracle + "\\Views\\Oracle" + GetClassName(SourceView, ClassNameFormat.Provider) + ".cs", false);
+					//AddExecutionTime(sqlDalcNode);
+				}
+			}
+			else
 			{
 				//----------------------------------------------------------------------------------------------------------------------------------------------
 				//	base provider class
@@ -3280,8 +3390,6 @@
 				
 						
 				this.RenderToFile("GenericEntityViewProviderBase.generated.cst", rootPathDALGeneric + "\\Views\\Generic" + GetClassName(SourceView, ClassNameFormat.PartialProviderBase) + ".cs", true);
-				
-				//----------------------------------------------------------------------------------------------------------------------------------------------
 				
 				//----------------------------------------------------------------------------------------------------------------------------------------------
 				//	provider class
@@ -3785,9 +3893,10 @@
 				}
 				//----------------------------------------------------------------------------------------------------------------------------------------------
 	
-				#region Sql client dal files
 				if (_netTiersSqlProvider == true)
-				{	
+				{
+					#region Sql client dal files
+				
 					//----------------------------------------------------------------------------------------------------------------------------------------------
 					//	Generating the abstract SqlClient entity Repository class		
 					//----------------------------------------------------------------------------------------------------------------------------------------------
@@ -3823,8 +3932,6 @@
 														
 					this.RenderToFile("SqlEntityProviderBase.generated.cst", rootPathDALSql + "\\Sql" + GetClassName(SourceTable, ClassNameFormat.PartialProviderBase) + ".cs", true);
 					AddExecutionTime(sqlDalcBaseNode);
-					//----------------------------------------------------------------------------------------------------------------------------------------------
-					
 					
 					//----------------------------------------------------------------------------------------------------------------------------------------------
 					//	Generating the SqlClient Repository Implementation, only if not already there
@@ -3842,14 +3949,72 @@
 						this.RenderToFile("SqlEntityProvider.cst", rootPathDALSql + "\\Sql" + GetClassName(SourceTable, ClassNameFormat.Provider) + ".cs", false);
 						AddExecutionTime(sqlDalcNode);
 					}
+					#endregion
 				}
-				#endregion
-				
-				#region Generic client dal files
-				
-				if (_netTiersSqlProvider == false)
+				else if(_providerInvariantName == "System.Data.OracleClient")
 				{
+					#region Oracle client dal files
+					
+					//----------------------------------------------------------------------------------------------------------------------------------------------
+					//	Generating the abstract SqlClient entity Repository class		
+					//----------------------------------------------------------------------------------------------------------------------------------------------
+					XmlElement oracleDalBaseNode = AddFileNode(tableNode, "OracleClient\\Oracle"+ GetClassName(SourceTable, ClassNameFormat.PartialProviderBase) + ".cs");
+					
+					//Response.WriteLine("Building abstract OracleClient Repository class : OracleClient\\" + GetAbstractRepositoryClassName(SourceTable.Name) );
+					this.GetTemplate("OracleEntityProviderBase.generated.cst").SetProperty("IncludeCustoms", IncludeCustoms);				
+					this.GetTemplate("OracleEntityProviderBase.generated.cst").SetProperty("CustomNonMatchingReturnType", CustomNonMatchingReturnType);				
+					this.GetTemplate("OracleEntityProviderBase.generated.cst").SetProperty("CustomProcedureStartsWith", CustomProcedureStartsWith);			
+					
+					this.GetTemplate("OracleEntityProviderBase.generated.cst").SetProperty("InsertSuffix", InsertSuffix);
+					this.GetTemplate("OracleEntityProviderBase.generated.cst").SetProperty("UpdateSuffix", UpdateSuffix);
+					this.GetTemplate("OracleEntityProviderBase.generated.cst").SetProperty("DeleteSuffix", DeleteSuffix);
+					this.GetTemplate("OracleEntityProviderBase.generated.cst").SetProperty("SelectSuffix", SelectSuffix);
+					this.GetTemplate("OracleEntityProviderBase.generated.cst").SetProperty("SelectAllSuffix", SelectAllSuffix);
+					this.GetTemplate("OracleEntityProviderBase.generated.cst").SetProperty("FindSuffix", FindSuffix);
+					this.GetTemplate("OracleEntityProviderBase.generated.cst").SetProperty("ProcedurePrefix", ProcedurePrefix.Replace(" ", ""));
+					
+					this.GetTemplate("OracleEntityProviderBase.generated.cst").SetProperty("IncludeInsert", IncludeInsert);
+					this.GetTemplate("OracleEntityProviderBase.generated.cst").SetProperty("IncludeUpdate", IncludeUpdate);
+					this.GetTemplate("OracleEntityProviderBase.generated.cst").SetProperty("IncludeSave", IncludeSave);
+					this.GetTemplate("OracleEntityProviderBase.generated.cst").SetProperty("IncludeDelete", IncludeDelete);
+					this.GetTemplate("OracleEntityProviderBase.generated.cst").SetProperty("IncludeManyToMany", IncludeManyToMany);
+					this.GetTemplate("OracleEntityProviderBase.generated.cst").SetProperty("IncludeGetList", IncludeGetList);
+					this.GetTemplate("OracleEntityProviderBase.generated.cst").SetProperty("IncludeGetListByFK", IncludeGetListByFK);
+					this.GetTemplate("OracleEntityProviderBase.generated.cst").SetProperty("IncludeGetListByIX", IncludeGetListByIX);
+					this.GetTemplate("OracleEntityProviderBase.generated.cst").SetProperty("IncludeFind", IncludeFind);
+					this.GetTemplate("OracleEntityProviderBase.generated.cst").SetProperty("IncludeDatabaseFeatures", IncludeDatabaseFeatures);
+					
+					this.GetTemplate("OracleEntityProviderBase.generated.cst").SetProperty("SourceTable", SourceTable);
+					this.GetTemplate("OracleEntityProviderBase.generated.cst").SetProperty("SourceTables", templateSourceTables);
+					this.GetTemplate("OracleEntityProviderBase.generated.cst").SetProperty("NameSpace", BLLNameSpace);
+					this.GetTemplate("OracleEntityProviderBase.generated.cst").SetProperty("DALNameSpace", DALNameSpace);
+														
+					this.RenderToFile("OracleEntityProviderBase.generated.cst", rootPathDALOracle + "\\Oracle" + GetClassName(SourceTable, ClassNameFormat.PartialProviderBase) + ".cs", true);
+					AddExecutionTime(oracleDalBaseNode);
 				
+					//----------------------------------------------------------------------------------------------------------------------------------------------
+					//	Generating the SqlClient Repository Implementation, only if not already there
+					//----------------------------------------------------------------------------------------------------------------------------------------------
+					if (!File.Exists(rootPathDALOracle+ "\\Oracle" + GetClassName(SourceTable, ClassNameFormat.Provider) + ".cs"))
+					{
+						XmlElement OracleDalNode2 = AddFileNode(tableNode, "OracleClient\\"+ GetClassName(SourceTable, ClassNameFormat.Repository) + ".cs");
+						//Response.WriteLine("Building concrete SqlClient Repository class : SqlClient\\" + GetRepositoryClassName(SourceTable.Name));
+						this.GetTemplate("OracleEntityProvider.cst").SetProperty("NameSpace", BLLNameSpace);
+						this.GetTemplate("OracleEntityProvider.cst").SetProperty("DALNameSpace", DALNameSpace);
+						this.GetTemplate("OracleEntityProvider.cst").SetProperty("ClassName", GetClassName(SourceTable));
+						this.GetTemplate("OracleEntityProvider.cst").SetProperty("ProviderName", "Oracle" + GetClassName(SourceTable, ClassNameFormat.Provider));
+						this.GetTemplate("OracleEntityProvider.cst").SetProperty("ProviderBaseName", "Oracle" + GetClassName(SourceTable, ClassNameFormat.ProviderBase));
+						
+						this.RenderToFile("OracleEntityProvider.cst", rootPathDALOracle + "\\Oracle" + GetClassName(SourceTable, ClassNameFormat.Provider) + ".cs", false);
+						AddExecutionTime(OracleDalNode2);
+					}
+					
+					#endregion
+				}
+				else
+				{
+					#region Generic client dal files
+					
 					//----------------------------------------------------------------------------------------------------------------------------------------------
 					//	Generating the abstract SqlClient entity Repository class		
 					//----------------------------------------------------------------------------------------------------------------------------------------------
@@ -3886,8 +4051,6 @@
 														
 					this.RenderToFile("GenericEntityProviderBase.generated.cst", rootPathDALGeneric + "\\Generic" + GetClassName(SourceTable, ClassNameFormat.PartialProviderBase) + ".cs", true);
 					AddExecutionTime(genericDalcBaseNode);
-					//----------------------------------------------------------------------------------------------------------------------------------------------
-					
 					
 					//----------------------------------------------------------------------------------------------------------------------------------------------
 					//	Generating the SqlClient Repository Implementation, only if not already there
@@ -3905,8 +4068,9 @@
 						this.RenderToFile("GenericEntityProvider.cst", rootPathDALGeneric + "\\Generic" + GetClassName(SourceTable, ClassNameFormat.Provider) + ".cs", false);
 						AddExecutionTime(genericDalcNode);
 					}
+					#endregion
 				}
-				#endregion
+				
 				
 				#region Generate the Repository nUnit Test class
 				if ((IncludeUnitTest != MoM.Templates.UnitTestStyle.None) /*&& !IsJunctionTable(SourceTable)*/)
