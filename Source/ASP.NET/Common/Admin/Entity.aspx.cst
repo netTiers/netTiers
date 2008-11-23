@@ -10,6 +10,7 @@
 
 <%@ Property Name="NameSpace" Type="System.String" Category="Style" Description="Class Namespace." %>
 <%@ Property Name="BLLNameSpace" Type="System.String" Category="Data" Description="BLL Namespace." %>
+<%@ Property Name="ProviderInvariantName" Type="System.String" Category="Options" Optional="False" Description="ProviderInvariantName" %>
 <%@ Property Name="IncludeAtlasLibrary" Type="System.Boolean" Default="false" Category="06b. Website - Advanced" Description="Indicates whether to include a reference to the Atlas component library." %>
 <%@ Property Name="IncludeAtlasToolkit" Type="System.Boolean" Default="false" Category="06b. Website - Advanced" Description="Indicates whether to include a reference to the Atlas Control Toolkit. This property is only taken into account when IncludeAtlasLibrary is true." %>
 <%@ Property Name="IncludeGetListByFK" Type="System.Boolean" Default="True" Category="Options" Description="If true get functions will be generated." %>
@@ -350,14 +351,36 @@ public string WriteBoundField(ColumnSchema column, int tabs) {
 
 	if (column.DataType == DbType.Date || column.DataType == DbType.DateTime)
 	{
+		if(ProviderInvariantName == "System.Data.OracleClient")
+		{
+		return string.Format("{1}<asp:BoundField DataField=\"{0}\" DataFormatString=\"{{0:d}}\" HtmlEncode=\"False\" HeaderText=\"{4}\" SortExpression=\"{2}\" {3} />", propertyName, Tab(tabs), column.Name, (column.IsPrimaryKeyMember)?"ReadOnly":"", GetFriendlyName(column));
+		}
+		else
+		{
 		return string.Format("{1}<asp:BoundField DataField=\"{0}\" DataFormatString=\"{{0:d}}\" HtmlEncode=\"False\" HeaderText=\"{4}\" SortExpression=\"[{2}]\" {3} />", propertyName, Tab(tabs), column.Name, (column.IsPrimaryKeyMember)?"ReadOnly":"", GetFriendlyName(column));
+		}
 	}
-	else if (column.NativeType == "bit") {
+	else if (column.NativeType == "bit") 
+	{
+		if(ProviderInvariantName == "System.Data.OracleClient")
+		{
+		return string.Format("{1}<data:BoundRadioButtonField DataField=\"{0}\" HeaderText=\"{4}\" SortExpression=\"{2}\" {3} />", propertyName, Tab(tabs), column.Name, (column.IsPrimaryKeyMember)?"ReadOnly":"", GetFriendlyName(column));
+		}
+		else
+		{
 		return string.Format("{1}<data:BoundRadioButtonField DataField=\"{0}\" HeaderText=\"{4}\" SortExpression=\"[{2}]\" {3} />", propertyName, Tab(tabs), column.Name, (column.IsPrimaryKeyMember)?"ReadOnly":"", GetFriendlyName(column));
+		}
 	}	
 	else if (column.NativeType != "text" && column.NativeType != "ntext") 
 	{
+		if(ProviderInvariantName == "System.Data.OracleClient")
+		{
+		return string.Format("{1}<asp:BoundField DataField=\"{0}\" HeaderText=\"{4}\" SortExpression=\"{2}\" {3} />", propertyName, Tab(tabs), column.Name, (column.IsPrimaryKeyMember)?"ReadOnly":"", GetFriendlyName(column));
+		}
+		else
+		{
 		return string.Format("{1}<asp:BoundField DataField=\"{0}\" HeaderText=\"{4}\" SortExpression=\"[{2}]\" {3} />", propertyName, Tab(tabs), column.Name, (column.IsPrimaryKeyMember)?"ReadOnly":"", GetFriendlyName(column));
+		}
 	}
 	/*
 	else 
