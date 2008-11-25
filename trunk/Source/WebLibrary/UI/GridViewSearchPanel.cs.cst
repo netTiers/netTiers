@@ -4,6 +4,7 @@
 
 <%@ Property Name="RootNameSpace" Type="System.String" Category="Data" Description="Website Namespace." %>
 <%@ Property Name="BusinessLogicLayerNameSpace" Type="System.String" Category="03. Namespaces - Required" Description="The sub namespace that is added to the root namespace for the entities." Default="Entities" Optional="False" %>  <%--  NoWarn="0108,0618,1572,1573,1574,0162,2002" --%>
+<%@ Property Name="ProviderInvariantName" Type="System.String" Category="Data" Description="The DBProviderFactory name." %>
 
 #region Using directives
 
@@ -622,6 +623,23 @@ namespace <%=RootNameSpace%>.Web.UI
         {
             switch (cboOperator.SelectedValue)
             {
+				<% if(ProviderInvariantName == "System.Data.OracleClient") { %>
+				case "0":
+                    whereClause = string.Format("{0} LIKE '%{1}%'", cboFieldName.SelectedValue, txtKeyword.Text);
+                    break;
+
+                case "1":
+                    whereClause = string.Format("{0} LIKE '{1}%'", cboFieldName.SelectedValue, txtKeyword.Text);
+                    break;
+
+                case "2":
+                    whereClause = string.Format("{0} = '{1}'", cboFieldName.SelectedValue, txtKeyword.Text);
+                    break;
+
+                case "3":
+                    whereClause = string.Format("{0} LIKE '%{1}'", cboFieldName.SelectedValue, txtKeyword.Text);
+                    break;
+				<% } else { %>
                 case "0":
                     whereClause = string.Format("[{0}] LIKE '%{1}%'", cboFieldName.SelectedValue, txtKeyword.Text);
                     break;
@@ -637,6 +655,7 @@ namespace <%=RootNameSpace%>.Web.UI
                 case "3":
                     whereClause = string.Format("[{0}] LIKE '%{1}'", cboFieldName.SelectedValue, txtKeyword.Text);
                     break;
+				<% } %>
             }
 
             SetWhereClause(whereClause);

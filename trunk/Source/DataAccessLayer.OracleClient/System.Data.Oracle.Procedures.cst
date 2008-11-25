@@ -169,17 +169,19 @@ end;
 				BEGIN
 				
 				dynamicSQL := 'SELECT <% for (int i = 0; i < cols.Count; i++) { %><%= cols[i].Name %><% if (i < cols.Count - 1) { %>,<% } %><% } %>';
-				dynamicSQL := dynamicSQL || ' FROM ';
-				dynamicSQL := dynamicSQL || '    (SELECT <% for (int i = 0; i < cols.Count; i++) { %> <%= cols[i].Name %>,	<% } %> rownum rnum ';
+				dynamicSQL := dynamicSQL || ' FROM (';
+				dynamicSQL := dynamicSQL || ' 	SELECT <% for (int i = 0; i < cols.Count; i++) { %>x.<%= cols[i].Name %>,<% } %> rownum as r';
+				dynamicSQL := dynamicSQL || ' 	FROM (';
+				dynamicSQL := dynamicSQL || '     SELECT <% for (int i = 0; i < cols.Count; i++) { %> <%= cols[i].Name %><% if (i < cols.Count - 1) { %>,<% } %><% } %>';
 				dynamicSQL := dynamicSQL || '     FROM <%=owner%>.<%= SourceTable.Name %> ';
-				dynamicSQL := dynamicSQL || '     WHERE rownum BETWEEN (:PageSize * :PageIndex) AND (:PageSize * :PageIndex + :PageSize) ) ';
-				
 				IF length(WhereClause) > 0 THEN
 					dynamicSQL := dynamicSQL || ' WHERE ' || WhereClause;
 				END IF;
 				IF length(OrderBy) > 0 THEN
 					dynamicSQL := dynamicSQL || ' ORDER BY ' || OrderBy;
 				END IF;
+				
+				dynamicSQL := dynamicSQL || ') x ) WHERE r BETWEEN (:PageSize * :PageIndex) AND (:PageSize * :PageIndex + :PageSize)';
 				
 				-- Execution the query
 				OPEN cur_OUT FOR dynamicSQL USING PageSize, PageIndex, PageSize, PageIndex, PageSize;
