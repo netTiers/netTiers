@@ -27,7 +27,7 @@ string entlibVersionText = GetEntLibVersionSignature(EntLibVersion);
 	<connectionStrings>
 		<add name="<%= DALNameSpace %>.ConnectionString" connectionString="<%= ConnectionString %>" />
 	</connectionStrings>
-	<<%= DALNameSpace %> defaultProvider="<% if (NetTiersSqlProvider) {%>SqlNetTiersProvider<% } else {%>GenericNetTiersProvider<%}%>">
+	<<%= DALNameSpace %> defaultProvider="<% if (NetTiersSqlProvider) {%>SqlNetTiersProvider<% } else if(ProviderInvariantName == "System.Data.OracleClient") { %>OracleNetTiersProvider<% } else {%>GenericNetTiersProvider<%}%>">
 		<providers>
 		<% if (NetTiersSqlProvider) { %>
 			<!--
@@ -49,16 +49,14 @@ string entlibVersionText = GetEntLibVersionSignature(EntLibVersion);
 			/>
 		<% } else if(ProviderInvariantName == "System.Data.OracleClient") { %>
 			<!--
-		*** GenericClient Provider ***
-		this is the generic DbProviderFactory .netTiers provider
+		*** OracleClient Provider ***
+			this is the Oracle DbProviderFactory .netTiers provider
 			connectionStringName: the connection string to the db
-			useStoredProcedure: if trueindicates that we use the stored procedures, otherwise, we use parametrized queries that are embedded.
-			providerInvariantName: indicate the provider you want to use, for the moment only the following list is supported:
-				- System.Data.SQLite
+			useStoredProcedure: Always uses stored procedures.
 		-->
 		<add 
-			name="GenericNetTiersProvider" 
-			type="<%=DALNameSpace%>.OracleClient.OracleNetTiersProvider, <%=DALNameSpace%>.GenericClient"
+			name="OracleNetTiersProvider" 
+			type="<%=DALNameSpace%>.OracleClient.OracleNetTiersProvider, <%=DALNameSpace%>.OracleClient"
 			connectionStringName="<%= DALNameSpace %>.ConnectionString"
 			useStoredProcedure="true"
 			providerInvariantName="<%=ProviderInvariantName%>"
@@ -104,7 +102,7 @@ string entlibVersionText = GetEntLibVersionSignature(EntLibVersion);
 			</controls>
 		</pages>
 		<httpModules>
-			<add name="EntityTransactionModule" type="<%= WebNameSpace %>.Data.EntityTransactionModule"/>
+			<add name="EntityTransactionModule" type="<%= WebNameSpace %>.Data.EntityTransactionModule, <%= WebNameSpace %>"/>
 		</httpModules>
         <!-- 
             Set compilation debug="true" to insert debugging 

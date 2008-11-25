@@ -6,6 +6,7 @@
  --%>
 <%@ CodeTemplate Language="C#" TargetLanguage="C#" Description="" ResponseEncoding="UTF-8"  NoWarn="0108,0618,1572,1573,1574,0162,2002"%>
 <%@ Property Name="DALNameSpace" Type="System.String" Category="Data" Description="Project Namespace." %>
+<%@ Property Name="ProviderInvariantName" Type="System.String" Category="Options" Optional="False" Description="ProviderInvariantName" %>
 #region Using directives
 using System;
 using System.Data;
@@ -14,6 +15,10 @@ using System.Data.Common;
 using System.Diagnostics;
 using Microsoft.Practices.EnterpriseLibrary.Data;
 using Microsoft.Practices.EnterpriseLibrary.Data.Sql;
+<% if(ProviderInvariantName == "System.Data.OracleClient") { %>
+using Microsoft.Practices.EnterpriseLibrary.Data.Oracle;
+<% } %>
+
 #endregion Using directives
 
 namespace <%=DALNameSpace%>
@@ -60,7 +65,11 @@ namespace <%=DALNameSpace%>
         		this._connectionString = value;
 				if ( this._connectionString.Length > 0 && this._invariantProviderName.Length > 0 )
 				{
+					<% if(ProviderInvariantName == "System.Data.OracleClient") { %>
+					this._database = new OracleDatabase(_connectionString );
+					<% } else { %>
 					this._database = new GenericDatabase(_connectionString, DbProviderFactories.GetFactory( this._invariantProviderName ) );
+					<% } %>
 					this._connection = this._database.CreateConnection();
 				}
 			}
@@ -83,7 +92,11 @@ namespace <%=DALNameSpace%>
 				this._invariantProviderName = value;
 				if ( this._connectionString.Length > 0 && this._invariantProviderName.Length > 0 )
 				{
-					this._database = new GenericDatabase(this._connectionString, DbProviderFactories.GetFactory( this._invariantProviderName ) );
+					<% if(ProviderInvariantName == "System.Data.OracleClient") { %>
+					this._database = new OracleDatabase(_connectionString );
+					<% } else { %>
+					this._database = new GenericDatabase(_connectionString, DbProviderFactories.GetFactory( this._invariantProviderName ) );
+					<% } %>
 					this._connection = this._database.CreateConnection();
 				}
 			}
@@ -141,8 +154,12 @@ namespace <%=DALNameSpace%>
 		{
     		this._connectionString = connectionString;
       		this._invariantProviderName = providerInvariantName;
-      		this._database = new GenericDatabase( this._connectionString, DbProviderFactories.GetFactory( providerInvariantName ) );
-			this._connection = this._database.CreateConnection();
+			<% if(ProviderInvariantName == "System.Data.OracleClient") { %>
+			this._database = new OracleDatabase(_connectionString );
+			<% } else { %>
+			this._database = new GenericDatabase(_connectionString, DbProviderFactories.GetFactory( this._invariantProviderName ) );
+			<% } %>
+      		this._connection = this._database.CreateConnection();
 		}
 		#endregion Constructors
 		
