@@ -4444,15 +4444,45 @@ CREATE\s+PROC(?:EDURE)?                               # find the start of the st
 		/// <param name="keys"> the key instance.</param>
 		public string GetProcNameForGetByIX(string prefix, ColumnSchema[] keys)
 		{
-			const int maxLen = 128; // SQL Server's maximum stored procedure name length
+			int maxLen;
+			
+			//Fixes ORA-00972: identifier is too long error.
+			if(string.IsNullOrEmpty(ParameterPrefix))
+			{
+				maxLen = 30; // Oracle's maximum stored procedure name length
+			}
+			else
+			{
+				maxLen = 128; // SQL Server's maximum stored procedure name length
+			}
+			
 			// get all the key names and see if they fit
 			string keyNames = GetKeysName(keys);
 			if (prefix.Length + keyNames.Length <= maxLen)
 				return prefix + keyNames;
-			else
+			else if (string.IsNullOrEmpty(ParameterPrefix))
 			{
+				// Handle Oracle Differently.
+				StringBuilder names = new StringBuilder(maxLen);
+				names.Append(prefix);
+				string keyName;
+				for(int x = 0; x < keys.Length; x++)
+				{
+					keyName = GetPropertyName(keys[x]);
+					if(keyName.Length > 5) //This should allow more keyNames..
+						keyName = keyName.Substring(0, 5);
+						
+					if (names.Length + keyName.Length <= maxLen)
+						names.Append(keyName);
+					else
+						break;
+				}
+				return names.ToString();
+			}
+			else
+			{	
 				// get the key names one at a time until we run out of space
-				StringBuilder names = new StringBuilder();
+				StringBuilder names = new StringBuilder(maxLen);
 				string keyName;
 				for(int x = 0; x < keys.Length; x++)
 				{
