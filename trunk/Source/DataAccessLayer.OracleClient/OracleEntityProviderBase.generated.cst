@@ -721,7 +721,7 @@ namespace <%=DALNameSpace%>.OracleClient
 		public override <%=collectionClassName%> GetBy<%=GetKeysName(fkeys[j].ForeignKeyMemberColumns)%>(TransactionManager transactionManager, <%= GetFunctionHeaderParameters(fkeys[j].ForeignKeyMemberColumns) %>, int start, int pageLength, out int count)
 		{
 			OracleDatabase database = new OracleDatabase(this._connectionString);
-			DbCommand command = database.GetStoredProcCommand("<%=owner + ProcedurePrefix + commandStem + SelectSuffix + "By" + GetKeysName(fkeys[j].ForeignKeyMemberColumns)%>");
+			DbCommand command = database.GetStoredProcCommand("<%=owner + GetProcNameForGetByIX( ProcedurePrefix + commandStem + SelectSuffix + "By" , fkeys[j].ForeignKeyMemberColumns ) %>");
 			
 			<% foreach(ColumnSchema col in fkeys[j].ForeignKeyMemberColumns) { %>
 				database.AddInParameter(command, "<%=ParameterPrefix + GetPropertyName(col)%>", DbType.<%=col.DataType%>, <%=GetFieldName(col)%>);
@@ -820,7 +820,7 @@ namespace <%=DALNameSpace%>.OracleClient
 		public override <%=returnType%> GetBy<%=GetKeysName(indexes[j].MemberColumns)%>(TransactionManager transactionManager, <%= GetFunctionHeaderParameters(indexes[j].MemberColumns) %>, int start, int pageLength, out int count)
 		{
 			OracleDatabase database = new OracleDatabase(this._connectionString);
-			DbCommand command = database.GetStoredProcCommand("<%=owner + ProcedurePrefix + commandStem + SelectSuffix + "By" + GetKeysName(indexes[j].MemberColumns)%>");
+			DbCommand command = database.GetStoredProcCommand("<%=owner + GetProcNameForGetByIX( ProcedurePrefix + commandStem + SelectSuffix + "By", indexes[j].MemberColumns ) %>");
 			
 			<% foreach(ColumnSchema col in indexes[j].MemberColumns) { %>
 				database.AddInParameter(command, "<%=ParameterPrefix + GetPropertyName(col)%>", DbType.<%=col.DataType%>, <%=GetFieldName(col)%>);
@@ -1015,39 +1015,7 @@ namespace <%=DALNameSpace%>.OracleClient
 			// Do the insert
 			results = Utility.ExecuteNonQuery(transactionManager, command);
 			
-			
-			// get the updatable columns
-			
-			DbCommand command2 = database.GetStoredProcCommand("<%=owner + ProcedurePrefix + commandStem + "Last" +InsertSuffix %>");
-			
-			IDataReader reader = Utility.ExecuteReader(transactionManager, command2);
-
-			if (reader.Read())
-			{
-				<%
-				// Update identity or computed columns
-				for (int i = 0; i < cols.Count; i++)		
-				{
-					if (IsComputed(cols[i]) || IsIdentityColumn(cols[i]) )
-					{
-						string castTo = String.Empty;
-						
-						if (cols[i].NativeType == "xml") 
-							castTo = typeof(System.String).ToString();
-						else
-							castTo = cols[i].SystemType.ToString();	%>
-	
-				entity.<%=GetPropertyName(cols[i])%> = (<%=castTo%>) reader["<%=cols[i]%>"];						
-					<%}
-				}
-				%>
-			}
-
-			reader.Close();
-						
 			if (commitTransaction) transactionManager.Commit();
-					
-			
 			
 			<% 			
 			// synchronise utility properties for updatable primary key

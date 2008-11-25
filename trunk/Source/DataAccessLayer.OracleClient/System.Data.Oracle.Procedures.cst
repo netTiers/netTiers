@@ -344,7 +344,7 @@ end;
 						if (!IsComputed(SourceTable.PrimaryKey.MemberColumns[i]) && !IsIdentityColumn(SourceTable.PrimaryKey.MemberColumns[i]) && SourceTable.PrimaryKey.MemberColumns[i] != RowVersion)
 							prefix = "Original";
 						
-						tempParams += string.Format("AND {1} = {0}; {2}", prefix + GetPropertyName(SourceTable.PrimaryKey.MemberColumns[i]), SourceTable.PrimaryKey.MemberColumns[i].Name, Environment.NewLine) ;
+						tempParams += string.Format("AND {1} = {0}{2}", prefix + GetPropertyName(SourceTable.PrimaryKey.MemberColumns[i]), SourceTable.PrimaryKey.MemberColumns[i].Name, Environment.NewLine) ;
 					}
 					if(tempParams.Length > 4)
 					{
@@ -354,7 +354,7 @@ end;
 					{
 						Response.Write("AND " + RowVersion.Name + " = " + GetPropertyName(RowVersion) );
 					} 
-				%>
+				%>;
 				
 				<% if (countComputedColumns > 0) {%>
 				
@@ -385,13 +385,13 @@ end;
 					tempParams = string.Empty;
 					for (int i = 0; i < SourceTable.PrimaryKey.MemberColumns.Count; i++)
 					{
-						tempParams += string.Format("AND {1} = {0} {2};", GetPropertyName(SourceTable.PrimaryKey.MemberColumns[i]), SourceTable.PrimaryKey.MemberColumns[i].Name, Environment.NewLine) ;
+						tempParams += string.Format("AND {1} = {0}{2}", GetPropertyName(SourceTable.PrimaryKey.MemberColumns[i]), SourceTable.PrimaryKey.MemberColumns[i].Name, Environment.NewLine) ;
 					}
 					if(tempParams.Length > 4)
 					{
 						Response.Write(tempParams.Substring(4));
 					}
-				%>
+				%>;
 				<% } // endif countComputedColumns > 0 %>
 			]]></body>
 		</procedure>
@@ -423,12 +423,12 @@ end;
 				DELETE FROM <%=owner%>.<%= SourceTable.Name %> 
 				WHERE
 					<% for (int i = 0; i < SourceTable.PrimaryKey.MemberColumns.Count; i++) { %>			
-					<% if (i > 0) { %>AND <% } %><%= SourceTable.PrimaryKey.MemberColumns[i].Name %> = <%= GetPropertyName(SourceTable.PrimaryKey.MemberColumns[i]) %>;
+					<% if (i > 0) { %>AND <% } %><%= SourceTable.PrimaryKey.MemberColumns[i].Name %> = <%= GetPropertyName(SourceTable.PrimaryKey.MemberColumns[i]) %>
 					<% } 
 					if (RowVersion != null)
 					{
 						Response.Write("\tAND " + RowVersion.Name + " = " + GetPropertyName(RowVersion) );
-					} %>
+					} %>;
 					
 			]]></body>
 		</procedure>
@@ -470,8 +470,8 @@ end;
 					<%=owner%>.<%= SourceTable.Name %>
 				WHERE
 					<% for (int i = 0; i < fkeys[j].ForeignKeyMemberColumns.Count; i++) { %>
-					<% if (i > 0) { %>AND <% } %><%= fkeys[j].ForeignKeyMemberColumns[i].Name %> = <%= GetPropertyName(fkeys[j].ForeignKeyMemberColumns[i]) %>;
-					<% } %>
+					<% if (i > 0) { %>AND <% } %><%= fkeys[j].ForeignKeyMemberColumns[i].Name %> = <%= GetPropertyName(fkeys[j].ForeignKeyMemberColumns[i]) %>
+					<% } %>;
 				
 				
 			]]></body>
@@ -520,8 +520,8 @@ end;
 					<%=owner%>.<%= SourceTable.Name %>
 				WHERE
 					<% for (int i = 0; i < indexes[j].MemberColumns.Count; i++) { %>
-					<% if (i > 0) { %>AND <% } %><%= indexes[j].MemberColumns[i].Name %> = <%= GetPropertyName(indexes[j].MemberColumns[i]) %>;
-					<% } %>
+					<% if (i > 0) { %>AND <% } %><%= indexes[j].MemberColumns[i].Name %> = <%= GetPropertyName(indexes[j].MemberColumns[i]) %>
+					<% } %>;
 				
 					
 			]]></body>
@@ -673,7 +673,7 @@ SELECT <% for (int i = 0; i < primaryTable.Columns.Count; i++)
 
 		<% if ( SourceTable.PrimaryKey != null ) { %>
 		
-		<procedure owner="<%=owner%>" name="<%= ProcedurePrefix + commandStem + FindSuffix + "_Dynamic" %>_Dynamic" skip="true" >
+		<procedure owner="<%=owner%>" name="<%= ProcedurePrefix + commandStem + FindSuffix + "_Dynamic" %>" >
 			<comment><![CDATA[<%= GetProcSqlComment(string.Format("Gets records from the {0} table using a dynamically generated query.", name), tableComment) %>]]></comment>
 			<parameters>
 				<parameter name="cur_OUT" type="types.cursorType" direction="InputOutput" />
@@ -688,7 +688,7 @@ SELECT <% for (int i = 0; i < primaryTable.Columns.Count; i++)
 				<% for (int i = 0; i < cols.Count; i++) { %>
 				       <%= cols[i].Name %><% if (i < cols.Count - 1) { %>,<% } %>
 				<% } %>
-				  from <%=owner%>.<%= SourceTable.Name %>
+				  from <%=owner%>.<%= SourceTable.Name %>;
 			]]></body>
 		</procedure>
 		
