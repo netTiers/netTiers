@@ -216,6 +216,7 @@ namespace <%=WinLibNameSpace%>
 			//
 			// <%=dgvColumnName%>Label
 			//
+			this.<%=dgvColumnName%>Label.Name = "<%=dgvColumnName%>Label";
 			this.<%=dgvColumnName%>Label.Text = "<%=GetFriendlyName(column)%>:";
 			this.<%=dgvColumnName%>Label.Location = new System.Drawing.Point(<%=left%>, <%=i * heightIncrement%>);
 			this.Controls.Add(this.<%=dgvColumnName%>Label);
@@ -223,6 +224,7 @@ namespace <%=WinLibNameSpace%>
 			//
 			// <%=dgvColumnName%>
 			//
+			this.<%=dgvColumnName%>.Name = "<%=dgvColumnName%>";
 			<%if (SourceTable.ForeignKeyColumns.Contains(column)) {%>
 			<% } else if (column.SystemType == typeof(System.String)) { %>
 			this.<%=dgvColumnName%>.Width = 250;
@@ -311,6 +313,45 @@ namespace <%=WinLibNameSpace%>
 		
 		#endregion
 		
+        #region Field visibility
+
+		<% for (int i=0; i<SourceTable.Columns.Count; i++)
+		{ 
+			ColumnSchema column = SourceTable.Columns[i];
+			string dgvColumnName = "ux" + GetPropertyName(column);
+			if (column.NativeType != "image" && column.NativeType != "timestamp" )
+			{%>
+        /// <summary>
+        /// Indicates if the controls associated with the <%=dgvColumnName%> property should be visible.
+        /// </summary>
+        [System.ComponentModel.Category(".netTiers"), System.ComponentModel.Description("Set Visible property for related controls.")]
+        public bool <%=dgvColumnName%>Visible
+        {
+            get { return this.<%=dgvColumnName%>.Visible; }
+            set
+            {
+                this.<%=dgvColumnName%>Label.Visible = value;
+                this.<%=dgvColumnName%>.Visible = value;
+            }
+        }
+
+        /// <summary>
+        /// Indicates if the controls associated with the <%=dgvColumnName%> property should be enabled.
+        /// </summary>
+        [System.ComponentModel.Category(".netTiers"), System.ComponentModel.Description("Set Enabled property for related controls.")]
+        public bool <%=dgvColumnName%>Enabled
+        {
+            get { return this.<%=dgvColumnName%>.Enabled; }
+            set
+            {
+                this.<%=dgvColumnName%>.Enabled = value;
+            }
+        }
+		<% } %>
+		<% } %>
+
+        #endregion
+
 		/// <summary> 
 		/// Required designer variable.
 		/// </summary>
