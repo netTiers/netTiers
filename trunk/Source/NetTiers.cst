@@ -27,9 +27,9 @@
 <%@ Property Name="IncludeComponentLayer" Type="MoM.Templates.ComponentPatternType" Category="02. Framework Generation - Optional" Description="The pattern type to implement in the Component Layer." Default="None" %>
 <%@ Property Name="IncludeWCFDataAttributes" Type="System.Boolean" Default="False" Category="02. Framework Generation - Optional" Description="Indicates if the WCF attributes, [DataContract] and [DataMember], should be included on the entity classes." %>
 <%@ Property Name="SerializeEntityState" Type="System.Boolean" Default="False" Category="02. Framework Generation - Optional" Description="Indicates if the EntityState property should be included during serialization.  Useful if needing to know what state the entity is in over webservices." %>
-<%@ Property Name="EntLibVersion" Type="MoM.Templates.EntLibVersion" Default="v2" Category="02. Framework Generation - Optional" Description="Indicates the Enterprise Library version to use. Options include v2, v3, v3.1, v4 and v4.1" %>
-<%@ Property Name="VisualStudioVersion" Type="MoM.Templates.VSNetVersion" Default="v2005" Category="02. Framework Generation - Optional" Description="Indicates the Version of Visual Studio to target. Options include v2005 and v2008" %>
-<%@ Property Name="DotNetVersion" Type="MoM.Templates.DotNetFrameworkVersion" Default="v2" Category="02. Framework Generation - Optional" Description="Indicates the Version of Dot Net to target. Options include v2, v3 and v3.5" %>
+<%@ Property Name="EntLibVersion" Type="MoM.Templates.EntLibVersion" Default="v4_1" Category="02. Framework Generation - Optional" Description="Indicates the Enterprise Library version to use. Options include v2, v3, v3.1, v4 and v4.1" %>
+<%@ Property Name="VisualStudioVersion" Type="MoM.Templates.VSNetVersion" Default="v2008" Category="02. Framework Generation - Optional" Description="Indicates the Version of Visual Studio to target. Options include v2005 and v2008" %>
+<%@ Property Name="DotNetVersion" Type="MoM.Templates.DotNetFrameworkVersion" Default="v3_5" Category="02. Framework Generation - Optional" Description="Indicates the Version of Dot Net to target. Options include v2, v3 and v3.5" %>
 <%@ Property Name="IncludeXmlAttributes" Type="System.Boolean" Default="False" Category="02. Framework Generation - Optional" Description="Indicates if the Xml attributes, [XmlElement(IsNullable=true)], should be included on the entity classes." %>
 <%@ Property Name="CustomCodeFolderName" Type="System.String" Category="02. Framework Generation - Optional" Description="If specified, indicates the name of a folder that can contains custom classes to dynamically add to each project." Default="App_Code" %>
 <%@ Property Name="EqualitySemantics" Type="MoM.Templates.EqualitySemantics" Default="Value" Category="02. Framework Generation - Optional" Description="Equality semantics used for Entity instances.  If 'Reference', default reference type semantics will be used (based on object identity).  If 'Value', Equals() and GetHashCode() will be overridden to use value semantics (based on object contents)." %>
@@ -421,10 +421,14 @@
 		get { return _ValidationType; }
 		set
 		{
-			_ValidationType = value;
-			if ( value == MoM.Templates.ValidationType.EntLib )
+			_ValidationType = value; 
+			
+			// Enterprise lib validation didn't exist until version 4.0.
+			// If the current version is less than 4.0 and entlib validation is selected update the property..
+			if ( value == MoM.Templates.ValidationType.EntLib && (int)EntLibVersion < 3)
 			{
-				this.EntLibVersion = MoM.Templates.EntLibVersion.v4;
+				Trace.WriteLine("\tWARNING: EntLib validation requires that you use a version of EntLib 4.0 or newer.");
+				this.EntLibVersion = MoM.Templates.EntLibVersion.v4_1;
 			}
 		}
 	}
