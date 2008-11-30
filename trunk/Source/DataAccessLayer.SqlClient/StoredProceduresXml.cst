@@ -78,8 +78,8 @@ if ( IncludeDrop &&
 BEGIN
 DECLARE @procedureName SYSNAME
 DECLARE c CURSOR FOR
-SELECT name FROM sysobjects WHERE type = 'P' AND objectproperty(id, 'IsMSShipped') = 0 
-AND name LIKE '<%=ProcedurePrefix%>%' 
+SELECT '[' + sc.name + '].[' + so.name + ']' FROM sysobjects so INNER JOIN sys.schemas sc ON sc.schema_id = so.uid WHERE type = 'P' AND objectproperty(id, 'IsMSShipped') = 0
+AND so.name LIKE '<%=ProcedurePrefix%>%' 
 <%
 //Exclude all custom stored procs for tables
 foreach(TableSchema table in SourceTables)
@@ -90,7 +90,7 @@ foreach(TableSchema table in SourceTables)
 	{  
 		SchemaExplorer.CommandSchema command = (SchemaExplorer.CommandSchema) item.Value;
 %>
-AND name <> '<%=command.Name%>'
+AND so.name <> '<%=command.Name%>'
 <%
 	}
 }
@@ -103,7 +103,7 @@ foreach(ViewSchema view in SourceViews)
 	{  
 		SchemaExplorer.CommandSchema command = (SchemaExplorer.CommandSchema) item.Value;
 %>
-AND name <> '<%=command.Name%>'
+AND so.name <> '<%=command.Name%>'
 <%
 	}
 }
