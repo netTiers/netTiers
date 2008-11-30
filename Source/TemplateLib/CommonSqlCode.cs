@@ -6016,18 +6016,18 @@ CREATE\s+PROC(?:EDURE)?                               # find the start of the st
 	/// <summary>
 	/// Enterprise Library versions
 	/// </summary>
-	public enum EntLibVersion
+	public enum EntLibVersion : byte
 	{
 		/// <summary>Use Enterprise Library version 2.0.</summary>
-		v2,
+		v2 = 0,
 		/// <summary>Use Enterprise Library version 3.0.</summary>
-		v3,
+		v3 = 1,
 		/// <summary>Use Enterprise Library version 3.1.</summary>
-		v3_1,
+		v3_1 = 2,
 		/// <summary>Use Enterprise Library version 4.0</summary>
-		v4,
+		v4 = 3,
 		/// <summary>Use Enterprise Library version 4.1</summary>
-		v4_1
+		v4_1 = 4
 	}
 	
 	#endregion
