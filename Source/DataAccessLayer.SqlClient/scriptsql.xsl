@@ -42,6 +42,8 @@ GRANT EXEC ON <xsl:value-of select="@owner"/>.<xsl:value-of select="@name"/> TO 
 GO
 SET QUOTED_IDENTIFIER ON 
 GO
+SET NOCOUNT ON
+GO
 SET ANSI_NULLS OFF 
 GO
 </xsl:template>
