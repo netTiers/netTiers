@@ -29,22 +29,30 @@
 
 <%@ Property Name="BLLNameSpace" Type="System.String" Category="Data" Description="BLL Namespace." %>
 <%@ Property Name="DALNameSpace" Type="System.String" Category="Data" Description="DAL Namespace." %>
+<%@ Property Name="ProviderInvariantName" Type="System.String" Default="" Optional="True" Category="Data" Description="The providers invariant name." %>
 
 <%@ Property Name="ClassName" Type="System.String" Category="Style" Description="The Name of the WebService class." %>
 <%@ Property Name="WebServiceUrl" Type="System.String" Category="Style" Description="The webservice base URL. The asmx filename will be added programmatically." Default="http://localhost/Services/" %>
 <%%@ WebService Language="C#" Class="<%=ClassName%>" %>
 <%%@ Assembly Name="<%=BLLNameSpace%>" %>
 <%%@ Assembly Name="<%=DALNameSpace%>" %>
-<%%@ Assembly Name="<%=DALNameSpace+".SqlClient"%>" %>
 
+<% if(ProviderInvariantName == "System.Data.OracleClient") { %>
+<%%@ Assembly Name="<%=DALNameSpace+".OracleClient"%>" %>
+<% } else { %>
+<%%@ Assembly Name="<%=DALNameSpace+".SqlClient"%>" %>
+<% } %>
 
 using System;
 using System.Data;
 using System.Web.Services;
 using <%=BLLNameSpace%>;
 using <%=DALNameSpace%>;
+<% if(ProviderInvariantName == "System.Data.OracleClient") { %>
+using <%=DALNameSpace+".OracleClient"%>;
+<% } else { %>
 using <%=DALNameSpace+".SqlClient"%>;
-
+<% } %>
 
 
 /// <summary>

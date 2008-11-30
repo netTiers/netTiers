@@ -376,7 +376,7 @@
 		{
 			if (_WebServiceUrl.Length == 0)
 			{
-				return "http://localhost/" + (ChooseSourceDatabase != null ? GetClassName(ChooseSourceDatabase) + "Services" : "NetTiersWebServices");
+				return "http://localhost/" + NameSpace + "Services";
 			}
 			return _WebServiceUrl;
 		}
@@ -1831,7 +1831,7 @@
 				this.GetTemplate(configFile).SetProperty("NetTiersSqlProvider", _netTiersSqlProvider);			
 				this.GetTemplate(configFile).SetProperty("ProviderInvariantName", _providerInvariantName);
 	
-				this.GetTemplate(configFile).SetProperty("WebServiceUrl", WebServiceUrl + "/" + GetClassName(SourceDatabase) + "Services.asmx");
+				this.GetTemplate(configFile).SetProperty("WebServiceUrl", WebServiceUrl + "/" + NameSpace + "Services.asmx");
 				
 				this.RenderToFile(configFile, specialPath + "\\" + NameSpace + (vsnetIntegration == VSNetIntegration.SeparatedProjects && (IncludeUnitTest != MoM.Templates.UnitTestStyle.None) ? "." + UnitTestsNameSpace : string.Empty) + ".dll.config", true);
 				
@@ -2045,7 +2045,7 @@
 				this.GetTemplate("WsNetTiersProvider.cst").SetProperty("SourceViews", templateSourceViews);
 				
 				this.GetTemplate("WsNetTiersProvider.cst").SetProperty("WebReferenceName", "WsProxy");
-				this.GetTemplate("WsNetTiersProvider.cst").SetProperty("ProxyClassName", GetClassName(SourceDatabase) + "Services");
+				this.GetTemplate("WsNetTiersProvider.cst").SetProperty("ProxyClassName", NameSpace + "Services");
 							
 				this.RenderToFile("WsNetTiersProvider.cst", rootPathDALWS + "\\WsNetTiersProvider.cs", true);
 			}
@@ -2080,10 +2080,10 @@
 				this.GetTemplate("ServiceLayer.WebService.cst").SetProperty("ComponentsNameSpace", ComponentsNameSpace);
 				this.GetTemplate("ServiceLayer.WebService.cst").SetProperty("BLLNameSpace", BLLNameSpace);
 					
-				this.GetTemplate("ServiceLayer.WebService.cst").SetProperty("ClassName", GetClassName(SourceDatabase) + "Services");
+				this.GetTemplate("ServiceLayer.WebService.cst").SetProperty("ClassName", NameSpace + "Services");
 				this.GetTemplate("ServiceLayer.WebService.cst").SetProperty("WebServiceUrl", WebServiceUrl);
 				
-				this.RenderToFile("ServiceLayer.WebService.cst", rootPathWS + "\\" + GetClassName(SourceDatabase) + "BLLServices.asmx", true);
+				this.RenderToFile("ServiceLayer.WebService.cst", rootPathWS + "\\" + NameSpace + "BLLServices.asmx", true);
 			}
 			//End ComponentService Layer 
 			
@@ -2110,10 +2110,11 @@
 			this.GetTemplate("WebService.cst").SetProperty("DALNameSpace", DALNameSpace);
 			this.GetTemplate("WebService.cst").SetProperty("BLLNameSpace", BLLNameSpace);
 				
-			this.GetTemplate("WebService.cst").SetProperty("ClassName", GetClassName(SourceDatabase) + "Services");
+			this.GetTemplate("WebService.cst").SetProperty("ClassName", NameSpace + "Services");
 			this.GetTemplate("WebService.cst").SetProperty("WebServiceUrl", WebServiceUrl);
+			this.GetTemplate("WebService.cst").SetProperty("ProviderInvariantName", _providerInvariantName);
 			
-			this.RenderToFile("WebService.cst", rootPathWS + "\\" + GetClassName(SourceDatabase) + "Services.asmx", true);
+			this.RenderToFile("WebService.cst", rootPathWS + "\\" + NameSpace + "Services.asmx", true);
 			
 			// Writing the web.config of this webservice
 			//AddFileNode(commonNode, "Web.config");
@@ -4717,7 +4718,7 @@
 		return newPath;
 	}
 		
-	/// <Summary>
+	/// <summary>
 	/// Increment Build Version
 	/// </summary>
 	private string IncrementBuildVersion(string assemblyInfoFilename)
