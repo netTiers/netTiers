@@ -31,7 +31,7 @@
 	<xsl:value-of select="body" disable-output-escaping="yes"/>
 	END;
 	
-	GO
+	/
 	</xsl:template>
 	
 	<xsl:template match="parameter">

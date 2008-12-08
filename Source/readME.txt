@@ -70,6 +70,9 @@ More Information
 For more options and detailed instructions please see:
 http://www.nettiers.com/GettingStarted.ashx
 
+Known Issues
+--------------------
+Oracle - Find_Dynamic Stored Procedures do not work.
 
 -----------------------------
 .netTiers Support
