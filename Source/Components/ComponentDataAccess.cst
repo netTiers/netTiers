@@ -132,7 +132,6 @@
 		private static SecurityContext<<%= className %>> securityContext = new SecurityContext<<%= className %>>();
 		private static readonly string layerExceptionPolicy = "<%= ComponentPattern %>ExceptionPolicy";
 		private static readonly bool noTranByDefault = false;
-		private static readonly int defaultMaxRecords = 10000;
 		#endregion 
 		
 		#region SecurityContext
@@ -172,8 +171,37 @@
 		[DataObjectMethod(DataObjectMethodType.Select)]
 		<%= constructorAccessModifier %> <%=collectionClassName%> <%=partialClassInternalPrefix%>GetBy<%=GetKeysName(fkeys[j].ForeignKeyMemberColumns)%>(<%= GetFunctionHeaderParameters(fkeys[j].ForeignKeyMemberColumns) %>)
 		{
-			int totalCount = -1;
-			return <%=partialClassInternalPrefix%>GetBy<%=GetKeysName(fkeys[j].ForeignKeyMemberColumns)%>(<%= GetFunctionCallParameters(fkeys[j].ForeignKeyMemberColumns) %>, 0, defaultMaxRecords, out totalCount);
+
+			#region Security check
+			// throws security exception if not authorized
+			SecurityContext.IsAuthorized("GetBy<%=GetKeysName(fkeys[j].ForeignKeyMemberColumns)%>");
+			#endregion Security check
+			
+			#region Initialisation
+			<%= collectionClassName %> list = null;
+			TransactionManager transactionManager = null; 
+			NetTiersProvider dataProvider = null;
+			#endregion Initialisation
+			
+			try
+            {					
+				transactionManager = ConnectionScope.ValidateOrCreateTransaction(noTranByDefault);
+				dataProvider = ConnectionScope.Current.DataProvider;
+				
+				list = <%=partialClassInternalPrefix%>GetBy<%=GetKeysName(fkeys[j].ForeignKeyMemberColumns)%>(<%= GetFunctionCallParameters(fkeys[j].ForeignKeyMemberColumns) %>);
+			}
+            catch (Exception exc)
+            {
+				#region Handle transaction rollback and exception
+                if (transactionManager != null && transactionManager.IsOpen) 
+					transactionManager.Rollback();
+				
+				//Handle exception based on policy
+                if (DomainUtil.HandleException(exc, layerExceptionPolicy)) 
+					throw;
+				#endregion Handle transaction rollback and exception
+			}
+			return list;
 		}
 		
 		/// <summary>
@@ -295,8 +323,37 @@
 		[DataObjectMethod(DataObjectMethodType.Select)]
 		<%= constructorAccessModifier %> <%=returnType%> <%=partialClassInternalPrefix%>GetBy<%=GetKeysName(indexes[j].MemberColumns)%>(<%= GetFunctionHeaderParameters(indexes[j].MemberColumns) %>)
 		{
-			int totalCount = -1;
-			return <%=partialClassInternalPrefix%>GetBy<%=GetKeysName(indexes[j].MemberColumns)%>(<%= GetFunctionCallParameters(indexes[j].MemberColumns) %>, 0, defaultMaxRecords, out totalCount);
+			#region Security check
+			// throws security exception if not authorized
+			SecurityContext.IsAuthorized("GetBy<%=GetKeysName(indexes[j].MemberColumns)%>");
+			#endregion Security check
+			
+			#region Initialisation
+			<%=returnType%> <%= returnTypeVar %> = null;
+			TransactionManager transactionManager = null; 
+			NetTiersProvider dataProvider = null;
+			#endregion Initialisation
+			
+			try
+            {	
+				transactionManager = ConnectionScope.ValidateOrCreateTransaction(noTranByDefault);
+				dataProvider = ConnectionScope.Current.DataProvider;
+				
+				<%= returnTypeVar %> = <%=newCollection%>dataProvider.<%= GetClassName(SourceTable, ClassNameFormat.Provider) %>.GetBy<%=GetKeysName(indexes[j].MemberColumns)%>(transactionManager, <%= GetFunctionCallParameters(indexes[j].MemberColumns) %>)  <%=newCollectionEnd%>;
+			}
+            catch (Exception exc)
+            {
+				#region Handle transaction rollback and exception
+                if (transactionManager != null && transactionManager.IsOpen) 
+					transactionManager.Rollback();
+				
+				//Handle exception based on policy
+                if (DomainUtil.HandleException(exc, layerExceptionPolicy)) 
+					throw;
+				#endregion Handle transaction rollback and exception
+			}
+			
+			return <%= returnTypeVar %>;
 		}
 		
 		/// <summary>
@@ -358,8 +415,36 @@
 		/// <returns></returns>
 		<%= interfaceImplModifier %> <%=collectionClassName %> <%=partialClassInternalPrefix%><%= MethodNames.GetAll %>() 
 		{
-			int totalCount = -1;
-			return <%=partialClassInternalPrefix%><%= MethodNames.GetAll %>(0, defaultMaxRecords, out totalCount);
+			#region Security check
+			// throws security exception if not authorized
+			SecurityContext.IsAuthorized("<%= MethodNames.GetAll %>");
+			#endregion Security check
+			
+			#region Initialisation
+			<%= collectionClassName %> list = null;
+			TransactionManager transactionManager = null; 
+			NetTiersProvider dataProvider = null;
+			#endregion Initialisation
+			
+			try
+            {	
+				transactionManager = ConnectionScope.ValidateOrCreateTransaction(noTranByDefault);
+				dataProvider = ConnectionScope.Current.DataProvider;
+
+				list = <%=newCollectionClassName%>dataProvider.<%= GetClassName(SourceTable, ClassNameFormat.Provider) %>.<%= MethodNames.GetAll %>(transactionManager)<%=newCollectionClassNameEnd%>;	
+			}
+            catch (Exception exc)
+            {
+				#region Handle transaction rollback and exception
+                if (transactionManager != null && transactionManager.IsOpen) 
+					transactionManager.Rollback();
+				
+				//Handle exception based on policy
+                if (DomainUtil.HandleException(exc, layerExceptionPolicy)) 
+					throw;
+				#endregion Handle transaction rollback and exception
+			}
+			return list;
 		}
 
 		/// <summary>
@@ -414,7 +499,7 @@
 		/// <returns>Returns a typed collection of <c><%= className %></c> objects.</returns>
 		<%= constructorAccessModifier %> <%=collectionClassName %> <%=partialClassInternalPrefix%><%= MethodNames.GetPaged %>(out int totalCount)
 		{
-			return <%=partialClassInternalPrefix%><%= MethodNames.GetPaged %>(null, null, 0, defaultMaxRecords, out totalCount);
+			return <%=partialClassInternalPrefix%><%= MethodNames.GetPaged %>(null, null, 0, int.MaxValue, out totalCount);
 		}
 		
 		/// <summary>
@@ -486,7 +571,7 @@
 		/// <returns>Returns the number of rows.</returns>
 		public int <%= MethodNames.GetTotalItems %>(string whereClause, out int totalCount)
 		{
-			<%= partialClassInternalPrefix %><%= MethodNames.GetPaged %>(whereClause, null, 0, defaultMaxRecords, out totalCount);
+			<%= partialClassInternalPrefix %><%= MethodNames.GetPaged %>(whereClause, null, 0, int.MaxValue, out totalCount);
 			return totalCount;
 		}
 		#endregion <%=partialClassInternalPrefix%><%= MethodNames.GetPaged %>	
@@ -506,8 +591,36 @@
 		/// <returns>Returns a typed collection of Entity objects.</returns>
 		<%= constructorAccessModifier %> <%=collectionClassName%> <%= MethodNames.Find %>(string whereClause)
 		{
-			int totalCount = -1;
-			return <%= MethodNames.Find %>(whereClause, 0, defaultMaxRecords, out totalCount);
+			#region Security check
+			// throws security exception if not authorized
+			SecurityContext.IsAuthorized("<%= MethodNames.Find %>");
+			#endregion Security check
+			
+			#region Initialisation
+			<%= collectionClassName %> list = null;
+			TransactionManager transactionManager = null; 
+			NetTiersProvider dataProvider = null;
+			#endregion Initialisation
+			
+			try
+            {	
+				transactionManager = ConnectionScope.ValidateOrCreateTransaction(noTranByDefault);
+				dataProvider = ConnectionScope.Current.DataProvider;
+
+				list = <%=newCollectionClassName%>dataProvider.<%= GetClassName(SourceTable, ClassNameFormat.Provider) %>.<%= MethodNames.Find %>(transactionManager, whereClause)<%=newCollectionClassNameEnd%>;
+			}
+            catch (Exception exc)
+            {
+				#region Handle transaction rollback and exception
+                if (transactionManager != null && transactionManager.IsOpen) 
+					transactionManager.Rollback();
+				
+				//Handle exception based on policy
+                if (DomainUtil.HandleException(exc, layerExceptionPolicy)) 
+					throw;
+				#endregion Handle transaction rollback and exception
+			}
+			return list;
 		}	
 		
 		/// <summary>
@@ -587,8 +700,37 @@
 		/// <returns>Returns a typed collection of <c><%= className %></c> objects.</returns>
 		<%= constructorAccessModifier %> <%=collectionClassName%> <%= MethodNames.Find %>(IFilterParameterCollection parameters, string orderBy)
 		{
-			int count = 0;
-			return <%= MethodNames.Find %>(parameters, orderBy, 0, defaultMaxRecords, out count);
+			#region Security check
+			// throws security exception if not authorized
+			SecurityContext.IsAuthorized("<%= MethodNames.Find %>");
+			#endregion Security check
+			
+			#region Initialisation
+			TransactionManager transactionManager = null; 
+			<%= collectionClassName %> list = null;
+			NetTiersProvider dataProvider = null;
+			#endregion Initialisation
+			
+			try
+            {	
+				transactionManager = ConnectionScope.ValidateOrCreateTransaction(noTranByDefault);
+				dataProvider = ConnectionScope.Current.DataProvider;
+
+				list = <%=newCollectionClassName%>dataProvider.<%= GetClassName(SourceTable, ClassNameFormat.Provider) %>.<%= MethodNames.Find %>(transactionManager, parameters, orderBy)<%=newCollectionClassNameEnd%>;
+			}
+            catch (Exception exc)
+            {
+				#region Handle transaction rollback and exception
+                if (transactionManager != null && transactionManager.IsOpen) 
+					transactionManager.Rollback();
+				
+				//Handle exception based on policy
+                if (DomainUtil.HandleException(exc, layerExceptionPolicy)) 
+					throw;
+				#endregion Handle transaction rollback and exception
+			}
+			
+			return list;		
 		}
 		
 		/// <summary>
@@ -873,7 +1015,7 @@
 		/// <returns>Returns true if operation suceeded.</returns>
 		public bool <%= MethodNames.Delete %>(<%= keyClassName %> key)
 		{
-			return <%= MethodNames.Delete %>(<%= GetFunctionObjectParameters(keys, "key") %> <% if(RowVersion != null) {Response.Write(String.Format(", ((key.Entity != null) ? key.Entity.{0} : new byte[0])", GetPropertyName(RowVersion)));}%>);
+			return <%= MethodNames.Delete %>(<%= GetFunctionObjectParameters(keys, "key") %> <% if(RowVersion != null && !RowVersion.IsPrimaryKeyMember) {Response.Write(String.Format(", ((key.Entity != null) ? key.Entity.{0} : new byte[0])", GetPropertyName(RowVersion)));}%>);
 		}
 		<% } %>
 		
@@ -883,13 +1025,13 @@
 		<% foreach(string item in GetFunctionCallParameters(keys).Split(',')) { %>
 		/// <param name="<%= item.Trim() %>"><%=className%> pk id.</param>
 		<% } %>
-		<% if (RowVersion != null){ %>
+		<% if (RowVersion != null && !RowVersion.IsPrimaryKeyMember){ %>
 		/// <param name="<%=GetFieldName(RowVersion)%>">The timestamp field used for concurrency check.</param>
 		<% }  %>
 		/// <remarks>Deletes based on primary key(s).</remarks>
 		/// <returns>Returns true if operation suceeded.</returns>
 		[DataObjectMethod(DataObjectMethodType.Delete)]
-		<%= constructorAccessModifierOnMembers %> bool <%=partialClassInternalPrefix%><%= MethodNames.Delete %>(<%= GetFunctionHeaderParameters(keys) %><% if(RowVersion != null) {Response.Write(", byte[] " + GetFieldName(RowVersion));}%>)
+		<%= constructorAccessModifierOnMembers %> bool <%=partialClassInternalPrefix%><%= MethodNames.Delete %>(<%= GetFunctionHeaderParameters(keys) %><% if(RowVersion != null && !RowVersion.IsPrimaryKeyMember) {Response.Write(", byte[] " + GetFieldName(RowVersion));}%>)
 		{
 			#region Security check
 			// throws security exception if not authorized
@@ -911,7 +1053,7 @@
 				transactionManager = ConnectionScope.ValidateOrCreateTransaction();
 				dataProvider = ConnectionScope.Current.DataProvider;
 
-				result = dataProvider.<%= GetClassName(SourceTable, ClassNameFormat.Provider) %>.<%= MethodNames.Delete %>(transactionManager, <%= GetFunctionCallParameters(keys) %><% if(RowVersion != null) {Response.Write(", " + GetFieldName(RowVersion));}%>);
+				result = dataProvider.<%= GetClassName(SourceTable, ClassNameFormat.Provider) %>.<%= MethodNames.Delete %>(transactionManager, <%= GetFunctionCallParameters(keys) %><% if(RowVersion != null && !RowVersion.IsPrimaryKeyMember) {Response.Write(", " + GetFieldName(RowVersion));}%>);
 				
 				if (!isBorrowedTransaction && transactionManager != null && transactionManager.IsOpen)
 					transactionManager.Commit();
@@ -971,8 +1113,37 @@
 		[DataObjectMethod(DataObjectMethodType.Select)]
 		<%= constructorAccessModifier %> <%=GetClassName(primaryTable, ClassNameFormat.Collection)%> <%=partialClassInternalPrefix%>GetBy<%=functionname%>(<%=GetFunctionHeaderParameters(junctionTableKey.ForeignKeyMemberColumns)%>)
 		{
-			int totalRecords = -1;
-			return <%=partialClassInternalPrefix%>GetBy<%=functionname%>(<%=GetFunctionCallParameters(junctionTableKey.ForeignKeyMemberColumns)%>, 0, defaultMaxRecords, out totalRecords);
+			#region Security check
+			// throws security exception if not authorized
+			SecurityContext.IsAuthorized("GetBy<%=functionname%>");
+			#endregion Security check
+			
+			#region Initialisation
+			<%=GetClassName(primaryTable, ClassNameFormat.Collection)%> list = null;
+			TransactionManager transactionManager = null; 
+			NetTiersProvider dataProvider = null;
+			#endregion Initialisation
+			
+			try
+            {	
+				transactionManager = ConnectionScope.ValidateOrCreateTransaction(noTranByDefault);
+				dataProvider = ConnectionScope.Current.DataProvider;
+
+				list = <%=partialClassInternalPrefix%>GetBy<%=functionname%>(<%=GetFunctionCallParameters(junctionTableKey.ForeignKeyMemberColumns)%>);
+			}
+            catch (Exception exc)
+            {
+				#region Handle transaction rollback and exception
+                if (transactionManager != null && transactionManager.IsOpen) 
+					transactionManager.Rollback();
+				
+				//Handle exception based on policy
+                if (DomainUtil.HandleException(exc, layerExceptionPolicy)) 
+					throw;
+				#endregion Handle transaction rollback and exception
+            }
+			
+			return list;
 		}
 		
 		/// <summary>
@@ -1074,7 +1245,44 @@
 		/// <returns>A <see cref="<%=returnTypeForComment%>"/> instance.</returns><%}%>
 		<%= constructorAccessModifier %>  <%=returnType%> <%=methodName%>(<%= overloadParms %>)
 		{
-			<%= returnKeyword %> <%=methodName%>(<%= overloadCall.Length > 0 ? overloadCall.TrimStart(',') + "," : "" %> 0, defaultMaxRecords );
+			#region Security check
+			// throws security exception if not authorized
+			SecurityContext.IsAuthorized("<%=methodName%>");
+			#endregion Security check
+		
+			#region Initialisation
+			bool isBorrowedTransaction = false;
+			<%=returnType != "void"  ? string.Format("{0} result = null;" , returnType) : "" %> 
+			TransactionManager transactionManager = null; 
+			NetTiersProvider dataProvider = null;
+			#endregion Initialisation
+			
+			try
+            {
+				isBorrowedTransaction = ConnectionScope.Current.HasTransaction;				
+				
+				transactionManager = ConnectionScope.ValidateOrCreateTransaction(<% if (returnType != "void") { %>noTranByDefault<%}%>);
+				dataProvider = ConnectionScope.Current.DataProvider;
+				<%= returnType != "void" ? "result = " : ""  %><%= newCollection %>dataProvider.<%= GetClassName(SourceTable, ClassNameFormat.Provider) %>.<%=methodName%>(transactionManager <%=TransformStoredProcedureInputsToDataAccess(true, command.InputParameters) + TransformStoredProcedureOutputsToDataAccess(true, command.AllOutputParameters)%>)<%= newCollectionEnd %>;
+	        
+				<% if (returnType == "void") { %>
+				if (!isBorrowedTransaction && transactionManager != null && transactionManager.IsOpen)
+					transactionManager.Commit();
+				<% } %>
+			}
+            catch (Exception exc)
+            {
+				#region Handle transaction rollback and exception
+                if (transactionManager != null && transactionManager.IsOpen) 
+					transactionManager.Rollback();
+				
+				//Handle exception based on policy
+                if (DomainUtil.HandleException(exc, layerExceptionPolicy)) 
+					throw;
+				#endregion Handle transaction rollback and exception
+            }
+			
+			return <%= returnType != "void" ? "result" : "" %>;		
 		}
 	
 		/// <summary>

@@ -56,6 +56,22 @@ using <%=ComponentsNameSpace%>;
 [WebService(Namespace="<%=WebServiceUrl%>", Description="Exposes CRUD webmethods for the <%=ClassName%> Database.")]
 public class <%=ClassName%> : WebService 
 {
+	
+	/// <summary>
+    /// used in exception handling for WebServices
+    /// </summary>
+    public enum FaultCode
+    {
+        /// <summary>
+        /// Fault is on the client
+        /// </summary>
+        Client,
+        /// <summary>
+        /// Fault is on the server
+        /// </summary>
+        Server
+    }
+	
 	<% 
 	for (int tableIndex = 0; tableIndex < SourceTables.Count; tableIndex++) 
 	{
@@ -171,10 +187,10 @@ public class <%=ClassName%> : WebService
 	/// <remarks>Deletes based on primary key(s).</remarks>
 	/// <returns>Returns true if operation suceeded.</returns>
 	[WebMethod(Description="Delete a row from the table <%=SourceTable.Name%>.")]
-	public bool <%=providerName%>_<%= MethodNames.Delete %>(<%= GetFunctionHeaderParameters(keys) %><% if(RowVersion != null) {Response.Write(", byte[] " + GetFieldName(RowVersion));}%>)
+	public bool <%=providerName%>_<%= MethodNames.Delete %>(<%= GetFunctionHeaderParameters(keys) %><% if(RowVersion != null && !RowVersion.IsPrimaryKeyMember) {Response.Write(", byte[] " + GetFieldName(RowVersion));}%>)
 	{
 		<%=serviceClassName%> serviceObject = new <%=serviceClassName%>();
-		return serviceObject.<%= MethodNames.Delete %>(<%= GetFunctionCallParameters(keys) %><% if(RowVersion != null) {Response.Write(", " + GetFieldName(RowVersion));}%>);
+		return serviceObject.<%= MethodNames.Delete %>(<%= GetFunctionCallParameters(keys) %><% if(RowVersion != null && !RowVersion.IsPrimaryKeyMember) {Response.Write(", " + GetFieldName(RowVersion));}%>);
 	}		
 	
 	#endregion

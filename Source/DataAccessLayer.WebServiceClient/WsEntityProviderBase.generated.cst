@@ -103,6 +103,7 @@ using System;
 using System.Data;
 using System.Collections;
 using System.Diagnostics;
+using System.Web.Services.Protocols;
 using <%=NameSpace%>;
 using <%=DALNameSpace%>.Bases;
 
@@ -290,12 +291,25 @@ namespace <%=DALNameSpace%>.WebServiceClient
 		/// <returns>Returns a typed collection of <%=primaryTable.Name%> objects.</returns>
 		public override <%=GetClassName(primaryTable, ClassNameFormat.Collection)%> GetBy<%=functionname%>(TransactionManager transactionManager, <%=GetFunctionHeaderParameters(junctionTableKey.ForeignKeyMemberColumns)%>, int start, int pagelen, out int count)
 		{
+			try
+			{
 			<%=WebReferenceName%>.<%=ProxyClassName%> proxy = new <%=WebReferenceName%>.<%=ProxyClassName%>();
 			proxy.Url = Url;
 				
 			<%=WebReferenceName%>.<%=GetClassName(primaryTable)%>[] items = proxy.<%=providerName + "_GetBy" + functionname%>(<%= GetFunctionCallParameters(junctionTableKey.ForeignKeyMemberColumns) %>, start, pagelen, out count);
 	
 			return Convert(items); 
+			}
+			catch(SoapException soex)
+			{
+				System.Diagnostics.Debug.WriteLine(soex);
+				throw soex;
+			}
+			catch(Exception ex)
+			{
+				System.Diagnostics.Debug.WriteLine(ex);
+				throw ex;
+			}
 		}
 		
 		#endregion GetBy<%=functionname%>
@@ -324,14 +338,27 @@ namespace <%=DALNameSpace%>.WebServiceClient
 			/// <param name="transactionManager"><see cref="TransactionManager"/> object</param>
 			/// <remarks>Deletes based on primary key(s).</remarks>
 			/// <returns>Returns true if operation suceeded.</returns>
-			public override bool <%= MethodNames.Delete %>(TransactionManager transactionManager, <%= GetFunctionHeaderParameters(SourceTable.PrimaryKey.MemberColumns) %><% if(RowVersion != null) {Response.Write(", byte[] " + GetFieldName(RowVersion));}%>)
+			public override bool <%= MethodNames.Delete %>(TransactionManager transactionManager, <%= GetFunctionHeaderParameters(SourceTable.PrimaryKey.MemberColumns) %><% if(RowVersion != null && !RowVersion.IsPrimaryKeyMember) {Response.Write(", byte[] " + GetFieldName(RowVersion));}%>)
 			{
+				try
+				{
 				// call the proxy
 				<%=WebReferenceName%>.<%=ProxyClassName%> proxy = new <%=WebReferenceName%>.<%=ProxyClassName%>();
 				proxy.Url = Url;
 				
-				bool result = proxy.<%=providerName%>_<%= MethodNames.Delete %>(<%= GetFunctionCallParameters(SourceTable.PrimaryKey.MemberColumns) %><% if(RowVersion != null) {Response.Write(", " + GetFieldName(RowVersion));}%>);				
+				bool result = proxy.<%=providerName%>_<%= MethodNames.Delete %>(<%= GetFunctionCallParameters(SourceTable.PrimaryKey.MemberColumns) %><% if(RowVersion != null && !RowVersion.IsPrimaryKeyMember) {Response.Write(", " + GetFieldName(RowVersion));}%>);				
 				return result;
+				}
+				catch(SoapException soex)
+				{
+					System.Diagnostics.Debug.WriteLine(soex);
+					throw soex;
+				}
+				catch(Exception ex)
+				{
+					System.Diagnostics.Debug.WriteLine(ex);
+					throw ex;
+				}
 			}
 			
 			#endregion <%= MethodNames.Delete %> Methods
@@ -356,12 +383,25 @@ namespace <%=DALNameSpace%>.WebServiceClient
 		/// <returns>Returns a typed collection of <%=className%> objects.</returns>
 		public override <%=collectionClassName%> <%= MethodNames.Find %>(TransactionManager transactionManager, string whereClause, int start, int pagelen, out int count)
 		{
+			try
+			{
 			<%=WebReferenceName%>.<%=ProxyClassName%> proxy = new <%=WebReferenceName%>.<%=ProxyClassName%>();
 			proxy.Url = Url;
 			
 			<%=WebReferenceName%>.<%=GetClassName(SourceTable)%>[] items = proxy.<%=providerName %>_<%= MethodNames.Find %>(whereClause, start, pagelen, out count);
 			
 			return Convert(items); 
+			}
+			catch(SoapException soex)
+			{
+				System.Diagnostics.Debug.WriteLine(soex);
+				throw soex;
+			}
+			catch(Exception ex)
+			{
+				System.Diagnostics.Debug.WriteLine(ex);
+				throw ex;
+			}
 		}
 		
 		#endregion <%= MethodNames.Find %> Methods
@@ -385,12 +425,25 @@ namespace <%=DALNameSpace%>.WebServiceClient
 		/// <returns>Returns a typed collection of <%=className%> objects.</returns>
 		public override <%=collectionClassName%> <%= MethodNames.GetAll %>(TransactionManager transactionManager, int start, int pageLength, out int count)
 		{
+			try
+			{
 			<%=WebReferenceName%>.<%=ProxyClassName%> proxy = new <%=WebReferenceName%>.<%=ProxyClassName%>();
 			proxy.Url = Url;
 				
 			<%=WebReferenceName%>.<%=GetClassName(SourceTable)%>[] items = proxy.<%=providerName%>_<%= MethodNames.GetAll %>(start, pageLength, out count);
 			
 			return Convert(items); 
+			}
+			catch(SoapException soex)
+			{
+				System.Diagnostics.Debug.WriteLine(soex);
+				throw soex;
+			}
+			catch(Exception ex)
+			{
+				System.Diagnostics.Debug.WriteLine(ex);
+				throw ex;
+			}
 		}
 		
 		#endregion <%= MethodNames.GetAll %> Methods
@@ -410,6 +463,8 @@ namespace <%=DALNameSpace%>.WebServiceClient
 		/// <returns>Returns a typed collection of <%=className%> objects.</returns>
 		public override <%=collectionClassName%> <%= MethodNames.GetPaged %>(TransactionManager transactionManager, string whereClause, string orderBy, int start, int pageLength, out int count)
 		{
+			try
+			{
 			whereClause = whereClause ?? string.Empty;
 			orderBy = orderBy ?? string.Empty;
 			
@@ -420,6 +475,17 @@ namespace <%=DALNameSpace%>.WebServiceClient
 			
 			// Create a collection and fill it with the dataset
 			return Convert(items); 
+			}
+			catch(SoapException soex)
+			{
+				System.Diagnostics.Debug.WriteLine(soex);
+				throw soex;
+			}
+			catch(Exception ex)
+			{
+				System.Diagnostics.Debug.WriteLine(ex);
+				throw ex;
+			}
 		}
 		
 		#endregion <%= MethodNames.GetPaged %> Methods
@@ -455,11 +521,24 @@ namespace <%=DALNameSpace%>.WebServiceClient
 		/// <returns>Returns a typed collection of <%=className%> objects.</returns>
 		public override <%=collectionClassName%> GetBy<%=GetKeysName(fkeys[j].ForeignKeyMemberColumns)%>(TransactionManager transactionManager, <%= GetFunctionHeaderParameters(fkeys[j].ForeignKeyMemberColumns) %>, int start, int pageLength, out int count)
 		{
+			try
+			{
 			<%=WebReferenceName%>.<%=ProxyClassName%> proxy = new <%=WebReferenceName%>.<%=ProxyClassName%>();
 			proxy.Url = Url;
 			<%=WebReferenceName%>.<%=GetClassName(SourceTable)%>[] items = proxy.<%=providerName%>_GetBy<%=GetKeysName(fkeys[j].ForeignKeyMemberColumns)%>(<%= GetFunctionCallParameters(fkeys[j].ForeignKeyMemberColumns) %>, start, pageLength, out count);
 			
 			return Convert(items); 
+			}
+			catch(SoapException soex)
+			{
+				System.Diagnostics.Debug.WriteLine(soex);
+				throw soex;
+			}
+			catch(Exception ex)
+			{
+				System.Diagnostics.Debug.WriteLine(ex);
+				throw ex;
+			}
 		}
 			
 	<% 		}//endfor %>
@@ -511,11 +590,24 @@ namespace <%=DALNameSpace%>.WebServiceClient
 		/// <returns>Returns an instance of the <see cref="<%=returnType.Replace("<", "&lt;").Replace(">", "&gt;")%>"/> class.</returns>
 		public override <%=returnType%> GetBy<%=GetKeysName(indexes[j].MemberColumns)%>(TransactionManager transactionManager, <%= GetFunctionHeaderParameters(indexes[j].MemberColumns) %>, int start, int pageLength, out int count)
 		{
+			try
+			{
 			<%=WebReferenceName%>.<%=ProxyClassName%> proxy = new <%=WebReferenceName%>.<%=ProxyClassName%>();
 			proxy.Url = Url;
 			<%=WebReferenceName%>.<%=GetClassName(SourceTable)%><% if (!isUnique) Response.Write("[]");%> items = proxy.<%=providerName%>_GetBy<%=GetKeysName(indexes[j].MemberColumns)%>(<%= GetFunctionCallParameters(indexes[j].MemberColumns) %>, start, pageLength, out count);
 			
 			return Convert(items); 
+			}
+			catch(SoapException soex)
+			{
+				System.Diagnostics.Debug.WriteLine(soex);
+				throw soex;
+			}
+			catch(Exception ex)
+			{
+				System.Diagnostics.Debug.WriteLine(ex);
+				throw ex;
+			}
 		}
 		
 	<%		}//endfor %>
@@ -546,10 +638,15 @@ namespace <%=DALNameSpace%>.WebServiceClient
 				Convert(entity, result);
 				return true;
 			}
+			catch(SoapException soex)
+			{
+				System.Diagnostics.Debug.WriteLine(soex);
+				throw soex;
+			}
 			catch(Exception ex)
 			{
 				System.Diagnostics.Debug.WriteLine(ex);
-				return false;
+				throw ex;
 			}
 		}
 	
@@ -570,9 +667,15 @@ namespace <%=DALNameSpace%>.WebServiceClient
 			{
 				proxy.<%=providerName%>_<%= MethodNames.BulkInsert %>(Convert(entityList));
 			}
+			catch(SoapException soex)
+			{
+				System.Diagnostics.Debug.WriteLine(soex);
+				throw soex;
+			}
 			catch (Exception ex)
 			{	
 				System.Diagnostics.Debug.WriteLine(ex);
+				throw ex;
 			}
 		}
 
@@ -605,10 +708,15 @@ namespace <%=DALNameSpace%>.WebServiceClient
 				entity.AcceptChanges();
 				return true;
 			}
+			catch(SoapException soex)
+			{
+				System.Diagnostics.Debug.WriteLine(soex);
+				throw soex;
+			}
 			catch(Exception ex)
 			{
 				System.Diagnostics.Debug.WriteLine(ex);
-				return false;
+				throw ex;
 			}
 		}
 		
@@ -647,6 +755,8 @@ namespace <%=DALNameSpace%>.WebServiceClient
 		/// <returns>A <see cref="<%=returnTypeForComment%>"/> instance.</returns><%}%>
 		public override <%=returnType%> <%=methodName%>(TransactionManager transactionManager, int start, int pageLength <%=TransformStoredProcedureInputsToMethod(true, command.InputParameters) + TransformStoredProcedureOutputsToMethod(true, command.AllOutputParameters) %>)
 		{
+			try
+			{
 			<%=WebReferenceName%>.<%=ProxyClassName%> proxy = new <%=WebReferenceName%>.<%=ProxyClassName%>();
 			proxy.Url = Url;
 						
@@ -660,6 +770,12 @@ namespace <%=DALNameSpace%>.WebServiceClient
 			<% } else { %>
 				throw new NotSupportedException("This <%=methodName%> for custom procedure <%=command.Name%> is implemented to return an IDataReader.  These are not supported by the client proxy.");
 			<% } %>		
+			}
+			catch(SoapException ex)
+			{
+				System.Diagnostics.Debug.WriteLine(ex);
+				throw ex;
+			}
 		}
 		
 		#endregion
