@@ -46,6 +46,8 @@
 using System;
 using System.Data;
 using System.Web.Services;
+using System.Web.Services.Protocols;
+using System.Xml;
 using <%=BLLNameSpace%>;
 using <%=DALNameSpace%>;
 <% if(ProviderInvariantName == "System.Data.OracleClient") { %>
@@ -61,6 +63,22 @@ using <%=DALNameSpace+".SqlClient"%>;
 [WebService(Namespace="<%=WebServiceUrl%>", Description="Exposes CRUD webmethods for the <%=ClassName%> Database.")]
 public class <%=ClassName%> : WebService 
 {
+	
+	/// <summary>
+    /// used in exception handling for WebServices
+    /// </summary>
+    public enum FaultCode
+    {
+        /// <summary>
+        /// Fault is on the client
+        /// </summary>
+        Client,
+        /// <summary>
+        /// Fault is on the server
+        /// </summary>
+        Server
+    }
+
 	<% 
 	System.Collections.ArrayList methods = new System.Collections.ArrayList();
 	for (int tableIndex = 0; tableIndex < SourceTables.Count; tableIndex++) 
@@ -144,7 +162,18 @@ public class <%=ClassName%> : WebService
 	[WebMethod(Description="Get rows from the table <%=SourceTable.Name%>, through the junction table <%=junctionTable.Name%>.")]
 	public <%=NameSpace + "." + GetClassName(primaryTable, ClassNameFormat.Collection)%> <%=providerName%>_GetBy<%=functionname%>(<%=GetFunctionHeaderParameters(junctionTableKey.ForeignKeyMemberColumns)%>, int start, int pageLength, out int count)
 	{		
+		try
+		{
 		return <%=DALNameSpace%>.DataRepository.<%=providerName%>.GetBy<%=functionname%>(<%=GetFunctionCallParameters(junctionTableKey.ForeignKeyMemberColumns)%>, start, pageLength, out count);
+		}
+		catch(SoapException soex)
+		{
+			throw soex;
+		}
+		catch(Exception ex)
+		{
+			throw RaiseException("<%=providerName%>_GetBy<%=functionname%>", "WSSoapException", ex.Message, "1000", ex.Source, FaultCode.Server);
+		}
 	}
 	
 	#endregion GetBy<%=functionname%>
@@ -174,9 +203,20 @@ public class <%=ClassName%> : WebService
 	/// <remarks>Deletes based on primary key(s).</remarks>
 	/// <returns>Returns true if operation suceeded.</returns>
 	[WebMethod(Description="Delete a row from the table <%=SourceTable.Name%>.")]
-	public bool <%=providerName%>_<%= MethodNames.Delete %>(<%= GetFunctionHeaderParameters(keys) %><% if(RowVersion != null) {Response.Write(", byte[] " + GetFieldName(RowVersion));}%>)
+	public bool <%=providerName%>_<%= MethodNames.Delete %>(<%= GetFunctionHeaderParameters(keys) %><% if(RowVersion != null && !RowVersion.IsPrimaryKeyMember) {Response.Write(", byte[] " + GetFieldName(RowVersion));}%>)
 	{
-		return <%=DALNameSpace%>.DataRepository.<%=providerName%>.<%= MethodNames.Delete %>(<%= GetFunctionCallParameters(keys) %><% if(RowVersion != null) {Response.Write(", " + GetFieldName(RowVersion));}%>);
+		try
+		{
+		return <%=DALNameSpace%>.DataRepository.<%=providerName%>.<%= MethodNames.Delete %>(<%= GetFunctionCallParameters(keys) %><% if(RowVersion != null && !RowVersion.IsPrimaryKeyMember) {Response.Write(", " + GetFieldName(RowVersion));}%>);
+		}
+		catch(SoapException soex)
+		{
+			throw soex;
+		}
+		catch(Exception ex)
+		{
+			throw RaiseException("<%=providerName%>_<%= MethodNames.Delete %>", "WSSoapException", ex.Message, "1000", ex.Source, FaultCode.Server);
+		}
 	}
 	
 	#endregion
@@ -196,7 +236,18 @@ public class <%=ClassName%> : WebService
 	[WebMethod(Description="Get rows from the table <%=SourceTable.Name%> with additional query text.")]
 	public <%=collectionClassName%> <%=providerName%>_<%= MethodNames.Find %>(string whereClause, int start, int pageLength, out int count)
 	{
+		try
+		{
 		return <%=DALNameSpace%>.DataRepository.<%=providerName%>.<%= MethodNames.Find %>((TransactionManager) null, whereClause, start, pageLength, out count);
+		}
+		catch(SoapException soex)
+		{
+			throw soex;
+		}
+		catch(Exception ex)
+		{
+			throw RaiseException("<%=providerName%>_<%= MethodNames.Find %>", "WSSoapException", ex.Message, "1000", ex.Source, FaultCode.Server);
+		}
 	}
 	
 	#endregion <%= MethodNames.Find %> Methods
@@ -219,7 +270,18 @@ public class <%=ClassName%> : WebService
 	[WebMethod(Description="Get all rows from the table <%=SourceTable.Name%>.")]
 	public <%=collectionClassName%> <%=providerName%>_<%= MethodNames.GetAll %>(int start, int pageLength, out int count)
 	{
+		try
+		{
 		return <%=DALNameSpace%>.DataRepository.<%=providerName%>.<%= MethodNames.GetAll %>(start, pageLength, out count);		
+		}
+		catch(SoapException soex)
+		{
+			throw soex;
+		}
+		catch(Exception ex)
+		{
+			throw RaiseException("<%=providerName%>_<%= MethodNames.GetAll %>", "WSSoapException", ex.Message, "1000", ex.Source, FaultCode.Server);
+		}		
 	}
 	
 	#endregion
@@ -239,7 +301,18 @@ public class <%=ClassName%> : WebService
 	[WebMethod(Description="Get all rows from the table <%=SourceTable.Name%>.")]
 	public <%=collectionClassName%> <%=providerName%>_<%= MethodNames.GetPaged %>(string whereClause, string orderBy, int start, int pageLength, out int count)
 	{
+		try
+		{
 		return <%=DALNameSpace%>.DataRepository.<%=providerName%>.<%= MethodNames.GetPaged %>(whereClause, orderBy, start, pageLength, out count);
+		}
+		catch(SoapException soex)
+		{
+			throw soex;
+		}
+		catch(Exception ex)
+		{
+			throw RaiseException("<%=providerName%>_<%= MethodNames.GetPaged %>", "WSSoapException", ex.Message, "1000", ex.Source, FaultCode.Server);
+		}
 	}
 
 	#endregion
@@ -272,7 +345,18 @@ public class <%=ClassName%> : WebService
 	[WebMethod(Description="Get rows from <%=SourceTable.Name%> filtered by the <%=GetKeysName(fkeys[j].ForeignKeyMemberColumns)%> column.")]
 	public <%=collectionClassName%> <%=providerName%>_GetBy<%=GetKeysName(fkeys[j].ForeignKeyMemberColumns)%>(<%= GetFunctionHeaderParameters(fkeys[j].ForeignKeyMemberColumns) %>, int start, int pageLength, out int count)
 	{
+		try
+		{
 		return <%=DALNameSpace%>.DataRepository.<%=providerName%>.GetBy<%=GetKeysName(fkeys[j].ForeignKeyMemberColumns)%>(<%= GetFunctionCallParameters(fkeys[j].ForeignKeyMemberColumns) %>, start, pageLength, out count);
+		}
+		catch(SoapException soex)
+		{
+			throw soex;
+		}
+		catch(Exception ex)
+		{
+			throw RaiseException("GetBy<%=GetKeysName(fkeys[j].ForeignKeyMemberColumns)%>", "WSSoapException", ex.Message, "1000", ex.Source, FaultCode.Server);
+		}
 	}
 	
 <% 		}//endfor %>
@@ -319,7 +403,18 @@ public class <%=ClassName%> : WebService
 	[WebMethod(Description="Get rows from the table <%=SourceTable.Name%> filtered by the column <%=GetKeysName(indexes[j].MemberColumns)%> that is part of the <%=indexes[j].Name%> index.")]
 	public <%=returnType%> <%=providerName%>_GetBy<%=GetKeysName(indexes[j].MemberColumns)%>(<%= GetFunctionHeaderParameters(indexes[j].MemberColumns) %>, int start, int pageLength, out int count)
 	{
+		try
+		{
 		return <%=DALNameSpace%>.DataRepository.<%=providerName%>.GetBy<%=GetKeysName(indexes[j].MemberColumns)%>(<%= GetFunctionCallParameters(indexes[j].MemberColumns) %>, start, pageLength, out count);
+		}
+		catch(SoapException soex)
+		{
+			throw soex;
+		}
+		catch(Exception ex)
+		{
+			throw RaiseException("<%=providerName%>_GetBy<%=GetKeysName(indexes[j].MemberColumns)%>", "WSSoapException", ex.Message, "1000", ex.Source, FaultCode.Server);
+		}
 	}
 	
 
@@ -341,8 +436,19 @@ public class <%=ClassName%> : WebService
 	[WebMethod(Description="Inserts a row in the table <%=SourceTable.Name%>.")]
 	public <%=className%> <%=providerName%>_<%= MethodNames.Insert %>(<%=className%> entity )
 	{
+		try
+		{
 		<%=DALNameSpace%>.DataRepository.<%=providerName%>.<%= MethodNames.Insert %>(entity);
 		return entity;		
+		}
+		catch(SoapException soex)
+		{
+			throw soex;
+		}
+		catch(Exception ex)
+		{
+			throw RaiseException("<%=providerName%>_<%= MethodNames.Insert %>", "WSSoapException", ex.Message, "1000", ex.Source, FaultCode.Server);
+		}
 	}
 	
 	/// <summary>
@@ -356,7 +462,18 @@ public class <%=ClassName%> : WebService
 	[WebMethod(Description="Inserts a Bulk set of rows into the table <%=SourceTable.Name%>.")]
 	public void <%=providerName%>_<%= MethodNames.BulkInsert %>(<%=collectionClassName%> entityList )
 	{
+		try
+		{
 		<%=DALNameSpace%>.DataRepository.<%=providerName%>.<%= MethodNames.BulkInsert %>(entityList);
+		}
+		catch(SoapException soex)
+		{
+			throw soex;
+		}
+		catch(Exception ex)
+		{
+			throw RaiseException("<%=providerName%>_<%= MethodNames.BulkInsert %>", "WSSoapException", ex.Message, "1000", ex.Source, FaultCode.Server);
+		}
 	}
 	#endregion <%= MethodNames.Insert %> Methods
 	<% } %>
@@ -376,8 +493,19 @@ public class <%=ClassName%> : WebService
 	[WebMethod(Description="Update a row in the table <%=SourceTable.Name%>.")]
 	public <%=className%> <%=providerName%>_<%= MethodNames.Update %>(<%=className%> entity)
 	{
+		try
+		{
 		<%=DALNameSpace%>.DataRepository.<%=providerName%>.<%= MethodNames.Update %>(entity);
 		return entity;
+		}
+		catch(SoapException soex)
+		{
+			throw soex;
+		}
+		catch(Exception ex)
+		{
+			throw RaiseException("<%=providerName%>_<%= MethodNames.Update %>", "WSSoapException", ex.Message, "1000", ex.Source, FaultCode.Server);
+		}
 	}
 
 	#endregion <%= MethodNames.Update %> Methods
@@ -418,11 +546,22 @@ public class <%=ClassName%> : WebService
 	[WebMethod(Description="This method wrap the <%=command.Name%> stored procedure.")]
 	public <%=returnType%> <%=providerName%>_<%=uniqueMethodName%>(int start, int pageLength<%=overloadParms%>)
 	{
+		try
+		{
 	    <% if (returnType == "DataSet") { %>
 		<%= returnKeyword %> <% if (CustomNonMatchingReturnType.ToString() == "IDataReader" ) { %><%=DALNameSpace%>.Utility.ConvertDataReaderToDataSet(<%}%><%=DALNameSpace%>.DataRepository.<%=providerName%>.<%=methodName%>(start, pageLength <%=overloadCall%>)<% if (CustomNonMatchingReturnType.ToString() == "IDataReader" ) { %>)<%}%>;
 	    <% } else { %>
 		<%= returnKeyword %> <%=DALNameSpace%>.DataRepository.<%=providerName%>.<%=methodName%>(start, pageLength<%=overloadCall %>);
 	    <% } %>
+		}
+		catch(SoapException soex)
+		{
+			throw soex;
+		}
+		catch(Exception ex)
+		{
+			throw RaiseException("<%=providerName%>_<%=uniqueMethodName%>", "WSSoapException", ex.Message, "1000", ex.Source, FaultCode.Server);
+		}
 	}
 		
 <%
@@ -460,7 +599,18 @@ public class <%=ClassName%> : WebService
 	[WebMethod(Description="Get all rows from the view <%=SourceView.Name%>.")]
 	public <%=collectionClassName%> <%=providerName%>_<%= MethodNames.GetAll %>(int start, int pageLength)
 	{
+		try
+		{
 		return <%=DALNameSpace%>.DataRepository.<%=providerName%>.<%= MethodNames.GetAll %>(start, pageLength);
+		}
+		catch(SoapException soex)
+		{
+			throw soex;
+		}
+		catch(Exception ex)
+		{
+			throw RaiseException("<%=providerName%>_<%= MethodNames.GetAll %>", "WSSoapException", ex.Message, "1000", ex.Source, FaultCode.Server);
+		}
 	}
 	
 	#endregion <%= MethodNames.GetAll %> Methods
@@ -478,7 +628,18 @@ public class <%=ClassName%> : WebService
 	[WebMethod(Description="Get all rows from the view <%=SourceView.Name%>.")]
 	public <%=collectionClassName%> <%=providerName%>_<%= MethodNames.Get %>(string whereClause, string orderBy, int start, int pageLength, out int count)
 	{
-		return <%=DALNameSpace%>.DataRepository.<%=providerName%>.<%= MethodNames.Get %>(whereClause.Length > 0 ? whereClause : null, orderBy.Length > 0 ? orderBy : null, start, pageLength, out count);
+                try
+		{
+		    return <%=DALNameSpace%>.DataRepository.<%=providerName%>.<%= MethodNames.Get %>(whereClause.Length > 0 ? whereClause : null, orderBy.Length > 0 ? orderBy : null, start, pageLength, out count);
+                }
+		catch(SoapException soex)
+		{
+	            throw soex;
+		}
+		catch(Exception ex)
+		{
+	            throw RaiseException("<%=providerName%>_<%= MethodNames.Get %>", "WSSoapException", ex.Message, "1000", ex.Source, FaultCode.Server);
+		}
 	}
 
 	#endregion <%= MethodNames.Get %> Methods
@@ -519,11 +680,22 @@ public class <%=ClassName%> : WebService
 	[WebMethod(Description="This method wrap the <%=command.Name%> stored procedure.")]
 	public <%=returnType%> <%=providerName%>_<%=methodName%>(int start, int pageLength<%=overloadParms%>)
 	{
+		try
+		{
 		<% if (returnType == "DataSet") { %>
 		<%= returnKeyword %> <% if (CustomNonMatchingReturnType.ToString() == "IDataReader" ) { %><%=DALNameSpace%>.Utility.ConvertDataReaderToDataSet(<%}%><%=DALNameSpace%>.DataRepository.<%=providerName%>.<%=methodName%>(start, pageLength<%=overloadCall%>)<% if (CustomNonMatchingReturnType.ToString() == "IDataReader" ) { %>)<%}%>;
 	    <% } else { %>
 		<%= returnKeyword %> <%=DALNameSpace%>.DataRepository.<%=providerName%>.<%=methodName%>(start, pageLength<%=overloadCall%>);
 		<% } %>
+		}
+		catch(SoapException soex)
+		{
+			throw soex;
+		}
+		catch(Exception ex)
+		{
+			throw RaiseException("<%=providerName%>_<%=methodName%>", "WSSoapException", ex.Message, "1000", ex.Source, FaultCode.Server);
+		}
 		
 	}
 <%
@@ -547,7 +719,18 @@ public class <%=ClassName%> : WebService
 		[WebMethod(MessageName="ExecuteNonQueryPs", Description="This method wrap the ExecuteNonQuery method provided by the Enterprise Library Data Access Application Block.")]
 		public int ExecuteNonQuery(string storedProcedureName, params object[] parameterValues)
 		{
-			return <%=DALNameSpace%>.DataRepository.Provider.ExecuteNonQuery(storedProcedureName, parameterValues);
+		        try
+		        {
+			    return <%=DALNameSpace%>.DataRepository.Provider.ExecuteNonQuery(storedProcedureName, parameterValues);
+                        }
+		        catch(SoapException soex)
+		        {
+			    throw soex;
+		        }
+		        catch(Exception ex)
+		        {
+			    throw RaiseException("ExecuteNonQuery", "WSSoapException", ex.Message, "1000", ex.Source, FaultCode.Server);
+		        }
 		}
 
 		/*
@@ -571,7 +754,18 @@ public class <%=ClassName%> : WebService
 		[WebMethod(MessageName="ExecuteNonQueryQry", Description="This method wrap the ExecuteNonQuery method provided by the Enterprise Library Data Access Application Block.")]
 		public int ExecuteNonQuery(CommandType commandType, string commandText)
 		{
-			return <%=DALNameSpace%>.DataRepository.Provider.ExecuteNonQuery(commandType, commandText);
+		        try
+		        {
+			    return <%=DALNameSpace%>.DataRepository.Provider.ExecuteNonQuery(commandType, commandText);
+                        }
+		        catch(SoapException soex)
+		        {
+			    throw soex;
+		        }
+		        catch(Exception ex)
+		        {
+			    throw RaiseException("ExecuteNonQuery", "WSSoapException", ex.Message, "1000", ex.Source, FaultCode.Server);
+		        }
 		}
 		
 		#endregion
@@ -586,7 +780,18 @@ public class <%=ClassName%> : WebService
 		[WebMethod(MessageName="ExecuteDataSetPs", Description="This method wrap the ExecuteDataSet method provided by the Enterprise Library Data Access Application Block.")]
 		public DataSet ExecuteDataSet(string storedProcedureName, params object[] parameterValues)
 		{
-			return <%=DALNameSpace%>.DataRepository.Provider.ExecuteDataSet(storedProcedureName, parameterValues);
+		        try
+		        {
+			    return <%=DALNameSpace%>.DataRepository.Provider.ExecuteDataSet(storedProcedureName, parameterValues);
+                        }
+		        catch(SoapException soex)
+		        {
+			    throw soex;
+		        }
+		        catch(Exception ex)
+		        {
+			    throw RaiseException("ExecuteDataSet", "WSSoapException", ex.Message, "1000", ex.Source, FaultCode.Server);
+		        }
 		}
 		
 		/*
@@ -611,7 +816,18 @@ public class <%=ClassName%> : WebService
 		[WebMethod(MessageName="ExecuteDataSetQry", Description="This method wrap the ExecuteDataSet method provided by the Enterprise Library Data Access Application Block.")]
 		public DataSet ExecuteDataSet(CommandType commandType, string commandText)
 		{
-			return <%=DALNameSpace%>.DataRepository.Provider.ExecuteDataSet(commandType, commandText);
+		        try
+		        {
+			    return <%=DALNameSpace%>.DataRepository.Provider.ExecuteDataSet(commandType, commandText);
+                        }
+		        catch(SoapException soex)
+		        {
+			    throw soex;
+		        }
+		        catch(Exception ex)
+		        {
+			    throw RaiseException("ExecuteDataSet", "WSSoapException", ex.Message, "1000", ex.Source, FaultCode.Server);
+		        }
 		}		
 		#endregion
 
@@ -625,7 +841,18 @@ public class <%=ClassName%> : WebService
 		[WebMethod(MessageName="ExecuteScalarPs", Description="This method wrap the ExecuteScalar method provided by the Enterprise Library Data Access Application Block.")]
 		public object ExecuteScalar(string storedProcedureName, params object[] parameterValues)
 		{
-			return <%=DALNameSpace%>.DataRepository.Provider.ExecuteScalar(storedProcedureName, parameterValues);
+		        try
+		        {
+			    return <%=DALNameSpace%>.DataRepository.Provider.ExecuteScalar(storedProcedureName, parameterValues);
+                        }
+		        catch(SoapException soex)
+		        {
+			    throw soex;
+		        }
+		        catch(Exception ex)
+		        {
+			    throw RaiseException("ExecuteScalar", "WSSoapException", ex.Message, "1000", ex.Source, FaultCode.Server);
+		        }
 		}	
 
 		/*
@@ -650,10 +877,85 @@ public class <%=ClassName%> : WebService
 		[WebMethod(MessageName="ExecuteScalarQry", Description="This method wrap the ExecuteScalar method provided by the Enterprise Library Data Access Application Block.")]
 		public object ExecuteScalar(CommandType commandType, string commandText)
 		{
-			return <%=DALNameSpace%>.DataRepository.Provider.ExecuteScalar(commandType, commandText);	
+		        try
+		        {
+			    return <%=DALNameSpace%>.DataRepository.Provider.ExecuteScalar(commandType, commandText);	
+                        }
+		        catch(SoapException soex)
+		        {
+			    throw soex;
+		        }
+		        catch(Exception ex)
+		        {
+			    throw RaiseException("ExecuteScalar", "WSSoapException", ex.Message, "1000", ex.Source, FaultCode.Server);
+		        }
 		}
 		
 		#endregion
 
 		#endregion
+		
+	
+	#region Exception Handling
+    /// <summary>
+    /// Creates the SoapException object with all the error details
+    /// </summary>
+    /// <param name="uri"></param>
+    /// <param name="webServiceNamespace"></param>
+    /// <param name="errorMessage"></param>
+    /// <param name="errorNumber"></param>
+    /// <param name="errorSource"></param>
+    /// <param name="code"></param>
+    /// <returns></returns>
+    public SoapException RaiseException(string uri, string webServiceNamespace, string errorMessage, string errorNumber, string errorSource, FaultCode code)
+    {
+        XmlQualifiedName faultCodeLocation = null;
+
+        //Identify the location of the FaultCode
+        switch (code)
+        {
+            case FaultCode.Client:
+                faultCodeLocation = SoapException.ClientFaultCode;
+                break;
+            case FaultCode.Server:
+                faultCodeLocation = SoapException.ServerFaultCode;
+                break;
+        }
+
+        XmlDocument xmlDoc = new XmlDocument();
+
+        //Create the Detail node
+        XmlNode rootNode = xmlDoc.CreateNode(XmlNodeType.Element, SoapException.DetailElementName.Name, SoapException.DetailElementName.Namespace);
+
+        //Build specific details for the SoapException
+        //Add first child of detail XML element.
+        XmlNode errorNode = xmlDoc.CreateNode(XmlNodeType.Element, "Error", webServiceNamespace);
+
+        //Create and set the value for the ErrorNumber node
+        XmlNode errorNumberNode = xmlDoc.CreateNode(XmlNodeType.Element, "ErrorNumber", webServiceNamespace);
+        errorNumberNode.InnerText = errorNumber;
+
+        //Create and set the value for the ErrorMessage node
+        XmlNode errorMessageNode = xmlDoc.CreateNode(XmlNodeType.Element, "ErrorMessage", webServiceNamespace);
+        errorMessageNode.InnerText = errorMessage;
+
+        //Create and set the value for the ErrorSource node
+        XmlNode errorSourceNode = xmlDoc.CreateNode(XmlNodeType.Element, "ErrorSource", webServiceNamespace);
+        errorSourceNode.InnerText = errorSource;
+
+        //Append the Error child element nodes to the root detail node.
+        errorNode.AppendChild(errorNumberNode);
+        errorNode.AppendChild(errorMessageNode);
+        errorNode.AppendChild(errorSourceNode);
+
+        //Append the Detail node to the root node
+        rootNode.AppendChild(errorNode);
+
+        //Construct the exception
+        SoapException soapEx = new SoapException(errorMessage, faultCodeLocation, uri, rootNode);
+
+        //Raise the exception  back to the caller
+        return soapEx;
+    }
+	#endregion
 }

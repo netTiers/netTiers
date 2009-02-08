@@ -54,6 +54,7 @@
 <%-- 6.0 ASP.Net Admin Controls --%>
 
 <%-- 6.0 webservice --%>
+<%@ Property Name="WebServiceClassName" Type="System.String" Default="" Category="06. Web - Advanced" Description="The class name of the Web Services.  Defaults to Namespace + 'Services' if not specified." %>
 <%@ Property Name="GenerateWebservice" Type="System.Boolean" Default="false" Category="06. Web - Advanced" Description="Indicates if the webservice dataaccesslayer should be generated" %>
 <%@ Property Name="AttemptCreateLocalVirtualDirectory" Type="System.Boolean" Default="false" Category="06. Web - Advanced" Description="Indicates if you would like the generator to attempt to create the virtual directory for the url specified in WebServiceUrl if it doesn't exist for the WebserviceOutput directory." %>
 
@@ -376,7 +377,7 @@
 		{
 			if (_WebServiceUrl.Length == 0)
 			{
-				return "http://localhost/" + NameSpace + "Services";
+				return "http://localhost/" + _webServiceClassName;
 			}
 			return _WebServiceUrl;
 		}
@@ -910,6 +911,13 @@
 			}
 		}
 		
+		//Set the Correct WebServiceClassName
+		string _webServiceClassName = WebServiceClassName;		
+		if(string.IsNullOrEmpty(_webServiceClassName))
+		{
+			_webServiceClassName = NameSpace + "Services";
+		}
+		
 		#region Build the correct list of used tables (filtering tables without primary key)
 		_CurrentPhase = "Check datasource";
 		DebugWriteLine("Current Phase: "+_CurrentPhase);
@@ -1331,6 +1339,12 @@
 		string vListName = GetVListName();
 		this.RenderToFile("VList.cst", string.Format("{0}\\Views\\{1}.cs",rootPathBLL,vListName), true);
 		#endregion List classes
+		
+		#region Common Test Classes
+		XmlElement testUtilityNode = AddFileNode(commonNode, "TestUtility.cs");
+		this.GetTemplate("TestUtility.cst").SetProperty("NameSpace", UTNameSpace);
+		this.RenderToFile("TestUtility.cst", rootPathUT + "\\TestUtility.cs", true);		
+		#endregion
 		
 		#region Entity Classes 1
 		//----------------------------------------------------------------------------------------------------------------------------------------------
@@ -2045,7 +2059,7 @@
 				this.GetTemplate("WsNetTiersProvider.cst").SetProperty("SourceViews", templateSourceViews);
 				
 				this.GetTemplate("WsNetTiersProvider.cst").SetProperty("WebReferenceName", "WsProxy");
-				this.GetTemplate("WsNetTiersProvider.cst").SetProperty("ProxyClassName", NameSpace + "Services");
+				this.GetTemplate("WsNetTiersProvider.cst").SetProperty("ProxyClassName", _webServiceClassName);
 							
 				this.RenderToFile("WsNetTiersProvider.cst", rootPathDALWS + "\\WsNetTiersProvider.cs", true);
 			}
@@ -2079,8 +2093,8 @@
 				this.GetTemplate("ServiceLayer.WebService.cst").SetProperty("NameSpace", BLLNameSpace);
 				this.GetTemplate("ServiceLayer.WebService.cst").SetProperty("ComponentsNameSpace", ComponentsNameSpace);
 				this.GetTemplate("ServiceLayer.WebService.cst").SetProperty("BLLNameSpace", BLLNameSpace);
-					
-				this.GetTemplate("ServiceLayer.WebService.cst").SetProperty("ClassName", NameSpace + "Services");
+				
+				this.GetTemplate("ServiceLayer.WebService.cst").SetProperty("ClassName", _webServiceClassName);
 				this.GetTemplate("ServiceLayer.WebService.cst").SetProperty("WebServiceUrl", WebServiceUrl);
 				
 				this.RenderToFile("ServiceLayer.WebService.cst", rootPathWS + "\\" + NameSpace + "BLLServices.asmx", true);
@@ -2110,7 +2124,7 @@
 			this.GetTemplate("WebService.cst").SetProperty("DALNameSpace", DALNameSpace);
 			this.GetTemplate("WebService.cst").SetProperty("BLLNameSpace", BLLNameSpace);
 				
-			this.GetTemplate("WebService.cst").SetProperty("ClassName", NameSpace + "Services");
+			this.GetTemplate("WebService.cst").SetProperty("ClassName", _webServiceClassName);
 			this.GetTemplate("WebService.cst").SetProperty("WebServiceUrl", WebServiceUrl);
 			this.GetTemplate("WebService.cst").SetProperty("ProviderInvariantName", _providerInvariantName);
 			
@@ -3618,7 +3632,7 @@
 				this.GetTemplate("WsEntityViewProviderBase.generated.cst").SetProperty("FindSuffix", FindSuffix);
 				
 				this.GetTemplate("WsEntityViewProviderBase.generated.cst").SetProperty("WebReferenceName", "WsProxy");
-				this.GetTemplate("WsEntityViewProviderBase.generated.cst").SetProperty("ProxyClassName", GetClassName(SourceDatabase) + "Services");
+				this.GetTemplate("WsEntityViewProviderBase.generated.cst").SetProperty("ProxyClassName", _webServiceClassName);
 							
 				this.RenderToFile("WsEntityViewProviderBase.generated.cst", rootPathDALWS + "\\Views\\Ws" + GetClassName(SourceView, ClassNameFormat.ProviderBase) + ".generated.cs", true);
 				AddExecutionTime(wsdalcViewBaseNode);
@@ -4207,7 +4221,7 @@
 					this.GetTemplate("WsEntityProviderBase.generated.cst").SetProperty("DALNameSpace", DALNameSpace);
 					
 					this.GetTemplate("WsEntityProviderBase.generated.cst").SetProperty("WebReferenceName", "WsProxy");
-					this.GetTemplate("WsEntityProviderBase.generated.cst").SetProperty("ProxyClassName", GetClassName(SourceDatabase) + "Services");
+					this.GetTemplate("WsEntityProviderBase.generated.cst").SetProperty("ProxyClassName", _webServiceClassName);
 														
 					this.RenderToFile("WsEntityProviderBase.generated.cst", rootPathDALWS + "\\Ws" + GetClassName(SourceTable, ClassNameFormat.ProviderBase) + ".generated.cs", true);
 					AddExecutionTime(wsDalcBaseNode);

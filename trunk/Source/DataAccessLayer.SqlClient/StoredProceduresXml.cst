@@ -356,7 +356,7 @@ GO
 				int countComputedColumns = 0;
 				for (int i = 0; i < cols.Count; i++)
 				{
-					Response.Write("\t\t\t\t" + GetSqlParameterXmlNode(cols[i], IsComputed(cols[i]) || IsIdentityColumn(cols[i])) + Environment.NewLine);
+					Response.Write("\t\t\t\t" + GetSqlParameterXmlNode(cols[i], IsComputed(cols[i]) || IsIdentityColumn(cols[i]) || IsIdentityRowGuidColumn(cols[i])) + Environment.NewLine);
 					if (IsComputed(cols[i]))
 						countComputedColumns++;
 				}%>
@@ -372,7 +372,7 @@ GO
 					,<% } } %>
 					)
 					<% if (colsIdentityRowGuids.Count > 0 && IncludeDatabaseFeatures == MoM.Templates.DatabaseType.SQLServer2005) { %>
-						OUTPUT <% for (int i = 0; i < colsIdentityRowGuids.Count; i++) {%>Inserted.<%= GetPropertyName(colsIdentityRowGuids[i]) %><% if (i < colsIdentityRowGuids.Count - 1) { %>,<% } } %> into @IdentityRowGuids
+						OUTPUT <% for (int i = 0; i < colsIdentityRowGuids.Count; i++) {%>INSERTED.<%= colsIdentityRowGuids[i].Name %><% if (i < colsIdentityRowGuids.Count - 1) { %>,<% } } %> INTO @IdentityRowGuids
 					
 					<%}%>					
 				VALUES
@@ -382,7 +382,7 @@ GO
 					)
 				
 				<% if (colsIdentityRowGuids.Count > 0 && IncludeDatabaseFeatures == MoM.Templates.DatabaseType.SQLServer2005) { %>
-				select <% for (int i = 0; i < colsIdentityRowGuids.Count; i++) {%>@<%= GetPropertyName(colsIdentityRowGuids[i]) %>=<%= GetPropertyName(colsIdentityRowGuids[i]) %><% if (i < colsIdentityRowGuids.Count - 1) { %>,<% } } %>	 from @IdentityRowGuids
+				SELECT <% for (int i = 0; i < colsIdentityRowGuids.Count; i++) {%>@<%= GetPropertyName(colsIdentityRowGuids[i]) %>=<%= GetPropertyName(colsIdentityRowGuids[i]) %><% if (i < colsIdentityRowGuids.Count - 1) { %>,<% } } %>	 from @IdentityRowGuids
 				<%}%>
 				<% for (int i = 0; i < cols.Count; i++) { if (IsIdentityColumn(cols[i]) && !(IsIdentityRowGuidColumn(cols[i]))) { %>
 				-- Get the identity value
@@ -539,7 +539,7 @@ GO
 				{
 					Response.Write("\t\t\t\t" + GetSqlParameterXmlNode(SourceTable.PrimaryKey.MemberColumns[i], false) + Environment.NewLine);
 				}
-				if (RowVersion != null)
+				if (RowVersion != null && !RowVersion.IsPrimaryKeyMember)
 				{
 					Response.Write("\t\t\t\t" + GetSqlParameterXmlNode(RowVersion, false) + Environment.NewLine);
 				}				
@@ -551,7 +551,7 @@ GO
 					<% for (int i = 0; i < SourceTable.PrimaryKey.MemberColumns.Count; i++) { %>			
 					<% if (i > 0) { %>AND <% } %>[<%= SourceTable.PrimaryKey.MemberColumns[i].Name %>] = @<%= GetPropertyName(SourceTable.PrimaryKey.MemberColumns[i]) %>
 					<% } 
-					if (RowVersion != null)
+					if (RowVersion != null && !RowVersion.IsPrimaryKeyMember)
 					{
 						Response.Write("\tAND [" + RowVersion.Name + "] = @" + GetPropertyName(RowVersion) );
 					} %>

@@ -235,10 +235,10 @@ namespace <%=UTNameSpace%>
 		{
 			using (TransactionManager tm = CreateTransaction())
 			{
-				mock = CreateMockInstance(tm);
-				UpdateMockInstance(tm, mock);
-				
+				<%=className%> mock = CreateMockInstance(tm);
 				Assert.IsTrue(DataRepository.<%=providerName%>.<%= MethodNames.Insert %>(tm, mock), "Insert failed");
+				
+				UpdateMockInstance(tm, mock);
 				Assert.IsTrue(DataRepository.<%=providerName%>.<%= MethodNames.Update %>(tm, mock), "Update failed.");			
 				
 				System.Console.WriteLine("DataRepository.<%=providerName%>.<%= MethodNames.Update %>(mock):");			
@@ -446,6 +446,42 @@ namespace <%=UTNameSpace%>
 				Assert.IsTrue(<%=className%>.ValueEquals(entity, mock), "Clone is not working");
 			}
 		}
+		
+		<% if (IncludeFind) { %>
+		/// <summary>
+		/// Test Find using the Query class
+		/// </summary>
+		private void Step_30_TestFindByQuery_Generated()
+		{
+			using (TransactionManager tm = CreateTransaction())
+			{
+				//Insert Mock Instance
+				<%=className%> entity = CreateMockInstance(tm);
+				bool result = DataRepository.<%=providerName%>.<%= MethodNames.Insert %>(tm, entity);
+				
+				Assert.IsTrue(result, "Could Not Test FindByQuery, Insert Failed");
+
+				<%=className%>Query query = new <%=className%>Query();
+			
+				<% for (int x=0; x < cols.Count; x++)
+				{ %>
+				<% if ( !cols[x].IsForeignKeyMember && !IsIdentityColumn(cols[x]) && !IsComputed(cols[x]) )
+				{ %>
+				<% if(cols[x].AllowDBNull) {%>
+				if(mock.<%= GetPropertyName(cols[x]) %> != null)
+					query.AppendEquals(<%=className%>Column.<%= GetPropertyName(cols[x]) %>, mock.<%= GetPropertyName(cols[x]) %>.ToString());
+				<% } else { %>
+				query.AppendEquals(<%=className%>Column.<%= GetPropertyName(cols[x]) %>, mock.<%= GetPropertyName(cols[x]) %>.ToString());
+				<% } %>
+				<% } %>
+				<% } %>
+				
+				<%=collectionClassName%> results = DataRepository.<%=providerName%>.<%= MethodNames.Find %>(tm, query);
+				
+				Assert.IsTrue(results.Count == 1, "Find is not working correctly.  Failed to find the mock instance");
+			}
+		}
+		<% } %>
 						
 		#region Mock Instance
 		///<summary>
@@ -459,7 +495,7 @@ namespace <%=UTNameSpace%>
 			{ %>
 			<% if ( !cols[x].IsForeignKeyMember && !IsIdentityColumn(cols[x]) && !IsComputed(cols[x]) )
 			{ %>
-			mock.<%= GetPropertyName(cols[x]) %> = <%= GetCSMockValueByType(cols[x], RandomString(cols[x], false), false, Guid.NewGuid(), RandomNumber(1, 250), DateTime.Now) %>;
+			mock.<%= GetPropertyName(cols[x]) %> = <%= GetCSMockValueByType(cols[x]) %>;
 			<% } %>
 			<% } %>
 			
@@ -528,7 +564,7 @@ namespace <%=UTNameSpace%>
 			<% 
 			if ( !cols[x].IsForeignKeyMember && !IsIdentityColumn(cols[x]) && !IsComputed(cols[x]) )
 			{ %>
-			mock.<%= GetPropertyName(cols[x]) %> = <%= GetCSMockValueByType(cols[x], RandomString(cols[x], false) + "2", true, Guid.NewGuid(), RandomNumber(1, 250), DateTime.Now) %>;
+			mock.<%= GetPropertyName(cols[x]) %> = <%= GetCSMockValueByType(cols[x]) %>;
 			<% } %>
 			<% } %>
 			

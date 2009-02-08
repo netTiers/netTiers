@@ -306,7 +306,7 @@ namespace <%=DALNameSpace%>.SqlClient
 		<% for (int i = 0; i < SourceTable.PrimaryKey.MemberColumns.Count; i++) { %>
 		/// <param name="<%= GetFieldName(SourceTable.PrimaryKey.MemberColumns[i])%>"><%=GetColumnXmlComment(SourceTable.PrimaryKey.MemberColumns[i],2)%>. Primary Key.</param>	
 		<% } %>
-		/// <param name="transactionManager"><see cref="TransactionManager"/> object</param><% if (RowVersion != null){ %>
+		/// <param name="transactionManager"><see cref="TransactionManager"/> object</param><% if (RowVersion != null && !RowVersion.IsPrimaryKeyMember){ %>
 		/// <param name="<%=GetFieldName(RowVersion)%>">The timestamp field used for concurrency check.</param><% } %>
 		/// <remarks>Deletes based on primary key(s).</remarks>
 		/// <returns>Returns true if operation suceeded.</returns>
@@ -316,7 +316,7 @@ namespace <%=DALNameSpace%>.SqlClient
 		<% if (RowVersion != null){ %>
         /// <exception cref="DBConcurrencyException">The record has been modified by an other user. Please reload the instance before deleting.</exception>
 		<%}%>
-		public override bool <%= MethodNames.Delete %>(TransactionManager transactionManager, <%= GetFunctionHeaderParameters(SourceTable.PrimaryKey.MemberColumns) %><% if(RowVersion != null) {Response.Write(", byte[] " + GetFieldName(RowVersion));}%>)
+		public override bool <%= MethodNames.Delete %>(TransactionManager transactionManager, <%= GetFunctionHeaderParameters(SourceTable.PrimaryKey.MemberColumns) %><% if(RowVersion != null && !RowVersion.IsPrimaryKeyMember) {Response.Write(", byte[] " + GetFieldName(RowVersion));}%>)
 		{
 			SqlDatabase database = new SqlDatabase(this._connectionString);
 			DbCommand commandWrapper = StoredProcedureProvider.GetCommandWrapper(database, "<%=owner + ProcedurePrefix + commandStem + DeleteSuffix%>", _useStoredProcedure);

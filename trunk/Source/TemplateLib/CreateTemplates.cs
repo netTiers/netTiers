@@ -163,6 +163,7 @@
 			CodeTemplates.Add("EntityViewRepositoryTest.generated.cst", base.CreateTemplate<EntityViewRepositoryTestGenerated>()); this.PerformStep();
 			CodeTemplates.Add("OrderedEntityRepositoryTestList.cst", base.CreateTemplate<OrderedEntityRepositoryTestList>()); this.PerformStep();
 			CodeTemplates.Add("OrderedEntityViewRepositoryTestList.cst", base.CreateTemplate<OrderedEntityViewRepositoryTestList>()); this.PerformStep();
+			CodeTemplates.Add("TestUtility.cst", base.CreateTemplate<TestUtility>()); this.PerformStep();
 																	
 			CodeTemplates.Add("AdminEntityUC_Designer.cst", base.CreateTemplate<AdminEntityUC_Designer>()); this.PerformStep();
 			CodeTemplates.Add("AdminEntityUC_CodeBehind.cst", base.CreateTemplate<AdminEntityUC_CodeBehind>()); this.PerformStep();

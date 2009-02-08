@@ -2513,7 +2513,7 @@ namespace MoM.Templates
 				return false;
 			if (IsGuidColumn(column) == false)
 			{
-				//Trace.WriteLine("IsIdentityRowGuid Not a Guid Column Returning False");
+				//Debug.WriteLine("IsIdentityRowGuid Not a Guid Column Returning False");
 				return false;
 			}
 
@@ -2530,7 +2530,7 @@ namespace MoM.Templates
 				defaultValue = defaultValueProperty.Value.ToString();
 				if (defaultValue == null || defaultValue.Trim().Length == 0)
 				{
-					//Trace.WriteLine("IsIdentityRowGuid DefaultValue is null Returning False");
+					//Debug.WriteLine("IsIdentityRowGuid DefaultValue is null Returning False");
 					return false;
 				}
 				
@@ -2546,23 +2546,21 @@ namespace MoM.Templates
 
 				if ( defaultValue.ToLower() == "newid()" || defaultValue.ToLower() == "newsequentialid()" )
 				{
-					// Trace.WriteLine("IsIdentityRowGuid Returning True defaultValue=" + defaultValue.ToLower());
+					//Debug.WriteLine("IsIdentityRowGuid Returning True defaultValue=" + defaultValue.ToLower());
 					return true;
 				
 				}
 				else
 				{
-					// Trace.WriteLine("IsIdentityRowGuid Default Value is not newid() or newsequentialid() Returning False");
+					//Debug.WriteLine("IsIdentityRowGuid Default Value is not newid() or newsequentialid() Returning False");
 					return false;
 				}
 				
 			}
 			catch{}
-				//Trace.WriteLine("IsIdentityRowGuid Catch Returning False");
-				return false;	
-			
-			
-			
+
+			//Debug.WriteLine("IsIdentityRowGuid Catch Returning False");				
+			return false;	
 		}
 		
 		/// <summary>
@@ -2888,8 +2886,8 @@ namespace MoM.Templates
 			if (column.DataType == DbType.Binary || column.NativeType == "text" || 
 					column.NativeType == "ntext" || 
 					column.NativeType == "timestamp" ||
-					column.NativeType == "image"
-				)
+					column.NativeType == "image" ||
+					column.NativeType == "xml")
 				return false;
 			
 			return true;
@@ -2943,7 +2941,7 @@ namespace MoM.Templates
 		/// <param name="isOutput">indicates the direction</param>
 		/// <returns>Sql Parameter statement</returns>
 		public string GetSqlParameterXmlNode(ColumnSchema column)
-		{
+		{	
 			return GetSqlParameterXmlNode(column, false);
 		}
 		
@@ -2954,7 +2952,7 @@ namespace MoM.Templates
 		/// <param name="isOutput">indicates the direction</param>
 		/// <returns>Sql Parameter statement</returns>
 		public string GetSqlParameterXmlNode(ColumnSchema column, bool isOutput)
-		{
+		{	
 			return GetSqlParameterXmlNode(column, GetPropertyName(column), isOutput, false);
 		}		
 		
@@ -3087,7 +3085,8 @@ namespace MoM.Templates
 						if (schemaItem.NativeType != "text" && 
 								schemaItem.NativeType != "ntext" && 
 								schemaItem.NativeType != "image" && 
-								schemaItem.NativeType != "timestamp")
+								schemaItem.NativeType != "timestamp" &&
+								schemaItem.NativeType != "sysname")
 						{
 							if (schemaItem.Size > 0)
 							{
@@ -3566,18 +3565,32 @@ namespace MoM.Templates
 			// than a Column or ViewColumn Schema or you do not have a mapping.config 
 			// file (or you are generating a mapping.config file).
 			if (field.NativeType.ToLower() == "real")
+			{
 				return "System.Single" + (field.AllowDBNull ? "?" : "");
+			}
 			else if (field.NativeType.ToLower() == "xml")
+			{
 				return "string";
+			}
 			else if (CSPUseDefaultValForNonNullableTypes && (field is ParameterSchema) && !IsCSReferenceDataType(field))
+			{
 				if (!DefaultIsNull((ParameterSchema)field) || !nullable)
+				{
 					return field.SystemType.ToString();
+				}
 				else 
+				{
 					return field.SystemType.ToString() + "?";
+				}
+			}
 			else if (!IsCSReferenceDataType(field) && field.AllowDBNull && nullable)
+			{
 				return field.SystemType.ToString() + "?";
+			}
 			else
+			{
 				return field.SystemType.ToString();
+			}
 		}
 		
 		#region Defualt Param Value
@@ -4112,7 +4125,8 @@ CREATE\s+PROC(?:EDURE)?                               # find the start of the st
 					case DbType.AnsiStringFixedLength: 
 					case DbType.String: 
 					case DbType.StringFixedLength: 
-					case DbType.Binary: 
+					case DbType.Binary:
+					case DbType.Object:
 						return true;
 						
 					case DbType.Boolean: 
@@ -4125,8 +4139,7 @@ CREATE\s+PROC(?:EDURE)?                               # find the start of the st
 					case DbType.Double:
 					case DbType.Int16: 
 					case DbType.Int32: 
-					case DbType.Int64: 
-					case DbType.Object: 
+					case DbType.Int64:  
 					case DbType.Single: 
 					case DbType.Time:
 					case DbType.VarNumeric:
@@ -4143,95 +4156,82 @@ CREATE\s+PROC(?:EDURE)?                               # find the start of the st
 		/// Get a mock value for a given data type. Used by the unit test classes.
 		/// </summary>
 		/// <param name="column">Data type for which to get the default value.</param>
-		/// <param name="stringValue">a mock string value.</param>
-		/// <param name="bValue">a mock boolean value.</param>
-		/// <param name="guidValue">a mock Guid value.</param>
-		/// <param name="numValue">a mock numeric value.</param>
-		/// <param name="dtValue">a mock datetime value.</param>
-		/// <returns>A string representation of the default value.</returns>
-		public string GetCSMockValueByType(SchemaExplorer.DataObjectBase column, string stringValue, bool bValue, Guid guidValue, int numValue, DateTime dtValue)
-		{	
+		/// <returns>Code to set the value of the test object</returns>
+		public string GetCSMockValueByType(SchemaExplorer.DataObjectBase column)
+		{		
+			string randomNumber = "TestUtility.Instance.RandomNumber()";
+			string randomBoolean = "TestUtility.Instance.RandomBoolean()";
+			string randomGuid = "Guid.NewGuid()";
+			string randomByte = "TestUtility.Instance.RandomByte()";
+			string randomShort = "TestUtility.Instance.RandomShort()";
+			
 			if (column.NativeType.ToLower() == "real")
-				return numValue.ToString() + "F";
+			{
+				return "(float)" + randomNumber;
+			}
 			else if (column.NativeType.ToLower() == "xml")
 			{
 				return "\"" + "<test></test>" + "\"";
 			}	
 			else
-			{
+			{	
+				/* Always use the Random String function for strings */
 				switch (column.DataType)
 				{
 					case DbType.AnsiString: 
-						return "\"" + stringValue + "\"";
-						
-					case DbType.AnsiStringFixedLength: 
-					return "\"" + stringValue + "\"";
-					
-					case DbType.String: 
-						return "\"" + stringValue + "\"";
+					case DbType.AnsiStringFixedLength:
+					case DbType.String:
+					case DbType.StringFixedLength: 
+						return RandomString(column, false);
 						
 					case DbType.Boolean: 
-						return bValue.ToString().ToLower();
-					
-					case DbType.StringFixedLength: 
-						return "\"" + stringValue + "\"";
+						return randomBoolean;
 						
 					case DbType.Guid: 
-						return "new Guid(\"" + guidValue.ToString() + "\")"; 
-					
+						return randomGuid;
 					
 					//Answer modified was just 0
 					case DbType.Binary: 
-						return "new byte[] {" + numValue.ToString() + "}";
+						return "new byte[] { " + randomByte + " }";
 					
 					//Answer modified was just 0
 					case DbType.Byte:
-						return "(byte)" + numValue.ToString() + "";
-						//return "{ 0 }";
+						return randomByte;
 					
-					case DbType.Currency: 
-						return numValue.ToString();
-					
+					case DbType.Currency:
+						return randomShort;
+						
+					case DbType.Int32:
+						return randomNumber;
+						
 					case DbType.Date: 
-						return string.Format("new DateTime({0}, {1}, {2}, 0, 0, 0, 0)", dtValue.Date.Year, dtValue.Date.Month, dtValue.Date.Day);
-					
+						return "TestUtility.Instance.RandomDate()";
+						
 					case DbType.DateTime: 
-						return string.Format("new DateTime({0}, {1}, {2}, {3}, {4}, {5}, {6})", dtValue.Year, dtValue.Month, dtValue.Day, dtValue.Hour, dtValue.Minute, dtValue.Second, dtValue.Millisecond);
+					case DbType.Time:
+						return "TestUtility.Instance.RandomDateTime()";
 					
 					case DbType.Decimal: 
-						return numValue.ToString() + "m";
-						//return "0M";
-						//return "0.0M";
+						return "(decimal)" + randomNumber;
 					
 					case DbType.Double: 
-						return numValue.ToString() + ".0f";
+						return "(double)" + randomNumber;
 					
 					case DbType.Int16: 
-						return "(short)" + numValue.ToString();
-						
-					case DbType.Int32: 
-						return "(int)" + numValue.ToString();
+						return randomShort;
 						
 					case DbType.Int64: 
-						return "(long)" + numValue.ToString();
+						return "(long)" + randomNumber;
 					
 					case DbType.Object: 
 						return "null";
 					
 					case DbType.Single: 
-						return numValue.ToString() + "F";
-					
-					//case DbType.Time: return "DateTime.MaxValue";
-					case DbType.Time: 
-						return string.Format("new DateTime({0}, {1}, {2}, {3}, {4}, {5}, {6})", dtValue.Year, dtValue.Month, dtValue.Day, dtValue.Hour, dtValue.Minute, dtValue.Second, dtValue.Millisecond);
-						
+						return "(float)" + randomNumber;
+											
 					case DbType.VarNumeric: 
-						return numValue.ToString();
-						//the following won't be used
-						//		case DbType.SByte: return "0";
-						//		case DbType.UInt16: return "0";
-						//		case DbType.UInt32: return "0";
-						//		case DbType.UInt64: return "0";
+						return randomNumber;
+						
 					default: return "null";
 				}
 			}
@@ -4249,7 +4249,7 @@ CREATE\s+PROC(?:EDURE)?                               # find the start of the st
 			return random.Next(min, max); 
 		}
 		
-		public string RandomString(ViewColumnSchema column, bool lowerCase)
+		public string RandomString(SchemaExplorer.DataObjectBase column, bool lowerCase)
 		{
 			//Debugger.Break();
 			int size = 2; // default size
@@ -4278,46 +4278,11 @@ CREATE\s+PROC(?:EDURE)?                               # find the start of the st
 				}
 			}
 			
-			return RandomString((size/2) -1, lowerCase);
-		}
-
-		public string RandomString(ColumnSchema column, bool lowerCase)
-		{
+			//Randomize the size on large string.
+			if(size > 20)
+				size = (size/2) - 1;
 			
-			
-			//Debugger.Break();
-			int size = 2; // default size
-			
-			// calculate maximum size of the field
-			switch (column.DataType)
-			{				
-				case DbType.AnsiString:
-				case DbType.AnsiStringFixedLength:
-				case DbType.String:
-				case DbType.StringFixedLength:
-				{
-					if (column.NativeType != "text" && column.NativeType != "ntext")
-					{
-						if (column.Size > 0)
-						{
-							size = column.Size;
-						}
-						
-						if (size > 1000)
-						{
-							size = 1000;	
-						}
-					}
-					break;
-				}
-			}
-			
-			string result = RandomString((size/2) -1, lowerCase);
-			
-			if (column.IsPrimaryKeyMember && !IsIdentityColumn(column) && !IsComputed(column))
-				return string.Concat(result, Guid.NewGuid().ToString("N").Substring(0,2));
-			
-			return result;	
+			return RandomString(size, lowerCase);
 		}
 		
 		/// <summary>
@@ -4328,18 +4293,8 @@ CREATE\s+PROC(?:EDURE)?                               # find the start of the st
 		/// <returns>Random string</returns>
 		/// <remarks>Mahesh Chand  - http://www.c-sharpcorner.com/Code/2004/Oct/RandomNumber.asp</remarks>
 		public string RandomString(int size, bool lowerCase)
-		{
-			StringBuilder builder = new StringBuilder();
-			Random random = new Random(size);
-			char ch ;
-			for(int i=0; i<size; i++)
-			{
-				ch = Convert.ToChar(Convert.ToInt32(26 * random.NextDouble() + 65)) ;
-				builder.Append(ch); 
-			}
-			if(lowerCase)
-			return builder.ToString().ToLower();
-			return builder.ToString();
+		{			
+			return "TestUtility.Instance.RandomString(" + size.ToString() + ", " + lowerCase.ToString().ToLower() + ");";
 		}
 
 
