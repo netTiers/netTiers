@@ -4680,7 +4680,7 @@ CREATE\s+PROC(?:EDURE)?                               # find the start of the st
 					{
 						continue;
 					}
-					else if (!SqlTypesAreEquivalent(command.CommandResults[0].Columns[i].NativeType, table.Columns[i].NativeType))
+					else if (!SqlTypesAreEquivalent(command.CommandResults[0].Columns[i], table.Columns[i]))
 					{
 						return false;
 					}
@@ -4731,7 +4731,7 @@ CREATE\s+PROC(?:EDURE)?                               # find the start of the st
 					{
 						continue;
 					}
-					else if (!SqlTypesAreEquivalent(command.CommandResults[0].Columns[i].NativeType, view.Columns[i].NativeType))
+					else if (!SqlTypesAreEquivalent(command.CommandResults[0].Columns[i], view.Columns[i]))
 					{
 						return false;
 					}
@@ -4746,22 +4746,27 @@ CREATE\s+PROC(?:EDURE)?                               # find the start of the st
 		}
 		
 		/// <summary>
-		/// Compares two sql types and determines if they are syntax equivalent.
-		/// </summary>
-		/// <param name="type1">The first sql type to compare.</param>
-		/// <param name="type2">The second sql type to compare.</param>
-		public bool SqlTypesAreEquivalent(string type1, string type2)
-		{
-			type1 = type1.ToLower();
-			type2 = type2.ToLower();
-			
-			if ((type1 == "numeric" && type2 == "decimal") || (type2 == "numeric" && type1 == "decimal"))
-				return true;
-			else if ((type1 == "varchar" && type2 == "nvarchar") || (type2 == "varchar" && type2 == "nvarchar"))
-				return true;   
+    /// Compares two sql types and determines if they are syntax equivalent.
+    /// </summary>
+    /// <param name="type1">The first sql type to compare.</param>
+    /// <param name="type2">The second sql type to compare.</param>
+    public bool SqlTypesAreEquivalent(DataObjectBase column1, DataObjectBase column2)
+    {
+      string nativeType1;
+      string nativeType2;
 
-			return (type1 == type2);
-		}
+      nativeType1 = column1.NativeType.ToString().ToLower();
+      nativeType2 = column1.NativeType.ToString().ToLower();
+
+
+      if ((nativeType1 == "numeric" && nativeType2 == "decimal") || (nativeType2 == "numeric" && nativeType1 == "decimal"))
+        return true;
+      else if ((nativeType1 == "varchar" && nativeType2 == "nvarchar") || (nativeType2 == "varchar" && nativeType1 == "nvarchar"))
+        return true;
+
+      return (nativeType1 == nativeType2) || (column1.SystemType.FullName == column2.SystemType.FullName);
+    }
+    
 		
 		public bool isIntXX(DataObjectBase column)
 		{
