@@ -4212,7 +4212,7 @@ CREATE\s+PROC(?:EDURE)?                               # find the start of the st
 						return "TestUtility.Instance.RandomDateTime()";
 					
 					case DbType.Decimal: 
-						return "(decimal)" + randomNumber;
+						return "(decimal)" + randomShort;
 					
 					case DbType.Double: 
 						return "(double)" + randomNumber;
