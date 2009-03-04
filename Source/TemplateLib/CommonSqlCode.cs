@@ -28,7 +28,7 @@ namespace MoM.Templates
 	{
 			
 		// [ab 012605] convenience array for checking if a datatype is an integer 
-		private readonly static DbType[] aIntegerDbTypes = new DbType[] {DbType.Int16,DbType.Int32, DbType.Int64 };
+		private readonly static DbType[] aIntegerDbTypes = new DbType[] {DbType.Int16,DbType.Int32, DbType.Int64, DbType.VarNumeric };
 		
 		private string entityFormat 		= "{0}";
 		private string entityKeyFormat 		= "{0}Key";
