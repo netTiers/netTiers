@@ -71,7 +71,7 @@ namespace MoM.Templates
 		
 		#region Oracle
 		
-		private static string _parameterPrefix = "@";
+		private static string _parameterPrefix = "@p_";
 		public static string ParameterPrefix 
 		{
 			get {return _parameterPrefix;}
@@ -3046,7 +3046,7 @@ namespace MoM.Templates
 			//Temp Oracle Fix.
 			if(string.IsNullOrEmpty(ParameterPrefix))
 			{
-				return string.Format(	"<parameter name=\"{6}{0}\" type=\"{1}\" direction=\"{2}\"  precision=\"{3}\" scale=\"{4}\" nulldefault=\"{5}\"/>", 
+				return string.Format(	"<parameter name=\"p_{6}{0}\" type=\"{1}\" direction=\"{2}\"  precision=\"{3}\" scale=\"{4}\" nulldefault=\"{5}\"/>", 
 										name, nativeType, direction, 
 										precision, scale, 
 										allowNull ? "null" : string.Empty, ParameterPrefix );

@@ -4,7 +4,7 @@ Admin Site
 </asp:Content>
 <asp:Content ID="Content2" ContentPlaceHolderID="ContentPlaceHolder1" Runat="Server">
 <blockquote>
-    netTiers 2.0 takes full advantage of .net 2.0 and forges together a feature set decidied by the community and it's presence had an immediate impact on project life-cycles.     
+    netTiers 2.3 takes full advantage of .net 2.0-3.5 and forges together a feature set decidied by the community and it's presence had an immediate impact on project life-cycles.     
 </blockquote>
 </asp:Content>
 
