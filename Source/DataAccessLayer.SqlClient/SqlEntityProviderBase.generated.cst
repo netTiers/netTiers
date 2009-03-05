@@ -32,6 +32,7 @@
 <%@ Property Name="IncludeGetListByIX" Type="System.Boolean" Default="True" Category="Options" Description="If true getlist functions will be generated." %>
 <%@ Property Name="IncludeFind" Type="System.Boolean" Default="False" Category="Options" Description="If true find functions will be generated." %>
 <%@ Property Name="IncludeManyToMany" Type="System.Boolean" Default="True" Category="Options" Description="If true select statements will be generated for any many to many relationship." %>
+<%@ Property Name="UseTimestampConcurrency" Type="System.Boolean" Default="True" Category="Options" Description="If this is set to True, Update and Delete will throw DbConcurrencyException when the timestamp doesn't match current." %>
 
 <%@ Property Name="InsertSuffix" Type="System.String" Default="_Insert" Category="Style" Description="Suffix to use for all generated INSERT functions." %>
 <%@ Property Name="UpdateSuffix" Type="System.String" Default="_Update" Category="Style" Description="Suffix to use for all generated UPDATE functions." %>
@@ -77,7 +78,6 @@
 		if (column.NativeType.ToLower() == "timestamp")
 			RowVersion = column;
 	}
-	
 	
 	string className = NameSpace + "." + GetClassName(SourceTable);
 	string entityClassName = GetClassName(SourceTable);
@@ -313,7 +313,7 @@ namespace <%=DALNameSpace%>.SqlClient
         /// <exception cref="System.Exception">The command could not be executed.</exception>
         /// <exception cref="System.Data.DataException">The <paramref name="transactionManager"/> is not open.</exception>
         /// <exception cref="System.Data.Common.DbException">The command could not be executed.</exception>
-		<% if (RowVersion != null){ %>
+		<% if (RowVersion != null && UseTimestampConcurrency){ %>
         /// <exception cref="DBConcurrencyException">The record has been modified by an other user. Please reload the instance before deleting.</exception>
 		<%}%>
 		public override bool <%= MethodNames.Delete %>(TransactionManager transactionManager, <%= GetFunctionHeaderParameters(SourceTable.PrimaryKey.MemberColumns) %><% if(RowVersion != null && !RowVersion.IsPrimaryKeyMember) {Response.Write(", byte[] " + GetFieldName(RowVersion));}%>)
@@ -356,15 +356,12 @@ namespace <%=DALNameSpace%>.SqlClient
 			//Provider Data Requested Command Event
 			OnDataRequested(new CommandEventArgs(commandWrapper, "<%= MethodNames.Delete %>")); 
 
+			<% if (RowVersion != null && UseTimestampConcurrency) { %>
 			if (results == 0)
 			{
-				<% if (RowVersion != null){ %>
 				throw new DBConcurrencyException ("The record has been modified by an other user. Please reload the instance before deleting.");
-				<% } else { %>
-				//throw new DataException("The record has been already deleted.");
-				return false;
-				<% } %>
 			}
+			<% } %>
 			commandWrapper = null;
 			
 			return Convert.ToBoolean(results);
@@ -1139,6 +1136,9 @@ namespace <%=DALNameSpace%>.SqlClient
         /// <exception cref="System.Exception">The command could not be executed.</exception>
         /// <exception cref="System.Data.DataException">The <paramref name="transactionManager"/> is not open.</exception>
         /// <exception cref="System.Data.Common.DbException">The command could not be executed.</exception>
+		<% if (RowVersion != null && UseTimestampConcurrency){ %>
+        /// <exception cref="DBConcurrencyException">The record has been modified by an other user. Please reload the instance before updating.</exception>
+		<%}%>
 		public override bool <%= MethodNames.Update %>(TransactionManager transactionManager, <%=className%> entity)
 		{
 			SqlDatabase database = new SqlDatabase(this._connectionString);
@@ -1205,11 +1205,12 @@ namespace <%=DALNameSpace%>.SqlClient
 		<%
 		if (RowVersion != null)
 		{%>
+			<% if (UseTimestampConcurrency) { %>
 			if (results == 0)
 			{
 				throw new DBConcurrencyException("Concurrency exception");
 			}
-		
+			<% } %>
 			entity.<%=GetPropertyName(RowVersion)%> = (<%=RowVersion.SystemType.ToString()%>)database.GetParameterValue(commandWrapper, "@Returned<%=GetPropertyName(RowVersion)%>");
 		<%}
 			
