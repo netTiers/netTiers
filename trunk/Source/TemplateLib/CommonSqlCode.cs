@@ -71,7 +71,7 @@ namespace MoM.Templates
 		
 		#region Oracle
 		
-		private static string _parameterPrefix = "@p_";
+		private static string _parameterPrefix = "@";
 		public static string ParameterPrefix 
 		{
 			get {return _parameterPrefix;}
