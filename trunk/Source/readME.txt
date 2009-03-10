@@ -1,5 +1,5 @@
 =============================
-      .netTiers v2.3.0.b2
+      .netTiers v2.3.0.RTM
 =============================
 
 -----------------------------
@@ -73,7 +73,10 @@ http://www.nettiers.com/GettingStarted.ashx
 Known Issues
 --------------------
 Oracle - Find_Dynamic Stored Procedures do not work.
+Oracle - Custom Stored Procedures do not work.
+Oracle - Unit tests do not work.
 
+http://code.google.com/p/nettiers/issues/list
 -----------------------------
 .netTiers Support
 -----------------------------
