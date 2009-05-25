@@ -238,6 +238,12 @@
 			CodeTemplates.Add("OracleEntityViewProvider.cst", base.CreateTemplate<OracleEntityViewProvider>()); this.PerformStep();
 			CodeTemplates.Add("OracleEntityViewProviderBase.generated.cst", base.CreateTemplate<OracleEntityViewProviderBaseGenerated>()); this.PerformStep();
 			CodeTemplates.Add("System.Data.Oracle.Procedures.cst", base.CreateTemplate<SystemDataOracleProcedures>()); this.PerformStep();
+
+			CodeTemplates.Add("SqlCeNetTiersProvider.cst", base.CreateTemplate<SqlCeNetTiersProvider>()); this.PerformStep();
+			CodeTemplates.Add("SqlCeEntityProvider.cst", base.CreateTemplate<SqlCeEntityProvider>()); this.PerformStep();
+			CodeTemplates.Add("SqlCeEntityProviderBase.generated.cst", base.CreateTemplate<SqlCeEntityProviderBaseGenerated>()); this.PerformStep();
+			CodeTemplates.Add("SqlCeStoredProcedureProvider.cst", base.CreateTemplate<SqlCeStoredProcedureProvider>()); this.PerformStep();
+			CodeTemplates.Add("SqlCeStoredProceduresXml.cst", base.CreateTemplate<SqlCeStoredProceduresXml>()); this.PerformStep();
 			
 		#endregion 
 			
