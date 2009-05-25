@@ -643,6 +643,7 @@
 		, OracleClient
 		, OdbcClient
 		, OleDbClient
+		, SqlCeClient
 	}
 	
 	// Used to determine the style of drop statement to be used (if any)
@@ -789,6 +790,11 @@
 			{
 				_providerInvariantName = "System.Data.OracleClient";
 				ParameterPrefix = "";
+			}
+			else if (SourceDatabase.Provider.Name == "SqlCompactSchemaProvider")
+			{
+				_providerInvariantName = "System.Data.SqlServerCe.3.5";
+				ParameterPrefix = "@";
 			} 
 			else if(SourceDatabase.Provider.Name == "VistaDB Schema Provider")
 			{
@@ -807,6 +813,7 @@
 		string DALNameSpace = NameSpace + "." + (DataAccessLayerNameSpace.Length>0 ? GetCleanName(DataAccessLayerNameSpace) : "DataAccessLayer");
 		string DALSqlNameSpace = DALNameSpace  + ".SqlClient";
 		string DALOracleNameSpace = DALNameSpace + ".OracleClient";
+		string DALSqlCeNameSpace = DALNameSpace + ".SqlCeClient";
 		string DALGenericNameSpace = DALNameSpace + ".GenericClient";
 		string DALWSNameSpace = DALNameSpace  + ".WebServiceClient";
 		string UTNameSpace = NameSpace + "." + (UnitTestsNameSpace.Length>0 ? GetCleanName(UnitTestsNameSpace) : "UnitTests");
@@ -826,6 +833,7 @@
 		string rootPathDAL = OutputDirectory + "\\" + DALNameSpace;
 		string rootPathDALSql = OutputDirectory + "\\" + DALSqlNameSpace;
 		string rootPathDALOracle = OutputDirectory + "\\" + DALOracleNameSpace;
+		string rootPathDALSqlCe = OutputDirectory + "\\" + DALSqlCeNameSpace;
 		string rootPathDALGeneric = OutputDirectory + "\\" + DALGenericNameSpace;
 		string rootPathDALWS = OutputDirectory + "\\" + DALWSNameSpace;
 		string rootPathWebLib = OutputDirectory + "\\" + WebLibNameSpace;
@@ -1125,6 +1133,14 @@
 					SafeCreateDirectory(rootPathDALOracle + "\\" + CustomCodeFolderName);
 				}
 			}
+			else if(_providerInvariantName == "System.Data.SqlServerCe.3.5")
+			{
+				SafeCreateDirectory(rootPathDALSqlCe);	
+				if ( HasCustomCode )
+				{
+					SafeCreateDirectory(rootPathDALSqlCe + "\\" + CustomCodeFolderName);
+				}
+			}
 			// Generic implementation
 			else
 			{
@@ -1297,6 +1313,11 @@
 		{
 			SafeCopyFile(this.CodeTemplateInfo.DirectoryName + "\\References\\" + entLibSubDir + "\\Microsoft.Practices.EnterpriseLibrary.Validation.dll", libPath + "\\Microsoft.Practices.EnterpriseLibrary.Validation.dll");
 		}
+
+		if(_providerInvariantName == "System.Data.SqlServerCe.3.5")
+		{
+			SafeCopyFile(this.CodeTemplateInfo.DirectoryName + "\\References\\" + entLibSubDir + "\\Microsoft.Practices.EnterpriseLibrary.Data.SqlCe.dll", libPath + "\\Microsoft.Practices.EnterpriseLibrary.Data.SqlCe.dll");
+		}		
 	
 		// NUnit file
 		SafeCopyFile(this.CodeTemplateInfo.DirectoryName + "\\References\\nunit.framework.dll", libPath + "\\nunit.framework.dll");
@@ -1700,6 +1721,11 @@
 				xmlTemplateName = "System.Data.Oracle.Procedures.cst";
 				xmlOutputName = "System.Data.OracleClient.Procedures.xml";
 			}
+			else if (_providerInvariantName == "System.Data.SqlServerCe.3.5")
+			{			
+				xmlTemplateName = "SqlCeStoredProceduresXml.cst";
+				xmlOutputName = "System.Data.SqlServerCe.Procedures.xml";
+			}
 			else
 			{
 				throw new System.Exception("This provider is not supported.");
@@ -1754,6 +1780,11 @@
 			{
 				this.RenderToFile(xmlTemplateName, rootPathDALOracle + "\\" + xmlOutputName, true);
 			}
+			else if(_providerInvariantName == "System.Data.SqlServerCe.3.5")
+			{
+				this.GetTemplate(xmlTemplateName).SetProperty("UseTimestampConcurrency", UseTimestampConcurrency);
+				this.RenderToFile(xmlTemplateName, rootPathDALSqlCe + "\\" + xmlOutputName, true);
+			}
 			else
 			{
 				this.RenderToFile(xmlTemplateName, rootPathDALGeneric + "\\" + xmlOutputName, true);
@@ -1770,6 +1801,10 @@
 			{
 				xslt.Load(this.CodeTemplateInfo.DirectoryName + "\\DataAccessLayer.OracleClient\\ScriptOracleSql.xsl");
 			}
+			else if(_providerInvariantName == "System.Data.SqlServerCe.3.5")
+			{
+				xslt.Load(this.CodeTemplateInfo.DirectoryName + "\\DataAccessLayer.SqlCeClient\\scriptsql.xsl");
+			}
 			             
 			TextWriter writer = null;
 			XPathDocument mydata = null;
@@ -1781,6 +1816,12 @@
 					writer = new StreamWriter(rootPathSQL + "\\procedures.sql");
 					//Create a new XPathDocument and load the XML data to be transformed.
 					mydata = new XPathDocument(rootPathDALSql + "\\" + xmlOutputName);
+				}
+				else if(_providerInvariantName == "System.Data.SqlServerCe.3.5")
+				{
+					writer = new StreamWriter(rootPathSQL + "\\procedures.sql");
+					//Create a new XPathDocument and load the XML data to be transformed.
+					mydata = new XPathDocument(rootPathDALSqlCe + "\\" + xmlOutputName);
 				}
 				else if(_providerInvariantName == "System.Data.OracleClient")
 				{
@@ -2034,6 +2075,22 @@
 				//this.GetTemplate("DbCommandManager.cst").SetProperty("ProviderInvariantName", _providerInvariantName);
 				//this.GetTemplate("DbCommandManager.cst").SetProperty("IncludeDatabaseFeatures", IncludeDatabaseFeatures);
 				//this.RenderToFile("DbCommandManager.cst", rootPathDALOracle + "\\DbCommandManager.cs", true);
+			}
+			else if(_providerInvariantName == "System.Data.SqlServerCe.3.5")
+			{
+				AddFileNode(commonNode, "SqlCeClient\\SqlCeNetTiersProvider.cs");
+				this.GetTemplate("SqlCeNetTiersProvider.cst").SetProperty("NameSpace", BLLNameSpace);
+				this.GetTemplate("SqlCeNetTiersProvider.cst").SetProperty("DALNameSpace", DALNameSpace);
+				this.GetTemplate("SqlCeNetTiersProvider.cst").SetProperty("SourceTables", templateSourceTables);
+				this.GetTemplate("SqlCeNetTiersProvider.cst").SetProperty("SourceViews", templateSourceViews);
+				this.RenderToFile("SqlCeNetTiersProvider.cst", rootPathDALSqlCe + "\\SqlCeNetTiersProvider.cs", true);				
+
+				AddFileNode(commonNode, "SqlCeClient\\StoredProcedureProvider.cs");
+				this.GetTemplate("SqlCeStoredProcedureProvider.cst").SetProperty("BLLNameSpace", BLLNameSpace);
+				this.GetTemplate("SqlCeStoredProcedureProvider.cst").SetProperty("DALNameSpace", DALNameSpace);
+				this.GetTemplate("SqlCeStoredProcedureProvider.cst").SetProperty("IncludeDatabaseFeatures", IncludeDatabaseFeatures);
+				this.RenderToFile("SqlCeStoredProcedureProvider.cst", rootPathDALSqlCe + "\\StoredProcedureProvider.cs", true);
+
 			}
 			else
 			{
@@ -2724,6 +2781,7 @@
 			this.GetTemplate(solutionTemplate).SetProperty("BLLNameSpace", BLLNameSpace);
 			this.GetTemplate(solutionTemplate).SetProperty("DALSqlNameSpace", DALSqlNameSpace);
 			this.GetTemplate(solutionTemplate).SetProperty("DALOracleNameSpace", DALOracleNameSpace);
+			this.GetTemplate(solutionTemplate).SetProperty("DALSqlCeNameSpace", DALSqlCeNameSpace);
 			this.GetTemplate(solutionTemplate).SetProperty("ProviderInvariantName", _providerInvariantName);
 			this.GetTemplate(solutionTemplate).SetProperty("DALGenericNameSpace", DALGenericNameSpace);
 			this.GetTemplate(solutionTemplate).SetProperty("DALWSNameSpace", DALWSNameSpace);
@@ -2802,6 +2860,7 @@
 		this.GetTemplate(projectTemplate).SetProperty("ComponentLayerNameSpace", ComponentsNameSpace);
 		this.GetTemplate(projectTemplate).SetProperty("DALSqlNameSpace", DALSqlNameSpace);
 		this.GetTemplate(projectTemplate).SetProperty("DALOracleNameSpace", DALOracleNameSpace);
+		this.GetTemplate(projectTemplate).SetProperty("DALSqlCeNameSpace", DALSqlCeNameSpace);
 		this.GetTemplate(projectTemplate).SetProperty("DALGenericNameSpace", DALGenericNameSpace);
 		this.GetTemplate(projectTemplate).SetProperty("DALWSNameSpace", DALWSNameSpace);
 		this.GetTemplate(projectTemplate).SetProperty("WebLibNameSpace", WebLibNameSpace);
@@ -2970,6 +3029,30 @@
 				this.GetTemplate(projectTemplate).SetProperty("IncludeDesignTimeSupport", false);
 			
 				this.RenderToFile(projectTemplate, rootPathDALOracle + "\\" + DALOracleNameSpace + ".csproj", true);
+			
+				#endregion
+			}
+			else if(_providerInvariantName == "System.Data.SqlServerCe.3.5")
+			{
+				#region SqlCe Client
+				
+				AddFileNode(commonNode, BLLNameSpace + "."+DataAccessLayerNameSpace+".SqlCeClient.csproj");
+		
+				this.GetTemplate(projectTemplate).SetProperty("IncludeBll", false);
+				this.GetTemplate(projectTemplate).SetProperty("IncludeDALBase", false);	
+				this.GetTemplate(projectTemplate).SetProperty("IncludeSqlClient", false);			
+				this.GetTemplate(projectTemplate).SetProperty("IncludeGenericClient", true);	
+				this.GetTemplate(projectTemplate).SetProperty("IncludeWebservice", false);
+				this.GetTemplate(projectTemplate).SetProperty("IncludeWebserviceClient", false);
+				this.GetTemplate(projectTemplate).SetProperty("IncludeComponents", false);
+				this.GetTemplate(projectTemplate).SetProperty("IncludeWebLibrary", false);
+				this.GetTemplate(projectTemplate).SetProperty("IncludeWebSecurity", false);
+				this.GetTemplate(projectTemplate).SetProperty("IncludeWebsite", false);
+				this.GetTemplate(projectTemplate).SetProperty("IncludeUnitTest", MoM.Templates.UnitTestStyle.None);			
+				this.GetTemplate(projectTemplate).SetProperty("IncludeWCFDataAttributes", false);
+				this.GetTemplate(projectTemplate).SetProperty("IncludeDesignTimeSupport", false);
+			
+				this.RenderToFile(projectTemplate, rootPathDALSqlCe + "\\" + DALSqlCeNameSpace + ".csproj", true);
 			
 				#endregion
 			}
@@ -4034,6 +4117,67 @@
 						
 						this.RenderToFile("OracleEntityProvider.cst", rootPathDALOracle + "\\Oracle" + GetClassName(SourceTable, ClassNameFormat.Provider) + ".cs", false);
 						AddExecutionTime(OracleDalNode2);
+					}
+					
+					#endregion
+				}
+				else if(_providerInvariantName == "System.Data.SqlServerCe.3.5")
+				{
+					#region SqlServerCe client dal files
+					
+					//----------------------------------------------------------------------------------------------------------------------------------------------
+					//	Generating the abstract SqlClient entity Repository class		
+					//----------------------------------------------------------------------------------------------------------------------------------------------
+					XmlElement sqlceDalBaseNode = AddFileNode(tableNode, "SqlCeClient\\SqlCe"+ GetClassName(SourceTable, ClassNameFormat.PartialProviderBase) + ".cs");
+					
+					this.GetTemplate("SqlCeEntityProviderBase.generated.cst").SetProperty("IncludeCustoms", IncludeCustoms);				
+					this.GetTemplate("SqlCeEntityProviderBase.generated.cst").SetProperty("CustomNonMatchingReturnType", CustomNonMatchingReturnType);				
+					this.GetTemplate("SqlCeEntityProviderBase.generated.cst").SetProperty("CustomProcedureStartsWith", CustomProcedureStartsWith);
+
+					
+					this.GetTemplate("SqlCeEntityProviderBase.generated.cst").SetProperty("InsertSuffix", InsertSuffix);
+					this.GetTemplate("SqlCeEntityProviderBase.generated.cst").SetProperty("UpdateSuffix", UpdateSuffix);
+					this.GetTemplate("SqlCeEntityProviderBase.generated.cst").SetProperty("DeleteSuffix", DeleteSuffix);
+					this.GetTemplate("SqlCeEntityProviderBase.generated.cst").SetProperty("SelectSuffix", SelectSuffix);
+					this.GetTemplate("SqlCeEntityProviderBase.generated.cst").SetProperty("SelectAllSuffix", SelectAllSuffix);
+					this.GetTemplate("SqlCeEntityProviderBase.generated.cst").SetProperty("FindSuffix", FindSuffix);
+					this.GetTemplate("SqlCeEntityProviderBase.generated.cst").SetProperty("ProcedurePrefix", ProcedurePrefix.Replace(" ", ""));
+					this.GetTemplate("SqlEntityProviderBase.generated.cst").SetProperty("UseTimestampConcurrency", UseTimestampConcurrency);
+					
+					this.GetTemplate("SqlCeEntityProviderBase.generated.cst").SetProperty("IncludeInsert", IncludeInsert);
+					this.GetTemplate("SqlCeEntityProviderBase.generated.cst").SetProperty("IncludeUpdate", IncludeUpdate);
+					this.GetTemplate("SqlCeEntityProviderBase.generated.cst").SetProperty("IncludeSave", IncludeSave);
+					this.GetTemplate("SqlCeEntityProviderBase.generated.cst").SetProperty("IncludeDelete", IncludeDelete);
+					this.GetTemplate("SqlCeEntityProviderBase.generated.cst").SetProperty("IncludeManyToMany", IncludeManyToMany);
+					this.GetTemplate("SqlCeEntityProviderBase.generated.cst").SetProperty("IncludeGetList", IncludeGetList);
+					this.GetTemplate("SqlCeEntityProviderBase.generated.cst").SetProperty("IncludeGetListByFK", IncludeGetListByFK);
+					this.GetTemplate("SqlCeEntityProviderBase.generated.cst").SetProperty("IncludeGetListByIX", IncludeGetListByIX);
+					this.GetTemplate("SqlCeEntityProviderBase.generated.cst").SetProperty("IncludeFind", IncludeFind);
+					this.GetTemplate("SqlCeEntityProviderBase.generated.cst").SetProperty("IncludeDatabaseFeatures", IncludeDatabaseFeatures);
+					
+					this.GetTemplate("SqlCeEntityProviderBase.generated.cst").SetProperty("SourceTable", SourceTable);
+					this.GetTemplate("SqlCeEntityProviderBase.generated.cst").SetProperty("SourceTables", templateSourceTables);
+					this.GetTemplate("SqlCeEntityProviderBase.generated.cst").SetProperty("NameSpace", BLLNameSpace);
+					this.GetTemplate("SqlCeEntityProviderBase.generated.cst").SetProperty("DALNameSpace", DALNameSpace);
+														
+					this.RenderToFile("SqlCeEntityProviderBase.generated.cst", rootPathDALSqlCe + "\\SqlCe" + GetClassName(SourceTable, ClassNameFormat.PartialProviderBase) + ".cs", true);
+					AddExecutionTime(sqlceDalBaseNode);
+				
+					//----------------------------------------------------------------------------------------------------------------------------------------------
+					//	Generating the SqlClient Repository Implementation, only if not already there
+					//----------------------------------------------------------------------------------------------------------------------------------------------
+					if (!File.Exists(rootPathDALSqlCe+ "\\SqlCe" + GetClassName(SourceTable, ClassNameFormat.Provider) + ".cs"))
+					{
+						XmlElement SqlCeDalNode2 = AddFileNode(tableNode, "SqlCeClient\\"+ GetClassName(SourceTable, ClassNameFormat.Repository) + ".cs");
+						//Response.WriteLine("Building concrete SqlClient Repository class : SqlClient\\" + GetRepositoryClassName(SourceTable.Name));
+						this.GetTemplate("SqlCeEntityProvider.cst").SetProperty("NameSpace", BLLNameSpace);
+						this.GetTemplate("SqlCeEntityProvider.cst").SetProperty("DALNameSpace", DALNameSpace);
+						this.GetTemplate("SqlCeEntityProvider.cst").SetProperty("ClassName", GetClassName(SourceTable));
+						this.GetTemplate("SqlCeEntityProvider.cst").SetProperty("ProviderName", "SqlCe" + GetClassName(SourceTable, ClassNameFormat.Provider));
+						this.GetTemplate("SqlCeEntityProvider.cst").SetProperty("ProviderBaseName", "SqlCe" + GetClassName(SourceTable, ClassNameFormat.ProviderBase));
+						
+						this.RenderToFile("SqlCeEntityProvider.cst", rootPathDALSqlCe + "\\SqlCe" + GetClassName(SourceTable, ClassNameFormat.Provider) + ".cs", false);
+						AddExecutionTime(SqlCeDalNode2);
 					}
 					
 					#endregion
