@@ -24,7 +24,6 @@
 <%@ Property Name="DALNameSpace" Type="System.String" Category="Data" Description="DAL Namespace." %>
 <%@ Property Name="DALSqlNameSpace" Type="System.String" Category="Data" Description="DAL sql Namespace." %>
 <%@ Property Name="DALOracleNameSpace" Type="System.String" Category="Data" Description="DAL sql Namespace." %>
-<%@ Property Name="DALSqlCeNameSpace" Type="System.String" Category="Data" Description="DAL sql Namespace." %>
 <%@ Property Name="DALGenericNameSpace" Type="System.String" Category="Data" Description="DAL sql Namespace." %>
 <%@ Property Name="DALWSNameSpace" Type="System.String" Category="Data" Description="DAL ws Namespace." %>
 <%@ Property Name="UTNameSpace" Type="System.String" Category="Data" Description="UT Namespace." %>
@@ -98,13 +97,9 @@
 	}
 	else if (IncludeGenericClient)
 	{
-		if (SourceDatabase.Provider.Name == "OracleSchemaProvider")
+		if(SourceDatabase.Provider.Name == "OracleSchemaProvider")
 		{
 			fileName = DALOracleNameSpace; 
-		}
-		else if (SourceDatabase.Provider.Name == "SqlCompactSchemaProvider")
-		{
-			fileName = DALSqlCeNameSpace; 
 		}
 		else
 		{
@@ -353,12 +348,6 @@
 		<% if (SourceDatabase.Provider.Name == "OracleSchemaProvider") {%>
 	<Reference Include="System.Data.OracleClient" />
 		<%}%>
-		<% if (SourceDatabase.Provider.Name == "SqlCompactSchemaProvider") {%>
-	    <Reference Include="Microsoft.Practices.EnterpriseLibrary.Data.SqlCe, <%= entlibVersionText %>">
-	      <SpecificVersion>False</SpecificVersion>
-      <HintPath><%= LibraryPath %>\Microsoft.Practices.EnterpriseLibrary.Data.SqlCe.dll</HintPath>
-    </Reference>
-		<%}%>
     <%}%>
 	<% if ( IncludeWebsite && IncludeAtlasLibrary ) { %>
 	
@@ -457,12 +446,6 @@
 	<% } else if (SourceDatabase.Provider.Name == "OracleSchemaProvider") { %>
 		<ProjectReference Include="..\<%=DALNameSpace + ".OracleClient" %>\<%=DALNameSpace + ".OracleClient" %>.csproj">
         <Name><%=DALNameSpace + ".OracleClient" %></Name>
-        <Project>{<%=DALGenericGuid%>}</Project>
-        <Package>{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}</Package>
-    </ProjectReference>
-	<% } else if (SourceDatabase.Provider.Name == "SqlCompactSchemaProvider") { %>
-		<ProjectReference Include="..\<%=DALNameSpace + ".SqlCeClient" %>\<%=DALNameSpace + ".SqlCeClient" %>.csproj">
-        <Name><%=DALNameSpace + ".SqlCeClient" %></Name>
         <Project>{<%=DALGenericGuid%>}</Project>
         <Package>{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}</Package>
     </ProjectReference>
@@ -710,15 +693,6 @@
 			
 			<Compile Include="<%=GenericClientSubFolder%>Oracle<%=GetClassName(SourceTables[i], ClassNameFormat.PartialProviderBase)%>.cs">
 			  <DependentUpon>Oracle<%=GetClassName(SourceTables[i], ClassNameFormat.Provider)%>.cs</DependentUpon>
-			  <SubType>Code</SubType>
-			</Compile>
-			<% } else if(SourceDatabase.Provider.Name == "SqlCompactSchemaProvider"){ %>
-			<Compile Include="<%=GenericClientSubFolder%>SqlCe<%=GetClassName(SourceTables[i], ClassNameFormat.Provider)%>.cs">
-			  <SubType>Code</SubType>
-			</Compile>
-			
-			<Compile Include="<%=GenericClientSubFolder%>SqlCe<%=GetClassName(SourceTables[i], ClassNameFormat.PartialProviderBase)%>.cs">
-			  <DependentUpon>SqlCe<%=GetClassName(SourceTables[i], ClassNameFormat.Provider)%>.cs</DependentUpon>
 			  <SubType>Code</SubType>
 			</Compile>
 			<%}
@@ -1073,14 +1047,6 @@
 			<Compile Include="<%=GenericClientSubFolder%>OracleNetTiersProvider.cs">
 			  <SubType>Code</SubType>
 			</Compile>
-			<% } else if(SourceDatabase.Provider.Name == "SqlCompactSchemaProvider"){ %>
-			<Compile Include="<%=GenericClientSubFolder%>StoredProcedureProvider.cs">
-			  <SubType>Code</SubType>
-			</Compile>
-			<Compile Include="<%=GenericClientSubFolder%>SqlCeNetTiersProvider.cs">
-			  <SubType>Code</SubType>
-			</Compile>
-		
 			<%}
 			else
 			{%>
@@ -1104,11 +1070,7 @@
 				<SubType>EmbeddedResource</SubType>
 				</EmbeddedResource>
 			<%}%>
-			<% if (SourceDatabase.Provider.Name == "SqlCompactSchemaProvider") {%>
-				<EmbeddedResource Include="<%=GenericClientSubFolder%>System.Data.SqlServerCe.Procedures.xml">
-				<SubType>EmbeddedResource</SubType>
-				</EmbeddedResource>
-			<%}%>
+		
 			<% if (SourceDatabase.Provider.Name == "ADOXSchemaProvider") {%>
 				<EmbeddedResource Include="<%=GenericClientSubFolder%>System.Data.ADOX.Procedures.xml">
 				<SubType>EmbeddedResource</SubType>
