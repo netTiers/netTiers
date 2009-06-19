@@ -1,0 +1,111 @@
+<%-- 
+Name:
+Author: Charlie Kilian
+Description: 
+
+--%>
+<%@ CodeTemplate Language="C#" TargetLanguage="C#" Src="./CommonMembershipCode.cs" Inherits="MoM.Templates.CommonMembershipCode" Debug="True" Description="Generates the EntityMembershipUser class." %>
+<%@ Assembly Name="System.Data" %>
+<%@ Assembly Name="System.Design" %>
+<%@ Assembly Name="SchemaExplorer" %>
+<%@ Import Namespace="System.Data" %>
+<%@ Import Namespace="System.IO" %>
+<%@ Import Namespace="System.Collections" %>
+<%@ Import Namespace="SchemaExplorer" %>
+
+<%@ Property Name="BLLNameSpace" Optional="False" Type="System.String" Category="Style" Description="BLL Namespace." %>
+<%@ Property Name="DALNameSpace" Optional="False" Type="System.String" Category="Style" Description="DAL Namespace." %>
+<%@ Property Name="WebNameSpace" Optional="False" Type="System.String" Category="Style" Description="Web Namespace." %>
+using System;
+using System.Collections.Generic;
+using System.ComponentModel;
+using System.Text;
+using System.Web;
+using System.Web.UI;
+using System.Web.Security;
+using System.Web.UI.WebControls;
+using System.Reflection;
+using <%= BLLNameSpace %>;
+using <%= DALNameSpace %>;
+
+namespace <%= WebNameSpace %>.Security
+{
+	/// <summary>
+	/// Displays the value of the specified EntityMembershipUser property.
+	/// </summary>
+	[DefaultProperty( "Text" )]
+	[ToolboxData( "<{0}:EntityMembershipProperty runat=server></{0}:EntityMembershipProperty>" )]
+	public class EntityMembershipProperty : WebControl
+	{
+		private <%= EntityClass %>Column _propertyName;
+		private string _formatString = "";
+
+		/// <summary>
+		/// The property to display
+		/// </summary>
+		[System.ComponentModel.Bindable( true )]
+		[Category( "Misc" )]
+		[DefaultValue( "" )]
+		[Localizable( true )]
+		public <%= EntityClass %>Column PropertyName
+		{
+			get { return _propertyName; }
+			set { _propertyName = value; }
+		}
+
+		/// <summary>
+		/// The string to use to format the property
+		/// </summary>
+		[System.ComponentModel.Bindable( true )]
+		[Category( "Misc" )]
+		[DefaultValue( "" )]
+		[Localizable( true )]
+		public string FormatString
+		{
+			get { return _formatString; }
+			set { _formatString = value; }
+		}
+
+		/// <summary>
+		/// Renders the contents of the control to the specified writer. 
+		/// </summary>
+		/// <param name="output">A HtmlTextWriter that represents the output stream to render HTML content on the client.</param>
+		protected override void RenderContents(HtmlTextWriter output)
+		{
+			MembershipUser member = Membership.GetUser();
+			if ( member == null )
+				return;
+
+			if ( !( member is EntityMembershipUser ) )
+				throw new Exception( "EntityMembershipProperty requires the current membership provider to be EntityMembershipProvider" );
+
+			<%= EntityClass %> user = ((EntityMembershipUser) member).UserEntity;
+			string propname = _propertyName.ToString();
+			
+			Type type = user.GetType();
+			object objvalue = type.InvokeMember(propname, BindingFlags.GetProperty, null, user, null);
+
+			if ( objvalue == null )
+				return;
+
+			string strvalue = "";
+
+			switch ( objvalue.GetType().ToString() )
+			{
+				case "System.Int32":
+					strvalue = ((int) objvalue).ToString(_formatString);
+					break;
+
+				case "System.DateTime":
+					strvalue = ((DateTime) objvalue).ToString(_formatString);
+					break;
+
+				default:
+					strvalue = objvalue.ToString();
+					break;
+			}
+
+			output.Write( strvalue );
+		}
+	}
+}

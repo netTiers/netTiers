@@ -1,0 +1,62 @@
+﻿<%--
+ * $Id: GenericTypeConverter.cst,v 1.1 2005/12/02 15:23:23 jroland Exp $
+ * Last modified by $Author: jroland $
+ * Last modified at $Date: 2006-03-16 16:53:08 -0600 (Thu, 16 Mar 2006) $
+ * $Revision: 62 $
+--%>
+<%@ CodeTemplate Src="..\TemplateLib\CommonSqlCode.cs" Inherits="MoM.Templates.CommonSqlCode" Language="C#" TargetLanguage="C#" Description="The interface that each business object of the domain implements." ResponseEncoding="UTF-8" NoWarn="0108,0618,1572,1573,1574,0162,2002" %>
+<%@ Assembly Name="SchemaExplorer" %>
+<%@ Import Namespace="SchemaExplorer" %>
+<%@ Assembly Name="System.Design" %>
+
+<%@ Property Name="NameSpace" Optional="False" Type="System.String" Category="Style" Description="Object Namespace." %>
+using System;
+using System.Text;
+
+using System.Reflection;
+using System.ComponentModel;
+using System.ComponentModel.Design.Serialization;
+
+namespace <%=NameSpace%>
+{
+	/// <summary>
+	/// Provides a unified way of converting types of values to other types, as well as for accessing standard values and subproperties.
+	/// Used by the nettiers strongly typed collection, so they can be saved in ViewState.
+	/// </summary>
+	public class GenericTypeConverter : TypeConverter
+	{
+		/// <summary>
+		/// Initializes a new instance of the <see cref="GenericTypeConverter"/> class.
+		/// </summary>
+		public GenericTypeConverter()
+		{
+		}
+		
+		/// <summary>
+		/// Returns whether this converter can convert the object to the specified type.
+		/// </summary>
+		public override bool CanConvertTo(ITypeDescriptorContext context, Type destinationType)
+		{
+			if(destinationType == typeof(InstanceDescriptor))
+				return true;
+				
+			return base.CanConvertTo(context,destinationType);
+		}
+		
+		/// <summary>
+		/// Converts the given value object to the specified type.
+		/// </summary>
+		public override object ConvertTo(ITypeDescriptorContext context,
+		              System.Globalization.CultureInfo culture,
+		              object val,Type destinationType)
+		{
+			if(destinationType == typeof(InstanceDescriptor))
+			{
+				Type valueType = val.GetType();
+				ConstructorInfo ci = valueType.GetConstructor(System.Type.EmptyTypes);
+				return new InstanceDescriptor(ci,null,false);
+			}
+			return base.ConvertTo(context,culture,val,destinationType);
+		}
+	}
+}
