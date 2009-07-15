@@ -1,0 +1,95 @@
+﻿<?xml version="1.0"?>
+<project name="PetShop" default="help" basedir=".">
+	
+	<!-- ================ -->
+	<!--      HELP        -->
+	<!-- ================ -->
+	<target name="help" description="Show some help information about this build file.">
+		<echo message="Available targets are : " />
+		<echo message=" - build : solution compilation." />
+		
+		<echo message=" - documentation : generate html and chm documentation." />
+		<echo message=" - complete : build, tests and documentation." />
+	</target>
+	
+	<!-- ================= -->
+	<!--   Complete tasks  -->
+	<!-- ================= -->
+	<target name="complete" description="Do the full integration process.">
+		<echo message="Starting integration process." />
+		<call target="build" />
+		<call target="tests" />
+		<call target="documentation" />
+	</target>
+			
+    
+    <!-- ================ -->
+	<!-- MS Build -->
+	<!-- ================ -->
+	<target name="build" description="Build of the solution using the release configuration.">
+		<property name="msbuild.property" value="OutDir=..\Output\"/>
+		<property name="msbuild.path" value="C:\WINDOWS\Microsoft.NET\Framework\v2.0.50727\"/>
+		<exec program="msbuild.exe" basedir="${msbuild.path}">
+		<arg value="/p:${msbuild.property}" />
+		<arg value="/t:rebuild" />
+		<arg value="/v:m" />
+		</exec>
+	</target>
+    
+    
+    <!-- ================ -->
+	<!--  DOCUMENTATION   -->
+	<!-- ================ -->
+    <target name="documentation" depends="build">
+		<ndoc failonerror="false">
+			 <assemblies basedir="Output\">
+			<include name="PetShop.Data.dll" />
+					<include name="PetShop.Data.SqlClient.dll" />
+					<include name="PetShop.Business.dll" />
+			</assemblies>			
+			<documenters>
+				<documenter name="MSDN">
+					<property name="OutputDirectory" value="Output\Doc" />
+					<property name="HtmlHelpName" value="Documentation" />
+					<property name="HtmlHelpCompilerFilename" value="hhc.exe" />
+					<property name="IncludeFavorites" value="False" />
+					<property name="Title" value="PetShop .Net documentation" />
+					<property name="SplitTOCs" value="False" />
+					<property name="DefaulTOC" value="" />
+					<property name="ShowVisualBasic" value="True" />
+					<property name="ShowMissingSummaries" value="True" />
+					<property name="ShowMissingRemarks" value="False" />
+					<property name="ShowMissingParams" value="True" />
+					<property name="ShowMissingReturns" value="True" />
+					<property name="ShowMissingValues" value="True" />
+					<property name="DocumentInternals" value="False" />
+					<property name="DocumentProtected" value="True" />
+					<property name="DocumentPrivates" value="False" />
+					<property name="DocumentEmptyNamespaces" value="False" />
+					<property name="IncludeAssemblyVersion" value="True" />
+					<property name="CopyrightText" value="Pet Shop" />
+					<property name="CopyrightHref" value="" />
+					<property name="OutputTarget" value="HtmlHelpAndWeb" />
+					<property name="UseNamespaceDocSummaries" value="True" />
+				 </documenter>				
+			</documenters> 
+		</ndoc>
+	</target>
+	
+	<!-- ================ -->
+    <!--     Gen Code     -->
+    <!-- ================ -->
+    <target name="gencode" description="Generation of the DAL source code using the .NetTiers templates and CodeSmith console.">
+        <property name="nettiers.template" value="c:\program files\NetTiers\Templates\NetTiers.cst" unless="${property::exists('nettiers.path')}"/>
+        <property name="nettiers.propertyset" value="Northwind.xml"/>
+        <property name="codesmith.path" value="c:\Program files\Codesmith\2.6\"/>
+        
+        <exec program="cs" basedir="${codesmith.path}">
+            <arg value="/template:${nettiers.template}" />
+            <arg value="/propertyset:${nettiers.propertyset}" />
+        </exec>
+    </target>
+
+
+	
+</project>
