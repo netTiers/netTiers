@@ -29,7 +29,6 @@ namespace PetShop.UI.Controls
         private void BindCart()
         {
             Profile profile = ProfileManager.Instance.GetCurrentUser(Page.User.Identity.Name);
-            
             TList<Cart> items = profile.CartCollection;
             if (items.Count > 0)
             {

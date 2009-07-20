@@ -1,8 +1,6 @@
 ﻿using System;
 using System.Web.UI;
 using System.Web.UI.WebControls;
-
-using PetShop.Business;
 using PetShop.Services;
 
 namespace PetShop.UI.Controls
@@ -20,8 +18,8 @@ namespace PetShop.UI.Controls
             //get category id
             string productId = Request.QueryString["productId"];
 
-            var productService = new ProductService();
-            itemsGrid.DataSource = productService.GetByProductId(productId).ItemCollection;
+            var itemService = new ItemService();
+            itemsGrid.DataSource = itemService.GetByProductId(productId);
             itemsGrid.DataBind();
         }
     }

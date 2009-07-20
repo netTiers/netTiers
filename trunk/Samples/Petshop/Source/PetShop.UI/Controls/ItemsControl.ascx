@@ -1,4 +1,5 @@
 ﻿<%@ Control Language="C#" AutoEventWireup="true" CodeBehind="ItemsControl.ascx.cs" Inherits="PetShop.UI.Controls.ItemsControl" %>
+<%@ Import Namespace="PetShop.Services"%>
 <%@ Import Namespace="PetShop.Business"%>
 <div class="paging">
     <a href='Products.aspx?categoryId=<%=Request.QueryString["categoryId"] %>&productId=<%=Request.QueryString["productId"] %>'>
@@ -18,11 +19,11 @@
                 <table cellspacing="0" cellpadding="0" border="0">
 		            <tr>
 			            <td class="itemText">Name:</td>
-			            <td class="itemName"><%# string.Format("{0} {1}", Eval("Product.Name"), Eval("Name")) %></td>
+			            <td class="itemName"><%# Eval("Name") %></td>
 		            </tr>
 		            <tr class="itemText">
 			            <td>Quantity:</td>
-			            <td><%# Inventory.GetInventory(Eval("ItemId").ToString()).Qty %></td>
+			            <td><%# new InventoryService().GetByItemId(Eval("ItemId").ToString()).Qty %></td>
 		            </tr>
 		            <tr class="itemText">
 			            <td>Price:</td>

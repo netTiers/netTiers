@@ -2,8 +2,7 @@
 <%@ OutputCache Duration="100000" VaryByParam="page;categoryId" %>
 
 <div align="center" class="productsPosition">
-    <PC:customlist ID="productsList" runat="server" 
-    EmptyText="No products found." OnPageIndexChanged="PageChanged" PageSize="4" 
+    <PC:CustomList ID="productsList" runat="server" EmptyText="No products found." OnPageIndexChanged="PageChanged" PageSize="4" 
     RepeatColumns="2" CellPadding="16" CellSpacing="0" Width="500px">        
         <ItemTemplate>
             <table cellpadding="0" cellspacing="0">
@@ -15,5 +14,5 @@
             </table>            
         </ItemTemplate>
         <ItemStyle HorizontalAlign="Left" VerticalAlign="Top" />        
-    </PC:customlist>
+    </PC:CustomList>
  </div>
