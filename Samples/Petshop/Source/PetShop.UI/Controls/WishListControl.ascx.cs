@@ -28,7 +28,7 @@ namespace PetShop.UI.Controls
             Profile profile = ProfileManager.Instance.GetCurrentUser(Page.User.Identity.Name);
 
            TList<Cart> wishList = profile.WishList;
-            if (wishList.Count > 0)
+           if (wishList.Count > 0)
             {
                 repWishList.DataSource = wishList;
                 repWishList.DataBind();

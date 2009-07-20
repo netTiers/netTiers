@@ -15,14 +15,53 @@ namespace PetShop.UI
                 if (!string.IsNullOrEmpty(itemId))
                 {
                     Profile profile = ProfileManager.Instance.GetCurrentUser(Page.User.Identity.Name);
-                    profile.WishList.Add(new Cart()
-                                             {ItemId = itemId, UniqueId = profile.UniqueId, IsShoppingCart = false});
+                    AddCartItem(ref profile, itemId, 1);
+
                     var profileService = new ProfileService();
                     profileService.Save(profile);
 
                     // Redirect to prevent duplictations in the wish list if user hits "Refresh"
                     Response.Redirect("~/WishList.aspx", true);
                 }
+            }
+        }
+
+        private static void AddCartItem(ref Profile profile, string itemId, int quantity)
+        {
+            int index = 0;
+            bool found = false;
+
+            foreach (Cart cart in profile.WishList)
+            {
+                if (cart.ItemId == itemId)
+                {
+                    found = true;
+                    break;
+                }
+
+                index++;
+            }
+
+            if (found)
+                profile.WishList[index].Quantity += quantity;
+            else
+            {
+                Item item = new ItemService().GetByItemId(itemId);
+                Product product = new ProductService().GetByProductId(item.ProductId);
+                Cart cart = new Cart
+                                {
+                                    UniqueId = profile.UniqueId,
+                                    ItemId = itemId,
+                                    Name = item.Name,
+                                    ProductId = item.ProductId,
+                                    IsShoppingCart = false,
+                                    Price = item.ListPrice ?? item.UnitCost ?? 0,
+                                    Type = product.Name,
+                                    CategoryId = product.CategoryId,
+                                    Quantity = quantity
+                                };
+
+                profile.WishList.Add(cart);
             }
         }
     }

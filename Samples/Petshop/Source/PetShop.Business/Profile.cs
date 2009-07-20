@@ -15,19 +15,39 @@ namespace PetShop.Business
 	[Serializable]
 	[CLSCompliant(true)]
 	public partial class Profile : ProfileBase
-	{		
-		#region Constructors
+    {
+        #region Private members
 
-		///<summary>
+        TList<Cart> _wishList = new TList<Cart>();
+
+        #endregion
+
+        #region Constructors
+
+        ///<summary>
 		/// Creates a new <see cref="Profile"/> instance.
 		///</summary>
-		public Profile():base(){}	
+		public Profile() : base()
+		{
+		}	
 		
 		#endregion
 
+        ///<summary>
+        /// A Wishlist.
+        ///</summary>
         public TList<Cart> WishList
         {
-            get; private set;
+            get
+            {
+                //NEED TO FIX THIS.
+                return _wishList;
+            }
+            private set
+            {
+                if (value != null)
+                    _wishList = value;
+            }
         }
 	}
 }
