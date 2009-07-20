@@ -63,7 +63,7 @@ namespace PetShop.Services.CustomCode
             Profile profile = profileService.GetByUsernameApplicationName(username, ".NET Pet Shop 4.0");
 
             //Check to see if the profile exists.
-            if (profile != null)
+            if (profile == null)
             {
                 //If the username is the Anonymous user then create it.
                 if (username == _ANONYMOUS_USERNAME)
