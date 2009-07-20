@@ -20,7 +20,7 @@ namespace PetShop.UI
                     AddCartItem(ref profile, itemId, 1);
 
                     var profileService = new ProfileService();
-                    profileService.Save(profile);
+                    profileService.DeepSave(profile);
 
                     // Redirect to prevent duplictations in the cart if user hits "Refresh"
                     Response.Redirect("~/ShoppingCart.aspx", true);

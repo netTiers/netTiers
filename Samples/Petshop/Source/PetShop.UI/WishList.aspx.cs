@@ -18,7 +18,7 @@ namespace PetShop.UI
                     AddCartItem(ref profile, itemId, 1);
 
                     var profileService = new ProfileService();
-                    profileService.Save(profile);
+                    profileService.DeepSave(profile);
 
                     // Redirect to prevent duplictations in the wish list if user hits "Refresh"
                     Response.Redirect("~/WishList.aspx", true);

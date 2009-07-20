@@ -80,7 +80,7 @@ namespace PetShop.UI
                 #endregion
 
                 var orderService = new OrderService();
-                orderService.Save(order);
+                orderService.DeepSave(order);
 
                 #endregion
 
@@ -104,7 +104,7 @@ namespace PetShop.UI
 
                     #endregion
 
-                    inventoryService.Save(inventory);
+                    inventoryService.DeepSave(inventory);
                 }
 
                 if(itemsOnBackOrder > 0)
