@@ -17,14 +17,53 @@ namespace PetShop.UI
                 if (!string.IsNullOrEmpty(itemId))
                 {
                     Profile profile = ProfileManager.Instance.GetCurrentUser(Page.User.Identity.Name);
+                    AddCartItem(ref profile, itemId, 1);
 
-                    profile.CartCollection.Add(new Cart() {ItemId = itemId, UniqueId = profile.UniqueId, IsShoppingCart = true});
                     var profileService = new ProfileService();
                     profileService.Save(profile);
 
                     // Redirect to prevent duplictations in the cart if user hits "Refresh"
                     Response.Redirect("~/ShoppingCart.aspx", true);
                 }
+            }
+        }
+
+        private static void AddCartItem(ref Profile profile, string itemId, int quantity)
+        {
+            int index = 0;
+            bool found = false;
+
+            foreach (Cart cart in profile.CartCollection)
+            {
+                if (cart.ItemId == itemId)
+                {
+                    found = true;
+                    break;
+                }
+
+                index++;
+            }
+
+            if (found)
+                profile.CartCollection[index].Quantity += quantity;
+            else
+            {
+                Item item = new ItemService().GetByItemId(itemId);
+                Product product = new ProductService().GetByProductId(item.ProductId);
+                Cart cart = new Cart
+                                {
+                                    UniqueId = profile.UniqueId,
+                                    ItemId = itemId,
+                                    Name = item.Name,
+                                    ProductId = item.ProductId,
+                                    IsShoppingCart = true,
+                                    Price = item.ListPrice ?? item.UnitCost ?? 0,
+                                    Type = product.Name,
+                                    CategoryId = product.CategoryId,
+                                    Quantity = quantity
+                                };
+
+                profile.CartCollection.Add(cart);
             }
         }
     }

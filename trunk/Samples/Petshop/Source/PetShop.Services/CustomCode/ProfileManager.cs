@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using PetShop.Business;
+using PetShop.Data;
 
 namespace PetShop.Services.CustomCode
 {
@@ -60,7 +61,7 @@ namespace PetShop.Services.CustomCode
 
             //Get the profile.
             var profileService = new ProfileService();
-            Profile profile = profileService.GetByUsernameApplicationName(username, ".NET Pet Shop 4.0");
+            Profile profile = profileService.DeepLoadByUsernameApplicationName(username, ".NET Pet Shop 4.0", true, DeepLoadType.IncludeChildren, new Type[] { typeof(Cart) });
 
             //Check to see if the profile exists.
             if (profile == null)
