@@ -93,7 +93,7 @@ namespace PetShop.Services.CustomCode
             profile.LastUpdatedDate = DateTime.Now;
 
             var profileService = new ProfileService();
-            profileService.Save(profile);
+            profileService.DeepSave(profile);
 
             return profile;
         }

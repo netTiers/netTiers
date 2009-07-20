@@ -27,7 +27,7 @@ namespace PetShop.UI
 
 
             var profileService = new ProfileService();
-            profileService.Save(profile);
+            profileService.DeepSave(profile);
 
             // Clean up anonymous profile
             ProfileManager.DeleteProfile(e.AnonymousID);
@@ -36,7 +36,7 @@ namespace PetShop.UI
             //Clear the cart.
             anonymousProfile.CartCollection.Clear();
             anonymousProfile.WishList.Clear();
-            profileService.Save(anonymousProfile);
+            profileService.DeepSave(anonymousProfile);
         }
 
         protected void Application_Start(object sender, EventArgs e)

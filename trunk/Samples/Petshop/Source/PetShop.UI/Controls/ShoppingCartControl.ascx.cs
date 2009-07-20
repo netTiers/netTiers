@@ -77,7 +77,7 @@ namespace PetShop.UI.Controls
                     if (quantity > 0)
                     {
                         profile.CartCollection.Find(c => c.ItemId == itemId).Quantity = quantity;
-                        cartService.Save(profile.CartCollection.Find(c => c.ItemId == itemId));
+                        cartService.DeepSave(profile.CartCollection.Find(c => c.ItemId == itemId));
                     }
                         
                     else if (quantity == 0)

@@ -132,7 +132,7 @@ namespace PetShop.Services.CustomCode
 
             profile.LastActivityDate = DateTime.Now;
             profile.LastUpdatedDate = DateTime.Now;
-            new ProfileService().Save(profile);
+            new ProfileService().DeepSave(profile);
         }
 
         #endregion

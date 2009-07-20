@@ -29,7 +29,7 @@ namespace PetShop.UI
                 }
 
                 var profileService = new ProfileService();
-                profileService.Save(profile);
+                profileService.DeepSave(profile);
             }
 
             lblMessage.Text = "Your profile information has been successfully updated.<br>&nbsp;";
