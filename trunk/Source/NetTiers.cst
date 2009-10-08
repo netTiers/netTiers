@@ -34,6 +34,7 @@
 <%@ Property Name="CustomCodeFolderName" Type="System.String" Category="02. Framework Generation - Optional" Description="If specified, indicates the name of a folder that can contains custom classes to dynamically add to each project." Default="App_Code" %>
 <%@ Property Name="EqualitySemantics" Type="MoM.Templates.EqualitySemantics" Default="Value" Category="02. Framework Generation - Optional" Description="Equality semantics used for Entity instances.  If 'Reference', default reference type semantics will be used (based on object identity).  If 'Value', Equals() and GetHashCode() will be overridden to use value semantics (based on object contents)." %>
 <%@ Property Name="TimeStandard" Type="TimeStandardEnum" Default="Local" Category="02. Framework Generation - Optional" Description="Standard used for generating DateTime values. If 'UTC' DateTime is generated based on UtcNow. If 'Local' DateTime is generated based on DateTime.Now" %>
+<%@ Property Name="IsConnectionStringAzure" Type="System.Boolean" Default="False" Category="02. Framework Generation - Optional" Description="Indicates if at runtime the netTiersConnectionString is read from Window Azure's ServiceConfiguration.cscfg or from Web.config/app.config." %>
 
 <%-- 3. Namespaces Category --%>
 <%@ Property Name="BusinessLogicLayerNameSpace" Type="System.String" Category="03. Namespaces - Required" Description="The sub namespace that is added to the root namespace for the entities." Default="Entities" Optional="False" %>
@@ -1321,6 +1322,12 @@
 	
 		// NUnit file
 		SafeCopyFile(this.CodeTemplateInfo.DirectoryName + "\\References\\nunit.framework.dll", libPath + "\\nunit.framework.dll");
+		
+		if(IsConnectionStringAzure)
+		{
+			SafeCopyFile(this.CodeTemplateInfo.DirectoryName + "\\References\\AzureSDKv1_0\\Microsoft.ServiceHosting.ServiceRuntime.dll", libPath + "\\Microsoft.ServiceHosting.ServiceRuntime.dll");
+		}
+		
 		#endregion Copy References
 		
 		AddExecutionTime(initNode);
@@ -1942,6 +1949,7 @@
 			this.GetTemplate("DataRepository.cst").SetProperty("SourceViews", templateSourceViews);
 			this.GetTemplate("DataRepository.cst").SetProperty("IncludeDesignTimeSupport", IncludeDesignTimeSupport);
 			this.GetTemplate("DataRepository.cst").SetProperty("VisualStudioVersion", VisualStudioVersion);
+			this.GetTemplate("DataRepository.cst").SetProperty("IsConnectionStringAzure", IsConnectionStringAzure);
 			this.RenderToFile("DataRepository.cst", rootPathDAL + "\\DataRepository.cs", true);
 			
 			AddFileNode(commonNode, "IEntityProvider.cs");
@@ -2877,6 +2885,7 @@
 		this.GetTemplate(projectTemplate).SetProperty("IncludeAtlasToolkit", IncludeAtlasToolkit);
 		this.GetTemplate(projectTemplate).SetProperty("EntLibVersion", EntLibVersion);
 		this.GetTemplate(projectTemplate).SetProperty("ValidationType", ValidationType);
+		this.GetTemplate(projectTemplate).SetProperty("IsConnectionStringAzure", IsConnectionStringAzure);
 		
 		//This is the path to the References Folder
 		string rootPath = Path.GetFullPath(Path.Combine(OutputDirectory, LibraryPath));
