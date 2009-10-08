@@ -9,6 +9,7 @@
 <%@ Property Name="SourceViews" Type="SchemaExplorer.ViewSchemaCollection" Category="Connection" Description="Tables of the system." %>
 <%@ Property Name="IncludeDesignTimeSupport" Type="System.Boolean" Default="true" Category="05. WebLibrary - Advanced" Description="Indicates if Visual Studio design-time support should be provided for the Web Library controls." %>
 <%@ Property Name="VisualStudioVersion" Type="MoM.Templates.VSNetVersion" Default="v2005" Category="02. Framework Generation - Optional" Description="Indicates the Version of Visual Studio to target. Options include v2005 and v2008" %>
+<%@ Property Name="IsConnectionStringAzure" Type="System.Boolean" Default="False" Category="02. Framework Generation - Optional" Description="Indicates if at runtime the netTiersConnectionString is read from Window Azure's ServiceConfiguration.cscfg or from Web.config/app.config." %>
 #region Using directives
 
 using System;
@@ -20,6 +21,9 @@ using System.Web;
 using <%=NameSpace%>;
 using <%=DALNameSpace%>;
 using <%=DALNameSpace%>.Bases;
+<% if ( IsConnectionStringAzure ) { %>
+using Microsoft.ServiceHosting.ServiceRuntime;
+<% } %>
 
 #endregion
 
@@ -298,17 +302,29 @@ namespace <%=DALNameSpace%>
 		{
 			get
 			{
-				<% if ( IncludeDesignTimeSupport ) { %>
-				// use default ConnectionStrings if _section has already been discovered
-				if ( _config == null && _section != null )
-				{
-					return WebConfigurationManager.ConnectionStrings;
-				}
-				
-				return Configuration.ConnectionStrings.ConnectionStrings;
+				<% if ( IsConnectionStringAzure ) { %>
+					ConnectionStringSettingsCollection connectionStrings = new ConnectionStringSettingsCollection();
+					
+					ConnectionStringSettings settings = new ConnectionStringSettings();
+					settings.Name = "netTiersConnectionString";
+					settings.ConnectionString = RoleManager.GetConfigurationSetting("netTiersConnectionString");
+			
+					connectionStrings.Add(settings);
+			
+					return connectionStrings;
 				<% } else { %>
-				return WebConfigurationManager.ConnectionStrings;
-				<% } // end if ( IncludeDesignTimeSupport ) { %>
+					<% if ( IncludeDesignTimeSupport ) { %>
+					// use default ConnectionStrings if _section has already been discovered
+					if ( _config == null && _section != null )
+					{
+						return WebConfigurationManager.ConnectionStrings;
+					}
+					
+					return Configuration.ConnectionStrings.ConnectionStrings;
+					<% } else { %>
+					return WebConfigurationManager.ConnectionStrings;
+					<% } // end if ( IncludeDesignTimeSupport ) { %>
+				<% } // end if ( IsConnectionStringAzure ) { %>
 			}
 		}
 
