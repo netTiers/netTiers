@@ -1153,7 +1153,7 @@ namespace <%=DALNameSpace%>.SqlCeClient
 		
 		<%} %>
 
-			// Update identity or computed columns
+			// Update computed columns
 			<%
 			for (int i = 0; i < cols.Count; i++)		
 			{
@@ -1170,15 +1170,14 @@ namespace <%=DALNameSpace%>.SqlCeClient
 					{
 						propertySetter	= string.Format("entity.{0} = ({2}){1};",GetPropertyName(cols[i]),fieldName,castTo);
 					}
-					%>
+			%>
 			<% if (RowVersion != null && cols[i] == RowVersion) { %>
 			DbCommand identityWrapper<% =i %> = database.GetSqlStringCommand("SELECT @@DBTS AS Temp");
-			<% } else { %>
-			DbCommand identityWrapper<% =i %> = database.GetSqlStringCommand("SELECT CONVERT(int, @@IDENTITY) AS Temp");
-			<% } %>
-			identityWrapper<% =i %>.Connection = commandWrapper.Connection;
+            identityWrapper<% =i %>.Connection = commandWrapper.Connection;
 			object <%=fieldName%> = Utility.ExecuteScalar(transactionManager, identityWrapper<% =i %>);
 			<%=propertySetter%>
+						
+			<% } %>
 				<%}
 			}
 			%>
