@@ -3690,7 +3690,6 @@ CREATE\s+PROC(?:EDURE)?                               # find the start of the st
 					case DbType.Guid: 
 						return "Guid.Empty";
 					
-					
 					//Answer modified was just 0
 					case DbType.Binary: 
 						return "new byte[] {}";
@@ -3707,6 +3706,9 @@ CREATE\s+PROC(?:EDURE)?                               # find the start of the st
 						return "DateTime.MinValue";
 					
 					case DbType.DateTime: 
+						return "DateTime.MinValue";
+                        
+                    case DbType.DateTime2: 
 						return "DateTime.MinValue";
 					
 					case DbType.Decimal: 
