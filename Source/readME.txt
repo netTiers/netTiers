@@ -72,7 +72,7 @@ http://www.nettiers.com/GettingStarted.ashx
 
 Known Issues
 --------------------
-Oracle - Find_Dynamic Stored Procedures do not work.
+Oracle - Find_Dynamic Stored Procedures does not work when a string value is passed in.
 Oracle - Custom Stored Procedures do not work.
 Oracle - Unit tests do not work.
 
