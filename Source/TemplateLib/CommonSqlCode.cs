@@ -26,10 +26,10 @@ namespace MoM.Templates
 	[DefaultProperty("ChooseSourceDatabase")]
 	public partial class CommonSqlCode : CodeTemplate
 	{
-			
-		// [ab 012605] convenience array for checking if a datatype is an integer 
+
+		// [ab 012605] convenience array for checking if a datatype is an integer
 		private readonly static DbType[] aIntegerDbTypes = new DbType[] {DbType.Int16,DbType.Int32, DbType.Int64, DbType.VarNumeric };
-		
+
 		private string entityFormat 		= "{0}";
 		private string entityKeyFormat 		= "{0}Key";
 		private string componentServiceFormat = "{0}Service";
@@ -68,23 +68,23 @@ namespace MoM.Templates
 		private string safeNamePrefix = "SafeName_";
 		private MoM.Templates.DatabaseType includeDatabaseFeatures = DatabaseType.None;
 		private bool allowCustomProcMultipleResults = false;
-		
+
 		#region Oracle
-		
+
 		private static string _parameterPrefix = "@";
-		public static string ParameterPrefix 
+		public static string ParameterPrefix
 		{
 			get {return _parameterPrefix;}
 			set {_parameterPrefix=value;}
 		}
-		
+
 		#endregion
-		
+
 		#region CSharpKeywords
-		
-		protected string[] csharpKeywords = new string[77] 
+
+		protected string[] csharpKeywords = new string[77]
 		{
-				"abstract","event", "new", "struct", 
+				"abstract","event", "new", "struct",
 				"as", "explicit", "null", "switch",
 				"base", "extern", "object", "this",
 				"bool", "false", "operator", "throw",
@@ -104,25 +104,25 @@ namespace MoM.Templates
 				"double","lock","stackalloc",
 				"else","long","static",
 				"enum","namespace", "string"
-		}; 
-		
-		#endregion 
-		
+		};
+
+		#endregion
+
 		#region CodeTemplates
-		private Dictionary<string,CodeSmith.Engine.CodeTemplate> codeTemplates = new Dictionary<string,CodeSmith.Engine.CodeTemplate>();	
+		private Dictionary<string,CodeSmith.Engine.CodeTemplate> codeTemplates = new Dictionary<string,CodeSmith.Engine.CodeTemplate>();
 		[Browsable(false), XmlIgnore]
 		///<summary>
 		/// A full list of compiled templates for usage in templates
 		///</summary>
 		///<remarks>
-		///  You reference the template by the filename.  
+		///  You reference the template by the filename.
 		///  Ex:
 		///  CodeTemplates["Entity.cst"].SetProperty("SourceTable", SourceTable);
 		///  CodeTemplates["Entity.cst"].RenderToFile(path,true);
 		///</remarks>
-		public Dictionary<string,CodeSmith.Engine.CodeTemplate> CodeTemplates 
+		public Dictionary<string,CodeSmith.Engine.CodeTemplate> CodeTemplates
 		{
-			get 
+			get
 			{
 				return codeTemplates;
 			}
@@ -131,8 +131,8 @@ namespace MoM.Templates
 				codeTemplates = value;
 			}
 		}
-		#endregion 
-		
+		#endregion
+
 		/// <summary>
 		/// Return a specified number of tabs
 		/// </summary>
@@ -142,9 +142,9 @@ namespace MoM.Templates
 		{
 			return new String('\t', n);
 		}
-		
+
 		#region Diagnostics
-		
+
 		/// <summary>
 		/// Gets or sets a value that indicates if output during generation should
 		/// be verbose or not.
@@ -152,7 +152,7 @@ namespace MoM.Templates
 		protected bool Verbose { get { return verbose; } set { verbose = value; } }
 		private bool verbose = false;
 
-		
+
 		/// <summary>
 		/// Write a message to the debug log.
 		/// </summary>
@@ -161,7 +161,7 @@ namespace MoM.Templates
 			if (Verbose && msg != null && msg.Length > 0)
 				System.Diagnostics.Debug.WriteLine(msg);
 		}
-		
+
 		/// <summary>
 		/// Gets or sets a value that indicates if output during generation should
 		/// include the messages specific to entity/field name conversions.
@@ -169,7 +169,7 @@ namespace MoM.Templates
 		protected bool DebugNameConversions { get { return debugNameConversions; } set { debugNameConversions = value; } }
 		private bool debugNameConversions = false;
 
-		
+
 		/// <summary>
 		/// Write a message to the debug log.
 		/// </summary>
@@ -178,11 +178,11 @@ namespace MoM.Templates
 			if (debugNameConversions && msg != null && msg.Length > 0)
 				System.Diagnostics.Debug.WriteLine(msg);
 		}
-		
+
 		#endregion
-		
+
 		#region "02. Framework Generation - Optional" Properties
-		
+
 		[Category("02. Framework Generation - Optional")]
 		[Description("Indicates if the date the files were generated should be added to each generated file in the header comments.")]
 		public bool IncludeGeneratedDate
@@ -190,7 +190,7 @@ namespace MoM.Templates
 			get {return this.includeGeneratedDate;}
 			set	{this.includeGeneratedDate = value;}
 		}
-		
+
 		[Category("02. Framework Generation - Optional")]
 		[Description("Indicates the mechanism to use when converting table and column names.")]
 		public NameConversionType NameConversion
@@ -198,20 +198,20 @@ namespace MoM.Templates
 			get {return nameConversion;}
 			set	{nameConversion = value;}
 		}
-		
+
 		[Category("02. Framework Generation - Optional")]
 		[Description("Indicates which database specific features to generate.")]
-		[DefaultValue("None")]	
+		[DefaultValue("None")]
 		public MoM.Templates.DatabaseType IncludeDatabaseFeatures
 		{
 			get {return includeDatabaseFeatures;}
 			set	{includeDatabaseFeatures = value;}
 		}
-		
-		#endregion 
-		
+
+		#endregion
+
 		#region "9. Code Style public properties"
-		
+
 		[Category("09. Code style - Advanced")]
 		[Description("The names to use for various generated methods.")]
 		public MethodNamesProperty MethodNames
@@ -222,25 +222,25 @@ namespace MoM.Templates
 				{
 					methodNames = new MethodNamesProperty();
 				}
-				
+
 				return methodNames;
 			}
 			set { methodNames = value; }
 		}
-		
+
 		[Browsable(false), XmlIgnore()]
 		public NetTiers.NetTiersMap CurrentNetTiersMap
 		{
-			get 
+			get
 			{
-				return netTiersMap;	
+				return netTiersMap;
 			}
-			set 
+			set
 			{
 				netTiersMap = value;
 			}
 		}
-		
+
 		/// <summary>
 		/// This property is used to set the MethodNames property from NetTiers.cst
 		/// due to runtime error when trying to set it directly using an object value.
@@ -251,7 +251,7 @@ namespace MoM.Templates
 			get { return MethodNames.ToStringList(); }
 			set { MethodNames = new MethodNamesProperty(value); }
 		}
-		
+
 		[Category("09. Code style - Advanced")]
 		[Description("The table prefixes to strip from the class name, delimited by semi-colon and case insensetive.")]
 		public string StrippedTablePrefixes
@@ -259,7 +259,7 @@ namespace MoM.Templates
 			get {return this.strippedTablePrefixes;}
 			set	{this.strippedTablePrefixes = value;}
 		}
-		
+
 		[Category("09. Code style - Advanced")]
 		[Description("The table suffixes to strip from the class name, delimited by semi-colon and case insensetive.")]
 		public string StrippedTableSuffixes
@@ -267,7 +267,7 @@ namespace MoM.Templates
 			get {return this.strippedTableSuffixes;}
 			set	{this.strippedTableSuffixes = value;}
 		}
-		
+
 		[Category("09. Code style - Advanced")]
 		[Description("The format for entity class name. Parameter {0} is replaced by the trimed table name, in Pascal case.")]
 		public string EntityFormat
@@ -275,14 +275,14 @@ namespace MoM.Templates
 			get {return this.entityFormat;}
 			set
 			{
-				if (value.IndexOf("{0}") == -1) 
+				if (value.IndexOf("{0}") == -1)
 				{
 					throw new ArgumentException("This parameter must contains the pattern {0} to be valid.", "EntityFormat");
 				}
 				this.entityFormat = value;
 			}
 		}
-		
+
 		[Category("09. Code style - Advanced")]
 		[Description("The format for entity key class name. Parameter {0} is replaced by the trimed table name, in Pascal case.")]
 		public string EntityKeyFormat
@@ -290,14 +290,14 @@ namespace MoM.Templates
 			get {return this.entityKeyFormat;}
 			set
 			{
-				if (value.IndexOf("{0}") == -1) 
+				if (value.IndexOf("{0}") == -1)
 				{
 					throw new ArgumentException("This parameter must contains the pattern {0} to be valid.", "EntityKeyFormat");
 				}
 				this.entityKeyFormat = value;
 			}
 		}
-		
+
 		[Category("09. Code style - Advanced")]
 		[Description("The format for any collection class name. Parameter {0} is replaced by the collection item class name.")]
 		public string CollectionFormat
@@ -305,14 +305,14 @@ namespace MoM.Templates
 			get {return this.collectionFormat;}
 			set
 			{
-				if (value.IndexOf("{0}") == -1) 
+				if (value.IndexOf("{0}") == -1)
 				{
 					throw new ArgumentException("This parameter must contains the pattern {0} to be valid.", "CollectionFormat");
 				}
 				this.collectionFormat = value;
 			}
 		}
-		
+
 		[Category("09. Code style - Advanced")]
 		[Description("The format for the views generic class name. Parameter {0} is replaced by the name of the class that will be stored in the list.")]
 		public string GenericViewFormat
@@ -320,14 +320,14 @@ namespace MoM.Templates
 			get {return this.genericViewFormat;}
 			set
 			{
-				if (value.IndexOf("{0}") == -1) 
+				if (value.IndexOf("{0}") == -1)
 				{
 					throw new ArgumentException("This parameter must contains the pattern {0} to be valid.", "GenericViewFormat");
 				}
 				this.genericViewFormat = value;
 			}
 		}
-		
+
 		[Category("09. Code style - Advanced")]
 		[Description("The format for the tables generic class name. Parameter {0} is replaced by the name of the class that will be stored in the list.")]
 		public string GenericListFormat
@@ -335,16 +335,16 @@ namespace MoM.Templates
 			get {return this.genericListFormat;}
 			set
 			{
-				if (value.IndexOf("{0}") == -1) 
+				if (value.IndexOf("{0}") == -1)
 				{
 					throw new ArgumentException("This parameter must contains the pattern {0} to be valid.", "GenericListFormat");
 				}
 				this.genericListFormat = value;
 			}
 		}
-		
-		
-		
+
+
+
 		[Category("09. Code style - Advanced")]
 		[Description("The format for any provider class name. Parameter {0} is replaced by the original class name.")]
 		public string ProviderFormat
@@ -352,14 +352,14 @@ namespace MoM.Templates
 			get {return this.providerFormat;}
 			set
 			{
-				if (value.IndexOf("{0}") == -1) 
+				if (value.IndexOf("{0}") == -1)
 				{
 					throw new ArgumentException("This parameter must contains the pattern {0} to be valid.", "ProviderFormat");
 				}
 				this.providerFormat = value;
 			}
 		}
-		
+
 		[Category("09. Code style - Advanced")]
 		[Description("The format for any interface name. Parameter {0} is replaced by the original class name.")]
 		public string InterfaceFormat
@@ -367,14 +367,14 @@ namespace MoM.Templates
 			get {return this.interfaceFormat;}
 			set
 			{
-				if (value.IndexOf("{0}") == -1) 
+				if (value.IndexOf("{0}") == -1)
 				{
 					throw new ArgumentException("This parameter must contains the pattern {0} to be valid.", "InterfaceFormat");
 				}
 				this.interfaceFormat = value;
 			}
 		}
-		
+
 		[Category("09. Code style - Advanced")]
 		[Description("The format for any base class name. Parameter {0} is replaced by the original class name.")]
 		public string BaseClassFormat
@@ -382,14 +382,14 @@ namespace MoM.Templates
 			get {return this.baseClassFormat;}
 			set
 			{
-				if (value.IndexOf("{0}") == -1) 
+				if (value.IndexOf("{0}") == -1)
 				{
 					throw new ArgumentException("This parameter must contains the pattern {0} to be valid.", "BaseClassFormat");
 				}
 				this.baseClassFormat = value;
 			}
 		}
-		
+
 		[Category("09. Code style - Advanced")]
 		[Description("The format for any enum. Parameter {0} is replaced by the original class name.")]
 		public string EnumFormat
@@ -397,14 +397,14 @@ namespace MoM.Templates
 			get {return this.enumFormat;}
 			set
 			{
-				if (value.IndexOf("{0}") == -1) 
+				if (value.IndexOf("{0}") == -1)
 				{
 					throw new ArgumentException("This parameter must contains the pattern {0} to be valid.", "EnumFormat");
 				}
 				this.enumFormat = value;
 			}
 		}
-		
+
 		[Category("09. Code style - Advanced")]
 		[Description("The format for many to many methods. Parameter {0} is replaced by the secondary class name.")]
 		public string ManyToManyFormat
@@ -412,7 +412,7 @@ namespace MoM.Templates
 			get {return this.manyToManyFormat;}
 			set
 			{
-				if (value.IndexOf("{0}") == -1) 
+				if (value.IndexOf("{0}") == -1)
 				{
 					throw new ArgumentException("This parameter must contains the pattern {0} to be valid.", "ManyToManyFormat");
 				}
@@ -427,14 +427,14 @@ namespace MoM.Templates
 			get {return this.serviceClassNameFormat;}
 			set
 			{
-				if (value.IndexOf("{0}") == -1) 
+				if (value.IndexOf("{0}") == -1)
 				{
 					throw new ArgumentException("This parameter must contains the pattern {0} to be valid.", "ManyToManyFormat");
 				}
 				this.serviceClassNameFormat = value;
 			}
 		}
-		
+
 		[Category("09. Code style - Advanced")]
 		[Description("The format used by the Column ClassNameFormat. Parameter {0} is replaced by the original class name.")]
 		public string ColumnClassNameFormat
@@ -442,14 +442,14 @@ namespace MoM.Templates
 			get {return this.columnClassNameFormat;}
 			set
 			{
-				if (value.IndexOf("{0}") == -1) 
+				if (value.IndexOf("{0}") == -1)
 				{
 					throw new ArgumentException("This parameter must contains the pattern {0} to be valid.", "ColumnClassNameFormat");
 				}
 				this.columnClassNameFormat = value;
 			}
 		}
-		
+
 		[Category("09. Code style - Advanced")]
 		[Description("The format used by the Comparer ClassNameFormat. Parameter {0} is replaced by the original class name.")]
 		public string ComparerClassNameFormat
@@ -457,14 +457,14 @@ namespace MoM.Templates
 			get {return this.comparerClassNameFormat;}
 			set
 			{
-				if (value.IndexOf("{0}") == -1) 
+				if (value.IndexOf("{0}") == -1)
 				{
 					throw new ArgumentException("This parameter must contains the pattern {0} to be valid.", "ComparerClassNameFormat");
 				}
 				this.comparerClassNameFormat = value;
 			}
 		}
-		
+
 		[Category("09. Code style - Advanced")]
 		[Description("The format used by the EventHandler ClassNameFormat. Parameter {0} is replaced by the original class name.")]
 		public string EventHandlerClassNameFormat
@@ -472,14 +472,14 @@ namespace MoM.Templates
 			get {return this.eventHandlerClassNameFormat;}
 			set
 			{
-				if (value.IndexOf("{0}") == -1) 
+				if (value.IndexOf("{0}") == -1)
 				{
 					throw new ArgumentException("This parameter must contains the pattern {0} to be valid.", "EventHandlerClassNameFormat");
 				}
 				this.eventHandlerClassNameFormat = value;
 			}
 		}
-		
+
 		[Category("09. Code style - Advanced")]
 		[Description("The format used by the EventHandler ClassNameFormat. Parameter {0} is replaced by the original class name.")]
 		public string EventArgsClassNameFormat
@@ -487,14 +487,14 @@ namespace MoM.Templates
 			get {return this.eventArgsClassNameFormat;}
 			set
 			{
-				if (value.IndexOf("{0}") == -1) 
+				if (value.IndexOf("{0}") == -1)
 				{
 					throw new ArgumentException("This parameter must contains the pattern {0} to be valid.", "EventArgsClassNameFormat");
 				}
 				this.eventArgsClassNameFormat = value;
 			}
 		}
-		
+
 		[Category("07. CRUD - Advanced")]
 		[Description("If set to true, attempts to parse the Default Value of your column and set it for the default value of the property on initialization.")]
 		public bool ParseDbColDefaultVal
@@ -502,7 +502,7 @@ namespace MoM.Templates
 			get { return this.parseDbColDefaultVal; }
 			set { this.parseDbColDefaultVal = value; }
 		}
-		
+
 		[Category("09. Code style - Advanced")]
 		[Description("If set to true, attempts to treat underscores, '_' and dashes '-', as word seperators for Pascal casing.  So, a table called aspnet_users, turns into AspnetUsers.")]
 		public bool ChangeUnderscoreToPascalCase
@@ -510,7 +510,7 @@ namespace MoM.Templates
 			get { return this.changeUnderscoreToPascalCase; }
 			set { this.changeUnderscoreToPascalCase = value; }
 		}
-		
+
 		[Category("09. Code style - Advanced")]
 		[Description("Used to prefix names that would be unsafe (invalid) in C#. i.e C# keywords, any characters except letters, digits (Not first char though), and '_'.  Note: although spaces are not valid in C# names they will automatically be removed. Dashes are also invalid, but can be suppressed using the 'ChangeUnderscoreToPascalCase' option")]
 		public string SafeNamePrefix
@@ -518,8 +518,8 @@ namespace MoM.Templates
 			get { return this.safeNamePrefix; }
 			set { this.safeNamePrefix = value; }
 		}
-		
-		
+
+
 		[Category("09. Code style - Advanced")]
 		[CodeTemplateProperty(CodeTemplatePropertyOption.Optional)]
 		[Description("Used to determine the type of pascal casing used. None - no casing is done, Style1 - original casing which does not convert uppercase characters, Style2 - newer casing that does convert uppercase")]
@@ -528,18 +528,18 @@ namespace MoM.Templates
 			get { return this.usePascalCasing; }
 			set { this.usePascalCasing = value; }
 		}
-		
-		[Editor(typeof(System.Windows.Forms.Design.FileNameEditor), typeof(System.Drawing.Design.UITypeEditor))] 
+
+		[Editor(typeof(System.Windows.Forms.Design.FileNameEditor), typeof(System.Drawing.Design.UITypeEditor))]
 		[Category("09. Code style - Advanced")]
 		[CodeTemplateProperty(CodeTemplatePropertyOption.Optional)]
-		[DefaultValue("")]		
+		[DefaultValue("")]
 		[Description("Optional File Path to a table/object alias file.")]
 		public string AliasFilePath
 		{
 			get {return this.aliasFilePath;}
 			set	{this.aliasFilePath = value;}
 		}
-			
+
 		[Category("08. Stored procedures - Advanced")]
 		[Description("The prefix to attach to the stored procs.")]
 		public string ProcedurePrefix
@@ -560,15 +560,15 @@ namespace MoM.Templates
 			get { return this.customProcedureStartsWith; }
 			set { this.customProcedureStartsWith = value; }
 		}
-		
+
 		[Category("07. CRUD - Advanced")]
 		[Description("If true custom stored procedures will be detected and generated.")]
 		public bool IncludeCustoms
 		{
 			get { return this.includeCustoms; }
 			set { this.includeCustoms = value; }
-		}		
-		
+		}
+
 		[Category("07. CRUD - Advanced")]
 		[Description("By Default, any parameter in the Custom Stored Procedure will be a nullable type if it's a value type.  Setting this flag to true will only allow the param value types that specify NULL, such as (@param1 int=NULL), be nullable i.e. (int? param1).  While the rest of the params, @param2 int, will be regular (int param2).")]
 		public bool CSPUseDefaultValForNonNullableTypes
@@ -576,7 +576,7 @@ namespace MoM.Templates
 			get { return this.cspUseDefaultValForNonNullableTypes; }
 			set { this.cspUseDefaultValForNonNullableTypes = value; }
 		}
-		
+
 		public enum CustomNonMatchingReturnType
 		{
 			DataSet,
@@ -585,7 +585,7 @@ namespace MoM.Templates
 		#endregion
 
 		#region "07. CRUD - Advanced Properties"
-		
+
 		[Category("07. CRUD - Advanced")]
 		[Description("If False, Custom procedures with Multiple results will return a the CustomNonMatchingReturnType, if True, it will attempt to match the Table / View.")]
 		public bool AllowCustomProcMultipleResults
@@ -593,7 +593,7 @@ namespace MoM.Templates
 			get { return allowCustomProcMultipleResults; }
 			set { allowCustomProcMultipleResults = value; }
 		}
-		
+
 		#endregion
 
 		/// <summary>
@@ -619,7 +619,7 @@ namespace MoM.Templates
 		}
 
 		/// <summary>
-		/// Get the camel cased version of a name.  
+		/// Get the camel cased version of a name.
 		/// If the name is all upper case, change it to all lower case
 		/// </summary>
 		/// <param name="name">Name to be changed</param>
@@ -627,7 +627,7 @@ namespace MoM.Templates
         public string GetCamelCaseName(string name)
         {
 			if (name == null)
-				return string.Empty;            
+				return string.Empty;
             // first get the PascalCase version of the name
             string pascalName = GetPascalCaseName(name);
             // now lowercase the first character to transform it to camelCase
@@ -635,14 +635,14 @@ namespace MoM.Templates
         }
 
 		/// <summary>
-        /// Get the Pascal cased version of a name.  
+        /// Get the Pascal cased version of a name.
         /// </summary>
         /// <param name="name">Name to be changed</param>
         /// <returns>PascalCased version of the name</returns>
 		public string GetPascalCaseName(string name)
 		{
 			string result = name;
-			
+
 			switch ( UsePascalCasing )
 			{
 				case PascalCasingStyle.Style1 :
@@ -654,12 +654,12 @@ namespace MoM.Templates
 				default :
 					break;
 			}
-			
+
 			return result;
 		}
-		
+
 		/// <summary>
-        /// Get the Pascal cased version of a name.  
+        /// Get the Pascal cased version of a name.
         /// </summary>
         /// <param name="name">Name to be changed</param>
         /// <returns>PascalCased version of the name</returns>
@@ -671,13 +671,13 @@ namespace MoM.Templates
 			{
 				char[] splitter = {'_', ' '};
 				splitNames = name.Split(splitter);
-			}	
+			}
 			else
 			{
 				char[] splitter =  {' '};
 				splitNames = name.Split(splitter);
 			}
-			
+
             string pascalName = "";
             foreach (string s in splitNames)
             {
@@ -687,7 +687,7 @@ namespace MoM.Templates
 
             return pascalName;
         }
-		
+
         /// <summary>
         /// Gets the pascal case name of a string.
         /// </summary>
@@ -699,10 +699,10 @@ namespace MoM.Templates
           	string notStartingAlpha = Regex.Replace( name, "^[^a-zA-Z]+", string.Empty );
            	string workingString = ToLowerExceptCamelCase( notStartingAlpha );
            	pascalName = RemoveSeparatorAndCapNext( workingString );
-			
+
 			return pascalName;
         }
-		
+
 		/// <summary>
 		/// Converts a pascal string to a spaced string
 		/// </summary>
@@ -728,29 +728,29 @@ namespace MoM.Templates
         {
             char[] chars = input.ToCharArray();
             char[] origChars = input.ToCharArray();
-			
+
             for ( int i = 0; i < chars.Length; i++ )
             {
                 int left = ( i > 0 ? i - 1 : i );
                 int right = ( i < chars.Length - 1 ? i + 1 : i );
 
-                if ( i != left && 
+                if ( i != left &&
 						i != right)
                 {
-                    if (Char.IsUpper(chars[i]) && 
-							Char.IsLetter(chars[left]) && 
+                    if (Char.IsUpper(chars[i]) &&
+							Char.IsLetter(chars[left]) &&
 							Char.IsUpper(chars[left]))
                     {
                         chars[i] = Char.ToLower(chars[i], CultureInfo.InvariantCulture);
                     }
-                    else if (Char.IsUpper(chars[i]) && 
-								Char.IsLetter(chars[right]) && 
-								Char.IsUpper(chars[right]) && 
+                    else if (Char.IsUpper(chars[i]) &&
+								Char.IsLetter(chars[right]) &&
+								Char.IsUpper(chars[right]) &&
 								Char.IsUpper(origChars[left]))
                     {
                         chars[i] = Char.ToLower(chars[i], CultureInfo.InvariantCulture);
                     }
-                    else if (Char.IsUpper(chars[i]) && 
+                    else if (Char.IsUpper(chars[i]) &&
 								!Char.IsLetter(chars[right]))
                     {
                         chars[i] = Char.ToLower(chars[i], CultureInfo.InvariantCulture);
@@ -790,7 +790,7 @@ namespace MoM.Templates
             }
 
             chars[0] = Char.ToUpper(chars[0], CultureInfo.InvariantCulture);
-			
+
             workingString = new string( chars );
 			}
             string regexReplacer = "[" + new string( ChangeUnderscoreToPascalCase ? new char[] { '-', '_', ' ' } : new char[] { ' ' } ) + "]";
@@ -808,8 +808,8 @@ namespace MoM.Templates
 		{
 			return GetCleanName(schemaObject.Name);
 		}
-		
-		
+
+
 		/// <summary>
 		/// Indicate if the datatable contains data that are compliant with a bitfield
 		/// </summary>
@@ -821,8 +821,8 @@ namespace MoM.Templates
 					return false;
 			return true;
 		}
-		
-		
+
+
 		/// <summary>
 		/// Returns a sorted table list.
 		/// </summary>
@@ -832,7 +832,7 @@ namespace MoM.Templates
 			sortedTables.Sort(new PropertyComparer(sortProperty));
 			return sortedTables;
 		}
-		
+
 		/// <summary>
 		/// Returns a sorted view list.
 		/// </summary>
@@ -842,14 +842,14 @@ namespace MoM.Templates
 			sortedViews.Sort(new PropertyComparer(sortProperty));
 			return sortedViews;
 		}
-		
+
 		public string GetChildObjectTypeServiceName()
 		{
 			return string.Format(serviceClassNameFormat, "ChildObjectType");
 		}
-		
+
 		#region Get Names
-		
+
 		/// <summary>
 		///  Create a class name from a table, for a business object.
 		/// </summary>
@@ -857,7 +857,7 @@ namespace MoM.Templates
 		{
 			return GetClassName(table, ClassNameFormat.None);
 		}
-		
+
 		/// <summary>
 		///  Create a class name from a table, for a business object.
 		/// </summary>
@@ -865,7 +865,7 @@ namespace MoM.Templates
 		{
 			return GetFormattedClassName( GetName(table, ReturnFields.EntityName), format);
 		}
-		
+
 		/// <summary>
 		///  Create a class name from a table, for a business object.
 		/// </summary>
@@ -873,7 +873,7 @@ namespace MoM.Templates
 		{
 			return GetFormattedClassName(database.Name, ClassNameFormat.None);
 		}
-		
+
 		/// <summary>
 		///  Create a class name from a view, for a business object.
 		/// </summary>
@@ -881,7 +881,7 @@ namespace MoM.Templates
 		{
 			return GetClassName(view, ClassNameFormat.None);
 		}
-		
+
 		/// <summary>
 		///  Create a class name from a view, for a business object.
 		/// </summary>
@@ -905,7 +905,7 @@ namespace MoM.Templates
 		{
 			return GetOwnerName(table.Owner, includeDot);
 		}
-		
+
 		/// <summary>
 		///  Create a class name from a view, for a business object.
 		/// </summary>
@@ -913,7 +913,7 @@ namespace MoM.Templates
 		{
 			return GetOwnerName(view, false);
 		}
-		
+
 		/// <summary>
 		///  Create a class name from a view, for a business object.
 		/// </summary>
@@ -921,7 +921,7 @@ namespace MoM.Templates
 		{
 			return GetOwnerName(view.Owner, includeDot);
 		}
-		
+
 		/// <summary>
 		///  Create a class name from a view, for a business object.
 		/// </summary>
@@ -929,7 +929,7 @@ namespace MoM.Templates
 		{
 			return GetOwnerName(cmd, false);
 		}
-		
+
 		/// <summary>
 		///  Create a class name from a view, for a business object.
 		/// </summary>
@@ -937,7 +937,7 @@ namespace MoM.Templates
 		{
 			return GetOwnerName(cmd.Owner, includeDot);
 		}
-		
+
 		/// <summary>
 		///  Create a class name from a view, for a business object.
 		/// </summary>
@@ -953,7 +953,7 @@ namespace MoM.Templates
 		{
 			return GetName(table, ReturnFields.FieldName);
 		}
-		
+
 		/// <summary>
 		///  Create a class name from a view, for a business object.
 		/// </summary>
@@ -961,7 +961,7 @@ namespace MoM.Templates
 		{
 			return GetName(view, ReturnFields.FieldName);
 		}
-		
+
 		/// <summary>
 		///  Create a class name from a view, for a business object.
 		/// </summary>
@@ -969,7 +969,7 @@ namespace MoM.Templates
 		{
 			return GetName(col, ReturnFields.FieldName);
 		}
-		
+
 		/// <summary>
 		///  Create a class name from a view, for a business object.
 		/// </summary>
@@ -977,7 +977,7 @@ namespace MoM.Templates
 		{
 			return GetName(col, ReturnFields.FieldName);
 		}
-		
+
 		/// <summary>
 		///  Create a class name from a view, for a business object.
 		/// </summary>
@@ -985,7 +985,7 @@ namespace MoM.Templates
 		{
 			return GetCamelCaseName(param.Name);
 		}
-		
+
 		/// <summary>
 		///  Create a class name from a view, for a business object.
 		/// </summary>
@@ -993,7 +993,7 @@ namespace MoM.Templates
 		{
 			return GetCamelCaseName(col.Name);
 		}
-		
+
 		/// <summary>
 		///  Create a class name from a view, for a business object.
 		/// </summary>
@@ -1001,7 +1001,7 @@ namespace MoM.Templates
 		{
 			return GetVariableName(col.Name);
 		}
-		
+
 		/// <summary>
 		///  Create a class name from a view, for a business object.
 		/// </summary>
@@ -1009,7 +1009,7 @@ namespace MoM.Templates
 		{
 			return GetVariableName(col.Name);
 		}
-		
+
 		/// <summary>
 		///  Create a class name from a view, for a business object.
 		/// </summary>
@@ -1017,7 +1017,7 @@ namespace MoM.Templates
 		{
 			return GetVariableName(param.Name);
 		}
-		
+
 		/// <summary>
 		///  Create a class name from a view, for a business object.
 		/// </summary>
@@ -1025,7 +1025,7 @@ namespace MoM.Templates
 		{
 			return "_" + GetCamelCaseName(name);
 		}
-		
+
 		/// <summary>
 		///  Create a class name from a table, for a business object.
 		/// </summary>
@@ -1033,7 +1033,7 @@ namespace MoM.Templates
 		{
 			return GetName(table, ReturnFields.PropertyName);
 		}
-		
+
 		/// <summary>
 		///  Create a class name from a view, for a business object.
 		/// </summary>
@@ -1041,7 +1041,7 @@ namespace MoM.Templates
 		{
 			return GetName(view, ReturnFields.PropertyName);
 		}
-		
+
 		/// <summary>
 		///  Create a class name from a view, for a business object.
 		/// </summary>
@@ -1049,7 +1049,7 @@ namespace MoM.Templates
 		{
 			return GetName(col, ReturnFields.PropertyName);
 		}
-		
+
 		/// <summary>
 		///  Create a class name from a view, for a business object.
 		/// </summary>
@@ -1057,7 +1057,7 @@ namespace MoM.Templates
 		{
 			return GetName(col, ReturnFields.PropertyName);
 		}
-		
+
 		/// <summary>
 		///  Create a class name from a view, for a business object.
 		/// </summary>
@@ -1065,7 +1065,7 @@ namespace MoM.Templates
 		{
 			return GetPascalCaseName(param.Name);
 		}
-		
+
 		/// <summary>
 		///  Create a class name from a view, for a business object.
 		/// </summary>
@@ -1073,7 +1073,7 @@ namespace MoM.Templates
 		{
 			return GetPascalCaseName(cmd.Name);
 		}
-		
+
 		/// <summary>
 		///  Create a class name from a table, for a business object.
 		/// </summary>
@@ -1081,7 +1081,7 @@ namespace MoM.Templates
 		{
 			return GetOriginalPropertyName( GetPropertyName(table));
 		}
-		
+
 		/// <summary>
 		///  Create a class name from a view, for a business object.
 		/// </summary>
@@ -1089,7 +1089,7 @@ namespace MoM.Templates
 		{
 			return GetOriginalPropertyName( GetPropertyName(view));
 		}
-		
+
 		/// <summary>
 		///  Create a class name from a view, for a business object.
 		/// </summary>
@@ -1097,7 +1097,7 @@ namespace MoM.Templates
 		{
 			return GetOriginalPropertyName( GetPropertyName(col));
 		}
-		
+
 		/// <summary>
 		///  Create a class name from a view, for a business object.
 		/// </summary>
@@ -1105,7 +1105,7 @@ namespace MoM.Templates
 		{
 			return GetOriginalPropertyName( GetPropertyName(col));
 		}
-		
+
 		/// <summary>
 		///  Create a class name from a view, for a business object.
 		/// </summary>
@@ -1113,7 +1113,7 @@ namespace MoM.Templates
 		{
 			return GetOriginalPropertyName( GetPropertyName(param));
 		}
-		
+
 		/// <summary>
 		///  Create a class name from a view, for a business object.
 		/// </summary>
@@ -1121,7 +1121,7 @@ namespace MoM.Templates
 		{
 			return string.Format("Original{0}", name);
 		}
-		
+
 		/// <summary>
 		///  Create a class name from a table, for a business object.
 		/// </summary>
@@ -1129,7 +1129,7 @@ namespace MoM.Templates
 		{
 			return GetName(table, ReturnFields.FriendlyName);
 		}
-		
+
 		/// <summary>
 		///  Create a class name from a view, for a business object.
 		/// </summary>
@@ -1137,7 +1137,7 @@ namespace MoM.Templates
 		{
 			return GetName(view, ReturnFields.FriendlyName);
 		}
-		
+
 		/// <summary>
 		///  Create a class name from a view, for a business object.
 		/// </summary>
@@ -1145,7 +1145,7 @@ namespace MoM.Templates
 		{
 			return GetName(col, ReturnFields.FriendlyName);
 		}
-		
+
 		/// <summary>
 		///  Create a class name from a view, for a business object.
 		/// </summary>
@@ -1153,7 +1153,7 @@ namespace MoM.Templates
 		{
 			return GetName(col, ReturnFields.FriendlyName);
 		}
-		
+
 		/// <summary>
 		///  Gets the name to be used for the TList class
 		/// </summary>
@@ -1161,11 +1161,11 @@ namespace MoM.Templates
 		{
 			string listName = GetFormattedClassName(" ",ClassNameFormat.Collection);
 			//Remove the generic portion of the name (i.e <Entity>)
-			
+
 			return listName.Remove(listName.IndexOf("<"));
-			
+
 		}
-		
+
 		/// <summary>
 		///  Gets the name to be used for the VList class
 		/// </summary>
@@ -1173,26 +1173,26 @@ namespace MoM.Templates
 		{
 			string listName = GetFormattedClassName(" ",ClassNameFormat.ViewCollection);
 			//Remove the generic portion of the name (i.e <Entity>)
-			
+
 			return listName.Remove(listName.IndexOf("<"));
 		}
-		
+
 				/// <summary>
         /// Determine if a table column should be included in generated output
         /// </summary>
         /// <param name="table">The table.</param>
         /// <param name="column">The column.</param>
-        /// <returns>the value of the IncludeInOutput property defined in mapping file for the table and column</returns>       	
+        /// <returns>the value of the IncludeInOutput property defined in mapping file for the table and column</returns>
 		public bool IncludeInOutput(TableSchema table, ColumnSchema column){
-			
-			if (CurrentNetTiersMap != null)			
+
+			if (CurrentNetTiersMap != null)
 			{
 				foreach(TableMetaData mappedTable in CurrentNetTiersMap.Tables)
 				{
 					if(mappedTable.Id == table.Name)
 					{
 						foreach(ColumnMetaData mappedColumn in mappedTable.Columns)
-						{						
+						{
 							if (mappedColumn.Id == column.Name)
 							{
 								return (bool)GetPropertyValue(mappedColumn, ReturnFields.IncludeInOutput.ToString());
@@ -1201,33 +1201,33 @@ namespace MoM.Templates
 					}
 				}
 			}
-			
+
 			return true; //assumes mapping file not specified\available or mapping file does not contain information for the specified Table\Column
-		}	
-		
+		}
+
 		#region ColumnSchemaComparer
-		
+
 		public class ColumnSchemaComparer : IComparer {
-	
+
 			private string _sortBy;
 			private SchemaExplorer.TableSchema _table;
 			private bool _tableFound = false;
 			private NetTiers.NetTiersMap _currentNettiersMap;
-	
-			public ColumnSchemaComparer() {				
+
+			public ColumnSchemaComparer() {
 			}
-	
+
 			public ColumnSchemaComparer(string sortBy, SchemaExplorer.TableSchema table, NetTiers.NetTiersMap currentNettiersMap) {
-				if (currentNettiersMap == null)			
+				if (currentNettiersMap == null)
 				{
 					throw new Exception("There is no mapping file currently available");
 				}
-				
+
 				_sortBy = sortBy;
 				_table = table;
 				_currentNettiersMap = currentNettiersMap;
 			}
-	
+
 			public string SortBy {
 				get {
 					return _sortBy;
@@ -1236,25 +1236,25 @@ namespace MoM.Templates
 					_sortBy = value;
 				}
 			}
-	
+
 			/// <summary>
-			/// The Compare method should compare the obj to the current instance. 
-			/// 1. Return a value less than zero if pFirstObject is less than pObjectToCompare. 
-			/// 2. Return 0 if pFirstObject is equal to pObjectToCompare. 
+			/// The Compare method should compare the obj to the current instance.
+			/// 1. Return a value less than zero if pFirstObject is less than pObjectToCompare.
+			/// 2. Return 0 if pFirstObject is equal to pObjectToCompare.
 			/// 3. Return a value larger than zero if pFirstObject is greater than pObjectToCompare.
 			/// </summary>
 			/// <param name="pFirstObject"></param>
 			/// <param name="pObjectToCompare"></param>
 			/// <returns></returns>
-			
+
 			public Int32 Compare(Object firstObject, Object objectToCompare) {
 				if(firstObject is ColumnSchema) {
-					
+
 					switch(this._sortBy) {
-						
-						case "Id":      
+
+						case "Id":
 							return(FindIndexOfColumn(_table, (ColumnSchema)firstObject, _currentNettiersMap) - FindIndexOfColumn(_table, (ColumnSchema)objectToCompare,_currentNettiersMap));
-							
+
 							break;
 						default:
 							return 0;
@@ -1265,39 +1265,39 @@ namespace MoM.Templates
 			}
 		}
 		#endregion
-		
+
 		/// <summary>
 		/// Find the index of a column in the mapping file
-		/// </summary>		
+		/// </summary>
 		/// <returns></returns>
 		public static int FindIndexOfColumn(TableSchema table, ColumnSchema column, NetTiers.NetTiersMap currentNettiersMap)
 		{
 			int index;
-			
-			if (currentNettiersMap != null)			
+
+			if (currentNettiersMap != null)
 			{
 				foreach(TableMetaData mappedTable in currentNettiersMap.Tables)
 				{
 					if(mappedTable.Id == table.Name)
 					{
 						index = 0;
-						
+
 						foreach(ColumnMetaData mappedColumn in mappedTable.Columns)
-						{						
+						{
 							if (mappedColumn.Id == column.Name)
 							{
 								return index;
 							}
-							
+
 							index++;
 						}
 					}
 				}
 			}
-			
+
 			return -1; //will occur if no mapping file provided or table\column cannot be found in mapping file
 		}
-		
+
 		public enum ReturnFields
 		{
 			EntityName,
@@ -1308,7 +1308,7 @@ namespace MoM.Templates
 			FriendlyName,
 			IncludeInOutput
 		}
-		
+
 		public enum ClassNameFormat
 		{
 			None,
@@ -1342,126 +1342,126 @@ namespace MoM.Templates
 			Repository,
 			AbstractRepository
 		}
-		
+
 		private string GetFormattedClassName(string name, ClassNameFormat format)
 		{
 			if (string.IsNullOrEmpty(name))
 				throw new ArgumentNullException("name");
-				
+
 			switch (format)
 			{
 				case ClassNameFormat.None:
 					return string.Format(entityFormat, name);
 					//return name;
-				
+
 				case ClassNameFormat.Base:
 				case ClassNameFormat.Abstract:
 					return string.Format(baseClassFormat, name);
-				
+
 				case ClassNameFormat.Interface:
 					return string.Format(interfaceFormat, name);
-					
+
 				case ClassNameFormat.Key:
 					return string.Format(this.entityKeyFormat, name);
-				
+
 				case ClassNameFormat.Column:
 					return string.Format(this.columnClassNameFormat, GetFormattedClassName(name, ClassNameFormat.None));
-				
+
 				case ClassNameFormat.Comparer:
 					return string.Format(this.comparerClassNameFormat, name);
-				
+
 				case ClassNameFormat.EventHandler:
 					return string.Format(this.eventHandlerClassNameFormat, name);
-				
+
 				case ClassNameFormat.EventArgs:
 					return string.Format(this.eventArgsClassNameFormat, name);
-				
+
 				case ClassNameFormat.Partial:
 					return string.Format("{0}.generated", name);
-				
+
 				case ClassNameFormat.PartialAbstract:
 					return GetFormattedClassName( GetFormattedClassName(name, ClassNameFormat.Abstract), ClassNameFormat.Partial);
-				
+
 				case ClassNameFormat.PartialCollection:
 					return GetFormattedClassName( GetFormattedClassName(name, ClassNameFormat.Collection), ClassNameFormat.Partial);
-				
+
 				case ClassNameFormat.PartialProviderBase:
 					return GetFormattedClassName( GetFormattedClassName(name, ClassNameFormat.ProviderBase), ClassNameFormat.Partial);
-				
+
 				case ClassNameFormat.PartialUnitTest:
 					return GetFormattedClassName( GetFormattedClassName(name, ClassNameFormat.UnitTest), ClassNameFormat.Partial);
-				
+
 				case ClassNameFormat.PartialAbstractService:
 					return GetFormattedClassName( GetFormattedClassName(name, ClassNameFormat.AbstractService), ClassNameFormat.Partial);
-				
+
 				case ClassNameFormat.Service:
 					return string.Format(ServiceClassNameFormat, name);
-				
+
 				case ClassNameFormat.AbstractService:
 					return GetFormattedClassName( GetFormattedClassName(name, ClassNameFormat.Service), ClassNameFormat.Abstract);
-				
+
 				case ClassNameFormat.Proxy:
 					return string.Format("{0}Services", name);
-				
+
 				case ClassNameFormat.Enum:
 					return string.Format(enumFormat, name);
-				
+
 				case ClassNameFormat.Struct:
 					return string.Format(entityDataFormat, name);
-				
+
 				case ClassNameFormat.Collection:
 					return string.Format(genericListFormat, GetFormattedClassName(name, ClassNameFormat.None));
-				
+
 				case ClassNameFormat.AbstractCollection:
 					return GetFormattedClassName( GetFormattedClassName(name, ClassNameFormat.Collection), ClassNameFormat.Abstract);
-				
+
 				case ClassNameFormat.CollectionProperty:
 					return string.Format(collectionFormat, name);
-				
+
 				case ClassNameFormat.ViewCollection:
 					return string.Format(genericViewFormat, GetFormattedClassName(name, ClassNameFormat.None));
-				
+
 				case ClassNameFormat.Provider:
 				case ClassNameFormat.Repository:
 					return string.Format(providerFormat, GetFormattedClassName(name, ClassNameFormat.None));
-					
+
 				case ClassNameFormat.AbstractRepository:
 					return GetFormattedClassName( GetFormattedClassName(name, ClassNameFormat.Repository), ClassNameFormat.Abstract);
-				
+
 				case ClassNameFormat.ProviderInterface:
 					return string.Format(interfaceFormat, GetFormattedClassName(name, ClassNameFormat.Provider));
-				
+
 				case ClassNameFormat.ProviderBase:
 					return GetFormattedClassName( GetFormattedClassName(name, ClassNameFormat.Provider), ClassNameFormat.Base);
-				
+
 				case ClassNameFormat.UnitTest:
 					return string.Format(unitTestFormat, name);
-				
+
 				default:
 					throw new ArgumentOutOfRangeException("format");
 			}
 		}
-		
+
 		private string GetName(SchemaObjectBase obj, ReturnFields nameType)
 		{
 			// without an object instance, this is all useless
 			if (obj == null)
 				throw new ArgumentNullException("obj");
-			
+
 			// get the name
 			if (obj is TableSchema)
 				return GetAliasName(((TableSchema)obj).Owner, obj.Name, null, nameType);
-				
+
 			else if (obj is ViewSchema)
 				return GetAliasName(((ViewSchema)obj).Owner, obj.Name, null, nameType);
-				
+
 			else if (obj is ColumnSchema && nameType != ReturnFields.CSType)
 			{
 				return GetAliasName(((ColumnSchema)obj).Table.Owner, ((ColumnSchema)obj).Table.Name, obj.Name, nameType);
-			}	
+			}
 			else if (obj is ViewColumnSchema && nameType != ReturnFields.CSType)
 				return GetAliasName(((ViewColumnSchema)obj).View.Owner, ((ViewColumnSchema)obj).View.Name, obj.Name, nameType);
-				
+
 			else if (obj is ColumnSchema && nameType == ReturnFields.CSType)
 			{
 				string aliasType = GetAliasName(((ColumnSchema)obj).Table.Owner, ((ColumnSchema)obj).Table.Name, obj.Name, nameType);
@@ -1470,7 +1470,7 @@ namespace MoM.Templates
 				else
 					return aliasType;
 			}
-			
+
 			else if (obj is ViewColumnSchema && nameType == ReturnFields.CSType)
 			{
 				string aliasType = GetAliasName(((ViewColumnSchema)obj).View.Owner, ((ViewColumnSchema)obj).View.Name, obj.Name, nameType);
@@ -1479,11 +1479,11 @@ namespace MoM.Templates
 				else
 					return aliasType;
 			}
-			
+
 			else
 				throw new ArgumentException("obj");
 		}
-		
+
 		/// <summary>
 		/// This function get the alias name for this object name.
 		/// </summary>
@@ -1492,7 +1492,7 @@ namespace MoM.Templates
 		{
 			return GetAliasName(owner, obj, item, returnType, nameConversion);
 		}
-		
+
 		/// <summary>
 		/// This function get the alias name for this object name.
 		/// </summary>
@@ -1533,7 +1533,7 @@ namespace MoM.Templates
 						name = item;
 					else
 						throw new ArgumentNullException();
-						
+
 					// return the formatted name
 					switch (returnType)
 					{
@@ -1553,9 +1553,9 @@ namespace MoM.Templates
 					}
 					#endregion // No convertion map/alias file being used
 				}
-					
+
 				case NameConversionType.Mapping:
-				{	
+				{
 					#region Using NetTiers Mapping File
 					// use the mapping.config file if we have one
 					if (CurrentNetTiersMap != null)
@@ -1576,7 +1576,7 @@ namespace MoM.Templates
 									else
 										return (string)val;
 								}
-							
+
 							// no table match found; check for a view
 							foreach(ViewMetaData view in CurrentNetTiersMap.Views)
 								if (string.Compare(obj, view.Id, true) == 0)
@@ -1603,7 +1603,7 @@ namespace MoM.Templates
 											else
 												return (string)val;
 										}
-											
+
 									foreach(ChildCollectionMetaData col in table.ChildCollections)
 										if (string.Compare(col.Id, item, true) == 0)
 										{
@@ -1614,7 +1614,7 @@ namespace MoM.Templates
 												return (string)val;
 										}
 								}
-							
+
 							// no table match found; check for a view
 							foreach(ViewMetaData view in CurrentNetTiersMap.Views)
 								if (string.Compare(owner, view.Owner, true) == 0 && string.Compare(obj, view.Id, true) == 0)
@@ -1633,30 +1633,30 @@ namespace MoM.Templates
 							throw new ArgumentNullException();
 						}
 					}
-					// there is no mapping file or we found no match 
+					// there is no mapping file or we found no match
 					// within the mapping file, so just create the name
 					return GetAliasName(owner, obj, item, returnType, NameConversionType.None);
-					
+
 					#endregion // Using NetTiers Mapping File
 				}
-					
+
 				case NameConversionType.Alias:
 				{
 					#region Using Alias File
-					
+
 					// If the aliases aren't loaded yet, and the filepath exists, then load the hashtable of aliases.
 					if (aliases == null && File.Exists(this.aliasFilePath))
-					{				
+					{
 						aliases = new Hashtable();
 						using (StreamReader sr = new StreamReader(this.aliasFilePath))
 						{
 							string line;
-							while ((line = sr.ReadLine()) != null)	
+							while ((line = sr.ReadLine()) != null)
 								if (line.IndexOf(":") > 0)
 									aliases.Add(line.Split(':')[0], (line.Split(':')[1]));
 						}
 					}
-					
+
 					// See if our tablename is in the aliases hashtable
 					if (aliases != null && !string.IsNullOrEmpty(obj) && string.IsNullOrEmpty(item))
 					{
@@ -1681,18 +1681,18 @@ namespace MoM.Templates
 							}
 					}
 
-					// there is no alias file or we found no match 
+					// there is no alias file or we found no match
 					// within the alias file, so just create the name
 					return GetAliasName(owner, obj, item, returnType, NameConversionType.None);
-						
+
 					#endregion // Using Alias File
 				}
-					
+
 				default:
 					throw new ApplicationException();
 			}
 		}
-		
+
         /// <summary>
         /// Gets a C Sharp safe version of the specified name.
         /// </summary>
@@ -1706,14 +1706,14 @@ namespace MoM.Templates
             if ( !IsValidCSharpName( result ) )
             {
                 result = safeNamePrefix + result;
-				
+
 				 // replace any non valid char with an underscore
                 result = Regex.Replace( result, "[^a-zA-Z0-9_]", "_" );
             }
 
             return result;
         }
-		
+
 		/// <summary>
         /// Determines whether specified name is valid in C#.
         /// </summary>
@@ -1736,7 +1736,7 @@ namespace MoM.Templates
                     if ( Array.IndexOf( csharpKeywords, name.ToLower() ) < 0 )
                     {
                         // only letters, digits and underscores are allowed
-						// we're also allowing spaces and dashes as the 
+						// we're also allowing spaces and dashes as the
 						// user has the option of suppressing those
                         Regex validChars = new Regex( @"[^a-zA-Z0-9_\s-]" );
                         result = !validChars.IsMatch( name );
@@ -1749,7 +1749,7 @@ namespace MoM.Templates
 		#endregion // Get Names
 
 		#region Reflection Helpers
-		
+
 		/// <summary>
 		/// Gets the value of the property with the specified name.
 		/// </summary>
@@ -1761,7 +1761,7 @@ namespace MoM.Templates
 			PropertyInfo property = GetPropertyInfo(item, name);
 			return (property != null && property.CanRead) ? property.GetValue(item, null) : null;
 		}
-		
+
 		/// <summary>
 		/// Gets a <see cref="PropertyInfo"/> object representing the property
 		/// belonging to the object having the specified name.
@@ -1774,7 +1774,7 @@ namespace MoM.Templates
 		{
 			return (item != null) ? GetPropertyInfo(item.GetType(), name) : null;
 		}
-		
+
 		/// <summary>
 		/// Gets a <see cref="PropertyInfo"/> object representing the property
 		/// belonging to the runtime type having the specified name.
@@ -1787,10 +1787,10 @@ namespace MoM.Templates
 		{
 			return type != null && !string.IsNullOrEmpty(name) ? type.GetProperty(name) : null;
 		}
-		
-		#endregion 
-		
-		
+
+		#endregion
+
+
 		public void LoadMappingFile(string path)
 		{
 			try
@@ -1802,7 +1802,7 @@ namespace MoM.Templates
 					{
 						this.CurrentNetTiersMap = instance as NetTiersMap;
 					}
-				}	
+				}
 			}
 			catch
 			{
@@ -1810,15 +1810,15 @@ namespace MoM.Templates
 					throw;
 			}
 		}
-	
+
 		public NetTiersMap GetMapping(string path)
 		{
 			if(File.Exists(path))
 				LoadMappingFile(path);
-			
+
 			return this.CurrentNetTiersMap;
 		}
-		
+
 		#region SubTemplateHelper
 		///<summary>
 		/// Creates an instance of a sub template.
@@ -1833,7 +1833,7 @@ namespace MoM.Templates
 			#endif
 		}
 		#endregion
-				
+
         #region 6b - Web Advanced Options
         /// <summary>
         /// Build and return a concatened list of columns that are contained in the specified key. (ex: Column1, Column2() )
@@ -1894,8 +1894,8 @@ namespace MoM.Templates
 						list.Add(tCol);
             	}
 			}
-			
-			return list;         
+
+			return list;
         }
 
         #endregion
@@ -1910,7 +1910,7 @@ namespace MoM.Templates
 		{
 			return string.IsNullOrEmpty(name) ? string.Empty : Regex.Replace(name, @"[^A-Za-z0-9_\.]", "");
 		}
-		
+
 		/// <summary>
 		/// Gets the expression used to set the property value in an entity.  Specificly used to handle nullable columns.
 		/// </summary>
@@ -1959,7 +1959,7 @@ namespace MoM.Templates
 				/*5*/GetClassName(column.Table, ClassNameFormat.Column));
 			}
 		}
-				
+
 		/// <summary>
 		/// Gets the expression used to set the property value in an entity.  Specificly used to handle nullable columns.
 		/// </summary>
@@ -2018,7 +2018,7 @@ namespace MoM.Templates
 					/*3*/GetCSType(column));
 			}
 		}
-		
+
 		/// <summary>
 		/// Gets the expression used to set the property value in an entity.  Specificly used to handle nullable columns.
 		/// </summary>
@@ -2088,7 +2088,7 @@ namespace MoM.Templates
 			}
 			return "";
 		}
-		
+
 		/// <summary>
 		/// Creates a string that reprensents an entity and its property.
 		/// </summary>
@@ -2098,7 +2098,7 @@ namespace MoM.Templates
 		{
 			return objectName + "." + GetPropertyName(column);
 		}
-		
+
 		/// <summary>
 		/// Creates a string that reprensents an entity and its property.
 		/// </summary>
@@ -2106,7 +2106,7 @@ namespace MoM.Templates
 		/// <param name="column">Name of the column that define the property.</param>
 		public string GetObjectPropertyAccessorWithDefault(ColumnSchema column, string objectName)
 		{
-			
+
 			if ( column.AllowDBNull )
 			{
 				// nullable reference types (strings), set to null if null retrieved from database
@@ -2116,7 +2116,7 @@ namespace MoM.Templates
 			}
 			return objectName + "." + GetPropertyName(column);
 		}
-		
+
 		/// <summary>
 		/// Creates a string that reprensents an entity and its property.
 		/// </summary>
@@ -2136,7 +2136,7 @@ namespace MoM.Templates
 		{
 			return objectName + "." + GetPropertyName(column);
 		}
-		
+
 
 		/// <summary>
 		/// Creates a string that represents a many to many relation name.
@@ -2147,7 +2147,7 @@ namespace MoM.Templates
 		{
 			return GetManyToManyName(junctionTableKey.ForeignKeyMemberColumns, junctionTable);
 		}
-		
+
 		/// <summary>
 		/// Creates a string that represents a many to many relation name.
 		/// </summary>
@@ -2158,10 +2158,10 @@ namespace MoM.Templates
 			StringBuilder result = new StringBuilder();
 			foreach(ColumnSchema pCol in columns)
 				result.Append(GetPropertyName(pCol));
-			
+
 			return string.Format(manyToManyFormat, result.ToString(), GetClassName(junctionTable));
 		}
-		
+
 		/// <summary>
 		/// Check that a given key has all foreign's columns into the primary key.
 		/// </summary>
@@ -2174,7 +2174,7 @@ namespace MoM.Templates
 
 			return true;
 		}
-		
+
 		/// <summary>
 		/// Check that a given index has all it's columns into the primary key.
 		/// </summary>
@@ -2197,7 +2197,7 @@ namespace MoM.Templates
 		{
 			return schemaObject.Description.Length > 0 ? "-- " + schemaObject.Description.Replace(Environment.NewLine, Environment.NewLine + "-- ") : "";
 		}
-		
+
 		#region GetColumnXmlComment
 		/// <summary>
 		/// Gets the table's description as a well formatted string for C# XML comments.
@@ -2222,8 +2222,8 @@ namespace MoM.Templates
 		{
 			return GetColumnXmlComment(view.Description, indentLevel);
 		}
-		
-		
+
+
 		/// <summary>
 		/// Gets the column's description as a well formatted string for C# XML comments.
 		/// </summary>
@@ -2239,7 +2239,7 @@ namespace MoM.Templates
 		{
 			return GetColumnXmlComment(key.Description, indentLevel);
 		}
-		
+
 		/// <summary>
 		/// Internal implementation.  Gets the description text as a clean C# XML comment line.
 		/// </summary>
@@ -2251,9 +2251,9 @@ namespace MoM.Templates
 			return description.Replace(Environment.NewLine, Environment.NewLine + linePrefix);
 		}
 		#endregion GetColumnXmlComment
-		
+
 		#region Component/Composition Helper Methods
-				
+
 		public string GetForeignKeyCompositeName (string fk, TableKeySchemaCollection fkeys)
 		{
 			foreach (TableKeySchema key in fkeys)
@@ -2268,7 +2268,7 @@ namespace MoM.Templates
 			}
 			return "//TODO: UNKNOWN, COULD NOT FIND FOREIGN KEY COMPOSITE NAME \t";
 		}
-				
+
 		public string GetCompositeClassName(string fk, TableKeySchemaCollection fkeys)
 		{
 			foreach (TableKeySchema key in fkeys)
@@ -2283,7 +2283,7 @@ namespace MoM.Templates
 			}
 			return "//TODO: UNKNOWN, COULD NOT FIND COMPOSITE CLASS NAME \t" ;
 		}
-		
+
 		public string GetCompositeMemberVariableName(string fk, TableKeySchemaCollection fkeys)
 		{
 			foreach (TableKeySchema key in fkeys)
@@ -2298,8 +2298,8 @@ namespace MoM.Templates
 			}
 			return "//TODO: UNKNOWN, COULD NOT FIND COMPOSITE MEMBER VARIABLE NAME\t ";
 		}
-		
-				
+
+
 		public string GetCompositePropertyName(string fk, TableKeySchemaCollection fkeys)
 		{
 			foreach (TableKeySchema key in fkeys)
@@ -2363,10 +2363,10 @@ namespace MoM.Templates
 					return GetPropertyName(fkey.ForeignKeyMemberColumns[0]);
 				}
 			}
-			
+
 			return string.Empty;
 		}
-		#endregion 
+		#endregion
 
 		/// <summary>
 		/// Cleans the given text so that it can be used in a [DescriptionAttribute] attribute in C# code.
@@ -2375,9 +2375,9 @@ namespace MoM.Templates
 		{
 			return text.Replace(Environment.NewLine, " ").Replace("\"", "'");
 		}
-		
+
 		/// <summary>
-		/// Determines if the given column has a user defined data type.  
+		/// Determines if the given column has a user defined data type.
 		/// </summary>
 		/// <remarks>
 		/// User defined data types are dynamically loaded from the database where the column is from.
@@ -2387,18 +2387,18 @@ namespace MoM.Templates
 			// lazy load the user defined user type list
 			if ( userDefinedTypes == null )
 				userDefinedTypes = GetUserDefinedTypes(obj.Database);
-			
+
 			foreach (string userDefinedType in userDefinedTypes)
 				if ( string.Compare(obj.NativeType, userDefinedType, true) == 0 )
 					return true;
 
 			return false;
 		}
-		
+
 		private string[] userDefinedTypes = null;
 
 		/// <summary>
-		/// Determines if the given schema object has a user defined data type.  
+		/// Determines if the given schema object has a user defined data type.
 		/// -- [ab] this is a generic ver of IsUserDefinedType(ColumnSchema column)
 		/// </summary>
 		/// <remarks>
@@ -2410,7 +2410,7 @@ namespace MoM.Templates
 			// lazy load the user defined user type list
 			if ( userDefinedTypes == null )
 				userDefinedTypes = GetUserDefinedTypes(schemaItem.Database);
-			
+
 			foreach (string userDefinedType in userDefinedTypes)
 				if ( string.Compare(schemaItem.NativeType, userDefinedType, true) == 0 )
 					return true;
@@ -2433,7 +2433,7 @@ namespace MoM.Templates
 					return new string[0];
 			}
 		}
-		
+
 		/// <summary>
 		/// Get the user defined data types from the specified Sql Server database.
 		/// </summary>
@@ -2445,7 +2445,7 @@ namespace MoM.Templates
 				command.CommandText = "sp_MShelptype";
 				command.CommandType = CommandType.StoredProcedure;
 				command.Connection = new SqlConnection(database.ConnectionString);
-	   
+
 				command.Parameters.Add( ParameterPrefix + "typename", SqlDbType.NVarChar, 517);
 				command.Parameters.Add( ParameterPrefix + "flags", SqlDbType.NVarChar, 10);
 
@@ -2456,17 +2456,17 @@ namespace MoM.Templates
 				command.Connection.Open();
 				using (SqlDataReader reader = command.ExecuteReader(CommandBehavior.CloseConnection))
 				{
-					while(reader.Read()) 
+					while(reader.Read())
 					{
 						udt.Add(reader["UserDatatypeName"]);
 					}
 				}
-				
+
 				string[] userDatatypeNames = new string[ udt.Count ];
 				udt.CopyTo(userDatatypeNames,0);
 				return userDatatypeNames;
 			}
-			catch 
+			catch
 			{
 				return new string[0]; // oh oh, should handle this better.
 			}
@@ -2484,23 +2484,23 @@ namespace MoM.Templates
 			// Trace.WriteLine("IsIdentityRowGuid Eval for Column " + column.Table.Name + "." + column.Name);
 			if (IsIdentityRowGuidColumn(column) && IncludeDatabaseFeatures == MoM.Templates.DatabaseType.SQLServer2005)
 				return true;
-		
+
 			if (column.ExtendedProperties["CS_IsIdentity"] != null)
 				return (bool)column.ExtendedProperties["CS_IsIdentity"].Value;
-			
+
 			// for access
 			if (column.ExtendedProperties["Autoincrement"] != null)
 				return (bool)column.ExtendedProperties["Autoincrement"].Value;
-			
+
 			// test mysql
-			
-			
+
+
 			return false;
-			
-			//Autoincrement: 
+
+			//Autoincrement:
 			//return (bool)column.ExtendedProperties["CS_IsIdentity"].Value;
-		} 
-		
+		}
+
 		// Added by Andrew DeVries Digital Example LLC 12/10/2007
  		/// <summary>
 		/// returns True is the Column Type is Guid and the Default Valus is newid() or newsequentialid()
@@ -2519,50 +2519,50 @@ namespace MoM.Templates
 
 			ExtendedProperty defaultValueProperty = column.ExtendedProperties["CS_Default"];
 			if (defaultValueProperty == null)
-				return false;			
-				
+				return false;
+
 			string defaultValue = null;
-			
-	
+
+
 			try
 			{
-				//Get Default Value 
+				//Get Default Value
 				defaultValue = defaultValueProperty.Value.ToString();
 				if (defaultValue == null || defaultValue.Trim().Length == 0)
 				{
 					//Debug.WriteLine("IsIdentityRowGuid DefaultValue is null Returning False");
 					return false;
 				}
-				
+
 				// trim off the surrounding ()'s if they exist (SQL Server)
-				while (defaultValue.StartsWith("(") && defaultValue.EndsWith(")") 
+				while (defaultValue.StartsWith("(") && defaultValue.EndsWith(")")
 					|| defaultValue.StartsWith("\"") && defaultValue.EndsWith("\""))
 				{
 					defaultValue = defaultValue.Substring(1);
 					defaultValue = defaultValue.Substring(0, defaultValue.Length - 1);
 				}
 
-				
+
 
 				if ( defaultValue.ToLower() == "newid()" || defaultValue.ToLower() == "newsequentialid()" )
 				{
 					//Debug.WriteLine("IsIdentityRowGuid Returning True defaultValue=" + defaultValue.ToLower());
 					return true;
-				
+
 				}
 				else
 				{
 					//Debug.WriteLine("IsIdentityRowGuid Default Value is not newid() or newsequentialid() Returning False");
 					return false;
 				}
-				
+
 			}
 			catch{}
 
-			//Debug.WriteLine("IsIdentityRowGuid Catch Returning False");				
-			return false;	
+			//Debug.WriteLine("IsIdentityRowGuid Catch Returning False");
+			return false;
 		}
-		
+
 		/// <summary>
 		/// Get's the default value of a column
 		/// </summary>
@@ -2572,37 +2572,37 @@ namespace MoM.Templates
 		{
 			/*
 			return "";
-			
+
 			// for sql server
 			if (column.ExtendedProperties["CS_Default"] != null)
 			{
 				string value = column.ExtendedProperties["CS_Default"].Value.ToString().ToLower();
 				value = value.Replace("getdate()", "DateTime.Now");
 				value = value.Replace("newid()", "Guid.NewGuid()");
-				
+
 				while(value.StartsWith("(") && value.EndsWith(")"))
     			 	value= value.TrimStart('(').TrimEnd(')');
-	
+
 				if (column.DataType == DbType.Boolean)
 					value = value.Contains("1") ? "true" : "false";
 				else if (!IsNumericType(column) || value.IndexOf("DateTime.Now") > -1 || value.IndexOf("Guid.NewGuid()") > -1)
 					value = string.Format("\"{0}\"", value);
-					
+
 				return value;
-	
-				
+
+
 			// for access
 			if (column.ExtendedProperties["DefaultValue"] != null)
 				return column.ExtendedProperties["DefaultValue"].Value.ToString();
-			
+
 			// test mysql
 			}
-			
+
 			*/
 
-			return "";			
-		} 
-		
+			return "";
+		}
+
 		/// <summary>
 		/// Determines if the column is a numeric column or not.
 		/// </summary>
@@ -2622,9 +2622,9 @@ namespace MoM.Templates
 				case "real":
 				case "smallint":
 				case "smallmoney":
-				case "tinyint": 
+				case "tinyint":
 					return true;
-				default: 
+				default:
 					return false;
 			}
 		}
@@ -2637,21 +2637,21 @@ namespace MoM.Templates
 			// sql server
 			if (column.ExtendedProperties["CS_ReadOnly"].Value != null && (bool)column.ExtendedProperties["CS_ReadOnly"].Value)
 				return true;
-			
+
 			// access, if auto inco
 			if (column.ExtendedProperties["Autoincrement"] != null && (bool)column.ExtendedProperties["Autoincrement"].Value)
 				return true;
-				
+
 			// Jet: if auto generate
 			if (column.ExtendedProperties["Jet OLEDB:AutoGenerate"] != null && (bool)column.ExtendedProperties["Jet OLEDB:AutoGenerate"].Value)
 				return true;
-				
+
 			// default
 			return false;
-			
+
 			//return column.ExtendedProperties.Count == 0 || (bool)column.ExtendedProperties["CS_ReadOnly"].Value;
 		}
-		
+
 		/// <summary>
 		///  Check if a column is computed.
 		/// </summary>
@@ -2661,25 +2661,25 @@ namespace MoM.Templates
 			// Sql server extended property
 			if (column.ExtendedProperties["CS_IsComputed"] != null && (bool)column.ExtendedProperties["CS_IsComputed"].Value)
 				return true;
-			
+
 			// sqlserver timestamp field are computed
 			if (column.NativeType.ToLower() == "timestamp")
 				return true;
-				
+
 			// access, if auto inco
 			if (column.ExtendedProperties["Autoincrement"] != null && (bool)column.ExtendedProperties["Autoincrement"].Value)
 				return true;
-				
+
 			// Jet: if auto generate
 			if (column.ExtendedProperties["Jet OLEDB:AutoGenerate"] != null && (bool)column.ExtendedProperties["Jet OLEDB:AutoGenerate"].Value)
 				return true;
-			
-			
+
+
 			return false;
-			
+
 			//return (bool)column.ExtendedProperties["CS_IsComputed"].Value == true || column.NativeType.ToLower() == "timestamp";
 		}
-		
+
 		/// <summary>
 		///  Check if a column is a guid (uniqueidentifier).
 		/// </summary>
@@ -2688,7 +2688,7 @@ namespace MoM.Templates
 		{
 			return column.SystemType.ToString() == typeof(System.Guid).ToString();
 		}
-		
+
 		/// <summary>
 		/// Check if a column is a rowguid column for replication
 		/// </summary>
@@ -2698,7 +2698,7 @@ namespace MoM.Templates
 		{
 			if (column.ExtendedProperties["CS_IsRowGuidCol"] != null)
 				return (bool)column.ExtendedProperties["CS_IsRowGuidCol"].Value;
-			
+
 			return false;
 		}
 
@@ -2713,7 +2713,7 @@ namespace MoM.Templates
 		{
 			return (table.Owner.Length > 0) ? GetSafeName(table.Owner) + "." : "";
 		}
-		
+
 		/// <summary>
 		/// Get the owner of a view
 		/// </summary>
@@ -2743,7 +2743,7 @@ namespace MoM.Templates
 		{
 			return cmd.CommandResults.Count > 0;
 		}
-		
+
 		/// <summary>
 		/// Get a SqlParameter statement for a column
 		/// </summary>
@@ -2752,15 +2752,15 @@ namespace MoM.Templates
 		public string GetSqlParameterStatement(ColumnSchemaCollection columns)
 		{
 			StringBuilder result = new StringBuilder();
-			
+
 			for(int i=0; i<columns.Count; i++)
 			{
 				if (i>0) result.Append(", ");
-				
+
 				result.Append(GetSqlParameterStatement(columns[i]));
 				result.Append(Environment.NewLine);
-				
-			}	
+
+			}
 			return result.ToString();
 		}
 
@@ -2773,7 +2773,7 @@ namespace MoM.Templates
 		{
 			return GetSqlParameterStatement(column, false);
 		}
-		
+
 		/// <summary>
 		/// Get a SqlParameter statement for a column
 		/// </summary>
@@ -2784,7 +2784,7 @@ namespace MoM.Templates
 		{
 			StringBuilder param = new StringBuilder();
 			param.AppendFormat("{3}{0} {1}", GetPropertyName(column), column.NativeType, ParameterPrefix);
-			
+
 			// user defined data types do not need size components
 			if ( ! IsUserDefinedType(column) )
 			{
@@ -2794,19 +2794,19 @@ namespace MoM.Templates
 				{
 					if (column.NativeType != "real")
 						param.AppendFormat("({0}, {1})", column.Precision, column.Scale);
-				
+
 					break;
 				}
 				// [ab 022205] now handles xxxbinary data type
 				case DbType.Binary:
-				// 
+				//
 				case DbType.AnsiString:
 				case DbType.AnsiStringFixedLength:
 				case DbType.String:
 				case DbType.StringFixedLength:
 				{
-					if (column.NativeType != "text" && 
-						column.NativeType != "ntext" && 
+					if (column.NativeType != "text" &&
+						column.NativeType != "ntext" &&
 						column.NativeType != "timestamp" &&
 						column.NativeType != "image"
 						)
@@ -2825,10 +2825,10 @@ namespace MoM.Templates
 			{
 				param.Append(" OUTPUT");
 			}
-			
+
 			return param.ToString();
 		}
-		
+
 		// Added by Andrew DeVries Digital Example, LLC
 		/// <summary>
 		/// Get a SqlParameter statement for a column
@@ -2840,7 +2840,7 @@ namespace MoM.Templates
 		{
 			StringBuilder param = new StringBuilder();
 			param.AppendFormat("{0}", column.NativeType);
-			
+
 			// user defined data types do not need size components
 			if ( ! IsUserDefinedType(column) )
 			{
@@ -2850,19 +2850,19 @@ namespace MoM.Templates
 				{
 					if (column.NativeType != "real")
 						param.AppendFormat("({0}, {1})", column.Precision, column.Scale);
-				
+
 					break;
 				}
 				// [ab 022205] now handles xxxbinary data type
 				case DbType.Binary:
-				// 
+				//
 				case DbType.AnsiString:
 				case DbType.AnsiStringFixedLength:
 				case DbType.String:
 				case DbType.StringFixedLength:
 				{
-					if (column.NativeType != "text" && 
-						column.NativeType != "ntext" && 
+					if (column.NativeType != "text" &&
+						column.NativeType != "ntext" &&
 						column.NativeType != "timestamp" &&
 						column.NativeType != "image"
 						)
@@ -2877,22 +2877,22 @@ namespace MoM.Templates
 				}
 			}
 			}
-			
+
 			return param.ToString();
 		}
 
 		public bool IsColumnFindable(ColumnSchema column)
 		{
-			if (column.DataType == DbType.Binary || column.NativeType == "text" || 
-					column.NativeType == "ntext" || 
+			if (column.DataType == DbType.Binary || column.NativeType == "text" ||
+					column.NativeType == "ntext" ||
 					column.NativeType == "timestamp" ||
 					column.NativeType == "image" ||
 					column.NativeType == "xml")
 				return false;
-			
+
 			return true;
 		}
-		
+
 		/*
 		/// <summary>
 		/// Get a SqlParameter statement for a column
@@ -2903,7 +2903,7 @@ namespace MoM.Templates
 		public string GetSqlParameterStatement(ColumnSchema column, string Name)
 		{
 			string param = "@" + (Name) + " " + column.NativeType;
-			
+
 			// user defined data types do not need size components
 			if ( ! IsUserDefinedType(column) )
 			{
@@ -2928,12 +2928,12 @@ namespace MoM.Templates
 					}
 					break;
 				}
-			}	
+			}
 			}
 			return param;
 		}
 		*/
-		
+
 		/// <summary>
 		/// Get a SqlParameter statement for a column
 		/// </summary>
@@ -2941,10 +2941,10 @@ namespace MoM.Templates
 		/// <param name="isOutput">indicates the direction</param>
 		/// <returns>Sql Parameter statement</returns>
 		public string GetSqlParameterXmlNode(ColumnSchema column)
-		{	
+		{
 			return GetSqlParameterXmlNode(column, false);
 		}
-		
+
 		/// <summary>
 		/// Get a SqlParameter statement for a column
 		/// </summary>
@@ -2952,10 +2952,10 @@ namespace MoM.Templates
 		/// <param name="isOutput">indicates the direction</param>
 		/// <returns>Sql Parameter statement</returns>
 		public string GetSqlParameterXmlNode(ColumnSchema column, bool isOutput)
-		{	
+		{
 			return GetSqlParameterXmlNode(column, GetPropertyName(column), isOutput, false);
-		}		
-		
+		}
+
 		/// <summary>
 		/// Get a SqlParameter statement for a column
 		/// </summary>
@@ -2966,7 +2966,7 @@ namespace MoM.Templates
 		{
 			return GetSqlParameterXmlNode(column, parameterName, isOutput, false);
 		}
-		
+
 		/// <summary>
 		/// Get a SqlParameter statement for a column
 		/// </summary>
@@ -2977,7 +2977,7 @@ namespace MoM.Templates
 		{
 			return GetSqlParameterXmlNode(column, GetPropertyName(column), isOutput, allowNull);
 		}
-		
+
 		/// <summary>
 		/// Get a SqlParameter statement for a column
 		/// </summary>
@@ -2988,16 +2988,16 @@ namespace MoM.Templates
 		/// <returns>the xml Sql Parameter statement</returns>
 		public string GetSqlParameterXmlNode(ColumnSchema column, string parameterName, bool isOutput, bool allowNull)
 		{
-			return GetSqlParameterXmlNode(	parameterName, 
-											column.NativeType, 
-											isOutput ? "Output" : "Input", // this won't handle bi-directional parameters 
-											column.Size, 
-											column.Precision, 
-											column.Scale, 
-											(string.Compare(column.NativeType, "real", true) == 0) ? string.Empty : GetSqlParameterParam<ColumnSchema>(column), 
+			return GetSqlParameterXmlNode(	parameterName,
+											column.NativeType,
+											isOutput ? "Output" : "Input", // this won't handle bi-directional parameters
+											column.Size,
+											column.Precision,
+											column.Scale,
+											(string.Compare(column.NativeType, "real", true) == 0) ? string.Empty : GetSqlParameterParam<ColumnSchema>(column),
 											allowNull);
 		}
-		
+
 		/// <summary>
 		/// Get an xml representation for a stored procedure parameter - this is for pre-existing (most likely, custom) Stored Procedures
 		/// </summary>
@@ -3008,27 +3008,27 @@ namespace MoM.Templates
 			if ( ParameterPrefix != "@")
 			{
 				return GetSqlParameterXmlNode(	parameter.Name,
-												parameter.NativeType, 
-												parameter.Direction.ToString(), 
-												parameter.Size, 
-												parameter.Precision, 
-												parameter.Scale, 
-												(string.Compare(parameter.NativeType, "real", true) == 0) ? string.Empty : GetSqlParameterParam<ParameterSchema>(parameter), 
+												parameter.NativeType,
+												parameter.Direction.ToString(),
+												parameter.Size,
+												parameter.Precision,
+												parameter.Scale,
+												(string.Compare(parameter.NativeType, "real", true) == 0) ? string.Empty : GetSqlParameterParam<ParameterSchema>(parameter),
 												parameter.AllowDBNull);
 			}
 			else
 			{
 				return GetSqlParameterXmlNode(	parameter.Name.TrimStart('@'),
-												parameter.NativeType, 
-												parameter.Direction.ToString(), 
-												parameter.Size, 
-												parameter.Precision, 
-												parameter.Scale, 
-												(string.Compare(parameter.NativeType, "real", true) == 0) ? string.Empty : GetSqlParameterParam<ParameterSchema>(parameter), 
+												parameter.NativeType,
+												parameter.Direction.ToString(),
+												parameter.Size,
+												parameter.Precision,
+												parameter.Scale,
+												(string.Compare(parameter.NativeType, "real", true) == 0) ? string.Empty : GetSqlParameterParam<ParameterSchema>(parameter),
 												parameter.AllowDBNull);
 			}
 		}
-		
+
 		/// <summary>
 		/// Get a SQL parameter/column XML node.
 		/// </summary>
@@ -3046,16 +3046,16 @@ namespace MoM.Templates
 			//Temp Oracle Fix.
 			if(string.IsNullOrEmpty(ParameterPrefix))
 			{
-				return string.Format(	"<parameter name=\"p_{6}{0}\" type=\"{1}\" direction=\"{2}\"  precision=\"{3}\" scale=\"{4}\" nulldefault=\"{5}\"/>", 
-										name, nativeType, direction, 
-										precision, scale, 
+				return string.Format(	"<parameter name=\"p_{6}{0}\" type=\"{1}\" direction=\"{2}\"  precision=\"{3}\" scale=\"{4}\" nulldefault=\"{5}\"/>",
+										name, nativeType, direction,
+										precision, scale,
 										allowNull ? "null" : string.Empty, ParameterPrefix );
 			}
 			else
 			{
-				return string.Format(	"<parameter name=\"{8}{0}\" type=\"{1}\" direction=\"{2}\" size=\"{3}\" precision=\"{4}\" scale=\"{5}\" param=\"{6}\" nulldefault=\"{7}\"/>", 
-										name, nativeType, direction, size, 
-										precision, scale, param, 
+				return string.Format(	"<parameter name=\"{8}{0}\" type=\"{1}\" direction=\"{2}\" size=\"{3}\" precision=\"{4}\" scale=\"{5}\" param=\"{6}\" nulldefault=\"{7}\"/>",
+										name, nativeType, direction, size,
+										precision, scale, param,
 										allowNull ? "null" : string.Empty, ParameterPrefix );
 			}
 		}
@@ -3069,7 +3069,7 @@ namespace MoM.Templates
 		public string GetSqlParameterParam<TSchemaType>(TSchemaType schemaItem) where TSchemaType : SchemaExplorer.DataObjectBase
 		{
 			string param = string.Empty;
-			
+
 			// user defined data types do not need size components
 			if ( !IsUserDefinedType((DataObjectBase)schemaItem) )
 				switch (schemaItem.DataType)
@@ -3081,10 +3081,10 @@ namespace MoM.Templates
 					case DbType.AnsiStringFixedLength:
 					case DbType.String:
 					case DbType.StringFixedLength:
-					case DbType.Binary:				
-						if (schemaItem.NativeType != "text" && 
-								schemaItem.NativeType != "ntext" && 
-								schemaItem.NativeType != "image" && 
+					case DbType.Binary:
+						if (schemaItem.NativeType != "text" &&
+								schemaItem.NativeType != "ntext" &&
+								schemaItem.NativeType != "image" &&
 								schemaItem.NativeType != "timestamp" &&
 								schemaItem.NativeType != "sysname")
 						{
@@ -3098,10 +3098,10 @@ namespace MoM.Templates
 							}
 						}
 						break;
-				}	
+				}
 			return param;
 		}
-		
+
 
 		/// <summary>
 		/// Parse the text of a stored procedure to retrieve any comment prior to the CREATE PROC construct
@@ -3112,7 +3112,7 @@ namespace MoM.Templates
 		{
 			string comment = "";
 			// Find anything upto the CREATE PROC statement
-			Regex regex = new Regex(@"CREATE\s+PROC(?:EDURE)?", RegexOptions.IgnoreCase);	
+			Regex regex = new Regex(@"CREATE\s+PROC(?:EDURE)?", RegexOptions.IgnoreCase);
 			comment = regex.Split(commandText)[0];
 			//remove comment characters
 			regex = new Regex(@"(-{2,})|(/\*)|(\*/)");
@@ -3138,10 +3138,10 @@ namespace MoM.Templates
 			//return the hashtable
 			return paramComments;
 		}
-		
-		
+
+
 		#region "Stored procedures input transformations"
-		
+
 		/// <summary>
 		/// Transform the list of sql parameters to a list of method parameters.
 		/// </summary>
@@ -3149,7 +3149,7 @@ namespace MoM.Templates
 		{
 			return TransformStoredProcedureInputsToMethod(false, inputParameters);
 		}
-		
+
 		/// <summary>
 		/// Transform the list of sql parameters to a list of method parameters.
 		/// </summary>
@@ -3163,14 +3163,14 @@ namespace MoM.Templates
 
 				temp.AppendFormat("{0} {1}", GetCSType(inputParameters[i]), GetFieldName(inputParameters[i]));
 			}
-			
+
 			return temp.ToString();
 		}
-		
+
 		public string TransformStoredProcedureInputsToMethod(bool startWithComa, CommandSchema command)
 		{
 			string temp = string.Empty;
-			
+
 			for(int i=0; i<command.InputParameters.Count; i++)
 			{
 				temp += (temp.Length > 0) || startWithComa ? ", " : "";
@@ -3181,10 +3181,10 @@ namespace MoM.Templates
 				temp += (temp.Length > 0) || (startWithComa)  ? ", out " : " out ";
 				temp += GetCSType(command.InputOutputParameters[j]) + " " + GetFieldName(command.InputOutputParameters[j]);
 			}
-			
+
 			return temp;
 		}
-		
+
 		/// <summary>
 		/// Transform the list of sql parameters to a list of ExecuteXXXXX parameters.
 		/// </summary>
@@ -3192,7 +3192,7 @@ namespace MoM.Templates
 		{
 			return TransformStoredProcedureInputsToDataAccess(false, inputParameters);
 		}
-		
+
 		/// <summary>
 		/// Transform the list of sql parameters to a list of ExecuteXXXXX parameters.
 		/// </summary>
@@ -3200,7 +3200,7 @@ namespace MoM.Templates
 		{
 			return TransformStoredProcedureInputsToDataAccess(alwaysStartWithaComa, inputParameters, false);
 		}
-		
+
 		/// <summary>
 		/// Transform the list of sql parameters to a list of ExecuteXXXXX parameters.
 		/// </summary>
@@ -3221,10 +3221,10 @@ namespace MoM.Templates
 					temp.Append( GetFieldName(inputParameters[i]));
 				}
 			}
-			
+
 			return temp.ToString();
 		}
-						
+
 		/// <summary>
 		/// Transform the list of sql parameters to a list of comment param for a method
 		/// </summary>
@@ -3235,7 +3235,7 @@ namespace MoM.Templates
 			{
 				temp.AppendFormat("{2}\t\t/// <param name=\"{0}\"> A <c>{1}</c> instance.</param>", GetFieldName(inputParameters[i]).Replace(ParameterPrefix, ""), GetCSType(inputParameters[i]).Replace("<", "&lt;").Replace(">", "&gt;"), "\r\n");
 			}
-			
+
 			return temp.ToString();
 		}
 
@@ -3253,14 +3253,14 @@ namespace MoM.Templates
 			{
 				temp += string.Format("{2}\t\t\t/// <param name=\"{0}\"> An output  <c>{1}</c> instance.</param>", GetFieldName(command.InputOutputParameters[i]).Replace(ParameterPrefix, ""), GetCSType(command.InputOutputParameters[i]), Environment.NewLine);
 			}
-			
+
 			return temp;
 		}
 
 		#endregion
-		
+
 		#region "Stored procedures output transformations"
-		
+
 		/// <summary>
 		/// Transform the list of sql parameters to a list of method parameters.
 		/// </summary>
@@ -3268,7 +3268,7 @@ namespace MoM.Templates
 		{
 			return TransformStoredProcedureOutputsToMethod(false, outputParameters);
 		}
-		
+
 		/// <summary>
 		/// Transform the list of sql parameters to a list of method parameters.
 		/// </summary>
@@ -3282,10 +3282,10 @@ namespace MoM.Templates
 
 				temp.AppendFormat("ref {0} {1}", GetCSType(outputParameters[i]), GetFieldName(outputParameters[i]));
 			}
-			
+
 			return temp.ToString();
 		}
-		
+
 		/// <summary>
 		/// Transform the list of sql parameters to a list of ExecuteXXXXX parameters.
 		/// </summary>
@@ -3293,7 +3293,7 @@ namespace MoM.Templates
 		{
 			return TransformStoredProcedureOutputsToDataAccess(false, outputParameters);
 		}
-		
+
 		/// <summary>
 		/// Transform the list of sql parameters to a list of ExecuteXXXXX parameters.
 		/// </summary>
@@ -3301,7 +3301,7 @@ namespace MoM.Templates
 		{
 			return TransformStoredProcedureOutputsToDataAccess(alwaysStartWithaComa, outputParameters, false);
 		}
-		
+
 		/// <summary>
 		/// Transform the list of sql parameters to a list of ExecuteXXXXX parameters.
 		/// </summary>
@@ -3322,10 +3322,10 @@ namespace MoM.Templates
 					temp.AppendFormat("ref {0}", GetFieldName(outputParameters[i]));
 				}
 			}
-			
+
 			return temp.ToString();
 		}
-						
+
 		/// <summary>
 		/// Transform the list of sql parameters to a list of comment param for a method
 		/// </summary>
@@ -3336,12 +3336,12 @@ namespace MoM.Templates
 			{
 				temp.AppendFormat("{2}\t\t\t/// <param name=\"{0}\"> A <c>{1}</c> instance.</param>", GetFieldName(outputParameters[i]).Replace(ParameterPrefix, ""), GetCSType(outputParameters[i]).Replace("<", "&lt;").Replace(">", "&gt;"), Environment.NewLine);
 			}
-			
+
 			return temp.ToString();
 		}
 
 		#endregion
-		
+
 		/// <summary>
 		/// Returns a string that reprenst the given columns formated as method parameters definitions. (ex: string param1, int param2)
 		/// </summary>
@@ -3357,8 +3357,8 @@ namespace MoM.Templates
 			}
 			return output.ToString();
 		}
-		
-		
+
+
 		/// <summary>
 		/// Returns a string that reprenst the given columns formated as method parameters call. (ex: param1, param2)
 		/// </summary>
@@ -3367,15 +3367,15 @@ namespace MoM.Templates
 		{
 			return GetFunctionCallParameters(columns, string.Empty, null);
 		}
-		
+
 		public delegate bool AppendIf(ColumnSchema col);
-		
+
 		/// <summary>
 		/// Returns a string that reprenst the given columns formated as method parameters call. (ex: param1, param2)
 		/// </summary>
 		/// <param name="columns">The columns to transform.</param>
 		public string GetFunctionCallParameters(ColumnSchemaCollection columns, string appendString, AppendIf condition)
-		{			
+		{
 			StringBuilder output = new StringBuilder();
 			for (int i = 0; i < columns.Count; i++)
 			{
@@ -3383,15 +3383,15 @@ namespace MoM.Templates
 				if (condition != null)
 					if (condition(columns[i]))
 						output.Append(appendString);
-					
+
 				if (i < columns.Count - 1)
 					output.Append(", ");
 			}
 			return output.ToString();
 		}
-		
+
 		/// <summary>
-		/// 
+		///
 		/// </summary>
 		/// <param name="columns"></param>
 		public string GetFunctionEntityParameters(ColumnSchemaCollection columns)
@@ -3405,9 +3405,9 @@ namespace MoM.Templates
 			}
 			return output.ToString();
 		}
-		
+
 		/// <summary>
-		/// 
+		///
 		/// </summary>
 		/// <param name="columns"></param>
 		/// <param name="accessor"></param>
@@ -3420,7 +3420,7 @@ namespace MoM.Templates
 					output.AppendFormat("{1}.{0}", GetPropertyName(columns[i]), accessor);
 				else
 					output.AppendFormat("({1}.{0} ?? {2})", GetPropertyName(columns[i]), accessor, GetCSDefaultByType(columns[i]));
-				
+
 				if (i < columns.Count - 1)
 					output.Append(", ");
 			}
@@ -3428,7 +3428,7 @@ namespace MoM.Templates
 		}
 
 		/// <summary>
-		/// 
+		///
 		/// </summary>
 		/// <param name="columns"></param>
 		/// <param name="objectName"></param>
@@ -3448,8 +3448,8 @@ namespace MoM.Templates
 		/// <summary>
 		/// Gets the <see cref="System.ComponentModel.DataObjectField" /> Ctor Params
 		/// based on the schema information on a column.
-		/// The 4 params are 
-		///	1. indicates whether the field is the primary key 
+		/// The 4 params are
+		///	1. indicates whether the field is the primary key
 		/// 2. whether the field is a database identity field
 		/// 3. whether the field can be null
 		/// 4. sets the length of the field
@@ -3468,8 +3468,8 @@ namespace MoM.Templates
 		/// <summary>
 		/// Gets the <see cref="System.ComponentModel.DataObjectField" /> Ctor Params
 		/// based on the schema information on a column.
-		/// The 4 params are 
-		///	1. indicates whether the field is the primary key 
+		/// The 4 params are
+		///	1. indicates whether the field is the primary key
 		/// 2. whether the field is a database identity field
 		/// 3. whether the field can be null
 		/// 4. sets the length of the field
@@ -3484,7 +3484,7 @@ namespace MoM.Templates
 				/*2*/ column.AllowDBNull.ToString().ToLower(),
 				/*3*/ (CanCheckLength(column) ? ", " + column.Size.ToString() : ""));
 		}
-		
+
 		/// <summary>
 		/// Gets the parameters needed for the ColumnEnumAttribute class
 		/// for the specified column.
@@ -3512,7 +3512,7 @@ namespace MoM.Templates
 				GetDbType(column)
 			) + GetDataObjectFieldCallParams(column);
 		}
-		
+
 		#if CodeSmith40
 		public static readonly CodeSmith.Engine.MapCollection CSharpTypes = CodeSmith.Engine.Map.Load(System.IO.Path.Combine(CodeSmith.Engine.Configuration.Instance.CodeSmithMapsDirectory , "System-CSharpAlias.csmap"));
 		#endif
@@ -3533,11 +3533,11 @@ namespace MoM.Templates
 		/// <param name="field">Column or parameter</param>
 		/// <returns>The C# (rough) equivalent of the field's data type</returns>
 		public string GetCSType(SchemaExplorer.DataObjectBase field, bool nullable)
-		{	
+		{
 			if(field is ColumnSchema || field is ViewColumnSchema)
 			{
 				string alias = string.Empty;
-				
+
 				if (field is ColumnSchema)
 				{
 					ColumnSchema col = (ColumnSchema)field;
@@ -3562,7 +3562,7 @@ namespace MoM.Templates
 				}
 			}
 			// if you got here, it's because you either passed in something other
-			// than a Column or ViewColumn Schema or you do not have a mapping.config 
+			// than a Column or ViewColumn Schema or you do not have a mapping.config
 			// file (or you are generating a mapping.config file).
 			if (field.NativeType.ToLower() == "real")
 			{
@@ -3578,7 +3578,7 @@ namespace MoM.Templates
 				{
 					return field.SystemType.ToString();
 				}
-				else 
+				else
 				{
 					return field.SystemType.ToString() + "?";
 				}
@@ -3592,9 +3592,9 @@ namespace MoM.Templates
 				return field.SystemType.ToString();
 			}
 		}
-		
+
 		#region Defualt Param Value
-		
+
         public static string parseParameterRegex = @"
 CREATE\s+PROC(?:EDURE)?                               # find the start of the stored procedure
 .*?                                                   # skip all content until we get to the name of the parameter that we are looking for
@@ -3609,25 +3609,25 @@ CREATE\s+PROC(?:EDURE)?                               # find the start of the st
 		{
 			if (param == null)
 				return false;
-			
-			System.Text.RegularExpressions.Regex DefaultParamRegex = new System.Text.RegularExpressions.Regex(String.Format(parseParameterRegex, param.Name), 
-				System.Text.RegularExpressions.RegexOptions.IgnoreCase | 
-				System.Text.RegularExpressions.RegexOptions.Multiline | 
-				System.Text.RegularExpressions.RegexOptions.Singleline | 
-				System.Text.RegularExpressions.RegexOptions.CultureInvariant | 
+
+			System.Text.RegularExpressions.Regex DefaultParamRegex = new System.Text.RegularExpressions.Regex(String.Format(parseParameterRegex, param.Name),
+				System.Text.RegularExpressions.RegexOptions.IgnoreCase |
+				System.Text.RegularExpressions.RegexOptions.Multiline |
+				System.Text.RegularExpressions.RegexOptions.Singleline |
+				System.Text.RegularExpressions.RegexOptions.CultureInvariant |
 				System.Text.RegularExpressions.RegexOptions.IgnorePatternWhitespace);
 
-		
+
             System.Text.RegularExpressions.Match match = DefaultParamRegex.Match(param.Command.CommandText);
             if (match != null && match.Success)
 			{
 				if (match.Groups["default"].Value != null && match.Groups["default"].Value.ToString().Trim().ToUpper() == "NULL")
 					return true;
-			}	
+			}
 			return false;
 		}
-		#endregion 
-		
+		#endregion
+
 		/// <summary>
 		/// Return the DbType enum entry of a specified column. It's a hack of the SchemaExplorer property, as it do not support Xml column properly.
 		/// </summary>
@@ -3641,16 +3641,16 @@ CREATE\s+PROC(?:EDURE)?                               # find the start of the st
 		}
 
 		/// <summary>
-		/// 
+		///
 		/// </summary>
 		/// <param name="column"></param>
 		public string GetCSDefaultByType(SchemaExplorer.DataObjectBase column)
 		{
 			return GetCSDefaultByType(column, false);
 		}
-		
+
 		/// <summary>
-		/// 
+		///
 		/// </summary>
 		/// <param name="column"></param>
 		public string GetCSDefaultByType(SchemaExplorer.DataObjectBase column, bool forceReturnDefault)
@@ -3672,68 +3672,68 @@ CREATE\s+PROC(?:EDURE)?                               # find the start of the st
 				DbType dataType = column.DataType;
 				switch (dataType)
 				{
-					case DbType.AnsiString: 
+					case DbType.AnsiString:
 						return "string.Empty";
-						
-					case DbType.AnsiStringFixedLength: 
+
+					case DbType.AnsiStringFixedLength:
 						return "string.Empty";
-					
-					case DbType.String: 
+
+					case DbType.String:
 						return "string.Empty";
-						
-					case DbType.Boolean: 
+
+					case DbType.Boolean:
 						return "false";
-					
-					case DbType.StringFixedLength: 
+
+					case DbType.StringFixedLength:
 						return "string.Empty";
-						
-					case DbType.Guid: 
+
+					case DbType.Guid:
 						return "Guid.Empty";
-					
+
 					//Answer modified was just 0
-					case DbType.Binary: 
+					case DbType.Binary:
 						return "new byte[] {}";
-					
+
 					//Answer modified was just 0
 					case DbType.Byte:
 						return "(byte)0";
 						//return "{ 0 }";
-					
-					case DbType.Currency: 
+
+					case DbType.Currency:
 						return "0";
-					
-					case DbType.Date: 
+
+					case DbType.Date:
 						return "DateTime.MinValue";
-					
-					case DbType.DateTime: 
+
+					case DbType.DateTime:
 						return "DateTime.MinValue";
-                        
-                    case DbType.DateTime2: 
+
+                    case DbType.DateTime2:
 						return "DateTime.MinValue";
-					
-					case DbType.Decimal: 
+
+					case DbType.Decimal:
 						return "0.0m";
 						//return "0M";
 						//return "0.0M";
-					
-					case DbType.Double: 
+
+					case DbType.Double:
 						return "0.0f";
-					
-					case DbType.Int16: 
+
+					case DbType.Int16:
 						return "(short)0";
-						
-					case DbType.Int32: 
+
+					case DbType.Int32:
 						return "(int)0";
-						
-					case DbType.Int64: 
+
+					case DbType.Int64:
 						return "(long)0";
-					
-					case DbType.Object: 
+
+					case DbType.Object:
 						return "null";
-					
-					case DbType.Single: 
+
+					case DbType.Single:
 						return "0F";
-					
+
 					//case DbType.Time: return "DateTime.MaxValue";
 					case DbType.Time: return "new DateTime(1900,1,1,0,0,0,0)";
 					case DbType.VarNumeric: return "0";
@@ -3746,11 +3746,11 @@ CREATE\s+PROC(?:EDURE)?                               # find the start of the st
 				}
 			}
 		}
-		
+
 		/// <summary>
 		/// This method returns the default value from the database if it is available.  It returns null
 		/// if no default value could be parsed.
-		/// 
+		///
 		/// NOTE: rudimentary support for default values with computations/functions is built in.  Right now th
 		///   only supported function is getdate().  Any others can be added below if desired.
 		/// </summary>
@@ -3762,10 +3762,10 @@ CREATE\s+PROC(?:EDURE)?                               # find the start of the st
 
 			ExtendedProperty defaultValueProperty = column.ExtendedProperties["CS_Default"];
 			if (defaultValueProperty == null)
-				return null;			
-				
+				return null;
+
 			string defaultValue = null;
-			
+
 			#region Convert declarations
 			bool boolConvert;
 			byte byteConvert;
@@ -3775,18 +3775,18 @@ CREATE\s+PROC(?:EDURE)?                               # find the start of the st
 			long longConvert;
 			short shortConvert;
 			DateTime dateConvert;
-			Guid guidConvert; 
+			Guid guidConvert;
 			#endregion
-	
+
 			try
 			{
-				//Get Default Value 
+				//Get Default Value
 				defaultValue = defaultValueProperty.Value.ToString();
 				if (defaultValue == null || defaultValue.Trim().Length == 0)
 					return null;
-				
+
 				// trim off the surrounding ()'s if they exist (SQL Server)
-				while (defaultValue.StartsWith("(") && defaultValue.EndsWith(")") 
+				while (defaultValue.StartsWith("(") && defaultValue.EndsWith(")")
 					|| defaultValue.StartsWith("\"") && defaultValue.EndsWith("\""))
 				{
 					defaultValue = defaultValue.Substring(1);
@@ -3804,7 +3804,7 @@ CREATE\s+PROC(?:EDURE)?                               # find the start of the st
 						defaultValue = defaultValue.Substring(1);
 						defaultValue = defaultValue.Substring(0, defaultValue.Length - 1);
 					}
-		
+
 					//this is probably a custom function, lets handle it sane-like
 					if (defaultValue.Contains("()"))
 					{
@@ -3833,7 +3833,7 @@ CREATE\s+PROC(?:EDURE)?                               # find the start of the st
 					{
 						return null;
 					}
-						
+
 				}
 
 				if (column.NativeType.ToLower() == "real")
@@ -3855,21 +3855,21 @@ CREATE\s+PROC(?:EDURE)?                               # find the start of the st
 								return "\"" + defaultValue + "\"";
 							else
 								return null;
-			
+
 						case DbType.AnsiStringFixedLength:
 							if (defaultValue != null)
 								return "\"" + defaultValue + "\"";
 							else
 								return null;
-			
+
 						case DbType.String:
 							if (defaultValue != null)
 								return "\"" + defaultValue + "\"";
 							else
 								return null;
-			
+
 						case DbType.Boolean:
-						
+
 							if (defaultValue != null )
 							{
 								if (defaultValue == "1") return "true";
@@ -3878,35 +3878,35 @@ CREATE\s+PROC(?:EDURE)?                               # find the start of the st
 								if (defaultValue.Trim().ToLower() == "no") return "false";
 								if (defaultValue.Trim().ToLower() == "y") return "true";
 								if (defaultValue.Trim().ToLower() == "n") return "false";
-								
+
 								boolConvert = bool.Parse(defaultValue);
 								return boolConvert.ToString();
 							}
 							else
 								return null;
-			
+
 						case DbType.StringFixedLength:
 							if (defaultValue != null)
 								return "\"" + defaultValue + "\"";
 							else
 								return null;
-			
+
 						case DbType.Guid:
 							if (defaultValue == "new Guid()"|| defaultValue == "Guid.NewGuid()")
 								return defaultValue;
-								
+
 							guidConvert = new Guid(defaultValue);
 							if (defaultValue != null && guidConvert != null)
 								return "new Guid(\"" + guidConvert.ToString() + "\")";
 							else
 								return null;
 						case DbType.Xml:
-								return null;			
-			
+								return null;
+
 						//Answer modified was just 0
 						case DbType.Binary:
 							return null;
-			
+
 						//Answer modified was just 0
 						case DbType.Byte:
 							if (defaultValue != null )
@@ -3916,7 +3916,7 @@ CREATE\s+PROC(?:EDURE)?                               # find the start of the st
 							}
 							else
 								return null;
-			
+
 						case DbType.Currency:
 							if (defaultValue != null)
 							{
@@ -3925,10 +3925,10 @@ CREATE\s+PROC(?:EDURE)?                               # find the start of the st
 							}
 							else
 								return null;
-			
+
 						case DbType.Date:
 						case DbType.DateTime:
-						
+
 							if (defaultValue == "DateTime.Now")
 								return "DateTime.Now";
 							if (defaultValue == "DateTime.UtcNow")
@@ -3937,9 +3937,9 @@ CREATE\s+PROC(?:EDURE)?                               # find the start of the st
 							dateConvert = DateTime.Parse(defaultValue);
 							if (defaultValue != null )
 								return "new DateTime(\"" + dateConvert.ToString() + "\")";
-					
+
 							return null;
-						
+
 						case DbType.Decimal:
 							if (defaultValue != null)
 							{
@@ -3948,7 +3948,7 @@ CREATE\s+PROC(?:EDURE)?                               # find the start of the st
 							}
 							else
 								return null;
-			
+
 						case DbType.Double:
 							if (defaultValue != null)
 							{
@@ -3957,7 +3957,7 @@ CREATE\s+PROC(?:EDURE)?                               # find the start of the st
 							}
 							else
 								return null;
-			
+
 						case DbType.Int16:
 							if (defaultValue != null)
 							{
@@ -3966,7 +3966,7 @@ CREATE\s+PROC(?:EDURE)?                               # find the start of the st
 							}
 							else
 								return null;
-			
+
 						case DbType.Int32:
 							if (defaultValue != null )
 							{
@@ -3975,7 +3975,7 @@ CREATE\s+PROC(?:EDURE)?                               # find the start of the st
 							}
 							else
 								return null;
-			
+
 						case DbType.Int64:
 							if (defaultValue != null)
 							{
@@ -3984,10 +3984,10 @@ CREATE\s+PROC(?:EDURE)?                               # find the start of the st
 							}
 							else
 								return null;
-			
+
 						case DbType.Object:
 							return null;
-			
+
 						case DbType.Single:
 							if (defaultValue != null)
 							{
@@ -3996,7 +3996,7 @@ CREATE\s+PROC(?:EDURE)?                               # find the start of the st
 							}
 							else
 								return null;
-			
+
 						case DbType.Time:
 							if (defaultValue == "DateTime.Now")
 								return defaultValue;
@@ -4008,7 +4008,7 @@ CREATE\s+PROC(?:EDURE)?                               # find the start of the st
 							return null;
 						case DbType.VarNumeric:
 							if (defaultValue != null)
-							{	
+							{
 								decimalConvert = decimal.Parse(defaultValue);
 								return decimalConvert.ToString();
 							}
@@ -4026,20 +4026,20 @@ CREATE\s+PROC(?:EDURE)?                               # find the start of the st
 			catch{}
 			return null;
 		}
-		
+
 		public bool IsLengthType(SchemaExplorer.DataObjectBase column)
 		{
 			DbType dataType = column.DataType;
 			switch (dataType)
 			{
-				case DbType.AnsiString: 
-				case DbType.AnsiStringFixedLength: 
-				case DbType.String: 
-				case DbType.StringFixedLength: 
-				case DbType.Binary: 
+				case DbType.AnsiString:
+				case DbType.AnsiStringFixedLength:
+				case DbType.String:
+				case DbType.StringFixedLength:
+				case DbType.Binary:
 					return true;
-					
-				default: 
+
+				default:
 						return false;
 			}
 		}
@@ -4052,17 +4052,17 @@ CREATE\s+PROC(?:EDURE)?                               # find the start of the st
 			DbType dataType = column.DataType;
 			switch (dataType)
 			{
-				case DbType.AnsiString: 
-				case DbType.AnsiStringFixedLength: 
-				case DbType.String: 
-				case DbType.StringFixedLength: 
+				case DbType.AnsiString:
+				case DbType.AnsiStringFixedLength:
+				case DbType.String:
+				case DbType.StringFixedLength:
 					return true;
-					
-				default: 
+
+				default:
 						return false;
 			}
 		}
-		
+
 		/// <summary>
 		/// Determines whether base DataObjectBase is a string type, and not a blob column of text or ntext
 		/// </summary>
@@ -4070,19 +4070,19 @@ CREATE\s+PROC(?:EDURE)?                               # find the start of the st
 		{
 			switch (column.DataType)
 			{
-				case DbType.AnsiString: 
-				case DbType.AnsiStringFixedLength: 
+				case DbType.AnsiString:
+				case DbType.AnsiStringFixedLength:
 				case DbType.String:
-				case DbType.StringFixedLength: 
+				case DbType.StringFixedLength:
 					if (column.Size == 16 && column.NativeType.ToLower().EndsWith("text"))
 						return false;
-					else 
+					else
 						return (column.Size != -1);
-				default: 
+				default:
 						return false;
 			}
 		}
-		
+
 		/// <summary>
 		/// Determines whether base DataObjectBase is a string type, and not a blob column of text or ntext
 		/// </summary>
@@ -4090,23 +4090,23 @@ CREATE\s+PROC(?:EDURE)?                               # find the start of the st
 		{
 			switch (column.DataType)
 			{
-				case DbType.AnsiString: 
-				case DbType.AnsiStringFixedLength: 
-				case DbType.String: 
-				case DbType.StringFixedLength: 
-					return 
+				case DbType.AnsiString:
+				case DbType.AnsiStringFixedLength:
+				case DbType.String:
+				case DbType.StringFixedLength:
+					return
 					(
 						column.NativeType == "text" ||
 						column.NativeType == "ntext" ||
 						(column.Size > 1000 || column.Size == -1)
 					);
-					
-				default: 
+
+				default:
 						return false;
 			}
 		}
-		
-		
+
+
 		/// <summary>
 		/// Returns true if the column is represented as a reference data type
 		/// rather than a value type. In other words, the C# code can set a
@@ -4123,50 +4123,50 @@ CREATE\s+PROC(?:EDURE)?                               # find the start of the st
 				DbType dataType = column.DataType;
 				switch (dataType)
 				{
-					case DbType.AnsiString: 
-					case DbType.AnsiStringFixedLength: 
-					case DbType.String: 
-					case DbType.StringFixedLength: 
+					case DbType.AnsiString:
+					case DbType.AnsiStringFixedLength:
+					case DbType.String:
+					case DbType.StringFixedLength:
 					case DbType.Binary:
 					case DbType.Object:
 						return true;
-						
-					case DbType.Boolean: 
-					case DbType.Guid: 
+
+					case DbType.Boolean:
+					case DbType.Guid:
 					case DbType.Byte:
-					case DbType.Currency: 
-					case DbType.Date: 
-					case DbType.DateTime: 
-					case DbType.Decimal: 
+					case DbType.Currency:
+					case DbType.Date:
+					case DbType.DateTime:
+					case DbType.Decimal:
 					case DbType.Double:
-					case DbType.Int16: 
-					case DbType.Int32: 
-					case DbType.Int64:  
-					case DbType.Single: 
+					case DbType.Int16:
+					case DbType.Int32:
+					case DbType.Int64:
+					case DbType.Single:
 					case DbType.Time:
 					case DbType.VarNumeric:
 						return false;
-						
-					default: 
+
+					default:
 						return false;
 				}
 			}
 		}
 
-		
+
 		/// <summary>
 		/// Get a mock value for a given data type. Used by the unit test classes.
 		/// </summary>
 		/// <param name="column">Data type for which to get the default value.</param>
 		/// <returns>Code to set the value of the test object</returns>
 		public string GetCSMockValueByType(SchemaExplorer.DataObjectBase column)
-		{		
+		{
 			string randomNumber = "TestUtility.Instance.RandomNumber()";
 			string randomBoolean = "TestUtility.Instance.RandomBoolean()";
 			string randomGuid = "Guid.NewGuid()";
 			string randomByte = "TestUtility.Instance.RandomByte()";
 			string randomShort = "TestUtility.Instance.RandomShort()";
-			
+
 			if (column.NativeType.ToLower() == "real")
 			{
 				return "(float)" + randomNumber;
@@ -4174,72 +4174,72 @@ CREATE\s+PROC(?:EDURE)?                               # find the start of the st
 			else if (column.NativeType.ToLower() == "xml")
 			{
 				return "\"" + "<test></test>" + "\"";
-			}	
+			}
 			else
-			{	
+			{
 				/* Always use the Random String function for strings */
 				switch (column.DataType)
 				{
-					case DbType.AnsiString: 
+					case DbType.AnsiString:
 					case DbType.AnsiStringFixedLength:
 					case DbType.String:
-					case DbType.StringFixedLength: 
+					case DbType.StringFixedLength:
 						return RandomString(column, false);
-						
-					case DbType.Boolean: 
+
+					case DbType.Boolean:
 						return randomBoolean;
-						
-					case DbType.Guid: 
+
+					case DbType.Guid:
 						return randomGuid;
-					
+
 					//Answer modified was just 0
-					case DbType.Binary: 
+					case DbType.Binary:
 						return "new byte[] { " + randomByte + " }";
-					
+
 					//Answer modified was just 0
 					case DbType.Byte:
 						return randomByte;
-					
+
 					case DbType.Currency:
 						return randomShort;
-						
+
 					case DbType.Int32:
 						return randomNumber;
-						
-					case DbType.Date: 
+
+					case DbType.Date:
 						return "TestUtility.Instance.RandomDate()";
-						
-					case DbType.DateTime: 
+
+					case DbType.DateTime:
 					case DbType.Time:
 						return "TestUtility.Instance.RandomDateTime()";
-					
-					case DbType.Decimal: 
+
+					case DbType.Decimal:
 						return "(decimal)" + randomShort;
-					
-					case DbType.Double: 
+
+					case DbType.Double:
 						return "(double)" + randomNumber;
-					
-					case DbType.Int16: 
+
+					case DbType.Int16:
 						return randomShort;
-						
-					case DbType.Int64: 
+
+					case DbType.Int64:
 						return "(long)" + randomNumber;
-					
-					case DbType.Object: 
+
+					case DbType.Object:
 						return "null";
-					
-					case DbType.Single: 
+
+					case DbType.Single:
 						return "(float)" + randomNumber;
-											
-					case DbType.VarNumeric: 
+
+					case DbType.VarNumeric:
 						return randomNumber;
-						
+
 					default: return "null";
 				}
 			}
 		}
-		
-		
+
+
 		/// <summary>
 		/// Generates a random number between the given bounds.
 		/// </summary>
@@ -4248,17 +4248,17 @@ CREATE\s+PROC(?:EDURE)?                               # find the start of the st
 		public int RandomNumber(int min, int max)
 		{
 			Random random = new Random();
-			return random.Next(min, max); 
+			return random.Next(min, max);
 		}
-		
+
 		public string RandomString(SchemaExplorer.DataObjectBase column, bool lowerCase)
 		{
 			//Debugger.Break();
 			int size = 2; // default size
-			
+
 			// calculate maximum size of the field
 			switch (column.DataType)
-			{				
+			{
 				case DbType.AnsiString:
 				case DbType.AnsiStringFixedLength:
 				case DbType.String:
@@ -4270,23 +4270,23 @@ CREATE\s+PROC(?:EDURE)?                               # find the start of the st
 						{
 							size = column.Size;
 						}
-						
+
 						if (size > 1000)
 						{
-							size = 1000;	
+							size = 1000;
 						}
 					}
 					break;
 				}
 			}
-			
+
 			//Randomize the size on large string.
 			if(size > 20)
 				size = (size/2) - 1;
-			
+
 			return RandomString(size, lowerCase);
 		}
-		
+
 		/// <summary>
 		/// Generates a random string with the given length
 		/// </summary>
@@ -4295,7 +4295,7 @@ CREATE\s+PROC(?:EDURE)?                               # find the start of the st
 		/// <returns>Random string</returns>
 		/// <remarks>Mahesh Chand  - http://www.c-sharpcorner.com/Code/2004/Oct/RandomNumber.asp</remarks>
 		public string RandomString(int size, bool lowerCase)
-		{			
+		{
 			return "TestUtility.Instance.RandomString(" + size.ToString() + ", " + lowerCase.ToString().ToLower() + ");";
 		}
 
@@ -4305,7 +4305,7 @@ CREATE\s+PROC(?:EDURE)?                               # find the start of the st
 		/// </summary>
 		/// <param name="column">Column for which to get the type</param>
 		/// <returns>String representing the SQL data type</returns>
-		public string GetSqlDbType(SchemaExplorer.DataObjectBase column)	
+		public string GetSqlDbType(SchemaExplorer.DataObjectBase column)
 		{
 			switch (column.NativeType)
 			{
@@ -4338,9 +4338,9 @@ CREATE\s+PROC(?:EDURE)?                               # find the start of the st
 				default: return "__UNKNOWN__" + column.NativeType;
 			}
 		}
-		
+
 		/// <summary>
-		/// 
+		///
 		/// </summary>
 		/// <param name="fkey"></param>
 		public string FKColumnName(TableKeySchema fkey)
@@ -4352,9 +4352,9 @@ CREATE\s+PROC(?:EDURE)?                               # find the start of the st
 			}
 			return Name.ToString();
 		}
-		
-		
-		
+
+
+
 		/// <summary>
 		/// Build and return a concatened list of columns that are contained in the specified index. (ex: Column1Column2() )
 		/// </summary>
@@ -4368,7 +4368,7 @@ CREATE\s+PROC(?:EDURE)?                               # find the start of the st
 			}
 			return Name.ToString();
 		}
-		
+
 		/// <summary>
 		/// Build and return a comma separated list of column contained in the specified index. (ex: column1, column2 )
 		/// </summary>
@@ -4385,7 +4385,7 @@ CREATE\s+PROC(?:EDURE)?                               # find the start of the st
 			}
 			return Name.ToString();
 		}
-		
+
 		/// <summary>
 		/// Build and return a function/stored procedure name that does not exceed the maximum length.
 		/// </summary>
@@ -4394,7 +4394,7 @@ CREATE\s+PROC(?:EDURE)?                               # find the start of the st
 		{
 			return GetProcNameForGetByIX(prefix, keys.ToArray());
 		}
-		
+
 		/// <summary>
 		/// Build and return a function/stored procedure name that does not exceed the maximum length.
 		/// </summary>
@@ -4402,7 +4402,7 @@ CREATE\s+PROC(?:EDURE)?                               # find the start of the st
 		public string GetProcNameForGetByIX(string prefix, ColumnSchema[] keys)
 		{
 			int maxLen;
-			
+
 			//Fixes ORA-00972: identifier is too long error.
 			if(string.IsNullOrEmpty(ParameterPrefix))
 			{
@@ -4412,7 +4412,7 @@ CREATE\s+PROC(?:EDURE)?                               # find the start of the st
 			{
 				maxLen = 128; // SQL Server's maximum stored procedure name length
 			}
-			
+
 			// get all the key names and see if they fit
 			string keyNames = GetKeysName(keys);
 			if (prefix.Length + keyNames.Length <= maxLen)
@@ -4428,7 +4428,7 @@ CREATE\s+PROC(?:EDURE)?                               # find the start of the st
 					keyName = GetPropertyName(keys[x]);
 					if(keyName.Length > 5) //This should allow more keyNames..
 						keyName = keyName.Substring(0, 5);
-						
+
 					if (names.Length + keyName.Length <= maxLen)
 						names.Append(keyName);
 					else
@@ -4437,7 +4437,7 @@ CREATE\s+PROC(?:EDURE)?                               # find the start of the st
 				return names.ToString();
 			}
 			else
-			{	
+			{
 				// get the key names one at a time until we run out of space
 				StringBuilder names = new StringBuilder(maxLen);
 				string keyName;
@@ -4452,28 +4452,28 @@ CREATE\s+PROC(?:EDURE)?                               # find the start of the st
 				return names.ToString();
 			}
 		}
-		
+
 		/// <summary>
 		/// Build and return a concatened list of columns that are contained in the specified key. (ex: Column1Column2() )
 		/// </summary>
 		/// <param name="keys"> the key instance.</param>
 		public string GetKeysName(ColumnSchemaCollection keys)
-		{	
+		{
 			return GetKeysName(keys.ToArray());
 		}
-		
+
 		/// <summary>
 		/// Build and return a concatened list of columns that are contained in the specified key. (ex: Column1Column2() )
 		/// </summary>
 		/// <param name="keys"> the key instance.</param>
 		public string GetKeysName(ColumnSchema[] keys)
-		{	
+		{
 			StringBuilder name = new StringBuilder();
 			for(int x = 0; x < keys.Length; x++)
 				name.Append( GetPropertyName(keys[x]) );
 			return name.ToString();
 		}
-		
+
 		/// <summary>
 		/// Indicates if the key is containing more than one column.
 		/// </summary>
@@ -4482,7 +4482,7 @@ CREATE\s+PROC(?:EDURE)?                               # find the start of the st
 		{
 			return keys.Count > 1;
 		}
-		
+
 		public bool HasCommonColumn(ColumnSchemaCollection cols1, ColumnSchemaCollection cols2)
 		{
 			foreach(ColumnSchema col1 in cols1)
@@ -4491,7 +4491,7 @@ CREATE\s+PROC(?:EDURE)?                               # find the start of the st
 						return true;
 			return false;
 		}
-		
+
 		/// <summary>
 		/// Return a ColumnSchemaCollection of columns that are contained in all of the tables
 		/// </summary>
@@ -4499,38 +4499,38 @@ CREATE\s+PROC(?:EDURE)?                               # find the start of the st
 		public ColumnSchemaCollection GetCommonTableColumns(TableSchemaCollection sourceTables)
 		{
 			ColumnSchemaCollection commonColumns = new ColumnSchemaCollection();
-			
+
 			if (sourceTables.Count > 0)
 			{
 				foreach(ColumnSchema col in sourceTables[0].Columns)
 				{
 					bool isInEveryTable = true;
-					
+
 					//System.Diagnostics.Debug.Write (col.Name + ":" + Environment.NewLine);
-					
+
 					for (int k = 1; k < sourceTables.Count ; k++)
 					{
 						TableSchema table = sourceTables[k];
 						bool isInThisTable = false;
-							
+
 						// scan each column of this table to find this column
 						foreach (ColumnSchema tCol in table.Columns)
 							if (col.Name == tCol.Name && col.SystemType == tCol.SystemType && col.AllowDBNull == tCol.AllowDBNull)
 								isInThisTable= true;
-						
-						//System.Diagnostics.Debug.Write ("\t" + table.Name + " : " + isInThisTable.ToString() + Environment.NewLine);					
-						isInEveryTable = isInEveryTable && isInThisTable;			
+
+						//System.Diagnostics.Debug.Write ("\t" + table.Name + " : " + isInThisTable.ToString() + Environment.NewLine);
+						isInEveryTable = isInEveryTable && isInThisTable;
 					}
-										
+
 					// If this column is present in every table, put it in the IEnity interface.
 					if (isInEveryTable)
 						commonColumns.Add(col);
 				}
-				
+
 			}
 			return commonColumns;
 		}
-		
+
 		/// <summary>
 		/// Check a table for enum eligibility
 		/// </summary>
@@ -4539,64 +4539,64 @@ CREATE\s+PROC(?:EDURE)?                               # find the start of the st
 		public void ValidForEnum(TableSchema table)
 		{
 			#region "Primary key validation"
-			
+
 			// No primary key
 			if (!table.HasPrimaryKey)
 				throw new ApplicationException("table has no primary key.");
-			
+
 			// Multiple column in primary key
 			if (table.PrimaryKey.MemberColumns.Count != 1)
 				throw new ApplicationException("table primary key contains more than one column.");
-			
+
 			// Primary key column is not an integer
 			if (!isIntXX(table.PrimaryKey.MemberColumns[0]))
 				throw new ApplicationException("table primary key column is not an integer. (used for enum value)");
-			
+
 			#endregion
-			
+
 			#region "Second column must be a string"
-			
+
 			// The table must have 2 columns at least
 			if (table.Columns.Count < 2)
 			{
 				throw new ApplicationException("table must at least contains two columns, an integer primary key, and a string.");
 			}
-			
-			// The second column must be a string (char, varchar) 
+
+			// The second column must be a string (char, varchar)
 			if (table.Columns[1].SystemType != typeof(string))
 			{
 				throw new ApplicationException("table 2nd column must be a string.");
 			}
-						
+
 			// The second column must have a unique constraint (index with unique constraint)
 			if (!table.Columns[1].IsUnique)
 			{
 				throw new ApplicationException("table 2nd column must be unique (used for the enum label).");
 			}
-									
+
 			#endregion
-			
+
 			#region "Check relations"
 			// the table mustn't have foreign relation
 			//if (table.ForeignKeys.Count > 0)
 			//{
 			//	throw new ApplicationException("table cannot have relations where it is the foreign table.");
 			//}
-			
-			// relation with table as primary key can only be on the first column 
+
+			// relation with table as primary key can only be on the first column
 			foreach(TableKeySchema key in table.PrimaryKeys)
 			{
 				if (key.PrimaryKeyMemberColumns[0].Name != table.Columns[0].Name || key.PrimaryKeyMemberColumns.Count > 1)
 				{
 					throw new ApplicationException("table cannot have relations where it is the foreign table.");
 				}
-				
-				
+
+
 			}
-			
+
 			#endregion
 		}
-	
+
 		/// <summary>
 		/// Indicates if the output rowset of the command is compliant with the table rowset.
 		/// </summary>
@@ -4609,29 +4609,29 @@ CREATE\s+PROC(?:EDURE)?                               # find the start of the st
 			// two types each have their own implementation of the Columns property and each returns
 			// a different collection type.  I looked at the reflection options briefly, but they were
 			// getting a little messy because of the different return types of the properties.
-			
+
 			try
 			{
 				//If allowCustomProcMultipleResults, then there just needs to be a result
 				//If !allowCustomProcMultipleResults, then there can only be 1 result.
 				if ((!allowCustomProcMultipleResults && command.CommandResults.Count != 1) || (allowCustomProcMultipleResults && command.CommandResults.Count == 0))
 					return false;
-					
+
 				if (command.CommandResults[0].Columns.Count != table.Columns.Count)
 				{
 					return false;
 				}
-				
+
 				for(int i=0; i<table.Columns.Count; i++)
 				{
 					if (IsComputed(table.Columns[i]))
 						continue;
-				
+
 					if (!command.CommandResults[0].Columns.Contains(table.Columns[i].Name.ToLower()))
 					{
 						return false;
 					}
-					
+
 					// manage the xml column type separately
 					if ( table.Columns[i].NativeType == "xml" && (command.CommandResults[0].Columns[i].NativeType == "sql_variant" || command.CommandResults[0].Columns[i].NativeType == "ntext"))
 					{
@@ -4643,14 +4643,14 @@ CREATE\s+PROC(?:EDURE)?                               # find the start of the st
 					}
 				}
 				return true;
-			}	
+			}
 			catch(Exception exc)
 			{
 				System.Diagnostics.Debug.WriteLine(string.Format("!!ERROR!! - Procedure Threw Exception: {0} [{1}]", command.Name, exc.Message));
-				return false;	
+				return false;
 			}
 		}
-		
+
 		/// <summary>
 		/// Indicates if the output rowset of the command is compliant with the view rowset.
 		/// </summary>
@@ -4663,26 +4663,26 @@ CREATE\s+PROC(?:EDURE)?                               # find the start of the st
 			// two types each have their own implementation of the Columns property and each returns
 			// a different collection type.  I looked at the reflection options briefly, but they were
 			// getting a little messy because of the different return types of the properties.
-			
+
 			try
 			{
 				//If allowCustomProcMultipleResults, then there just needs to be a result
 				//If !allowCustomProcMultipleResults, then there can only be 1 result.
 				if ((!allowCustomProcMultipleResults && command.CommandResults.Count != 1) || (allowCustomProcMultipleResults && command.CommandResults.Count == 0))
 					return false;
-					
+
 				if (command.CommandResults[0].Columns.Count != view.Columns.Count)
 				{
 					return false;
 				}
-				
+
 				for(int i=0; i<view.Columns.Count; i++)
-				{	
+				{
 					if (!command.CommandResults[0].Columns.Contains(view.Columns[i].Name.ToLower()))
 					{
 						return false;
 					}
-					
+
 					// manage the xml column type separately
 					if ( view.Columns[i].NativeType == "xml" && (command.CommandResults[0].Columns[i].NativeType == "sql_variant" || command.CommandResults[0].Columns[i].NativeType == "ntext"))
 					{
@@ -4694,14 +4694,14 @@ CREATE\s+PROC(?:EDURE)?                               # find the start of the st
 					}
 				}
 				return true;
-			}	
+			}
 			catch(Exception exc)
 			{
 				System.Diagnostics.Debug.WriteLine(string.Format("!!ERROR!! - Procedure Threw Exception: {0} [{1}]", command.Name, exc.Message));
-				return false;	
+				return false;
 			}
 		}
-		
+
 		/// <summary>
     /// Compares two sql types and determines if they are syntax equivalent.
     /// </summary>
@@ -4723,28 +4723,28 @@ CREATE\s+PROC(?:EDURE)?                               # find the start of the st
 
       return (nativeType1 == nativeType2) || (column1.SystemType.FullName == column2.SystemType.FullName);
     }
-    
-		
+
+
 		public bool isIntXX(DataObjectBase column)
 		{
 			for(int i = 0; i < aIntegerDbTypes.Length; i++)
-				if (aIntegerDbTypes[i] == column.DataType) 
+				if (aIntegerDbTypes[i] == column.DataType)
 					return true;
-			
+
 			return false;
 		}
-		
+
 		#region Long Line Wrapping Handling
 		// EntityBase.cst and EntityCollectionBase.cst render constructs with every column
 		// in a table as arguments.  For very long tables, the C# compliler complains with
 		// "CS1034: Compiler limit exceeded: Line cannot exceed 2046 characters"
 		// Data warehouses can have very long tables.
-		
+
 		/// <summary>
 		/// Stores the current column were are at.
 		/// </summary>
 		private int wrapCurrentColumn;
-		
+
 		/// <summary>
 		/// Inititalizes the line wrapping to column 50.
 		/// </summary>
@@ -4782,53 +4782,53 @@ CREATE\s+PROC(?:EDURE)?                               # find the start of the st
 			}
 		}
 		#endregion
-		
+
 		#region Column Comparer
 		// [ab 013105] column name sorting comparer
-		public class columnSchemaComparer : IComparer  
+		public class columnSchemaComparer : IComparer
 		{
-	      	int IComparer.Compare( Object x, Object y )  
+	      	int IComparer.Compare( Object x, Object y )
 			{
 				if (x is ColumnSchema && y is ColumnSchema)
 	          		return( (new CaseInsensitiveComparer()).Compare( ((ColumnSchema)x).Name,  ((ColumnSchema)y).Name ) );
-					
+
 				throw new ArgumentException("one or both object(s) are not of type ColumnSchema");
 			}
-				
+
       	}
       	#endregion
-		
+
 		#region Utils
-		
+
 		#region Recursive Copy Code
 		///<summary>
 		/// Safely Copies all files from one directory to another
 		///</summary>
-		public void SafeCopyAll(string path, string destination) 
-		{ 
-			System.IO.DirectoryInfo dir = new System.IO.DirectoryInfo(path); 
-			SafeCopyAll(dir, destination); 
-		} 
-		
+		public void SafeCopyAll(string path, string destination)
+		{
+			System.IO.DirectoryInfo dir = new System.IO.DirectoryInfo(path);
+			SafeCopyAll(dir, destination);
+		}
+
 		///<summary>
 		/// Safely Copies all files from one directory to another
 		///</summary>
-		public void SafeCopyAll(System.IO.DirectoryInfo dir, string destination) 
-		{ 
-			string path; 
-			foreach ( System.IO.FileInfo f in dir.GetFiles() ) 
-			{ 
-				f.CopyTo(System.IO.Path.Combine(destination, f.Name), true); 
-			} 
-			
-			foreach ( System.IO.DirectoryInfo d in dir.GetDirectories() ) 
-			{ 
-				path = System.IO.Path.Combine(destination, d.Name); 
-				SafeCreateDirectory(path); 
-				SafeCopyAll(d, path); 
-			} 
-		} 
-		
+		public void SafeCopyAll(System.IO.DirectoryInfo dir, string destination)
+		{
+			string path;
+			foreach ( System.IO.FileInfo f in dir.GetFiles() )
+			{
+				f.CopyTo(System.IO.Path.Combine(destination, f.Name), true);
+			}
+
+			foreach ( System.IO.DirectoryInfo d in dir.GetDirectories() )
+			{
+				path = System.IO.Path.Combine(destination, d.Name);
+				SafeCreateDirectory(path);
+				SafeCopyAll(d, path);
+			}
+		}
+
 		/// <summary>
 		/// Copy the specified file.
 		/// </summary>
@@ -4839,7 +4839,7 @@ CREATE\s+PROC(?:EDURE)?                               # find the start of the st
 				Directory.CreateDirectory(path);
 			}
 		}
-		
+
 		/// <summary>
 		/// Copy the specified file.
 		/// </summary>
@@ -4849,78 +4849,78 @@ CREATE\s+PROC(?:EDURE)?                               # find the start of the st
 			file1.CopyTo(destination, true);
 		}
 
-		#endregion 
-		
+		#endregion
+
 		#region Recursive Get Files
 		///<summary>
 		/// Get's all available files with the proper extensions for inclusion into a project
 		/// NOTE: Not Tested
 		///</summary>
-		public System.Collections.IList  GetFiles(string path) 
-		{ 
-				System.IO.DirectoryInfo dir = new System.IO.DirectoryInfo(path); 
-			
-			return GetFiles(dir, new System.Collections.ArrayList()); 
-		} 
-		
+		public System.Collections.IList  GetFiles(string path)
+		{
+				System.IO.DirectoryInfo dir = new System.IO.DirectoryInfo(path);
+
+			return GetFiles(dir, new System.Collections.ArrayList());
+		}
+
 		///<summary>
 		/// Get's all available files with the proper extensions for inclusion into a project
 		/// NOTE: Not Tested
 		///</summary>
-		public System.Collections.IList GetFiles(System.IO.DirectoryInfo dir, System.Collections.ArrayList files) 
-		{ 
-			string path; 
-			foreach (System.IO.FileInfo f in dir.GetFiles() ) 
+		public System.Collections.IList GetFiles(System.IO.DirectoryInfo dir, System.Collections.ArrayList files)
+		{
+			string path;
+			foreach (System.IO.FileInfo f in dir.GetFiles() )
 			{
 				if (Array.IndexOf(IncludeExtensions, f.Extension) >= 0)
 					files.Add(f);
-			} 
-			
-			foreach (System.IO.DirectoryInfo d in dir.GetDirectories() ) 
-			{ 
-				path = System.IO.Path.Combine(dir.FullName, d.Name); 
-				files.AddRange(GetFiles(d, files)); 
-			} 
-			
+			}
+
+			foreach (System.IO.DirectoryInfo d in dir.GetDirectories() )
+			{
+				path = System.IO.Path.Combine(dir.FullName, d.Name);
+				files.AddRange(GetFiles(d, files));
+			}
+
 			return files;
-		} 
-		#endregion 
-		
+		}
+		#endregion
+
       	#region File Extensions
-		private static string[] IncludeExtensions = new string[]{".arj", ".asa",".asax", ".ascx", ".asmx", ".ashx", ".asp", ".aspx", ".au", ".avi", ".bat", ".bmp", 
-													  ".cab", ".chm", ".com", ".config", ".cs", ".css", ".disco", ".dll", ".doc", 
-													  ".exe", ".png", ".gif", ".hlp", ".htm", ".html", ".jpg", ".inc", ".ini", 
+		private static string[] IncludeExtensions = new string[]{".arj", ".asa",".asax", ".ascx", ".asmx", ".ashx", ".asp", ".aspx", ".au", ".avi", ".bat", ".bmp",
+													  ".cab", ".chm", ".com", ".config", ".cs", ".css", ".disco", ".dll", ".doc",
+													  ".exe", ".png", ".gif", ".hlp", ".htm", ".html", ".jpg", ".inc", ".ini",
 													  ".log", ".mdb", ".mid", ".midi", ".mov", ".mp3", ".mpg", ".mpeg", ".fla", ".swf",
-													  ".cur", ".ico", ".resx", ".jsl", ".cd", ".rdlc", ".js", ".vbs", ".wsf", ".master", 
-													  ".skin", ".pdf", ".ppt", ".psd", ".sys", ".txt", ".tif", ".vb", ".vbs", ".vsdisco", 
+													  ".cur", ".ico", ".resx", ".jsl", ".cd", ".rdlc", ".js", ".vbs", ".wsf", ".master",
+													  ".skin", ".pdf", ".ppt", ".psd", ".sys", ".txt", ".tif", ".vb", ".vbs", ".vsdisco",
 													  ".wav", ".wri", ".xls", ".xml", ".xsd", ".xslt", ".zip", ".rpt", ".java",
 													  ".settings", ".cfm", ".cfmx", ".jsp", ".mdf", ".ldf" };
-													
-		#endregion 
-		
-		#endregion 
-		
+
+		#endregion
+
+		#endregion
+
 		#region Custom Stored Procedures
-		
+
 		public IDictionary GetCustomProcedures(TableSchema table)
 		{
 			return GetCustomProcedures(table.Name, table.Database.Commands);
 		}
-		
+
 		public IDictionary GetCustomProcedures(ViewSchema view)
 		{
 			return GetCustomProcedures(view.Name, view.Database.Commands);
 		}
-		
+
 		public IDictionary GetCustomProcedures(string objectName, CommandSchemaCollection allCommands)
-		{		
+		{
 			string customPrefix = string.Format(CustomProcedureStartsWith, objectName, ProcedurePrefix);
 			IDictionary procs = new Hashtable();
 			string customName;
 			bool discover = true;
 			System.Collections.ArrayList invalids = new System.Collections.ArrayList();
 			string current = string.Empty;
-			
+
 			while(discover)
 			{
 				try
@@ -4930,11 +4930,11 @@ CREATE\s+PROC(?:EDURE)?                               # find the start of the st
 					{
 						if (proc == null)
 							continue;
-							
+
 						current = proc.Name;
 						if (invalids.Contains(proc.Name))
 							continue;
-							
+
 						if ( proc.Name.ToLower().StartsWith(customPrefix.ToLower()) )
 						{
 							customName = proc.Name.Substring(customPrefix.Length);
@@ -4945,11 +4945,11 @@ CREATE\s+PROC(?:EDURE)?                               # find the start of the st
 				}
 				catch
 				{
-					System.Diagnostics.Debug.WriteLine("Stored Procedure Command Failed: " + current);	
+					System.Diagnostics.Debug.WriteLine("Stored Procedure Command Failed: " + current);
 					invalids.Add(current);
-				}	
+				}
 			}
-		
+
 			return procs;
 		}
 
@@ -4964,17 +4964,17 @@ CREATE\s+PROC(?:EDURE)?                               # find the start of the st
 				}
 				else if (command.CommandResults != null && command.CommandResults.Count > 0)
 				{
-					returnType = nonMatchingReturnType.ToString();				
+					returnType = nonMatchingReturnType.ToString();
 				}
 			}
 			catch
 			{
-				System.Diagnostics.Debug.WriteLine("!!ERROR!!: Could not get return type from " + command.Name);	
-			}	
-			return returnType;	
+				System.Diagnostics.Debug.WriteLine("!!ERROR!!: Could not get return type from " + command.Name);
+			}
+			return returnType;
 		}
 
-		
+
 		public string GetReturnCustomProcReturnType(CustomNonMatchingReturnType nonMatchingReturnType, SchemaExplorer.ViewSchema view, SchemaExplorer.CommandSchema command)
 		{
 			string returnType = "void";
@@ -4991,10 +4991,10 @@ CREATE\s+PROC(?:EDURE)?                               # find the start of the st
 			}
 			catch
 			{
-				System.Diagnostics.Debug.WriteLine("!!ERROR!!: Could not get return type from " + command.Name);	
-			}	
-			
-			return returnType;	
+				System.Diagnostics.Debug.WriteLine("!!ERROR!!: Could not get return type from " + command.Name);
+			}
+
+			return returnType;
 		}
 
 		public string GetCustomVariableName(string paramName, SchemaExplorer.CommandSchema command)
@@ -5005,20 +5005,20 @@ CREATE\s+PROC(?:EDURE)?                               # find the start of the st
 				for(;c < command.Database.Commands.Count; c++)
 				{
 					CommandSchema tmp = command.Database.Commands[c];
-					
+
 					if (tmp.Name == command.Name)
 						break;
 				}
 			} catch{}
-			
+
 			return string.Format("sp{1}_{0}", GetPascalCaseName(GetCleanName(paramName)), c);
 		}
-		
-		#endregion 
-      	
+
+		#endregion
+
 		#region Execute sql file
 
-		public void ExecuteSqlInFile(string pathToScriptFile, string connectionString ) 
+		public void ExecuteSqlInFile(string pathToScriptFile, string connectionString )
 		{
 			SqlConnection connection;
 
@@ -5026,11 +5026,11 @@ CREATE\s+PROC(?:EDURE)?                               # find the start of the st
 
 			string sql	= "";
 
-			if( false == System.IO.File.Exists( pathToScriptFile )) 
+			if( false == System.IO.File.Exists( pathToScriptFile ))
 			{
 				throw new Exception("File " + pathToScriptFile + " does not exists");
 			}
-			using( Stream stream = System.IO.File.OpenRead( pathToScriptFile ) ) 
+			using( Stream stream = System.IO.File.OpenRead( pathToScriptFile ) )
 			{
 				_reader = new StreamReader( stream );
 
@@ -5042,7 +5042,7 @@ CREATE\s+PROC(?:EDURE)?                               # find the start of the st
 				command.Connection = connection;
 				command.CommandType	= System.Data.CommandType.Text;
 
-				while( null != (sql = ReadNextStatementFromStream( _reader ) )) 
+				while( null != (sql = ReadNextStatementFromStream( _reader ) ))
 				{
 					command.CommandText = sql;
 
@@ -5051,37 +5051,37 @@ CREATE\s+PROC(?:EDURE)?                               # find the start of the st
 
 				_reader.Close();
 			}
-			connection.Close();			
+			connection.Close();
 		}
 
 
-		private static string ReadNextStatementFromStream( StreamReader _reader ) 
-		{			
+		private static string ReadNextStatementFromStream( StreamReader _reader )
+		{
 			StringBuilder sb = new StringBuilder();
 
 			string lineOfText;
 
-			while(true) 
+			while(true)
 			{
 				lineOfText = _reader.ReadLine();
-				if( lineOfText == null ) 
+				if( lineOfText == null )
 				{
 
-					if( sb.Length > 0 ) 
+					if( sb.Length > 0 )
 					{
 						return sb.ToString();
 					}
-					else 
+					else
 					{
 						return null;
 					}
 				}
 
-				if( lineOfText.TrimEnd().ToUpper() == "GO" ) 
+				if( lineOfText.TrimEnd().ToUpper() == "GO" )
 				{
 					break;
 				}
-			
+
 				sb.Append(lineOfText + Environment.NewLine);
 			}
 
@@ -5089,79 +5089,79 @@ CREATE\s+PROC(?:EDURE)?                               # find the start of the st
 		}
 
 		#endregion
-		
+
 		#region Children Collections
-		
+
 		/////////////////////////////////////////////////////////////////////////////////////
-		/// Begin Children Collection 
+		/// Begin Children Collection
 		/////////////////////////////////////////////////////////////////////////////////////
-		
+
 		///<summary>
 		///  An ArrayList of all the child collections for this table.
 		///</summary>
 		private System.Collections.ArrayList _collections = new System.Collections.ArrayList();
-		
+
 		///<summary>
-		///  An ArrayList of all the properties rendered.  
+		///  An ArrayList of all the properties rendered.
 		///  Eliminate Dupes through common junction tables and fk relationships
 		///</summary>
 		private System.Collections.Hashtable relationshipDictionary = new System.Collections.Hashtable();
-		
+
 		///<summary>
 		///	Returns an array list of Child Collections of the object
 		///</summary>
-		public System.Collections.Hashtable GetChildrenCollections(SchemaExplorer.TableSchema table, SchemaExplorer.TableSchemaCollection tables) 
+		public System.Collections.Hashtable GetChildrenCollections(SchemaExplorer.TableSchema table, SchemaExplorer.TableSchemaCollection tables)
 		{
 			//System.Diagnostics.Debugger.Break();
-			
+
 			///  An ArrayList of all the child collections for this table.
 			System.Collections.Hashtable _collections = new System.Collections.Hashtable();
-		
+
 			CurrentTable = table.Name;
-			
+
 			//Check Cache
 			if( relationshipDictionary[table.Name] == null )
 				relationshipDictionary[table.Name] = _collections;
-			else 
+			else
 				return relationshipDictionary[table.Name] as System.Collections.Hashtable;
-	
+
 			//Provides Information about the foreign keys
 			SchemaExplorer.TableKeySchemaCollection fkeys = table.ForeignKeys;
-			
-			//Provides information about the indexes contained in the table. 
+
+			//Provides information about the indexes contained in the table.
 			IndexSchemaCollection indexes = table.Indexes;
-			
+
 			// All keys that relate to this table
 			TableKeySchemaCollection primaryKeyCollection = new TableKeySchemaCollection();
 			primaryKeyCollection.AddRange(table.PrimaryKeys);
-			
-			// Add missing item to primaryKeyCollection 			
+
+			// Add missing item to primaryKeyCollection
 			foreach(TableKeySchema keyschema in fkeys)
 				if (keyschema.ForeignKeyTable.Equals(table) && keyschema.PrimaryKeyTable.Equals(table))
 				{
 					bool found = false;
-					
+
 					foreach(TableKeySchema primaryKey in primaryKeyCollection)
 						if (keyschema.Equals(primaryKey))
 						{
 							found = true;
 							break;
 						}
-						
+
 					if (!found)
 						primaryKeyCollection.Add(keyschema);
 				}
-			
+
 			//for each relationship
 			foreach(TableKeySchema keyschema in primaryKeyCollection)
 			{
-				
+
 				// add the relationship only if the linked table is part of the selected tables (ie: omit tables without primary key)
 				if (!tables.Contains(keyschema.ForeignKeyTable.Owner, keyschema.ForeignKeyTable.Name))
 					continue;
-				
+
 				#region One-To-One Relationships
-				
+
 				if (IsRelationOneToOne(keyschema))
 				{
 					CollectionInfo collectionInfo = new CollectionInfo();
@@ -5174,7 +5174,7 @@ CREATE\s+PROC(?:EDURE)?                               # find the start of the st
 					collectionInfo.SecondaryTablePkColNames = GetColumnNames(keyschema.ForeignKeyTable.PrimaryKey.MemberColumns);
 					collectionInfo.SecondaryTable = GetClassName(keyschema.ForeignKeyTable);
 					// collection names
-					collectionInfo.CollectionRelationshipType = RelationshipType.OneToOne;			
+					collectionInfo.CollectionRelationshipType = RelationshipType.OneToOne;
 					collectionInfo.CollectionName = GetClassName(keyschema.ForeignKeyTable, ClassNameFormat.CollectionProperty);
 					collectionInfo.CollectionTypeName = GetClassName(keyschema.ForeignKeyTable, ClassNameFormat.Collection);
 					collectionInfo.TableKey = keyschema;
@@ -5182,36 +5182,36 @@ CREATE\s+PROC(?:EDURE)?                               # find the start of the st
 
 					//Key Name - Each collection should have a unique key namce
 					collectionInfo.PkIdxName = keyschema.Name;
-										
+
 					// Method to fill this entity
 					collectionInfo.GetByKeysName = "GetBy" + GetKeysName(keyschema.ForeignKeyMemberColumns);
-					
+
 					// Params to fill this entity
 					collectionInfo.CallParams = GetFunctionRelationshipCallParameters(keyschema.PrimaryKeyMemberColumns);
-					
+
 					// Property String Name for a this relationship
 					collectionInfo.PropertyName = GetClassName(keyschema.ForeignKeyTable);
-					
+
 					// Property String Name for a this relationship
 					collectionInfo.PropertyNameUnique = collectionInfo.PropertyName;
 
 					// Property Type for this relationship
 					collectionInfo.TypeName = GetClassName(keyschema.ForeignKeyTable);
-					
+
 					// Field Variable String
 					collectionInfo.FieldName = GetFieldName(keyschema.ForeignKeyTable) + GetKeysName(keyschema.ForeignKeyMemberColumns);
 
 					AddToCollection(_collections, collectionInfo);
 				}
-				
+
 				#endregion // One-To-One Relationships
-				
+
 				#region One-To-Many & Many-To-One Relationships
-				
+
 				else
 				{
 					CollectionInfo collectionInfo = new CollectionInfo();
-					
+
 					collectionInfo.PkColNames = GetColumnNames(table.PrimaryKey.MemberColumns);
 					collectionInfo.PrimaryTable = GetClassName(table);
 					collectionInfo.PrimaryTableSchema = table;
@@ -5221,18 +5221,18 @@ CREATE\s+PROC(?:EDURE)?                               # find the start of the st
 					collectionInfo.CollectionRelationshipType = RelationshipType.OneToMany;
 					collectionInfo.CollectionName = GetClassName(keyschema.ForeignKeyTable, ClassNameFormat.CollectionProperty);
 					collectionInfo.TableKey = keyschema;
-					collectionInfo.CleanName = GetClassName(keyschema.ForeignKeyTable); 
+					collectionInfo.CleanName = GetClassName(keyschema.ForeignKeyTable);
 					collectionInfo.CollectionTypeName = GetClassName(keyschema.ForeignKeyTable, ClassNameFormat.Collection);
-					
+
 					//Key Name - Each collection should have a unique key namce
 					collectionInfo.PkIdxName = keyschema.Name;
-					
-					
+
+
 					// Gets Method Calls
 					if (IsForeignKeyCoveredByIndex(keyschema))
 					{
 						IndexSchema idx = GetIndexCoveringForeignKey(keyschema);
-						
+
 						// Method to fill this entity
 						collectionInfo.GetByKeysName = "GetBy" + GetKeysName(idx.MemberColumns);
 
@@ -5243,10 +5243,10 @@ CREATE\s+PROC(?:EDURE)?                               # find the start of the st
 					{
 						// Method to fill this entity
 						collectionInfo.GetByKeysName = "GetBy" + GetKeysName(keyschema.ForeignKeyMemberColumns);
-						
+
 						// Params to fill this entity
 						collectionInfo.CallParams = GetFunctionRelationshipCallParameters(keyschema.PrimaryKeyMemberColumns);
-					}	
+					}
 
 					// Usually the same as the property string
 					collectionInfo.PropertyName = GetClassName(keyschema.ForeignKeyTable, ClassNameFormat.CollectionProperty);
@@ -5262,28 +5262,28 @@ CREATE\s+PROC(?:EDURE)?                               # find the start of the st
 
 					AddToCollection(_collections, collectionInfo);
 				}
-				
+
 				#endregion // One-To-Many & Many-To-One Relationships
 			}
-				
+
 			#region Many-To-Many Relationships
-				
+
 			foreach(SchemaExplorer.TableKeySchema key in primaryKeyCollection)
 			{
 				// Check that the key is related to a junction table and that this key relate a PK in this junction table
 				if ( tables.Contains(key.ForeignKeyTable.Owner, key.ForeignKeyTable.Name) &&  IsJunctionTable(key.ForeignKeyTable) && IsJunctionKey(key))
 				{
 					TableSchema junctionTable = key.ForeignKeyTable;
-					
+
 					// Search for the other(s) key(s) of the junction table' primary key
 					foreach(TableKeySchema junctionTableKey in junctionTable.ForeignKeys)
-					{				
+					{
 						if ( tables.Contains(junctionTableKey.ForeignKeyTable.Owner, junctionTableKey.ForeignKeyTable.Name) && IsJunctionKey(junctionTableKey) && junctionTableKey.Name != key.Name )
 						{
 							TableSchema secondaryTable = junctionTableKey.PrimaryKeyTable;
-																			
+
 							CollectionInfo collectionInfo = new CollectionInfo();
-					
+
 							collectionInfo.PkColNames = GetColumnNames(table.PrimaryKey.MemberColumns);
 							collectionInfo.PrimaryTable = GetClassName(table);
 							collectionInfo.SecondaryTable = GetClassName(junctionTableKey.PrimaryKeyTable);
@@ -5299,41 +5299,41 @@ CREATE\s+PROC(?:EDURE)?                               # find the start of the st
 							collectionInfo.CollectionTypeName = GetClassName(collectionInfo.SecondaryTableSchema, ClassNameFormat.Collection);
 							collectionInfo.CollectionRelationshipType = RelationshipType.ManyToMany;
 							collectionInfo.FkColNames = GetColumnNames(secondaryTable.PrimaryKey.MemberColumns);
-							collectionInfo.TableKey = key;		
-							collectionInfo.CleanName = string.Format(manyToManyFormat, GetClassName(collectionInfo.SecondaryTableSchema), GetClassName(junctionTable)); 
-							
+							collectionInfo.TableKey = key;
+							collectionInfo.CleanName = string.Format(manyToManyFormat, GetClassName(collectionInfo.SecondaryTableSchema), GetClassName(junctionTable));
+
 							//Key Name - Each collection should have a unique key name
 							collectionInfo.PkIdxName = junctionTableKey.Name;
-							
+
 							// Property Name
-							collectionInfo.PropertyName =  string.Format("{2}{0}_From_{1}", GetClassName(collectionInfo.SecondaryTableSchema, ClassNameFormat.CollectionProperty), GetClassName(collectionInfo.JunctionTableSchema),GetKeysName(junctionTableKey.ForeignKeyMemberColumns)); 
+							collectionInfo.PropertyName =  string.Format("{2}{0}_From_{1}", GetClassName(collectionInfo.SecondaryTableSchema, ClassNameFormat.CollectionProperty), GetClassName(collectionInfo.JunctionTableSchema),GetKeysName(junctionTableKey.ForeignKeyMemberColumns));
 
 							// Uninque Property Name, in case of conflict
-							collectionInfo.PropertyNameUnique =   string.Format("{2}{0}_From_{1}", GetClassName( collectionInfo.SecondaryTableSchema, ClassNameFormat.CollectionProperty), GetClassName(collectionInfo.JunctionTableSchema),GetKeysName(junctionTableKey.ForeignKeyMemberColumns)); 
+							collectionInfo.PropertyNameUnique =   string.Format("{2}{0}_From_{1}", GetClassName( collectionInfo.SecondaryTableSchema, ClassNameFormat.CollectionProperty), GetClassName(collectionInfo.JunctionTableSchema),GetKeysName(junctionTableKey.ForeignKeyMemberColumns));
 
 							// Field Variable String
 							collectionInfo.FieldName = GetCamelCaseName(collectionInfo.PropertyNameUnique);
-							
+
 							// Property/Field Type Name
 							collectionInfo.TypeName = GetClassName(collectionInfo.SecondaryTableSchema, ClassNameFormat.Collection);
-							
+
 							//Method Params
 							collectionInfo.CallParams = GetFunctionRelationshipCallParameters(table.PrimaryKey.MemberColumns);
-							
+
 							//Method Name
 							collectionInfo.GetByKeysName = GetManyToManyName(key, junctionTable);
-							
+
 							AddToCollection(_collections, collectionInfo);
 						}
 					}
 				}
 			}
-			
+
 			#endregion // Many-To-Many Relationships
-			
-			return _collections; 
+
+			return _collections;
 		}
-		
+
 		public void AddToCollection(System.Collections.Hashtable _collections, CollectionInfo collectionInfo)
 		{
 			if(_collections[collectionInfo.PropertyName] != null)
@@ -5355,14 +5355,14 @@ CREATE\s+PROC(?:EDURE)?                               # find the start of the st
 			}
 			_collections[collectionInfo.PropertyName] = collectionInfo;
 		}
-		#endregion 
-		
+		#endregion
+
 		#region CollectionInfo class
 		///<summary>
 		///	Child relationship structure information and their <see cref="RelationshipType" />
 		/// to store in the ChildCollections ArrayList
 		///</summary>
-		public class CollectionInfo 
+		public class CollectionInfo
 		{
 			public string CleanName;
 			public ColumnSchema[] PkColNames;
@@ -5385,20 +5385,20 @@ CREATE\s+PROC(?:EDURE)?                               # find the start of the st
 			public string TypeName = string.Empty;
 			public string FieldName = string.Empty;
 			public string GetByKeysName = string.Empty;
-			public RelationshipType CollectionRelationshipType;	
+			public RelationshipType CollectionRelationshipType;
 			public TableKeySchema TableKey = null;
 			public TableKeySchema SecondaryTableKey = null;
 		}
 		#endregion
-			
+
 		#region Relationships
-		
+
 		/// <summary>
 		/// Gets params for a method based on the columns
 		/// </summary>
 		public string GetFunctionRelationshipCallParameters(ColumnSchemaCollection columns)
 		{
-			
+
 			StringBuilder output = new StringBuilder();
 			for (int i = 0; i < columns.Count; i++)
 			{
@@ -5410,14 +5410,14 @@ CREATE\s+PROC(?:EDURE)?                               # find the start of the st
 		}
 
 		/// <summary>
-		/// Orders the params for a method, based on the ordered column list.  It's useful when dealing with the IsForeignKeyCoveredByIndex method, which the 
+		/// Orders the params for a method, based on the ordered column list.  It's useful when dealing with the IsForeignKeyCoveredByIndex method, which the
 		/// columns may be in different orders
 		/// </summary>
 		public string GetFunctionRelationshipCallParametersInKeyOrder(ColumnSchemaCollection orderedColumns, TableKeySchema keySchema)
 		{
 			ColumnSchemaCollection unorderedColumns = keySchema.ForeignKeyMemberColumns;
 			ColumnSchemaCollection entityColumns = keySchema.PrimaryKeyMemberColumns;
-			
+
 			StringBuilder output = new StringBuilder();
 			for (int j = 0; j < orderedColumns.Count; j++)
 			{
@@ -5425,28 +5425,28 @@ CREATE\s+PROC(?:EDURE)?                               # find the start of the st
 				{
 					if (orderedColumns[j].Name.ToLower() != unorderedColumns[i].Name.ToLower())
 						continue;
-						
+
 					if (j > 0)
 						output.Append(", ");
-						
+
 					output.AppendFormat("entity.{0}", GetPropertyName(entityColumns[i]));
 				}
 			}
 			return output.ToString();
 		}
-		
 
-	
+
+
 		///<summary>
 		/// Workaround for when a method in the DAL is using Indexes to create the method
 		/// instead of the keys
-		/// Sometimes when working with composite primary keys, the orders could be 
+		/// Sometimes when working with composite primary keys, the orders could be
 		/// different in the index than in the key.
-		/// So it could be Col1 Col2 in TableKeySchema.ForeignKeyMemberColumns 
+		/// So it could be Col1 Col2 in TableKeySchema.ForeignKeyMemberColumns
 		/// But in Index.MemberColumns it could be Col2, Col1
 		///</summary>
 		public ColumnSchemaCollection GetCorrectColumnOrder(TableKeySchema key)
-		{		
+		{
 			if(IsForeignKeyCoveredByIndex(key))
 			{
 				bool found = true;
@@ -5457,14 +5457,14 @@ CREATE\s+PROC(?:EDURE)?                               # find the start of the st
 						if (!idx.MemberColumns.Contains(col.Name))
 							found = false;
 					}
-					
+
 					if (found)
 					{
 						return idx.MemberColumns;
 					}
 				}
 			}
-			
+
 			return key.ForeignKeyMemberColumns;
 		}
 
@@ -5474,7 +5474,7 @@ CREATE\s+PROC(?:EDURE)?                               # find the start of the st
 		/// <param name="key">The key to check.</param>
 		/// <returns>true if all of the child's foreign key members are part of the primary key.</returns>
 		/// <remarks>
-		/// An identifying relationship means that the child table cannot 
+		/// An identifying relationship means that the child table cannot
 		/// be uniquely identified without the parent.
 		/// </remarks>
 		/// <exception cref="ArgumentNullException">key is null</exception>
@@ -5484,7 +5484,7 @@ CREATE\s+PROC(?:EDURE)?                               # find the start of the st
 				throw new ArgumentNullException("key");
 
 			PrimaryKeySchema childPrimaryKey = key.ForeignKeyTable.PrimaryKey;
-			
+
 			// cant be a identifying relationship if the child does not have a PK
 			if ( childPrimaryKey.MemberColumns.Count == 0 )
 				return false;
@@ -5508,8 +5508,8 @@ CREATE\s+PROC(?:EDURE)?                               # find the start of the st
 				return false;
 
 			if (table.PrimaryKey.MemberColumns.Count == 1)
-				return false;				
-						
+				return false;
+
 			// junction table requires at least 2 FK
 			if (table.ForeignKeys.Count < 2)
 				return false;
@@ -5527,18 +5527,18 @@ CREATE\s+PROC(?:EDURE)?                               # find the start of the st
 				if (!table.PrimaryKey.MemberColumns[i].IsForeignKeyMember)
 					return false;
 
-			return true;			
+			return true;
 		}
-		
+
 
 		public bool IsRelationOneToOne(TableKeySchema keyschema) //, PrimaryKeySchema primaryKey)
 		{
 			bool result = true;
-			
+
 			// if this key do not contain
 			if (keyschema.PrimaryKeyMemberColumns.Count != keyschema.PrimaryKeyTable.PrimaryKey.MemberColumns.Count)
 				return false;
-			
+
 			// Each member must reference a unique key in the foreign table
 			foreach(ColumnSchema column in keyschema.ForeignKeyMemberColumns)
 			{
@@ -5558,28 +5558,28 @@ CREATE\s+PROC(?:EDURE)?                               # find the start of the st
 						}
 					}
 				}
-				
+
 				result = result && columnIsUnique;
 			}
-			
+
 			return result;
 		}
 
-		
+
 		public bool IsForeignKeyCoveredByIndex(TableKeySchema fKey)
 		{
 			bool isCovered = false;
-				
-			//If the Foreign key is also covered by an index, let the index 
+
+			//If the Foreign key is also covered by an index, let the index
 			//processing handle the Get methods
 			foreach(IndexSchema i in fKey.ForeignKeyTable.Indexes)
 			{
 				ColumnSchemaCollection fkCols = fKey.ForeignKeyMemberColumns;
-				
+
 				//First, the index must contain the same number of columns as the key
 				if (fkCols.Count != i.MemberColumns.Count)
 					continue;
-					
+
 				//Index must contain the same columns
 				bool hasAllColumns = true;
 				foreach(ColumnSchema column in fkCols)
@@ -5590,32 +5590,32 @@ CREATE\s+PROC(?:EDURE)?                               # find the start of the st
 						break;
 					}
 				}
-				
+
 				if ( hasAllColumns )
 				{
 					//Index is a match - stop looking
 					isCovered = true;
 					break;
-					
-				}	
+
+				}
 			}
-			
+
 			return isCovered;
 		}
-		
-		
+
+
 		public IndexSchema GetIndexCoveringForeignKey(TableKeySchema fKey)
-		{		
-			//If the Foreign key is also covered by an index, let the index 
+		{
+			//If the Foreign key is also covered by an index, let the index
 			//processing handle the Get methods
 			foreach(IndexSchema i in fKey.ForeignKeyTable.Indexes)
 			{
 				ColumnSchemaCollection fkCols = fKey.ForeignKeyMemberColumns;
-				
+
 				//First, the index must contain the same number of columns as the key
 				if (fkCols.Count != i.MemberColumns.Count)
 					continue;
-					
+
 				//Index must contain the same columns
 				bool hasAllColumns = true;
 				foreach(ColumnSchema column in fkCols)
@@ -5624,15 +5624,15 @@ CREATE\s+PROC(?:EDURE)?                               # find the start of the st
 						hasAllColumns = false;
 						break;
 					}
-				
+
 				if ( hasAllColumns )
 					return i;
 			}
 			return null;
 		}
-		
+
 		/// <summary>
-		/// 
+		///
 		/// </summary>
 		public ColumnSchemaCollection GetRelationKeyColumns(TableKeySchemaCollection fkeys, IndexSchemaCollection indexes)
 		{
@@ -5643,7 +5643,7 @@ CREATE\s+PROC(?:EDURE)?                               # find the start of the st
 				foreach(IndexSchema i in indexes)
 				{
 					if(i.MemberColumns.Contains(fkeys[j].ForeignKeyMemberColumns[0]))
-						skipkey = true;			
+						skipkey = true;
 				}
 				if(skipkey)
 					continue;
@@ -5652,7 +5652,7 @@ CREATE\s+PROC(?:EDURE)?                               # find the start of the st
 			}
 			return new ColumnSchemaCollection();
 		}
-		
+
 		/// <summary>
 		/// Gets the names of all the columns in the collection as a string array.
 		/// </summary>
@@ -5663,31 +5663,31 @@ CREATE\s+PROC(?:EDURE)?                               # find the start of the st
 			SchemaExplorer.ColumnSchema[] columnNames = new SchemaExplorer.ColumnSchema[ columns.Count ];
 			for (int i = 0; i < columns.Count; i++)
 				columnNames[i] = columns[i];
-			
+
 			return columnNames;
 		}
-	
+
 		///<summary>
 		/// Get's the constraint side of a column from a m:m relationship to it's corresponding 1:m relationship
 		///</summary>
 		public List<ColumnSchema> GetCorrespondingRelationships(SchemaExplorer.TableKeySchemaCollection fkeys, SchemaExplorer.ColumnSchema[] cols)
-		{	
+		{
 			List<ColumnSchema> result = new List<ColumnSchema>();
-			
+
 			for(int x=0; x < cols.Length; x++)
 			{
 				ColumnSchema col = cols[x];
-				
+
 				for (int j=0; j < fkeys.Count; j++)
 				{
 					if (col.Table != fkeys[j].ForeignKeyTable)
 						continue;
-						
+
 					for (int y=0; y < fkeys[j].ForeignKeyMemberColumns.Count; y++)
-					{						
-						if (fkeys[j].ForeignKeyMemberColumns[y].Name.ToLower() 
+					{
+						if (fkeys[j].ForeignKeyMemberColumns[y].Name.ToLower()
 								== col.Name.ToLower())
-						{	
+						{
 							if (fkeys[j].PrimaryKeyMemberColumns.Count - 1 >= y)
 								result.Add(fkeys[j].PrimaryKeyMemberColumns[y]);
 						}
@@ -5716,17 +5716,17 @@ CREATE\s+PROC(?:EDURE)?                               # find the start of the st
         }
 
 		private string _currentTable = string.Empty;
-		
+
 		///<summary>
 		///  Store the most recent SourceTable of the templates,
-		///  Used to clean up upon new SourceTable execution.  
+		///  Used to clean up upon new SourceTable execution.
 		///</summary>
 		[BrowsableAttribute(false)]
 		public  string CurrentTable {
 			get{return _currentTable;}
 			set {_currentTable = value;}
 		}
-		
+
 		///<summary>
 		///  Store the most recent
 		///  Used to keep track of which childcollections have been rendered
@@ -5737,8 +5737,8 @@ CREATE\s+PROC(?:EDURE)?                               # find the start of the st
 			get{return relationshipDictionary;}
 			set {relationshipDictionary = value;}
 		}
-		
-		
+
+
 		///<summary>
 		/// Child Collection RelationshipType Enum
 		///</summary>
@@ -5750,9 +5750,9 @@ CREATE\s+PROC(?:EDURE)?                               # find the start of the st
 			ManyToOne,
 			ManyToMany
 		}
-		
+
 		#endregion Relationships
-		
+
 		#region GetParent/Child Tables
 		///<summary>
 		/// Get's the parent tables if any based on a child table.
@@ -5765,7 +5765,7 @@ CREATE\s+PROC(?:EDURE)?                               # find the start of the st
 			}
 			DatabaseSchema _dbCurrent;
 			_dbCurrent=table.Database;
-			
+
 			foreach(TableSchema _tb in _dbCurrent.Tables){
 				if(CurrentTable!=_tb.Name){
 					foreach(ColumnSchema _col in _tb.PrimaryKey.MemberColumns){
@@ -5773,13 +5773,13 @@ CREATE\s+PROC(?:EDURE)?                               # find the start of the st
 							if (col.Name == _col.Name){
 								_tbParent.Add(_tb);
 							}
-						}                        
+						}
 					}
 				}
 			}
 			return _tbParent;
 		}
-			
+
 		///<summary>
 		///  Get's all the child tables based on a parent table
 		///</summary>
@@ -5798,14 +5798,14 @@ CREATE\s+PROC(?:EDURE)?                               # find the start of the st
 								if (_col.Name == primaryCol.Name){
 									_tbChild.Add(_tb);
 								}
-							}                       
+							}
 						}
 					}
 				}
 			return _tbChild;
 		}
-		#endregion 
-	
+		#endregion
+
 		#region EntLibVersion
 		///<summary>
 		/// Gets the enterprise library version assembly signature
@@ -5813,7 +5813,7 @@ CREATE\s+PROC(?:EDURE)?                               # find the start of the st
 		public string GetEntLibVersionSignature(EntLibVersion version)
 		{
 			string entlibVersionText = "";
-	
+
 			switch (version)
 			{
 				case MoM.Templates.EntLibVersion.v2 :
@@ -5831,18 +5831,18 @@ CREATE\s+PROC(?:EDURE)?                               # find the start of the st
                 case MoM.Templates.EntLibVersion.v4_1 :
                     entlibVersionText = "Version=4.1.0.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35";
                     break;
-				
-			}	
+
+			}
 			return entlibVersionText;
 		}
-		
+
 		///<summary>
 		/// Gets the enterprise library ObjectBuilder version assembly signature
 		///</summary>
 		public string GetEntLibOBVersionSignature(EntLibVersion version)
 		{
 			string entlibOBVersionText = "";
-	
+
 			switch (version)
 			{
 				case MoM.Templates.EntLibVersion.v2 :
@@ -5860,8 +5860,8 @@ CREATE\s+PROC(?:EDURE)?                               # find the start of the st
                 case MoM.Templates.EntLibVersion.v4_1 :
                     entlibOBVersionText = "Version=2.2.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a";
                     break;
-				
-			}	
+
+			}
 			return entlibOBVersionText;
 		}
 
@@ -5871,7 +5871,7 @@ CREATE\s+PROC(?:EDURE)?                               # find the start of the st
 		public string GetEntLibOBClassName(EntLibVersion version)
 		{
 			string entlibOBClassName = "";
-	
+
 			switch (version)
 			{
 				case MoM.Templates.EntLibVersion.v2 :
@@ -5883,53 +5883,112 @@ CREATE\s+PROC(?:EDURE)?                               # find the start of the st
                 case MoM.Templates.EntLibVersion.v4_1 :
                     entlibOBClassName = "ObjectBuilder2";
 					break;
-				
-			}	
+
+			}
 			return entlibOBClassName;
 		}
 
 		#endregion
-		
+
 		public string GetMSBuildExtensionsVersionString( VSNetVersion version )
 		{
 			string versionNumber = "8.0";
-			
+
 			switch ( version )
 			{
 				case ( VSNetVersion.v2008 ) :
 					versionNumber = "9.0";
 					break;
+				case ( VSNetVersion.v2010 ) :
+					versionNumber = "10.0";
+					break;
 			}
-		
+
 			return versionNumber;
 		}
-		
+
+        public string GetVisualStudioSolutionFileVersionString( VSNetVersion version )
+		{
+			string versionNumber = "9.0";
+
+			switch ( version )
+			{
+				case ( VSNetVersion.v2008 ) :
+					versionNumber = "10.0";
+					break;
+				case ( VSNetVersion.v2010 ) :
+					versionNumber = "11.0";
+					break;
+			}
+
+			return versionNumber;
+		}
+
 		public string GetVisualStudioProductVersionString( VSNetVersion version )
 		{
 			string versionNumber = "8.0.50727";
-			
+
 			switch ( version )
 			{
 				case ( VSNetVersion.v2008 ) :
 					versionNumber = "9.0.21022";
 					break;
+				case ( VSNetVersion.v2010 ) :
+					versionNumber = "10.0.20506";
+					break;
 			}
-		
+
 			return versionNumber;
 		}
-		
-		public string GetVisualStudioGeneralVersionString( VSNetVersion version ) 
+
+
+		public string GetVisualStudioToolVersionString( VSNetVersion version )
+		{
+			string toolsVersion = "3.5";
+
+			switch ( version )
+			{
+				case ( VSNetVersion.v2010 ) :
+					toolsVersion = "4.0";
+					break;
+			}
+
+			return toolsVersion;
+		}
+
+		public string GetVisualStudioNameString( VSNetVersion version )
+		{
+			string versionNumber = "2005";
+
+			switch ( version )
+			{
+				case ( VSNetVersion.v2008 ) :
+					versionNumber = "2008";
+					break;
+				case ( VSNetVersion.v2010 ) :
+					versionNumber = "2010";
+					break;
+			}
+
+			return versionNumber;
+		}
+
+
+		public string GetVisualStudioGeneralVersionString( VSNetVersion version )
 		{
 			// Default to VS2005 version number
 			string versionNumber = "8.0.0.0";
-			
+
 			switch ( version )
 			{
 				case ( VSNetVersion.v2008 ) :
 					versionNumber = "9.0.0.0";
 					break;
+				case ( VSNetVersion.v2010 ) :
+					versionNumber = "10.0.0.0";
+					break;
 			}
-		
+
 			return versionNumber;
 		}
 		public string GetDotNetFrameworkString( DotNetFrameworkVersion version )
@@ -5942,27 +6001,30 @@ CREATE\s+PROC(?:EDURE)?                               # find the start of the st
 					break;
 				case ( DotNetFrameworkVersion.v3_5 ) :
 					versionNumber = "3.5";
+					break;
+				case ( DotNetFrameworkVersion.v4 ) :
+					versionNumber = "4.0";
 				break;
 			}
-		
+
 			return versionNumber;
 		}
 	}
 
 	#region Retry
 	public enum SleepStyle
-	{ 
+	{
 		/// <summary>Each sleep will be the <i>n</i> milliseconds.</summary>
-		Constant, 
+		Constant,
 		/// <summary>Each sleep will increase by <i>n</i>*<i>attempts</i> milliseconds.</summary>
-		Linear, 
+		Linear,
 		/// <summary>Each sleep will increase exponential by <i>n</i>^<i>attempts</i> milliseconds.</summary>
-		Exponential 
+		Exponential
 	}
 	#endregion
-	
+
 	#region UnitTests
-	
+
 	public enum UnitTestStyle
 	{
 		/// <summary>No unit test should be included.</summary>
@@ -5973,7 +6035,7 @@ CREATE\s+PROC(?:EDURE)?                               # find the start of the st
 		VSTS
 	}
 	#endregion
-	
+
 	#region Enterprise Library Version
 	/// <summary>
 	/// Enterprise Library versions
@@ -5991,9 +6053,9 @@ CREATE\s+PROC(?:EDURE)?                               # find the start of the st
 		/// <summary>Use Enterprise Library version 4.1</summary>
 		v4_1 = 4
 	}
-	
+
 	#endregion
-	
+
 	#region PascalCasing style
 	/// <summary>
 	/// Indicates the style of Pascal casing to be used
@@ -6004,21 +6066,21 @@ CREATE\s+PROC(?:EDURE)?                               # find the start of the st
 		/// No pascal casing is applied
 		/// </summary>
 		None,
-		
+
 		/// <summary>
 		/// Original .NetTiers styling (pre SVN553)
 		/// </summary>
 		Style1,
-		
+
 		/// <summary>
 		/// New styling that handles uppercase (post SVN552)
 		/// </summary>
 		Style2,
 	}
 	#endregion
-	
+
 	#region Entity name conversion types
-	
+
 	public enum NameConversionType
 	{
 		/// <summary>Do not use any conversion.</summary>
@@ -6028,9 +6090,9 @@ CREATE\s+PROC(?:EDURE)?                               # find the start of the st
 		/// <summary>Use an alias file (older method).</summary>
 		Alias
 	}
-	
+
 	#endregion
-	
+
 	#region ComponentPatternType
 	public enum ComponentPatternType
 	{
@@ -6042,7 +6104,7 @@ CREATE\s+PROC(?:EDURE)?                               # find the start of the st
 		DomainModel
 	}
 	#endregion
-	
+
 	#region Entity Equality Semantics
 	public enum EqualitySemantics
 	{
@@ -6052,7 +6114,7 @@ CREATE\s+PROC(?:EDURE)?                               # find the start of the st
 		Value
 	}
 	#endregion
-	
+
 	#region Validation Option Entlib or NetTiers
 	public enum ValidationType
 	{
@@ -6060,15 +6122,16 @@ CREATE\s+PROC(?:EDURE)?                               # find the start of the st
 		EntLib
 	}
 	#endregion
-	
+
 	#region VS and Dot Net Version
-		
+
 	public enum VSNetVersion
 	{
 		v2005
 		,v2008
+		,v2010
 	}
-	
+
 	public enum DotNetFrameworkVersion
 	{
 		/// <summary> version 2.0 </summary>
@@ -6076,10 +6139,12 @@ CREATE\s+PROC(?:EDURE)?                               # find the start of the st
 		/// <summary> version 3.0 </summary>
 		v3,
 		/// <summary> version 3.5 </summary>
-		v3_5
-	}	
+		v3_5,
+		/// <summary> version 4.0 </summary>
+		v4
+	}
 	#endregion
-	
+
 	#region DatabaseType
 	public enum DatabaseType
 	{
@@ -6099,7 +6164,7 @@ CREATE\s+PROC(?:EDURE)?                               # find the start of the st
 	#endregion
 
 	#region MethodNamesProperty
-	
+
 	[Serializable]
 	//[TypeConverter(typeof(MethodNamesTypeConverter))]
 	[TypeConverter(typeof(ExpandableObjectConverter))]
@@ -6111,10 +6176,10 @@ CREATE\s+PROC(?:EDURE)?                               # find the start of the st
 		{
 			ParseCore(values);
 		}
-		
+
 		// used for testing
 		private static readonly string _methodNameSuffix = "";
-		
+
 		private string _get = "Get" + _methodNameSuffix;
 		[NotifyParentProperty(true)]
 		[Description("The name of the method used to perform a Get operation.")]
@@ -6123,7 +6188,7 @@ CREATE\s+PROC(?:EDURE)?                               # find the start of the st
 			get { return _get; }
 			set { if ( IsValid(value) ) _get = value.Trim(); }
 		}
-		
+
 		private string _getAll = "GetAll" + _methodNameSuffix;
 		[NotifyParentProperty(true)]
 		[Description("The name of the method used to perform a GetAll operation.")]
@@ -6132,7 +6197,7 @@ CREATE\s+PROC(?:EDURE)?                               # find the start of the st
 			get { return _getAll; }
 			set { if ( IsValid(value) ) _getAll = value.Trim(); }
 		}
-		
+
 		private string _getPaged = "GetPaged" + _methodNameSuffix;
 		[NotifyParentProperty(true)]
 		[Description("The name of the method used to perform a GetPaged operation.")]
@@ -6141,7 +6206,7 @@ CREATE\s+PROC(?:EDURE)?                               # find the start of the st
 			get { return _getPaged; }
 			set { if ( IsValid(value) ) _getPaged = value.Trim(); }
 		}
-		
+
 		private string _find = "Find" + _methodNameSuffix;
 		[NotifyParentProperty(true)]
 		[Description("The name of the method used to perform a Find operation.")]
@@ -6150,7 +6215,7 @@ CREATE\s+PROC(?:EDURE)?                               # find the start of the st
 			get { return _find; }
 			set { if ( IsValid(value) ) _find = value.Trim(); }
 		}
-		
+
 		private string _insert = "Insert" + _methodNameSuffix;
 		[NotifyParentProperty(true)]
 		[Description("The name of the method used to perform a Insert operation.")]
@@ -6159,7 +6224,7 @@ CREATE\s+PROC(?:EDURE)?                               # find the start of the st
 			get { return _insert; }
 			set { if ( IsValid(value) ) _insert = value.Trim(); }
 		}
-		
+
 		private string _update = "Update" + _methodNameSuffix;
 		[NotifyParentProperty(true)]
 		[Description("The name of the method used to perform a Update operation.")]
@@ -6168,7 +6233,7 @@ CREATE\s+PROC(?:EDURE)?                               # find the start of the st
 			get { return _update; }
 			set { if ( IsValid(value) ) _update = value.Trim(); }
 		}
-		
+
 		private string _save = "Save" + _methodNameSuffix;
 		[NotifyParentProperty(true)]
 		[Description("The name of the method used to perform a Save operation.")]
@@ -6177,7 +6242,7 @@ CREATE\s+PROC(?:EDURE)?                               # find the start of the st
 			get { return _save; }
 			set { if ( IsValid(value) ) _save = value.Trim(); }
 		}
-		
+
 		private string _delete = "Delete" + _methodNameSuffix;
 		[NotifyParentProperty(true)]
 		[Description("The name of the method used to perform a Delete operation.")]
@@ -6186,7 +6251,7 @@ CREATE\s+PROC(?:EDURE)?                               # find the start of the st
 			get { return _delete; }
 			set { if ( IsValid(value) ) _delete = value.Trim(); }
 		}
-		
+
 		private string _deepLoad = "DeepLoad" + _methodNameSuffix;
 		[NotifyParentProperty(true)]
 		[Description("The name of the method used to perform a DeepLoad operation.")]
@@ -6195,7 +6260,7 @@ CREATE\s+PROC(?:EDURE)?                               # find the start of the st
 			get { return _deepLoad; }
 			set { if ( IsValid(value) ) _deepLoad = value.Trim(); }
 		}
-		
+
 		private string _deepSave = "DeepSave" + _methodNameSuffix;
 		[NotifyParentProperty(true)]
 		[Description("The name of the method used to perform a DeepSave operation.")]
@@ -6204,7 +6269,7 @@ CREATE\s+PROC(?:EDURE)?                               # find the start of the st
 			get { return _deepSave; }
 			set { if ( IsValid(value) ) _deepSave = value.Trim(); }
 		}
-		
+
 		private string _getTotalItems = "GetTotalItems" + _methodNameSuffix;
 		[NotifyParentProperty(true)]
 		[Description("The name of the method used to perform a GetTotalItems operation.")]
@@ -6213,7 +6278,7 @@ CREATE\s+PROC(?:EDURE)?                               # find the start of the st
 			get { return _getTotalItems; }
 			set { if ( IsValid(value) ) _getTotalItems = value.Trim(); }
 		}
-		
+
 		private string _bulkInsert = "BulkInsert" + _methodNameSuffix;
 		[NotifyParentProperty(true)]
 		[Description("The name of the method used to perform a BulkInsert operation.")]
@@ -6222,18 +6287,18 @@ CREATE\s+PROC(?:EDURE)?                               # find the start of the st
 			get { return _bulkInsert; }
 			set { if ( IsValid(value) ) _bulkInsert = value.Trim(); }
 		}
-		
+
 		private bool IsValid(string value)
 		{
 			return ( value != null && value.Trim().Length > 0 );
 		}
-		
+
 		private void ParseCore(string value)
 		{
 			if ( value != null && value.Length > 0 )
 			{
 				string[] values = value.Split(new char[] { ',' });
-				
+
 				if ( values.Length > 0 )
 					Get = values[0];
 				if ( values.Length > 1 )
@@ -6260,12 +6325,12 @@ CREATE\s+PROC(?:EDURE)?                               # find the start of the st
 					BulkInsert = values[11];
 			}
 		}
-		
+
 		public static MethodNamesProperty Parse(string value)
 		{
 			return new MethodNamesProperty(value);
 		}
-		
+
 		public string ToStringList()
 		{
 			string[] names = new string[] {
@@ -6274,16 +6339,16 @@ CREATE\s+PROC(?:EDURE)?                               # find the start of the st
 				DeepLoad, DeepSave, GetTotalItems,
 				BulkInsert
 			};
-			
+
 			return string.Join(",", names);
 		}
-		
+
 		public override string ToString()
 		{
 			return "(Expand to edit...)";
 		}
 	}
-	
+
 	public class MethodNamesTypeConverter : ExpandableObjectConverter
 	{
 		public override bool CanConvertFrom(ITypeDescriptorContext context, Type t)
@@ -6296,20 +6361,20 @@ CREATE\s+PROC(?:EDURE)?                               # find the start of the st
 			{
 				return true;
 			}
-			
+
 			return base.CanConvertFrom(context, t);
 		}
-		
+
 		public override bool CanConvertTo(ITypeDescriptorContext context, Type t)
 		{
 			if ( t == typeof(XmlNode) )
 			{
 				return true;
 			}
-			
+
 			return base.CanConvertTo(context, t);
 		}
-		
+
 		public override object ConvertFrom(ITypeDescriptorContext context, CultureInfo info, object value)
 		{
 			if ( value is string )
@@ -6323,10 +6388,10 @@ CREATE\s+PROC(?:EDURE)?                               # find the start of the st
 				XmlNodeReader reader = new XmlNodeReader(node.FirstChild);
 				return ser.Deserialize(reader);
 			}
-			
+
 			return base.ConvertFrom(context, info, value);
 		}
-		
+
 		public override object ConvertTo(ITypeDescriptorContext context, CultureInfo culture, object value, Type t)
 		{
 			if ( t == typeof(string) )
@@ -6344,13 +6409,13 @@ CREATE\s+PROC(?:EDURE)?                               # find the start of the st
 				stream.Close();
 				return xml.DocumentElement.FirstChild;
 			}
-			
+
 			return base.ConvertTo(context, culture, value, t);
 		}
 	}
-	
+
 	#endregion MethodNamesProperty
-	
+
 	#region Archived Deprecated
 	/*
 	///<summary>
@@ -6361,38 +6426,38 @@ CREATE\s+PROC(?:EDURE)?                               # find the start of the st
 		// une seul column vers la table pivot
 		if (primaryKey.ForeignKeyMemberColumns.Count != 1)
 			return false;
-		
+
 		// une seul column venant de la table primaire
 		if (primaryKey.PrimaryKeyMemberColumns.Count != 1)
 			return false;
-		
-		
+
+
 		// Junction table require a primary on two columns
 		if (primaryKey.ForeignKeyTable.PrimaryKey == null || primaryKey.ForeignKeyTable.PrimaryKey.MemberColumns.Count != 2)
 		{
 			//Response.WriteLine(string.Format("IsJunctionTable: The table {0} doesn't have a primary key.", table.Name));
 			return false;
 		}
-		
+
 		// And each primary key member columns must be part of relation
 		for (int i=0;i < primaryKey.ForeignKeyTable.PrimaryKey.MemberColumns.Count; i++)
 		{
 			if (!primaryKey.ForeignKeyTable.PrimaryKey.MemberColumns[i].IsForeignKeyMember)
 				return false;
-			
+
 			//if (!primaryKey.ForeignKeyTable.PrimaryKey.MemberColumns[i].IsPrimaryKeyMember)
 			//	return false;
 		}
-		
+
 		// the foreign column of the relation must be a junction table's primary key member's column
 		//if (primaryKey.ForeignKeyTable.PrimaryKey.MemberColumns[0] != primaryKey.ForeignKeyMemberColumns[0] && primaryKey.ForeignKeyTable.PrimaryKey.MemberColumns[1] != primaryKey.ForeignKeyMemberColumns[0])
 		//{
 		//	return false;
 		//}
-		
+
 		if (!primaryKey.ForeignKeyMemberColumns[0].IsPrimaryKeyMember)	return false;
-		
-		return true;			
+
+		return true;
 		}
 			TableSchemaCollection _tbChild= new TableSchemaCollection();
 				if(CurrentTable != table.Name){
@@ -6407,13 +6472,13 @@ CREATE\s+PROC(?:EDURE)?                               # find the start of the st
 								if (_col.Name == primaryCol.Name){
 									_tbChild.Add(_tb);
 								}
-							}                       
+							}
 						}
 					}
 				}
 			return _tbChild;
 		}
-		
+
 	}
 
 	public bool IsJunctionTable(TableSchema table)
@@ -6435,13 +6500,13 @@ CREATE\s+PROC(?:EDURE)?                               # find the start of the st
 						RetValue = false;
 						break;
 					}
-				} 
+				}
 			}
 			return RetValue;
 		}
 
 */
-#endregion 
+#endregion
 }
 
 namespace NetTiers
@@ -6476,10 +6541,10 @@ public partial class NetTiersMap {
 
 	[NonSerialized]
 	public static readonly XmlSerializer NetTiersMappingSerializer =  new XmlSerializer(typeof(NetTiersMap));
-	
+
 	private TableMetaDataCollection tableField;
 	private ViewMetaDataCollection viewField;
-	
+
 	/// <remarks/>
 	[System.Xml.Serialization.XmlElementAttribute("Table")]
 	public TableMetaDataCollection Tables {
@@ -6490,7 +6555,7 @@ public partial class NetTiersMap {
 			this.tableField = value;
 		}
 	}
-	
+
 	[System.Xml.Serialization.XmlElementAttribute("View")]
 	public ViewMetaDataCollection Views {
 		get {
@@ -6509,25 +6574,25 @@ public partial class NetTiersMap {
 [System.ComponentModel.DesignerCategoryAttribute("code")]
 [System.Xml.Serialization.XmlTypeAttribute(Namespace="http://www.nettiers.com/NetTiersMap.xsd")]
 public partial class TableMetaData {
-	
+
 	private ColumnMetaDataCollection columnField;
-	
+
 	private ChildCollectionMetaDataCollection childCollectionField;
-	
+
 	private string idField;
-	
+
 	private string entityNameField;
-	
+
 	private string ownerField;
-	
+
 	private string fieldNameField;
-	
+
 	private string propertyNameField;
-	
+
 	private string friendlyNameField;
-	
-	private bool includeInOutput; 
-	
+
+	private bool includeInOutput;
+
 	/// <remarks/>
 	[System.Xml.Serialization.XmlElementAttribute("Column")]
 	public ColumnMetaDataCollection Columns {
@@ -6538,7 +6603,7 @@ public partial class TableMetaData {
 			this.columnField = value;
 		}
 	}
-	
+
 	/// <remarks/>
 	[System.Xml.Serialization.XmlElementAttribute("ChildCollection")]
 	public ChildCollectionMetaDataCollection ChildCollections {
@@ -6549,7 +6614,7 @@ public partial class TableMetaData {
 			this.childCollectionField = value;
 		}
 	}
-	
+
 	/// <remarks/>
 	[System.Xml.Serialization.XmlAttributeAttribute()]
 	public string Id {
@@ -6560,7 +6625,7 @@ public partial class TableMetaData {
 			this.idField = value;
 		}
 	}
-	
+
 	/// <remarks/>
 	[System.Xml.Serialization.XmlAttributeAttribute()]
 	public string EntityName {
@@ -6571,7 +6636,7 @@ public partial class TableMetaData {
 			this.entityNameField = value;
 		}
 	}
-	
+
 	/// <remarks/>
 	[System.Xml.Serialization.XmlAttributeAttribute()]
 	public string Owner {
@@ -6582,7 +6647,7 @@ public partial class TableMetaData {
 			this.ownerField = value;
 		}
 	}
-	
+
 	/// <remarks/>
 	[System.Xml.Serialization.XmlAttributeAttribute()]
 	public string FieldName {
@@ -6593,7 +6658,7 @@ public partial class TableMetaData {
 			this.fieldNameField = value;
 		}
 	}
-	
+
 	/// <remarks/>
 	[System.Xml.Serialization.XmlAttributeAttribute()]
 	public string PropertyName {
@@ -6604,7 +6669,7 @@ public partial class TableMetaData {
 			this.propertyNameField = value;
 		}
 	}
-	
+
 	/// <remarks/>
 	[System.Xml.Serialization.XmlAttributeAttribute()]
 	public string FriendlyName {
@@ -6615,7 +6680,7 @@ public partial class TableMetaData {
 			this.friendlyNameField = value;
 		}
 	}
-	
+
 	/// <remarks/>
 	[System.Xml.Serialization.XmlAttributeAttribute()]
 	public bool IncludeInOutput {
@@ -6634,23 +6699,23 @@ public partial class TableMetaData {
 [System.ComponentModel.DesignerCategoryAttribute("code")]
 [System.Xml.Serialization.XmlTypeAttribute(Namespace="http://www.nettiers.com/NetTiersMap.xsd")]
 public partial class ViewMetaData {
-	
+
 	private ColumnMetaDataCollection columnField;
-	
+
 	private string idField;
-	
+
 	private string entityNameField;
-	
+
 	private string ownerField;
-	
+
 	private string fieldNameField;
-	
+
 	private string propertyNameField;
-	
+
 	private string friendlyNameField;
-	
-	private bool includeInOutput; 
-	
+
+	private bool includeInOutput;
+
 	/// <remarks/>
 	[System.Xml.Serialization.XmlElementAttribute("Column")]
 	public ColumnMetaDataCollection Columns {
@@ -6661,7 +6726,7 @@ public partial class ViewMetaData {
 			this.columnField = value;
 		}
 	}
-	
+
 	/// <remarks/>
 	[System.Xml.Serialization.XmlAttributeAttribute()]
 	public string Id {
@@ -6672,7 +6737,7 @@ public partial class ViewMetaData {
 			this.idField = value;
 		}
 	}
-	
+
 	/// <remarks/>
 	[System.Xml.Serialization.XmlAttributeAttribute()]
 	public string EntityName {
@@ -6683,7 +6748,7 @@ public partial class ViewMetaData {
 			this.entityNameField = value;
 		}
 	}
-	
+
 	/// <remarks/>
 	[System.Xml.Serialization.XmlAttributeAttribute()]
 	public string Owner {
@@ -6694,7 +6759,7 @@ public partial class ViewMetaData {
 			this.ownerField = value;
 		}
 	}
-	
+
 	/// <remarks/>
 	[System.Xml.Serialization.XmlAttributeAttribute()]
 	public string FieldName {
@@ -6705,7 +6770,7 @@ public partial class ViewMetaData {
 			this.fieldNameField = value;
 		}
 	}
-	
+
 	/// <remarks/>
 	[System.Xml.Serialization.XmlAttributeAttribute()]
 	public string PropertyName {
@@ -6716,7 +6781,7 @@ public partial class ViewMetaData {
 			this.propertyNameField = value;
 		}
 	}
-	
+
 	/// <remarks/>
 	[System.Xml.Serialization.XmlAttributeAttribute()]
 	public string FriendlyName {
@@ -6727,7 +6792,7 @@ public partial class ViewMetaData {
 			this.friendlyNameField = value;
 		}
 	}
-	
+
 	/// <remarks/>
 	[System.Xml.Serialization.XmlAttributeAttribute()]
 	public bool IncludeInOutput {
@@ -6747,19 +6812,19 @@ public partial class ViewMetaData {
 [System.ComponentModel.DesignerCategoryAttribute("code")]
 [System.Xml.Serialization.XmlTypeAttribute(Namespace="http://www.nettiers.com/NetTiersMap.xsd")]
 public partial class ColumnMetaData {
-	
+
 	private string idField;
-	
+
 	private string friendlyNameField;
-	
+
 	private string cSTypeField;
-	
+
 	private string fieldNameField;
-	
+
 	private string propertyNameField;
-	
-	private bool includeInOutput; 
-	
+
+	private bool includeInOutput;
+
 	/// <remarks/>
 	[System.Xml.Serialization.XmlAttributeAttribute()]
 	public string Id {
@@ -6770,7 +6835,7 @@ public partial class ColumnMetaData {
 			this.idField = value;
 		}
 	}
-	
+
 	/// <remarks/>
 	[System.Xml.Serialization.XmlAttributeAttribute()]
 	public string FriendlyName {
@@ -6781,7 +6846,7 @@ public partial class ColumnMetaData {
 			this.friendlyNameField = value;
 		}
 	}
-	
+
 	/// <remarks/>
 	[System.Xml.Serialization.XmlAttributeAttribute()]
 	public string CSType {
@@ -6792,7 +6857,7 @@ public partial class ColumnMetaData {
 			this.cSTypeField = value;
 		}
 	}
-	
+
 	/// <remarks/>
 	[System.Xml.Serialization.XmlAttributeAttribute()]
 	public string FieldName {
@@ -6803,7 +6868,7 @@ public partial class ColumnMetaData {
 			this.fieldNameField = value;
 		}
 	}
-	
+
 	/// <remarks/>
 	[System.Xml.Serialization.XmlAttributeAttribute()]
 	public string PropertyName {
@@ -6814,7 +6879,7 @@ public partial class ColumnMetaData {
 			this.propertyNameField = value;
 		}
 	}
-	
+
 	/// <remarks/>
 	[System.Xml.Serialization.XmlAttributeAttribute()]
 	public bool IncludeInOutput {
@@ -6834,24 +6899,24 @@ public partial class ColumnMetaData {
 [System.ComponentModel.DesignerCategoryAttribute("code")]
 [System.Xml.Serialization.XmlTypeAttribute(Namespace="http://www.nettiers.com/NetTiersMap.xsd")]
 public partial class ChildCollectionMetaData {
-	
+
 	private string idField;
-	
+
 	private string friendlyNameField;
-	
+
 	private string cSTypeField;
-	
+
 	private string propertyNameField;
-	
+
 	private string fieldNameField;
-	
+
 	private ChildCollectionMetaDataRelationshipType relationshipTypeField;
-	
+
 	private string foreignKeyNameField;
-	
-	private bool includeInOutput; 
-	
-	
+
+	private bool includeInOutput;
+
+
 	/// <remarks/>
 	[System.Xml.Serialization.XmlAttributeAttribute()]
 	public string Id {
@@ -6862,7 +6927,7 @@ public partial class ChildCollectionMetaData {
 			this.idField = value;
 		}
 	}
-	
+
 	/// <remarks/>
 	[System.Xml.Serialization.XmlAttributeAttribute()]
 	public string FriendlyName {
@@ -6873,7 +6938,7 @@ public partial class ChildCollectionMetaData {
 			this.friendlyNameField = value;
 		}
 	}
-	
+
 	/// <remarks/>
 	[System.Xml.Serialization.XmlAttributeAttribute()]
 	public string CSType {
@@ -6884,7 +6949,7 @@ public partial class ChildCollectionMetaData {
 			this.cSTypeField = value;
 		}
 	}
-	
+
 	/// <remarks/>
 	[System.Xml.Serialization.XmlAttributeAttribute()]
 	public string PropertyName {
@@ -6895,7 +6960,7 @@ public partial class ChildCollectionMetaData {
 			this.propertyNameField = value;
 		}
 	}
-	
+
 	/// <remarks/>
 	[System.Xml.Serialization.XmlAttributeAttribute()]
 	public string FieldName {
@@ -6906,7 +6971,7 @@ public partial class ChildCollectionMetaData {
 			this.fieldNameField = value;
 		}
 	}
-	
+
 	/// <remarks/>
 	[System.Xml.Serialization.XmlAttributeAttribute()]
 	public ChildCollectionMetaDataRelationshipType RelationshipType {
@@ -6917,7 +6982,7 @@ public partial class ChildCollectionMetaData {
 			this.relationshipTypeField = value;
 		}
 	}
-	
+
 	/// <remarks/>
 	[System.Xml.Serialization.XmlAttributeAttribute()]
 	public string ForeignKeyName {
@@ -6928,7 +6993,7 @@ public partial class ChildCollectionMetaData {
 			this.foreignKeyNameField = value;
 		}
 	}
-	
+
 	/// <remarks/>
 	[System.Xml.Serialization.XmlAttributeAttribute()]
 	public bool IncludeInOutput {
@@ -6946,16 +7011,16 @@ public partial class ChildCollectionMetaData {
 [System.SerializableAttribute()]
 [System.Xml.Serialization.XmlTypeAttribute(AnonymousType=false)]
 public enum ChildCollectionMetaDataRelationshipType {
-	
+
 	/// <remarks/>
 	OneToMany,
-	
+
 	/// <remarks/>
 	ManyToOne,
-	
+
 	/// <remarks/>
 	ManyToMany,
-	
+
 	/// <remarks/>
 	OneToOne,
 }
@@ -6971,6 +7036,6 @@ public class ColumnMetaDataCollection : System.Collections.Generic.List<ColumnMe
 
 public class ChildCollectionMetaDataCollection : System.Collections.Generic.List<ChildCollectionMetaData> {
 }
-#endregion 
+#endregion
 
 }
