@@ -1348,9 +1348,9 @@ namespace PetShop.Business
         }
 
 		/// <summary>
-        /// Determines whether the specified <c cref="LineItem"/> instances are considered equal.
+        /// Determines whether the specified <see cref="LineItem"/> instances are considered equal.
         /// </summary>
-        /// <param name="a">The first <c cref="LineItem"/> to compare.</param>
+        /// <param name="a">The first <see cref="LineItem"/> to compare.</param>
         /// <param name="b">The second <c>LineItem</c> to compare.</param>
         /// <returns>true if objA is the same instance as objB or if both are null references or if objA.Equals(objB) returns true; otherwise, false.</returns>
         public bool Equals(LineItem a, LineItem b)
