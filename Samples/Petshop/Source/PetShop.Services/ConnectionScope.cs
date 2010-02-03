@@ -174,8 +174,8 @@ namespace PetShop.Services
 		}
 
 		/// <summary>
-		/// Validates an existing <c cref="TransactionManager" /> if one exists,
-		/// otherwise creates a new <c cref="TransactionManager" /> to use.
+		/// Validates an existing <see cref="TransactionManager" /> if one exists,
+		/// otherwise creates a new <see cref="TransactionManager" /> to use.
 		/// </summary>
 		public static TransactionManager ValidateOrCreateTransaction()
 		{
@@ -183,8 +183,8 @@ namespace PetShop.Services
 		}
 		
 		/// <summary>
-		/// Validates an existing <c cref="TransactionManager" /> if one exists,
-		/// otherwise creates a new <c cref="TransactionManager" /> to use.
+		/// Validates an existing <see cref="TransactionManager" /> if one exists,
+		/// otherwise creates a new <see cref="TransactionManager" /> to use.
 		/// </summary>
 		/// <param name="createTransaction">determines whether to create a new transaction</param>
 		public static TransactionManager ValidateOrCreateTransaction(bool createTransaction)
@@ -227,9 +227,9 @@ namespace PetShop.Services
 		
 		/// <summary>
 		/// Creates a new transaction on the current <c>ConnectionScope</c>
-		/// with the specified <c cref="System.Data.IsolationLevel" />.
+		/// with the specified <see cref="System.Data.IsolationLevel" />.
 		/// </summary>
-		/// <param name="level">Determines which <c cref="System.Data.IsolationLevel" /> to use for the transaction.</param>
+		/// <param name="level">Determines which <see cref="System.Data.IsolationLevel" /> to use for the transaction.</param>
 		public static TransactionManager CreateTransaction(IsolationLevel level)
 		{
 			Current.TransactionManager = Current.DataProvider.CreateTransaction();

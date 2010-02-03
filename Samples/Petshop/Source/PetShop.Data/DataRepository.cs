@@ -128,7 +128,7 @@ namespace PetShop.Data
         }
 		
 		/// <summary>
-		/// Creates a new <c cref="TransactionManager"/> instance from the current datasource.
+		/// Creates a new <see cref="TransactionManager"/> instance from the current datasource.
 		/// </summary>
 		/// <returns></returns>
 		public TransactionManager CreateTransaction()

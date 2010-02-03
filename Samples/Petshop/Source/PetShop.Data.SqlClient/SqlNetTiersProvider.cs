@@ -140,7 +140,7 @@ namespace PetShop.Data.SqlClient
         }
 		
 		/// <summary>
-		/// Creates a new <c cref="TransactionManager"/> instance from the current datasource.
+		/// Creates a new <see cref="TransactionManager"/> instance from the current datasource.
 		/// </summary>
 		/// <returns></returns>
 		public override TransactionManager CreateTransaction()
@@ -181,7 +181,7 @@ namespace PetShop.Data.SqlClient
 	    }		
 		
 		///<summary>
-		/// Indicates if the current <c cref="NetTiersProvider"/> implementation supports Transacton.
+		/// Indicates if the current <see cref="NetTiersProvider"/> implementation supports Transacton.
 		///</summary>
 		public override bool IsTransactionSupported
 		{
@@ -220,7 +220,7 @@ namespace PetShop.Data.SqlClient
 		}
 		
 		/// <summary>
-		/// Gets the current <c cref="SqlOrderStatusProvider"/>.
+		/// Gets the current <see cref="SqlOrderStatusProvider"/>.
 		/// </summary>
 		/// <value></value>
 		public SqlOrderStatusProvider SqlOrderStatusProvider
@@ -259,7 +259,7 @@ namespace PetShop.Data.SqlClient
 		}
 		
 		/// <summary>
-		/// Gets the current <c cref="SqlCartProvider"/>.
+		/// Gets the current <see cref="SqlCartProvider"/>.
 		/// </summary>
 		/// <value></value>
 		public SqlCartProvider SqlCartProvider
@@ -298,7 +298,7 @@ namespace PetShop.Data.SqlClient
 		}
 		
 		/// <summary>
-		/// Gets the current <c cref="SqlOrderProvider"/>.
+		/// Gets the current <see cref="SqlOrderProvider"/>.
 		/// </summary>
 		/// <value></value>
 		public SqlOrderProvider SqlOrderProvider
@@ -337,7 +337,7 @@ namespace PetShop.Data.SqlClient
 		}
 		
 		/// <summary>
-		/// Gets the current <c cref="SqlInventoryProvider"/>.
+		/// Gets the current <see cref="SqlInventoryProvider"/>.
 		/// </summary>
 		/// <value></value>
 		public SqlInventoryProvider SqlInventoryProvider
@@ -376,7 +376,7 @@ namespace PetShop.Data.SqlClient
 		}
 		
 		/// <summary>
-		/// Gets the current <c cref="SqlSupplierProvider"/>.
+		/// Gets the current <see cref="SqlSupplierProvider"/>.
 		/// </summary>
 		/// <value></value>
 		public SqlSupplierProvider SqlSupplierProvider
@@ -415,7 +415,7 @@ namespace PetShop.Data.SqlClient
 		}
 		
 		/// <summary>
-		/// Gets the current <c cref="SqlCategoryProvider"/>.
+		/// Gets the current <see cref="SqlCategoryProvider"/>.
 		/// </summary>
 		/// <value></value>
 		public SqlCategoryProvider SqlCategoryProvider
@@ -454,7 +454,7 @@ namespace PetShop.Data.SqlClient
 		}
 		
 		/// <summary>
-		/// Gets the current <c cref="SqlProductProvider"/>.
+		/// Gets the current <see cref="SqlProductProvider"/>.
 		/// </summary>
 		/// <value></value>
 		public SqlProductProvider SqlProductProvider
@@ -493,7 +493,7 @@ namespace PetShop.Data.SqlClient
 		}
 		
 		/// <summary>
-		/// Gets the current <c cref="SqlLineItemProvider"/>.
+		/// Gets the current <see cref="SqlLineItemProvider"/>.
 		/// </summary>
 		/// <value></value>
 		public SqlLineItemProvider SqlLineItemProvider
@@ -532,7 +532,7 @@ namespace PetShop.Data.SqlClient
 		}
 		
 		/// <summary>
-		/// Gets the current <c cref="SqlAccountProvider"/>.
+		/// Gets the current <see cref="SqlAccountProvider"/>.
 		/// </summary>
 		/// <value></value>
 		public SqlAccountProvider SqlAccountProvider
@@ -571,7 +571,7 @@ namespace PetShop.Data.SqlClient
 		}
 		
 		/// <summary>
-		/// Gets the current <c cref="SqlProfileProvider"/>.
+		/// Gets the current <see cref="SqlProfileProvider"/>.
 		/// </summary>
 		/// <value></value>
 		public SqlProfileProvider SqlProfileProvider
@@ -610,7 +610,7 @@ namespace PetShop.Data.SqlClient
 		}
 		
 		/// <summary>
-		/// Gets the current <c cref="SqlItemProvider"/>.
+		/// Gets the current <see cref="SqlItemProvider"/>.
 		/// </summary>
 		/// <value></value>
 		public SqlItemProvider SqlItemProvider

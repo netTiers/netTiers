@@ -1780,9 +1780,9 @@ namespace PetShop.Business
         }
 
 		/// <summary>
-        /// Determines whether the specified <c cref="Account"/> instances are considered equal.
+        /// Determines whether the specified <see cref="Account"/> instances are considered equal.
         /// </summary>
-        /// <param name="a">The first <c cref="Account"/> to compare.</param>
+        /// <param name="a">The first <see cref="Account"/> to compare.</param>
         /// <param name="b">The second <c>Account</c> to compare.</param>
         /// <returns>true if objA is the same instance as objB or if both are null references or if objA.Equals(objB) returns true; otherwise, false.</returns>
         public bool Equals(Account a, Account b)

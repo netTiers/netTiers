@@ -393,7 +393,7 @@ namespace PetShop.Business
       }
 
       /// <summary>
-      /// Force the filtering of the collection, based on the filter expression set through the <c cref="Filter"/> property.
+      /// Force the filtering of the collection, based on the filter expression set through the <see cref="Filter"/> property.
       /// </summary>
       public void ApplyFilter()
       {
