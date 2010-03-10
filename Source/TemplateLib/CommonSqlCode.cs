@@ -5816,17 +5816,8 @@ CREATE\s+PROC(?:EDURE)?                               # find the start of the st
 
 			switch (version)
 			{
-				case MoM.Templates.EntLibVersion.v2 :
-					entlibVersionText = "Version=2.0.0.0, Culture=neutral, PublicKeyToken=null";
-					break;
-				case MoM.Templates.EntLibVersion.v3 :
-					entlibVersionText = "Version=3.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a";
-					break;
 				case MoM.Templates.EntLibVersion.v3_1 :
 					entlibVersionText = "Version=3.1.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a";
-					break;
-				case MoM.Templates.EntLibVersion.v4 :
-					entlibVersionText = "Version=4.0.0.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35";
 					break;
                 case MoM.Templates.EntLibVersion.v4_1 :
                     entlibVersionText = "Version=4.1.0.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35";
@@ -5845,17 +5836,8 @@ CREATE\s+PROC(?:EDURE)?                               # find the start of the st
 
 			switch (version)
 			{
-				case MoM.Templates.EntLibVersion.v2 :
-					entlibOBVersionText = "Version=1.0.51205.0, Culture=neutral, PublicKeyToken=null";
-					break;
-				case MoM.Templates.EntLibVersion.v3 :
-					entlibOBVersionText = "Version=1.0.51206.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a";
-					break;
 				case MoM.Templates.EntLibVersion.v3_1 :
 					entlibOBVersionText = "Version=1.0.51206.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a";
-					break;
-				case MoM.Templates.EntLibVersion.v4 :
-					entlibOBVersionText = "Version=2.1.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a";
 					break;
                 case MoM.Templates.EntLibVersion.v4_1 :
                     entlibOBVersionText = "Version=2.2.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a";
@@ -5874,12 +5856,9 @@ CREATE\s+PROC(?:EDURE)?                               # find the start of the st
 
 			switch (version)
 			{
-				case MoM.Templates.EntLibVersion.v2 :
-				case MoM.Templates.EntLibVersion.v3 :
 				case MoM.Templates.EntLibVersion.v3_1 :
 					entlibOBClassName = "ObjectBuilder";
 					break;
-				case MoM.Templates.EntLibVersion.v4 :
                 case MoM.Templates.EntLibVersion.v4_1 :
                     entlibOBClassName = "ObjectBuilder2";
 					break;
@@ -6042,14 +6021,8 @@ CREATE\s+PROC(?:EDURE)?                               # find the start of the st
 	/// </summary>
 	public enum EntLibVersion : byte
 	{
-		/// <summary>Use Enterprise Library version 2.0.</summary>
-		v2 = 0,
-		/// <summary>Use Enterprise Library version 3.0.</summary>
-		v3 = 1,
 		/// <summary>Use Enterprise Library version 3.1.</summary>
 		v3_1 = 2,
-		/// <summary>Use Enterprise Library version 4.0</summary>
-		v4 = 3,
 		/// <summary>Use Enterprise Library version 4.1</summary>
 		v4_1 = 4
 	}
