@@ -97,18 +97,18 @@ namespace <%=UTNameSpace%>
    public partial class <%=unitTestClassName%>
     {
     	// the <%=className%> instance used to test the repository.
-		private <%=className%> mock;
+		protected <%=className%> mock;
 		
 		// the <%=collectionClassName%> instance used to test the repository.
-		private <%=collectionClassName%> mockCollection;
+		protected <%=collectionClassName%> mockCollection;
 		
-		private static TransactionManager CreateTransaction()
+		protected static TransactionManager CreateTransaction()
 		{
 			TransactionManager transactionManager = null;
 			if (DataRepository.Provider.IsTransactionSupported)
 			{
 				transactionManager = DataRepository.Provider.CreateTransaction();
-				transactionManager.BeginTransaction(System.Data.IsolationLevel.ReadUncommitted);
+				transactionManager.BeginTransaction(System.Data.IsolationLevel.ReadCommitted);
 			}			
 			return transactionManager;
 		}
@@ -465,7 +465,7 @@ namespace <%=UTNameSpace%>
 			
 				<% for (int x=0; x < cols.Count; x++)
 				{ %>
-				<% if ( !cols[x].IsForeignKeyMember && !IsIdentityColumn(cols[x]) && !IsComputed(cols[x]) && IsColumnFindable(cols[x]) )
+				<% if ( !IsComputed(cols[x]) && IsColumnFindable(cols[x]) )
 				{ %>
 				<% if(cols[x].AllowDBNull) {%>
 				if(mock.<%= GetPropertyName(cols[x]) %> != null)

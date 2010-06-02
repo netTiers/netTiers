@@ -126,7 +126,7 @@ end;
 		if (IncludeGetList)
 		{%>
 		
-		<procedure owner="<%=owner%>" name="<%= ProcedurePrefix + commandStem + SelectSuffix + SelectAllSuffix %>" >
+		<procedure owner="<%=owner%>" name="<%= abbreviate(ProcedurePrefix + commandStem + SelectSuffix + SelectAllSuffix) %>" >
 			<comment><![CDATA[<%= GetProcSqlComment(string.Format("Gets all records from the {0} table", name), tableComment) %>]]></comment>
 			<parameters>
 				<parameter name="cur_OUT" type="types.cursorType" direction="InputOutput" />
@@ -152,7 +152,7 @@ end;
 		%>
 		
 		//GetPaged
-		<procedure owner="<%=owner%>" name="<%= ProcedurePrefix + commandStem + SelectSuffix + "Paged" %>" >
+		<procedure owner="<%=owner%>" name="<%= abbreviate(ProcedurePrefix + commandStem + SelectSuffix + "Paged") %>" >
 			<comment><![CDATA[<%= GetProcSqlComment(string.Format("Gets records from the {0} table passing page index and page count parameters", name), tableComment) %>]]></comment>
 			<parameters>
 				<parameter name="p_WhereClause" type="varchar2" direction="Input" precision="0" scale="0" />
@@ -181,7 +181,7 @@ end;
 					dynamicSQL := dynamicSQL || ' ORDER BY ' || p_OrderBy;
 				END IF;
 				
-				dynamicSQL := dynamicSQL || ') x ) WHERE r BETWEEN (:p_PageSize * :p_PageIndex) AND (:p_PageSize * :p_PageIndex + :p_PageSize)';
+				dynamicSQL := dynamicSQL || ') x ) WHERE r BETWEEN (:p_PageSize * :p_PageIndex + 1) AND (:p_PageSize * :p_PageIndex + :p_PageSize)';
 				
 				-- Execution the query
 				OPEN cur_OUT FOR dynamicSQL USING p_PageSize, p_PageIndex, p_PageSize, p_PageIndex, p_PageSize;
@@ -189,7 +189,7 @@ end;
 			]]></body>
 		</procedure>
 		
-		<procedure owner="<%=owner%>" name="<%= ProcedurePrefix + commandStem + SelectSuffix + "PagedCount" %>" >
+		<procedure owner="<%=owner%>" name="<%= abbreviate(ProcedurePrefix + commandStem + SelectSuffix + "PagedCount") %>" >
 			<parameters>
 				<parameter name="p_WhereClause" type="varchar2" direction="Input" precision="0" scale="0" />
 				<parameter name="p_OrderBy" type="varchar2" direction="Input" precision="0" scale="0" />
@@ -225,7 +225,7 @@ end;
 		// Insert
 		if (IncludeInsert)
 		{%>
-		<procedure owner="<%=owner%>" name="<%= ProcedurePrefix + commandStem + InsertSuffix %>" >
+		<procedure owner="<%=owner%>" name="<%= abbreviate(ProcedurePrefix + commandStem + InsertSuffix) %>" >
 			<comment><![CDATA[<%= GetProcSqlComment(string.Format("Inserts a record into the {0} table", name), tableComment) %>]]></comment>
 			<parameters>
 				<% 
@@ -300,7 +300,7 @@ end;
 		// -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- 
 		if (IncludeUpdate) 
 		{%>
-		<procedure owner="<%=owner%>" name="<%= ProcedurePrefix + commandStem + UpdateSuffix %>" >
+		<procedure owner="<%=owner%>" name="<%= abbreviate(ProcedurePrefix + commandStem + UpdateSuffix) %>" >
 			<comment><![CDATA[<%= GetProcSqlComment(string.Format("Updates a record in the {0} table", name), tableComment) %>]]></comment>
 			<parameters>
 				<% 
@@ -401,7 +401,7 @@ end;
 		// -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- 
 		if (IncludeDelete && SourceTable.PrimaryKey != null) 
 		{%>
-		<procedure owner="<%=owner%>" name="<%= ProcedurePrefix + commandStem + DeleteSuffix %>" >
+		<procedure owner="<%=owner%>" name="<%= abbreviate(ProcedurePrefix + commandStem + DeleteSuffix) %>" >
 			<comment><![CDATA[<%= GetProcSqlComment(string.Format("Deletes a record in the {0} table", name), tableComment) %>]]></comment>
 			<parameters>
 			<% 
@@ -444,7 +444,7 @@ end;
 					
 				getbyKeys.Add(GetKeysName(fkeys[j].ForeignKeyMemberColumns));
 %>
-		<procedure owner="<%=owner%>" name="<%= GetProcNameForGetByIX(ProcedurePrefix + commandStem + SelectSuffix + "By", fkeys[j].ForeignKeyMemberColumns) %>" >
+		<procedure owner="<%=owner%>" name="<%= abbreviate(ProcedurePrefix + commandStem + SelectSuffix + "By" + GetKeysName(fkeys[j].ForeignKeyMemberColumns)) %>" >
 			<comment><![CDATA[<%= GetProcSqlComment(string.Format("Select records from the {0} table through a foreign key", SourceTable.Name), "") %>]]></comment>
 			<parameters>
 			<% 
@@ -497,7 +497,7 @@ end;
 					getbyKeys.Add(GetKeysName(indexes[j].MemberColumns));
 				}
 %>
-		<procedure owner="<%=owner%>" name="<%= GetProcNameForGetByIX(ProcedurePrefix + commandStem + SelectSuffix + "By", indexes[j].MemberColumns) %>" >
+		<procedure owner="<%=owner%>" name="<%= abbreviate(ProcedurePrefix + commandStem + SelectSuffix + "By" + GetKeysName(indexes[j].MemberColumns)) %>" >
 			<comment><![CDATA[<%= GetProcSqlComment(string.Format("Select records from the {0} table through an index", SourceTable.Name), "") %>]]></comment>
 			<parameters>
 			<%	for (int i = 0; i < indexes[j].MemberColumns.Count; i++) 
@@ -552,7 +552,7 @@ end;
 																			
 							string functionname = GetManyToManyName(junctionTableKey, junctionTable);
 			%>
-			<procedure owner="<%=owner%>" name="<%= ProcedurePrefix + commandStem + SelectSuffix + "By" + functionname %>" >
+			<procedure owner="<%=owner%>" name="<%= abbreviate(ProcedurePrefix + commandStem + SelectSuffix + "By" + functionname) %>" >
 			<comment><![CDATA[<%= GetProcSqlComment("Gets records through a junction table", "") %>]]></comment>
 			<parameters>
 			<% 
@@ -594,7 +594,7 @@ SELECT <% for (int i = 0; i < primaryTable.Columns.Count; i++)
 					} // if
 				} // foreach
 				
-				%>)		
+				%>);		
 				]]></body>
 		</procedure>
 <%						
@@ -606,7 +606,7 @@ SELECT <% for (int i = 0; i < primaryTable.Columns.Count; i++)
 		// -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- 
 		if(IncludeFind)
 		{%>
-		<procedure owner="<%=owner%>" name="<%= ProcedurePrefix + commandStem + FindSuffix %>" >
+		<procedure owner="<%=owner%>" name="<%= abbreviate(ProcedurePrefix + commandStem + FindSuffix) %>" >
 			<comment><![CDATA[<%= GetProcSqlComment(string.Format("Finds records in the {0} table passing nullable parameters", name), tableComment) %>]]></comment>
 			<parameters>
 				<parameter name="p_SearchUsingOR" type="NUMBER" direction="Input" />
@@ -673,7 +673,7 @@ SELECT <% for (int i = 0; i < primaryTable.Columns.Count; i++)
 
 		<% if ( SourceTable.PrimaryKey != null ) { %>
 		
-		<procedure owner="<%=owner%>" name="<%= ProcedurePrefix + commandStem + FindSuffix + "_Dynamic" %>" >
+		<procedure owner="<%=owner%>" name="<%= abbreviate(ProcedurePrefix + commandStem + FindSuffix + "_Dynamic") %>" >
 			<comment><![CDATA[<%= GetProcSqlComment(string.Format("Gets records from the {0} table using a dynamically generated query.", name), tableComment) %>]]></comment>
 			<parameters>
                 <parameter name="Param0" type="NUMBER" direction="Input" />
@@ -715,7 +715,7 @@ SELECT <% for (int i = 0; i < primaryTable.Columns.Count; i++)
 		
 		if (IncludeGetList) 
 		{%>
-		<procedure owner="<%=owner%>" name="<%= ProcedurePrefix + commandStem + SelectSuffix + SelectAllSuffix %>" >
+		<procedure owner="<%=owner%>" name="<%= abbreviate(ProcedurePrefix + commandStem + SelectSuffix + SelectAllSuffix) %>" >
 			<comment><![CDATA[<%= GetProcSqlComment(string.Format("Gets all records from the {0} view", name), tableComment) %>]]></comment>
 			<parameters>
 				<parameter name="cur_OUT" type="types.cursorType" direction="InputOutput" />
@@ -738,7 +738,7 @@ SELECT <% for (int i = 0; i < primaryTable.Columns.Count; i++)
 			]]></body>
 		</procedure>
 		
-		<procedure owner="<%=owner%>" name="<%= ProcedurePrefix + commandStem + SelectSuffix %>" >
+		<procedure owner="<%=owner%>" name="<%= abbreviate(ProcedurePrefix + commandStem + SelectSuffix) %>" >
 			<comment><![CDATA[<%= GetProcSqlComment(string.Format("Gets records from the {0} view passing page index and page count parameters", name), tableComment) %>]]></comment>
 			<parameters>
 				<parameter name="p_WhereClause" type="varchar2" direction="Input" precision="0" scale="0"  />
@@ -770,7 +770,7 @@ SELECT <% for (int i = 0; i < primaryTable.Columns.Count; i++)
 		
 		if ( IncludeFind ) { %>
 		
-		<procedure owner="<%=owner%>" name="<%= ProcedurePrefix + commandStem + FindSuffix %>_Dynamic" skip="true">
+		<procedure owner="<%=owner%>" name="<%= abbreviate(ProcedurePrefix + commandStem + FindSuffix) %>_Dynamic" skip="true">
 			<comment><![CDATA[<%= GetProcSqlComment(string.Format("Gets records from the {0} table using a dynamically generated query.", name), tableComment) %>]]></comment>
 			<parameters>
 				<parameter name="cur_OUT" type="types.cursorType" direction="InputOutput" />
@@ -922,4 +922,5 @@ public string GetPagedHelper(ColumnSchema column)
 	}
 	return param;
 }
+
 </script>

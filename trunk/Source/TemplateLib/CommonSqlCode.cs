@@ -73,9 +73,16 @@ namespace MoM.Templates
             get {return _parameterPrefix;}
             set {_parameterPrefix=value;}
         }
+        private string providerInvariantName = string.Empty;
 
-        #endregion
+        public string ProviderInvariantName
+        {
+			get {return providerInvariantName;}
+			set {providerInvariantName = value;}      
+        }
 
+		#endregion
+        
         #region CSharpKeywords
 
         protected string[] csharpKeywords = new string[77]
@@ -2877,15 +2884,32 @@ namespace MoM.Templates
             return param.ToString();
         }
 
-        public bool IsColumnFindable(ColumnSchema column)
-        {
-            if (column.DataType == DbType.Binary || column.NativeType == "text" ||
+		public bool IsColumnFindable(ColumnSchema column)
+		{
+            if (ProviderInvariantName == "System.Data.OracleClient")
+            { 
+                if (column.DataType == DbType.Binary || 
+                    column.DataType == DbType.Date ||
+                    column.DataType == DbType.DateTime ||
+                    column.DataType == DbType.Time ||
+                    column.NativeType == "text" ||
+                    column.NativeType == "ntext" ||
+                    column.NativeType == "timestamp" ||
+                    column.NativeType == "Date" ||
+                    column.NativeType == "DateTime" ||
+                    column.NativeType == "Time" ||
+                    column.NativeType == "xml")
+                    return false;
+            }
+            else
+            {
+                if (column.DataType == DbType.Binary || column.NativeType == "text" ||
                     column.NativeType == "ntext" ||
                     column.NativeType == "timestamp" ||
                     column.NativeType == "image" ||
                     column.NativeType == "xml")
-                return false;
-
+				return false;
+            }
             return true;
         }
 
@@ -2974,25 +2998,25 @@ namespace MoM.Templates
             return GetSqlParameterXmlNode(column, GetPropertyName(column), isOutput, allowNull);
         }
 
-        /// <summary>
-        /// Get a SqlParameter statement for a column
-        /// </summary>
-        /// <param name="column">Column for which to get the Sql parameter statement</param>
-        /// <param name="parameterName">the name of the parameter?</param>
-        /// <param name="isOutput">indicates the direction</param>
-        /// <param name="allowNull">indicates whether to give each parameter a null or empty default.  (used mainly for Find sp's)</param>
-        /// <returns>the xml Sql Parameter statement</returns>
-        public string GetSqlParameterXmlNode(ColumnSchema column, string parameterName, bool isOutput, bool allowNull)
-        {
-            return GetSqlParameterXmlNode(    parameterName,
-                                            column.NativeType,
-                                            isOutput ? "Output" : "Input", // this won't handle bi-directional parameters
-                                            column.Size,
-                                            column.Precision,
-                                            column.Scale,
+		/// <summary>
+		/// Get a SqlParameter statement for a column
+		/// </summary>
+		/// <param name="column">Column for which to get the Sql parameter statement</param>
+		/// <param name="parameterName">the name of the parameter?</param>
+		/// <param name="isOutput">indicates the direction</param>
+		/// <param name="allowNull">indicates whether to give each parameter a null or empty default.  (used mainly for Find sp's)</param>
+		/// <returns>the xml Sql Parameter statement</returns>
+		public string GetSqlParameterXmlNode(ColumnSchema column, string parameterName, bool isOutput, bool allowNull)
+		{
+			return GetSqlParameterXmlNode(	parameterName,
+											column.NativeType,
+											isOutput ? "Output" : "Input", // this won't handle bi-directional parameters
+											column.Size,
+											column.Precision,
+											column.Scale,
                                             (string.Compare(column.NativeType, "real", true) == 0) ? string.Empty : GetSqlParameterParam<ColumnSchema>(column),
-                                            allowNull);
-        }
+											allowNull);
+		}
 
         /// <summary>
         /// Get an xml representation for a stored procedure parameter - this is for pre-existing (most likely, custom) Stored Procedures
@@ -4276,9 +4300,9 @@ CREATE\s+PROC(?:EDURE)?                               # find the start of the st
                 }
             }
 
-            //Randomize the size on large string.
-            if(size > 20)
-                size = (size/2) - 1;
+			//Randomize the size on large string.
+			if(size > 10)
+				size = (size/2) - 1;
 
             return RandomString(size, lowerCase);
         }
@@ -5982,7 +6006,170 @@ CREATE\s+PROC(?:EDURE)?                               # find the start of the st
                 break;
             }
 
-            return versionNumber;
+			return versionNumber;
+		}
+	
+        /// <summary>
+        /// Abbreviate string exceed Oracle's 30 character limitation
+        /// </summary>
+        /// <param name="StrToAbbrev">String needing to be abbreviated</param>
+        /// <returns>Abbreviated string</returns>
+        public string abbreviate(string StrToAbbrev)
+        {
+            if(StrToAbbrev.ToUpper().Contains("ACTION_GROUP_GETBYGROUPACTIO")){
+                System.Diagnostics.Debugger.Break();
+            }
+            
+            if (StrToAbbrev.Length >= 30)
+            {
+                if (StrToAbbrev.ToUpper().Contains("PACKAGE"))
+                {
+                    StrToAbbrev = StrToAbbrev.ToUpper().Replace("PACKAGE", "Pkg");
+                }
+                if (StrToAbbrev.ToUpper().Contains("PRODUCT"))
+                {
+                    StrToAbbrev = StrToAbbrev.ToUpper().Replace("PRODUCT", "Prod");
+                }
+                if (StrToAbbrev.ToUpper().Contains("USERS"))
+                {
+                    StrToAbbrev = StrToAbbrev.ToUpper().Replace("USERS", "Usr");
+                }
+                if (StrToAbbrev.ToUpper().Contains("USER"))
+                {
+                    StrToAbbrev = StrToAbbrev.ToUpper().Replace("USER", "Usr");
+                }
+                if (StrToAbbrev.ToUpper().Contains("TABLE"))
+                {
+                    StrToAbbrev = StrToAbbrev.ToUpper().Replace("TABLE", "Tbl");
+                }
+                if (StrToAbbrev.ToUpper().Contains("Pending"))
+                {
+                    StrToAbbrev = StrToAbbrev.ToUpper().Replace("Pending", "Pend");
+                }
+                if (StrToAbbrev.ToUpper().Contains("PERSON"))
+                {
+                    StrToAbbrev = StrToAbbrev.ToUpper().Replace("PERSON", "Pers");
+                }
+                if (StrToAbbrev.ToUpper().Contains("COUNT"))
+                {
+                    StrToAbbrev = StrToAbbrev.ToUpper().Replace("COUNT", "Cnt");
+                }
+                if (StrToAbbrev.ToUpper().Contains("LIST"))
+                {
+                    StrToAbbrev = StrToAbbrev.ToUpper().Replace("LIST", "Lst");
+                }
+                if (StrToAbbrev.ToUpper().Contains("Paged"))
+                {
+                    StrToAbbrev = StrToAbbrev.ToUpper().Replace("Paged", "Pgd");
+                }
+                if (StrToAbbrev.ToUpper().Contains("COMPANY"))
+                {
+                    StrToAbbrev = StrToAbbrev.ToUpper().Replace("COMPANY", "Co");
+                }
+                if (StrToAbbrev.ToUpper().Contains("TARGET"))
+                {
+                    StrToAbbrev = StrToAbbrev.ToUpper().Replace("TARGET", "Trgt");
+                }
+                if (StrToAbbrev.ToUpper().Contains("CONTACT"))
+                {
+                    StrToAbbrev = StrToAbbrev.ToUpper().Replace("CONTACT", "Ctct");
+                }
+                if (StrToAbbrev.ToUpper().Contains("POSITION"))
+                {
+                   StrToAbbrev = StrToAbbrev.ToUpper().Replace("POSITION", "Posn");
+                }
+                if (StrToAbbrev.ToUpper().Contains("CREDIT"))
+                {
+                    StrToAbbrev = StrToAbbrev.ToUpper().Replace("CREDIT", "Crdt");
+                }
+                if (StrToAbbrev.ToUpper().Contains("CARD"))
+                {
+                    StrToAbbrev = StrToAbbrev.ToUpper().Replace("CARD", "Crd");
+                }
+                if (StrToAbbrev.ToUpper().Contains("TRANSACTION"))
+                {
+                    StrToAbbrev = StrToAbbrev.ToUpper().Replace("TRANSACTION", "Tran");
+                }
+                if (StrToAbbrev.ToUpper().Contains("INDUSTRY"))
+                {
+                   StrToAbbrev = StrToAbbrev.ToUpper().Replace("INDUSTRY", "Indy");
+                }
+                if (StrToAbbrev.ToUpper().Contains("GROUP"))
+                {
+                    StrToAbbrev = StrToAbbrev.ToUpper().Replace("GROUP", "Grp");
+                }
+                if (StrToAbbrev.ToUpper().Contains("LEVEL"))
+                {
+                    StrToAbbrev = StrToAbbrev.ToUpper().Replace("LEVEL", "Lvl");
+                }
+                if (StrToAbbrev.ToUpper().Contains("DEFAULT"))
+                {
+                    StrToAbbrev = StrToAbbrev.ToUpper().Replace("DEFAULT", "Dflt");
+                }
+                if (StrToAbbrev.ToUpper().Contains("LOCATION"))
+                {
+                    StrToAbbrev = StrToAbbrev.ToUpper().Replace("LOCATION", "Loc");
+                }
+                if (StrToAbbrev.ToUpper().Contains("INSTALLMENTS"))
+                {
+                    StrToAbbrev = StrToAbbrev.ToUpper().Replace("INSTALLMENTS", "Instlmnts");
+                }
+                if (StrToAbbrev.ToUpper().Contains("BILLING"))
+                {
+                   StrToAbbrev = StrToAbbrev.ToUpper().Replace("BILLING", "Bill");
+                }
+                if (StrToAbbrev.ToUpper().Contains("ORDER"))
+                {
+                    StrToAbbrev = StrToAbbrev.ToUpper().Replace("ORDER", "Ord");
+                }
+                if (StrToAbbrev.ToUpper().Contains("COMMISION"))
+                {
+                    StrToAbbrev = StrToAbbrev.ToUpper().Replace("COMMISION", "Comm");
+                }
+                if (StrToAbbrev.ToUpper().Contains("ITEM"))
+                {
+                   StrToAbbrev = StrToAbbrev.ToUpper().Replace("ITEM", "Itm");
+                }
+                if (StrToAbbrev.ToUpper().Contains("LINE"))
+                {
+                    StrToAbbrev = StrToAbbrev.ToUpper().Replace("LINE", "Ln");
+                }
+                if (StrToAbbrev.ToUpper().Contains("PRODUCTION"))
+                {
+                    StrToAbbrev = StrToAbbrev.ToUpper().Replace("PRODUCTION", "Prod");
+                }
+                if (StrToAbbrev.ToUpper().Contains("FREQUENCY"))
+                {
+                    StrToAbbrev = StrToAbbrev.ToUpper().Replace("FREQUENCY", "Freq");
+                }
+                if (StrToAbbrev.ToUpper().Contains("PAGE"))
+                {
+                    StrToAbbrev = StrToAbbrev.ToUpper().Replace("PAGE", "Pg");
+                }
+                if (StrToAbbrev.ToUpper().Contains("CUSTOMER"))
+                {
+                    StrToAbbrev = StrToAbbrev.ToUpper().Replace("CUSTOMER", "Cust");
+                }
+                if (StrToAbbrev.ToUpper().Contains("PROJECTION"))
+                {
+                    StrToAbbrev = StrToAbbrev.ToUpper().Replace("PROJECTION", "Proj");
+                }
+            }
+            
+            //Can there really be anything left over 30 characters
+            if (StrToAbbrev.Length >= 30)
+            {
+                if (StrToAbbrev.Contains("_"))
+                {
+                    StrToAbbrev = StrToAbbrev.Replace("_", "");
+                }
+            }
+            
+            if (StrToAbbrev.Length >= 30)
+            {
+                StrToAbbrev = StrToAbbrev.Substring(0, 30);                
+            }
+            return StrToAbbrev;
         }
     }
 

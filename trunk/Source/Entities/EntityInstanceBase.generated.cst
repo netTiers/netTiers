@@ -255,7 +255,8 @@ namespace <%=NameSpace%>
 				if (this.entityData.<%= GetPropertyName(cols[x]) %> == value)
 				<%}%>
 					return;
-					
+				
+                OnPropertyChanging("<%=GetPropertyName(cols[x]) %>");                    
 				OnColumnChanging(<%= GetClassName(SourceTable, ClassNameFormat.Column) %>.<%=GetPropertyName(cols[x]) %>, this.entityData.<%= GetPropertyName(cols[x]) %>);
 				this.entityData.<%= GetPropertyName(cols[x]) %> = value;
 				<% if ( cols[x].IsPrimaryKeyMember ) { %>
@@ -362,14 +363,15 @@ WriteRelationshipPropertyString();
 				new ValidationRuleArgs("<%=propertyName%>", "<%=friendlyName%>"));
 				<%							
 			}
-			
+			            
 			if (CanCheckLength(cols[x]))
 			{%>
 			ValidationRules.AddRule( CommonRules.StringMaxLength, 
-				new CommonRules.MaxLengthRuleArgs("<%=propertyName%>", "<%=friendlyName%>", <%=cols[x].Size%>));
+				new CommonRules.MaxLengthRuleArgs("<%=propertyName%>", "<%=friendlyName%>", <%=getColumnSize(cols[x].Size)%>));
 			<%
-			}			
-		}
+			}	
+            
+        }
 		%>		
 		}
    		#endregion
@@ -1603,5 +1605,14 @@ private void WriteRelationshipPropertyString()
 	
 	}///End foreach loop
 		
+}
+
+private int getColumnSize(int columnSize)
+{
+    if(columnSize == 0)
+    {
+        columnSize++;
+    }
+    return columnSize;
 }
 </script>

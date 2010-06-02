@@ -27,7 +27,7 @@ string entlibVersionText = GetEntLibVersionSignature(EntLibVersion);
     <add name="netTiersConnectionString" connectionString="<%=ConnectionString%>" />
   </connectionStrings>
 
-  <netTiersService defaultProvider="<% if (NetTiersSqlProvider) {%>SqlNetTiersProvider<% } else if (ProviderInvariantName == "System.Data.SqlServerCe.3.5") { %>SqlCeNetTiersProvider<% } else {%>GenericNetTiersProvider<%}%>">
+  <netTiersService defaultProvider="<% if (NetTiersSqlProvider) {%>SqlNetTiersProvider<% } else if (ProviderInvariantName == "System.Data.SqlServerCe.3.5") { %>SqlCeNetTiersProvider<% }  else if (ProviderInvariantName == "System.Data.OracleClient") { %>OracleNetTiersProvider<% } else {%>GenericNetTiersProvider<%}%>">
     <providers>
     <% if (NetTiersSqlProvider) { %>
     <!--
@@ -66,6 +66,27 @@ string entlibVersionText = GetEntLibVersionSignature(EntLibVersion);
         enableMethodAuthorization="false"
         defaultCommandTimeout="30"
         />
+    <% } else if (ProviderInvariantName == "System.Data.OracleClient") { %>     
+        <!--
+    *** OracleClient Provider ***
+    this is the Oracle DbProviderFactory .netTiers provider
+    	connectionStringName: the connection string to the db
+    	useStoredProcedure: if trueindicates that we use the stored procedures, otherwise, we use parametrized queries that are embedded.
+    	providerInvariantName: indicate the provider you want to use, for the moment only the following list is supported:
+    		- System.Data.OracleClient
+    -->
+      <add 
+        name="OracleNetTiersProvider" 
+        type="<%=DALNameSpace%>.OracleClient.OracleNetTiersProvider, <%=DALNameSpace%>.OracleClient"
+        connectionStringName="netTiersConnectionString"
+        useStoredProcedure="false"
+        providerInvariantName="<%=ProviderInvariantName%>"
+		entityFactoryType="<%= FactoryType %>"
+		useEntityFactory="true"
+		enableEntityTracking="false"
+        enableMethodAuthorization="false"
+        defaultCommandTimeout="30"
+        />   
     <% } else { %>
         <!--
     *** GenericClient Provider ***
