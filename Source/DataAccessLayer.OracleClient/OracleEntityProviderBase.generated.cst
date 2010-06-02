@@ -111,7 +111,7 @@ using System;
 using System.Data;
 using System.Data.Common;
 using System.Data.OracleClient;
-
+using System.Text;
 using Microsoft.Practices.EnterpriseLibrary.Data.Oracle;
 
 using <%=NameSpace%>;
@@ -236,7 +236,7 @@ namespace <%=DALNameSpace%>.OracleClient
 		public override <%=GetClassName(primaryTable, ClassNameFormat.Collection)%> GetBy<%=functionname%>(TransactionManager transactionManager, <%=GetFunctionHeaderParameters(junctionTableKey.ForeignKeyMemberColumns)%>, int start, int pageLength, out int count)
 		{
 			OracleDatabase database = new OracleDatabase(this._connectionString);
-			DbCommand command = database.GetStoredProcCommand("<%=owner + ProcedurePrefix + commandStem + SelectSuffix + "By" + functionname%>");
+			DbCommand command = database.GetStoredProcCommand("<%=owner + abbreviate(ProcedurePrefix + commandStem + SelectSuffix + "By" + functionname)%>");
 			
 			<% foreach(ColumnSchema col in junctionTableKey.ForeignKeyMemberColumns) { %>
 			database.AddInParameter(command, "p_<%=GetPropertyName(col)%>", DbType.<%=col.DataType.ToString()%>, <%=GetFieldName(col)%>);
@@ -300,7 +300,7 @@ namespace <%=DALNameSpace%>.OracleClient
 		public override bool Delete(TransactionManager transactionManager, <%= GetFunctionHeaderParameters(SourceTable.PrimaryKey.MemberColumns) %><% if(RowVersion != null) {Response.Write(", byte[] " + GetFieldName(RowVersion));}%>)
 		{
 			OracleDatabase database = new OracleDatabase(this._connectionString);
-			DbCommand command = database.GetStoredProcCommand("<%=owner + ProcedurePrefix + commandStem + DeleteSuffix%>");
+			DbCommand command = database.GetStoredProcCommand("<%=owner + abbreviate(ProcedurePrefix + commandStem + DeleteSuffix)%>");
 			<% for(int i = 0; i < SourceTable.PrimaryKey.MemberColumns.Count; i++) { 
 				ColumnSchema col = SourceTable.PrimaryKey.MemberColumns[i];
 			%>
@@ -372,7 +372,7 @@ namespace <%=DALNameSpace%>.OracleClient
 				return new <%=collectionClassName%>();
 	
 			OracleDatabase database = new OracleDatabase(this._connectionString);
-			DbCommand command = database.GetStoredProcCommand("<%=owner + ProcedurePrefix + commandStem + FindSuffix%>");
+			DbCommand command = database.GetStoredProcCommand("<%=owner + abbreviate(ProcedurePrefix + commandStem + FindSuffix)%>");
 
 			bool searchUsingOR = false;
 			if (whereClause.IndexOf("OR") > 0) // did they want to do "a=b OR c=d OR..."?
@@ -477,22 +477,25 @@ namespace <%=DALNameSpace%>.OracleClient
 				filter = new SqlFilterParameterCollection();
 			else 
 				filter = parameters.GetParameters();
-				
-			OracleDatabase database = new OracleDatabase(this._connectionString);
-			DbCommand command = database.GetStoredProcCommand("<%= owner + ProcedurePrefix + commandStem + FindSuffix %>_Dynamic");
+                            
+            OracleDatabase database = new OracleDatabase(this._connectionString);
 			
 			SqlFilterParameter param;
 
+		    int startRownum = start;
+		    int endRownum = startRownum + pageLength;
+
+            StringBuilder sb = new StringBuilder(String.Format(" SELECT <% foreach (var column in SourceTable.Columns.AsIndexedEnumerable()) {%><%= column.Value.Name%><% if(!column.IsLast){%>, <% }}%> FROM <%=owner%><%=SourceTable.Name%> WHERE ROWNUM > {0} AND ROWNUM < {1} ", startRownum, endRownum));
+
 			for ( int i = 0; i < filter.Count; i++ )
 			{
-				param = filter[i];
-				
-				string paramterName = param.Name;
-				if(paramterName != "curOut" && paramterName.StartsWith("p_"))
-				paramterName = string.Format("p_{0}", paramterName);
-				
-				database.AddInParameter(command, paramterName, param.DbType, param.Value);
-			}
+                param = filter[i];
+                sb.Append(String.Format(" AND trim({0}) LIKE '{1}' ", EntityHelper.GetEnumTextValue(param.Column), param.Value));
+            }
+
+		    sb.Append(orderBy);
+
+            DbCommand command = database.GetSqlStringCommand(sb.ToString());
 
 			<%= collectionClassName %> rows = new <%= collectionClassName %>();
 			IDataReader reader = null;
@@ -556,7 +559,7 @@ namespace <%=DALNameSpace%>.OracleClient
 		public override <%=collectionClassName%> GetAll(TransactionManager transactionManager, int start, int pageLength, out int count)
 		{
 			OracleDatabase database = new OracleDatabase(this._connectionString);
-			DbCommand command = database.GetStoredProcCommand("<%=owner + ProcedurePrefix + commandStem + SelectSuffix + SelectAllSuffix%>");
+			DbCommand command = database.GetStoredProcCommand("<%=owner + abbreviate(ProcedurePrefix + commandStem + SelectSuffix + SelectAllSuffix)%>");
 			
 			IDataReader reader = null;
 		
@@ -610,7 +613,7 @@ namespace <%=DALNameSpace%>.OracleClient
 		public override <%=collectionClassName%> GetPaged(TransactionManager transactionManager, string whereClause, string orderBy, int start, int pageLength, out int count)
 		{
 			OracleDatabase database = new OracleDatabase(this._connectionString);
-			DbCommand command = database.GetStoredProcCommand("<%=owner + ProcedurePrefix + commandStem + SelectSuffix + "Paged"%>");
+			DbCommand command = database.GetStoredProcCommand("<%=owner + abbreviate(ProcedurePrefix + commandStem + SelectSuffix + "Paged")%>");
 			
 			database.AddInParameter(command, "p_WhereClause", DbType.String, whereClause);
 			database.AddInParameter(command, "p_OrderBy", DbType.String, orderBy);
@@ -663,7 +666,7 @@ namespace <%=DALNameSpace%>.OracleClient
 			}
 			
 			// now we get the count
-			DbCommand commandCount = database.GetStoredProcCommand("<%=owner + ProcedurePrefix + commandStem + SelectSuffix + "PagedCount"%>");
+			DbCommand commandCount = database.GetStoredProcCommand("<%=owner + abbreviate(ProcedurePrefix + commandStem + SelectSuffix + "PagedCount")%>");
 			database.AddInParameter(commandCount, "p_WhereClause", DbType.String, whereClause);
 			database.AddInParameter(commandCount, "p_OrderBy", DbType.String, orderBy);
 			
@@ -726,7 +729,7 @@ namespace <%=DALNameSpace%>.OracleClient
 		public override <%=collectionClassName%> GetBy<%=GetKeysName(fkeys[j].ForeignKeyMemberColumns)%>(TransactionManager transactionManager, <%= GetFunctionHeaderParameters(fkeys[j].ForeignKeyMemberColumns) %>, int start, int pageLength, out int count)
 		{
 			OracleDatabase database = new OracleDatabase(this._connectionString);
-			DbCommand command = database.GetStoredProcCommand("<%=owner + GetProcNameForGetByIX( ProcedurePrefix + commandStem + SelectSuffix + "By" , fkeys[j].ForeignKeyMemberColumns ) %>");
+			DbCommand command = database.GetStoredProcCommand("<%=owner + abbreviate(ProcedurePrefix + commandStem + SelectSuffix + "By" + GetKeysName(fkeys[j].ForeignKeyMemberColumns )) %>");
 			
 			<% foreach(ColumnSchema col in fkeys[j].ForeignKeyMemberColumns) { %>
 				database.AddInParameter(command, "p_<%=GetPropertyName(col)%>", DbType.<%=col.DataType%>, <%=GetFieldName(col)%>);
@@ -825,7 +828,7 @@ namespace <%=DALNameSpace%>.OracleClient
 		public override <%=returnType%> GetBy<%=GetKeysName(indexes[j].MemberColumns)%>(TransactionManager transactionManager, <%= GetFunctionHeaderParameters(indexes[j].MemberColumns) %>, int start, int pageLength, out int count)
 		{
 			OracleDatabase database = new OracleDatabase(this._connectionString);
-			DbCommand command = database.GetStoredProcCommand("<%=owner + GetProcNameForGetByIX( ProcedurePrefix + commandStem + SelectSuffix + "By", indexes[j].MemberColumns ) %>");
+			DbCommand command = database.GetStoredProcCommand("<%=owner + abbreviate(ProcedurePrefix + commandStem + SelectSuffix + "By" + GetKeysName(indexes[j].MemberColumns )) %>");
 			
 			<% foreach(ColumnSchema col in indexes[j].MemberColumns) { %>
 				database.AddInParameter(command, "p_<%=GetPropertyName(col)%>", DbType.<%=col.DataType%>, <%=GetFieldName(col)%>);
@@ -985,7 +988,7 @@ namespace <%=DALNameSpace%>.OracleClient
 		public override bool Insert(TransactionManager transactionManager, <%=className%> entity)
 		{
 			OracleDatabase database = new OracleDatabase(this._connectionString);
-			DbCommand command = database.GetStoredProcCommand("<%=owner + ProcedurePrefix + commandStem + InsertSuffix %>");
+			DbCommand command = database.GetStoredProcCommand("<%=owner + abbreviate(ProcedurePrefix + commandStem + InsertSuffix) %>");
 			
 			<%			
 			for (int i = 0; i < cols.Count; i++)		
@@ -1069,7 +1072,7 @@ namespace <%=DALNameSpace%>.OracleClient
 		public override bool Update(TransactionManager transactionManager, <%=className%> entity)
 		{
 			OracleDatabase database = new OracleDatabase(this._connectionString);
-			DbCommand command = database.GetStoredProcCommand("<%=owner + ProcedurePrefix + commandStem + UpdateSuffix %>");
+			DbCommand command = database.GetStoredProcCommand("<%=owner + abbreviate(ProcedurePrefix + commandStem + UpdateSuffix) %>");
 			
 			<%		
 			//Debugger.Break();
@@ -1140,7 +1143,7 @@ namespace <%=DALNameSpace%>.OracleClient
 		
 			// get the updatable columns
 			
-			DbCommand command2 = database.GetStoredProcCommand("<%= ProcedurePrefix + commandStem + SelectSuffix + "By" + GetKeysName(SourceTable.PrimaryKey.MemberColumns) %>");
+			DbCommand command2 = database.GetStoredProcCommand("<%= abbreviate(ProcedurePrefix + commandStem + SelectSuffix + "By" + GetKeysName(SourceTable.PrimaryKey.MemberColumns)) %>");
 			<% for(int j=0; j<SourceTable.PrimaryKey.MemberColumns.Count; j++)
 			{%>
 			database.AddInParameter(command2, "p_<%=GetPropertyName(SourceTable.PrimaryKey.MemberColumns[j])%>", DbType.<%= SourceTable.PrimaryKey.MemberColumns[j].DataType.ToString() %>, entity.<%=GetPropertyName(SourceTable.PrimaryKey.MemberColumns[j])%>);
@@ -1233,7 +1236,7 @@ namespace <%=DALNameSpace%>.OracleClient
 		public override <%=returnType%> <%=methodName%>(TransactionManager transactionManager, int start, int pageLength <%=TransformStoredProcedureInputsToMethod(true, command.InputParameters) + TransformStoredProcedureOutputsToMethod(true, command.AllOutputParameters)%>)
 		{
 			OracleDatabase database = new OracleDatabase(this._connectionString);
-			DbCommand command = database.GetStoredProcCommand("<%=command.Name%>");
+			DbCommand command = database.GetStoredProcCommand("<%=abbreviate(command.Name)%>");
 			
 			<% foreach(ParameterSchema col in command.InputParameters)	{%>			
 				database.AddInParameter(command, "p_<%=GetPropertyName(col)%>", <%=GetDbType(col)%>,  <%=GetFieldName(col)%> );

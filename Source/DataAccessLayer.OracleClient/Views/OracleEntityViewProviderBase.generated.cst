@@ -60,6 +60,8 @@ using System;
 using System.Data;
 using System.Data.Common;
 
+using System.Text;
+using System.Data.OracleClient;
 using Microsoft.Practices.EnterpriseLibrary.Data.Oracle;
 
 using <%=NameSpace%>;
@@ -160,7 +162,7 @@ public abstract partial class <%=providerBaseName%> : <%=GetClassName(SourceView
 	public override <%=collectionClassName%> <%= MethodNames.GetAll %>(TransactionManager transactionManager, int start, int pageLength, out int count)
 	{
 		OracleDatabase database = new OracleDatabase(this._connectionString);
-		DbCommand command = database.GetStoredProcCommand("<%=owner + ProcedurePrefix + GetCleanName(name) + SelectSuffix + SelectAllSuffix%>");
+		DbCommand command = database.GetStoredProcCommand("<%=owner + abbreviate(ProcedurePrefix + GetCleanName(name) + SelectSuffix + SelectAllSuffix)%>");
 		
 		IDataReader reader = null;
 		//Create Collection
@@ -214,13 +216,13 @@ public abstract partial class <%=providerBaseName%> : <%=GetClassName(SourceView
 	public override <%=collectionClassName%> <%= MethodNames.Get %>(TransactionManager transactionManager, string whereClause, string orderBy, int start, int pageLength, out int count)
 	{
 		OracleDatabase database = new OracleDatabase(this._connectionString);
-		DbCommand command = database.GetStoredProcCommand("<%=owner + ProcedurePrefix + GetCleanName(name) + SelectSuffix%>");
-		
-		database.AddInParameter(command, "@p_WhereClause", DbType.String, whereClause);
-		database.AddInParameter(command, "@p_OrderBy", DbType.String, orderBy);
-	
+        if (!string.IsNullOrEmpty(whereClause)) whereClause = " where " + whereClause;
+        if (!string.IsNullOrEmpty(orderBy)) orderBy = " order by " + orderBy;
+        string query = String.Format("SELECT <% foreach (var column in SourceView.Columns.AsIndexedEnumerable()) {%><%= column.Value.Name%><% if(!column.IsLast){%>, <% }}%> from <%=owner + GetCleanName(name)%> {0} {1} ", whereClause, orderBy);
+        OracleCommand command = (OracleCommand)database.GetSqlStringCommand(query);
+
 		IDataReader reader = null;
-		//Create Collection
+		//Create Collection <%=owner%>.<%= SourceView.Name %>
 		<%=collectionClassName%> rows = new <%=collectionClassName%>();
 		
 		try
@@ -273,60 +275,67 @@ public abstract partial class <%=providerBaseName%> : <%=GetClassName(SourceView
 	/// <param name="count">out. The number of rows that match this query.</param>
 	/// <returns>Returns a typed collection of <%= className %> objects.</returns>
 	public override <%=collectionClassName%> <%= MethodNames.Find %>(TransactionManager transactionManager, IFilterParameterCollection parameters, string orderBy, int start, int pageLength, out int count)
-	{
-		SqlFilterParameterCollection filter = null;
-		
-		if (parameters == null)
-			filter = new SqlFilterParameterCollection();
-		else 
-			filter = parameters.GetParameters();
-			
-		OracleDatabase database = new OracleDatabase(this._connectionString);
-		DbCommand command = database.GetStoredProcCommand("<%=owner + ProcedurePrefix + GetCleanName(name) + FindSuffix %>_Dynamic");
-		
-		SqlFilterParameter param;
-
-		for ( int i = 0; i < filter.Count; i++ )
 		{
-			param = filter[i];
-			database.AddInParameter(command, param.Name, param.DbType, param.GetValue());
-		}
-
-		<%= collectionClassName %> rows = new <%= collectionClassName %>();
-		IDataReader reader = null;
-		
-		try
-		{
-			if ( transactionManager != null )
-			{
-				reader = Utility.ExecuteReader(transactionManager, command);
-			}
-			else
-			{
-				reader = Utility.ExecuteReader(database, command);
-			}
+			SqlFilterParameterCollection filter = null;
 			
-			Fill(reader, rows, start, pageLength);
-
-			count = rows.Count;
+			if (parameters == null)
+				filter = new SqlFilterParameterCollection();
+			else 
+				filter = parameters.GetParameters();
+                            
+            OracleDatabase database = new OracleDatabase(this._connectionString);
 			
-			if ( reader.NextResult() )
+			SqlFilterParameter param;
+
+		    int startRownum = start;
+		    int endRownum = startRownum + pageLength;
+
+            StringBuilder sb = new StringBuilder(String.Format("select <% foreach (var column in SourceView.Columns.AsIndexedEnumerable()) {%><%= column.Value.Name%><% if(!column.IsLast){%>, <% }}%> FROM <%=owner%><%=SourceView.Name%> WHERE ROWNUM > {0} AND ROWNUM < {1} ", startRownum, endRownum));
+
+			for ( int i = 0; i < filter.Count; i++ )
 			{
-				if ( reader.Read() )
+                param = filter[i];
+                sb.Append(String.Format(" AND trim({0}) LIKE '{1}' ", EntityHelper.GetEnumTextValue(param.Column), param.Value));
+            }
+
+		    sb.Append(orderBy);
+
+            DbCommand command = database.GetSqlStringCommand(sb.ToString());
+
+			<%= collectionClassName %> rows = new <%= collectionClassName %>();
+			IDataReader reader = null;
+			
+			try
+			{
+				if ( transactionManager != null )
 				{
-					count = ( int )reader.GetDecimal(0);
+					reader = Utility.ExecuteReader(transactionManager, command);
+				}
+				else
+				{
+					reader = Utility.ExecuteReader(database, command);
+				}
+				
+				Fill(reader, rows, 0, int.MaxValue);
+				count = rows.Count;
+				
+				if ( reader.NextResult() )
+				{
+					if ( reader.Read() )
+					{
+						count = ( int )reader.GetDecimal(0);
+					}
 				}
 			}
+			finally
+			{
+				if ( reader != null )
+					reader.Close();
+			}
+			
+			return rows;
 		}
-		finally
-		{
-			if ( reader != null )
-				reader.Close();
-		}
-		
-		return rows;
-	}
-	
+        
 	#endregion Parameterized <%= MethodNames.Find %> Methods
 
 	#endregion 

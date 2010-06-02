@@ -58,7 +58,7 @@ namespace <%=NameSpace%>
 	<%
 	}
 	%>
-	public abstract partial class EntityBaseCore : IEntity, INotifyPropertyChanged, IDataErrorInfo, IDeserializationCallback
+	public abstract partial class EntityBaseCore : IEntity, INotifyPropertyChanged, IDataErrorInfo, IDeserializationCallback, INotifyPropertyChanging
 	{
 		#region Constructors
 		
@@ -304,6 +304,46 @@ namespace <%=NameSpace%>
 			
 			return entityHashCode.GetHashCode(); 
 		}
+        
+
+        #region INotifyPropertyChanging Members
+
+        /// <summary>
+        /// Event to indicate that a property is changing.
+        /// </summary>
+        [field: NonSerialized]
+        public event PropertyChangingEventHandler PropertyChanging;
+
+        /// <summary>
+        /// Called when a property is changing
+        /// </summary>
+        /// <param name="propertyName">The name of the property that is changing.</param>
+        protected virtual void OnPropertyChanging(string propertyName)
+        {
+            if (!suppressEntityEvents)
+            {
+                OnPropertyChanging(new PropertyChangingEventArgs(propertyName));
+            }
+        }
+
+        /// <summary>
+        /// Called when a property is changing
+        /// </summary>
+        /// <param name="e">PropertyChangingEventArgs</param>
+        protected virtual void OnPropertyChanging(PropertyChangingEventArgs e)
+        {
+            if (!suppressEntityEvents)
+            {
+                // Check field level security instead of ValidationRules.ValidateRules(e.PropertyName);
+
+                if (null != PropertyChanging)
+                {
+                    PropertyChanging(this, e);
+                }
+            }
+        }
+
+        #endregion        
 		
 		#region INotifyPropertyChanged Members
 		
