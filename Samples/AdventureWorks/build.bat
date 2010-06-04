@@ -1,0 +1,1 @@
+msbuild adventureworks.sln /t:rebuild /p:Configuration=Release
