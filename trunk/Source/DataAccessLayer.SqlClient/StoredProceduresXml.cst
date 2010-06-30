@@ -882,22 +882,14 @@ SELECT <% for (int i = 0; i < primaryTable.Columns.Count; i++)
 				SchemaExplorer.CommandSchema command = (SchemaExplorer.CommandSchema) item.Value;
 				%>
 				
-		<procedure owner="<%=GetOwnerName(command)%>" name="<%=command.Name %>" <%if (!string.IsNullOrEmpty(GrantUser)) {%>grant="<%=GrantUser%>"<%}%> skip="true">
+		<procedure owner="<%=GetOwnerName(command)%>" name="<%=command.Name %>" <%if (hasGrantUser) {%>grant="<%=grantUser%>"<%}%> skip="true">
 			<comment><![CDATA[<%
 					Regex rx = new Regex(@"^CREATE\s+PROC(?:EDURE)?(.+?\n)*^AS", RegexOptions.Multiline | RegexOptions.IgnoreCase);
-					//(.+?\n)
-                    /* AC [29/06/2010] BEWARE! A newly created database only contains 0x0A (linefeed)
-                       in the SPs whereas older ones, for whatever reason, contain CRLF (0x0D, 0x0A).
-                       This may be a W7/SQL05 problem but I'm not sure. No amount of fiddling
-                       with the Regex (above) would get the 0x0A variant through so a string
-                       replace was in order */
-                    string sortedCmd = command.CommandText.Replace("\n","\r\n");
-					// Match rxm = rx.Match(command.CommandText);
-                    Match rxm = rx.Match(sortedCmd);
+					
+					Match rxm = rx.Match(command.CommandText);
 					string sp_body = String.Empty;
 					if (rxm.Success)
 					{
-                        Debug.WriteLine("PASS " + command.CommandText);   
 						// get any comments that precede "CREATE PROCEDURE"
 						string comments = command.CommandText.Substring(0, rxm.Index);
 						// TODO: no validation as to whether this is a valid comment block
@@ -907,11 +899,9 @@ SELECT <% for (int i = 0; i < primaryTable.Columns.Count; i++)
 					}
 					else
 					{
-                     Debug.WriteLine("FAIL " + command.CommandText);   
 						throw new ApplicationException(string.Format("Custom sp {0} is not in the expected format.", command.Name ));						
 					}
-
-            rx = null;
+			
 			%>]]></comment>
 			<parameters>
 				<% 
