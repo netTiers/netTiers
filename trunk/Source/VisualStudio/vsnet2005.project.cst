@@ -69,7 +69,7 @@
 
 <%@ Property Name="WebServiceUrl" Type="System.String" Category="WebService" Description="The webservice base URL. The asmx filename will be added programmatically." Default="http://localhost/Services/" %>
 <%@ Property Name="rootPathWS" Type="System.String" Category="WebService" Description="The folder where the webservice code is generated." Default="" %>
-<%@ Property Name="EntLibVersion" Type="MoM.Templates.EntLibVersion" Default="v4_1" Category="02. Framework Generation - Optional" Description="Indicates the Enterprise Library version to use. Options include v2, v3, v3.1 and v4" %>
+<%@ Property Name="EntLibVersion" Type="MoM.Templates.EntLibVersion" Default="v5_0" Category="02. Framework Generation - Optional" Description="Indicates the Enterprise Library version to use. Options include v2, v3, v3.1 and v4" %>
 <%@ Property Name="VisualStudioVersion" Type="MoM.Templates.VSNetVersion" Default="v2005" Category="02. Framework Generation - Optional" Description="Indicates the Version of Visual Studio to target. Options include v2005, v2008 and v2010" %>
 <%@ Property Name="DotNetVersion" Type="MoM.Templates.DotNetFrameworkVersion" Default="v2" Category="02. Framework Generation - Optional" Description="Indicates the Version of Dot Net to target. Options include v2, v3 and v3.5" %>
 <%@ Property Name="IsConnectionStringAzure" Type="System.Boolean" Default="False" Category="02. Framework Generation - Optional" Description="Indicates if at runtime the netTiersConnectionString is read from Window Azure's ServiceConfiguration.cscfg or from Web.config/app.config." %>
@@ -82,6 +82,11 @@
 
 <%
 	string entlibVersionText = GetEntLibVersionSignature(EntLibVersion);
+    string unityVersionText = GetUnityVersionSignature(EntLibVersion);
+    string serviceLocationVersionText = GetServiceLocationVersionSignature(EntLibVersion);
+    
+    bool includeObjectBuilder = EntLibVersion != MoM.Templates.EntLibVersion.v5_0;
+    
 	string fileName = string.Empty;
 	
 	// the assembly and documentation filename
@@ -313,10 +318,21 @@
       <SpecificVersion>False</SpecificVersion>
       <HintPath><%= LibraryPath %>\Microsoft.Practices.EnterpriseLibrary.Caching.Cryptography.dll</HintPath>
     </Reference>
+    <% if(includeObjectBuilder) { %>
 	<Reference Include="Microsoft.Practices.<%= GetEntLibOBClassName(EntLibVersion)%>, <%= GetEntLibOBVersionSignature(EntLibVersion) %>">
       <SpecificVersion>False</SpecificVersion>
       <HintPath><%= LibraryPath %>\Microsoft.Practices.<%= GetEntLibOBClassName(EntLibVersion)%>.dll</HintPath>
     </Reference>
+    <% } else { %>
+    <Reference Include="Microsoft.Practices.Unity, <%= unityVersionText %>">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath><%= LibraryPath %>\Microsoft.Practices.Unity.dll</HintPath>
+    </Reference>
+    <Reference Include="Microsoft.Practices.ServiceLocation, <%= serviceLocationVersionText %>">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath><%= LibraryPath %>\Microsoft.Practices.ServiceLocation.dll</HintPath>
+    </Reference>    
+    <% } %>
 	<% if (IncludeComponents || IncludeWebsite){%>
 	<Reference Include="Microsoft.Practices.EnterpriseLibrary.Logging, <%= entlibVersionText %>">
 		<SpecificVersion>False</SpecificVersion>
@@ -353,10 +369,22 @@
       <SpecificVersion>False</SpecificVersion>
       <HintPath><%= LibraryPath %>\Microsoft.Practices.EnterpriseLibrary.Data.dll</HintPath>
     </Reference>
+    <% if(includeObjectBuilder) { %>
 	<Reference Include="Microsoft.Practices.<%= GetEntLibOBClassName(EntLibVersion)%>, <%= GetEntLibOBVersionSignature(EntLibVersion) %>">
       <SpecificVersion>False</SpecificVersion>
       <HintPath><%= LibraryPath %>\Microsoft.Practices.<%= GetEntLibOBClassName(EntLibVersion)%>.dll</HintPath>
     </Reference>
+    <% } else { %>
+    <Reference Include="Microsoft.Practices.Unity, <%= unityVersionText %>">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath><%= LibraryPath %>\Microsoft.Practices.Unity.dll</HintPath>
+    </Reference>
+    <Reference Include="Microsoft.Practices.ServiceLocation, <%= serviceLocationVersionText %>">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath><%= LibraryPath %>\Microsoft.Practices.ServiceLocation.dll</HintPath>
+    </Reference>      
+    <% } %>
+    
 		<% if (SourceDatabase.Provider.Name == "OracleSchemaProvider") {%>
 	<Reference Include="System.Data.OracleClient" />
 		<%}%>
@@ -805,6 +833,11 @@
 			  <SubType>Code</SubType>
 			</Compile>
 			<%string vListName = GetVListName();%>
+            <% if(!includeObjectBuilder) { %>
+            <Compile Include="<%=BLLSubFolder%>WeakRefDictionary.cs">
+			  <SubType>Code</SubType>
+			</Compile>
+            <% } %>            
 			<Compile Include="<%=BLLSubFolder%>Views\<%=vListName%>.cs">
 			  <SubType>Code</SubType>
 			</Compile>
@@ -1038,7 +1071,6 @@
 			<Compile Include="<%=DALSubFolder%>Query\StringTokenizer.cs">
 			  <SubType>Code</SubType>
 			</Compile>
-			
 			<Compile Include="<%=DALSubFolder%>Utility.cs">
 			  <SubType>Code</SubType>
 			</Compile>

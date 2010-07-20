@@ -5839,14 +5839,62 @@ CREATE\s+PROC(?:EDURE)?                               # find the start of the st
                 case MoM.Templates.EntLibVersion.v3_1 :
                     entlibVersionText = "Version=3.1.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a";
                     break;
-                case MoM.Templates.EntLibVersion.v4_1 :
-                    entlibVersionText = "Version=4.1.0.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35";
+                //case MoM.Templates.EntLibVersion.v4_1 :
+                //    entlibVersionText = "Version=4.1.0.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35";
+                
+                case MoM.Templates.EntLibVersion.v5_0 :
+                    entlibVersionText = "Version=5.0.414.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35";
                     break;
 
             }
             return entlibVersionText;
         }
+        
+        ///<summary>
+        /// Gets the enterprise library version assembly signature
+        ///</summary>
+        public string GetUnityVersionSignature(EntLibVersion version)
+        {
+            string unityVersion = string.Empty;;
 
+            switch (version)
+            {
+                case MoM.Templates.EntLibVersion.v3_1 :
+                    unityVersion = string.Empty;
+                    break;
+                //case MoM.Templates.EntLibVersion.v4_1 :
+                //    entlibVersionText = "Version=4.1.0.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35";
+                
+                case MoM.Templates.EntLibVersion.v5_0 :
+                    unityVersion = "Version=2.0.414.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35";
+                    break;
+
+            }
+            return unityVersion;
+        }
+
+        ///<summary>
+        /// Gets the enterprise library version assembly signature
+        ///</summary>
+        public string GetServiceLocationVersionSignature(EntLibVersion version)
+        {
+            string unityVersion = string.Empty;;
+
+            switch (version)
+            {
+                case MoM.Templates.EntLibVersion.v3_1 :
+                    unityVersion = string.Empty;
+                    break;
+                
+                case MoM.Templates.EntLibVersion.v5_0 :
+                    unityVersion = "Version=1.0.0.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35";
+                    break;
+
+            }
+            return unityVersion;
+        }
+
+        
         ///<summary>
         /// Gets the enterprise library ObjectBuilder version assembly signature
         ///</summary>
@@ -5859,8 +5907,8 @@ CREATE\s+PROC(?:EDURE)?                               # find the start of the st
                 case MoM.Templates.EntLibVersion.v3_1 :
                     entlibOBVersionText = "Version=1.0.51206.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a";
                     break;
-                case MoM.Templates.EntLibVersion.v4_1 :
-                    entlibOBVersionText = "Version=2.2.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a";
+                case MoM.Templates.EntLibVersion.v5_0 :
+                    entlibOBVersionText = string.Empty;
                     break;
 
             }
@@ -5879,8 +5927,8 @@ CREATE\s+PROC(?:EDURE)?                               # find the start of the st
                 case MoM.Templates.EntLibVersion.v3_1 :
                     entlibOBClassName = "ObjectBuilder";
                     break;
-                case MoM.Templates.EntLibVersion.v4_1 :
-                    entlibOBClassName = "ObjectBuilder2";
+                case MoM.Templates.EntLibVersion.v5_0 :
+                    entlibOBClassName = string.Empty;
                     break;
 
             }
@@ -6207,7 +6255,9 @@ CREATE\s+PROC(?:EDURE)?                               # find the start of the st
         /// <summary>Use Enterprise Library version 3.1.</summary>
         v3_1 = 2,
         /// <summary>Use Enterprise Library version 4.1</summary>
-        v4_1 = 4
+        //v4_1 = 4
+        /// <summary>Use Enterprise Library version 5.0</summary>
+        v5_0 = 8
     }
 
     #endregion
