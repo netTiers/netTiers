@@ -27,7 +27,7 @@
 <%@ Property Name="IncludeComponentLayer" Type="MoM.Templates.ComponentPatternType" Category="02. Framework Generation - Optional" Description="The pattern type to implement in the Component Layer." Default="None" %>
 <%@ Property Name="IncludeWCFDataAttributes" Type="System.Boolean" Default="False" Category="02. Framework Generation - Optional" Description="Indicates if the WCF attributes, [DataContract] and [DataMember], should be included on the entity classes." %>
 <%@ Property Name="SerializeEntityState" Type="System.Boolean" Default="False" Category="02. Framework Generation - Optional" Description="Indicates if the EntityState property should be included during serialization.  Useful if needing to know what state the entity is in over webservices." %>
-<%@ Property Name="EntLibVersion" Type="MoM.Templates.EntLibVersion" Default="v4_1" Category="02. Framework Generation - Optional" Description="Indicates the Enterprise Library version to use. Options include v2, v3, v3.1, v4 and v4.1" %>
+<%@ Property Name="EntLibVersion" Type="MoM.Templates.EntLibVersion" Default="v5_0" Category="02. Framework Generation - Optional" Description="Indicates the Enterprise Library version to use. Options include v3.1, v5.0" %>
 <%@ Property Name="VisualStudioVersion" Type="MoM.Templates.VSNetVersion" Default="v2008" Category="02. Framework Generation - Optional" Description="Indicates the Version of Visual Studio to target. Options include v2005, v2008 and v2010" %>
 <%@ Property Name="DotNetVersion" Type="MoM.Templates.DotNetFrameworkVersion" Default="v3_5" Category="02. Framework Generation - Optional" Description="Indicates the Version of Dot Net to target. Options include v2, v3 and v3.5" %>
 <%@ Property Name="IncludeXmlAttributes" Type="System.Boolean" Default="False" Category="02. Framework Generation - Optional" Description="Indicates if the Xml attributes, [XmlElement(IsNullable=true)], should be included on the entity classes." %>
@@ -430,8 +430,8 @@
 			// If the current version is less than 4.0 and entlib validation is selected update the property..
 			if ( value == MoM.Templates.ValidationType.EntLib && (byte)EntLibVersion < 3)
 			{
-				Trace.WriteLine("\tWARNING: EntLib validation requires that you use a version of EntLib 4.0 or newer.");
-				this.EntLibVersion = MoM.Templates.EntLibVersion.v4_1;
+				Trace.WriteLine("\tWARNING: EntLib validation requires that you use a version of EntLib 3.1 or newer.");
+				this.EntLibVersion = MoM.Templates.EntLibVersion.v3_1;
 			}
 		}
 	}
@@ -1300,8 +1300,11 @@
 		SafeCopyFile(this.CodeTemplateInfo.DirectoryName + "\\References\\" + entLibSubDir + "\\Microsoft.Practices.EnterpriseLibrary.Common.dll", libPath + "\\Microsoft.Practices.EnterpriseLibrary.Common.dll");
 		SafeCopyFile(this.CodeTemplateInfo.DirectoryName + "\\References\\" + entLibSubDir + "\\Microsoft.Practices.EnterpriseLibrary.Data.dll", libPath+ "\\Microsoft.Practices.EnterpriseLibrary.Data.dll");
 		
-		SafeCopyFile(this.CodeTemplateInfo.DirectoryName + "\\References\\" + entLibSubDir + "\\Microsoft.Practices." + GetEntLibOBClassName(EntLibVersion) + ".dll", libPath +  "\\Microsoft.Practices." + GetEntLibOBClassName(EntLibVersion) + ".dll");
-			
+        if(EntLibVersion == MoM.Templates.EntLibVersion.v5_0)
+		    SafeCopyFile(this.CodeTemplateInfo.DirectoryName + "\\References\\" + entLibSubDir + "\\Microsoft.Practices.Unity.dll", libPath +  "\\Microsoft.Practices.Unity.dll");
+		else
+            SafeCopyFile(this.CodeTemplateInfo.DirectoryName + "\\References\\" + entLibSubDir + "\\Microsoft.Practices." + GetEntLibOBClassName(EntLibVersion) + ".dll", libPath +  "\\Microsoft.Practices." + GetEntLibOBClassName(EntLibVersion) + ".dll");
+            
 		SafeCopyFile(this.CodeTemplateInfo.DirectoryName + "\\References\\" + entLibSubDir + "\\Microsoft.Practices.EnterpriseLibrary.Caching.dll", libPath +  "\\Microsoft.Practices.EnterpriseLibrary.Caching.dll");
 		SafeCopyFile(this.CodeTemplateInfo.DirectoryName + "\\References\\" + entLibSubDir + "\\Microsoft.Practices.EnterpriseLibrary.Caching.Cryptography.dll", libPath + "\\Microsoft.Practices.EnterpriseLibrary.Caching.Cryptography.dll");
 		SafeCopyFile(this.CodeTemplateInfo.DirectoryName + "\\References\\" + entLibSubDir + "\\Microsoft.Practices.EnterpriseLibrary.Logging.dll", libPath +  "\\Microsoft.Practices.EnterpriseLibrary.Logging.dll");
@@ -1367,6 +1370,13 @@
 		this.GetTemplate("VList.cst").SetProperty("NameSpace", BLLNameSpace);
 		string vListName = GetVListName();
 		this.RenderToFile("VList.cst", string.Format("{0}\\Views\\{1}.cs",rootPathBLL,vListName), true);
+        
+        if(EntLibVersion == MoM.Templates.EntLibVersion.v5_0)
+        {
+            AddFileNode(commonNode, "WeakRefDictionary.cs");
+            this.GetTemplate("WeakRefDictionary.cst").SetProperty("BLLNameSpace", BLLNameSpace);
+            this.RenderToFile("WeakRefDictionary.cst", rootPathBLL + "\\WeakRefDictionary.cs", true);
+        }
 		#endregion List classes
 		
 		#region Common Test Classes
@@ -1438,18 +1448,39 @@
 		//----------------------------------------------------------------------------------------------------------------------------------------------
 		//-- Entity IEntityLocator file
 		//----------------------------------------------------------------------------------------------------------------------------------------------
-		XmlElement iEntityLocatorNode = AddFileNode(commonNode, "EntityLocator.cs");
-		this.GetTemplate("EntityLocator.cst").SetProperty("NameSpace", BLLNameSpace);
-		this.GetTemplate("EntityLocator.cst").SetProperty("ObjectBuilderClass", GetEntLibOBClassName(EntLibVersion));
-		this.RenderToFile("EntityLocator.cst", rootPathBLL + "\\EntityLocator.cs", true);
+        if(EntLibVersion == MoM.Templates.EntLibVersion.v5_0)
+        {
+            XmlElement iEntityLocatorNode = AddFileNode(commonNode, "EntityLocator.cs");
+		    this.GetTemplate("EntityLocator_EntLib5.cst").SetProperty("NameSpace", BLLNameSpace);
+            this.GetTemplate("EntityLocator.cst").SetProperty("EntLibVersion", EntLibVersion);
+		    this.RenderToFile("EntityLocator_EntLib5.cst", rootPathBLL + "\\EntityLocator.cs", true);    
+        }
+        else
+        {
+            XmlElement iEntityLocatorNode = AddFileNode(commonNode, "EntityLocator.cs");
+		    this.GetTemplate("EntityLocator.cst").SetProperty("NameSpace", BLLNameSpace);
+		    this.GetTemplate("EntityLocator.cst").SetProperty("ObjectBuilderClass", GetEntLibOBClassName(EntLibVersion));
+            this.GetTemplate("EntityLocator.cst").SetProperty("EntLibVersion", EntLibVersion);
+		    this.RenderToFile("EntityLocator.cst", rootPathBLL + "\\EntityLocator.cs", true);
+        }
+		
 		
 		//----------------------------------------------------------------------------------------------------------------------------------------------
 		//-- Entity EntityManager file
 		//----------------------------------------------------------------------------------------------------------------------------------------------
-		XmlElement iEntityManagerNode = AddFileNode(commonNode, "EntityManager.cs");
-		this.GetTemplate("EntityManager.cst").SetProperty("NameSpace", BLLNameSpace);
-		this.GetTemplate("EntityManager.cst").SetProperty("ObjectBuilderClass", GetEntLibOBClassName(EntLibVersion));
-		this.RenderToFile("EntityManager.cst", rootPathBLL + "\\EntityManager.cs", true);
+        if(EntLibVersion == MoM.Templates.EntLibVersion.v5_0)
+        {
+            XmlElement iEntityManagerNode = AddFileNode(commonNode, "EntityManager.cs");
+            this.GetTemplate("EntityManager_EntLib5.cst").SetProperty("NameSpace", BLLNameSpace);
+            this.RenderToFile("EntityManager_EntLib5.cst", rootPathBLL + "\\EntityManager.cs", true);   
+        }
+        else
+        {
+            XmlElement iEntityManagerNode = AddFileNode(commonNode, "EntityManager.cs");
+            this.GetTemplate("EntityManager.cst").SetProperty("NameSpace", BLLNameSpace);
+            this.RenderToFile("EntityManager.cst", rootPathBLL + "\\EntityManager.cs", true);
+        }
+		
 		#endregion Entity Classes 1
 		
 		#region Validation class files
@@ -1932,7 +1963,7 @@
 			this.GetTemplate("Utility.cst").SetProperty("RetrySleepTime", RetrySleepTime);
 			this.GetTemplate("Utility.cst").SetProperty("RetrySleepStyle", RetrySleepStyle);
 			this.RenderToFile("Utility.cst", rootPathDAL + "\\Utility.cs", true);
-									
+                                    
 			AddFileNode(commonNode, "ITransactionManager.cs");
 			this.GetTemplate("ITransactionManager.cst").SetProperty("DALNameSpace", DALNameSpace);
 			this.RenderToFile("ITransactionManager.cst", rootPathDAL + "\\ITransactionManager.cs", true);
@@ -1980,7 +2011,7 @@
 			this.GetTemplate("EntityProviderBaseCoreClass.generated.cst").SetProperty("BLLNameSpace", BLLNameSpace);
 			this.GetTemplate("EntityProviderBaseCoreClass.generated.cst").SetProperty("DALNameSpace", DALNameSpace);
 			this.GetTemplate("EntityProviderBaseCoreClass.generated.cst").SetProperty("IncludeDatabaseFeatures", IncludeDatabaseFeatures);
-			this.GetTemplate("EntityProviderBaseCoreClass.generated.cst").SetProperty("ObjectBuilderClass", GetEntLibOBClassName(EntLibVersion));
+			this.GetTemplate("EntityProviderBaseCoreClass.generated.cst").SetProperty("EntLibVersion", EntLibVersion);
 			this.RenderToFile("EntityProviderBaseCoreClass.generated.cst", rootPathDAL + "\\Bases\\EntityProviderBaseCore.generated.cs", true);
 	
 			if ( !File.Exists(rootPathDAL + "\\Bases\\EntityViewProviderBase.cs") )
@@ -3467,7 +3498,7 @@
 				this.GetTemplate("OracleEntityViewProviderBase.generated.cst").SetProperty("SelectSuffix", SelectSuffix);
 				this.GetTemplate("OracleEntityViewProviderBase.generated.cst").SetProperty("SelectAllSuffix", SelectAllSuffix);
 				this.GetTemplate("OracleEntityViewProviderBase.generated.cst").SetProperty("ProcedurePrefix", ProcedurePrefix);
-				
+				this.GetTemplate("OracleEntityViewProviderBase.generated.cst").SetProperty("EntLibVersion", EntLibVersion);
 						
 				this.RenderToFile("OracleEntityViewProviderBase.generated.cst", rootPathDALOracle + "\\Views\\Oracle" + GetClassName(SourceView, ClassNameFormat.PartialProviderBase) + ".cs", true);
 				
@@ -3505,7 +3536,6 @@
 				this.GetTemplate("GenericEntityViewProviderBase.generated.cst").SetProperty("SelectSuffix", SelectSuffix);
 				this.GetTemplate("GenericEntityViewProviderBase.generated.cst").SetProperty("SelectAllSuffix", SelectAllSuffix);
 				this.GetTemplate("GenericEntityViewProviderBase.generated.cst").SetProperty("ProcedurePrefix", ProcedurePrefix);
-				
 						
 				this.RenderToFile("GenericEntityViewProviderBase.generated.cst", rootPathDALGeneric + "\\Views\\Generic" + GetClassName(SourceView, ClassNameFormat.PartialProviderBase) + ".cs", true);
 				
@@ -3809,6 +3839,7 @@
 				this.GetTemplate("EntityInstanceBase.generated.cst").SetProperty("IncludeXmlAttributes", IncludeXmlAttributes);
 				this.GetTemplate("EntityInstanceBase.generated.cst").SetProperty("EqualitySemantics", EqualitySemantics);
 				this.GetTemplate("EntityInstanceBase.generated.cst").SetProperty("ValidationType", ValidationType);
+                this.GetTemplate("EntityInstanceBase.generated.cst").SetProperty("EntLibVersion", EntLibVersion);
 				
 				this.RenderToFile("EntityInstanceBase.generated.cst", rootPathBLL + "\\" + GetClassName(SourceTable, ClassNameFormat.PartialAbstract) + ".cs", true);
 				AddExecutionTime(boBaseNode);
@@ -4048,7 +4079,8 @@
 					this.GetTemplate("SqlEntityProviderBase.generated.cst").SetProperty("SourceTables", templateSourceTables);
 					this.GetTemplate("SqlEntityProviderBase.generated.cst").SetProperty("NameSpace", BLLNameSpace);
 					this.GetTemplate("SqlEntityProviderBase.generated.cst").SetProperty("DALNameSpace", DALNameSpace);
-														
+                    this.GetTemplate("SqlEntityProviderBase.generated.cst").SetProperty("EntLibVersion", EntLibVersion);
+                    
 					this.RenderToFile("SqlEntityProviderBase.generated.cst", rootPathDALSql + "\\Sql" + GetClassName(SourceTable, ClassNameFormat.PartialProviderBase) + ".cs", true);
 					AddExecutionTime(sqlDalcBaseNode);
 					
@@ -4107,7 +4139,8 @@
 					this.GetTemplate("OracleEntityProviderBase.generated.cst").SetProperty("SourceTables", templateSourceTables);
 					this.GetTemplate("OracleEntityProviderBase.generated.cst").SetProperty("NameSpace", BLLNameSpace);
 					this.GetTemplate("OracleEntityProviderBase.generated.cst").SetProperty("DALNameSpace", DALNameSpace);
-														
+                    this.GetTemplate("OracleEntityProviderBase.generated.cst").SetProperty("EntLibVersion", EntLibVersion);
+                    
 					this.RenderToFile("OracleEntityProviderBase.generated.cst", rootPathDALOracle + "\\Oracle" + GetClassName(SourceTable, ClassNameFormat.PartialProviderBase) + ".cs", true);
 					AddExecutionTime(oracleDalBaseNode);
 				
@@ -4168,7 +4201,8 @@
 					this.GetTemplate("SqlCeEntityProviderBase.generated.cst").SetProperty("SourceTables", templateSourceTables);
 					this.GetTemplate("SqlCeEntityProviderBase.generated.cst").SetProperty("NameSpace", BLLNameSpace);
 					this.GetTemplate("SqlCeEntityProviderBase.generated.cst").SetProperty("DALNameSpace", DALNameSpace);
-														
+                    this.GetTemplate("SqlCeEntityProviderBase.generated.cst").SetProperty("EntLibVersion", EntLibVersion);
+                    
 					this.RenderToFile("SqlCeEntityProviderBase.generated.cst", rootPathDALSqlCe + "\\SqlCe" + GetClassName(SourceTable, ClassNameFormat.PartialProviderBase) + ".cs", true);
 					AddExecutionTime(sqlceDalBaseNode);
 				
@@ -4228,6 +4262,7 @@
 					this.GetTemplate("GenericEntityProviderBase.generated.cst").SetProperty("SourceTables", templateSourceTables);
 					this.GetTemplate("GenericEntityProviderBase.generated.cst").SetProperty("NameSpace", BLLNameSpace);
 					this.GetTemplate("GenericEntityProviderBase.generated.cst").SetProperty("DALNameSpace", DALNameSpace);
+                    this.GetTemplate("GenericEntityProviderBase.generated.cst").SetProperty("EntLibVersion", EntLibVersion);
 														
 					this.RenderToFile("GenericEntityProviderBase.generated.cst", rootPathDALGeneric + "\\Generic" + GetClassName(SourceTable, ClassNameFormat.PartialProviderBase) + ".cs", true);
 					AddExecutionTime(genericDalcBaseNode);

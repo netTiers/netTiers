@@ -8,8 +8,9 @@
 			CodeTemplates.Add("nAnt.cst", base.CreateTemplate<nAnt>()); this.PerformStep();
 			CodeTemplates.Add("AssemblyInfo.cst", base.CreateTemplate<AssemblyInfo>()); this.PerformStep(); 																												
 			CodeTemplates.Add("entlib.v3_1.config.cst", base.CreateTemplate<entlibv3_1config>()); this.PerformStep();
-			CodeTemplates.Add("entlib.v4_1.config.cst", base.CreateTemplate<entlibv4_1config>()); this.PerformStep();
-						
+            CodeTemplates.Add("entlib.v5_0.config.cst", base.CreateTemplate<entlibv5_0config>()); this.PerformStep();
+            CodeTemplates.Add("WeakRefDictionary.cst", base.CreateTemplate<WeakRefDictionary>()); this.PerformStep();
+                        
 			CodeTemplates.Add("App.config.2005.cst", base.CreateTemplate<AppConfig>()); this.PerformStep();													
 			CodeTemplates.Add("Enum.cst", base.CreateTemplate<Enum>()); this.PerformStep();
 			CodeTemplates.Add("IEntity.cst", base.CreateTemplate<IEntity>()); this.PerformStep();
@@ -29,7 +30,9 @@
 			CodeTemplates.Add("EntityFactoryBase.cst", base.CreateTemplate<EntityFactoryBase>()); this.PerformStep();
 			CodeTemplates.Add("EntityCache.cst", base.CreateTemplate<EntityCache>()); this.PerformStep();
 			CodeTemplates.Add("EntityLocator.cst", base.CreateTemplate<EntityLocator>()); this.PerformStep();
+            CodeTemplates.Add("EntityLocator_EntLib5.cst", base.CreateTemplate<EntityLocator_EntLib5>()); this.PerformStep();
 			CodeTemplates.Add("EntityManager.cst", base.CreateTemplate<EntityManager>()); this.PerformStep();
+            CodeTemplates.Add("EntityManager_EntLib5.cst", base.CreateTemplate<EntityManager_EntLib5>()); this.PerformStep();
 			CodeTemplates.Add("IEntityFactory.cst", base.CreateTemplate<IEntityFactory>()); this.PerformStep();
 			CodeTemplates.Add("IEntityCacheItem.cst", base.CreateTemplate<IEntityCacheItem>()); this.PerformStep();
 			
