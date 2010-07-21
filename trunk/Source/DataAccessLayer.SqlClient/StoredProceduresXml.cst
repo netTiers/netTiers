@@ -939,175 +939,178 @@ SELECT <% for (int i = 0; i < primaryTable.Columns.Count; i++)
 	
 	
 	// Sql views management
-	for (int vi = 0; vi < SourceViews.Count; vi++)
-	{
-		ViewSchema SourceView = SourceViews[vi];
-		ViewColumnSchemaCollection cols = SourceView.Columns;
-		
-		string owner = GetOwnerName(SourceView);
-		string fqTableName = string.Format("[{0}].[{1}]", GetOwnerName(SourceView), SourceView.Name);
-		string name = GetSafeName(SourceView);
-		string commandStem = GetCleanName(SourceView);
-		string tableComment = SourceView.Description;
-		
-		if (IncludeGetList) 
-		{%>
-		<procedure owner="<%=owner%>" name="<%= ProcedurePrefix + commandStem + SelectSuffix + SelectAllSuffix %>" <%if (hasGrantUser) {%>grant="<%=grantUser%>"<%}%>>
-			<comment><![CDATA[<%= GetProcSqlComment(string.Format("Gets all records from the {0} view", name), tableComment) %>]]></comment>
-			<parameters/>
-			<body><![CDATA[
-				<%= GetSetTransactionIsolationLevelStatement() %>
-				SELECT
-					<% for (int i = 0; i < SourceView.Columns.Count; i++) { %>
-					[<%= SourceView.Columns[i].Name %>]<% if (i < SourceView.Columns.Count - 1) { %>,<% } %>
-					<% } %>
-				FROM
-					<%=fqTableName%>
-					
-				SELECT @@ROWCOUNT			
-			]]></body>
-		</procedure>
-		
-		<procedure owner="<%=owner%>" name="<%= ProcedurePrefix + commandStem + SelectSuffix %>" <%if (hasGrantUser) {%>grant="<%=grantUser%>"<%}%>>
-			<comment><![CDATA[<%= GetProcSqlComment(string.Format("Gets records from the {0} view passing page index and page count parameters", name), tableComment) %>]]></comment>
-			<parameters>
-				<parameter name="@WhereClause" type="varchar" direction="Input" size="2000" precision="0" scale="0" param="(2000)" />
-				<parameter name="@OrderBy" type="varchar" direction="Input" size="2000" precision="0" scale="0" param="(2000)"/>			
-				<% if ( IncludeDatabaseFeatures == MoM.Templates.DatabaseType.SQLServer2005 ) { %>
-				<parameter name="@PageIndex" type="int" direction="Input" size="0" precision="10" scale="0" />
-				<parameter name="@PageSize" type="int" direction="Input" size="0" precision="10" scale="0" /> 
-				<% } %>
-			</parameters>
-			<body><![CDATA[
-				<%= GetSetTransactionIsolationLevelStatement() %>
-				BEGIN
-
-<% if ( IncludeDatabaseFeatures == MoM.Templates.DatabaseType.SQLServer2005 ) { %>
-				DECLARE @PageLowerBound int
-				DECLARE @PageUpperBound int
-				
-				-- Set the page bounds
-				SET @PageLowerBound = @PageSize * @PageIndex
-				SET @PageUpperBound = @PageLowerBound + @PageSize
-
-				IF (@OrderBy IS NULL OR LEN(@OrderBy) < 1)
-				BEGIN
-					-- default order by to first column
-					SET @OrderBy = '[<%= cols[0].Name %>]'
-				END
-
-				-- SQL Server 2005 Paging
-				DECLARE @SQL AS nvarchar(MAX)
-				SET @SQL = 'WITH PageIndex AS ('
-				SET @SQL = @SQL + ' SELECT'
-				IF @PageSize > 0
-				BEGIN
-					SET @SQL = @SQL + ' TOP ' + CONVERT(nvarchar, @PageUpperBound)
-				END
-				SET @SQL = @SQL + ' ROW_NUMBER() OVER (ORDER BY ' + @OrderBy + ') as RowIndex'
-				<% for (int i = 0; i < cols.Count; i++) { %>
-				SET @SQL = @SQL + ', [<%= cols[i].Name %>]'
-				<% } %>
-				SET @SQL = @SQL + ' FROM <%=fqTableName%>'
-				IF LEN(@WhereClause) > 0
-				BEGIN
-					SET @SQL = @SQL + ' WHERE ' + @WhereClause
-				END
-				SET @SQL = @SQL + ' ) SELECT'
-				<% for (int i = 0; i < cols.Count; i++) { %>
-				SET @SQL = @SQL + ' [<%= cols[i].Name %>]<% if (i < cols.Count - 1) { %>,<% } %>'
-				<% } %>
-				SET @SQL = @SQL + ' FROM PageIndex'
-				SET @SQL = @SQL + ' WHERE RowIndex > ' + CONVERT(nvarchar, @PageLowerBound)
-				IF @PageSize > 0
-				BEGIN
-					SET @SQL = @SQL + ' AND RowIndex <= ' + CONVERT(nvarchar, @PageUpperBound)
-				END
-				IF LEN(@OrderBy) > 0
-				BEGIN
-					SET @SQL = @SQL + ' ORDER BY ' + @OrderBy
-				END
-				EXEC sp_executesql @SQL
-
-				-- get row count
-				SET @SQL = 'SELECT COUNT(*) AS TotalRowCount'
-				SET @SQL = @SQL + ' FROM <%=fqTableName%>'
-				IF LEN(@WhereClause) > 0
-				BEGIN
-					SET @SQL = @SQL + ' WHERE ' + @WhereClause
-				END
-				EXEC sp_executesql @SQL
-				
-<% } else { %>
-				-- Build the sql query
-				DECLARE @SQL AS nvarchar(4000)
-				SET @SQL = ' SELECT * FROM <%=fqTableName%>'
-				IF LEN(@WhereClause) > 0
-				BEGIN
-					SET @SQL = @SQL + ' WHERE ' + @WhereClause
-				END
-				IF LEN(@OrderBy) > 0
-				BEGIN
-					SET @SQL = @SQL + ' ORDER BY ' + @OrderBy
-				END
-				
-				-- Execution the query
-				EXEC sp_executesql @SQL
-				
-				-- Return total count
-				SELECT @@ROWCOUNT AS TotalRowCount
-				
-<% } // end if ( IncludeDatabaseFeatures ) %>
-				END
-			]]></body>
-		</procedure>
-		
-		<%} //end if(IncludeGetList)
-		
-		if ( IncludeFind ) { %>
-		
-		<procedure owner="<%=owner%>" name="<%= ProcedurePrefix + commandStem + FindSuffix %>_Dynamic" <%if (hasGrantUser) {%>grant="<%=grantUser%>"<%}%> skip="true">
-			<comment><![CDATA[<%= GetProcSqlComment(string.Format("Gets records from the {0} table using a dynamically generated query.", name), tableComment) %>]]></comment>
-			<parameters/>
-			<body><![CDATA[
-				<%= GetSetTransactionIsolationLevelStatement() %>
-				BEGIN
-				
-				<% if ( IncludeDatabaseFeatures == MoM.Templates.DatabaseType.SQLServer2005 ) { %>
-				WITH PageIndex AS (
-					SELECT TOP {3} row_number() OVER (ORDER BY {1}) AS RowIndex
-					<% for (int i = 0; i < cols.Count; i++) { %>
-					, [<%= cols[i].Name %>]
-					<% } %>
-					FROM <%=fqTableName%> {0}
-				)
-				SELECT
-				<% for (int i = 0; i < cols.Count; i++) { %>
-				       [<%= cols[i].Name %>]<% if (i < cols.Count - 1) { %>,<% } %>
-				<% } %>
-				  FROM PageIndex
-				 WHERE RowIndex > {2}
-				   AND RowIndex <= {3}
-				ORDER BY {1};
-				
-				-- get total count
-				SELECT COUNT(*) AS TotalRowCount FROM <%= fqTableName%> {0};
-				
-				<% } else { // SQL 2000 %>
-				SELECT * FROM <%= fqTableName%> {0}
-				ORDER BY {1}
-
-				-- get total count
-				SELECT @@ROWCOUNT AS TotalRowCount;
-				
-				<% } // end if ( IncludeDatabaseFeatures ) %>
-				END
-			]]></body>
-		</procedure>
-		
-		<% } // end if ( IncludeFind ) {
-		
-	} // end for each View
+    if(SourceViews != null)
+    {
+        for (int vi = 0; vi < SourceViews.Count; vi++)
+        {
+            ViewSchema SourceView = SourceViews[vi];
+            ViewColumnSchemaCollection cols = SourceView.Columns;
+            
+            string owner = GetOwnerName(SourceView);
+            string fqTableName = string.Format("[{0}].[{1}]", GetOwnerName(SourceView), SourceView.Name);
+            string name = GetSafeName(SourceView);
+            string commandStem = GetCleanName(SourceView);
+            string tableComment = SourceView.Description;
+            
+            if (IncludeGetList) 
+            {%>
+            <procedure owner="<%=owner%>" name="<%= ProcedurePrefix + commandStem + SelectSuffix + SelectAllSuffix %>" <%if (hasGrantUser) {%>grant="<%=grantUser%>"<%}%>>
+                <comment><![CDATA[<%= GetProcSqlComment(string.Format("Gets all records from the {0} view", name), tableComment) %>]]></comment>
+                <parameters/>
+                <body><![CDATA[
+                    <%= GetSetTransactionIsolationLevelStatement() %>
+                    SELECT
+                        <% for (int i = 0; i < SourceView.Columns.Count; i++) { %>
+                        [<%= SourceView.Columns[i].Name %>]<% if (i < SourceView.Columns.Count - 1) { %>,<% } %>
+                        <% } %>
+                    FROM
+                        <%=fqTableName%>
+                        
+                    SELECT @@ROWCOUNT			
+                ]]></body>
+            </procedure>
+            
+            <procedure owner="<%=owner%>" name="<%= ProcedurePrefix + commandStem + SelectSuffix %>" <%if (hasGrantUser) {%>grant="<%=grantUser%>"<%}%>>
+                <comment><![CDATA[<%= GetProcSqlComment(string.Format("Gets records from the {0} view passing page index and page count parameters", name), tableComment) %>]]></comment>
+                <parameters>
+                    <parameter name="@WhereClause" type="varchar" direction="Input" size="2000" precision="0" scale="0" param="(2000)" />
+                    <parameter name="@OrderBy" type="varchar" direction="Input" size="2000" precision="0" scale="0" param="(2000)"/>			
+                    <% if ( IncludeDatabaseFeatures == MoM.Templates.DatabaseType.SQLServer2005 ) { %>
+                    <parameter name="@PageIndex" type="int" direction="Input" size="0" precision="10" scale="0" />
+                    <parameter name="@PageSize" type="int" direction="Input" size="0" precision="10" scale="0" /> 
+                    <% } %>
+                </parameters>
+                <body><![CDATA[
+                    <%= GetSetTransactionIsolationLevelStatement() %>
+                    BEGIN
+    
+    <% if ( IncludeDatabaseFeatures == MoM.Templates.DatabaseType.SQLServer2005 ) { %>
+                    DECLARE @PageLowerBound int
+                    DECLARE @PageUpperBound int
+                    
+                    -- Set the page bounds
+                    SET @PageLowerBound = @PageSize * @PageIndex
+                    SET @PageUpperBound = @PageLowerBound + @PageSize
+    
+                    IF (@OrderBy IS NULL OR LEN(@OrderBy) < 1)
+                    BEGIN
+                        -- default order by to first column
+                        SET @OrderBy = '[<%= cols[0].Name %>]'
+                    END
+    
+                    -- SQL Server 2005 Paging
+                    DECLARE @SQL AS nvarchar(MAX)
+                    SET @SQL = 'WITH PageIndex AS ('
+                    SET @SQL = @SQL + ' SELECT'
+                    IF @PageSize > 0
+                    BEGIN
+                        SET @SQL = @SQL + ' TOP ' + CONVERT(nvarchar, @PageUpperBound)
+                    END
+                    SET @SQL = @SQL + ' ROW_NUMBER() OVER (ORDER BY ' + @OrderBy + ') as RowIndex'
+                    <% for (int i = 0; i < cols.Count; i++) { %>
+                    SET @SQL = @SQL + ', [<%= cols[i].Name %>]'
+                    <% } %>
+                    SET @SQL = @SQL + ' FROM <%=fqTableName%>'
+                    IF LEN(@WhereClause) > 0
+                    BEGIN
+                        SET @SQL = @SQL + ' WHERE ' + @WhereClause
+                    END
+                    SET @SQL = @SQL + ' ) SELECT'
+                    <% for (int i = 0; i < cols.Count; i++) { %>
+                    SET @SQL = @SQL + ' [<%= cols[i].Name %>]<% if (i < cols.Count - 1) { %>,<% } %>'
+                    <% } %>
+                    SET @SQL = @SQL + ' FROM PageIndex'
+                    SET @SQL = @SQL + ' WHERE RowIndex > ' + CONVERT(nvarchar, @PageLowerBound)
+                    IF @PageSize > 0
+                    BEGIN
+                        SET @SQL = @SQL + ' AND RowIndex <= ' + CONVERT(nvarchar, @PageUpperBound)
+                    END
+                    IF LEN(@OrderBy) > 0
+                    BEGIN
+                        SET @SQL = @SQL + ' ORDER BY ' + @OrderBy
+                    END
+                    EXEC sp_executesql @SQL
+    
+                    -- get row count
+                    SET @SQL = 'SELECT COUNT(*) AS TotalRowCount'
+                    SET @SQL = @SQL + ' FROM <%=fqTableName%>'
+                    IF LEN(@WhereClause) > 0
+                    BEGIN
+                        SET @SQL = @SQL + ' WHERE ' + @WhereClause
+                    END
+                    EXEC sp_executesql @SQL
+                    
+    <% } else { %>
+                    -- Build the sql query
+                    DECLARE @SQL AS nvarchar(4000)
+                    SET @SQL = ' SELECT * FROM <%=fqTableName%>'
+                    IF LEN(@WhereClause) > 0
+                    BEGIN
+                        SET @SQL = @SQL + ' WHERE ' + @WhereClause
+                    END
+                    IF LEN(@OrderBy) > 0
+                    BEGIN
+                        SET @SQL = @SQL + ' ORDER BY ' + @OrderBy
+                    END
+                    
+                    -- Execution the query
+                    EXEC sp_executesql @SQL
+                    
+                    -- Return total count
+                    SELECT @@ROWCOUNT AS TotalRowCount
+                    
+    <% } // end if ( IncludeDatabaseFeatures ) %>
+                    END
+                ]]></body>
+            </procedure>
+            
+            <%} //end if(IncludeGetList)
+            
+            if ( IncludeFind ) { %>
+            
+            <procedure owner="<%=owner%>" name="<%= ProcedurePrefix + commandStem + FindSuffix %>_Dynamic" <%if (hasGrantUser) {%>grant="<%=grantUser%>"<%}%> skip="true">
+                <comment><![CDATA[<%= GetProcSqlComment(string.Format("Gets records from the {0} table using a dynamically generated query.", name), tableComment) %>]]></comment>
+                <parameters/>
+                <body><![CDATA[
+                    <%= GetSetTransactionIsolationLevelStatement() %>
+                    BEGIN
+                    
+                    <% if ( IncludeDatabaseFeatures == MoM.Templates.DatabaseType.SQLServer2005 ) { %>
+                    WITH PageIndex AS (
+                        SELECT TOP {3} row_number() OVER (ORDER BY {1}) AS RowIndex
+                        <% for (int i = 0; i < cols.Count; i++) { %>
+                        , [<%= cols[i].Name %>]
+                        <% } %>
+                        FROM <%=fqTableName%> {0}
+                    )
+                    SELECT
+                    <% for (int i = 0; i < cols.Count; i++) { %>
+                        [<%= cols[i].Name %>]<% if (i < cols.Count - 1) { %>,<% } %>
+                    <% } %>
+                    FROM PageIndex
+                    WHERE RowIndex > {2}
+                    AND RowIndex <= {3}
+                    ORDER BY {1};
+                    
+                    -- get total count
+                    SELECT COUNT(*) AS TotalRowCount FROM <%= fqTableName%> {0};
+                    
+                    <% } else { // SQL 2000 %>
+                    SELECT * FROM <%= fqTableName%> {0}
+                    ORDER BY {1}
+    
+                    -- get total count
+                    SELECT @@ROWCOUNT AS TotalRowCount;
+                    
+                    <% } // end if ( IncludeDatabaseFeatures ) %>
+                    END
+                ]]></body>
+            </procedure>
+            
+            <% } // end if ( IncludeFind ) {
+            
+        } // end for each View
+    }
 %>
 </procedures>
 </root>
@@ -1219,30 +1222,31 @@ public string GetPagedHelper(ColumnSchema column)
 	string param = "[" + column.Name + "] " + column.NativeType;
 	
 	// user defined data types do not need size components
-	if ( ! IsUserDefinedType(column) )
+	if (!IsUserDefinedType(column))
 	{
-	switch (column.DataType)
-	{
-		case DbType.Decimal:
-		{
-			param += "(" + column.Precision + ", " + column.Scale + ")";
-			break;
-		}
-		case DbType.AnsiString:
-		case DbType.AnsiStringFixedLength:
-		case DbType.String:
-		case DbType.StringFixedLength:
-		{
-			if (column.NativeType != "text" && column.NativeType != "ntext")
-			{
-				if (column.Size > 0)
-				{
-					param += "(" + column.Size + ") COLLATE database_default ";
-				}
-			}
-			break;
-		}
-	}	
+        switch (column.DataType)
+        {
+            case DbType.Decimal:
+            {
+                param += "(" + column.Precision + ", " + column.Scale + ")";
+                break;
+            }
+            case DbType.AnsiString:
+            case DbType.AnsiStringFixedLength:
+            case DbType.String:
+            case DbType.StringFixedLength:
+            case DbType.Binary:
+            {
+                if (column.NativeType != "text" && column.NativeType != "ntext" && column.NativeType != "timestamp" && column.NativeType != "image")
+                {
+                    if (column.Size > 0)
+                    {
+                        param += "(" + column.Size + ") ";
+                    }
+                }
+                break;
+            }
+        }	
 	}
 	return param;
 }
