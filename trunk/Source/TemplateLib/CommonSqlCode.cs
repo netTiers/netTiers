@@ -73,8 +73,10 @@ namespace MoM.Templates
             get {return _parameterPrefix;}
             set {_parameterPrefix=value;}
         }
+        
         private string providerInvariantName = string.Empty;
-
+        
+        [System.ComponentModel.Browsable(false)]
         public string ProviderInvariantName
         {
 			get {return providerInvariantName;}
