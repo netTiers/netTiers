@@ -1,0 +1,4521 @@
+﻿<?xml version="1.0" encoding="utf-8" ?>
+<?xml-stylesheet type='text/xsl' href="scriptsql.xsl"?>
+<root xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+<database includeDrop="true">D:\WORK\CODESMITH-SAMPLES\NETTIERS\CSHARP\PETSHOP\SOURCE\PETSHOP.UI\APP_DATA\PETSHOP.MDF</database>
+<procedures>
+		
+		<procedure owner="dbo" name="OrderStatus_Get_List" >
+			<comment><![CDATA[/*
+----------------------------------------------------------------------------------------------------
+
+-- Created By: Pet Shop ()
+-- Purpose: Gets all records from the OrderStatus table
+----------------------------------------------------------------------------------------------------
+*/
+]]></comment>
+			<parameters/>
+			<body><![CDATA[
+				
+				SELECT
+					[OrderId],
+					[LineNum],
+					[Timestamp],
+					[Status]
+				FROM
+					[dbo].[OrderStatus]
+					
+				SELECT @@ROWCOUNT
+			]]></body>
+		</procedure>
+		
+		
+		<procedure owner="dbo" name="OrderStatus_GetPaged" >
+			<comment><![CDATA[/*
+----------------------------------------------------------------------------------------------------
+
+-- Created By: Pet Shop ()
+-- Purpose: Gets records from the OrderStatus table passing page index and page count parameters
+----------------------------------------------------------------------------------------------------
+*/
+]]></comment>
+			<parameters>
+				<parameter name="@WhereClause" type="varchar" direction="Input" size="2000" precision="0" scale="0" param="(2000)" />
+				<parameter name="@OrderBy" type="varchar" direction="Input" size="2000" precision="0" scale="0" param="(2000)"/>
+				<parameter name="@PageIndex" type="int" direction="Input" size="0" precision="10" scale="0" />
+				<parameter name="@PageSize" type="int" direction="Input" size="0" precision="10" scale="0" /> 
+			</parameters>
+			<body><![CDATA[
+				
+				BEGIN
+				DECLARE @PageLowerBound int
+				DECLARE @PageUpperBound int
+				
+				-- Set the page bounds
+				SET @PageLowerBound = @PageSize * @PageIndex
+				SET @PageUpperBound = @PageLowerBound + @PageSize
+
+				IF (@OrderBy IS NULL OR LEN(@OrderBy) < 1)
+				BEGIN
+					-- default order by to first column
+					SET @OrderBy = '[OrderId]'
+				END
+
+				-- SQL Server 2005 Paging
+				DECLARE @SQL AS nvarchar(MAX)
+				SET @SQL = 'WITH PageIndex AS ('
+				SET @SQL = @SQL + ' SELECT'
+				IF @PageSize > 0
+				BEGIN
+					SET @SQL = @SQL + ' TOP ' + CONVERT(nvarchar, @PageUpperBound)
+				END
+				SET @SQL = @SQL + ' ROW_NUMBER() OVER (ORDER BY ' + @OrderBy + ') as RowIndex'
+				SET @SQL = @SQL + ', [OrderId]'
+				SET @SQL = @SQL + ', [LineNum]'
+				SET @SQL = @SQL + ', [Timestamp]'
+				SET @SQL = @SQL + ', [Status]'
+				SET @SQL = @SQL + ' FROM [dbo].[OrderStatus]'
+				IF LEN(@WhereClause) > 0
+				BEGIN
+					SET @SQL = @SQL + ' WHERE ' + @WhereClause
+				END
+				SET @SQL = @SQL + ' ) SELECT'
+				SET @SQL = @SQL + ' [OrderId],'
+				SET @SQL = @SQL + ' [LineNum],'
+				SET @SQL = @SQL + ' [Timestamp],'
+				SET @SQL = @SQL + ' [Status]'
+				SET @SQL = @SQL + ' FROM PageIndex'
+				SET @SQL = @SQL + ' WHERE RowIndex > ' + CONVERT(nvarchar, @PageLowerBound)
+				IF @PageSize > 0
+				BEGIN
+					SET @SQL = @SQL + ' AND RowIndex <= ' + CONVERT(nvarchar, @PageUpperBound)
+				END
+				SET @SQL = @SQL + ' ORDER BY ' + @OrderBy
+				EXEC sp_executesql @SQL
+				
+				-- get row count
+				SET @SQL = 'SELECT COUNT(*) AS TotalRowCount'
+				SET @SQL = @SQL + ' FROM [dbo].[OrderStatus]'
+				IF LEN(@WhereClause) > 0
+				BEGIN
+					SET @SQL = @SQL + ' WHERE ' + @WhereClause
+				END
+				EXEC sp_executesql @SQL
+			
+				END
+			]]></body>
+		</procedure>
+		
+		<procedure owner="dbo" name="OrderStatus_Insert" grant="">
+			<comment><![CDATA[/*
+----------------------------------------------------------------------------------------------------
+
+-- Created By: Pet Shop ()
+-- Purpose: Inserts a record into the OrderStatus table
+----------------------------------------------------------------------------------------------------
+*/
+]]></comment>
+			<parameters>
+				<parameter name="@OrderId" type="int" direction="Input" size="4" precision="10" scale="0" param="" nulldefault=""/>
+				<parameter name="@LineNum" type="int" direction="Input" size="4" precision="10" scale="0" param="" nulldefault=""/>
+				<parameter name="@Timestamp" type="datetime" direction="Input" size="8" precision="23" scale="3" param="" nulldefault=""/>
+				<parameter name="@Status" type="varchar" direction="Input" size="2" precision="0" scale="0" param="(2)" nulldefault=""/>
+			</parameters>
+			<body><![CDATA[
+				
+				INSERT INTO [dbo].[OrderStatus]
+					(
+					[OrderId]
+					,[LineNum]
+					,[Timestamp]
+					,[Status]
+					)
+				VALUES
+					(
+					@OrderId
+					,@LineNum
+					,@Timestamp
+					,@Status
+					)
+				
+									
+							
+			]]></body>
+		</procedure>
+		<procedure owner="dbo" name="OrderStatus_Update" grant="">
+			<comment><![CDATA[/*
+----------------------------------------------------------------------------------------------------
+
+-- Created By: Pet Shop ()
+-- Purpose: Updates a record in the OrderStatus table
+----------------------------------------------------------------------------------------------------
+*/
+]]></comment>
+			<parameters>
+				<parameter name="@OrderId" type="int" direction="Input" size="4" precision="10" scale="0" param="" nulldefault=""/>
+				<parameter name="@OriginalOrderId" type="int" direction="Input" size="4" precision="10" scale="0" param="" nulldefault=""/>
+				<parameter name="@LineNum" type="int" direction="Input" size="4" precision="10" scale="0" param="" nulldefault=""/>
+				<parameter name="@OriginalLineNum" type="int" direction="Input" size="4" precision="10" scale="0" param="" nulldefault=""/>
+				<parameter name="@Timestamp" type="datetime" direction="Input" size="8" precision="23" scale="3" param="" nulldefault=""/>
+				<parameter name="@Status" type="varchar" direction="Input" size="2" precision="0" scale="0" param="(2)" nulldefault=""/>
+			</parameters>
+			<body><![CDATA[
+				
+				
+				-- Modify the updatable columns
+				UPDATE
+					[dbo].[OrderStatus]
+				SET
+					[OrderId] = @OrderId
+					,[LineNum] = @LineNum
+					,[Timestamp] = @Timestamp
+					,[Status] = @Status
+				WHERE
+[OrderId] = @OriginalOrderId 
+AND [LineNum] = @OriginalLineNum 
+				
+			]]></body>
+		</procedure>
+		<procedure owner="dbo" name="OrderStatus_Delete" grant="">
+			<comment><![CDATA[/*
+----------------------------------------------------------------------------------------------------
+
+-- Created By: Pet Shop ()
+-- Purpose: Deletes a record in the OrderStatus table
+----------------------------------------------------------------------------------------------------
+*/
+]]></comment>
+			<parameters>
+				<parameter name="@OrderId" type="int" direction="Input" size="4" precision="10" scale="0" param="" nulldefault=""/>
+				<parameter name="@LineNum" type="int" direction="Input" size="4" precision="10" scale="0" param="" nulldefault=""/>
+			</parameters>
+			<body><![CDATA[
+				DELETE FROM [dbo].[OrderStatus] WITH (ROWLOCK) 
+				WHERE
+					[OrderId] = @OrderId
+					AND [LineNum] = @LineNum
+					
+			]]></body>
+		</procedure>
+		<procedure owner="dbo" name="OrderStatus_GetByOrderId" >
+			<comment><![CDATA[/*
+----------------------------------------------------------------------------------------------------
+
+-- Created By: Pet Shop ()
+-- Purpose: Select records from the OrderStatus table through a foreign key
+----------------------------------------------------------------------------------------------------
+*/
+]]></comment>
+			<parameters>
+				<parameter name="@OrderId" type="int" direction="Input" size="4" precision="10" scale="0" param="" nulldefault=""/>
+			</parameters>
+			<body><![CDATA[
+				SET ANSI_NULLS OFF
+				
+				SELECT
+					[OrderId],
+					[LineNum],
+					[Timestamp],
+					[Status]
+				FROM
+					[dbo].[OrderStatus]
+				WHERE
+					[OrderId] = @OrderId
+				
+				SELECT @@ROWCOUNT
+				SET ANSI_NULLS ON
+			]]></body>
+		</procedure>
+		<procedure owner="dbo" name="OrderStatus_GetByOrderIdLineNum" >
+			<comment><![CDATA[/*
+----------------------------------------------------------------------------------------------------
+
+-- Created By: Pet Shop ()
+-- Purpose: Select records from the OrderStatus table through an index
+----------------------------------------------------------------------------------------------------
+*/
+]]></comment>
+			<parameters>
+				<parameter name="@OrderId" type="int" direction="Input" size="4" precision="10" scale="0" param="" nulldefault=""/>
+				<parameter name="@LineNum" type="int" direction="Input" size="4" precision="10" scale="0" param="" nulldefault=""/>
+			</parameters>
+			<body><![CDATA[
+				SELECT
+					[OrderId],
+					[LineNum],
+					[Timestamp],
+					[Status]
+				FROM
+					[dbo].[OrderStatus]
+				WHERE
+					[OrderId] = @OrderId
+					AND [LineNum] = @LineNum
+				SELECT @@ROWCOUNT
+					
+			]]></body>
+			
+		</procedure>
+		<procedure owner="dbo" name="OrderStatus_Find" >
+			<comment><![CDATA[/*
+----------------------------------------------------------------------------------------------------
+
+-- Created By: Pet Shop ()
+-- Purpose: Finds records in the OrderStatus table passing nullable parameters
+----------------------------------------------------------------------------------------------------
+*/
+]]></comment>
+			<parameters>
+				<parameter name="@SearchUsingOR" type="bit" direction="Input" size="0" precision="1" scale="0" param="" nulldefault="null"/>
+				<parameter name="@OrderId" type="int" direction="Input" size="4" precision="10" scale="0" param="" nulldefault="null"/>
+				<parameter name="@LineNum" type="int" direction="Input" size="4" precision="10" scale="0" param="" nulldefault="null"/>
+				<parameter name="@Timestamp" type="datetime" direction="Input" size="8" precision="23" scale="3" param="" nulldefault="null"/>
+				<parameter name="@Status" type="varchar" direction="Input" size="2" precision="0" scale="0" param="(2)" nulldefault="null"/>
+			</parameters>
+			<body><![CDATA[
+				
+  IF ISNULL(@SearchUsingOR, 0) <> 1
+  BEGIN
+    SELECT
+	  [OrderId]
+	, [LineNum]
+	, [Timestamp]
+	, [Status]
+    FROM
+	[dbo].[OrderStatus]
+    WHERE 
+	 ([OrderId] = @OrderId OR @OrderId IS NULL)
+	AND ([LineNum] = @LineNum OR @LineNum IS NULL)
+	AND ([Timestamp] = @Timestamp OR @Timestamp IS NULL)
+	AND ([Status] = @Status OR @Status IS NULL)
+						
+  END
+  ELSE
+  BEGIN
+    SELECT
+	  [OrderId]
+	, [LineNum]
+	, [Timestamp]
+	, [Status]
+    FROM
+	[dbo].[OrderStatus]
+    WHERE 
+	 ([OrderId] = @OrderId AND @OrderId is not null)
+	OR ([LineNum] = @LineNum AND @LineNum is not null)
+	OR ([Timestamp] = @Timestamp AND @Timestamp is not null)
+	OR ([Status] = @Status AND @Status is not null)
+	SELECT @@ROWCOUNT			
+  END
+				]]></body>
+		</procedure>
+
+		
+		<procedure owner="dbo" name="OrderStatus_Find_Dynamic"  skip="true">
+			<comment><![CDATA[/*
+----------------------------------------------------------------------------------------------------
+
+-- Created By: Pet Shop ()
+-- Purpose: Gets records from the OrderStatus table using a dynamically generated query.
+----------------------------------------------------------------------------------------------------
+*/
+]]></comment>
+			<parameters/>
+			<body><![CDATA[
+				
+				BEGIN
+				
+				WITH PageIndex AS (
+					SELECT TOP {3} row_number() over (order by {1}) AS RowIndex
+					, [OrderId]
+					, [LineNum]
+					, [Timestamp]
+					, [Status]
+					FROM [dbo].[OrderStatus] {0}
+				)
+				SELECT
+				       [OrderId],
+				       [LineNum],
+				       [Timestamp],
+				       [Status]
+				  FROM PageIndex
+				 WHERE RowIndex > {2}
+				   AND RowIndex <= {3}
+				ORDER BY {1};
+				
+
+				-- get total count
+				SELECT COUNT(*) AS TotalRowCount FROM [dbo].[OrderStatus] {0};
+				
+				END
+			]]></body>
+		</procedure>
+		
+		
+		<procedure owner="dbo" name="Cart_Get_List" >
+			<comment><![CDATA[/*
+----------------------------------------------------------------------------------------------------
+
+-- Created By: Pet Shop ()
+-- Purpose: Gets all records from the Cart table
+----------------------------------------------------------------------------------------------------
+*/
+]]></comment>
+			<parameters/>
+			<body><![CDATA[
+				
+				SELECT
+					[CartId],
+					[UniqueID],
+					[ItemId],
+					[Name],
+					[Type],
+					[Price],
+					[CategoryId],
+					[ProductId],
+					[IsShoppingCart],
+					[Quantity]
+				FROM
+					[dbo].[Cart]
+					
+				SELECT @@ROWCOUNT
+			]]></body>
+		</procedure>
+		
+		
+		<procedure owner="dbo" name="Cart_GetPaged" >
+			<comment><![CDATA[/*
+----------------------------------------------------------------------------------------------------
+
+-- Created By: Pet Shop ()
+-- Purpose: Gets records from the Cart table passing page index and page count parameters
+----------------------------------------------------------------------------------------------------
+*/
+]]></comment>
+			<parameters>
+				<parameter name="@WhereClause" type="varchar" direction="Input" size="2000" precision="0" scale="0" param="(2000)" />
+				<parameter name="@OrderBy" type="varchar" direction="Input" size="2000" precision="0" scale="0" param="(2000)"/>
+				<parameter name="@PageIndex" type="int" direction="Input" size="0" precision="10" scale="0" />
+				<parameter name="@PageSize" type="int" direction="Input" size="0" precision="10" scale="0" /> 
+			</parameters>
+			<body><![CDATA[
+				
+				BEGIN
+				DECLARE @PageLowerBound int
+				DECLARE @PageUpperBound int
+				
+				-- Set the page bounds
+				SET @PageLowerBound = @PageSize * @PageIndex
+				SET @PageUpperBound = @PageLowerBound + @PageSize
+
+				IF (@OrderBy IS NULL OR LEN(@OrderBy) < 1)
+				BEGIN
+					-- default order by to first column
+					SET @OrderBy = '[CartId]'
+				END
+
+				-- SQL Server 2005 Paging
+				DECLARE @SQL AS nvarchar(MAX)
+				SET @SQL = 'WITH PageIndex AS ('
+				SET @SQL = @SQL + ' SELECT'
+				IF @PageSize > 0
+				BEGIN
+					SET @SQL = @SQL + ' TOP ' + CONVERT(nvarchar, @PageUpperBound)
+				END
+				SET @SQL = @SQL + ' ROW_NUMBER() OVER (ORDER BY ' + @OrderBy + ') as RowIndex'
+				SET @SQL = @SQL + ', [CartId]'
+				SET @SQL = @SQL + ', [UniqueID]'
+				SET @SQL = @SQL + ', [ItemId]'
+				SET @SQL = @SQL + ', [Name]'
+				SET @SQL = @SQL + ', [Type]'
+				SET @SQL = @SQL + ', [Price]'
+				SET @SQL = @SQL + ', [CategoryId]'
+				SET @SQL = @SQL + ', [ProductId]'
+				SET @SQL = @SQL + ', [IsShoppingCart]'
+				SET @SQL = @SQL + ', [Quantity]'
+				SET @SQL = @SQL + ' FROM [dbo].[Cart]'
+				IF LEN(@WhereClause) > 0
+				BEGIN
+					SET @SQL = @SQL + ' WHERE ' + @WhereClause
+				END
+				SET @SQL = @SQL + ' ) SELECT'
+				SET @SQL = @SQL + ' [CartId],'
+				SET @SQL = @SQL + ' [UniqueID],'
+				SET @SQL = @SQL + ' [ItemId],'
+				SET @SQL = @SQL + ' [Name],'
+				SET @SQL = @SQL + ' [Type],'
+				SET @SQL = @SQL + ' [Price],'
+				SET @SQL = @SQL + ' [CategoryId],'
+				SET @SQL = @SQL + ' [ProductId],'
+				SET @SQL = @SQL + ' [IsShoppingCart],'
+				SET @SQL = @SQL + ' [Quantity]'
+				SET @SQL = @SQL + ' FROM PageIndex'
+				SET @SQL = @SQL + ' WHERE RowIndex > ' + CONVERT(nvarchar, @PageLowerBound)
+				IF @PageSize > 0
+				BEGIN
+					SET @SQL = @SQL + ' AND RowIndex <= ' + CONVERT(nvarchar, @PageUpperBound)
+				END
+				SET @SQL = @SQL + ' ORDER BY ' + @OrderBy
+				EXEC sp_executesql @SQL
+				
+				-- get row count
+				SET @SQL = 'SELECT COUNT(*) AS TotalRowCount'
+				SET @SQL = @SQL + ' FROM [dbo].[Cart]'
+				IF LEN(@WhereClause) > 0
+				BEGIN
+					SET @SQL = @SQL + ' WHERE ' + @WhereClause
+				END
+				EXEC sp_executesql @SQL
+			
+				END
+			]]></body>
+		</procedure>
+		
+		<procedure owner="dbo" name="Cart_Insert" grant="">
+			<comment><![CDATA[/*
+----------------------------------------------------------------------------------------------------
+
+-- Created By: Pet Shop ()
+-- Purpose: Inserts a record into the Cart table
+----------------------------------------------------------------------------------------------------
+*/
+]]></comment>
+			<parameters>
+				<parameter name="@CartId" type="int" direction="Output" size="4" precision="10" scale="0" param="" nulldefault=""/>
+				<parameter name="@UniqueId" type="int" direction="Input" size="4" precision="10" scale="0" param="" nulldefault=""/>
+				<parameter name="@ItemId" type="varchar" direction="Input" size="10" precision="0" scale="0" param="(10)" nulldefault=""/>
+				<parameter name="@Name" type="varchar" direction="Input" size="80" precision="0" scale="0" param="(80)" nulldefault=""/>
+				<parameter name="@Type" type="varchar" direction="Input" size="80" precision="0" scale="0" param="(80)" nulldefault=""/>
+				<parameter name="@Price" type="decimal" direction="Input" size="9" precision="10" scale="2" param="(10, 2)" nulldefault=""/>
+				<parameter name="@CategoryId" type="varchar" direction="Input" size="10" precision="0" scale="0" param="(10)" nulldefault=""/>
+				<parameter name="@ProductId" type="varchar" direction="Input" size="10" precision="0" scale="0" param="(10)" nulldefault=""/>
+				<parameter name="@IsShoppingCart" type="bit" direction="Input" size="1" precision="1" scale="0" param="" nulldefault=""/>
+				<parameter name="@Quantity" type="int" direction="Input" size="4" precision="10" scale="0" param="" nulldefault=""/>
+			</parameters>
+			<body><![CDATA[
+				
+				INSERT INTO [dbo].[Cart]
+					(
+					[UniqueID]
+					,[ItemId]
+					,[Name]
+					,[Type]
+					,[Price]
+					,[CategoryId]
+					,[ProductId]
+					,[IsShoppingCart]
+					,[Quantity]
+					)
+				VALUES
+					(
+					@UniqueId
+					,@ItemId
+					,@Name
+					,@Type
+					,@Price
+					,@CategoryId
+					,@ProductId
+					,@IsShoppingCart
+					,@Quantity
+					)
+				
+				-- Get the identity value
+				SET @CartId = SCOPE_IDENTITY()
+									
+							
+			]]></body>
+		</procedure>
+		<procedure owner="dbo" name="Cart_Update" grant="">
+			<comment><![CDATA[/*
+----------------------------------------------------------------------------------------------------
+
+-- Created By: Pet Shop ()
+-- Purpose: Updates a record in the Cart table
+----------------------------------------------------------------------------------------------------
+*/
+]]></comment>
+			<parameters>
+				<parameter name="@CartId" type="int" direction="Input" size="4" precision="10" scale="0" param="" nulldefault=""/>
+				<parameter name="@UniqueId" type="int" direction="Input" size="4" precision="10" scale="0" param="" nulldefault=""/>
+				<parameter name="@ItemId" type="varchar" direction="Input" size="10" precision="0" scale="0" param="(10)" nulldefault=""/>
+				<parameter name="@Name" type="varchar" direction="Input" size="80" precision="0" scale="0" param="(80)" nulldefault=""/>
+				<parameter name="@Type" type="varchar" direction="Input" size="80" precision="0" scale="0" param="(80)" nulldefault=""/>
+				<parameter name="@Price" type="decimal" direction="Input" size="9" precision="10" scale="2" param="(10, 2)" nulldefault=""/>
+				<parameter name="@CategoryId" type="varchar" direction="Input" size="10" precision="0" scale="0" param="(10)" nulldefault=""/>
+				<parameter name="@ProductId" type="varchar" direction="Input" size="10" precision="0" scale="0" param="(10)" nulldefault=""/>
+				<parameter name="@IsShoppingCart" type="bit" direction="Input" size="1" precision="1" scale="0" param="" nulldefault=""/>
+				<parameter name="@Quantity" type="int" direction="Input" size="4" precision="10" scale="0" param="" nulldefault=""/>
+			</parameters>
+			<body><![CDATA[
+				
+				
+				-- Modify the updatable columns
+				UPDATE
+					[dbo].[Cart]
+				SET
+					[UniqueID] = @UniqueId
+					,[ItemId] = @ItemId
+					,[Name] = @Name
+					,[Type] = @Type
+					,[Price] = @Price
+					,[CategoryId] = @CategoryId
+					,[ProductId] = @ProductId
+					,[IsShoppingCart] = @IsShoppingCart
+					,[Quantity] = @Quantity
+				WHERE
+[CartId] = @CartId 
+				
+			]]></body>
+		</procedure>
+		<procedure owner="dbo" name="Cart_Delete" grant="">
+			<comment><![CDATA[/*
+----------------------------------------------------------------------------------------------------
+
+-- Created By: Pet Shop ()
+-- Purpose: Deletes a record in the Cart table
+----------------------------------------------------------------------------------------------------
+*/
+]]></comment>
+			<parameters>
+				<parameter name="@CartId" type="int" direction="Input" size="4" precision="10" scale="0" param="" nulldefault=""/>
+			</parameters>
+			<body><![CDATA[
+				DELETE FROM [dbo].[Cart] WITH (ROWLOCK) 
+				WHERE
+					[CartId] = @CartId
+					
+			]]></body>
+		</procedure>
+		<procedure owner="dbo" name="Cart_GetByUniqueId" >
+			<comment><![CDATA[/*
+----------------------------------------------------------------------------------------------------
+
+-- Created By: Pet Shop ()
+-- Purpose: Select records from the Cart table through an index
+----------------------------------------------------------------------------------------------------
+*/
+]]></comment>
+			<parameters>
+				<parameter name="@UniqueId" type="int" direction="Input" size="4" precision="10" scale="0" param="" nulldefault=""/>
+			</parameters>
+			<body><![CDATA[
+				SELECT
+					[CartId],
+					[UniqueID],
+					[ItemId],
+					[Name],
+					[Type],
+					[Price],
+					[CategoryId],
+					[ProductId],
+					[IsShoppingCart],
+					[Quantity]
+				FROM
+					[dbo].[Cart]
+				WHERE
+					[UniqueID] = @UniqueId
+				SELECT @@ROWCOUNT
+					
+			]]></body>
+			
+		</procedure>
+		<procedure owner="dbo" name="Cart_GetByIsShoppingCart" >
+			<comment><![CDATA[/*
+----------------------------------------------------------------------------------------------------
+
+-- Created By: Pet Shop ()
+-- Purpose: Select records from the Cart table through an index
+----------------------------------------------------------------------------------------------------
+*/
+]]></comment>
+			<parameters>
+				<parameter name="@IsShoppingCart" type="bit" direction="Input" size="1" precision="1" scale="0" param="" nulldefault=""/>
+			</parameters>
+			<body><![CDATA[
+				SELECT
+					[CartId],
+					[UniqueID],
+					[ItemId],
+					[Name],
+					[Type],
+					[Price],
+					[CategoryId],
+					[ProductId],
+					[IsShoppingCart],
+					[Quantity]
+				FROM
+					[dbo].[Cart]
+				WHERE
+					[IsShoppingCart] = @IsShoppingCart
+				SELECT @@ROWCOUNT
+					
+			]]></body>
+			
+		</procedure>
+		<procedure owner="dbo" name="Cart_GetByCartId" >
+			<comment><![CDATA[/*
+----------------------------------------------------------------------------------------------------
+
+-- Created By: Pet Shop ()
+-- Purpose: Select records from the Cart table through an index
+----------------------------------------------------------------------------------------------------
+*/
+]]></comment>
+			<parameters>
+				<parameter name="@CartId" type="int" direction="Input" size="4" precision="10" scale="0" param="" nulldefault=""/>
+			</parameters>
+			<body><![CDATA[
+				SELECT
+					[CartId],
+					[UniqueID],
+					[ItemId],
+					[Name],
+					[Type],
+					[Price],
+					[CategoryId],
+					[ProductId],
+					[IsShoppingCart],
+					[Quantity]
+				FROM
+					[dbo].[Cart]
+				WHERE
+					[CartId] = @CartId
+				SELECT @@ROWCOUNT
+					
+			]]></body>
+			
+		</procedure>
+		<procedure owner="dbo" name="Cart_Find" >
+			<comment><![CDATA[/*
+----------------------------------------------------------------------------------------------------
+
+-- Created By: Pet Shop ()
+-- Purpose: Finds records in the Cart table passing nullable parameters
+----------------------------------------------------------------------------------------------------
+*/
+]]></comment>
+			<parameters>
+				<parameter name="@SearchUsingOR" type="bit" direction="Input" size="0" precision="1" scale="0" param="" nulldefault="null"/>
+				<parameter name="@CartId" type="int" direction="Input" size="4" precision="10" scale="0" param="" nulldefault="null"/>
+				<parameter name="@UniqueId" type="int" direction="Input" size="4" precision="10" scale="0" param="" nulldefault="null"/>
+				<parameter name="@ItemId" type="varchar" direction="Input" size="10" precision="0" scale="0" param="(10)" nulldefault="null"/>
+				<parameter name="@Name" type="varchar" direction="Input" size="80" precision="0" scale="0" param="(80)" nulldefault="null"/>
+				<parameter name="@Type" type="varchar" direction="Input" size="80" precision="0" scale="0" param="(80)" nulldefault="null"/>
+				<parameter name="@Price" type="decimal" direction="Input" size="9" precision="10" scale="2" param="(10, 2)" nulldefault="null"/>
+				<parameter name="@CategoryId" type="varchar" direction="Input" size="10" precision="0" scale="0" param="(10)" nulldefault="null"/>
+				<parameter name="@ProductId" type="varchar" direction="Input" size="10" precision="0" scale="0" param="(10)" nulldefault="null"/>
+				<parameter name="@IsShoppingCart" type="bit" direction="Input" size="1" precision="1" scale="0" param="" nulldefault="null"/>
+				<parameter name="@Quantity" type="int" direction="Input" size="4" precision="10" scale="0" param="" nulldefault="null"/>
+			</parameters>
+			<body><![CDATA[
+				
+  IF ISNULL(@SearchUsingOR, 0) <> 1
+  BEGIN
+    SELECT
+	  [CartId]
+	, [UniqueID]
+	, [ItemId]
+	, [Name]
+	, [Type]
+	, [Price]
+	, [CategoryId]
+	, [ProductId]
+	, [IsShoppingCart]
+	, [Quantity]
+    FROM
+	[dbo].[Cart]
+    WHERE 
+	 ([CartId] = @CartId OR @CartId IS NULL)
+	AND ([UniqueID] = @UniqueId OR @UniqueId IS NULL)
+	AND ([ItemId] = @ItemId OR @ItemId IS NULL)
+	AND ([Name] = @Name OR @Name IS NULL)
+	AND ([Type] = @Type OR @Type IS NULL)
+	AND ([Price] = @Price OR @Price IS NULL)
+	AND ([CategoryId] = @CategoryId OR @CategoryId IS NULL)
+	AND ([ProductId] = @ProductId OR @ProductId IS NULL)
+	AND ([IsShoppingCart] = @IsShoppingCart OR @IsShoppingCart IS NULL)
+	AND ([Quantity] = @Quantity OR @Quantity IS NULL)
+						
+  END
+  ELSE
+  BEGIN
+    SELECT
+	  [CartId]
+	, [UniqueID]
+	, [ItemId]
+	, [Name]
+	, [Type]
+	, [Price]
+	, [CategoryId]
+	, [ProductId]
+	, [IsShoppingCart]
+	, [Quantity]
+    FROM
+	[dbo].[Cart]
+    WHERE 
+	 ([CartId] = @CartId AND @CartId is not null)
+	OR ([UniqueID] = @UniqueId AND @UniqueId is not null)
+	OR ([ItemId] = @ItemId AND @ItemId is not null)
+	OR ([Name] = @Name AND @Name is not null)
+	OR ([Type] = @Type AND @Type is not null)
+	OR ([Price] = @Price AND @Price is not null)
+	OR ([CategoryId] = @CategoryId AND @CategoryId is not null)
+	OR ([ProductId] = @ProductId AND @ProductId is not null)
+	OR ([IsShoppingCart] = @IsShoppingCart AND @IsShoppingCart is not null)
+	OR ([Quantity] = @Quantity AND @Quantity is not null)
+	SELECT @@ROWCOUNT			
+  END
+				]]></body>
+		</procedure>
+
+		
+		<procedure owner="dbo" name="Cart_Find_Dynamic"  skip="true">
+			<comment><![CDATA[/*
+----------------------------------------------------------------------------------------------------
+
+-- Created By: Pet Shop ()
+-- Purpose: Gets records from the Cart table using a dynamically generated query.
+----------------------------------------------------------------------------------------------------
+*/
+]]></comment>
+			<parameters/>
+			<body><![CDATA[
+				
+				BEGIN
+				
+				WITH PageIndex AS (
+					SELECT TOP {3} row_number() over (order by {1}) AS RowIndex
+					, [CartId]
+					, [UniqueID]
+					, [ItemId]
+					, [Name]
+					, [Type]
+					, [Price]
+					, [CategoryId]
+					, [ProductId]
+					, [IsShoppingCart]
+					, [Quantity]
+					FROM [dbo].[Cart] {0}
+				)
+				SELECT
+				       [CartId],
+				       [UniqueID],
+				       [ItemId],
+				       [Name],
+				       [Type],
+				       [Price],
+				       [CategoryId],
+				       [ProductId],
+				       [IsShoppingCart],
+				       [Quantity]
+				  FROM PageIndex
+				 WHERE RowIndex > {2}
+				   AND RowIndex <= {3}
+				ORDER BY {1};
+				
+
+				-- get total count
+				SELECT COUNT(*) AS TotalRowCount FROM [dbo].[Cart] {0};
+				
+				END
+			]]></body>
+		</procedure>
+		
+		
+		<procedure owner="dbo" name="Orders_Get_List" >
+			<comment><![CDATA[/*
+----------------------------------------------------------------------------------------------------
+
+-- Created By: Pet Shop ()
+-- Purpose: Gets all records from the Orders table
+----------------------------------------------------------------------------------------------------
+*/
+]]></comment>
+			<parameters/>
+			<body><![CDATA[
+				
+				SELECT
+					[OrderId],
+					[UserId],
+					[OrderDate],
+					[ShipAddr1],
+					[ShipAddr2],
+					[ShipCity],
+					[ShipState],
+					[ShipZip],
+					[ShipCountry],
+					[BillAddr1],
+					[BillAddr2],
+					[BillCity],
+					[BillState],
+					[BillZip],
+					[BillCountry],
+					[Courier],
+					[TotalPrice],
+					[BillToFirstName],
+					[BillToLastName],
+					[ShipToFirstName],
+					[ShipToLastName],
+					[AuthorizationNumber],
+					[Locale]
+				FROM
+					[dbo].[Orders]
+					
+				SELECT @@ROWCOUNT
+			]]></body>
+		</procedure>
+		
+		
+		<procedure owner="dbo" name="Orders_GetPaged" >
+			<comment><![CDATA[/*
+----------------------------------------------------------------------------------------------------
+
+-- Created By: Pet Shop ()
+-- Purpose: Gets records from the Orders table passing page index and page count parameters
+----------------------------------------------------------------------------------------------------
+*/
+]]></comment>
+			<parameters>
+				<parameter name="@WhereClause" type="varchar" direction="Input" size="2000" precision="0" scale="0" param="(2000)" />
+				<parameter name="@OrderBy" type="varchar" direction="Input" size="2000" precision="0" scale="0" param="(2000)"/>
+				<parameter name="@PageIndex" type="int" direction="Input" size="0" precision="10" scale="0" />
+				<parameter name="@PageSize" type="int" direction="Input" size="0" precision="10" scale="0" /> 
+			</parameters>
+			<body><![CDATA[
+				
+				BEGIN
+				DECLARE @PageLowerBound int
+				DECLARE @PageUpperBound int
+				
+				-- Set the page bounds
+				SET @PageLowerBound = @PageSize * @PageIndex
+				SET @PageUpperBound = @PageLowerBound + @PageSize
+
+				IF (@OrderBy IS NULL OR LEN(@OrderBy) < 1)
+				BEGIN
+					-- default order by to first column
+					SET @OrderBy = '[OrderId]'
+				END
+
+				-- SQL Server 2005 Paging
+				DECLARE @SQL AS nvarchar(MAX)
+				SET @SQL = 'WITH PageIndex AS ('
+				SET @SQL = @SQL + ' SELECT'
+				IF @PageSize > 0
+				BEGIN
+					SET @SQL = @SQL + ' TOP ' + CONVERT(nvarchar, @PageUpperBound)
+				END
+				SET @SQL = @SQL + ' ROW_NUMBER() OVER (ORDER BY ' + @OrderBy + ') as RowIndex'
+				SET @SQL = @SQL + ', [OrderId]'
+				SET @SQL = @SQL + ', [UserId]'
+				SET @SQL = @SQL + ', [OrderDate]'
+				SET @SQL = @SQL + ', [ShipAddr1]'
+				SET @SQL = @SQL + ', [ShipAddr2]'
+				SET @SQL = @SQL + ', [ShipCity]'
+				SET @SQL = @SQL + ', [ShipState]'
+				SET @SQL = @SQL + ', [ShipZip]'
+				SET @SQL = @SQL + ', [ShipCountry]'
+				SET @SQL = @SQL + ', [BillAddr1]'
+				SET @SQL = @SQL + ', [BillAddr2]'
+				SET @SQL = @SQL + ', [BillCity]'
+				SET @SQL = @SQL + ', [BillState]'
+				SET @SQL = @SQL + ', [BillZip]'
+				SET @SQL = @SQL + ', [BillCountry]'
+				SET @SQL = @SQL + ', [Courier]'
+				SET @SQL = @SQL + ', [TotalPrice]'
+				SET @SQL = @SQL + ', [BillToFirstName]'
+				SET @SQL = @SQL + ', [BillToLastName]'
+				SET @SQL = @SQL + ', [ShipToFirstName]'
+				SET @SQL = @SQL + ', [ShipToLastName]'
+				SET @SQL = @SQL + ', [AuthorizationNumber]'
+				SET @SQL = @SQL + ', [Locale]'
+				SET @SQL = @SQL + ' FROM [dbo].[Orders]'
+				IF LEN(@WhereClause) > 0
+				BEGIN
+					SET @SQL = @SQL + ' WHERE ' + @WhereClause
+				END
+				SET @SQL = @SQL + ' ) SELECT'
+				SET @SQL = @SQL + ' [OrderId],'
+				SET @SQL = @SQL + ' [UserId],'
+				SET @SQL = @SQL + ' [OrderDate],'
+				SET @SQL = @SQL + ' [ShipAddr1],'
+				SET @SQL = @SQL + ' [ShipAddr2],'
+				SET @SQL = @SQL + ' [ShipCity],'
+				SET @SQL = @SQL + ' [ShipState],'
+				SET @SQL = @SQL + ' [ShipZip],'
+				SET @SQL = @SQL + ' [ShipCountry],'
+				SET @SQL = @SQL + ' [BillAddr1],'
+				SET @SQL = @SQL + ' [BillAddr2],'
+				SET @SQL = @SQL + ' [BillCity],'
+				SET @SQL = @SQL + ' [BillState],'
+				SET @SQL = @SQL + ' [BillZip],'
+				SET @SQL = @SQL + ' [BillCountry],'
+				SET @SQL = @SQL + ' [Courier],'
+				SET @SQL = @SQL + ' [TotalPrice],'
+				SET @SQL = @SQL + ' [BillToFirstName],'
+				SET @SQL = @SQL + ' [BillToLastName],'
+				SET @SQL = @SQL + ' [ShipToFirstName],'
+				SET @SQL = @SQL + ' [ShipToLastName],'
+				SET @SQL = @SQL + ' [AuthorizationNumber],'
+				SET @SQL = @SQL + ' [Locale]'
+				SET @SQL = @SQL + ' FROM PageIndex'
+				SET @SQL = @SQL + ' WHERE RowIndex > ' + CONVERT(nvarchar, @PageLowerBound)
+				IF @PageSize > 0
+				BEGIN
+					SET @SQL = @SQL + ' AND RowIndex <= ' + CONVERT(nvarchar, @PageUpperBound)
+				END
+				SET @SQL = @SQL + ' ORDER BY ' + @OrderBy
+				EXEC sp_executesql @SQL
+				
+				-- get row count
+				SET @SQL = 'SELECT COUNT(*) AS TotalRowCount'
+				SET @SQL = @SQL + ' FROM [dbo].[Orders]'
+				IF LEN(@WhereClause) > 0
+				BEGIN
+					SET @SQL = @SQL + ' WHERE ' + @WhereClause
+				END
+				EXEC sp_executesql @SQL
+			
+				END
+			]]></body>
+		</procedure>
+		
+		<procedure owner="dbo" name="Orders_Insert" grant="">
+			<comment><![CDATA[/*
+----------------------------------------------------------------------------------------------------
+
+-- Created By: Pet Shop ()
+-- Purpose: Inserts a record into the Orders table
+----------------------------------------------------------------------------------------------------
+*/
+]]></comment>
+			<parameters>
+				<parameter name="@OrderId" type="int" direction="Output" size="4" precision="10" scale="0" param="" nulldefault=""/>
+				<parameter name="@UserId" type="varchar" direction="Input" size="20" precision="0" scale="0" param="(20)" nulldefault=""/>
+				<parameter name="@OrderDate" type="datetime" direction="Input" size="8" precision="23" scale="3" param="" nulldefault=""/>
+				<parameter name="@ShipAddr1" type="varchar" direction="Input" size="80" precision="0" scale="0" param="(80)" nulldefault=""/>
+				<parameter name="@ShipAddr2" type="varchar" direction="Input" size="80" precision="0" scale="0" param="(80)" nulldefault=""/>
+				<parameter name="@ShipCity" type="varchar" direction="Input" size="80" precision="0" scale="0" param="(80)" nulldefault=""/>
+				<parameter name="@ShipState" type="varchar" direction="Input" size="80" precision="0" scale="0" param="(80)" nulldefault=""/>
+				<parameter name="@ShipZip" type="varchar" direction="Input" size="20" precision="0" scale="0" param="(20)" nulldefault=""/>
+				<parameter name="@ShipCountry" type="varchar" direction="Input" size="20" precision="0" scale="0" param="(20)" nulldefault=""/>
+				<parameter name="@BillAddr1" type="varchar" direction="Input" size="80" precision="0" scale="0" param="(80)" nulldefault=""/>
+				<parameter name="@BillAddr2" type="varchar" direction="Input" size="80" precision="0" scale="0" param="(80)" nulldefault=""/>
+				<parameter name="@BillCity" type="varchar" direction="Input" size="80" precision="0" scale="0" param="(80)" nulldefault=""/>
+				<parameter name="@BillState" type="varchar" direction="Input" size="80" precision="0" scale="0" param="(80)" nulldefault=""/>
+				<parameter name="@BillZip" type="varchar" direction="Input" size="20" precision="0" scale="0" param="(20)" nulldefault=""/>
+				<parameter name="@BillCountry" type="varchar" direction="Input" size="20" precision="0" scale="0" param="(20)" nulldefault=""/>
+				<parameter name="@Courier" type="varchar" direction="Input" size="80" precision="0" scale="0" param="(80)" nulldefault=""/>
+				<parameter name="@TotalPrice" type="decimal" direction="Input" size="9" precision="10" scale="2" param="(10, 2)" nulldefault=""/>
+				<parameter name="@BillToFirstName" type="varchar" direction="Input" size="80" precision="0" scale="0" param="(80)" nulldefault=""/>
+				<parameter name="@BillToLastName" type="varchar" direction="Input" size="80" precision="0" scale="0" param="(80)" nulldefault=""/>
+				<parameter name="@ShipToFirstName" type="varchar" direction="Input" size="80" precision="0" scale="0" param="(80)" nulldefault=""/>
+				<parameter name="@ShipToLastName" type="varchar" direction="Input" size="80" precision="0" scale="0" param="(80)" nulldefault=""/>
+				<parameter name="@AuthorizationNumber" type="int" direction="Input" size="4" precision="10" scale="0" param="" nulldefault=""/>
+				<parameter name="@Locale" type="varchar" direction="Input" size="20" precision="0" scale="0" param="(20)" nulldefault=""/>
+			</parameters>
+			<body><![CDATA[
+				
+				INSERT INTO [dbo].[Orders]
+					(
+					[UserId]
+					,[OrderDate]
+					,[ShipAddr1]
+					,[ShipAddr2]
+					,[ShipCity]
+					,[ShipState]
+					,[ShipZip]
+					,[ShipCountry]
+					,[BillAddr1]
+					,[BillAddr2]
+					,[BillCity]
+					,[BillState]
+					,[BillZip]
+					,[BillCountry]
+					,[Courier]
+					,[TotalPrice]
+					,[BillToFirstName]
+					,[BillToLastName]
+					,[ShipToFirstName]
+					,[ShipToLastName]
+					,[AuthorizationNumber]
+					,[Locale]
+					)
+				VALUES
+					(
+					@UserId
+					,@OrderDate
+					,@ShipAddr1
+					,@ShipAddr2
+					,@ShipCity
+					,@ShipState
+					,@ShipZip
+					,@ShipCountry
+					,@BillAddr1
+					,@BillAddr2
+					,@BillCity
+					,@BillState
+					,@BillZip
+					,@BillCountry
+					,@Courier
+					,@TotalPrice
+					,@BillToFirstName
+					,@BillToLastName
+					,@ShipToFirstName
+					,@ShipToLastName
+					,@AuthorizationNumber
+					,@Locale
+					)
+				
+				-- Get the identity value
+				SET @OrderId = SCOPE_IDENTITY()
+									
+							
+			]]></body>
+		</procedure>
+		<procedure owner="dbo" name="Orders_Update" grant="">
+			<comment><![CDATA[/*
+----------------------------------------------------------------------------------------------------
+
+-- Created By: Pet Shop ()
+-- Purpose: Updates a record in the Orders table
+----------------------------------------------------------------------------------------------------
+*/
+]]></comment>
+			<parameters>
+				<parameter name="@OrderId" type="int" direction="Input" size="4" precision="10" scale="0" param="" nulldefault=""/>
+				<parameter name="@UserId" type="varchar" direction="Input" size="20" precision="0" scale="0" param="(20)" nulldefault=""/>
+				<parameter name="@OrderDate" type="datetime" direction="Input" size="8" precision="23" scale="3" param="" nulldefault=""/>
+				<parameter name="@ShipAddr1" type="varchar" direction="Input" size="80" precision="0" scale="0" param="(80)" nulldefault=""/>
+				<parameter name="@ShipAddr2" type="varchar" direction="Input" size="80" precision="0" scale="0" param="(80)" nulldefault=""/>
+				<parameter name="@ShipCity" type="varchar" direction="Input" size="80" precision="0" scale="0" param="(80)" nulldefault=""/>
+				<parameter name="@ShipState" type="varchar" direction="Input" size="80" precision="0" scale="0" param="(80)" nulldefault=""/>
+				<parameter name="@ShipZip" type="varchar" direction="Input" size="20" precision="0" scale="0" param="(20)" nulldefault=""/>
+				<parameter name="@ShipCountry" type="varchar" direction="Input" size="20" precision="0" scale="0" param="(20)" nulldefault=""/>
+				<parameter name="@BillAddr1" type="varchar" direction="Input" size="80" precision="0" scale="0" param="(80)" nulldefault=""/>
+				<parameter name="@BillAddr2" type="varchar" direction="Input" size="80" precision="0" scale="0" param="(80)" nulldefault=""/>
+				<parameter name="@BillCity" type="varchar" direction="Input" size="80" precision="0" scale="0" param="(80)" nulldefault=""/>
+				<parameter name="@BillState" type="varchar" direction="Input" size="80" precision="0" scale="0" param="(80)" nulldefault=""/>
+				<parameter name="@BillZip" type="varchar" direction="Input" size="20" precision="0" scale="0" param="(20)" nulldefault=""/>
+				<parameter name="@BillCountry" type="varchar" direction="Input" size="20" precision="0" scale="0" param="(20)" nulldefault=""/>
+				<parameter name="@Courier" type="varchar" direction="Input" size="80" precision="0" scale="0" param="(80)" nulldefault=""/>
+				<parameter name="@TotalPrice" type="decimal" direction="Input" size="9" precision="10" scale="2" param="(10, 2)" nulldefault=""/>
+				<parameter name="@BillToFirstName" type="varchar" direction="Input" size="80" precision="0" scale="0" param="(80)" nulldefault=""/>
+				<parameter name="@BillToLastName" type="varchar" direction="Input" size="80" precision="0" scale="0" param="(80)" nulldefault=""/>
+				<parameter name="@ShipToFirstName" type="varchar" direction="Input" size="80" precision="0" scale="0" param="(80)" nulldefault=""/>
+				<parameter name="@ShipToLastName" type="varchar" direction="Input" size="80" precision="0" scale="0" param="(80)" nulldefault=""/>
+				<parameter name="@AuthorizationNumber" type="int" direction="Input" size="4" precision="10" scale="0" param="" nulldefault=""/>
+				<parameter name="@Locale" type="varchar" direction="Input" size="20" precision="0" scale="0" param="(20)" nulldefault=""/>
+			</parameters>
+			<body><![CDATA[
+				
+				
+				-- Modify the updatable columns
+				UPDATE
+					[dbo].[Orders]
+				SET
+					[UserId] = @UserId
+					,[OrderDate] = @OrderDate
+					,[ShipAddr1] = @ShipAddr1
+					,[ShipAddr2] = @ShipAddr2
+					,[ShipCity] = @ShipCity
+					,[ShipState] = @ShipState
+					,[ShipZip] = @ShipZip
+					,[ShipCountry] = @ShipCountry
+					,[BillAddr1] = @BillAddr1
+					,[BillAddr2] = @BillAddr2
+					,[BillCity] = @BillCity
+					,[BillState] = @BillState
+					,[BillZip] = @BillZip
+					,[BillCountry] = @BillCountry
+					,[Courier] = @Courier
+					,[TotalPrice] = @TotalPrice
+					,[BillToFirstName] = @BillToFirstName
+					,[BillToLastName] = @BillToLastName
+					,[ShipToFirstName] = @ShipToFirstName
+					,[ShipToLastName] = @ShipToLastName
+					,[AuthorizationNumber] = @AuthorizationNumber
+					,[Locale] = @Locale
+				WHERE
+[OrderId] = @OrderId 
+				
+			]]></body>
+		</procedure>
+		<procedure owner="dbo" name="Orders_Delete" grant="">
+			<comment><![CDATA[/*
+----------------------------------------------------------------------------------------------------
+
+-- Created By: Pet Shop ()
+-- Purpose: Deletes a record in the Orders table
+----------------------------------------------------------------------------------------------------
+*/
+]]></comment>
+			<parameters>
+				<parameter name="@OrderId" type="int" direction="Input" size="4" precision="10" scale="0" param="" nulldefault=""/>
+			</parameters>
+			<body><![CDATA[
+				DELETE FROM [dbo].[Orders] WITH (ROWLOCK) 
+				WHERE
+					[OrderId] = @OrderId
+					
+			]]></body>
+		</procedure>
+		<procedure owner="dbo" name="Orders_GetByOrderId" >
+			<comment><![CDATA[/*
+----------------------------------------------------------------------------------------------------
+
+-- Created By: Pet Shop ()
+-- Purpose: Select records from the Orders table through an index
+----------------------------------------------------------------------------------------------------
+*/
+]]></comment>
+			<parameters>
+				<parameter name="@OrderId" type="int" direction="Input" size="4" precision="10" scale="0" param="" nulldefault=""/>
+			</parameters>
+			<body><![CDATA[
+				SELECT
+					[OrderId],
+					[UserId],
+					[OrderDate],
+					[ShipAddr1],
+					[ShipAddr2],
+					[ShipCity],
+					[ShipState],
+					[ShipZip],
+					[ShipCountry],
+					[BillAddr1],
+					[BillAddr2],
+					[BillCity],
+					[BillState],
+					[BillZip],
+					[BillCountry],
+					[Courier],
+					[TotalPrice],
+					[BillToFirstName],
+					[BillToLastName],
+					[ShipToFirstName],
+					[ShipToLastName],
+					[AuthorizationNumber],
+					[Locale]
+				FROM
+					[dbo].[Orders]
+				WHERE
+					[OrderId] = @OrderId
+				SELECT @@ROWCOUNT
+					
+			]]></body>
+			
+		</procedure>
+		<procedure owner="dbo" name="Orders_Find" >
+			<comment><![CDATA[/*
+----------------------------------------------------------------------------------------------------
+
+-- Created By: Pet Shop ()
+-- Purpose: Finds records in the Orders table passing nullable parameters
+----------------------------------------------------------------------------------------------------
+*/
+]]></comment>
+			<parameters>
+				<parameter name="@SearchUsingOR" type="bit" direction="Input" size="0" precision="1" scale="0" param="" nulldefault="null"/>
+				<parameter name="@OrderId" type="int" direction="Input" size="4" precision="10" scale="0" param="" nulldefault="null"/>
+				<parameter name="@UserId" type="varchar" direction="Input" size="20" precision="0" scale="0" param="(20)" nulldefault="null"/>
+				<parameter name="@OrderDate" type="datetime" direction="Input" size="8" precision="23" scale="3" param="" nulldefault="null"/>
+				<parameter name="@ShipAddr1" type="varchar" direction="Input" size="80" precision="0" scale="0" param="(80)" nulldefault="null"/>
+				<parameter name="@ShipAddr2" type="varchar" direction="Input" size="80" precision="0" scale="0" param="(80)" nulldefault="null"/>
+				<parameter name="@ShipCity" type="varchar" direction="Input" size="80" precision="0" scale="0" param="(80)" nulldefault="null"/>
+				<parameter name="@ShipState" type="varchar" direction="Input" size="80" precision="0" scale="0" param="(80)" nulldefault="null"/>
+				<parameter name="@ShipZip" type="varchar" direction="Input" size="20" precision="0" scale="0" param="(20)" nulldefault="null"/>
+				<parameter name="@ShipCountry" type="varchar" direction="Input" size="20" precision="0" scale="0" param="(20)" nulldefault="null"/>
+				<parameter name="@BillAddr1" type="varchar" direction="Input" size="80" precision="0" scale="0" param="(80)" nulldefault="null"/>
+				<parameter name="@BillAddr2" type="varchar" direction="Input" size="80" precision="0" scale="0" param="(80)" nulldefault="null"/>
+				<parameter name="@BillCity" type="varchar" direction="Input" size="80" precision="0" scale="0" param="(80)" nulldefault="null"/>
+				<parameter name="@BillState" type="varchar" direction="Input" size="80" precision="0" scale="0" param="(80)" nulldefault="null"/>
+				<parameter name="@BillZip" type="varchar" direction="Input" size="20" precision="0" scale="0" param="(20)" nulldefault="null"/>
+				<parameter name="@BillCountry" type="varchar" direction="Input" size="20" precision="0" scale="0" param="(20)" nulldefault="null"/>
+				<parameter name="@Courier" type="varchar" direction="Input" size="80" precision="0" scale="0" param="(80)" nulldefault="null"/>
+				<parameter name="@TotalPrice" type="decimal" direction="Input" size="9" precision="10" scale="2" param="(10, 2)" nulldefault="null"/>
+				<parameter name="@BillToFirstName" type="varchar" direction="Input" size="80" precision="0" scale="0" param="(80)" nulldefault="null"/>
+				<parameter name="@BillToLastName" type="varchar" direction="Input" size="80" precision="0" scale="0" param="(80)" nulldefault="null"/>
+				<parameter name="@ShipToFirstName" type="varchar" direction="Input" size="80" precision="0" scale="0" param="(80)" nulldefault="null"/>
+				<parameter name="@ShipToLastName" type="varchar" direction="Input" size="80" precision="0" scale="0" param="(80)" nulldefault="null"/>
+				<parameter name="@AuthorizationNumber" type="int" direction="Input" size="4" precision="10" scale="0" param="" nulldefault="null"/>
+				<parameter name="@Locale" type="varchar" direction="Input" size="20" precision="0" scale="0" param="(20)" nulldefault="null"/>
+			</parameters>
+			<body><![CDATA[
+				
+  IF ISNULL(@SearchUsingOR, 0) <> 1
+  BEGIN
+    SELECT
+	  [OrderId]
+	, [UserId]
+	, [OrderDate]
+	, [ShipAddr1]
+	, [ShipAddr2]
+	, [ShipCity]
+	, [ShipState]
+	, [ShipZip]
+	, [ShipCountry]
+	, [BillAddr1]
+	, [BillAddr2]
+	, [BillCity]
+	, [BillState]
+	, [BillZip]
+	, [BillCountry]
+	, [Courier]
+	, [TotalPrice]
+	, [BillToFirstName]
+	, [BillToLastName]
+	, [ShipToFirstName]
+	, [ShipToLastName]
+	, [AuthorizationNumber]
+	, [Locale]
+    FROM
+	[dbo].[Orders]
+    WHERE 
+	 ([OrderId] = @OrderId OR @OrderId IS NULL)
+	AND ([UserId] = @UserId OR @UserId IS NULL)
+	AND ([OrderDate] = @OrderDate OR @OrderDate IS NULL)
+	AND ([ShipAddr1] = @ShipAddr1 OR @ShipAddr1 IS NULL)
+	AND ([ShipAddr2] = @ShipAddr2 OR @ShipAddr2 IS NULL)
+	AND ([ShipCity] = @ShipCity OR @ShipCity IS NULL)
+	AND ([ShipState] = @ShipState OR @ShipState IS NULL)
+	AND ([ShipZip] = @ShipZip OR @ShipZip IS NULL)
+	AND ([ShipCountry] = @ShipCountry OR @ShipCountry IS NULL)
+	AND ([BillAddr1] = @BillAddr1 OR @BillAddr1 IS NULL)
+	AND ([BillAddr2] = @BillAddr2 OR @BillAddr2 IS NULL)
+	AND ([BillCity] = @BillCity OR @BillCity IS NULL)
+	AND ([BillState] = @BillState OR @BillState IS NULL)
+	AND ([BillZip] = @BillZip OR @BillZip IS NULL)
+	AND ([BillCountry] = @BillCountry OR @BillCountry IS NULL)
+	AND ([Courier] = @Courier OR @Courier IS NULL)
+	AND ([TotalPrice] = @TotalPrice OR @TotalPrice IS NULL)
+	AND ([BillToFirstName] = @BillToFirstName OR @BillToFirstName IS NULL)
+	AND ([BillToLastName] = @BillToLastName OR @BillToLastName IS NULL)
+	AND ([ShipToFirstName] = @ShipToFirstName OR @ShipToFirstName IS NULL)
+	AND ([ShipToLastName] = @ShipToLastName OR @ShipToLastName IS NULL)
+	AND ([AuthorizationNumber] = @AuthorizationNumber OR @AuthorizationNumber IS NULL)
+	AND ([Locale] = @Locale OR @Locale IS NULL)
+						
+  END
+  ELSE
+  BEGIN
+    SELECT
+	  [OrderId]
+	, [UserId]
+	, [OrderDate]
+	, [ShipAddr1]
+	, [ShipAddr2]
+	, [ShipCity]
+	, [ShipState]
+	, [ShipZip]
+	, [ShipCountry]
+	, [BillAddr1]
+	, [BillAddr2]
+	, [BillCity]
+	, [BillState]
+	, [BillZip]
+	, [BillCountry]
+	, [Courier]
+	, [TotalPrice]
+	, [BillToFirstName]
+	, [BillToLastName]
+	, [ShipToFirstName]
+	, [ShipToLastName]
+	, [AuthorizationNumber]
+	, [Locale]
+    FROM
+	[dbo].[Orders]
+    WHERE 
+	 ([OrderId] = @OrderId AND @OrderId is not null)
+	OR ([UserId] = @UserId AND @UserId is not null)
+	OR ([OrderDate] = @OrderDate AND @OrderDate is not null)
+	OR ([ShipAddr1] = @ShipAddr1 AND @ShipAddr1 is not null)
+	OR ([ShipAddr2] = @ShipAddr2 AND @ShipAddr2 is not null)
+	OR ([ShipCity] = @ShipCity AND @ShipCity is not null)
+	OR ([ShipState] = @ShipState AND @ShipState is not null)
+	OR ([ShipZip] = @ShipZip AND @ShipZip is not null)
+	OR ([ShipCountry] = @ShipCountry AND @ShipCountry is not null)
+	OR ([BillAddr1] = @BillAddr1 AND @BillAddr1 is not null)
+	OR ([BillAddr2] = @BillAddr2 AND @BillAddr2 is not null)
+	OR ([BillCity] = @BillCity AND @BillCity is not null)
+	OR ([BillState] = @BillState AND @BillState is not null)
+	OR ([BillZip] = @BillZip AND @BillZip is not null)
+	OR ([BillCountry] = @BillCountry AND @BillCountry is not null)
+	OR ([Courier] = @Courier AND @Courier is not null)
+	OR ([TotalPrice] = @TotalPrice AND @TotalPrice is not null)
+	OR ([BillToFirstName] = @BillToFirstName AND @BillToFirstName is not null)
+	OR ([BillToLastName] = @BillToLastName AND @BillToLastName is not null)
+	OR ([ShipToFirstName] = @ShipToFirstName AND @ShipToFirstName is not null)
+	OR ([ShipToLastName] = @ShipToLastName AND @ShipToLastName is not null)
+	OR ([AuthorizationNumber] = @AuthorizationNumber AND @AuthorizationNumber is not null)
+	OR ([Locale] = @Locale AND @Locale is not null)
+	SELECT @@ROWCOUNT			
+  END
+				]]></body>
+		</procedure>
+
+		
+		<procedure owner="dbo" name="Orders_Find_Dynamic"  skip="true">
+			<comment><![CDATA[/*
+----------------------------------------------------------------------------------------------------
+
+-- Created By: Pet Shop ()
+-- Purpose: Gets records from the Orders table using a dynamically generated query.
+----------------------------------------------------------------------------------------------------
+*/
+]]></comment>
+			<parameters/>
+			<body><![CDATA[
+				
+				BEGIN
+				
+				WITH PageIndex AS (
+					SELECT TOP {3} row_number() over (order by {1}) AS RowIndex
+					, [OrderId]
+					, [UserId]
+					, [OrderDate]
+					, [ShipAddr1]
+					, [ShipAddr2]
+					, [ShipCity]
+					, [ShipState]
+					, [ShipZip]
+					, [ShipCountry]
+					, [BillAddr1]
+					, [BillAddr2]
+					, [BillCity]
+					, [BillState]
+					, [BillZip]
+					, [BillCountry]
+					, [Courier]
+					, [TotalPrice]
+					, [BillToFirstName]
+					, [BillToLastName]
+					, [ShipToFirstName]
+					, [ShipToLastName]
+					, [AuthorizationNumber]
+					, [Locale]
+					FROM [dbo].[Orders] {0}
+				)
+				SELECT
+				       [OrderId],
+				       [UserId],
+				       [OrderDate],
+				       [ShipAddr1],
+				       [ShipAddr2],
+				       [ShipCity],
+				       [ShipState],
+				       [ShipZip],
+				       [ShipCountry],
+				       [BillAddr1],
+				       [BillAddr2],
+				       [BillCity],
+				       [BillState],
+				       [BillZip],
+				       [BillCountry],
+				       [Courier],
+				       [TotalPrice],
+				       [BillToFirstName],
+				       [BillToLastName],
+				       [ShipToFirstName],
+				       [ShipToLastName],
+				       [AuthorizationNumber],
+				       [Locale]
+				  FROM PageIndex
+				 WHERE RowIndex > {2}
+				   AND RowIndex <= {3}
+				ORDER BY {1};
+				
+
+				-- get total count
+				SELECT COUNT(*) AS TotalRowCount FROM [dbo].[Orders] {0};
+				
+				END
+			]]></body>
+		</procedure>
+		
+		
+		<procedure owner="dbo" name="Inventory_Get_List" >
+			<comment><![CDATA[/*
+----------------------------------------------------------------------------------------------------
+
+-- Created By: Pet Shop ()
+-- Purpose: Gets all records from the Inventory table
+----------------------------------------------------------------------------------------------------
+*/
+]]></comment>
+			<parameters/>
+			<body><![CDATA[
+				
+				SELECT
+					[ItemId],
+					[Qty]
+				FROM
+					[dbo].[Inventory]
+					
+				SELECT @@ROWCOUNT
+			]]></body>
+		</procedure>
+		
+		
+		<procedure owner="dbo" name="Inventory_GetPaged" >
+			<comment><![CDATA[/*
+----------------------------------------------------------------------------------------------------
+
+-- Created By: Pet Shop ()
+-- Purpose: Gets records from the Inventory table passing page index and page count parameters
+----------------------------------------------------------------------------------------------------
+*/
+]]></comment>
+			<parameters>
+				<parameter name="@WhereClause" type="varchar" direction="Input" size="2000" precision="0" scale="0" param="(2000)" />
+				<parameter name="@OrderBy" type="varchar" direction="Input" size="2000" precision="0" scale="0" param="(2000)"/>
+				<parameter name="@PageIndex" type="int" direction="Input" size="0" precision="10" scale="0" />
+				<parameter name="@PageSize" type="int" direction="Input" size="0" precision="10" scale="0" /> 
+			</parameters>
+			<body><![CDATA[
+				
+				BEGIN
+				DECLARE @PageLowerBound int
+				DECLARE @PageUpperBound int
+				
+				-- Set the page bounds
+				SET @PageLowerBound = @PageSize * @PageIndex
+				SET @PageUpperBound = @PageLowerBound + @PageSize
+
+				IF (@OrderBy IS NULL OR LEN(@OrderBy) < 1)
+				BEGIN
+					-- default order by to first column
+					SET @OrderBy = '[ItemId]'
+				END
+
+				-- SQL Server 2005 Paging
+				DECLARE @SQL AS nvarchar(MAX)
+				SET @SQL = 'WITH PageIndex AS ('
+				SET @SQL = @SQL + ' SELECT'
+				IF @PageSize > 0
+				BEGIN
+					SET @SQL = @SQL + ' TOP ' + CONVERT(nvarchar, @PageUpperBound)
+				END
+				SET @SQL = @SQL + ' ROW_NUMBER() OVER (ORDER BY ' + @OrderBy + ') as RowIndex'
+				SET @SQL = @SQL + ', [ItemId]'
+				SET @SQL = @SQL + ', [Qty]'
+				SET @SQL = @SQL + ' FROM [dbo].[Inventory]'
+				IF LEN(@WhereClause) > 0
+				BEGIN
+					SET @SQL = @SQL + ' WHERE ' + @WhereClause
+				END
+				SET @SQL = @SQL + ' ) SELECT'
+				SET @SQL = @SQL + ' [ItemId],'
+				SET @SQL = @SQL + ' [Qty]'
+				SET @SQL = @SQL + ' FROM PageIndex'
+				SET @SQL = @SQL + ' WHERE RowIndex > ' + CONVERT(nvarchar, @PageLowerBound)
+				IF @PageSize > 0
+				BEGIN
+					SET @SQL = @SQL + ' AND RowIndex <= ' + CONVERT(nvarchar, @PageUpperBound)
+				END
+				SET @SQL = @SQL + ' ORDER BY ' + @OrderBy
+				EXEC sp_executesql @SQL
+				
+				-- get row count
+				SET @SQL = 'SELECT COUNT(*) AS TotalRowCount'
+				SET @SQL = @SQL + ' FROM [dbo].[Inventory]'
+				IF LEN(@WhereClause) > 0
+				BEGIN
+					SET @SQL = @SQL + ' WHERE ' + @WhereClause
+				END
+				EXEC sp_executesql @SQL
+			
+				END
+			]]></body>
+		</procedure>
+		
+		<procedure owner="dbo" name="Inventory_Insert" grant="">
+			<comment><![CDATA[/*
+----------------------------------------------------------------------------------------------------
+
+-- Created By: Pet Shop ()
+-- Purpose: Inserts a record into the Inventory table
+----------------------------------------------------------------------------------------------------
+*/
+]]></comment>
+			<parameters>
+				<parameter name="@ItemId" type="varchar" direction="Input" size="10" precision="0" scale="0" param="(10)" nulldefault=""/>
+				<parameter name="@Qty" type="int" direction="Input" size="4" precision="10" scale="0" param="" nulldefault=""/>
+			</parameters>
+			<body><![CDATA[
+				
+				INSERT INTO [dbo].[Inventory]
+					(
+					[ItemId]
+					,[Qty]
+					)
+				VALUES
+					(
+					@ItemId
+					,@Qty
+					)
+				
+									
+							
+			]]></body>
+		</procedure>
+		<procedure owner="dbo" name="Inventory_Update" grant="">
+			<comment><![CDATA[/*
+----------------------------------------------------------------------------------------------------
+
+-- Created By: Pet Shop ()
+-- Purpose: Updates a record in the Inventory table
+----------------------------------------------------------------------------------------------------
+*/
+]]></comment>
+			<parameters>
+				<parameter name="@ItemId" type="varchar" direction="Input" size="10" precision="0" scale="0" param="(10)" nulldefault=""/>
+				<parameter name="@OriginalItemId" type="varchar" direction="Input" size="10" precision="0" scale="0" param="(10)" nulldefault=""/>
+				<parameter name="@Qty" type="int" direction="Input" size="4" precision="10" scale="0" param="" nulldefault=""/>
+			</parameters>
+			<body><![CDATA[
+				
+				
+				-- Modify the updatable columns
+				UPDATE
+					[dbo].[Inventory]
+				SET
+					[ItemId] = @ItemId
+					,[Qty] = @Qty
+				WHERE
+[ItemId] = @OriginalItemId 
+				
+			]]></body>
+		</procedure>
+		<procedure owner="dbo" name="Inventory_Delete" grant="">
+			<comment><![CDATA[/*
+----------------------------------------------------------------------------------------------------
+
+-- Created By: Pet Shop ()
+-- Purpose: Deletes a record in the Inventory table
+----------------------------------------------------------------------------------------------------
+*/
+]]></comment>
+			<parameters>
+				<parameter name="@ItemId" type="varchar" direction="Input" size="10" precision="0" scale="0" param="(10)" nulldefault=""/>
+			</parameters>
+			<body><![CDATA[
+				DELETE FROM [dbo].[Inventory] WITH (ROWLOCK) 
+				WHERE
+					[ItemId] = @ItemId
+					
+			]]></body>
+		</procedure>
+		<procedure owner="dbo" name="Inventory_GetByItemId" >
+			<comment><![CDATA[/*
+----------------------------------------------------------------------------------------------------
+
+-- Created By: Pet Shop ()
+-- Purpose: Select records from the Inventory table through an index
+----------------------------------------------------------------------------------------------------
+*/
+]]></comment>
+			<parameters>
+				<parameter name="@ItemId" type="varchar" direction="Input" size="10" precision="0" scale="0" param="(10)" nulldefault=""/>
+			</parameters>
+			<body><![CDATA[
+				SELECT
+					[ItemId],
+					[Qty]
+				FROM
+					[dbo].[Inventory]
+				WHERE
+					[ItemId] = @ItemId
+				SELECT @@ROWCOUNT
+					
+			]]></body>
+			
+		</procedure>
+		<procedure owner="dbo" name="Inventory_Find" >
+			<comment><![CDATA[/*
+----------------------------------------------------------------------------------------------------
+
+-- Created By: Pet Shop ()
+-- Purpose: Finds records in the Inventory table passing nullable parameters
+----------------------------------------------------------------------------------------------------
+*/
+]]></comment>
+			<parameters>
+				<parameter name="@SearchUsingOR" type="bit" direction="Input" size="0" precision="1" scale="0" param="" nulldefault="null"/>
+				<parameter name="@ItemId" type="varchar" direction="Input" size="10" precision="0" scale="0" param="(10)" nulldefault="null"/>
+				<parameter name="@Qty" type="int" direction="Input" size="4" precision="10" scale="0" param="" nulldefault="null"/>
+			</parameters>
+			<body><![CDATA[
+				
+  IF ISNULL(@SearchUsingOR, 0) <> 1
+  BEGIN
+    SELECT
+	  [ItemId]
+	, [Qty]
+    FROM
+	[dbo].[Inventory]
+    WHERE 
+	 ([ItemId] = @ItemId OR @ItemId IS NULL)
+	AND ([Qty] = @Qty OR @Qty IS NULL)
+						
+  END
+  ELSE
+  BEGIN
+    SELECT
+	  [ItemId]
+	, [Qty]
+    FROM
+	[dbo].[Inventory]
+    WHERE 
+	 ([ItemId] = @ItemId AND @ItemId is not null)
+	OR ([Qty] = @Qty AND @Qty is not null)
+	SELECT @@ROWCOUNT			
+  END
+				]]></body>
+		</procedure>
+
+		
+		<procedure owner="dbo" name="Inventory_Find_Dynamic"  skip="true">
+			<comment><![CDATA[/*
+----------------------------------------------------------------------------------------------------
+
+-- Created By: Pet Shop ()
+-- Purpose: Gets records from the Inventory table using a dynamically generated query.
+----------------------------------------------------------------------------------------------------
+*/
+]]></comment>
+			<parameters/>
+			<body><![CDATA[
+				
+				BEGIN
+				
+				WITH PageIndex AS (
+					SELECT TOP {3} row_number() over (order by {1}) AS RowIndex
+					, [ItemId]
+					, [Qty]
+					FROM [dbo].[Inventory] {0}
+				)
+				SELECT
+				       [ItemId],
+				       [Qty]
+				  FROM PageIndex
+				 WHERE RowIndex > {2}
+				   AND RowIndex <= {3}
+				ORDER BY {1};
+				
+
+				-- get total count
+				SELECT COUNT(*) AS TotalRowCount FROM [dbo].[Inventory] {0};
+				
+				END
+			]]></body>
+		</procedure>
+		
+		
+		<procedure owner="dbo" name="Supplier_Get_List" >
+			<comment><![CDATA[/*
+----------------------------------------------------------------------------------------------------
+
+-- Created By: Pet Shop ()
+-- Purpose: Gets all records from the Supplier table
+----------------------------------------------------------------------------------------------------
+*/
+]]></comment>
+			<parameters/>
+			<body><![CDATA[
+				
+				SELECT
+					[SuppId],
+					[Name],
+					[Status],
+					[Addr1],
+					[Addr2],
+					[City],
+					[State],
+					[Zip],
+					[Phone]
+				FROM
+					[dbo].[Supplier]
+					
+				SELECT @@ROWCOUNT
+			]]></body>
+		</procedure>
+		
+		
+		<procedure owner="dbo" name="Supplier_GetPaged" >
+			<comment><![CDATA[/*
+----------------------------------------------------------------------------------------------------
+
+-- Created By: Pet Shop ()
+-- Purpose: Gets records from the Supplier table passing page index and page count parameters
+----------------------------------------------------------------------------------------------------
+*/
+]]></comment>
+			<parameters>
+				<parameter name="@WhereClause" type="varchar" direction="Input" size="2000" precision="0" scale="0" param="(2000)" />
+				<parameter name="@OrderBy" type="varchar" direction="Input" size="2000" precision="0" scale="0" param="(2000)"/>
+				<parameter name="@PageIndex" type="int" direction="Input" size="0" precision="10" scale="0" />
+				<parameter name="@PageSize" type="int" direction="Input" size="0" precision="10" scale="0" /> 
+			</parameters>
+			<body><![CDATA[
+				
+				BEGIN
+				DECLARE @PageLowerBound int
+				DECLARE @PageUpperBound int
+				
+				-- Set the page bounds
+				SET @PageLowerBound = @PageSize * @PageIndex
+				SET @PageUpperBound = @PageLowerBound + @PageSize
+
+				IF (@OrderBy IS NULL OR LEN(@OrderBy) < 1)
+				BEGIN
+					-- default order by to first column
+					SET @OrderBy = '[SuppId]'
+				END
+
+				-- SQL Server 2005 Paging
+				DECLARE @SQL AS nvarchar(MAX)
+				SET @SQL = 'WITH PageIndex AS ('
+				SET @SQL = @SQL + ' SELECT'
+				IF @PageSize > 0
+				BEGIN
+					SET @SQL = @SQL + ' TOP ' + CONVERT(nvarchar, @PageUpperBound)
+				END
+				SET @SQL = @SQL + ' ROW_NUMBER() OVER (ORDER BY ' + @OrderBy + ') as RowIndex'
+				SET @SQL = @SQL + ', [SuppId]'
+				SET @SQL = @SQL + ', [Name]'
+				SET @SQL = @SQL + ', [Status]'
+				SET @SQL = @SQL + ', [Addr1]'
+				SET @SQL = @SQL + ', [Addr2]'
+				SET @SQL = @SQL + ', [City]'
+				SET @SQL = @SQL + ', [State]'
+				SET @SQL = @SQL + ', [Zip]'
+				SET @SQL = @SQL + ', [Phone]'
+				SET @SQL = @SQL + ' FROM [dbo].[Supplier]'
+				IF LEN(@WhereClause) > 0
+				BEGIN
+					SET @SQL = @SQL + ' WHERE ' + @WhereClause
+				END
+				SET @SQL = @SQL + ' ) SELECT'
+				SET @SQL = @SQL + ' [SuppId],'
+				SET @SQL = @SQL + ' [Name],'
+				SET @SQL = @SQL + ' [Status],'
+				SET @SQL = @SQL + ' [Addr1],'
+				SET @SQL = @SQL + ' [Addr2],'
+				SET @SQL = @SQL + ' [City],'
+				SET @SQL = @SQL + ' [State],'
+				SET @SQL = @SQL + ' [Zip],'
+				SET @SQL = @SQL + ' [Phone]'
+				SET @SQL = @SQL + ' FROM PageIndex'
+				SET @SQL = @SQL + ' WHERE RowIndex > ' + CONVERT(nvarchar, @PageLowerBound)
+				IF @PageSize > 0
+				BEGIN
+					SET @SQL = @SQL + ' AND RowIndex <= ' + CONVERT(nvarchar, @PageUpperBound)
+				END
+				SET @SQL = @SQL + ' ORDER BY ' + @OrderBy
+				EXEC sp_executesql @SQL
+				
+				-- get row count
+				SET @SQL = 'SELECT COUNT(*) AS TotalRowCount'
+				SET @SQL = @SQL + ' FROM [dbo].[Supplier]'
+				IF LEN(@WhereClause) > 0
+				BEGIN
+					SET @SQL = @SQL + ' WHERE ' + @WhereClause
+				END
+				EXEC sp_executesql @SQL
+			
+				END
+			]]></body>
+		</procedure>
+		
+		<procedure owner="dbo" name="Supplier_Insert" grant="">
+			<comment><![CDATA[/*
+----------------------------------------------------------------------------------------------------
+
+-- Created By: Pet Shop ()
+-- Purpose: Inserts a record into the Supplier table
+----------------------------------------------------------------------------------------------------
+*/
+]]></comment>
+			<parameters>
+				<parameter name="@SuppId" type="int" direction="Input" size="4" precision="10" scale="0" param="" nulldefault=""/>
+				<parameter name="@Name" type="varchar" direction="Input" size="80" precision="0" scale="0" param="(80)" nulldefault=""/>
+				<parameter name="@Status" type="varchar" direction="Input" size="2" precision="0" scale="0" param="(2)" nulldefault=""/>
+				<parameter name="@Addr1" type="varchar" direction="Input" size="80" precision="0" scale="0" param="(80)" nulldefault=""/>
+				<parameter name="@Addr2" type="varchar" direction="Input" size="80" precision="0" scale="0" param="(80)" nulldefault=""/>
+				<parameter name="@City" type="varchar" direction="Input" size="80" precision="0" scale="0" param="(80)" nulldefault=""/>
+				<parameter name="@State" type="varchar" direction="Input" size="80" precision="0" scale="0" param="(80)" nulldefault=""/>
+				<parameter name="@Zip" type="varchar" direction="Input" size="5" precision="0" scale="0" param="(5)" nulldefault=""/>
+				<parameter name="@Phone" type="varchar" direction="Input" size="40" precision="0" scale="0" param="(40)" nulldefault=""/>
+			</parameters>
+			<body><![CDATA[
+				
+				INSERT INTO [dbo].[Supplier]
+					(
+					[SuppId]
+					,[Name]
+					,[Status]
+					,[Addr1]
+					,[Addr2]
+					,[City]
+					,[State]
+					,[Zip]
+					,[Phone]
+					)
+				VALUES
+					(
+					@SuppId
+					,@Name
+					,@Status
+					,@Addr1
+					,@Addr2
+					,@City
+					,@State
+					,@Zip
+					,@Phone
+					)
+				
+									
+							
+			]]></body>
+		</procedure>
+		<procedure owner="dbo" name="Supplier_Update" grant="">
+			<comment><![CDATA[/*
+----------------------------------------------------------------------------------------------------
+
+-- Created By: Pet Shop ()
+-- Purpose: Updates a record in the Supplier table
+----------------------------------------------------------------------------------------------------
+*/
+]]></comment>
+			<parameters>
+				<parameter name="@SuppId" type="int" direction="Input" size="4" precision="10" scale="0" param="" nulldefault=""/>
+				<parameter name="@OriginalSuppId" type="int" direction="Input" size="4" precision="10" scale="0" param="" nulldefault=""/>
+				<parameter name="@Name" type="varchar" direction="Input" size="80" precision="0" scale="0" param="(80)" nulldefault=""/>
+				<parameter name="@Status" type="varchar" direction="Input" size="2" precision="0" scale="0" param="(2)" nulldefault=""/>
+				<parameter name="@Addr1" type="varchar" direction="Input" size="80" precision="0" scale="0" param="(80)" nulldefault=""/>
+				<parameter name="@Addr2" type="varchar" direction="Input" size="80" precision="0" scale="0" param="(80)" nulldefault=""/>
+				<parameter name="@City" type="varchar" direction="Input" size="80" precision="0" scale="0" param="(80)" nulldefault=""/>
+				<parameter name="@State" type="varchar" direction="Input" size="80" precision="0" scale="0" param="(80)" nulldefault=""/>
+				<parameter name="@Zip" type="varchar" direction="Input" size="5" precision="0" scale="0" param="(5)" nulldefault=""/>
+				<parameter name="@Phone" type="varchar" direction="Input" size="40" precision="0" scale="0" param="(40)" nulldefault=""/>
+			</parameters>
+			<body><![CDATA[
+				
+				
+				-- Modify the updatable columns
+				UPDATE
+					[dbo].[Supplier]
+				SET
+					[SuppId] = @SuppId
+					,[Name] = @Name
+					,[Status] = @Status
+					,[Addr1] = @Addr1
+					,[Addr2] = @Addr2
+					,[City] = @City
+					,[State] = @State
+					,[Zip] = @Zip
+					,[Phone] = @Phone
+				WHERE
+[SuppId] = @OriginalSuppId 
+				
+			]]></body>
+		</procedure>
+		<procedure owner="dbo" name="Supplier_Delete" grant="">
+			<comment><![CDATA[/*
+----------------------------------------------------------------------------------------------------
+
+-- Created By: Pet Shop ()
+-- Purpose: Deletes a record in the Supplier table
+----------------------------------------------------------------------------------------------------
+*/
+]]></comment>
+			<parameters>
+				<parameter name="@SuppId" type="int" direction="Input" size="4" precision="10" scale="0" param="" nulldefault=""/>
+			</parameters>
+			<body><![CDATA[
+				DELETE FROM [dbo].[Supplier] WITH (ROWLOCK) 
+				WHERE
+					[SuppId] = @SuppId
+					
+			]]></body>
+		</procedure>
+		<procedure owner="dbo" name="Supplier_GetBySuppId" >
+			<comment><![CDATA[/*
+----------------------------------------------------------------------------------------------------
+
+-- Created By: Pet Shop ()
+-- Purpose: Select records from the Supplier table through an index
+----------------------------------------------------------------------------------------------------
+*/
+]]></comment>
+			<parameters>
+				<parameter name="@SuppId" type="int" direction="Input" size="4" precision="10" scale="0" param="" nulldefault=""/>
+			</parameters>
+			<body><![CDATA[
+				SELECT
+					[SuppId],
+					[Name],
+					[Status],
+					[Addr1],
+					[Addr2],
+					[City],
+					[State],
+					[Zip],
+					[Phone]
+				FROM
+					[dbo].[Supplier]
+				WHERE
+					[SuppId] = @SuppId
+				SELECT @@ROWCOUNT
+					
+			]]></body>
+			
+		</procedure>
+		<procedure owner="dbo" name="Supplier_Find" >
+			<comment><![CDATA[/*
+----------------------------------------------------------------------------------------------------
+
+-- Created By: Pet Shop ()
+-- Purpose: Finds records in the Supplier table passing nullable parameters
+----------------------------------------------------------------------------------------------------
+*/
+]]></comment>
+			<parameters>
+				<parameter name="@SearchUsingOR" type="bit" direction="Input" size="0" precision="1" scale="0" param="" nulldefault="null"/>
+				<parameter name="@SuppId" type="int" direction="Input" size="4" precision="10" scale="0" param="" nulldefault="null"/>
+				<parameter name="@Name" type="varchar" direction="Input" size="80" precision="0" scale="0" param="(80)" nulldefault="null"/>
+				<parameter name="@Status" type="varchar" direction="Input" size="2" precision="0" scale="0" param="(2)" nulldefault="null"/>
+				<parameter name="@Addr1" type="varchar" direction="Input" size="80" precision="0" scale="0" param="(80)" nulldefault="null"/>
+				<parameter name="@Addr2" type="varchar" direction="Input" size="80" precision="0" scale="0" param="(80)" nulldefault="null"/>
+				<parameter name="@City" type="varchar" direction="Input" size="80" precision="0" scale="0" param="(80)" nulldefault="null"/>
+				<parameter name="@State" type="varchar" direction="Input" size="80" precision="0" scale="0" param="(80)" nulldefault="null"/>
+				<parameter name="@Zip" type="varchar" direction="Input" size="5" precision="0" scale="0" param="(5)" nulldefault="null"/>
+				<parameter name="@Phone" type="varchar" direction="Input" size="40" precision="0" scale="0" param="(40)" nulldefault="null"/>
+			</parameters>
+			<body><![CDATA[
+				
+  IF ISNULL(@SearchUsingOR, 0) <> 1
+  BEGIN
+    SELECT
+	  [SuppId]
+	, [Name]
+	, [Status]
+	, [Addr1]
+	, [Addr2]
+	, [City]
+	, [State]
+	, [Zip]
+	, [Phone]
+    FROM
+	[dbo].[Supplier]
+    WHERE 
+	 ([SuppId] = @SuppId OR @SuppId IS NULL)
+	AND ([Name] = @Name OR @Name IS NULL)
+	AND ([Status] = @Status OR @Status IS NULL)
+	AND ([Addr1] = @Addr1 OR @Addr1 IS NULL)
+	AND ([Addr2] = @Addr2 OR @Addr2 IS NULL)
+	AND ([City] = @City OR @City IS NULL)
+	AND ([State] = @State OR @State IS NULL)
+	AND ([Zip] = @Zip OR @Zip IS NULL)
+	AND ([Phone] = @Phone OR @Phone IS NULL)
+						
+  END
+  ELSE
+  BEGIN
+    SELECT
+	  [SuppId]
+	, [Name]
+	, [Status]
+	, [Addr1]
+	, [Addr2]
+	, [City]
+	, [State]
+	, [Zip]
+	, [Phone]
+    FROM
+	[dbo].[Supplier]
+    WHERE 
+	 ([SuppId] = @SuppId AND @SuppId is not null)
+	OR ([Name] = @Name AND @Name is not null)
+	OR ([Status] = @Status AND @Status is not null)
+	OR ([Addr1] = @Addr1 AND @Addr1 is not null)
+	OR ([Addr2] = @Addr2 AND @Addr2 is not null)
+	OR ([City] = @City AND @City is not null)
+	OR ([State] = @State AND @State is not null)
+	OR ([Zip] = @Zip AND @Zip is not null)
+	OR ([Phone] = @Phone AND @Phone is not null)
+	SELECT @@ROWCOUNT			
+  END
+				]]></body>
+		</procedure>
+
+		
+		<procedure owner="dbo" name="Supplier_Find_Dynamic"  skip="true">
+			<comment><![CDATA[/*
+----------------------------------------------------------------------------------------------------
+
+-- Created By: Pet Shop ()
+-- Purpose: Gets records from the Supplier table using a dynamically generated query.
+----------------------------------------------------------------------------------------------------
+*/
+]]></comment>
+			<parameters/>
+			<body><![CDATA[
+				
+				BEGIN
+				
+				WITH PageIndex AS (
+					SELECT TOP {3} row_number() over (order by {1}) AS RowIndex
+					, [SuppId]
+					, [Name]
+					, [Status]
+					, [Addr1]
+					, [Addr2]
+					, [City]
+					, [State]
+					, [Zip]
+					, [Phone]
+					FROM [dbo].[Supplier] {0}
+				)
+				SELECT
+				       [SuppId],
+				       [Name],
+				       [Status],
+				       [Addr1],
+				       [Addr2],
+				       [City],
+				       [State],
+				       [Zip],
+				       [Phone]
+				  FROM PageIndex
+				 WHERE RowIndex > {2}
+				   AND RowIndex <= {3}
+				ORDER BY {1};
+				
+
+				-- get total count
+				SELECT COUNT(*) AS TotalRowCount FROM [dbo].[Supplier] {0};
+				
+				END
+			]]></body>
+		</procedure>
+		
+		
+		<procedure owner="dbo" name="Category_Get_List" >
+			<comment><![CDATA[/*
+----------------------------------------------------------------------------------------------------
+
+-- Created By: Pet Shop ()
+-- Purpose: Gets all records from the Category table
+----------------------------------------------------------------------------------------------------
+*/
+]]></comment>
+			<parameters/>
+			<body><![CDATA[
+				
+				SELECT
+					[CategoryId],
+					[Name],
+					[Descn]
+				FROM
+					[dbo].[Category]
+					
+				SELECT @@ROWCOUNT
+			]]></body>
+		</procedure>
+		
+		
+		<procedure owner="dbo" name="Category_GetPaged" >
+			<comment><![CDATA[/*
+----------------------------------------------------------------------------------------------------
+
+-- Created By: Pet Shop ()
+-- Purpose: Gets records from the Category table passing page index and page count parameters
+----------------------------------------------------------------------------------------------------
+*/
+]]></comment>
+			<parameters>
+				<parameter name="@WhereClause" type="varchar" direction="Input" size="2000" precision="0" scale="0" param="(2000)" />
+				<parameter name="@OrderBy" type="varchar" direction="Input" size="2000" precision="0" scale="0" param="(2000)"/>
+				<parameter name="@PageIndex" type="int" direction="Input" size="0" precision="10" scale="0" />
+				<parameter name="@PageSize" type="int" direction="Input" size="0" precision="10" scale="0" /> 
+			</parameters>
+			<body><![CDATA[
+				
+				BEGIN
+				DECLARE @PageLowerBound int
+				DECLARE @PageUpperBound int
+				
+				-- Set the page bounds
+				SET @PageLowerBound = @PageSize * @PageIndex
+				SET @PageUpperBound = @PageLowerBound + @PageSize
+
+				IF (@OrderBy IS NULL OR LEN(@OrderBy) < 1)
+				BEGIN
+					-- default order by to first column
+					SET @OrderBy = '[CategoryId]'
+				END
+
+				-- SQL Server 2005 Paging
+				DECLARE @SQL AS nvarchar(MAX)
+				SET @SQL = 'WITH PageIndex AS ('
+				SET @SQL = @SQL + ' SELECT'
+				IF @PageSize > 0
+				BEGIN
+					SET @SQL = @SQL + ' TOP ' + CONVERT(nvarchar, @PageUpperBound)
+				END
+				SET @SQL = @SQL + ' ROW_NUMBER() OVER (ORDER BY ' + @OrderBy + ') as RowIndex'
+				SET @SQL = @SQL + ', [CategoryId]'
+				SET @SQL = @SQL + ', [Name]'
+				SET @SQL = @SQL + ', [Descn]'
+				SET @SQL = @SQL + ' FROM [dbo].[Category]'
+				IF LEN(@WhereClause) > 0
+				BEGIN
+					SET @SQL = @SQL + ' WHERE ' + @WhereClause
+				END
+				SET @SQL = @SQL + ' ) SELECT'
+				SET @SQL = @SQL + ' [CategoryId],'
+				SET @SQL = @SQL + ' [Name],'
+				SET @SQL = @SQL + ' [Descn]'
+				SET @SQL = @SQL + ' FROM PageIndex'
+				SET @SQL = @SQL + ' WHERE RowIndex > ' + CONVERT(nvarchar, @PageLowerBound)
+				IF @PageSize > 0
+				BEGIN
+					SET @SQL = @SQL + ' AND RowIndex <= ' + CONVERT(nvarchar, @PageUpperBound)
+				END
+				SET @SQL = @SQL + ' ORDER BY ' + @OrderBy
+				EXEC sp_executesql @SQL
+				
+				-- get row count
+				SET @SQL = 'SELECT COUNT(*) AS TotalRowCount'
+				SET @SQL = @SQL + ' FROM [dbo].[Category]'
+				IF LEN(@WhereClause) > 0
+				BEGIN
+					SET @SQL = @SQL + ' WHERE ' + @WhereClause
+				END
+				EXEC sp_executesql @SQL
+			
+				END
+			]]></body>
+		</procedure>
+		
+		<procedure owner="dbo" name="Category_Insert" grant="">
+			<comment><![CDATA[/*
+----------------------------------------------------------------------------------------------------
+
+-- Created By: Pet Shop ()
+-- Purpose: Inserts a record into the Category table
+----------------------------------------------------------------------------------------------------
+*/
+]]></comment>
+			<parameters>
+				<parameter name="@CategoryId" type="varchar" direction="Input" size="10" precision="0" scale="0" param="(10)" nulldefault=""/>
+				<parameter name="@Name" type="varchar" direction="Input" size="80" precision="0" scale="0" param="(80)" nulldefault=""/>
+				<parameter name="@Descn" type="varchar" direction="Input" size="255" precision="0" scale="0" param="(255)" nulldefault=""/>
+			</parameters>
+			<body><![CDATA[
+				
+				INSERT INTO [dbo].[Category]
+					(
+					[CategoryId]
+					,[Name]
+					,[Descn]
+					)
+				VALUES
+					(
+					@CategoryId
+					,@Name
+					,@Descn
+					)
+				
+									
+							
+			]]></body>
+		</procedure>
+		<procedure owner="dbo" name="Category_Update" grant="">
+			<comment><![CDATA[/*
+----------------------------------------------------------------------------------------------------
+
+-- Created By: Pet Shop ()
+-- Purpose: Updates a record in the Category table
+----------------------------------------------------------------------------------------------------
+*/
+]]></comment>
+			<parameters>
+				<parameter name="@CategoryId" type="varchar" direction="Input" size="10" precision="0" scale="0" param="(10)" nulldefault=""/>
+				<parameter name="@OriginalCategoryId" type="varchar" direction="Input" size="10" precision="0" scale="0" param="(10)" nulldefault=""/>
+				<parameter name="@Name" type="varchar" direction="Input" size="80" precision="0" scale="0" param="(80)" nulldefault=""/>
+				<parameter name="@Descn" type="varchar" direction="Input" size="255" precision="0" scale="0" param="(255)" nulldefault=""/>
+			</parameters>
+			<body><![CDATA[
+				
+				
+				-- Modify the updatable columns
+				UPDATE
+					[dbo].[Category]
+				SET
+					[CategoryId] = @CategoryId
+					,[Name] = @Name
+					,[Descn] = @Descn
+				WHERE
+[CategoryId] = @OriginalCategoryId 
+				
+			]]></body>
+		</procedure>
+		<procedure owner="dbo" name="Category_Delete" grant="">
+			<comment><![CDATA[/*
+----------------------------------------------------------------------------------------------------
+
+-- Created By: Pet Shop ()
+-- Purpose: Deletes a record in the Category table
+----------------------------------------------------------------------------------------------------
+*/
+]]></comment>
+			<parameters>
+				<parameter name="@CategoryId" type="varchar" direction="Input" size="10" precision="0" scale="0" param="(10)" nulldefault=""/>
+			</parameters>
+			<body><![CDATA[
+				DELETE FROM [dbo].[Category] WITH (ROWLOCK) 
+				WHERE
+					[CategoryId] = @CategoryId
+					
+			]]></body>
+		</procedure>
+		<procedure owner="dbo" name="Category_GetByCategoryId" >
+			<comment><![CDATA[/*
+----------------------------------------------------------------------------------------------------
+
+-- Created By: Pet Shop ()
+-- Purpose: Select records from the Category table through an index
+----------------------------------------------------------------------------------------------------
+*/
+]]></comment>
+			<parameters>
+				<parameter name="@CategoryId" type="varchar" direction="Input" size="10" precision="0" scale="0" param="(10)" nulldefault=""/>
+			</parameters>
+			<body><![CDATA[
+				SELECT
+					[CategoryId],
+					[Name],
+					[Descn]
+				FROM
+					[dbo].[Category]
+				WHERE
+					[CategoryId] = @CategoryId
+				SELECT @@ROWCOUNT
+					
+			]]></body>
+			
+		</procedure>
+		<procedure owner="dbo" name="Category_Find" >
+			<comment><![CDATA[/*
+----------------------------------------------------------------------------------------------------
+
+-- Created By: Pet Shop ()
+-- Purpose: Finds records in the Category table passing nullable parameters
+----------------------------------------------------------------------------------------------------
+*/
+]]></comment>
+			<parameters>
+				<parameter name="@SearchUsingOR" type="bit" direction="Input" size="0" precision="1" scale="0" param="" nulldefault="null"/>
+				<parameter name="@CategoryId" type="varchar" direction="Input" size="10" precision="0" scale="0" param="(10)" nulldefault="null"/>
+				<parameter name="@Name" type="varchar" direction="Input" size="80" precision="0" scale="0" param="(80)" nulldefault="null"/>
+				<parameter name="@Descn" type="varchar" direction="Input" size="255" precision="0" scale="0" param="(255)" nulldefault="null"/>
+			</parameters>
+			<body><![CDATA[
+				
+  IF ISNULL(@SearchUsingOR, 0) <> 1
+  BEGIN
+    SELECT
+	  [CategoryId]
+	, [Name]
+	, [Descn]
+    FROM
+	[dbo].[Category]
+    WHERE 
+	 ([CategoryId] = @CategoryId OR @CategoryId IS NULL)
+	AND ([Name] = @Name OR @Name IS NULL)
+	AND ([Descn] = @Descn OR @Descn IS NULL)
+						
+  END
+  ELSE
+  BEGIN
+    SELECT
+	  [CategoryId]
+	, [Name]
+	, [Descn]
+    FROM
+	[dbo].[Category]
+    WHERE 
+	 ([CategoryId] = @CategoryId AND @CategoryId is not null)
+	OR ([Name] = @Name AND @Name is not null)
+	OR ([Descn] = @Descn AND @Descn is not null)
+	SELECT @@ROWCOUNT			
+  END
+				]]></body>
+		</procedure>
+
+		
+		<procedure owner="dbo" name="Category_Find_Dynamic"  skip="true">
+			<comment><![CDATA[/*
+----------------------------------------------------------------------------------------------------
+
+-- Created By: Pet Shop ()
+-- Purpose: Gets records from the Category table using a dynamically generated query.
+----------------------------------------------------------------------------------------------------
+*/
+]]></comment>
+			<parameters/>
+			<body><![CDATA[
+				
+				BEGIN
+				
+				WITH PageIndex AS (
+					SELECT TOP {3} row_number() over (order by {1}) AS RowIndex
+					, [CategoryId]
+					, [Name]
+					, [Descn]
+					FROM [dbo].[Category] {0}
+				)
+				SELECT
+				       [CategoryId],
+				       [Name],
+				       [Descn]
+				  FROM PageIndex
+				 WHERE RowIndex > {2}
+				   AND RowIndex <= {3}
+				ORDER BY {1};
+				
+
+				-- get total count
+				SELECT COUNT(*) AS TotalRowCount FROM [dbo].[Category] {0};
+				
+				END
+			]]></body>
+		</procedure>
+		
+		
+		<procedure owner="dbo" name="Product_Get_List" >
+			<comment><![CDATA[/*
+----------------------------------------------------------------------------------------------------
+
+-- Created By: Pet Shop ()
+-- Purpose: Gets all records from the Product table
+----------------------------------------------------------------------------------------------------
+*/
+]]></comment>
+			<parameters/>
+			<body><![CDATA[
+				
+				SELECT
+					[ProductId],
+					[CategoryId],
+					[Name],
+					[Descn],
+					[Image]
+				FROM
+					[dbo].[Product]
+					
+				SELECT @@ROWCOUNT
+			]]></body>
+		</procedure>
+		
+		
+		<procedure owner="dbo" name="Product_GetPaged" >
+			<comment><![CDATA[/*
+----------------------------------------------------------------------------------------------------
+
+-- Created By: Pet Shop ()
+-- Purpose: Gets records from the Product table passing page index and page count parameters
+----------------------------------------------------------------------------------------------------
+*/
+]]></comment>
+			<parameters>
+				<parameter name="@WhereClause" type="varchar" direction="Input" size="2000" precision="0" scale="0" param="(2000)" />
+				<parameter name="@OrderBy" type="varchar" direction="Input" size="2000" precision="0" scale="0" param="(2000)"/>
+				<parameter name="@PageIndex" type="int" direction="Input" size="0" precision="10" scale="0" />
+				<parameter name="@PageSize" type="int" direction="Input" size="0" precision="10" scale="0" /> 
+			</parameters>
+			<body><![CDATA[
+				
+				BEGIN
+				DECLARE @PageLowerBound int
+				DECLARE @PageUpperBound int
+				
+				-- Set the page bounds
+				SET @PageLowerBound = @PageSize * @PageIndex
+				SET @PageUpperBound = @PageLowerBound + @PageSize
+
+				IF (@OrderBy IS NULL OR LEN(@OrderBy) < 1)
+				BEGIN
+					-- default order by to first column
+					SET @OrderBy = '[ProductId]'
+				END
+
+				-- SQL Server 2005 Paging
+				DECLARE @SQL AS nvarchar(MAX)
+				SET @SQL = 'WITH PageIndex AS ('
+				SET @SQL = @SQL + ' SELECT'
+				IF @PageSize > 0
+				BEGIN
+					SET @SQL = @SQL + ' TOP ' + CONVERT(nvarchar, @PageUpperBound)
+				END
+				SET @SQL = @SQL + ' ROW_NUMBER() OVER (ORDER BY ' + @OrderBy + ') as RowIndex'
+				SET @SQL = @SQL + ', [ProductId]'
+				SET @SQL = @SQL + ', [CategoryId]'
+				SET @SQL = @SQL + ', [Name]'
+				SET @SQL = @SQL + ', [Descn]'
+				SET @SQL = @SQL + ', [Image]'
+				SET @SQL = @SQL + ' FROM [dbo].[Product]'
+				IF LEN(@WhereClause) > 0
+				BEGIN
+					SET @SQL = @SQL + ' WHERE ' + @WhereClause
+				END
+				SET @SQL = @SQL + ' ) SELECT'
+				SET @SQL = @SQL + ' [ProductId],'
+				SET @SQL = @SQL + ' [CategoryId],'
+				SET @SQL = @SQL + ' [Name],'
+				SET @SQL = @SQL + ' [Descn],'
+				SET @SQL = @SQL + ' [Image]'
+				SET @SQL = @SQL + ' FROM PageIndex'
+				SET @SQL = @SQL + ' WHERE RowIndex > ' + CONVERT(nvarchar, @PageLowerBound)
+				IF @PageSize > 0
+				BEGIN
+					SET @SQL = @SQL + ' AND RowIndex <= ' + CONVERT(nvarchar, @PageUpperBound)
+				END
+				SET @SQL = @SQL + ' ORDER BY ' + @OrderBy
+				EXEC sp_executesql @SQL
+				
+				-- get row count
+				SET @SQL = 'SELECT COUNT(*) AS TotalRowCount'
+				SET @SQL = @SQL + ' FROM [dbo].[Product]'
+				IF LEN(@WhereClause) > 0
+				BEGIN
+					SET @SQL = @SQL + ' WHERE ' + @WhereClause
+				END
+				EXEC sp_executesql @SQL
+			
+				END
+			]]></body>
+		</procedure>
+		
+		<procedure owner="dbo" name="Product_Insert" grant="">
+			<comment><![CDATA[/*
+----------------------------------------------------------------------------------------------------
+
+-- Created By: Pet Shop ()
+-- Purpose: Inserts a record into the Product table
+----------------------------------------------------------------------------------------------------
+*/
+]]></comment>
+			<parameters>
+				<parameter name="@ProductId" type="varchar" direction="Input" size="10" precision="0" scale="0" param="(10)" nulldefault=""/>
+				<parameter name="@CategoryId" type="varchar" direction="Input" size="10" precision="0" scale="0" param="(10)" nulldefault=""/>
+				<parameter name="@Name" type="varchar" direction="Input" size="80" precision="0" scale="0" param="(80)" nulldefault=""/>
+				<parameter name="@Descn" type="varchar" direction="Input" size="255" precision="0" scale="0" param="(255)" nulldefault=""/>
+				<parameter name="@Image" type="varchar" direction="Input" size="80" precision="0" scale="0" param="(80)" nulldefault=""/>
+			</parameters>
+			<body><![CDATA[
+				
+				INSERT INTO [dbo].[Product]
+					(
+					[ProductId]
+					,[CategoryId]
+					,[Name]
+					,[Descn]
+					,[Image]
+					)
+				VALUES
+					(
+					@ProductId
+					,@CategoryId
+					,@Name
+					,@Descn
+					,@Image
+					)
+				
+									
+							
+			]]></body>
+		</procedure>
+		<procedure owner="dbo" name="Product_Update" grant="">
+			<comment><![CDATA[/*
+----------------------------------------------------------------------------------------------------
+
+-- Created By: Pet Shop ()
+-- Purpose: Updates a record in the Product table
+----------------------------------------------------------------------------------------------------
+*/
+]]></comment>
+			<parameters>
+				<parameter name="@ProductId" type="varchar" direction="Input" size="10" precision="0" scale="0" param="(10)" nulldefault=""/>
+				<parameter name="@OriginalProductId" type="varchar" direction="Input" size="10" precision="0" scale="0" param="(10)" nulldefault=""/>
+				<parameter name="@CategoryId" type="varchar" direction="Input" size="10" precision="0" scale="0" param="(10)" nulldefault=""/>
+				<parameter name="@Name" type="varchar" direction="Input" size="80" precision="0" scale="0" param="(80)" nulldefault=""/>
+				<parameter name="@Descn" type="varchar" direction="Input" size="255" precision="0" scale="0" param="(255)" nulldefault=""/>
+				<parameter name="@Image" type="varchar" direction="Input" size="80" precision="0" scale="0" param="(80)" nulldefault=""/>
+			</parameters>
+			<body><![CDATA[
+				
+				
+				-- Modify the updatable columns
+				UPDATE
+					[dbo].[Product]
+				SET
+					[ProductId] = @ProductId
+					,[CategoryId] = @CategoryId
+					,[Name] = @Name
+					,[Descn] = @Descn
+					,[Image] = @Image
+				WHERE
+[ProductId] = @OriginalProductId 
+				
+			]]></body>
+		</procedure>
+		<procedure owner="dbo" name="Product_Delete" grant="">
+			<comment><![CDATA[/*
+----------------------------------------------------------------------------------------------------
+
+-- Created By: Pet Shop ()
+-- Purpose: Deletes a record in the Product table
+----------------------------------------------------------------------------------------------------
+*/
+]]></comment>
+			<parameters>
+				<parameter name="@ProductId" type="varchar" direction="Input" size="10" precision="0" scale="0" param="(10)" nulldefault=""/>
+			</parameters>
+			<body><![CDATA[
+				DELETE FROM [dbo].[Product] WITH (ROWLOCK) 
+				WHERE
+					[ProductId] = @ProductId
+					
+			]]></body>
+		</procedure>
+		<procedure owner="dbo" name="Product_GetByName" >
+			<comment><![CDATA[/*
+----------------------------------------------------------------------------------------------------
+
+-- Created By: Pet Shop ()
+-- Purpose: Select records from the Product table through an index
+----------------------------------------------------------------------------------------------------
+*/
+]]></comment>
+			<parameters>
+				<parameter name="@Name" type="varchar" direction="Input" size="80" precision="0" scale="0" param="(80)" nulldefault=""/>
+			</parameters>
+			<body><![CDATA[
+				SELECT
+					[ProductId],
+					[CategoryId],
+					[Name],
+					[Descn],
+					[Image]
+				FROM
+					[dbo].[Product]
+				WHERE
+					[Name] = @Name
+				SELECT @@ROWCOUNT
+					
+			]]></body>
+			
+		</procedure>
+		<procedure owner="dbo" name="Product_GetByCategoryId" >
+			<comment><![CDATA[/*
+----------------------------------------------------------------------------------------------------
+
+-- Created By: Pet Shop ()
+-- Purpose: Select records from the Product table through an index
+----------------------------------------------------------------------------------------------------
+*/
+]]></comment>
+			<parameters>
+				<parameter name="@CategoryId" type="varchar" direction="Input" size="10" precision="0" scale="0" param="(10)" nulldefault=""/>
+			</parameters>
+			<body><![CDATA[
+				SELECT
+					[ProductId],
+					[CategoryId],
+					[Name],
+					[Descn],
+					[Image]
+				FROM
+					[dbo].[Product]
+				WHERE
+					[CategoryId] = @CategoryId
+				SELECT @@ROWCOUNT
+					
+			]]></body>
+			
+		</procedure>
+		<procedure owner="dbo" name="Product_GetByCategoryIdName" >
+			<comment><![CDATA[/*
+----------------------------------------------------------------------------------------------------
+
+-- Created By: Pet Shop ()
+-- Purpose: Select records from the Product table through an index
+----------------------------------------------------------------------------------------------------
+*/
+]]></comment>
+			<parameters>
+				<parameter name="@CategoryId" type="varchar" direction="Input" size="10" precision="0" scale="0" param="(10)" nulldefault=""/>
+				<parameter name="@Name" type="varchar" direction="Input" size="80" precision="0" scale="0" param="(80)" nulldefault=""/>
+			</parameters>
+			<body><![CDATA[
+				SELECT
+					[ProductId],
+					[CategoryId],
+					[Name],
+					[Descn],
+					[Image]
+				FROM
+					[dbo].[Product]
+				WHERE
+					[CategoryId] = @CategoryId
+					AND [Name] = @Name
+				SELECT @@ROWCOUNT
+					
+			]]></body>
+			
+		</procedure>
+		<procedure owner="dbo" name="Product_GetByCategoryIdProductIdName" >
+			<comment><![CDATA[/*
+----------------------------------------------------------------------------------------------------
+
+-- Created By: Pet Shop ()
+-- Purpose: Select records from the Product table through an index
+----------------------------------------------------------------------------------------------------
+*/
+]]></comment>
+			<parameters>
+				<parameter name="@CategoryId" type="varchar" direction="Input" size="10" precision="0" scale="0" param="(10)" nulldefault=""/>
+				<parameter name="@ProductId" type="varchar" direction="Input" size="10" precision="0" scale="0" param="(10)" nulldefault=""/>
+				<parameter name="@Name" type="varchar" direction="Input" size="80" precision="0" scale="0" param="(80)" nulldefault=""/>
+			</parameters>
+			<body><![CDATA[
+				SELECT
+					[ProductId],
+					[CategoryId],
+					[Name],
+					[Descn],
+					[Image]
+				FROM
+					[dbo].[Product]
+				WHERE
+					[CategoryId] = @CategoryId
+					AND [ProductId] = @ProductId
+					AND [Name] = @Name
+				SELECT @@ROWCOUNT
+					
+			]]></body>
+			
+		</procedure>
+		<procedure owner="dbo" name="Product_GetByProductId" >
+			<comment><![CDATA[/*
+----------------------------------------------------------------------------------------------------
+
+-- Created By: Pet Shop ()
+-- Purpose: Select records from the Product table through an index
+----------------------------------------------------------------------------------------------------
+*/
+]]></comment>
+			<parameters>
+				<parameter name="@ProductId" type="varchar" direction="Input" size="10" precision="0" scale="0" param="(10)" nulldefault=""/>
+			</parameters>
+			<body><![CDATA[
+				SELECT
+					[ProductId],
+					[CategoryId],
+					[Name],
+					[Descn],
+					[Image]
+				FROM
+					[dbo].[Product]
+				WHERE
+					[ProductId] = @ProductId
+				SELECT @@ROWCOUNT
+					
+			]]></body>
+			
+		</procedure>
+		<procedure owner="dbo" name="Product_Find" >
+			<comment><![CDATA[/*
+----------------------------------------------------------------------------------------------------
+
+-- Created By: Pet Shop ()
+-- Purpose: Finds records in the Product table passing nullable parameters
+----------------------------------------------------------------------------------------------------
+*/
+]]></comment>
+			<parameters>
+				<parameter name="@SearchUsingOR" type="bit" direction="Input" size="0" precision="1" scale="0" param="" nulldefault="null"/>
+				<parameter name="@ProductId" type="varchar" direction="Input" size="10" precision="0" scale="0" param="(10)" nulldefault="null"/>
+				<parameter name="@CategoryId" type="varchar" direction="Input" size="10" precision="0" scale="0" param="(10)" nulldefault="null"/>
+				<parameter name="@Name" type="varchar" direction="Input" size="80" precision="0" scale="0" param="(80)" nulldefault="null"/>
+				<parameter name="@Descn" type="varchar" direction="Input" size="255" precision="0" scale="0" param="(255)" nulldefault="null"/>
+				<parameter name="@Image" type="varchar" direction="Input" size="80" precision="0" scale="0" param="(80)" nulldefault="null"/>
+			</parameters>
+			<body><![CDATA[
+				
+  IF ISNULL(@SearchUsingOR, 0) <> 1
+  BEGIN
+    SELECT
+	  [ProductId]
+	, [CategoryId]
+	, [Name]
+	, [Descn]
+	, [Image]
+    FROM
+	[dbo].[Product]
+    WHERE 
+	 ([ProductId] = @ProductId OR @ProductId IS NULL)
+	AND ([CategoryId] = @CategoryId OR @CategoryId IS NULL)
+	AND ([Name] = @Name OR @Name IS NULL)
+	AND ([Descn] = @Descn OR @Descn IS NULL)
+	AND ([Image] = @Image OR @Image IS NULL)
+						
+  END
+  ELSE
+  BEGIN
+    SELECT
+	  [ProductId]
+	, [CategoryId]
+	, [Name]
+	, [Descn]
+	, [Image]
+    FROM
+	[dbo].[Product]
+    WHERE 
+	 ([ProductId] = @ProductId AND @ProductId is not null)
+	OR ([CategoryId] = @CategoryId AND @CategoryId is not null)
+	OR ([Name] = @Name AND @Name is not null)
+	OR ([Descn] = @Descn AND @Descn is not null)
+	OR ([Image] = @Image AND @Image is not null)
+	SELECT @@ROWCOUNT			
+  END
+				]]></body>
+		</procedure>
+
+		
+		<procedure owner="dbo" name="Product_Find_Dynamic"  skip="true">
+			<comment><![CDATA[/*
+----------------------------------------------------------------------------------------------------
+
+-- Created By: Pet Shop ()
+-- Purpose: Gets records from the Product table using a dynamically generated query.
+----------------------------------------------------------------------------------------------------
+*/
+]]></comment>
+			<parameters/>
+			<body><![CDATA[
+				
+				BEGIN
+				
+				WITH PageIndex AS (
+					SELECT TOP {3} row_number() over (order by {1}) AS RowIndex
+					, [ProductId]
+					, [CategoryId]
+					, [Name]
+					, [Descn]
+					, [Image]
+					FROM [dbo].[Product] {0}
+				)
+				SELECT
+				       [ProductId],
+				       [CategoryId],
+				       [Name],
+				       [Descn],
+				       [Image]
+				  FROM PageIndex
+				 WHERE RowIndex > {2}
+				   AND RowIndex <= {3}
+				ORDER BY {1};
+				
+
+				-- get total count
+				SELECT COUNT(*) AS TotalRowCount FROM [dbo].[Product] {0};
+				
+				END
+			]]></body>
+		</procedure>
+		
+		
+		<procedure owner="dbo" name="LineItem_Get_List" >
+			<comment><![CDATA[/*
+----------------------------------------------------------------------------------------------------
+
+-- Created By: Pet Shop ()
+-- Purpose: Gets all records from the LineItem table
+----------------------------------------------------------------------------------------------------
+*/
+]]></comment>
+			<parameters/>
+			<body><![CDATA[
+				
+				SELECT
+					[OrderId],
+					[LineNum],
+					[ItemId],
+					[Quantity],
+					[UnitPrice]
+				FROM
+					[dbo].[LineItem]
+					
+				SELECT @@ROWCOUNT
+			]]></body>
+		</procedure>
+		
+		
+		<procedure owner="dbo" name="LineItem_GetPaged" >
+			<comment><![CDATA[/*
+----------------------------------------------------------------------------------------------------
+
+-- Created By: Pet Shop ()
+-- Purpose: Gets records from the LineItem table passing page index and page count parameters
+----------------------------------------------------------------------------------------------------
+*/
+]]></comment>
+			<parameters>
+				<parameter name="@WhereClause" type="varchar" direction="Input" size="2000" precision="0" scale="0" param="(2000)" />
+				<parameter name="@OrderBy" type="varchar" direction="Input" size="2000" precision="0" scale="0" param="(2000)"/>
+				<parameter name="@PageIndex" type="int" direction="Input" size="0" precision="10" scale="0" />
+				<parameter name="@PageSize" type="int" direction="Input" size="0" precision="10" scale="0" /> 
+			</parameters>
+			<body><![CDATA[
+				
+				BEGIN
+				DECLARE @PageLowerBound int
+				DECLARE @PageUpperBound int
+				
+				-- Set the page bounds
+				SET @PageLowerBound = @PageSize * @PageIndex
+				SET @PageUpperBound = @PageLowerBound + @PageSize
+
+				IF (@OrderBy IS NULL OR LEN(@OrderBy) < 1)
+				BEGIN
+					-- default order by to first column
+					SET @OrderBy = '[OrderId]'
+				END
+
+				-- SQL Server 2005 Paging
+				DECLARE @SQL AS nvarchar(MAX)
+				SET @SQL = 'WITH PageIndex AS ('
+				SET @SQL = @SQL + ' SELECT'
+				IF @PageSize > 0
+				BEGIN
+					SET @SQL = @SQL + ' TOP ' + CONVERT(nvarchar, @PageUpperBound)
+				END
+				SET @SQL = @SQL + ' ROW_NUMBER() OVER (ORDER BY ' + @OrderBy + ') as RowIndex'
+				SET @SQL = @SQL + ', [OrderId]'
+				SET @SQL = @SQL + ', [LineNum]'
+				SET @SQL = @SQL + ', [ItemId]'
+				SET @SQL = @SQL + ', [Quantity]'
+				SET @SQL = @SQL + ', [UnitPrice]'
+				SET @SQL = @SQL + ' FROM [dbo].[LineItem]'
+				IF LEN(@WhereClause) > 0
+				BEGIN
+					SET @SQL = @SQL + ' WHERE ' + @WhereClause
+				END
+				SET @SQL = @SQL + ' ) SELECT'
+				SET @SQL = @SQL + ' [OrderId],'
+				SET @SQL = @SQL + ' [LineNum],'
+				SET @SQL = @SQL + ' [ItemId],'
+				SET @SQL = @SQL + ' [Quantity],'
+				SET @SQL = @SQL + ' [UnitPrice]'
+				SET @SQL = @SQL + ' FROM PageIndex'
+				SET @SQL = @SQL + ' WHERE RowIndex > ' + CONVERT(nvarchar, @PageLowerBound)
+				IF @PageSize > 0
+				BEGIN
+					SET @SQL = @SQL + ' AND RowIndex <= ' + CONVERT(nvarchar, @PageUpperBound)
+				END
+				SET @SQL = @SQL + ' ORDER BY ' + @OrderBy
+				EXEC sp_executesql @SQL
+				
+				-- get row count
+				SET @SQL = 'SELECT COUNT(*) AS TotalRowCount'
+				SET @SQL = @SQL + ' FROM [dbo].[LineItem]'
+				IF LEN(@WhereClause) > 0
+				BEGIN
+					SET @SQL = @SQL + ' WHERE ' + @WhereClause
+				END
+				EXEC sp_executesql @SQL
+			
+				END
+			]]></body>
+		</procedure>
+		
+		<procedure owner="dbo" name="LineItem_Insert" grant="">
+			<comment><![CDATA[/*
+----------------------------------------------------------------------------------------------------
+
+-- Created By: Pet Shop ()
+-- Purpose: Inserts a record into the LineItem table
+----------------------------------------------------------------------------------------------------
+*/
+]]></comment>
+			<parameters>
+				<parameter name="@OrderId" type="int" direction="Input" size="4" precision="10" scale="0" param="" nulldefault=""/>
+				<parameter name="@LineNum" type="int" direction="Input" size="4" precision="10" scale="0" param="" nulldefault=""/>
+				<parameter name="@ItemId" type="varchar" direction="Input" size="10" precision="0" scale="0" param="(10)" nulldefault=""/>
+				<parameter name="@Quantity" type="int" direction="Input" size="4" precision="10" scale="0" param="" nulldefault=""/>
+				<parameter name="@UnitPrice" type="decimal" direction="Input" size="9" precision="10" scale="2" param="(10, 2)" nulldefault=""/>
+			</parameters>
+			<body><![CDATA[
+				
+				INSERT INTO [dbo].[LineItem]
+					(
+					[OrderId]
+					,[LineNum]
+					,[ItemId]
+					,[Quantity]
+					,[UnitPrice]
+					)
+				VALUES
+					(
+					@OrderId
+					,@LineNum
+					,@ItemId
+					,@Quantity
+					,@UnitPrice
+					)
+				
+									
+							
+			]]></body>
+		</procedure>
+		<procedure owner="dbo" name="LineItem_Update" grant="">
+			<comment><![CDATA[/*
+----------------------------------------------------------------------------------------------------
+
+-- Created By: Pet Shop ()
+-- Purpose: Updates a record in the LineItem table
+----------------------------------------------------------------------------------------------------
+*/
+]]></comment>
+			<parameters>
+				<parameter name="@OrderId" type="int" direction="Input" size="4" precision="10" scale="0" param="" nulldefault=""/>
+				<parameter name="@OriginalOrderId" type="int" direction="Input" size="4" precision="10" scale="0" param="" nulldefault=""/>
+				<parameter name="@LineNum" type="int" direction="Input" size="4" precision="10" scale="0" param="" nulldefault=""/>
+				<parameter name="@OriginalLineNum" type="int" direction="Input" size="4" precision="10" scale="0" param="" nulldefault=""/>
+				<parameter name="@ItemId" type="varchar" direction="Input" size="10" precision="0" scale="0" param="(10)" nulldefault=""/>
+				<parameter name="@Quantity" type="int" direction="Input" size="4" precision="10" scale="0" param="" nulldefault=""/>
+				<parameter name="@UnitPrice" type="decimal" direction="Input" size="9" precision="10" scale="2" param="(10, 2)" nulldefault=""/>
+			</parameters>
+			<body><![CDATA[
+				
+				
+				-- Modify the updatable columns
+				UPDATE
+					[dbo].[LineItem]
+				SET
+					[OrderId] = @OrderId
+					,[LineNum] = @LineNum
+					,[ItemId] = @ItemId
+					,[Quantity] = @Quantity
+					,[UnitPrice] = @UnitPrice
+				WHERE
+[OrderId] = @OriginalOrderId 
+AND [LineNum] = @OriginalLineNum 
+				
+			]]></body>
+		</procedure>
+		<procedure owner="dbo" name="LineItem_Delete" grant="">
+			<comment><![CDATA[/*
+----------------------------------------------------------------------------------------------------
+
+-- Created By: Pet Shop ()
+-- Purpose: Deletes a record in the LineItem table
+----------------------------------------------------------------------------------------------------
+*/
+]]></comment>
+			<parameters>
+				<parameter name="@OrderId" type="int" direction="Input" size="4" precision="10" scale="0" param="" nulldefault=""/>
+				<parameter name="@LineNum" type="int" direction="Input" size="4" precision="10" scale="0" param="" nulldefault=""/>
+			</parameters>
+			<body><![CDATA[
+				DELETE FROM [dbo].[LineItem] WITH (ROWLOCK) 
+				WHERE
+					[OrderId] = @OrderId
+					AND [LineNum] = @LineNum
+					
+			]]></body>
+		</procedure>
+		<procedure owner="dbo" name="LineItem_GetByOrderId" >
+			<comment><![CDATA[/*
+----------------------------------------------------------------------------------------------------
+
+-- Created By: Pet Shop ()
+-- Purpose: Select records from the LineItem table through a foreign key
+----------------------------------------------------------------------------------------------------
+*/
+]]></comment>
+			<parameters>
+				<parameter name="@OrderId" type="int" direction="Input" size="4" precision="10" scale="0" param="" nulldefault=""/>
+			</parameters>
+			<body><![CDATA[
+				SET ANSI_NULLS OFF
+				
+				SELECT
+					[OrderId],
+					[LineNum],
+					[ItemId],
+					[Quantity],
+					[UnitPrice]
+				FROM
+					[dbo].[LineItem]
+				WHERE
+					[OrderId] = @OrderId
+				
+				SELECT @@ROWCOUNT
+				SET ANSI_NULLS ON
+			]]></body>
+		</procedure>
+		<procedure owner="dbo" name="LineItem_GetByOrderIdLineNum" >
+			<comment><![CDATA[/*
+----------------------------------------------------------------------------------------------------
+
+-- Created By: Pet Shop ()
+-- Purpose: Select records from the LineItem table through an index
+----------------------------------------------------------------------------------------------------
+*/
+]]></comment>
+			<parameters>
+				<parameter name="@OrderId" type="int" direction="Input" size="4" precision="10" scale="0" param="" nulldefault=""/>
+				<parameter name="@LineNum" type="int" direction="Input" size="4" precision="10" scale="0" param="" nulldefault=""/>
+			</parameters>
+			<body><![CDATA[
+				SELECT
+					[OrderId],
+					[LineNum],
+					[ItemId],
+					[Quantity],
+					[UnitPrice]
+				FROM
+					[dbo].[LineItem]
+				WHERE
+					[OrderId] = @OrderId
+					AND [LineNum] = @LineNum
+				SELECT @@ROWCOUNT
+					
+			]]></body>
+			
+		</procedure>
+		<procedure owner="dbo" name="LineItem_Find" >
+			<comment><![CDATA[/*
+----------------------------------------------------------------------------------------------------
+
+-- Created By: Pet Shop ()
+-- Purpose: Finds records in the LineItem table passing nullable parameters
+----------------------------------------------------------------------------------------------------
+*/
+]]></comment>
+			<parameters>
+				<parameter name="@SearchUsingOR" type="bit" direction="Input" size="0" precision="1" scale="0" param="" nulldefault="null"/>
+				<parameter name="@OrderId" type="int" direction="Input" size="4" precision="10" scale="0" param="" nulldefault="null"/>
+				<parameter name="@LineNum" type="int" direction="Input" size="4" precision="10" scale="0" param="" nulldefault="null"/>
+				<parameter name="@ItemId" type="varchar" direction="Input" size="10" precision="0" scale="0" param="(10)" nulldefault="null"/>
+				<parameter name="@Quantity" type="int" direction="Input" size="4" precision="10" scale="0" param="" nulldefault="null"/>
+				<parameter name="@UnitPrice" type="decimal" direction="Input" size="9" precision="10" scale="2" param="(10, 2)" nulldefault="null"/>
+			</parameters>
+			<body><![CDATA[
+				
+  IF ISNULL(@SearchUsingOR, 0) <> 1
+  BEGIN
+    SELECT
+	  [OrderId]
+	, [LineNum]
+	, [ItemId]
+	, [Quantity]
+	, [UnitPrice]
+    FROM
+	[dbo].[LineItem]
+    WHERE 
+	 ([OrderId] = @OrderId OR @OrderId IS NULL)
+	AND ([LineNum] = @LineNum OR @LineNum IS NULL)
+	AND ([ItemId] = @ItemId OR @ItemId IS NULL)
+	AND ([Quantity] = @Quantity OR @Quantity IS NULL)
+	AND ([UnitPrice] = @UnitPrice OR @UnitPrice IS NULL)
+						
+  END
+  ELSE
+  BEGIN
+    SELECT
+	  [OrderId]
+	, [LineNum]
+	, [ItemId]
+	, [Quantity]
+	, [UnitPrice]
+    FROM
+	[dbo].[LineItem]
+    WHERE 
+	 ([OrderId] = @OrderId AND @OrderId is not null)
+	OR ([LineNum] = @LineNum AND @LineNum is not null)
+	OR ([ItemId] = @ItemId AND @ItemId is not null)
+	OR ([Quantity] = @Quantity AND @Quantity is not null)
+	OR ([UnitPrice] = @UnitPrice AND @UnitPrice is not null)
+	SELECT @@ROWCOUNT			
+  END
+				]]></body>
+		</procedure>
+
+		
+		<procedure owner="dbo" name="LineItem_Find_Dynamic"  skip="true">
+			<comment><![CDATA[/*
+----------------------------------------------------------------------------------------------------
+
+-- Created By: Pet Shop ()
+-- Purpose: Gets records from the LineItem table using a dynamically generated query.
+----------------------------------------------------------------------------------------------------
+*/
+]]></comment>
+			<parameters/>
+			<body><![CDATA[
+				
+				BEGIN
+				
+				WITH PageIndex AS (
+					SELECT TOP {3} row_number() over (order by {1}) AS RowIndex
+					, [OrderId]
+					, [LineNum]
+					, [ItemId]
+					, [Quantity]
+					, [UnitPrice]
+					FROM [dbo].[LineItem] {0}
+				)
+				SELECT
+				       [OrderId],
+				       [LineNum],
+				       [ItemId],
+				       [Quantity],
+				       [UnitPrice]
+				  FROM PageIndex
+				 WHERE RowIndex > {2}
+				   AND RowIndex <= {3}
+				ORDER BY {1};
+				
+
+				-- get total count
+				SELECT COUNT(*) AS TotalRowCount FROM [dbo].[LineItem] {0};
+				
+				END
+			]]></body>
+		</procedure>
+		
+		
+		<procedure owner="dbo" name="Account_Get_List" >
+			<comment><![CDATA[/*
+----------------------------------------------------------------------------------------------------
+
+-- Created By: Pet Shop ()
+-- Purpose: Gets all records from the Account table
+----------------------------------------------------------------------------------------------------
+*/
+]]></comment>
+			<parameters/>
+			<body><![CDATA[
+				
+				SELECT
+					[AccountId],
+					[UniqueID],
+					[Email],
+					[FirstName],
+					[LastName],
+					[Address1],
+					[Address2],
+					[City],
+					[State],
+					[Zip],
+					[Country],
+					[Phone]
+				FROM
+					[dbo].[Account]
+					
+				SELECT @@ROWCOUNT
+			]]></body>
+		</procedure>
+		
+		
+		<procedure owner="dbo" name="Account_GetPaged" >
+			<comment><![CDATA[/*
+----------------------------------------------------------------------------------------------------
+
+-- Created By: Pet Shop ()
+-- Purpose: Gets records from the Account table passing page index and page count parameters
+----------------------------------------------------------------------------------------------------
+*/
+]]></comment>
+			<parameters>
+				<parameter name="@WhereClause" type="varchar" direction="Input" size="2000" precision="0" scale="0" param="(2000)" />
+				<parameter name="@OrderBy" type="varchar" direction="Input" size="2000" precision="0" scale="0" param="(2000)"/>
+				<parameter name="@PageIndex" type="int" direction="Input" size="0" precision="10" scale="0" />
+				<parameter name="@PageSize" type="int" direction="Input" size="0" precision="10" scale="0" /> 
+			</parameters>
+			<body><![CDATA[
+				
+				BEGIN
+				DECLARE @PageLowerBound int
+				DECLARE @PageUpperBound int
+				
+				-- Set the page bounds
+				SET @PageLowerBound = @PageSize * @PageIndex
+				SET @PageUpperBound = @PageLowerBound + @PageSize
+
+				IF (@OrderBy IS NULL OR LEN(@OrderBy) < 1)
+				BEGIN
+					-- default order by to first column
+					SET @OrderBy = '[AccountId]'
+				END
+
+				-- SQL Server 2005 Paging
+				DECLARE @SQL AS nvarchar(MAX)
+				SET @SQL = 'WITH PageIndex AS ('
+				SET @SQL = @SQL + ' SELECT'
+				IF @PageSize > 0
+				BEGIN
+					SET @SQL = @SQL + ' TOP ' + CONVERT(nvarchar, @PageUpperBound)
+				END
+				SET @SQL = @SQL + ' ROW_NUMBER() OVER (ORDER BY ' + @OrderBy + ') as RowIndex'
+				SET @SQL = @SQL + ', [AccountId]'
+				SET @SQL = @SQL + ', [UniqueID]'
+				SET @SQL = @SQL + ', [Email]'
+				SET @SQL = @SQL + ', [FirstName]'
+				SET @SQL = @SQL + ', [LastName]'
+				SET @SQL = @SQL + ', [Address1]'
+				SET @SQL = @SQL + ', [Address2]'
+				SET @SQL = @SQL + ', [City]'
+				SET @SQL = @SQL + ', [State]'
+				SET @SQL = @SQL + ', [Zip]'
+				SET @SQL = @SQL + ', [Country]'
+				SET @SQL = @SQL + ', [Phone]'
+				SET @SQL = @SQL + ' FROM [dbo].[Account]'
+				IF LEN(@WhereClause) > 0
+				BEGIN
+					SET @SQL = @SQL + ' WHERE ' + @WhereClause
+				END
+				SET @SQL = @SQL + ' ) SELECT'
+				SET @SQL = @SQL + ' [AccountId],'
+				SET @SQL = @SQL + ' [UniqueID],'
+				SET @SQL = @SQL + ' [Email],'
+				SET @SQL = @SQL + ' [FirstName],'
+				SET @SQL = @SQL + ' [LastName],'
+				SET @SQL = @SQL + ' [Address1],'
+				SET @SQL = @SQL + ' [Address2],'
+				SET @SQL = @SQL + ' [City],'
+				SET @SQL = @SQL + ' [State],'
+				SET @SQL = @SQL + ' [Zip],'
+				SET @SQL = @SQL + ' [Country],'
+				SET @SQL = @SQL + ' [Phone]'
+				SET @SQL = @SQL + ' FROM PageIndex'
+				SET @SQL = @SQL + ' WHERE RowIndex > ' + CONVERT(nvarchar, @PageLowerBound)
+				IF @PageSize > 0
+				BEGIN
+					SET @SQL = @SQL + ' AND RowIndex <= ' + CONVERT(nvarchar, @PageUpperBound)
+				END
+				SET @SQL = @SQL + ' ORDER BY ' + @OrderBy
+				EXEC sp_executesql @SQL
+				
+				-- get row count
+				SET @SQL = 'SELECT COUNT(*) AS TotalRowCount'
+				SET @SQL = @SQL + ' FROM [dbo].[Account]'
+				IF LEN(@WhereClause) > 0
+				BEGIN
+					SET @SQL = @SQL + ' WHERE ' + @WhereClause
+				END
+				EXEC sp_executesql @SQL
+			
+				END
+			]]></body>
+		</procedure>
+		
+		<procedure owner="dbo" name="Account_Insert" grant="">
+			<comment><![CDATA[/*
+----------------------------------------------------------------------------------------------------
+
+-- Created By: Pet Shop ()
+-- Purpose: Inserts a record into the Account table
+----------------------------------------------------------------------------------------------------
+*/
+]]></comment>
+			<parameters>
+				<parameter name="@AccountId" type="int" direction="Output" size="4" precision="10" scale="0" param="" nulldefault=""/>
+				<parameter name="@UniqueId" type="int" direction="Input" size="4" precision="10" scale="0" param="" nulldefault=""/>
+				<parameter name="@Email" type="varchar" direction="Input" size="80" precision="0" scale="0" param="(80)" nulldefault=""/>
+				<parameter name="@FirstName" type="varchar" direction="Input" size="80" precision="0" scale="0" param="(80)" nulldefault=""/>
+				<parameter name="@LastName" type="varchar" direction="Input" size="80" precision="0" scale="0" param="(80)" nulldefault=""/>
+				<parameter name="@Address1" type="varchar" direction="Input" size="80" precision="0" scale="0" param="(80)" nulldefault=""/>
+				<parameter name="@Address2" type="varchar" direction="Input" size="80" precision="0" scale="0" param="(80)" nulldefault=""/>
+				<parameter name="@City" type="varchar" direction="Input" size="80" precision="0" scale="0" param="(80)" nulldefault=""/>
+				<parameter name="@State" type="varchar" direction="Input" size="80" precision="0" scale="0" param="(80)" nulldefault=""/>
+				<parameter name="@Zip" type="varchar" direction="Input" size="20" precision="0" scale="0" param="(20)" nulldefault=""/>
+				<parameter name="@Country" type="varchar" direction="Input" size="20" precision="0" scale="0" param="(20)" nulldefault=""/>
+				<parameter name="@Phone" type="varchar" direction="Input" size="20" precision="0" scale="0" param="(20)" nulldefault=""/>
+			</parameters>
+			<body><![CDATA[
+				
+				INSERT INTO [dbo].[Account]
+					(
+					[UniqueID]
+					,[Email]
+					,[FirstName]
+					,[LastName]
+					,[Address1]
+					,[Address2]
+					,[City]
+					,[State]
+					,[Zip]
+					,[Country]
+					,[Phone]
+					)
+				VALUES
+					(
+					@UniqueId
+					,@Email
+					,@FirstName
+					,@LastName
+					,@Address1
+					,@Address2
+					,@City
+					,@State
+					,@Zip
+					,@Country
+					,@Phone
+					)
+				
+				-- Get the identity value
+				SET @AccountId = SCOPE_IDENTITY()
+									
+							
+			]]></body>
+		</procedure>
+		<procedure owner="dbo" name="Account_Update" grant="">
+			<comment><![CDATA[/*
+----------------------------------------------------------------------------------------------------
+
+-- Created By: Pet Shop ()
+-- Purpose: Updates a record in the Account table
+----------------------------------------------------------------------------------------------------
+*/
+]]></comment>
+			<parameters>
+				<parameter name="@AccountId" type="int" direction="Input" size="4" precision="10" scale="0" param="" nulldefault=""/>
+				<parameter name="@UniqueId" type="int" direction="Input" size="4" precision="10" scale="0" param="" nulldefault=""/>
+				<parameter name="@Email" type="varchar" direction="Input" size="80" precision="0" scale="0" param="(80)" nulldefault=""/>
+				<parameter name="@FirstName" type="varchar" direction="Input" size="80" precision="0" scale="0" param="(80)" nulldefault=""/>
+				<parameter name="@LastName" type="varchar" direction="Input" size="80" precision="0" scale="0" param="(80)" nulldefault=""/>
+				<parameter name="@Address1" type="varchar" direction="Input" size="80" precision="0" scale="0" param="(80)" nulldefault=""/>
+				<parameter name="@Address2" type="varchar" direction="Input" size="80" precision="0" scale="0" param="(80)" nulldefault=""/>
+				<parameter name="@City" type="varchar" direction="Input" size="80" precision="0" scale="0" param="(80)" nulldefault=""/>
+				<parameter name="@State" type="varchar" direction="Input" size="80" precision="0" scale="0" param="(80)" nulldefault=""/>
+				<parameter name="@Zip" type="varchar" direction="Input" size="20" precision="0" scale="0" param="(20)" nulldefault=""/>
+				<parameter name="@Country" type="varchar" direction="Input" size="20" precision="0" scale="0" param="(20)" nulldefault=""/>
+				<parameter name="@Phone" type="varchar" direction="Input" size="20" precision="0" scale="0" param="(20)" nulldefault=""/>
+			</parameters>
+			<body><![CDATA[
+				
+				
+				-- Modify the updatable columns
+				UPDATE
+					[dbo].[Account]
+				SET
+					[UniqueID] = @UniqueId
+					,[Email] = @Email
+					,[FirstName] = @FirstName
+					,[LastName] = @LastName
+					,[Address1] = @Address1
+					,[Address2] = @Address2
+					,[City] = @City
+					,[State] = @State
+					,[Zip] = @Zip
+					,[Country] = @Country
+					,[Phone] = @Phone
+				WHERE
+[AccountId] = @AccountId 
+				
+			]]></body>
+		</procedure>
+		<procedure owner="dbo" name="Account_Delete" grant="">
+			<comment><![CDATA[/*
+----------------------------------------------------------------------------------------------------
+
+-- Created By: Pet Shop ()
+-- Purpose: Deletes a record in the Account table
+----------------------------------------------------------------------------------------------------
+*/
+]]></comment>
+			<parameters>
+				<parameter name="@AccountId" type="int" direction="Input" size="4" precision="10" scale="0" param="" nulldefault=""/>
+			</parameters>
+			<body><![CDATA[
+				DELETE FROM [dbo].[Account] WITH (ROWLOCK) 
+				WHERE
+					[AccountId] = @AccountId
+					
+			]]></body>
+		</procedure>
+		<procedure owner="dbo" name="Account_GetByUniqueId" >
+			<comment><![CDATA[/*
+----------------------------------------------------------------------------------------------------
+
+-- Created By: Pet Shop ()
+-- Purpose: Select records from the Account table through an index
+----------------------------------------------------------------------------------------------------
+*/
+]]></comment>
+			<parameters>
+				<parameter name="@UniqueId" type="int" direction="Input" size="4" precision="10" scale="0" param="" nulldefault=""/>
+			</parameters>
+			<body><![CDATA[
+				SELECT
+					[AccountId],
+					[UniqueID],
+					[Email],
+					[FirstName],
+					[LastName],
+					[Address1],
+					[Address2],
+					[City],
+					[State],
+					[Zip],
+					[Country],
+					[Phone]
+				FROM
+					[dbo].[Account]
+				WHERE
+					[UniqueID] = @UniqueId
+				SELECT @@ROWCOUNT
+					
+			]]></body>
+			
+		</procedure>
+		<procedure owner="dbo" name="Account_GetByAccountId" >
+			<comment><![CDATA[/*
+----------------------------------------------------------------------------------------------------
+
+-- Created By: Pet Shop ()
+-- Purpose: Select records from the Account table through an index
+----------------------------------------------------------------------------------------------------
+*/
+]]></comment>
+			<parameters>
+				<parameter name="@AccountId" type="int" direction="Input" size="4" precision="10" scale="0" param="" nulldefault=""/>
+			</parameters>
+			<body><![CDATA[
+				SELECT
+					[AccountId],
+					[UniqueID],
+					[Email],
+					[FirstName],
+					[LastName],
+					[Address1],
+					[Address2],
+					[City],
+					[State],
+					[Zip],
+					[Country],
+					[Phone]
+				FROM
+					[dbo].[Account]
+				WHERE
+					[AccountId] = @AccountId
+				SELECT @@ROWCOUNT
+					
+			]]></body>
+			
+		</procedure>
+		<procedure owner="dbo" name="Account_Find" >
+			<comment><![CDATA[/*
+----------------------------------------------------------------------------------------------------
+
+-- Created By: Pet Shop ()
+-- Purpose: Finds records in the Account table passing nullable parameters
+----------------------------------------------------------------------------------------------------
+*/
+]]></comment>
+			<parameters>
+				<parameter name="@SearchUsingOR" type="bit" direction="Input" size="0" precision="1" scale="0" param="" nulldefault="null"/>
+				<parameter name="@AccountId" type="int" direction="Input" size="4" precision="10" scale="0" param="" nulldefault="null"/>
+				<parameter name="@UniqueId" type="int" direction="Input" size="4" precision="10" scale="0" param="" nulldefault="null"/>
+				<parameter name="@Email" type="varchar" direction="Input" size="80" precision="0" scale="0" param="(80)" nulldefault="null"/>
+				<parameter name="@FirstName" type="varchar" direction="Input" size="80" precision="0" scale="0" param="(80)" nulldefault="null"/>
+				<parameter name="@LastName" type="varchar" direction="Input" size="80" precision="0" scale="0" param="(80)" nulldefault="null"/>
+				<parameter name="@Address1" type="varchar" direction="Input" size="80" precision="0" scale="0" param="(80)" nulldefault="null"/>
+				<parameter name="@Address2" type="varchar" direction="Input" size="80" precision="0" scale="0" param="(80)" nulldefault="null"/>
+				<parameter name="@City" type="varchar" direction="Input" size="80" precision="0" scale="0" param="(80)" nulldefault="null"/>
+				<parameter name="@State" type="varchar" direction="Input" size="80" precision="0" scale="0" param="(80)" nulldefault="null"/>
+				<parameter name="@Zip" type="varchar" direction="Input" size="20" precision="0" scale="0" param="(20)" nulldefault="null"/>
+				<parameter name="@Country" type="varchar" direction="Input" size="20" precision="0" scale="0" param="(20)" nulldefault="null"/>
+				<parameter name="@Phone" type="varchar" direction="Input" size="20" precision="0" scale="0" param="(20)" nulldefault="null"/>
+			</parameters>
+			<body><![CDATA[
+				
+  IF ISNULL(@SearchUsingOR, 0) <> 1
+  BEGIN
+    SELECT
+	  [AccountId]
+	, [UniqueID]
+	, [Email]
+	, [FirstName]
+	, [LastName]
+	, [Address1]
+	, [Address2]
+	, [City]
+	, [State]
+	, [Zip]
+	, [Country]
+	, [Phone]
+    FROM
+	[dbo].[Account]
+    WHERE 
+	 ([AccountId] = @AccountId OR @AccountId IS NULL)
+	AND ([UniqueID] = @UniqueId OR @UniqueId IS NULL)
+	AND ([Email] = @Email OR @Email IS NULL)
+	AND ([FirstName] = @FirstName OR @FirstName IS NULL)
+	AND ([LastName] = @LastName OR @LastName IS NULL)
+	AND ([Address1] = @Address1 OR @Address1 IS NULL)
+	AND ([Address2] = @Address2 OR @Address2 IS NULL)
+	AND ([City] = @City OR @City IS NULL)
+	AND ([State] = @State OR @State IS NULL)
+	AND ([Zip] = @Zip OR @Zip IS NULL)
+	AND ([Country] = @Country OR @Country IS NULL)
+	AND ([Phone] = @Phone OR @Phone IS NULL)
+						
+  END
+  ELSE
+  BEGIN
+    SELECT
+	  [AccountId]
+	, [UniqueID]
+	, [Email]
+	, [FirstName]
+	, [LastName]
+	, [Address1]
+	, [Address2]
+	, [City]
+	, [State]
+	, [Zip]
+	, [Country]
+	, [Phone]
+    FROM
+	[dbo].[Account]
+    WHERE 
+	 ([AccountId] = @AccountId AND @AccountId is not null)
+	OR ([UniqueID] = @UniqueId AND @UniqueId is not null)
+	OR ([Email] = @Email AND @Email is not null)
+	OR ([FirstName] = @FirstName AND @FirstName is not null)
+	OR ([LastName] = @LastName AND @LastName is not null)
+	OR ([Address1] = @Address1 AND @Address1 is not null)
+	OR ([Address2] = @Address2 AND @Address2 is not null)
+	OR ([City] = @City AND @City is not null)
+	OR ([State] = @State AND @State is not null)
+	OR ([Zip] = @Zip AND @Zip is not null)
+	OR ([Country] = @Country AND @Country is not null)
+	OR ([Phone] = @Phone AND @Phone is not null)
+	SELECT @@ROWCOUNT			
+  END
+				]]></body>
+		</procedure>
+
+		
+		<procedure owner="dbo" name="Account_Find_Dynamic"  skip="true">
+			<comment><![CDATA[/*
+----------------------------------------------------------------------------------------------------
+
+-- Created By: Pet Shop ()
+-- Purpose: Gets records from the Account table using a dynamically generated query.
+----------------------------------------------------------------------------------------------------
+*/
+]]></comment>
+			<parameters/>
+			<body><![CDATA[
+				
+				BEGIN
+				
+				WITH PageIndex AS (
+					SELECT TOP {3} row_number() over (order by {1}) AS RowIndex
+					, [AccountId]
+					, [UniqueID]
+					, [Email]
+					, [FirstName]
+					, [LastName]
+					, [Address1]
+					, [Address2]
+					, [City]
+					, [State]
+					, [Zip]
+					, [Country]
+					, [Phone]
+					FROM [dbo].[Account] {0}
+				)
+				SELECT
+				       [AccountId],
+				       [UniqueID],
+				       [Email],
+				       [FirstName],
+				       [LastName],
+				       [Address1],
+				       [Address2],
+				       [City],
+				       [State],
+				       [Zip],
+				       [Country],
+				       [Phone]
+				  FROM PageIndex
+				 WHERE RowIndex > {2}
+				   AND RowIndex <= {3}
+				ORDER BY {1};
+				
+
+				-- get total count
+				SELECT COUNT(*) AS TotalRowCount FROM [dbo].[Account] {0};
+				
+				END
+			]]></body>
+		</procedure>
+		
+		
+		<procedure owner="dbo" name="Profiles_Get_List" >
+			<comment><![CDATA[/*
+----------------------------------------------------------------------------------------------------
+
+-- Created By: Pet Shop ()
+-- Purpose: Gets all records from the Profiles table
+----------------------------------------------------------------------------------------------------
+*/
+]]></comment>
+			<parameters/>
+			<body><![CDATA[
+				
+				SELECT
+					[UniqueID],
+					[Username],
+					[ApplicationName],
+					[IsAnonymous],
+					[LastActivityDate],
+					[LastUpdatedDate]
+				FROM
+					[dbo].[Profiles]
+					
+				SELECT @@ROWCOUNT
+			]]></body>
+		</procedure>
+		
+		
+		<procedure owner="dbo" name="Profiles_GetPaged" >
+			<comment><![CDATA[/*
+----------------------------------------------------------------------------------------------------
+
+-- Created By: Pet Shop ()
+-- Purpose: Gets records from the Profiles table passing page index and page count parameters
+----------------------------------------------------------------------------------------------------
+*/
+]]></comment>
+			<parameters>
+				<parameter name="@WhereClause" type="varchar" direction="Input" size="2000" precision="0" scale="0" param="(2000)" />
+				<parameter name="@OrderBy" type="varchar" direction="Input" size="2000" precision="0" scale="0" param="(2000)"/>
+				<parameter name="@PageIndex" type="int" direction="Input" size="0" precision="10" scale="0" />
+				<parameter name="@PageSize" type="int" direction="Input" size="0" precision="10" scale="0" /> 
+			</parameters>
+			<body><![CDATA[
+				
+				BEGIN
+				DECLARE @PageLowerBound int
+				DECLARE @PageUpperBound int
+				
+				-- Set the page bounds
+				SET @PageLowerBound = @PageSize * @PageIndex
+				SET @PageUpperBound = @PageLowerBound + @PageSize
+
+				IF (@OrderBy IS NULL OR LEN(@OrderBy) < 1)
+				BEGIN
+					-- default order by to first column
+					SET @OrderBy = '[UniqueID]'
+				END
+
+				-- SQL Server 2005 Paging
+				DECLARE @SQL AS nvarchar(MAX)
+				SET @SQL = 'WITH PageIndex AS ('
+				SET @SQL = @SQL + ' SELECT'
+				IF @PageSize > 0
+				BEGIN
+					SET @SQL = @SQL + ' TOP ' + CONVERT(nvarchar, @PageUpperBound)
+				END
+				SET @SQL = @SQL + ' ROW_NUMBER() OVER (ORDER BY ' + @OrderBy + ') as RowIndex'
+				SET @SQL = @SQL + ', [UniqueID]'
+				SET @SQL = @SQL + ', [Username]'
+				SET @SQL = @SQL + ', [ApplicationName]'
+				SET @SQL = @SQL + ', [IsAnonymous]'
+				SET @SQL = @SQL + ', [LastActivityDate]'
+				SET @SQL = @SQL + ', [LastUpdatedDate]'
+				SET @SQL = @SQL + ' FROM [dbo].[Profiles]'
+				IF LEN(@WhereClause) > 0
+				BEGIN
+					SET @SQL = @SQL + ' WHERE ' + @WhereClause
+				END
+				SET @SQL = @SQL + ' ) SELECT'
+				SET @SQL = @SQL + ' [UniqueID],'
+				SET @SQL = @SQL + ' [Username],'
+				SET @SQL = @SQL + ' [ApplicationName],'
+				SET @SQL = @SQL + ' [IsAnonymous],'
+				SET @SQL = @SQL + ' [LastActivityDate],'
+				SET @SQL = @SQL + ' [LastUpdatedDate]'
+				SET @SQL = @SQL + ' FROM PageIndex'
+				SET @SQL = @SQL + ' WHERE RowIndex > ' + CONVERT(nvarchar, @PageLowerBound)
+				IF @PageSize > 0
+				BEGIN
+					SET @SQL = @SQL + ' AND RowIndex <= ' + CONVERT(nvarchar, @PageUpperBound)
+				END
+				SET @SQL = @SQL + ' ORDER BY ' + @OrderBy
+				EXEC sp_executesql @SQL
+				
+				-- get row count
+				SET @SQL = 'SELECT COUNT(*) AS TotalRowCount'
+				SET @SQL = @SQL + ' FROM [dbo].[Profiles]'
+				IF LEN(@WhereClause) > 0
+				BEGIN
+					SET @SQL = @SQL + ' WHERE ' + @WhereClause
+				END
+				EXEC sp_executesql @SQL
+			
+				END
+			]]></body>
+		</procedure>
+		
+		<procedure owner="dbo" name="Profiles_Insert" grant="">
+			<comment><![CDATA[/*
+----------------------------------------------------------------------------------------------------
+
+-- Created By: Pet Shop ()
+-- Purpose: Inserts a record into the Profiles table
+----------------------------------------------------------------------------------------------------
+*/
+]]></comment>
+			<parameters>
+				<parameter name="@UniqueId" type="int" direction="Output" size="4" precision="10" scale="0" param="" nulldefault=""/>
+				<parameter name="@Username" type="varchar" direction="Input" size="256" precision="0" scale="0" param="(256)" nulldefault=""/>
+				<parameter name="@ApplicationName" type="varchar" direction="Input" size="256" precision="0" scale="0" param="(256)" nulldefault=""/>
+				<parameter name="@IsAnonymous" type="bit" direction="Input" size="1" precision="1" scale="0" param="" nulldefault=""/>
+				<parameter name="@LastActivityDate" type="datetime" direction="Input" size="8" precision="23" scale="3" param="" nulldefault=""/>
+				<parameter name="@LastUpdatedDate" type="datetime" direction="Input" size="8" precision="23" scale="3" param="" nulldefault=""/>
+			</parameters>
+			<body><![CDATA[
+				
+				INSERT INTO [dbo].[Profiles]
+					(
+					[Username]
+					,[ApplicationName]
+					,[IsAnonymous]
+					,[LastActivityDate]
+					,[LastUpdatedDate]
+					)
+				VALUES
+					(
+					@Username
+					,@ApplicationName
+					,@IsAnonymous
+					,@LastActivityDate
+					,@LastUpdatedDate
+					)
+				
+				-- Get the identity value
+				SET @UniqueId = SCOPE_IDENTITY()
+									
+							
+			]]></body>
+		</procedure>
+		<procedure owner="dbo" name="Profiles_Update" grant="">
+			<comment><![CDATA[/*
+----------------------------------------------------------------------------------------------------
+
+-- Created By: Pet Shop ()
+-- Purpose: Updates a record in the Profiles table
+----------------------------------------------------------------------------------------------------
+*/
+]]></comment>
+			<parameters>
+				<parameter name="@UniqueId" type="int" direction="Input" size="4" precision="10" scale="0" param="" nulldefault=""/>
+				<parameter name="@Username" type="varchar" direction="Input" size="256" precision="0" scale="0" param="(256)" nulldefault=""/>
+				<parameter name="@ApplicationName" type="varchar" direction="Input" size="256" precision="0" scale="0" param="(256)" nulldefault=""/>
+				<parameter name="@IsAnonymous" type="bit" direction="Input" size="1" precision="1" scale="0" param="" nulldefault=""/>
+				<parameter name="@LastActivityDate" type="datetime" direction="Input" size="8" precision="23" scale="3" param="" nulldefault=""/>
+				<parameter name="@LastUpdatedDate" type="datetime" direction="Input" size="8" precision="23" scale="3" param="" nulldefault=""/>
+			</parameters>
+			<body><![CDATA[
+				
+				
+				-- Modify the updatable columns
+				UPDATE
+					[dbo].[Profiles]
+				SET
+					[Username] = @Username
+					,[ApplicationName] = @ApplicationName
+					,[IsAnonymous] = @IsAnonymous
+					,[LastActivityDate] = @LastActivityDate
+					,[LastUpdatedDate] = @LastUpdatedDate
+				WHERE
+[UniqueID] = @UniqueId 
+				
+			]]></body>
+		</procedure>
+		<procedure owner="dbo" name="Profiles_Delete" grant="">
+			<comment><![CDATA[/*
+----------------------------------------------------------------------------------------------------
+
+-- Created By: Pet Shop ()
+-- Purpose: Deletes a record in the Profiles table
+----------------------------------------------------------------------------------------------------
+*/
+]]></comment>
+			<parameters>
+				<parameter name="@UniqueId" type="int" direction="Input" size="4" precision="10" scale="0" param="" nulldefault=""/>
+			</parameters>
+			<body><![CDATA[
+				DELETE FROM [dbo].[Profiles] WITH (ROWLOCK) 
+				WHERE
+					[UniqueID] = @UniqueId
+					
+			]]></body>
+		</procedure>
+		<procedure owner="dbo" name="Profiles_GetByUsernameApplicationName" >
+			<comment><![CDATA[/*
+----------------------------------------------------------------------------------------------------
+
+-- Created By: Pet Shop ()
+-- Purpose: Select records from the Profiles table through an index
+----------------------------------------------------------------------------------------------------
+*/
+]]></comment>
+			<parameters>
+				<parameter name="@Username" type="varchar" direction="Input" size="256" precision="0" scale="0" param="(256)" nulldefault=""/>
+				<parameter name="@ApplicationName" type="varchar" direction="Input" size="256" precision="0" scale="0" param="(256)" nulldefault=""/>
+			</parameters>
+			<body><![CDATA[
+				SELECT
+					[UniqueID],
+					[Username],
+					[ApplicationName],
+					[IsAnonymous],
+					[LastActivityDate],
+					[LastUpdatedDate]
+				FROM
+					[dbo].[Profiles]
+				WHERE
+					[Username] = @Username
+					AND [ApplicationName] = @ApplicationName
+				SELECT @@ROWCOUNT
+					
+			]]></body>
+			
+		</procedure>
+		<procedure owner="dbo" name="Profiles_GetByUniqueId" >
+			<comment><![CDATA[/*
+----------------------------------------------------------------------------------------------------
+
+-- Created By: Pet Shop ()
+-- Purpose: Select records from the Profiles table through an index
+----------------------------------------------------------------------------------------------------
+*/
+]]></comment>
+			<parameters>
+				<parameter name="@UniqueId" type="int" direction="Input" size="4" precision="10" scale="0" param="" nulldefault=""/>
+			</parameters>
+			<body><![CDATA[
+				SELECT
+					[UniqueID],
+					[Username],
+					[ApplicationName],
+					[IsAnonymous],
+					[LastActivityDate],
+					[LastUpdatedDate]
+				FROM
+					[dbo].[Profiles]
+				WHERE
+					[UniqueID] = @UniqueId
+				SELECT @@ROWCOUNT
+					
+			]]></body>
+			
+		</procedure>
+		<procedure owner="dbo" name="Profiles_Find" >
+			<comment><![CDATA[/*
+----------------------------------------------------------------------------------------------------
+
+-- Created By: Pet Shop ()
+-- Purpose: Finds records in the Profiles table passing nullable parameters
+----------------------------------------------------------------------------------------------------
+*/
+]]></comment>
+			<parameters>
+				<parameter name="@SearchUsingOR" type="bit" direction="Input" size="0" precision="1" scale="0" param="" nulldefault="null"/>
+				<parameter name="@UniqueId" type="int" direction="Input" size="4" precision="10" scale="0" param="" nulldefault="null"/>
+				<parameter name="@Username" type="varchar" direction="Input" size="256" precision="0" scale="0" param="(256)" nulldefault="null"/>
+				<parameter name="@ApplicationName" type="varchar" direction="Input" size="256" precision="0" scale="0" param="(256)" nulldefault="null"/>
+				<parameter name="@IsAnonymous" type="bit" direction="Input" size="1" precision="1" scale="0" param="" nulldefault="null"/>
+				<parameter name="@LastActivityDate" type="datetime" direction="Input" size="8" precision="23" scale="3" param="" nulldefault="null"/>
+				<parameter name="@LastUpdatedDate" type="datetime" direction="Input" size="8" precision="23" scale="3" param="" nulldefault="null"/>
+			</parameters>
+			<body><![CDATA[
+				
+  IF ISNULL(@SearchUsingOR, 0) <> 1
+  BEGIN
+    SELECT
+	  [UniqueID]
+	, [Username]
+	, [ApplicationName]
+	, [IsAnonymous]
+	, [LastActivityDate]
+	, [LastUpdatedDate]
+    FROM
+	[dbo].[Profiles]
+    WHERE 
+	 ([UniqueID] = @UniqueId OR @UniqueId IS NULL)
+	AND ([Username] = @Username OR @Username IS NULL)
+	AND ([ApplicationName] = @ApplicationName OR @ApplicationName IS NULL)
+	AND ([IsAnonymous] = @IsAnonymous OR @IsAnonymous IS NULL)
+	AND ([LastActivityDate] = @LastActivityDate OR @LastActivityDate IS NULL)
+	AND ([LastUpdatedDate] = @LastUpdatedDate OR @LastUpdatedDate IS NULL)
+						
+  END
+  ELSE
+  BEGIN
+    SELECT
+	  [UniqueID]
+	, [Username]
+	, [ApplicationName]
+	, [IsAnonymous]
+	, [LastActivityDate]
+	, [LastUpdatedDate]
+    FROM
+	[dbo].[Profiles]
+    WHERE 
+	 ([UniqueID] = @UniqueId AND @UniqueId is not null)
+	OR ([Username] = @Username AND @Username is not null)
+	OR ([ApplicationName] = @ApplicationName AND @ApplicationName is not null)
+	OR ([IsAnonymous] = @IsAnonymous AND @IsAnonymous is not null)
+	OR ([LastActivityDate] = @LastActivityDate AND @LastActivityDate is not null)
+	OR ([LastUpdatedDate] = @LastUpdatedDate AND @LastUpdatedDate is not null)
+	SELECT @@ROWCOUNT			
+  END
+				]]></body>
+		</procedure>
+
+		
+		<procedure owner="dbo" name="Profiles_Find_Dynamic"  skip="true">
+			<comment><![CDATA[/*
+----------------------------------------------------------------------------------------------------
+
+-- Created By: Pet Shop ()
+-- Purpose: Gets records from the Profiles table using a dynamically generated query.
+----------------------------------------------------------------------------------------------------
+*/
+]]></comment>
+			<parameters/>
+			<body><![CDATA[
+				
+				BEGIN
+				
+				WITH PageIndex AS (
+					SELECT TOP {3} row_number() over (order by {1}) AS RowIndex
+					, [UniqueID]
+					, [Username]
+					, [ApplicationName]
+					, [IsAnonymous]
+					, [LastActivityDate]
+					, [LastUpdatedDate]
+					FROM [dbo].[Profiles] {0}
+				)
+				SELECT
+				       [UniqueID],
+				       [Username],
+				       [ApplicationName],
+				       [IsAnonymous],
+				       [LastActivityDate],
+				       [LastUpdatedDate]
+				  FROM PageIndex
+				 WHERE RowIndex > {2}
+				   AND RowIndex <= {3}
+				ORDER BY {1};
+				
+
+				-- get total count
+				SELECT COUNT(*) AS TotalRowCount FROM [dbo].[Profiles] {0};
+				
+				END
+			]]></body>
+		</procedure>
+		
+		
+		<procedure owner="dbo" name="Item_Get_List" >
+			<comment><![CDATA[/*
+----------------------------------------------------------------------------------------------------
+
+-- Created By: Pet Shop ()
+-- Purpose: Gets all records from the Item table
+----------------------------------------------------------------------------------------------------
+*/
+]]></comment>
+			<parameters/>
+			<body><![CDATA[
+				
+				SELECT
+					[ItemId],
+					[ProductId],
+					[ListPrice],
+					[UnitCost],
+					[Supplier],
+					[Status],
+					[Name],
+					[Image]
+				FROM
+					[dbo].[Item]
+					
+				SELECT @@ROWCOUNT
+			]]></body>
+		</procedure>
+		
+		
+		<procedure owner="dbo" name="Item_GetPaged" >
+			<comment><![CDATA[/*
+----------------------------------------------------------------------------------------------------
+
+-- Created By: Pet Shop ()
+-- Purpose: Gets records from the Item table passing page index and page count parameters
+----------------------------------------------------------------------------------------------------
+*/
+]]></comment>
+			<parameters>
+				<parameter name="@WhereClause" type="varchar" direction="Input" size="2000" precision="0" scale="0" param="(2000)" />
+				<parameter name="@OrderBy" type="varchar" direction="Input" size="2000" precision="0" scale="0" param="(2000)"/>
+				<parameter name="@PageIndex" type="int" direction="Input" size="0" precision="10" scale="0" />
+				<parameter name="@PageSize" type="int" direction="Input" size="0" precision="10" scale="0" /> 
+			</parameters>
+			<body><![CDATA[
+				
+				BEGIN
+				DECLARE @PageLowerBound int
+				DECLARE @PageUpperBound int
+				
+				-- Set the page bounds
+				SET @PageLowerBound = @PageSize * @PageIndex
+				SET @PageUpperBound = @PageLowerBound + @PageSize
+
+				IF (@OrderBy IS NULL OR LEN(@OrderBy) < 1)
+				BEGIN
+					-- default order by to first column
+					SET @OrderBy = '[ItemId]'
+				END
+
+				-- SQL Server 2005 Paging
+				DECLARE @SQL AS nvarchar(MAX)
+				SET @SQL = 'WITH PageIndex AS ('
+				SET @SQL = @SQL + ' SELECT'
+				IF @PageSize > 0
+				BEGIN
+					SET @SQL = @SQL + ' TOP ' + CONVERT(nvarchar, @PageUpperBound)
+				END
+				SET @SQL = @SQL + ' ROW_NUMBER() OVER (ORDER BY ' + @OrderBy + ') as RowIndex'
+				SET @SQL = @SQL + ', [ItemId]'
+				SET @SQL = @SQL + ', [ProductId]'
+				SET @SQL = @SQL + ', [ListPrice]'
+				SET @SQL = @SQL + ', [UnitCost]'
+				SET @SQL = @SQL + ', [Supplier]'
+				SET @SQL = @SQL + ', [Status]'
+				SET @SQL = @SQL + ', [Name]'
+				SET @SQL = @SQL + ', [Image]'
+				SET @SQL = @SQL + ' FROM [dbo].[Item]'
+				IF LEN(@WhereClause) > 0
+				BEGIN
+					SET @SQL = @SQL + ' WHERE ' + @WhereClause
+				END
+				SET @SQL = @SQL + ' ) SELECT'
+				SET @SQL = @SQL + ' [ItemId],'
+				SET @SQL = @SQL + ' [ProductId],'
+				SET @SQL = @SQL + ' [ListPrice],'
+				SET @SQL = @SQL + ' [UnitCost],'
+				SET @SQL = @SQL + ' [Supplier],'
+				SET @SQL = @SQL + ' [Status],'
+				SET @SQL = @SQL + ' [Name],'
+				SET @SQL = @SQL + ' [Image]'
+				SET @SQL = @SQL + ' FROM PageIndex'
+				SET @SQL = @SQL + ' WHERE RowIndex > ' + CONVERT(nvarchar, @PageLowerBound)
+				IF @PageSize > 0
+				BEGIN
+					SET @SQL = @SQL + ' AND RowIndex <= ' + CONVERT(nvarchar, @PageUpperBound)
+				END
+				SET @SQL = @SQL + ' ORDER BY ' + @OrderBy
+				EXEC sp_executesql @SQL
+				
+				-- get row count
+				SET @SQL = 'SELECT COUNT(*) AS TotalRowCount'
+				SET @SQL = @SQL + ' FROM [dbo].[Item]'
+				IF LEN(@WhereClause) > 0
+				BEGIN
+					SET @SQL = @SQL + ' WHERE ' + @WhereClause
+				END
+				EXEC sp_executesql @SQL
+			
+				END
+			]]></body>
+		</procedure>
+		
+		<procedure owner="dbo" name="Item_Insert" grant="">
+			<comment><![CDATA[/*
+----------------------------------------------------------------------------------------------------
+
+-- Created By: Pet Shop ()
+-- Purpose: Inserts a record into the Item table
+----------------------------------------------------------------------------------------------------
+*/
+]]></comment>
+			<parameters>
+				<parameter name="@ItemId" type="varchar" direction="Input" size="10" precision="0" scale="0" param="(10)" nulldefault=""/>
+				<parameter name="@ProductId" type="varchar" direction="Input" size="10" precision="0" scale="0" param="(10)" nulldefault=""/>
+				<parameter name="@ListPrice" type="decimal" direction="Input" size="9" precision="10" scale="2" param="(10, 2)" nulldefault=""/>
+				<parameter name="@UnitCost" type="decimal" direction="Input" size="9" precision="10" scale="2" param="(10, 2)" nulldefault=""/>
+				<parameter name="@Supplier" type="int" direction="Input" size="4" precision="10" scale="0" param="" nulldefault=""/>
+				<parameter name="@Status" type="varchar" direction="Input" size="2" precision="0" scale="0" param="(2)" nulldefault=""/>
+				<parameter name="@Name" type="varchar" direction="Input" size="80" precision="0" scale="0" param="(80)" nulldefault=""/>
+				<parameter name="@Image" type="varchar" direction="Input" size="80" precision="0" scale="0" param="(80)" nulldefault=""/>
+			</parameters>
+			<body><![CDATA[
+				
+				INSERT INTO [dbo].[Item]
+					(
+					[ItemId]
+					,[ProductId]
+					,[ListPrice]
+					,[UnitCost]
+					,[Supplier]
+					,[Status]
+					,[Name]
+					,[Image]
+					)
+				VALUES
+					(
+					@ItemId
+					,@ProductId
+					,@ListPrice
+					,@UnitCost
+					,@Supplier
+					,@Status
+					,@Name
+					,@Image
+					)
+				
+									
+							
+			]]></body>
+		</procedure>
+		<procedure owner="dbo" name="Item_Update" grant="">
+			<comment><![CDATA[/*
+----------------------------------------------------------------------------------------------------
+
+-- Created By: Pet Shop ()
+-- Purpose: Updates a record in the Item table
+----------------------------------------------------------------------------------------------------
+*/
+]]></comment>
+			<parameters>
+				<parameter name="@ItemId" type="varchar" direction="Input" size="10" precision="0" scale="0" param="(10)" nulldefault=""/>
+				<parameter name="@OriginalItemId" type="varchar" direction="Input" size="10" precision="0" scale="0" param="(10)" nulldefault=""/>
+				<parameter name="@ProductId" type="varchar" direction="Input" size="10" precision="0" scale="0" param="(10)" nulldefault=""/>
+				<parameter name="@ListPrice" type="decimal" direction="Input" size="9" precision="10" scale="2" param="(10, 2)" nulldefault=""/>
+				<parameter name="@UnitCost" type="decimal" direction="Input" size="9" precision="10" scale="2" param="(10, 2)" nulldefault=""/>
+				<parameter name="@Supplier" type="int" direction="Input" size="4" precision="10" scale="0" param="" nulldefault=""/>
+				<parameter name="@Status" type="varchar" direction="Input" size="2" precision="0" scale="0" param="(2)" nulldefault=""/>
+				<parameter name="@Name" type="varchar" direction="Input" size="80" precision="0" scale="0" param="(80)" nulldefault=""/>
+				<parameter name="@Image" type="varchar" direction="Input" size="80" precision="0" scale="0" param="(80)" nulldefault=""/>
+			</parameters>
+			<body><![CDATA[
+				
+				
+				-- Modify the updatable columns
+				UPDATE
+					[dbo].[Item]
+				SET
+					[ItemId] = @ItemId
+					,[ProductId] = @ProductId
+					,[ListPrice] = @ListPrice
+					,[UnitCost] = @UnitCost
+					,[Supplier] = @Supplier
+					,[Status] = @Status
+					,[Name] = @Name
+					,[Image] = @Image
+				WHERE
+[ItemId] = @OriginalItemId 
+				
+			]]></body>
+		</procedure>
+		<procedure owner="dbo" name="Item_Delete" grant="">
+			<comment><![CDATA[/*
+----------------------------------------------------------------------------------------------------
+
+-- Created By: Pet Shop ()
+-- Purpose: Deletes a record in the Item table
+----------------------------------------------------------------------------------------------------
+*/
+]]></comment>
+			<parameters>
+				<parameter name="@ItemId" type="varchar" direction="Input" size="10" precision="0" scale="0" param="(10)" nulldefault=""/>
+			</parameters>
+			<body><![CDATA[
+				DELETE FROM [dbo].[Item] WITH (ROWLOCK) 
+				WHERE
+					[ItemId] = @ItemId
+					
+			]]></body>
+		</procedure>
+		<procedure owner="dbo" name="Item_GetByProductId" >
+			<comment><![CDATA[/*
+----------------------------------------------------------------------------------------------------
+
+-- Created By: Pet Shop ()
+-- Purpose: Select records from the Item table through a foreign key
+----------------------------------------------------------------------------------------------------
+*/
+]]></comment>
+			<parameters>
+				<parameter name="@ProductId" type="varchar" direction="Input" size="10" precision="0" scale="0" param="(10)" nulldefault=""/>
+			</parameters>
+			<body><![CDATA[
+				SET ANSI_NULLS OFF
+				
+				SELECT
+					[ItemId],
+					[ProductId],
+					[ListPrice],
+					[UnitCost],
+					[Supplier],
+					[Status],
+					[Name],
+					[Image]
+				FROM
+					[dbo].[Item]
+				WHERE
+					[ProductId] = @ProductId
+				
+				SELECT @@ROWCOUNT
+				SET ANSI_NULLS ON
+			]]></body>
+		</procedure>
+		<procedure owner="dbo" name="Item_GetBySupplier" >
+			<comment><![CDATA[/*
+----------------------------------------------------------------------------------------------------
+
+-- Created By: Pet Shop ()
+-- Purpose: Select records from the Item table through a foreign key
+----------------------------------------------------------------------------------------------------
+*/
+]]></comment>
+			<parameters>
+				<parameter name="@Supplier" type="int" direction="Input" size="4" precision="10" scale="0" param="" nulldefault=""/>
+			</parameters>
+			<body><![CDATA[
+				SET ANSI_NULLS OFF
+				
+				SELECT
+					[ItemId],
+					[ProductId],
+					[ListPrice],
+					[UnitCost],
+					[Supplier],
+					[Status],
+					[Name],
+					[Image]
+				FROM
+					[dbo].[Item]
+				WHERE
+					[Supplier] = @Supplier
+				
+				SELECT @@ROWCOUNT
+				SET ANSI_NULLS ON
+			]]></body>
+		</procedure>
+		<procedure owner="dbo" name="Item_GetByProductIdItemIdListPriceName" >
+			<comment><![CDATA[/*
+----------------------------------------------------------------------------------------------------
+
+-- Created By: Pet Shop ()
+-- Purpose: Select records from the Item table through an index
+----------------------------------------------------------------------------------------------------
+*/
+]]></comment>
+			<parameters>
+				<parameter name="@ProductId" type="varchar" direction="Input" size="10" precision="0" scale="0" param="(10)" nulldefault=""/>
+				<parameter name="@ItemId" type="varchar" direction="Input" size="10" precision="0" scale="0" param="(10)" nulldefault=""/>
+				<parameter name="@ListPrice" type="decimal" direction="Input" size="9" precision="10" scale="2" param="(10, 2)" nulldefault=""/>
+				<parameter name="@Name" type="varchar" direction="Input" size="80" precision="0" scale="0" param="(80)" nulldefault=""/>
+			</parameters>
+			<body><![CDATA[
+				SELECT
+					[ItemId],
+					[ProductId],
+					[ListPrice],
+					[UnitCost],
+					[Supplier],
+					[Status],
+					[Name],
+					[Image]
+				FROM
+					[dbo].[Item]
+				WHERE
+					[ProductId] = @ProductId
+					AND [ItemId] = @ItemId
+					AND [ListPrice] = @ListPrice
+					AND [Name] = @Name
+				SELECT @@ROWCOUNT
+					
+			]]></body>
+			
+		</procedure>
+		<procedure owner="dbo" name="Item_GetByItemId" >
+			<comment><![CDATA[/*
+----------------------------------------------------------------------------------------------------
+
+-- Created By: Pet Shop ()
+-- Purpose: Select records from the Item table through an index
+----------------------------------------------------------------------------------------------------
+*/
+]]></comment>
+			<parameters>
+				<parameter name="@ItemId" type="varchar" direction="Input" size="10" precision="0" scale="0" param="(10)" nulldefault=""/>
+			</parameters>
+			<body><![CDATA[
+				SELECT
+					[ItemId],
+					[ProductId],
+					[ListPrice],
+					[UnitCost],
+					[Supplier],
+					[Status],
+					[Name],
+					[Image]
+				FROM
+					[dbo].[Item]
+				WHERE
+					[ItemId] = @ItemId
+				SELECT @@ROWCOUNT
+					
+			]]></body>
+			
+		</procedure>
+		<procedure owner="dbo" name="Item_Find" >
+			<comment><![CDATA[/*
+----------------------------------------------------------------------------------------------------
+
+-- Created By: Pet Shop ()
+-- Purpose: Finds records in the Item table passing nullable parameters
+----------------------------------------------------------------------------------------------------
+*/
+]]></comment>
+			<parameters>
+				<parameter name="@SearchUsingOR" type="bit" direction="Input" size="0" precision="1" scale="0" param="" nulldefault="null"/>
+				<parameter name="@ItemId" type="varchar" direction="Input" size="10" precision="0" scale="0" param="(10)" nulldefault="null"/>
+				<parameter name="@ProductId" type="varchar" direction="Input" size="10" precision="0" scale="0" param="(10)" nulldefault="null"/>
+				<parameter name="@ListPrice" type="decimal" direction="Input" size="9" precision="10" scale="2" param="(10, 2)" nulldefault="null"/>
+				<parameter name="@UnitCost" type="decimal" direction="Input" size="9" precision="10" scale="2" param="(10, 2)" nulldefault="null"/>
+				<parameter name="@Supplier" type="int" direction="Input" size="4" precision="10" scale="0" param="" nulldefault="null"/>
+				<parameter name="@Status" type="varchar" direction="Input" size="2" precision="0" scale="0" param="(2)" nulldefault="null"/>
+				<parameter name="@Name" type="varchar" direction="Input" size="80" precision="0" scale="0" param="(80)" nulldefault="null"/>
+				<parameter name="@Image" type="varchar" direction="Input" size="80" precision="0" scale="0" param="(80)" nulldefault="null"/>
+			</parameters>
+			<body><![CDATA[
+				
+  IF ISNULL(@SearchUsingOR, 0) <> 1
+  BEGIN
+    SELECT
+	  [ItemId]
+	, [ProductId]
+	, [ListPrice]
+	, [UnitCost]
+	, [Supplier]
+	, [Status]
+	, [Name]
+	, [Image]
+    FROM
+	[dbo].[Item]
+    WHERE 
+	 ([ItemId] = @ItemId OR @ItemId IS NULL)
+	AND ([ProductId] = @ProductId OR @ProductId IS NULL)
+	AND ([ListPrice] = @ListPrice OR @ListPrice IS NULL)
+	AND ([UnitCost] = @UnitCost OR @UnitCost IS NULL)
+	AND ([Supplier] = @Supplier OR @Supplier IS NULL)
+	AND ([Status] = @Status OR @Status IS NULL)
+	AND ([Name] = @Name OR @Name IS NULL)
+	AND ([Image] = @Image OR @Image IS NULL)
+						
+  END
+  ELSE
+  BEGIN
+    SELECT
+	  [ItemId]
+	, [ProductId]
+	, [ListPrice]
+	, [UnitCost]
+	, [Supplier]
+	, [Status]
+	, [Name]
+	, [Image]
+    FROM
+	[dbo].[Item]
+    WHERE 
+	 ([ItemId] = @ItemId AND @ItemId is not null)
+	OR ([ProductId] = @ProductId AND @ProductId is not null)
+	OR ([ListPrice] = @ListPrice AND @ListPrice is not null)
+	OR ([UnitCost] = @UnitCost AND @UnitCost is not null)
+	OR ([Supplier] = @Supplier AND @Supplier is not null)
+	OR ([Status] = @Status AND @Status is not null)
+	OR ([Name] = @Name AND @Name is not null)
+	OR ([Image] = @Image AND @Image is not null)
+	SELECT @@ROWCOUNT			
+  END
+				]]></body>
+		</procedure>
+
+		
+		<procedure owner="dbo" name="Item_Find_Dynamic"  skip="true">
+			<comment><![CDATA[/*
+----------------------------------------------------------------------------------------------------
+
+-- Created By: Pet Shop ()
+-- Purpose: Gets records from the Item table using a dynamically generated query.
+----------------------------------------------------------------------------------------------------
+*/
+]]></comment>
+			<parameters/>
+			<body><![CDATA[
+				
+				BEGIN
+				
+				WITH PageIndex AS (
+					SELECT TOP {3} row_number() over (order by {1}) AS RowIndex
+					, [ItemId]
+					, [ProductId]
+					, [ListPrice]
+					, [UnitCost]
+					, [Supplier]
+					, [Status]
+					, [Name]
+					, [Image]
+					FROM [dbo].[Item] {0}
+				)
+				SELECT
+				       [ItemId],
+				       [ProductId],
+				       [ListPrice],
+				       [UnitCost],
+				       [Supplier],
+				       [Status],
+				       [Name],
+				       [Image]
+				  FROM PageIndex
+				 WHERE RowIndex > {2}
+				   AND RowIndex <= {3}
+				ORDER BY {1};
+				
+
+				-- get total count
+				SELECT COUNT(*) AS TotalRowCount FROM [dbo].[Item] {0};
+				
+				END
+			]]></body>
+		</procedure>
+		
+</procedures>
+</root>

@@ -1,0 +1,1065 @@
+<%-- 
+Name:
+Author: Charlie Kilian
+Description: 
+
+--%>
+<%@ CodeTemplate Language="C#" TargetLanguage="C#" Src="./CommonMembershipCode.cs" Inherits="MoM.Templates.CommonMembershipCode" Debug="True" Description="Generates the EntityMembershipUser class." %>
+<%@ Assembly Name="System.Data" %>
+<%@ Assembly Name="System.Design" %>
+<%@ Assembly Name="SchemaExplorer" %>
+<%@ Import Namespace="System.Data" %>
+<%@ Import Namespace="System.IO" %>
+<%@ Import Namespace="System.Collections" %>
+<%@ Import Namespace="SchemaExplorer" %>
+
+<%@ Property Name="BLLNameSpace" Optional="False" Type="System.String" Category="Style" Description="BLL Namespace." %>
+<%@ Property Name="DALNameSpace" Optional="False" Type="System.String" Category="Style" Description="DAL Namespace." %>
+<%@ Property Name="WebNameSpace" Optional="False" Type="System.String" Category="Style" Description="Web Namespace." %>
+
+<%
+//	string entityClassName = GetClassName(SourceTable);
+%>
+
+using System;
+using System.Collections.Generic;
+using System.Collections.Specialized;
+using System.Configuration;
+using System.Configuration.Provider;
+using System.Security.Cryptography;
+using System.Text;
+using System.Web.Security;
+using System.Web.Configuration;
+using <%= BLLNameSpace %>;
+using <%= DALNameSpace %>;
+
+namespace <%= WebNameSpace %>.Security
+{
+    /// <summary>
+    /// A NetTiers implementation of <see cref="MembershipProvider" />.
+    /// </summary>
+	public class EntityMembershipProvider : MembershipProvider
+	{
+		#region Variable Declarations
+		
+		/// <summary>
+		/// Stores the value of the ApplicationName configuration property 
+		/// required to implement MembershipProvider.
+		/// </summary>
+		private string _applicationName;
+
+		/// <summary>
+		/// Stores the value of the EnablePasswordReset configuration property 
+		/// required to implement MembershipProvider.
+		/// </summary>
+		private bool _enablePasswordReset;
+
+		/// <summary>
+		/// Stores the value of the EnablePasswordRetrieval configuration property 
+		/// required to implement MembershipProvider.
+		/// </summary>
+		private bool _enablePasswordRetrieval;
+
+		/// <summary>
+		/// Stores the value of the MaxInvalidPasswordAttempts configuration property 
+		/// required to implement MembershipProvider.
+		/// </summary>
+		private int _maxInvalidPasswordAttempts;
+
+		/// <summary>
+		/// Stores the value of the MinRequiredNonAlphanumericCharacters configuration property 
+		/// required to implement MembershipProvider.
+		/// </summary>
+		private int _minRequiredNonAlphanumericCharacters;
+
+		/// <summary>
+		/// Stores the value of the MinRequiredPasswordLength configuration property 
+		/// required to implement MembershipProvider.
+		/// </summary>
+		private int _minRequiredPasswordLength;
+
+		/// <summary>
+		/// Stores the value of the PasswordAttemptWindow configuration property 
+		/// required to implement MembershipProvider.
+		/// </summary>
+		private int _passwordAttemptWindow;
+
+		/// <summary>
+		/// Stores the value of the PasswordFormat configuration property 
+		/// required to implement MembershipProvider.
+		/// </summary>
+		private MembershipPasswordFormat _passwordFormat;
+
+		/// <summary>
+		/// Stores the value of the PasswordStrengthRegularExpression configuration property 
+		/// required to implement MembershipProvider.
+		/// </summary>
+		private string _passwordStrengthRegularExpression;
+
+		/// <summary>
+		/// Stores the value of the RequiresQuestionAndAnswer configuration property 
+		/// required to implement MembershipProvider.
+		/// </summary>
+		private bool _requiresQuestionAndAnswer;
+
+		/// <summary>
+		/// Stores the value of the RequiresUniqueEmail configuration property 
+		/// required to implement MembershipProvider.
+		/// </summary>
+		private bool _requiresUniqueEmail;
+
+		/// <summary>
+		/// Stores the value of the MachineKey configuration property 
+		/// required to implement MembershipProvider.
+		/// </summary>
+		private MachineKeySection _machineKey;
+
+		#endregion
+
+		#region Public Constructors and Initialialization
+
+		/// <summary>
+		/// Initializes the provider. 
+		/// </summary>
+		/// <param name="name">The friendly name of the provider. For EntityMembershipProvider, this is always the string "EntityMembershipProvider".</param>
+		/// <param name="config">A collection of the name/value pairs representing the attributes specified in the configuration for this provider.</param>
+		public override void Initialize(string name, NameValueCollection config)
+		{
+			_applicationName = Convert.ToString( GetConfigValue( config["applicationName"], System.Web.Hosting.HostingEnvironment.ApplicationVirtualPath ) );
+			_enablePasswordReset = Convert.ToBoolean( GetConfigValue( config["enablePasswordReset"], "true" ) );
+			_enablePasswordRetrieval = Convert.ToBoolean( GetConfigValue( config["enablePasswordRetrieval"], "true" ) );
+			_maxInvalidPasswordAttempts = Convert.ToInt32( GetConfigValue( config["maxInvalidPasswordAttempts"], "5" ) );
+			_minRequiredNonAlphanumericCharacters = Convert.ToInt32( GetConfigValue( config["minRequiredNonAlphanumericCharacters"], "1" ) );
+			_minRequiredPasswordLength = Convert.ToInt32( GetConfigValue( config["minRequiredPasswordLength"], "7" ) );
+			_passwordAttemptWindow = Convert.ToInt32( GetConfigValue( config["passwordAttemptWindow"], "10" ) );
+			_passwordStrengthRegularExpression = Convert.ToString( GetConfigValue( config["passwordStrengthRegularExpression"], "" ) );
+			_requiresQuestionAndAnswer = Convert.ToBoolean( GetConfigValue( config["requiresQuestionAndAnswer"], "true" ) );
+			_requiresUniqueEmail = Convert.ToBoolean( GetConfigValue( config["requiresUniqueEmail"], "true" ) );
+
+			string pformat = config["passwordFormat"];
+			if ( pformat == null )
+				pformat = "Hashed";
+
+			switch ( pformat )
+			{
+				case "Hashed":
+					_passwordFormat = MembershipPasswordFormat.Hashed;
+					break;
+
+				case "Encrypted":
+					_passwordFormat = MembershipPasswordFormat.Encrypted;
+					break;
+
+				case "Clear":
+					_passwordFormat = MembershipPasswordFormat.Clear;
+					break;
+
+				default:
+					throw new ProviderException( "Password format not supported." );
+			}
+			
+			<% if(!UseMD5Hash){ %>
+			// FIXME: I have no idea what the next section does
+			// See: http://msdn2.microsoft.com/en-us/library/6tc47t75.aspx
+
+			// Get encryption and decryption key information from the configuration.
+			Configuration cfg = WebConfigurationManager.OpenWebConfiguration( System.Web.Hosting.HostingEnvironment.ApplicationVirtualPath );
+			_machineKey = (MachineKeySection) cfg.GetSection( "system.web/machineKey" );
+
+			if ( _machineKey.ValidationKey.Contains( "AutoGenerate" ) &&
+				 PasswordFormat != MembershipPasswordFormat.Clear )
+			{
+				throw new ProviderException( "Hashed or Encrypted passwords are not supported with auto-generated keys." );
+			}
+			
+			<%}%>
+			
+
+		}
+
+		#endregion
+
+		#region Public Properties
+
+		/// <summary>
+		/// The name of the application using the EntityMembershipProvider. 
+		/// </summary>
+		public override string ApplicationName
+		{
+			get { return _applicationName; }
+			set { _applicationName = value; }
+		}
+
+		/// <summary>
+		/// Gets a brief, friendly description suitable for display in administrative tools 
+		/// or other user interfaces (UIs). 
+		/// </summary>
+		public override string Description
+		{
+			get { return "EntityMembershipProvider, a typed MembershipProvider generated by .netTiers"; }
+		}
+
+		/// <summary>
+		///	Indicates whether the EntityMembershipProvider is configured to allow users to reset their passwords. 
+		/// </summary>
+		public override bool EnablePasswordReset
+		{
+			get { return _enablePasswordReset; }
+		}
+
+		/// <summary>
+		/// Indicates whether the EntityMembershipProvider is configured to allow users to retrieve their passwords. 
+		/// </summary>
+		public override bool EnablePasswordRetrieval
+		{
+			get { return _enablePasswordRetrieval; }
+		}
+
+		/// <summary>
+		/// Gets the number of invalid password or password-answer attempts allowed before the 
+		/// membership user is locked out. 
+		/// </summary>
+		public override int MaxInvalidPasswordAttempts
+		{
+			get { return _maxInvalidPasswordAttempts; }
+		}
+
+		/// <summary>
+		/// Gets the minimum number of special characters that must be present in a valid password.
+		/// </summary>
+		public override int MinRequiredNonAlphanumericCharacters
+		{
+			get { return _minRequiredNonAlphanumericCharacters; }
+		}
+
+		/// <summary>
+		/// Gets the minimum length required for a password. 
+		/// </summary>
+		public override int MinRequiredPasswordLength
+		{
+			get { return _minRequiredPasswordLength; }
+		}
+
+		/// <summary>
+		/// Gets the friendly name used to refer to the provider during configuration. 
+		/// Always returns the string "EntityMembershipProvider".
+		/// </summary>
+		public override string Name
+		{
+			get { return "EntityMembershipProvider"; }
+		}
+
+		/// <summary>
+		/// Gets the number of minutes in which a maximum number of invalid password or 
+		/// password-answer attempts are allowed before the membership user is locked out. 
+		/// </summary>
+		public override int PasswordAttemptWindow
+		{
+			get { return _passwordAttemptWindow; }
+		}
+
+		/// <summary>
+		/// Gets a value indicating the format for storing passwords in the membership data store. 
+		/// </summary>
+		public override MembershipPasswordFormat PasswordFormat
+		{
+			get { return _passwordFormat; }
+		}
+
+		/// <summary>
+		/// Gets the regular expression used to evaluate a password. 
+		/// </summary>
+		public override string PasswordStrengthRegularExpression
+		{
+			get { return _passwordStrengthRegularExpression; }
+		}
+
+		/// <summary>
+		/// Gets a value indicating whether the EntityMembershipProvider is configured 
+		/// to require the user to answer a password question for password reset and retrieval. 
+		/// </summary>
+		public override bool RequiresQuestionAndAnswer
+		{
+			get { return _requiresQuestionAndAnswer; }
+		}
+
+		/// <summary>
+		/// Gets a value indicating whether the EntityMembershipProvider is configured 
+		/// to require a unique e-mail address for each user name. 
+		/// </summary>
+		public override bool RequiresUniqueEmail
+		{
+			get { return _requiresUniqueEmail; }
+		}
+
+		#endregion
+
+		#region Public Methods
+
+		/// <summary>
+		/// Processes a request to update the password for a membership user.  
+		/// </summary>
+		/// <param name="username">The user to update the password for.</param>
+		/// <param name="oldPassword">The current password for the specified user.</param>
+		/// <param name="newPassword">The new password for the specified user.</param>
+		/// <returns><c>true</c> if the password was updated successfully; otherwise, <c>false</c>.</returns>
+		/// <remarks>Takes, as input, a user name, a current password, and a new password, and updates the password in the data source if the supplied user name and current password are valid.</remarks>
+		public override bool ChangePassword(string username, string oldPassword, string newPassword)
+		{
+			// attempt to validate old password
+			if ( !ValidateUser( username, oldPassword ) )
+				return false;
+
+			// attempt to validate the strength of the new password
+			ValidatePasswordEventArgs args = new ValidatePasswordEventArgs( username, newPassword, true );
+			OnValidatingPassword( args );
+
+			if ( args.Cancel )
+			{
+				if ( args.FailureInformation != null )
+					throw args.FailureInformation;
+				else
+					throw new MembershipPasswordException( "Change password canceled due to new password validation failure." );
+			}
+
+			try
+			{
+				// retrieve the user entity and set the new password
+				// retrieve the user entity and set the new password
+				<%= EntityClass %> user = GetUserByUsername(username);
+				if ( user == null ) 
+					return false;
+				user.<%= GetMappedColumn("Password") %> = EncodePassword( newPassword );
+				user.<%= GetMappedColumn("LastPasswordChangedDate") %> = DateTime.Now;
+				DataRepository.<%= EntityClass %>Provider.Save(user);
+				return true;
+			}
+			catch ( Exception )
+			{
+				return false;
+			}
+		}
+
+		/// <summary>
+		/// Processes a request to update the password question and answer for a membership user.
+		/// </summary>
+		/// <param name="username">The user to change the password question and answer for.</param>
+		/// <param name="password">The password for the specified user.</param>
+		/// <param name="newPasswordQuestion">The new password question for the specified user.</param>
+		/// <param name="newPasswordAnswer">The new password answer for the specified user.</param>
+		/// <returns><c>true</c> if the password question and answer are updated successfully; otherwise, <c>false</c>.</returns>
+		public override bool ChangePasswordQuestionAndAnswer(
+			string username,
+			string password,
+			string newPasswordQuestion,
+			string newPasswordAnswer)
+		{
+			if ( !ValidateUser( username, password ) )
+				return false;
+
+			try
+			{
+				// retrieve the user entity and set the new password
+				<%= EntityClass %> user = GetUserByUsername(username);
+				if ( user == null )
+					return false;
+				user.<%= GetMappedColumn("PasswordQuestion") %> = newPasswordQuestion;
+				user.<%= GetMappedColumn("PasswordAnswer") %> = newPasswordAnswer;
+				DataRepository.<%= EntityClass %>Provider.Save( user );
+				return true;
+			}
+			catch ( Exception )
+			{
+				return false;
+			}
+		}
+
+		/// <summary>
+		/// Adds a new membership user to the data source.
+		/// </summary>
+		/// <param name="username">The user name for the new user.</param>
+		/// <param name="password">The password for the new user.</param>
+		/// <param name="email">The e-mail address for the new user.</param>
+		/// <param name="passwordQuestion">The password question for the new user.</param>
+		/// <param name="passwordAnswer">The password answer for the new user</param>
+		/// <param name="isApproved">Whether or not the new user is approved to be validated.</param>
+		/// <param name="providerUserKey">The unique identifier from the membership data source for the user.</param>
+		/// <param name="status">A MembershipCreateStatus enumeration value indicating whether the user was created successfully.</param>
+		/// <returns>A MembershipUser object populated with the information for the newly created user.</returns>
+		public override MembershipUser CreateUser(
+			string username,
+			string password,
+			string email,
+			string passwordQuestion,
+			string passwordAnswer,
+			bool isApproved,
+			Object providerUserKey,
+			out MembershipCreateStatus status)
+		{
+			// make sure the selected password passes validation
+			ValidatePasswordEventArgs args = new ValidatePasswordEventArgs( username, password, true );
+			OnValidatingPassword( args );
+
+			if ( args.Cancel )
+			{
+				status = MembershipCreateStatus.InvalidPassword;
+				return null;
+			}
+
+
+			// if the email address is supposed to be unique, 
+			// check to make sure it doesn't already exist
+			if ( RequiresUniqueEmail && GetUserNameByEmail( email ) != "" )
+			{
+				status = MembershipCreateStatus.DuplicateEmail;
+				return null;
+			}
+
+			// check to see if the username already exists
+			if ( GetUser( username, false ) != null )
+			{
+				status = MembershipCreateStatus.DuplicateUserName;
+				return null;
+			}
+
+			// if there was no User ID supplied, get one now
+			// otherwise check to make sure the supplied ID is valid
+			if ( providerUserKey == null )
+			{
+				<% 
+				if ( GetPKType("Membership") == "System.Guid" )
+				{
+				%>
+					providerUserKey = Guid.NewGuid();
+				<%
+				}
+				else
+				{
+				%>
+					providerUserKey = new <%= GetPKType("Membership") %>();
+				<%
+				}
+				%>
+			}
+			else
+			{
+				if ( !( providerUserKey is <%= GetPKType("Membership") %> ) )
+				{
+					status = MembershipCreateStatus.InvalidProviderUserKey;
+					return null;
+				}
+			}
+
+			<%= EntityClass %> user = new <%= EntityClass %>();
+			user.<%= GetMappedColumn("ProviderUserKey") %> = (<%= GetPKType("Membership") %>) providerUserKey;
+			user.<%= GetMappedColumn("Username") %> = username;
+			user.<%= GetMappedColumn("ApplicationName") %> = _applicationName;
+			user.<%= GetMappedColumn("Email") %> = email;
+			user.<%= GetMappedColumn("Comment") %> = null;
+			user.<%= GetMappedColumn("Password") %> = EncodePassword( password );
+			user.<%= GetMappedColumn("PasswordQuestion") %> = passwordQuestion;
+			user.<%= GetMappedColumn("PasswordAnswer") %> = passwordAnswer;
+			user.<%= GetMappedColumn("IsApproved") %> = <%=GetBoolExp(IsApprovedType, "isApproved")%>;
+			user.<%= GetMappedColumn("LastActivityDate") %> = null;
+			user.<%= GetMappedColumn("LastLoginDate") %> = null;
+			user.<%= GetMappedColumn("LastPasswordChangedDate") %> = null;
+			user.<%= GetMappedColumn("CreationDate") %> = DateTime.Now;
+			user.<%= GetMappedColumn("IsLockedOut") %> = <%=GetBoolExp(IsLockedOutType, false)%>;
+			user.<%= GetMappedColumn("LastLockoutDate") %> = null;
+			user.<%= GetMappedColumn("FailedPasswordAnswerAttemptCount") %> = 0;
+			user.<%= GetMappedColumn("FailedPasswordAnswerAttemptWindowStart") %> = null;
+
+			try
+			{
+				DataRepository.<%= EntityClass %>Provider.Save(user);
+				user = null;
+				status = MembershipCreateStatus.Success;
+				return GetUser( username, false );
+			}
+			catch ( Exception )
+			{
+				status = MembershipCreateStatus.ProviderError;
+				return null;
+			}
+		}
+
+		/// <summary>
+		/// Removes a user from the membership data source.
+		/// </summary>
+		/// <param name="username">The name of the user to delete.</param>
+		/// <param name="deleteAllRelatedData"><c>true</c> to delete data related to the user from the database; <c>false</c> to leave data related to the user in the database.</param>
+		/// <returns><c>true</c> if the user was successfully deleted; otherwise, <c>false</c>.</returns>
+		public override bool DeleteUser(string username, bool deleteAllRelatedData)
+		{
+			try
+			{
+				// FIXME: this should all be handled with a transaction object
+				if ( deleteAllRelatedData )
+				{
+					// FIXME: raise an event to delete all data related to the user
+				}
+
+				<%= EntityClass %> user = GetUserByUsername(username);
+				if ( user == null )
+					return false;
+				user.MarkToDelete();
+				DataRepository.<%= EntityClass %>Provider.Save(user);
+
+				return true;
+			}
+			catch ( Exception )
+			{
+				return false;
+			}
+		}
+
+		/// <summary>
+		/// Gets a collection of membership users where the e-mail address contains the specified e-mail address to match.
+		/// </summary>
+		/// <param name="emailToMatch">The e-mail address to search for.</param>
+		/// <param name="pageIndex">The index of the page of results to return. pageIndex is zero-based.</param>
+		/// <param name="pageSize">The size of the page of results to return.</param>
+		/// <param name="totalRecords">The total number of matched users.</param>
+		/// <returns>A MembershipUserCollection collection that contains a page of pageSizeMembershipUser objects beginning at the page specified by pageIndex.</returns>
+		public override MembershipUserCollection FindUsersByEmail(
+			string emailToMatch,
+			int pageIndex,
+			int pageSize,
+			out int totalRecords)
+		{
+			MembershipUserCollection members = new MembershipUserCollection();
+
+			try
+			{
+				// FIXME: use new parameter builder so single quotes are escaped
+				// FIXME: this will only work if GetPaged methods are generated, need to also code for when they don't exist
+				string whereClause = "<%= GetMappedColumn("Email") %> = '" + emailToMatch + "' AND <%= GetMappedColumn("ApplicationName") %> = '" + _applicationName + "'";
+				TList<<%= EntityClass %>> users = DataRepository.<%= EntityClass %>Provider.GetPaged(whereClause, null, pageIndex, pageSize, out totalRecords);
+
+				foreach ( <%= EntityClass %> user in users )
+				{
+					EntityMembershipUser member = new EntityMembershipUser(user);
+					members.Add(member);
+				}
+			}
+			catch ( Exception )
+			{
+				totalRecords = 0;
+			}
+
+			return members;
+		}
+
+		/// <summary>
+		/// Gets a collection of membership users where the user name contains the specified user name to match. 
+		/// </summary>
+		/// <param name="usernameToMatch">The user name to search for.</param>
+		/// <param name="pageIndex">The index of the page of results to return. pageIndex is zero-based.</param>
+		/// <param name="pageSize">The size of the page of results to return.</param>
+		/// <param name="totalRecords">The total number of matched users.</param>
+		/// <returns>A MembershipUserCollection collection that contains a page of pageSizeMembershipUser objects beginning at the page specified by pageIndex.</returns>
+		public override MembershipUserCollection FindUsersByName(
+			string usernameToMatch,
+			int pageIndex,
+			int pageSize,
+			out int totalRecords)
+		{
+			MembershipUserCollection members = new MembershipUserCollection();
+
+			try
+			{
+				// FIXME: use new parameter builder so single quotes are escaped
+				// FIXME: this will only work if GetPaged methods are generated, need to also code for when they don't exist
+				string whereClause = "UserName = '" + usernameToMatch + "' AND ApplicationName = '" + _applicationName + "'";
+				TList<<%= EntityClass %>> users = DataRepository.<%= EntityClass %>Provider.GetPaged( whereClause, null, pageIndex, pageSize, out totalRecords );
+
+				foreach ( <%= EntityClass %> user in users )
+				{
+					EntityMembershipUser member = new EntityMembershipUser( user );
+					members.Add( member );
+				}
+			}
+			catch ( Exception )
+			{
+				totalRecords = 0;
+			}
+
+			return members;
+		}
+
+		/// <summary>
+		/// Gets a collection of all the users in the data source in pages of data.
+		/// </summary>
+		/// <param name="pageIndex">The index of the page of results to return. pageIndex is zero-based.</param>
+		/// <param name="pageSize">The size of the page of results to return.</param>
+		/// <param name="totalRecords">The total number of matched users.</param>
+		/// <returns>A MembershipUserCollection collection that contains a page of pageSizeMembershipUser objects beginning at the page specified by pageIndex.</returns>
+		public override MembershipUserCollection GetAllUsers(
+			int pageIndex,
+			int pageSize,
+			out int totalRecords)
+		{
+			MembershipUserCollection members = new MembershipUserCollection();
+
+			try
+			{
+				// FIXME: use new parameter builder so single quotes are escaped
+				// FIXME: this will only work if GetPaged methods are generated, need to also code for when they don't exist
+				string whereClause = "ApplicationName = '" + _applicationName + "'";
+				TList<<%= EntityClass %>> users = DataRepository.<%= EntityClass %>Provider.GetPaged( whereClause, null, pageIndex, pageSize, out totalRecords );
+
+				foreach ( <%= EntityClass %> user in users )
+				{
+					EntityMembershipUser member = new EntityMembershipUser( user );
+					members.Add( member );
+				}
+			}
+			catch ( Exception )
+			{
+				totalRecords = 0;
+			}
+
+			return members;
+		}
+
+		/// <summary>
+		/// Gets the number of users currently accessing the application.  
+		/// </summary>
+		/// <returns>Returns an integer value that is the count of all the users in the data source where the LastActivityDate is greater than the current date and time minus the UserIsOnlineTimeWindow. The UserIsOnlineTimeWindow is a positive integer value specifying the number of minutes to use when determining whether a user is online.</returns>
+		public override int GetNumberOfUsersOnline()
+		{
+			try
+			{
+				string whereClause = GetOnlineWhereClause();
+				int userCount = 0;
+				DataRepository.<%= EntityClass %>Provider.GetTotalItems(whereClause, out userCount);
+				return userCount;
+			}
+			catch ( Exception ex )
+			{
+				throw new ProviderException( "An error occured while attempting to determine the number of users online.", ex );
+			}
+		}
+
+		/// <summary>
+		/// Gets the password for the specified user name from the data source.
+		/// </summary>
+		/// <param name="username">The user to retrieve the password for.</param>
+		/// <param name="answer">The password answer for the user.</param>
+		/// <returns>The password for the specified user name.</returns>
+		public override string GetPassword(string username, string answer)
+		{
+			if ( !EnablePasswordRetrieval )
+			{
+				throw new ProviderException( "Password retrieval not enabled." );
+			}
+
+			if ( PasswordFormat == MembershipPasswordFormat.Hashed )
+			{
+				throw new ProviderException( "Cannot retrieve Hashed passwords." );
+			}
+
+			<%= EntityClass %> user = GetUserByUsername(username);
+			if ( user == null )
+			{
+				throw new MembershipPasswordException( "The supplied user name is not found." );
+			}
+
+			if ( user.<%= GetMappedColumn("IsLockedOut") %> == <%=GetBoolExp(IsLockedOutType, true)%>)
+			{
+				throw new MembershipPasswordException( "The supplied user is locked out." );
+			}
+
+			if ( RequiresQuestionAndAnswer && !CheckPassword( answer, user.<%= GetMappedColumn("PasswordAnswer") %> ) )
+			{
+				UpdateFailureCount( username );
+				throw new MembershipPasswordException( "Incorrect password answer." );
+			}
+
+			string password = user.<%= GetMappedColumn("Password") %>;
+			if ( PasswordFormat == MembershipPasswordFormat.Encrypted )
+			{
+				password = UnEncodePassword( password );
+			}
+
+			return password;
+		}
+
+		/// <summary>
+		/// Gets user information from the data source based on the unique identifier for the membership user. Provides an option to update the last-activity date/time stamp for the user.
+		/// </summary>
+		/// <param name="providerUserKey">The unique identifier for the membership user to get information for.</param>
+		/// <param name="userIsOnline">true to update the last-activity date/time stamp for the user; false to return user information without updating the last-activity date/time stamp for the user.</param>
+		/// <returns>A MembershipUser object populated with the specified user's information from the data source.</returns>
+		public override MembershipUser GetUser(Object providerUserKey, bool userIsOnline)
+		{
+			if ( !( providerUserKey is <%= GetPKType("Membership") %> ) )
+				throw new ProviderException("ProviderUserKey must be of type <%= GetPKType("Membership") %>.");
+
+			<%= EntityClass %> user = DataRepository.<%= EntityClass %>Provider.GetBy<%= GetMappedColumn("ProviderUserKey") %>( (<%= GetPKType("Membership") %>) providerUserKey );
+
+			if ( userIsOnline )
+			{
+				user.<%= GetMappedColumn("LastActivityDate") %> = DateTime.Now;
+				DataRepository.<%= EntityClass %>Provider.Save(user);
+			}
+
+			EntityMembershipUser member = new EntityMembershipUser( user );
+			return member;
+		}
+
+		/// <summary>
+		/// Gets information from the data source for a user. Provides an option to update the last-activity date/time stamp for the user.
+		/// </summary>
+		/// <param name="username">The name of the user to get information for.</param>
+		/// <param name="userIsOnline">true to update the last-activity date/time stamp for the user; false to return user information without updating the last-activity date/time stamp for the user.</param>
+		/// <returns>A MembershipUser object populated with the specified user's information from the data source.</returns>
+		public override MembershipUser GetUser(string username, bool userIsOnline)
+		{
+			<%= EntityClass %> user = GetUserByUsername(username);
+			if ( user == null )
+				return null;
+
+			if ( userIsOnline )
+			{
+				user.<%= GetMappedColumn("LastActivityDate") %> = DateTime.Now;
+				DataRepository.<%= EntityClass %>Provider.Save( user );
+			}
+
+			EntityMembershipUser member = new EntityMembershipUser( user );
+			return member;
+		}
+
+		/// <summary>
+		/// Gets the user name associated with the specified e-mail address.
+		/// </summary>
+		/// <param name="email">The e-mail address to search for.</param>
+		/// <returns>The user name associated with the specified e-mail address. If no match is found, return a null reference</returns>
+		public override string GetUserNameByEmail(string email)
+		{
+			// FIXME: what is the correct behavior when email is not unique?
+			string whereClause = "Email = '" + email + "' AND ApplicationName = '" + _applicationName + "'";
+			TList<<%= EntityClass %>> users = DataRepository.<%= EntityClass %>Provider.Find(whereClause);
+			if ( users.Count == 0 )
+				return null;
+			return users[0].Username;
+		}
+
+		/// <summary>
+		/// Resets a user's password to a new, automatically generated password.  
+		/// </summary>
+		/// <param name="username">The user to reset the password for.</param>
+		/// <param name="answer">The password answer for the specified user.</param>
+		/// <returns>The new password for the specified user.</returns>
+		public override string ResetPassword(string username, string answer)
+		{
+			// FIXME: are these the correct exceptions?
+			if ( !EnablePasswordReset )
+			{
+				throw new NotSupportedException( "Password reset is not enabled." );
+			}
+
+			if ( answer == null && RequiresQuestionAndAnswer )
+			{
+				UpdateFailureCount( username );
+				throw new ProviderException( "Password answer required for password reset." );
+			}
+
+			<%= EntityClass %> user = GetUserByUsername(username);
+			if ( user == null )
+			{
+				throw new MembershipPasswordException( "The supplied user name is not found." );
+			}
+
+			// FIXME: allow NewPasswordLength to be configurable
+			string newPassword = System.Web.Security.Membership.GeneratePassword( 8, _minRequiredNonAlphanumericCharacters );
+
+			ValidatePasswordEventArgs args = new ValidatePasswordEventArgs( username, newPassword, true );
+			OnValidatingPassword( args );
+
+			if ( args.Cancel )
+			{
+				if ( args.FailureInformation != null )
+					throw args.FailureInformation;
+				else
+					throw new MembershipPasswordException( "Reset password canceled due to password validation failure." );
+			}
+
+			if ( RequiresQuestionAndAnswer && !CheckPassword( answer, user.<%= GetMappedColumn("PasswordAnswer") %> ) )
+			{
+				UpdateFailureCount( username );
+				throw new MembershipPasswordException( "Incorrect password answer." );
+			}
+
+			user.<%= GetMappedColumn("Password") %> = EncodePassword(newPassword);
+			DataRepository.<%= EntityClass %>Provider.Save(user);
+
+			return newPassword;
+		}
+
+		/// <summary>
+		/// Clears a lock so that the membership user can be validated.  
+		/// </summary>
+		/// <param name="userName">The membership user whose lock status you want to clear.</param>
+		/// <returns>true if the membership user was successfully unlocked; otherwise, false.</returns>
+		public override bool UnlockUser(string userName)
+		{
+			<%= EntityClass %> user = GetUserByUsername( userName );
+			if ( user == null )
+				return false;
+
+			user.<%= GetMappedColumn("IsLockedOut") %> = <%=GetBoolExp(IsLockedOutType, false)%>;
+			try
+			{
+				DataRepository.<%= EntityClass %>Provider.Save(user);
+			}
+			catch ( Exception )
+			{
+				return false;
+			}
+
+			return true;
+		}
+
+		/// <summary>
+		/// Updates information about a user in the data source.
+		/// </summary>
+		/// <param name="user">A MembershipUser object that represents the user to update and the updated information for the user.</param>
+		public override void UpdateUser(MembershipUser user)
+		{
+			if ( !( user is EntityMembershipUser ) )
+				throw new ProviderException( "EntityMembershipProvider can only update users of type EntityMembershipUser" );
+
+			EntityMembershipUser member = (EntityMembershipUser) user;
+			DataRepository.<%= EntityClass %>Provider.Save( member.UserEntity );
+		}
+
+		/// <summary>
+		/// Verifies that the specified user name and password exist in the data source.
+		/// </summary>
+		/// <param name="username">The name of the user to validate.</param>
+		/// <param name="password">The password for the specified user.</param>
+		/// <returns>true if the specified username and password are valid; otherwise, false.</returns>
+		public override bool ValidateUser(string username, string password)
+		{
+			if ( username == null )
+				return false;
+
+			if ( password == null )
+				return false;
+
+			<%= EntityClass %> user = GetUserByUsername( username );
+			if ( user == null )
+				return false;
+
+			if ( user.<%= GetMappedColumn("IsApproved") %> != <%=GetBoolExp(IsApprovedType, true)%>)
+				return false;
+
+			if ( user.<%= GetMappedColumn("IsLockedOut") %> == <%=GetBoolExp(IsLockedOutType, true)%>)
+				return false;
+
+			if ( !CheckPassword(password, user.<%= GetMappedColumn("Password") %>) )
+			{
+				UpdateFailureCount( username );
+				return false;
+			}
+
+			user.<%= GetMappedColumn("LastLoginDate") %> = DateTime.Now;
+			DataRepository.<%= EntityClass %>Provider.Save(user);
+
+			return true;
+		}
+
+		#endregion
+
+		#region Private Methods
+
+		/// <summary>
+		/// Gets a value from the config file if it is not empty or null.
+		/// </summary>
+		/// <param name="configValue">The value from the config file to return, if it exists.</param>
+		/// <param name="defaultValue">The value to return if the config file parameter is empty or null.</param>
+		/// <returns>the value of <c>configValue</c>, if it is not empty or null; otherwise, the value of <c>defaultValue</c></returns>
+		private string GetConfigValue(string configValue, string defaultValue)
+		{
+			if ( String.IsNullOrEmpty( configValue ) )
+				return defaultValue;
+
+			return configValue;
+		}
+
+		/// <summary>
+		/// Gets a Where Clause capable of being used with .netTiers EntityProvider's Find method 
+		/// that will restrict results to show only users who are online.
+		/// </summary>
+		/// <returns>a Where Clause that restricts results to show users who are online.</returns>
+		private string GetOnlineWhereClause()
+		{
+			TimeSpan onlineSpan = new TimeSpan( 0, System.Web.Security.Membership.UserIsOnlineTimeWindow, 0 );
+			DateTime compareTime = DateTime.Now.Subtract( onlineSpan );
+
+			// FIXME: this is provider specific, use a parameter builder instead
+			string whereClause = "LastActivityDate > '" + compareTime.ToShortDateString() + " " + compareTime.ToShortTimeString() + "'";
+
+			return whereClause;
+		}
+
+		/// <summary>
+		/// Updates the failure count for a membership user.
+		/// </summary>
+		/// <param name="username">The name of the user for which to update the failure count.</param>
+		private void UpdateFailureCount(string username)
+		{
+			<%= EntityClass %> user = GetUserByUsername( username );
+			if ( user == null )
+				throw new ProviderException("User not found");
+
+			user.<%= GetMappedColumn("FailedPasswordAttemptCount") %>++;
+			DataRepository.<%= EntityClass %>Provider.Save(user);
+		}
+
+		/// <summary>
+		/// Helper function to check password equivilency regardless of the format the password is stored in.
+		/// </summary>
+		/// <param name="password">The first password to check</param>
+		/// <param name="dbpassword">The second password to check</param>
+		/// <returns><c>true</c> if the passwords match; otherwise, false.</returns>
+		private bool CheckPassword(string password, string dbpassword)
+		{
+			string pass1 = password;
+			string pass2 = dbpassword;
+
+			if ( pass1 == null )
+				pass1 = "";
+
+			if ( dbpassword == null )
+				pass2 = "";
+
+			switch ( PasswordFormat )
+			{
+				case MembershipPasswordFormat.Encrypted:
+					pass2 = UnEncodePassword( dbpassword );
+					break;
+
+				case MembershipPasswordFormat.Hashed:
+					pass1 = EncodePassword( password );
+					break;
+
+				default:
+					break;
+			}
+
+			if ( pass1 == pass2 )
+				return true;
+
+			return false;
+		}
+
+		/// <summary>
+		/// Helper method to return a password encoded in the correct format, 
+		/// regardless of the whether the passwords are stored in clear text, hashed, or encrypted.
+		/// </summary>
+		/// <param name="newPassword">the password to encode</param>
+		/// <returns>the password encoded using the current password storage format.</returns>
+		private string EncodePassword(string newPassword)
+		{
+			string encodedPassword = newPassword;
+
+			switch ( PasswordFormat )
+			{
+				case MembershipPasswordFormat.Clear:
+					break;
+				
+				case MembershipPasswordFormat.Encrypted:
+					encodedPassword = Convert.ToBase64String( EncryptPassword( Encoding.Unicode.GetBytes( newPassword ) ) );
+					break;
+
+				case MembershipPasswordFormat.Hashed:
+				<% if(!UseMD5Hash){ %>
+					HMACSHA1 hash = new HMACSHA1();
+					hash.Key = HexToByte( _machineKey.ValidationKey );
+					encodedPassword = Convert.ToBase64String( hash.ComputeHash( Encoding.Unicode.GetBytes( newPassword ) ) );
+				<%}else{%>
+					MD5 md5 = new MD5CryptoServiceProvider();
+					Byte[] originalBytes;
+					Byte[] encodedBytes;
+
+					originalBytes = ASCIIEncoding.Default.GetBytes(newPassword);
+					encodedBytes = md5.ComputeHash(originalBytes);
+
+					//Convert encoded bytes back to a 'readable' string
+					encodedPassword = BitConverter.ToString(encodedBytes);
+				<%}%>
+					break;
+
+				default:
+					throw new ProviderException( "Unsupported password format." );
+			}
+
+			return encodedPassword;
+		}
+
+		/// <summary>
+		/// Helper method to return a decoded password, 
+		/// regardless of the whether the passwords are stored in clear text, hashed, or encrypted.
+		/// </summary>
+		/// <param name="encodedPassword">the password to decode</param>
+		/// <returns>the decoded password</returns>
+		private string UnEncodePassword(string encodedPassword)
+		{
+			string password = encodedPassword;
+
+			switch ( PasswordFormat )
+			{
+				case MembershipPasswordFormat.Clear:
+					break;
+
+				case MembershipPasswordFormat.Encrypted:
+					password = Encoding.Unicode.GetString( DecryptPassword( Convert.FromBase64String( password ) ) );
+					break;
+
+				case MembershipPasswordFormat.Hashed:
+					throw new ProviderException( "Cannot unencode a hashed password." );
+
+				default:
+					throw new ProviderException( "Unsupported password format." );
+			}
+
+			return password;
+		}
+
+		/// <summary>
+		/// Converts a hexadecimal string to a byte array. Used to convert encryption key values from the configuration.
+		/// </summary>
+		/// <param name="hexString">the hexidecimal string to convert into a byte array</param>
+		/// <returns>a byte array representing the hexadecimal string</returns>
+		private byte[] HexToByte(string hexString)
+		{
+			byte[] returnBytes = new byte[hexString.Length / 2];
+			for ( int i = 0; i < returnBytes.Length; i++ )
+				returnBytes[i] = Convert.ToByte( hexString.Substring( i*2, 2 ), 16 );
+			return returnBytes;
+		}
+		
+		/// <summary>
+		/// Helper function to retrieve a user based on their username without having to also specify application name
+		/// </summary>
+		/// <param name="username">The username to retrieve</param>
+		/// <returns>A <%= EntityClass %> if the user could be found; otherwise null</returns>
+		private <%=EntityClass%> GetUserByUsername(string username)
+		{
+			string whereClause = "<%= GetMappedColumn("Username") %> = '" + username + "' AND <%= GetMappedColumn("ApplicationName") %> = '" + _applicationName + "'";
+			TList<<%= EntityClass %>> users = DataRepository.<%= EntityClass %>Provider.Find( whereClause );
+			if ( users.Count > 1 )
+				throw new ProviderException("Found too many users with the same username and application name");
+
+			if ( users.Count == 0 )
+				return null;
+
+			return users[0];
+		}
+
+		#endregion
+	}
+
+}

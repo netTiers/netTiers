@@ -1,0 +1,340 @@
+﻿<%-- 
+Name:
+Author: 
+Description: 
+--%>
+<%@ CodeTemplate Language="C#" TargetLanguage="Text" Src="..\..\TemplateLib\CommonSqlCode.cs" Inherits="MoM.Templates.CommonSqlCode" Debug="False" Description="Template description here." ResponseEncoding="UTF-8"  NoWarn="0108,0618,1572,1573,1574,0162,2002" %>
+<%@ Assembly Name="SchemaExplorer" %>
+<%@ Assembly Name="System.Design" %>
+
+<%@ Import Namespace="SchemaExplorer" %>
+<%@ Import Namespace="System.Collections" %>
+
+
+<%@ Property Name="SourceTables" Type="SchemaExplorer.TableSchemaCollection" Category="Connection" Description="Tables of the system." %>
+<%@ Property Name="SourceTable" Type="SchemaExplorer.TableSchema" Category="Connection" Description="Table that the data access class should be based on." %>
+
+<%@ Property Name="NameSpace" Type="System.String" Category="Style" Description="Root Namespace." %>
+<%@ Property Name="DALNameSpace" Type="System.String" Category="Data" Description="DAL Namespace." %>
+<%@ Property Name="BusinessLogicLayerNameSpace" Type="System.String" Category="Namespaces" Description="The sub namespace that is added to the root namespace for the entities." Default="" Optional="true" %>
+
+<%@ Property Name="IncludeGetList" Type="System.Boolean" Default="True" Category="Options" Description="If true getlist functions will be generated." %>
+<%@ Property Name="IncludeGetListByFK" Type="System.Boolean" Default="True" Category="Options" Description="If true get functions will be generated." %>
+<%@ Property Name="IncludeGetListByIX" Type="System.Boolean" Default="True" Category="Options" Description="If true getlist functions will be generated." %>
+<%@ Property Name="IncludeFind" Type="System.Boolean" Default="False" Category="Options" Description="If true find functions will be generated." %>
+<%@ Property Name="IncludeManyToMany" Type="System.Boolean" Default="False" Category="Options" Description="If true select statements will be generated for any many to many relationship." %>
+
+
+<% 
+	string name = SourceTable.Name;
+	
+	// Collection of ForeignKeys. Provides information about the foreign keys 
+	//(keys where the current table is the foreign table) contained in the table. 
+	TableKeySchemaCollection fkeys = SourceTable.ForeignKeys;
+	
+	//Provides information about the primary keys 
+	//(keys where the current table is the primary table) contained in the table. 
+	TableKeySchemaCollection pkeys = SourceTable.PrimaryKeys;
+	
+	//Provides information about the indexes contained in the table. 
+	IndexSchemaCollection indexes = SourceTable.Indexes;
+	
+	string className = GetClassName(SourceTable.Name);
+	string collectionClassName = NameSpace + "." + GetCollectionClassName(SourceTable.Name);
+	string collectionClassNameForComment = collectionClassName.Replace("<", "&lt;").Replace(">", "&gt;");
+	string baseProviderName = GetProviderBaseName(SourceTable.Name);
+	ArrayList methodNames = new ArrayList();
+	
+	ArrayList manyToManyMethodNames = new ArrayList();
+
+	
+	if(IncludeGetList){
+		methodNames.Add("GetAll");
+		methodNames.Add("GetPaged");
+	}
+	if(IncludeFind){
+		methodNames.Add("Find");
+	}
+	if(IncludeGetListByFK){
+		for(int j = 0; j < fkeys.Count; j++){
+			methodNames.Add("GetBy" + GetKeysName(fkeys[j].ForeignKeyMemberColumns));
+		}
+	}
+	if(IncludeGetListByIX){	
+		for(int j = 0; j < indexes.Count; j++){
+			methodNames.Add("GetBy" + GetKeysName(indexes[j].MemberColumns));
+		}
+	}
+	if(IncludeManyToMany){
+		TableSchema primaryTable = SourceTable;
+		
+		foreach(TableKeySchema key in SourceTable.PrimaryKeys)
+		{
+			// Check that the key is related to a junction table
+			if ( IsJunctionTable(key.ForeignKeyTable) && IsJunctionKey(key))
+			{
+				TableSchema junctionTable = key.ForeignKeyTable;
+				
+				// Search for the other(s) key(s) of the junction table' primary key
+				foreach(TableKeySchema junctionTableKey in junctionTable.ForeignKeys)
+				{				
+					if ( IsJunctionKey(junctionTableKey) && junctionTableKey.Name != key.Name )
+					{
+						TableSchema secondaryTable = junctionTableKey.PrimaryKeyTable;
+						string functionname = GetManyToManyName(junctionTableKey, GetCleanName(junctionTable.Name));
+						manyToManyMethodNames.Add("GetBy"+functionname);
+					}
+					
+				}
+			}
+		}
+		methodNames.AddRange((ICollection)manyToManyMethodNames);
+	}
+		
+	
+%>
+#region Using Directives
+using System;
+using System.Collections;
+using System.Collections.Generic;
+using System.Collections.Specialized;
+using System.ComponentModel;
+using System.ComponentModel.Design;
+using System.Drawing.Design;
+using System.Data;
+using System.Diagnostics;
+using System.Web;
+using System.Web.Security;
+using System.Web.UI;
+using System.Web.UI.Design.WebControls;
+using System.Web.UI.WebControls;
+using <%= NameSpace %><%if(BusinessLogicLayerNameSpace != string.Empty)%>.<%= BusinessLogicLayerNameSpace %>;
+#endregion
+namespace <%= NameSpace %>.DataSourceControls
+{
+	public enum <%= name %>SelectMethod{
+		<% for(int j = 0; j < methodNames.Count; j++){  %>
+			<%= methodNames[j].ToString() %><%if(j < methodNames.Count-1)%>,
+		<%}%>
+		
+	}
+	
+		
+		[
+    DefaultProperty("SelectParameters"),
+    ParseChildren(true),
+    PersistChildren(false)
+    ]
+    public class <%= name %>DataSource : DataSourceControl
+    {
+        public static readonly string dataViewName = "<%= name %>View";
+		private bool _enableCaching = false;
+        public bool EnableCaching
+        {
+            get
+            {
+                return _enableCaching;
+            }
+            set
+            {
+                _enableCaching = value;
+            }
+        }
+        private int _cacheDuration = 30;
+        public int CacheDuration
+        {
+            get
+            {
+                return this._cacheDuration;
+            }
+            set
+            {
+                this._cacheDuration = value;
+            }
+        }
+        private string cacheKey = dataViewName + "data";
+
+        internal CachedDataSource<<%= className %>> GetDataFromCache(int start, int page)
+        {
+            CachedDataSource<<%= className %>>  data = null;
+            Hashtable cachedData = (Hashtable)Context.Cache.Get(cacheKey);
+            if (cachedData != null && cachedData.ContainsKey(CacheHashKey(start,page)))
+            {
+                Context.Trace.Write("CustomerDataSource", "Getting Cached Data " + CacheHashKey(start, page));
+                data = ((CachedDataSource<<%= className %>> )cachedData[CacheHashKey(start, page)]);
+            }
+            return data;
+        }
+        internal void SaveDataToCache(CachedDataSource<<%= className %>>  data, int start, int page)
+        {
+            Context.Trace.Write("CustomerDataSource", "Saving Cache Data");
+            Hashtable cacheData = (Hashtable)Context.Cache.Get(cacheKey);
+            if (cacheData == null)
+            {
+                
+                cacheData = CreateCacheEntry();
+            }
+            string hashKey = CacheHashKey(start, page);
+            if (!cacheData.ContainsKey(hashKey))
+            {
+                Context.Trace.Write("CustomerDataSource", "Adding Data to Cache " + hashKey);
+                cacheData.Add(hashKey, data);
+            }
+        }
+        private string CacheHashKey(int start, int page)
+        {
+            System.Text.StringBuilder sb = new System.Text.StringBuilder();
+            sb.AppendFormat("{0}:{1}:{2}", Enum.GetName(typeof(<%= name %>SelectMethod), SelectMethod), start.ToString(), page.ToString());
+            return sb.ToString();
+        }
+		
+		private Hashtable CreateCacheEntry()
+        {
+            Hashtable cacheObject = new Hashtable();
+            Context.Cache.Insert(cacheKey, cacheObject, null, DateTime.Now.AddMinutes(CacheDuration), TimeSpan.Zero);
+            return cacheObject;
+        }
+		
+		 public <%= name %>SelectMethod SelectMethod
+        {
+            get
+            {
+                if (ViewState["<%= name %>SelectMethod"] == null)
+                {
+                    ViewState["<%= name %>SelectMethod"] = <%= name %>SelectMethod.GetAll;
+                }
+                return (<%= name %>SelectMethod)ViewState["<%= name %>SelectMethod"];
+            }
+            set
+            {
+                ViewState["<%= name %>SelectMethod"] = value;
+            }
+        }
+        private <%= name %>DataView _view = null;
+        private <%= name %>DataView DataView
+        {
+            get
+            {
+                if (_view == null)
+                {
+                    _view = new <%= name %>DataView(Context, this, dataViewName);
+                }
+                return _view;
+            }
+        }
+		
+		 [
+        DefaultValue(null),
+        Editor(typeof(ParameterCollectionEditor), typeof(UITypeEditor)),
+        MergableProperty(false),
+        PersistenceMode(PersistenceMode.InnerProperty),
+        Category("Data")
+        ]
+        public ParameterCollection SelectParameters
+        {
+            get
+            {
+                return ((<%= name %>DataView)GetView(dataViewName)).SelectParameters;
+            }
+        }
+		
+		protected override DataSourceView GetView(string viewName)
+        {
+            if (string.IsNullOrEmpty(viewName) ||
+                string.Compare(dataViewName, viewName, StringComparison.OrdinalIgnoreCase) == 0)
+            {
+                return DataView;
+            }
+            throw new ArgumentOutOfRangeException("View Name Not Correct");
+        }
+		
+		public bool EnablePaging
+        {
+            get
+            {
+                return ((<%= name %>DataView)GetView(dataViewName)).EnablePaging;
+            }
+            set
+            {
+                ((<%= name %>DataView)GetView(dataViewName)).EnablePaging = value;
+            }
+        }
+		
+		#region Events
+        public event ObjectDataSourceSelectingEventHandler Selecting
+        {
+            add
+            {
+                ((<%= name %>DataView)GetView(dataViewName)).Selecting += value;
+
+            }
+            remove
+            {
+                ((<%= name %>DataView)GetView(dataViewName)).Selecting -= value;
+            }
+
+        }
+
+
+        public event ObjectDataSourceStatusEventHandler Selected
+        {
+            add
+            {
+                ((<%= name %>DataView)GetView(dataViewName)).Selected += value;
+            }
+            remove
+            {
+                ((<%= name %>DataView)GetView(dataViewName)).Selected -= value;
+            }
+        }
+		#endregion
+		#region ViewState
+
+        protected override void TrackViewState()
+        {
+            base.TrackViewState();
+            if (_view != null)
+            {
+                _view.TrackViewState();
+            }
+        }
+        protected override void LoadViewState(object savedState)
+        {
+            object baseState = null;
+            if (savedState != null)
+            {
+                Pair p = (Pair)savedState;
+                baseState = p.First;
+
+                if (p.Second != null)
+                {
+                    _view.LoadViewState(p.Second);
+                }
+            }
+        }
+        protected override object SaveViewState()
+        {
+            object baseState = base.SaveViewState();
+            object parameterState = null;
+            if (_view != null)
+            {
+                parameterState = _view.SaveViewState();
+            }
+            if (baseState != null || parameterState != null)
+            {
+                return new Pair(baseState, parameterState);
+            }
+            return null;
+        }
+        #endregion
+	}
+}
+
+		
+		
+		
+    
+		
+		
+		
+	

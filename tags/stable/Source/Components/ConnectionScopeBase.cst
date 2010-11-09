@@ -1,0 +1,139 @@
+﻿<%@ CodeTemplate Src="..\TemplateLib\CommonSqlCode.cs" Inherits="MoM.Templates.CommonSqlCode" Language="C#" TargetLanguage="C#" Description="The interface that each business object of the domain implements." ResponseEncoding="UTF-8" NoWarn="0108,0618,1572,1573,1574,0162,2002"%>
+<%@ Assembly Name="SchemaExplorer" %>
+<%@ Import Namespace="SchemaExplorer" %>
+<%@ Assembly Name="System.Design" %>
+
+<%@ Property Name="NameSpace" Optional="False" Type="System.String" Category="Style" Description="Object Namespace." %>
+<%@ Property Name="BLLNameSpace" Optional="False" Type="System.String" Category="Style" Description="Object Namespace." %>
+<%@ Property Name="DALNameSpace" Optional="False" Type="System.String" Category="Style" Description="Repository Namespace." %>
+<%@ Assembly Name="SchemaExplorer" %>
+#region Using Directives
+using System;
+using System.Collections.Generic;
+using System.Collections;
+using System.Data;
+using System.Threading;
+using System.Web;
+
+using <%= BLLNameSpace %>;
+using <%= DALNameSpace %>;
+using <%= DALNameSpace %>.Bases;
+
+using Microsoft.Practices.EnterpriseLibrary.ExceptionHandling;
+#endregion 
+
+namespace <%= NameSpace %>
+{
+	/// <summary>
+	/// Provides storage of global database connection information.
+	/// </summary>
+	[CLSCompliant(true)]
+	public class ConnectionScopeBase : IConnectionScope
+    {
+        #region Constructors
+        /// <summary>
+		/// Initializes a new instance of the ConnectionScope class.
+		/// </summary>
+		public ConnectionScopeBase()
+		{
+        }
+        #endregion Constructors
+
+		#region Properties
+		/// <summary>
+		/// The ConnectionStringKey member variable.
+		/// </summary>
+		private string connectionStringKey;
+
+		/// <summary>
+		/// Gets or sets the ConnectionStringKey property.
+		/// </summary>
+		public string ConnectionStringKey
+		{
+			get { return connectionStringKey; }
+			set { connectionStringKey = value; }
+		}
+
+		/// <summary>
+		/// The DynamicConnectionString member variable.
+		/// </summary>
+		private string dynamicConnectionString;
+
+		/// <summary>
+		/// Gets or sets the DynamicConnectionString property.
+		/// </summary>
+		public string DynamicConnectionString
+		{
+			get { return dynamicConnectionString; }
+			set { dynamicConnectionString = value; }
+		}
+
+		/// <summary>
+		/// The TransactionManager member variable.
+		/// </summary>
+		private TransactionManager transactionManager;
+
+		/// <summary>
+		/// Gets or sets the TransactionManager property.
+		/// </summary>
+		public TransactionManager TransactionManager
+		{
+			get { return transactionManager; }
+			set { transactionManager = value; }
+		}
+		
+		/// <summary>
+		/// The NetTiersProvider member variable.
+		/// </summary>
+		private NetTiersProvider dataProvider;
+		
+		/// <summary>
+		/// Gets or Sets the Current DataProvider property of the <c>ConnectionScope</c> Object.
+		/// </summary>
+		/// <remarks>
+		/// To use a dynamic connection, you must set both the 
+		/// DynamicConnectionString and a unique ConnectionStringKey properties;
+		///</remarks>
+		public NetTiersProvider DataProvider
+		{
+			get
+			{
+				if (dataProvider == null)
+				{
+					if (string.IsNullOrEmpty(connectionStringKey))
+					{
+						dataProvider = DataRepository.Provider;
+					}
+					else if (!DataRepository.Connections.ContainsKey(connectionStringKey) && dynamicConnectionString != null)
+					{
+						DataRepository.AddConnection(connectionStringKey, dynamicConnectionString);
+						dataProvider = DataRepository.Connections[connectionStringKey].Provider;
+					}
+					else if (DataRepository.Connections.ContainsKey(connectionStringKey)) 
+					{
+						dataProvider =  DataRepository.Connections[connectionStringKey].Provider;
+					}
+				}
+					
+				return dataProvider;
+			}
+			set
+			{
+				if (value != null)
+				{
+					dataProvider = value;	
+				}
+			}
+		}
+
+		/// <summary>
+		/// Determines if Current Connections is in a Transaction.
+		/// </summary>
+		public virtual bool HasTransaction 
+		{
+            get { throw new NotImplementedException( "Property is not implemented" ); }
+		}
+		#endregion Properties
+	}
+
+}

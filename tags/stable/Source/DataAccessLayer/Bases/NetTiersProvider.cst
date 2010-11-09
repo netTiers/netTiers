@@ -1,0 +1,54 @@
+﻿<%@ CodeTemplate Src="..\..\TemplateLib\CommonSqlCode.cs" Inherits="MoM.Templates.CommonSqlCode" Language="C#" TargetLanguage="C#" Description="Template description here." ResponseEncoding="UTF-8"  NoWarn="0108,0618,1572,1573,1574,0162,2002"%>
+<%@ Assembly Name="SchemaExplorer" %>
+<%@ Assembly Name="System.Design" %>
+<%@ Import Namespace="SchemaExplorer" %>
+
+<%@ Property Name="DALNameSpace" Type="System.String" Category="Data" Description="DAL Namespace." %>
+<%@ Property Name="BLLNameSpace" Type="System.String" Category="Data" Description="DAL Namespace." %>
+<%@ Property Name="SourceTables" Type="SchemaExplorer.TableSchemaCollection" Category="Connection" Description="Tables of the system." %>
+<%@ Property Name="SourceViews" Type="SchemaExplorer.ViewSchemaCollection" Category="Connection" Description="Tables of the system." %>
+
+#region Using directives
+
+using System;
+using System.Collections.Specialized;
+using System.Configuration;
+using System.Data;
+using System.Data.Common;
+using System.Configuration.Provider;
+
+using <%= BLLNameSpace %>;
+
+#endregion
+
+namespace <%=DALNameSpace%>.Bases
+{	
+	///<summary>
+	/// The base class to implements to create a .NetTiers provider.
+	///</summary>
+	public abstract class NetTiersProvider : NetTiersProviderBase
+	{
+		
+		<% foreach(TableSchema SourceTable in SourceTables) { 
+			string providerName = GetClassName(SourceTable, ClassNameFormat.Provider);
+			string providerBaseName = GetClassName(SourceTable, ClassNameFormat.ProviderBase);
+		%>			
+		///<summary>
+		/// Current <%=providerBaseName%> instance.
+		///</summary>
+		public virtual <%=providerBaseName%> <%=providerName%>{get {throw new NotImplementedException();}}
+		
+		<%}%>
+		
+		<% foreach(ViewSchema SourceView in SourceViews) { 
+			string providerName = GetClassName(SourceView, ClassNameFormat.Provider);
+			string providerBaseName = GetClassName(SourceView, ClassNameFormat.ProviderBase);
+		%>			
+		///<summary>
+		/// Current <%=providerBaseName%> instance.
+		///</summary>
+		public virtual <%=providerBaseName%> <%=providerName%>{get {throw new NotImplementedException();}}
+		
+		<%}%>
+	}
+}

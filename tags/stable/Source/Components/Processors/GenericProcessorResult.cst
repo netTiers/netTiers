@@ -1,0 +1,154 @@
+﻿<%@ CodeTemplate Src="..\..\TemplateLib\CommonSqlCode.cs" Inherits="MoM.Templates.CommonSqlCode" Language="C#" TargetLanguage="C#" Description="The interface that each business object of the domain implements." ResponseEncoding="UTF-8" NoWarn="0108,0618,1572,1573,1574,0162,2002"%>
+<%@ Assembly Name="SchemaExplorer" %>
+<%@ Import Namespace="SchemaExplorer" %>
+<%@ Assembly Name="System.Design" %>
+
+<%@ Property Name="NameSpace" Optional="False" Type="System.String" Category="Style" Description="Object Namespace." %>
+<%@ Property Name="BLLNameSpace" Optional="False" Type="System.String" Category="Style" Description="Entities Namespace." %>
+<%@ Property Name="ValidationType" Type="MoM.Templates.ValidationType" Default="NetTiers" Category="02. Framework Generation - Optional" Description="Choice to either use .netTiers validation framework, or Enterprise Library VAB" %>
+<%@ Assembly Name="SchemaExplorer" %>
+
+using System;
+using System.ComponentModel;
+using System.Collections.Generic;
+<% if(ValidationType == MoM.Templates.ValidationType.EntLib){%>
+using Microsoft.Practices.EnterpriseLibrary.Validation;
+<%}%>
+
+using <%=BLLNameSpace%>;
+using <%=BLLNameSpace%>.Validation;
+
+namespace <%=NameSpace%>
+{
+	/// <summary>
+	/// The interface that each component business domain service of the model implements.
+	/// </summary> 
+	[Serializable]
+	public class GenericProcessorResult : IProcessorResult
+	{
+		private bool result;
+		<% if(ValidationType == MoM.Templates.ValidationType.NetTiers){%>
+		private Dictionary<Type, BrokenRulesList> brokenRuleLists = null;
+		<%}%>
+		<% if(ValidationType == MoM.Templates.ValidationType.EntLib){%>
+		private Dictionary<Type, ValidationResults> brokenRuleLists = null;
+		<%}%>
+		private bool resultSetByProcessor = false;
+		private ProcessorState finalProcessorState = ProcessorState.Unknown;
+		
+		/// <summary>
+		/// Initializes a new instance of the GenericProcessorResult class.
+		/// </summary>
+		public GenericProcessorResult()
+		{
+			<% if(ValidationType == MoM.Templates.ValidationType.NetTiers){%>
+			brokenRuleLists = new Dictionary<Type, BrokenRulesList>();
+			<%}%>
+			<% if(ValidationType == MoM.Templates.ValidationType.EntLib){%>
+			brokenRuleLists = new Dictionary<Type, ValidationResults>();
+			<%}%>
+		}
+		
+		/// <summary>
+		///	Provides a result of the current process.
+		/// </summary>
+		///<value>A list of business rule processors to execute</value>
+		public bool Result 
+		{	
+			get 
+			{
+				// if not set by a processor, then run a default check on the broken rules.
+				if (!resultSetByProcessor)
+				{
+					//default check to see if a list has broken rules.
+					<% if(ValidationType == MoM.Templates.ValidationType.NetTiers){%>
+					foreach(KeyValuePair<Type, BrokenRulesList> list in BrokenRulesLists)
+					<%}%>
+					<% if(ValidationType == MoM.Templates.ValidationType.EntLib){%>
+					foreach(KeyValuePair<Type, ValidationResults> list in BrokenRulesLists)
+					<%}%>
+					{
+						<% if(ValidationType == MoM.Templates.ValidationType.NetTiers){%>
+						if (list.Value.Count > 0)
+						{
+							result = false;
+							return result;
+						}
+						<%}%>
+						<% if(ValidationType == MoM.Templates.ValidationType.EntLib){%>
+						if(!list.Value.IsValid)
+						{
+							return false;
+						}
+						<%}%>
+					}
+					result = true;
+				}
+				
+				return result;
+			} 
+			set
+			{ 	
+				result = value; 	
+				resultSetByProcessor = true;
+			}
+		}
+		
+		/// <summary>
+		///	Provides a list of broken rules for the entire process.
+		/// </summary>
+		///<value>A list of rules that were broken in the process</value>
+		<% if(ValidationType == MoM.Templates.ValidationType.NetTiers){%>
+		public Dictionary<Type, BrokenRulesList> BrokenRulesLists
+		<%}%>
+		<% if(ValidationType == MoM.Templates.ValidationType.EntLib){%>
+		public Dictionary<Type, ValidationResults> BrokenRulesLists
+		<%}%>
+		{
+			get{	return brokenRuleLists;	}
+		}
+
+		/// <summary>
+		///	Provides a method to aggregate BrokenRuleList Collections Based on their Type 
+		/// if they are invalid.
+		/// </summary>
+		<% if(ValidationType == MoM.Templates.ValidationType.NetTiers){%>
+		public void AddBrokenRulesList(Type type, BrokenRulesList otherList)
+		<%}%>
+		<% if(ValidationType == MoM.Templates.ValidationType.EntLib){%>
+		public void AddBrokenRulesList(Type type, ValidationResults otherList)
+		<%}%>
+		{
+			//skip, no rules broken
+			<% if(ValidationType == MoM.Templates.ValidationType.NetTiers){%>
+			if (otherList == null || otherList.Count == 0)
+                return;
+			<%}%>
+			<% if(ValidationType == MoM.Templates.ValidationType.EntLib){%>
+			if (otherList == null || otherList.IsValid)
+			 	return;
+			<%}%>
+
+			if (type == null)
+				type = typeof(object);
+			
+			BrokenRulesLists.Add(type, otherList);
+		}
+		
+		/// <summary>
+		///	Provides the final processor state the operation. 
+		/// This is set by the processor.
+		/// </summary>
+		public ProcessorState FinalProcessorState 
+		{
+			get	
+			{	
+					return finalProcessorState;
+			}
+			set
+			{
+				finalProcessorState = value;
+			}
+		}
+	}
+}

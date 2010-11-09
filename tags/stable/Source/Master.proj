@@ -1,0 +1,66 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Zip" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <Import Project="$(MSBuildExtensionsPath)\MSBuildCommunityTasks\MSBuild.Community.Tasks.Targets"/>
+
+  <PropertyGroup>
+    <Major>2</Major>
+    <Minor>3</Minor>
+    <Build>0</Build>
+    <Revision>1</Revision>
+
+    <BindMinor>0</BindMinor>
+    <BindBuild>0</BindBuild>
+    <BindRevision>0</BindRevision>
+  </PropertyGroup>
+
+  <PropertyGroup>
+    <BuildConfiguration>Release</BuildConfiguration>
+    <DeployFolder>\\WEB02\nightly\netTiers</DeployFolder>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <SvnExclude Include="**\.svn\**" />
+
+    <DefaultExclude Include="@(SvnExclude)" />
+    <DefaultExclude Include="**\obj\**" />
+    <DefaultExclude Include="**\bin\**" />
+    <DefaultExclude Include="**\Sample\**" />
+    <DefaultExclude Include="**\Libraries\**" />
+    <DefaultExclude Include="**\Help\**" />
+    <DefaultExclude Include="**\Patch\**" />
+    <DefaultExclude Include="**\_ReSharper*\**" />
+    <DefaultExclude Include="*.proj" />
+    <DefaultExclude Include="*.dbml" />
+    <DefaultExclude Include="*.zip" />
+    <DefaultExclude Include="**\*.user" />
+    <DefaultExclude Include="**\*.resharper" />
+    <DefaultExclude Include="**\*.cache" />
+    <DefaultExclude Include="*.teamcity.*" />
+
+    <ZipFiles Include="**\*.*" Exclude="@(DefaultExclude)" />
+  </ItemGroup>
+
+  <Target Name="Version">
+    <SvnVersion LocalPath="$(MSBuildProjectDirectory)">
+      <Output TaskParameter="Revision" PropertyName="Revision" />
+    </SvnVersion>
+
+    <Message Text="Revision: $(Revision)"/>
+    
+    <Time>
+      <Output TaskParameter="Month" PropertyName="Month" />
+      <Output TaskParameter="Day" PropertyName="Day" />
+      <Output TaskParameter="Year" PropertyName="Year" />
+    </Time>
+ 
+  </Target>
+
+  <Target Name="Zip" DependsOnTargets="Version;">
+    <Zip Files="@(ZipFiles)" ZipFileName="nettiers-$(Major).$(Minor)-r$(Revision).zip" />
+  </Target>
+
+  <Target Name="Nightly" DependsOnTargets="Zip;">
+    <Copy SourceFiles="nettiers-$(Major).$(Minor)-r$(Revision).zip" DestinationFiles="$(DeployFolder)\nettiers-$(Major).$(Minor)-r$(Revision).zip" />
+  </Target>
+
+</Project>
