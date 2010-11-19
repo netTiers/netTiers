@@ -3356,7 +3356,7 @@ namespace MoM.Templates
             StringBuilder temp = new StringBuilder();
             for(int i=0; i<outputParameters.Count; i++)
             {
-                temp.AppendFormat("{2}\t\t\t/// <param name=\"{0}\"> A <c>{1}</c> instance.</param>", GetFieldName(outputParameters[i]).Replace(ParameterPrefix, ""), GetCSType(outputParameters[i]).Replace("<", "&lt;").Replace(">", "&gt;"), Environment.NewLine);
+                temp.AppendFormat("{2}\t\t\t/// <param name=\"{0}\"> A <c>{1}</c> instance.</param>", GetFieldName(outputParameters[i]).Replace(ParameterPrefix ?? string.Empty, ""), GetCSType(outputParameters[i]).Replace("<", "&lt;").Replace(">", "&gt;"), Environment.NewLine);
             }
 
             return temp.ToString();
