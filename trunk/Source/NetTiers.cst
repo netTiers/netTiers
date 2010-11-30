@@ -783,10 +783,14 @@
 			{
 				ProviderInvariantName = "System.Data.SQLite";
 			}
+			else if(SourceDatabase.Provider.Name == "MySQLSchemaProvider")
+			{
+				ProviderInvariantName = "MySql.Data.MySqlClient";
+			}
 			else if (SourceDatabase.Provider.Name == "ADOXSchemaProvider")
 			{
 				ProviderInvariantName = "System.Data.OleDb";
-			}		
+			}
 			else if (SourceDatabase.Provider.Name == "OracleSchemaProvider")
 			{
 				ProviderInvariantName = "System.Data.OracleClient";
@@ -1767,6 +1771,11 @@
 				xmlTemplateName = "SqlCeStoredProceduresXml.cst";
 				xmlOutputName = "System.Data.SqlServerCe.Procedures.xml";
 			}
+			else if (ProviderInvariantName == "MySql.Data.MySqlClient")
+			{			
+				xmlTemplateName = "MySql.Data.MySqlClient.Procedures.cst";
+				xmlOutputName = "MySql.Data.MySqlClient.Procedures.xml";
+			}
 			else
 			{
 				throw new System.Exception("This provider is not supported.");
@@ -1846,6 +1855,16 @@
 			{
 				xslt.Load(this.CodeTemplateInfo.DirectoryName + "\\DataAccessLayer.SqlCeClient\\scriptsql.xsl");
 			}
+			else if(ProviderInvariantName == "MySql.Data.MySqlClient")
+			{
+                // TODO: Load the Oracle XSLT for now.. This needs to be written..
+				xslt.Load(this.CodeTemplateInfo.DirectoryName + "\\DataAccessLayer.OracleClient\\ScriptOracleSql.xsl");
+			}
+            else
+            {
+                //TODO: You need to add your custom provider render when using a third party RDBMS.
+                // Need to load Default XSLT Template for the stored procedures....
+            }
 			             
 			TextWriter writer = null;
 			XPathDocument mydata = null;
@@ -1965,6 +1984,7 @@
 			this.GetTemplate("Utility.cst").SetProperty("RetryMaxAttempts", RetryMaxAttempts);
 			this.GetTemplate("Utility.cst").SetProperty("RetrySleepTime", RetrySleepTime);
 			this.GetTemplate("Utility.cst").SetProperty("RetrySleepStyle", RetrySleepStyle);
+			this.GetTemplate("Utility.cst").SetProperty("ProviderInvariantName", ProviderInvariantName);
 			this.RenderToFile("Utility.cst", rootPathDAL + "\\Utility.cs", true);
                                     
 			AddFileNode(commonNode, "ITransactionManager.cs");
@@ -2089,12 +2109,12 @@
 			
 			if (_netTiersSqlProvider == true)
 			{			
-			AddFileNode(commonNode, "SqlClient\\SqlNetTiersProvider.cs");
-			this.GetTemplate("SqlNetTiersProvider.cst").SetProperty("NameSpace", BLLNameSpace);
-			this.GetTemplate("SqlNetTiersProvider.cst").SetProperty("DALNameSpace", DALNameSpace);
-			this.GetTemplate("SqlNetTiersProvider.cst").SetProperty("SourceTables", templateSourceTables);
-			this.GetTemplate("SqlNetTiersProvider.cst").SetProperty("SourceViews", templateSourceViews);
-			this.RenderToFile("SqlNetTiersProvider.cst", rootPathDALSql + "\\SqlNetTiersProvider.cs", true);
+				AddFileNode(commonNode, "SqlClient\\SqlNetTiersProvider.cs");
+				this.GetTemplate("SqlNetTiersProvider.cst").SetProperty("NameSpace", BLLNameSpace);
+				this.GetTemplate("SqlNetTiersProvider.cst").SetProperty("DALNameSpace", DALNameSpace);
+				this.GetTemplate("SqlNetTiersProvider.cst").SetProperty("SourceTables", templateSourceTables);
+				this.GetTemplate("SqlNetTiersProvider.cst").SetProperty("SourceViews", templateSourceViews);
+				this.RenderToFile("SqlNetTiersProvider.cst", rootPathDALSql + "\\SqlNetTiersProvider.cs", true);
 			
 				AddFileNode(commonNode, "StoredProcedureProvider.cs");
 				this.GetTemplate("StoredProcedureProvider.cst").SetProperty("BLLNameSpace", BLLNameSpace);
@@ -2920,7 +2940,8 @@
 		this.GetTemplate(projectTemplate).SetProperty("EntLibVersion", EntLibVersion);
 		this.GetTemplate(projectTemplate).SetProperty("ValidationType", ValidationType);
 		this.GetTemplate(projectTemplate).SetProperty("IsConnectionStringAzure", IsConnectionStringAzure);
-		
+		this.GetTemplate(projectTemplate).SetProperty("ProviderInvariantName", ProviderInvariantName);
+
 		//This is the path to the References Folder
 		string rootPath = Path.GetFullPath(Path.Combine(OutputDirectory, LibraryPath));
 

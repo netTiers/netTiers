@@ -3750,6 +3750,18 @@ CREATE\s+PROC(?:EDURE)?                               # find the start of the st
                     case DbType.Int64:
                         return "(long)0";
 
+                    case DbType.SByte:
+                        return "(sbyte)0";
+
+                    case DbType.UInt16:
+                        return "(ushort)0";
+
+                    case DbType.UInt32:
+                        return "(uint)0";
+
+                    case DbType.UInt64:
+                        return "(ulong)0";
+
                     case DbType.Object:
                         return "null";
 
@@ -3798,6 +3810,10 @@ CREATE\s+PROC(?:EDURE)?                               # find the start of the st
             short shortConvert;
             DateTime dateConvert;
             Guid guidConvert;
+            sbyte sbConvert;
+            ushort u16Convert;
+            uint u32Convert;
+            ulong u64Convert;
             #endregion
 
             try
@@ -4036,11 +4052,40 @@ CREATE\s+PROC(?:EDURE)?                               # find the start of the st
                             }
                             else
                                 return null;
-                        //the following won't be used
-                        //        case DbType.SByte: return "0";
-                        //        case DbType.UInt16: return "0";
-                        //        case DbType.UInt32: return "0";
-                        //        case DbType.UInt64: return "0";
+                        case DbType.SByte:
+                            if (defaultValue != null)
+                            {
+                                sbConvert = sbyte.Parse(defaultValue);
+                                return "(sbyte)" + sbConvert.ToString();
+                            }
+                            else
+                                return "0";
+
+                        case DbType.UInt16:
+                            if (defaultValue != null)
+                            {
+                                u16Convert = ushort.Parse(defaultValue);
+                                return "(ushort)" + u16Convert.ToString();
+                            }
+                            else
+                                return "0";
+                        case DbType.UInt32:
+                            if (defaultValue != null)
+                            {
+                                u32Convert = uint.Parse(defaultValue);
+                                return "(uint)" + u32Convert.ToString();
+                            }
+                            else
+                                return "0";
+                        case DbType.UInt64:
+                            if (defaultValue != null)
+                            {
+                                u64Convert = ulong.Parse(defaultValue);
+                                return "(ulong)" + u64Convert.ToString();
+                            }
+                            else
+                                return "0";
+
                         default: return null;
                     }
                 }
@@ -4246,6 +4291,18 @@ CREATE\s+PROC(?:EDURE)?                               # find the start of the st
 
                     case DbType.Int64:
                         return "(long)" + randomNumber;
+
+                    case DbType.SByte:
+                        return "(sbyte)" + randomNumber;
+
+                    case DbType.UInt16:
+                        return "(ushort)" + randomNumber;
+
+                    case DbType.UInt32:
+                        return "(uint)" + randomNumber;
+
+                    case DbType.UInt64:
+                        return "(ulong)" + randomNumber;
 
                     case DbType.Object:
                         return "null";

@@ -14,11 +14,11 @@
 				<table width="100%" border="0" cellspacing="2" cellpadding="2">
 					<tr>
                         <td width="700">
-                            <a href="http://code.google.com/p/nettiers/downloads/" target="_blank"><img border="0" src="http://nettiers.com/img/netTiersLogo2.0_small.gif" alt=".netTiers 2.2"  /></a>
+                            <a href="http://code.google.com/p/nettiers/downloads/" target="_blank"><img border="0" src="http://www.nettiers.com/GetFile.aspx?File=Summary_Logo.gif" alt=".netTiers 2.3"  /></a>
                             <hr /><div>
                               <a href="http://nettiers.com/">Website</a>
                              &#160;&#160; | &#160;&#160; 
-                             <a href="http://community.codesmithtools.com/forums/default.aspx?GroupID=11/">Forums</a>
+                             <a href="http://community.codesmithtools.com/nettiers/f/default.aspx">Forums</a>
                              &#160;&#160; | &#160;&#160; 
                              <a href="http://code.google.com/p/nettiers/">Google Code</a>
                              &#160;&#160; | &#160;&#160; 
@@ -73,7 +73,7 @@
               <p>To Configure your application to use .netTiers, add the following sections to your App / Web config files.
 			
 			 You can find more information on how to set this up at<br/> 
-			 <a href="http://docs.nettiers.com">.netTiers 2 Install and Configuration Document @ http://docs.netTiers.com</a>
+			 <a href="http://nettiers.com/DocumentationPage.ashx">.netTiers 2.3 Install and Configuration Document @ http://nettiers.com/DocumentationPage.ashx</a>
             </p>
             <p>1. Add a new section to the configSections</p>
             
@@ -207,7 +207,7 @@ accountsService.DeepSave(myAccountEntity, <font color="blue">false</font>, DeepS
 	
 	<xsl:template name="copyrightinfo">
 		<div align="center">
-			.netTiers Open Source Group, 2008
+			.netTiers Open Source Group, 2008-2011
 		</div>
 	</xsl:template>
 	

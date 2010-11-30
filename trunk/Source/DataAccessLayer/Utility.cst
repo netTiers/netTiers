@@ -3,6 +3,7 @@
 <%@ Assembly Name="System.Design" %>
 <%@ Property Name="DALNameSpace" Type="System.String" Category="Data" Description="DAL Namespace." %>
 <%@ Property Name="NameSpace" Type="System.String" Category="Data" Description="BLL Namespace." %>
+<%@ Property Name="ProviderInvariantName" Type="System.String" Category="Data" Description="Provider name" %>
 
 <%@ Property Name="RetryEnabled" Optional="False" Type="System.Boolean" Category="Retry" Description="Enabling Retry will add code retry the queries that failed with data exceptions. Useful to if your database becomes temporarily unavailable." %>
 <%@ Property Name="RetryMaxAttempts" Optional="True" Type="System.Int32" Category="Retry" Description="The number of attempts that will be made." %>
@@ -291,7 +292,11 @@ namespace <%=DALNameSpace%>
 								sb.Append(", ");
 							}
 
+							<%if(ProviderInvariantName == "MySql.Data.MySqlClient" || ProviderInvariantName == "System.Data.OracleClient"){%>
+							sb.AppendFormat("'{0}'", name);
+							<%}else{%>
 							sb.AppendFormat("[{0}]", name);
+							<%}%>
 
 							if ( pair.Length > 1 && SqlUtil.DESC.Equals(pair[1], StringComparison.OrdinalIgnoreCase) )
 							{
@@ -306,7 +311,11 @@ namespace <%=DALNameSpace%>
 			}
 			if ( String.IsNullOrEmpty(sort) )
 			{
+				<%if(ProviderInvariantName == "MySql.Data.MySqlClient" || ProviderInvariantName == "System.Data.OracleClient"){%>
+				sort = String.Format("'{0}'", EntityHelper.GetEnumTextValue((Enum)Enum.Parse(columnEnum, Enum.GetName(columnEnum, 1), true)));
+				<%}else{%>
 				sort = String.Format("[{0}]", EntityHelper.GetEnumTextValue((Enum)Enum.Parse(columnEnum, Enum.GetName(columnEnum, 1), true)));
+				<%}%>
 			}
 
 			return sort;
