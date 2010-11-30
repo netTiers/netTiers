@@ -6015,15 +6015,15 @@ CREATE\s+PROC(?:EDURE)?                               # find the start of the st
 
         public string GetVisualStudioSolutionFileVersionString( VSNetVersion version )
         {
-            string versionNumber = "9.0";
+            string versionNumber = "9.00";
 
             switch ( version )
             {
                 case ( VSNetVersion.v2008 ) :
-                    versionNumber = "10.0";
+                    versionNumber = "10.00";
                     break;
                 case ( VSNetVersion.v2010 ) :
-                    versionNumber = "11.0";
+                    versionNumber = "11.00";
                     break;
             }
 
