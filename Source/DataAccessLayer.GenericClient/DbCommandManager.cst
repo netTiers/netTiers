@@ -52,15 +52,9 @@ namespace <%=DALNameSpace%>.GenericClient
 					if (_instances == null)
 					{
 						_instances = new Dictionary<string, DbCommandProvider>();
-						
-					<%if (ProviderInvariantName == "System.Data.SQLite")
-					{%>
-						_instances.Add("System.Data.SQLite", DbCommandProvider.Create("System.Data.SQLite"));
-					<%}	
-					else if (ProviderInvariantName == "System.Data.OracleClient")
-					{%>
-						_instances.Add("System.Data.OracleClient", DbCommandProvider.Create("System.Data.OracleClient"));
-					<%}%>				
+					<%if (ProviderInvariantName != "System.Data.SqlClient") {%>
+						_instances.Add("<%=ProviderInvariantName%>", DbCommandProvider.Create("<%=ProviderInvariantName%>"));
+					<%}	%>
 					}
 				}
 			}
@@ -221,6 +215,17 @@ namespace <%=DALNameSpace%>.GenericClient
 			return database.GetSqlStringCommand(query);
 		}
 		
+		/// <summary>
+		/// Gets the command wrapper for a dynamically generated query and
+		/// optionally includes server-side paging.
+		/// </summary>
+		/// <param name="database"></param>
+		/// <param name="commandName"></param>
+		/// <param name="useStoredProcedure"></param>
+		/// <param name="providerInvariantName"></param>
+		/// <param name="whereClause">clause without 'WHERE' keyword</param>
+		/// <param name="orderBy">clause without 'ORDER BY'</param>
+		/// <returns></returns>
 		public static DbCommand GetCommandWrapper(GenericDatabase database, string commandName, bool useStoredProcedure, string providerInvariantName, string whereClause, string orderBy)
 		{
 			string query = DbCommandProvider.GetInstance(providerInvariantName).GetProcedureBodyFromEmbeddedResource(commandName);
