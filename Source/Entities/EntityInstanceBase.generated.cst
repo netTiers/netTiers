@@ -5,7 +5,7 @@
 <%@ Assembly Name="SchemaExplorer" %>
 <%@ Assembly Name="System.Design" %>
 <%@ Import Namespace="SchemaExplorer" %>
-
+<%@ Property Name="DotNetVersion" Type="MoM.Templates.DotNetFrameworkVersion" Default="v2" Category="02. Framework Generation - Optional" Description="Indicates the Version of Dot Net to target. Options include v2, v3 and v3.5" %>
 <%@ Property Name="SourceTable" Type="SchemaExplorer.TableSchema" Category="Connection" Description="Table Object should be based on." %>
 <%@ Property Name="SourceTables" Type="SchemaExplorer.TableSchemaCollection" Category="Connection" Description="Tables of the sytem." %>
 <%@ Property Name="SerializeEntityState" Type="System.Boolean" Default="False" Category="02. Framework Generation - Optional" Description="Indicates if the EntityState property should be included in serialization." %>
@@ -86,7 +86,7 @@ using System.Runtime.Serialization;
 using Microsoft.Practices.EnterpriseLibrary.Validation.Validators;
 using Microsoft.Practices.EnterpriseLibrary.Validation;
 <%}%>
-
+<% if (DotNetVersion  == MoM.Templates.DotNetFrameworkVersion.v4) {%>using System.ComponentModel.DataAnnotations;<%}%>
 using <%=NameSpace%>.Validation;
 #endregion
 
@@ -229,6 +229,8 @@ namespace <%=NameSpace%>
 		<%if (! cols[x].AllowDBNull && IsCSReferenceDataType(cols[x]) ) {%>
 		/// <exception cref="ArgumentNullException">If you attempt to set to null.</exception>
 		<%}%>
+		
+		<% if (!cols[x].AllowDBNull && DotNetVersion  == MoM.Templates.DotNetFrameworkVersion.v4 ) {%>[Required(ErrorMessage = "<%= GetPropertyName(cols[x]) %> is required")]<%}%>
 		<% if(!cols[x].AllowDBNull && IsCSReferenceDataType(cols[x]) && ValidationType == MoM.Templates.ValidationType.EntLib){ %>
 		[NotNullValidator(MessageTemplate="Property does not allow null values.", Tag="<%= cols[x].Name %>")]<% } %>
 		<% if(!cols[x].AllowDBNull && CanCheckLength(cols[x]) && IsCSReferenceDataType(cols[x]) && ValidationType == MoM.Templates.ValidationType.EntLib){ %>
