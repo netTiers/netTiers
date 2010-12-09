@@ -22,14 +22,14 @@
 <%@ Property Name="SQLFolderName" Type="System.String" Category="02. Framework Generation - Optional" Description="The sub folder to output the SQL scripts" Default="SQL" Optional="False"%>
 <%@ Property Name="ViewReport" Type="System.Boolean" Default="True" Category="02. Framework Generation - Optional" Description="Indicates if the html report should launched at the end of the generation." %>
 <%@ Property Name="AutoIncrementBuildVersion" Type="System.Boolean" Default="True" Category="02. Framework Generation - Optional" Description="Indicates if assembley build version should be auto incremented." %>
-<%@ Property Name="LaunchVisualStudio" Type="System.Boolean" Default="False" Category="02. Framework Generation - Optional" Description="Attempts to launch visual studio with the generated solution only if there are no instances already open." %>
+<%@ Property Name="LaunchVisualStudio" Type="System.Boolean" Default="True" Category="02. Framework Generation - Optional" Description="Attempts to launch visual studio with the generated solution only if there are no instances already open." %>
 <%@ Property Name="IncludeUnitTest" Type="MoM.Templates.UnitTestStyle" Default="None" Category="02. Framework Generation - Optional" Description="Indicates type of Unit tests to be generated." %>
 <%@ Property Name="IncludeComponentLayer" Type="MoM.Templates.ComponentPatternType" Category="02. Framework Generation - Optional" Description="The pattern type to implement in the Component Layer." Default="None" %>
 <%@ Property Name="IncludeWCFDataAttributes" Type="System.Boolean" Default="False" Category="02. Framework Generation - Optional" Description="Indicates if the WCF attributes, [DataContract] and [DataMember], should be included on the entity classes." %>
 <%@ Property Name="SerializeEntityState" Type="System.Boolean" Default="False" Category="02. Framework Generation - Optional" Description="Indicates if the EntityState property should be included during serialization.  Useful if needing to know what state the entity is in over webservices." %>
 <%@ Property Name="EntLibVersion" Type="MoM.Templates.EntLibVersion" Default="v5_0" Category="02. Framework Generation - Optional" Description="Indicates the Enterprise Library version to use. Options include v3.1, v5.0" %>
-<%@ Property Name="VisualStudioVersion" Type="MoM.Templates.VSNetVersion" Default="v2008" Category="02. Framework Generation - Optional" Description="Indicates the Version of Visual Studio to target. Options include v2005, v2008 and v2010" %>
-<%@ Property Name="DotNetVersion" Type="MoM.Templates.DotNetFrameworkVersion" Default="v3_5" Category="02. Framework Generation - Optional" Description="Indicates the Version of Dot Net to target. Options include v2, v3 and v3.5" %>
+<%@ Property Name="VisualStudioVersion" Type="MoM.Templates.VSNetVersion" Default="v2010" Category="02. Framework Generation - Optional" Description="Indicates the Version of Visual Studio to target. Options include v2005, v2008 and v2010" %>
+<%@ Property Name="DotNetVersion" Type="MoM.Templates.DotNetFrameworkVersion" Default="v4" Category="02. Framework Generation - Optional" Description="Indicates the Version of Dot Net to target. Options include v2, v3 and v3.5" %>
 <%@ Property Name="IncludeXmlAttributes" Type="System.Boolean" Default="False" Category="02. Framework Generation - Optional" Description="Indicates if the Xml attributes, [XmlElement(IsNullable=true)], should be included on the entity classes." %>
 <%@ Property Name="CustomCodeFolderName" Type="System.String" Category="02. Framework Generation - Optional" Description="If specified, indicates the name of a folder that can contains custom classes to dynamically add to each project." Default="App_Code" %>
 <%@ Property Name="EqualitySemantics" Type="MoM.Templates.EqualitySemantics" Default="Value" Category="02. Framework Generation - Optional" Description="Equality semantics used for Entity instances.  If 'Reference', default reference type semantics will be used (based on object identity).  If 'Value', Equals() and GetHashCode() will be overridden to use value semantics (based on object contents)." %>
@@ -358,7 +358,7 @@
 		{
 			if (_WebServiceOutputPath.Length == 0)
 			{
-				return @"c:\NetTiers\" + (ChooseSourceDatabase != null ? ChooseSourceDatabase.Name + @"\WebServices" : @"Output\WebServices");
+				return OutputDirectory + "\\WebServices";
 			}
 			return _WebServiceOutputPath;
 		}
@@ -1495,6 +1495,7 @@
 		{
 			XmlElement propertyValidatorNode = AddFileNode(commonNode, "PropertyValidator.cs");
 			this.GetTemplate("PropertyValidator.cst").SetProperty("NameSpace", BLLNameSpace);
+			this.GetTemplate("PropertyValidator.cst").SetProperty("EntLibVersion", EntLibVersion);
 			this.RenderToFile("PropertyValidator.cst", rootPathBLL + "\\Validation\\PropertyValidator.cs", true);
 			
 			XmlElement propertyValidatorValueAccessNode = AddFileNode(commonNode, "PropertyValidatorValueAccess.cs");
