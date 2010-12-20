@@ -1306,7 +1306,8 @@
 		
         if(EntLibVersion == MoM.Templates.EntLibVersion.v5_0)
         {
-		    SafeCopyFile(this.CodeTemplateInfo.DirectoryName + "\\References\\" + entLibSubDir + "\\Microsoft.Practices.Unity.dll", libPath +  "\\Microsoft.Practices.Unity.dll");
+            SafeCopyFile(this.CodeTemplateInfo.DirectoryName + "\\References\\" + entLibSubDir + "\\Microsoft.Practices.Unity.dll", libPath +  "\\Microsoft.Practices.Unity.dll");
+		    SafeCopyFile(this.CodeTemplateInfo.DirectoryName + "\\References\\" + entLibSubDir + "\\Microsoft.Practices.Unity.Interception.dll", libPath +  "\\Microsoft.Practices.Unity.Interception.dll");
             SafeCopyFile(this.CodeTemplateInfo.DirectoryName + "\\References\\" + entLibSubDir + "\\Microsoft.Practices.ServiceLocation.dll", libPath +  "\\Microsoft.Practices.ServiceLocation.dll");
         }
         else
@@ -1996,6 +1997,17 @@
 			this.GetTemplate("TransactionManager.cst").SetProperty("DALNameSpace", DALNameSpace);
 			this.GetTemplate("TransactionManager.cst").SetProperty("ProviderInvariantName", ProviderInvariantName);
 			this.RenderToFile("TransactionManager.cst", rootPathDAL + "\\TransactionManager.cs", true);
+            
+            if(EntLibVersion == MoM.Templates.EntLibVersion.v5_0)
+            {
+                AddFileNode(commonNode, "FileConfigurationSouce.cs");
+	    		this.GetTemplate("FileConfigurationSouce_EntLib5.cst").SetProperty("DALNameSpace", DALNameSpace);
+                this.RenderToFile("FileConfigurationSouce_EntLib5.cst", rootPathDAL + "\\FileConfigurationSouce.cs", true);
+                
+                AddFileNode(commonNode, "FileConfigurationSouceElement.cs");
+	    		this.GetTemplate("FileConfigurationSouceElement_EntLib5.cst").SetProperty("DALNameSpace", DALNameSpace);
+                this.RenderToFile("FileConfigurationSouceElement_EntLib5.cst", rootPathDAL + "\\FileConfigurationSouceElement.cs", true);
+			}
 			
 			AddFileNode(commonNode, "DataRepository.cs");
 			this.GetTemplate("DataRepository.cst").SetProperty("NameSpace", BLLNameSpace);
@@ -2006,7 +2018,7 @@
 			this.GetTemplate("DataRepository.cst").SetProperty("VisualStudioVersion", VisualStudioVersion);
 			this.GetTemplate("DataRepository.cst").SetProperty("IsConnectionStringAzure", IsConnectionStringAzure);
 			this.RenderToFile("DataRepository.cst", rootPathDAL + "\\DataRepository.cs", true);
-			
+            
 			AddFileNode(commonNode, "IEntityProvider.cs");
 			SetCommonProperties("IEntityProvider.cst");
 			this.GetTemplate("IEntityProvider.cst").SetProperty("BLLNameSpace", BLLNameSpace);
