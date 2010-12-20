@@ -99,6 +99,8 @@
 			CodeTemplates.Add("Utility.cst", base.CreateTemplate<Utility>()); this.PerformStep();
 			CodeTemplates.Add("ITransactionManager.cst", base.CreateTemplate<ITransactionManager>()); this.PerformStep();
 			CodeTemplates.Add("TransactionManager.cst", base.CreateTemplate<TransactionManager>()); this.PerformStep();
+            CodeTemplates.Add("FileConfigurationSouce_EntLib5.cst", base.CreateTemplate<FileConfigurationSouce_EntLib5>()); this.PerformStep();
+            CodeTemplates.Add("FileConfigurationSouceElement_EntLib5.cst", base.CreateTemplate<FileConfigurationSouceElement_EntLib5>()); this.PerformStep();
 			CodeTemplates.Add("IEntityProvider.cst", base.CreateTemplate<IEntityProvider>()); this.PerformStep();
 			CodeTemplates.Add("IEntityViewProvider.cst", base.CreateTemplate<IEntityViewProvider>()); this.PerformStep();
 
