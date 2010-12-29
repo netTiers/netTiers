@@ -284,10 +284,6 @@ GO
 				DECLARE @SQL AS nvarchar(4000)
 				SET @SQL = 'INSERT INTO #PageIndex (<% for(int i=0; i<SourceTable.PrimaryKey.MemberColumns.Count; i++) { Response.Write("[" + SourceTable.PrimaryKey.MemberColumns[i].Name + "]"); if (i < SourceTable.PrimaryKey.MemberColumns.Count-1) {Response.Write(", ");} } %>)'
 				SET @SQL = @SQL + ' SELECT'
-				IF @PageSize > 0
-				BEGIN
-					SET @SQL = @SQL + ' TOP ' + CONVERT(nvarchar, @PageUpperBound)
-				END
 				SET @SQL = @SQL + ' <% for(int i=0; i<SourceTable.PrimaryKey.MemberColumns.Count; i++) { Response.Write("[" + SourceTable.PrimaryKey.MemberColumns[i].Name + "]"); if (i < SourceTable.PrimaryKey.MemberColumns.Count-1) {Response.Write(", ");} } %>'
 				SET @SQL = @SQL + ' FROM <%=fqTableName%>'
 				IF LEN(@WhereClause) > 0
@@ -299,9 +295,15 @@ GO
 					SET @SQL = @SQL + ' ORDER BY ' + @OrderBy
 				END
 				
+				-- Only get the number of rows needed here.
+				SET ROWCOUNT @PageUpperBound
+				
 				-- Populate the temp table
 				EXEC sp_executesql @SQL
 
+				-- Reset Rowcount back to all
+				SET ROWCOUNT 0
+				
 				-- Return paged results
 				SELECT <% for (int i = 0; i < cols.Count; i++) { %>O.[<%= cols[i].Name %>]<% if (i < cols.Count - 1) { %>, <% }} %>
 				FROM
