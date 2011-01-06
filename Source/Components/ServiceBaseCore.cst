@@ -238,17 +238,39 @@ namespace <%=NameSpace%>
 				if (processResult != null)
 				{
 					//Add to Processor Result List
-					result.ProcessorResultList.Add(processResult);
+                    // NOTE: I have a feeling this could throw an exception as well.
+                    result.ProcessorResultList.Add(processResult);
 	
 					//Add To Aggregated Broken Rules List
- 					<% if(ValidationType == MoM.Templates.ValidationType.NetTiers){%>
- 					foreach(BrokenRulesList list in processResult.BrokenRulesLists.Values)
-                        result.ProcessBrokenRuleLists.Add((ProcessorBase)ProcessorList[i], list);
-					<%}%>
-					<% if(ValidationType == MoM.Templates.ValidationType.EntLib){%>
-					foreach(ValidationResults results in processResult.BrokenRulesLists.Values)
-						result.ProcessBrokenRuleLists.Add((ProcessorBase)ProcessorList[i], results);
-					<%}%>
+                    <% if(ValidationType == MoM.Templates.ValidationType.NetTiers){%>
+ 					foreach(BrokenRulesList items in processResult.BrokenRulesLists.Values)
+                    <%} else {%>
+                    foreach(ValidationResults items in processResult.BrokenRulesLists.Values)
+                    <%}%>
+                    {
+                        // I really don't like how everything is casted to a ProcessorBase but yet the list just uses the interface...
+                        // This is really really bad :\ and will be changed in 3.0.
+                        // NOTE: If you are creating your own processors, you MUST inherit from ProcessorBase.
+                        ProcessorBase processorBase = (ProcessorBase)ProcessorList[i];
+                        if (!result.ProcessBrokenRuleLists.ContainsKey(processorBase))
+                        {
+                            result.ProcessBrokenRuleLists.Add(processorBase, items);
+                        }
+                        else
+                        {
+                            <% if(ValidationType == MoM.Templates.ValidationType.NetTiers){%>
+ 					        foreach (BrokenRule item in items)
+                            <%} else {%>
+                            foreach (ValidationResult item in items)
+                            <%}%>
+                            {
+                                if (!result.ProcessBrokenRuleLists[processorBase].Contains(item))
+                                {
+                                    result.ProcessBrokenRuleLists[processorBase].Add(item);
+                                }
+                            }
+                        }
+                    }
 				}
 				
 				OnProcessEnded(ProcessorList[i] as ProcessorBase);	//Fire Process Ending Event

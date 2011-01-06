@@ -2,6 +2,7 @@
 
 <%@ Property Name="BLLNameSpace" Optional="False" Type="System.String" Category="Style" Description="BLL Namespace." %>
 <%@ Property Name="DALNameSpace" Optional="False" Type="System.String" Category="Style" Description="DAL Namespace." %>
+<%@ Property Name="ProviderInvariantName" Type="System.String" Category="Data" Description="The DBProviderFactory name." %>
 
 <%@ Assembly Name="System.Data" %>
 <%@ Import Namespace="System.Data" %>
@@ -942,7 +943,11 @@ namespace <%= DALNameSpace %>
         /// <param name="value">The value.</param>
         protected virtual void AppendInternal(string junction, string column, string compare, string value)
         {
+<% if(ProviderInvariantName == "System.Data.OracleClient") { %>
+            AppendInternal(junction, string.Format("{0} {1} {2}", column, compare, value));
+<% } else { %>
             AppendInternal(junction, string.Format("[{0}] {1} {2}", column, compare, value));
+<% } %>
         }
 
         /// <summary>
