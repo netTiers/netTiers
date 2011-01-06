@@ -1,8 +1,8 @@
 ﻿<%--
- * $Id: IEntity.cst,v 1.13 2006/02/27 22:09:40 bgjohnso Exp $
- * Last modified by $Author: bgjohnso $
- * Last modified at $Date: 2006/02/27 22:09:40 $
- * $Revision: 1.13 $
+ * $Id: IEntity.cst,v 2.3.1 2011/05/01 22:09:40 bniemyjski Exp $
+ * Last modified by $Author: bniemyjski $
+ * Last modified at $Date: 2011/05/01 22:09:40 $
+ * $Revision: 2.3.1 $
 --%>
 <%@ CodeTemplate Src="..\TemplateLib\CommonSqlCode.cs" Inherits="MoM.Templates.CommonSqlCode" Language="C#" TargetLanguage="C#" Description="The interface that each business object of the domain implements." ResponseEncoding="UTF-8" NoWarn="0108,0618,1572,1573,1574,0162,2002"%>
 <%@ Assembly Name="SchemaExplorer" %>
@@ -21,12 +21,11 @@
 <%@ Property Name="IncludeFind" Type="System.Boolean" Default="True" Category="Options" Description="If true find functions will be generated." %>
 <%@ Property Name="ComponentPattern" Optional="False" Type="MoM.Templates.ComponentPatternType" Category="Pattern" Description="Component Pattern Type." %>
 <%@ Property Name="ValidationType" Type="MoM.Templates.ValidationType" Default="NetTiers" Category="02. Framework Generation - Optional" Description="Choice to either use .netTiers validation framework, or Enterprise Library VAB" %>
-
+<%@ Property Name="EntLibVersion" Type="MoM.Templates.EntLibVersion" Default="v5_0" Category="02. Framework Generation - Optional" Description="Indicates the Enterprise Library version to use. Options include v3.1, v5.0" %>
 <%@ Property Name="NameSpace" Optional="False" Type="System.String" Category="Style" Description="Object Namespace." %>
 <%@ Property Name="BLLNameSpace" Optional="False" Type="System.String" Category="Style" Description="BLL Object Namespace." %>
 <%@ Property Name="DALNameSpace" Optional="False" Type="System.String" Category="Style" Description="DAL Object Namespace." %>
 <%@ Assembly Name="SchemaExplorer" %>
-
 <%
 	string listName = GetTListName();
 %>
@@ -36,6 +35,9 @@ using System.Collections;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Diagnostics;
+<% if(EntLibVersion == MoM.Templates.EntLibVersion.v5_0){%>
+using System.Linq;
+<%}%>
 <% if(ValidationType == MoM.Templates.ValidationType.EntLib){%>
 using Microsoft.Practices.EnterpriseLibrary.Validation;
 <%}%>
@@ -264,10 +266,21 @@ namespace <%=NameSpace%>
                             foreach (ValidationResult item in items)
                             <%}%>
                             {
+                            <% if(ValidationType == MoM.Templates.ValidationType.EntLib && EntLibVersion == MoM.Templates.EntLibVersion.v3_1){%>
+                                // This is a hack for .NET 2.0 as ValidationResults does not have a .Contains() method.
+                                bool flag = false;
+                                foreach (ValidationResult r in result.ProcessBrokenRuleLists[processorBase])
+	                            {
+		                           if(r.Equals(item)) flag = true;
+                            	}
+
+                                if(!flag) result.ProcessBrokenRuleLists[processorBase].AddResult(item);
+                            <%} else {%>    
                                 if (!result.ProcessBrokenRuleLists[processorBase].Contains(item))
                                 {
-                                    result.ProcessBrokenRuleLists[processorBase].Add(item);
+                                    result.ProcessBrokenRuleLists[processorBase].Add<% if(ValidationType == MoM.Templates.ValidationType.EntLib) {%>Result<% }%>(item);
                                 }
+                            <%}%>
                             }
                         }
                     }
