@@ -422,18 +422,7 @@
 	public MoM.Templates.ValidationType ValidationType
 	{
 		get { return _ValidationType; }
-		set
-		{
-			_ValidationType = value; 
-			
-			// Enterprise lib validation didn't exist until version 4.0.
-			// If the current version is less than 4.0 and entlib validation is selected update the property..
-			if ( value == MoM.Templates.ValidationType.EntLib && (byte)EntLibVersion < 3)
-			{
-				Trace.WriteLine("\tWARNING: EntLib validation requires that you use a version of EntLib 3.1 or newer.");
-				this.EntLibVersion = MoM.Templates.EntLibVersion.v3_1;
-			}
-		}
+		set { _ValidationType = value; }
 	}
 
 	#endregion Properties
@@ -1689,7 +1678,8 @@
 				this.GetTemplate("ServiceBaseCore.cst").SetProperty("BLLNameSpace", BLLNameSpace);
 				this.GetTemplate("ServiceBaseCore.cst").SetProperty("DALNameSpace", DALNameSpace);
 				this.GetTemplate("ServiceBaseCore.cst").SetProperty("ValidationType", ValidationType);
-				this.RenderToFile("ServiceBaseCore.cst", rootPathComponents + "\\ServiceBaseCore.generated.cs", true);
+				this.GetTemplate("ServiceBaseCore.cst").SetProperty("EntLibVersion", EntLibVersion);
+                this.RenderToFile("ServiceBaseCore.cst", rootPathComponents + "\\ServiceBaseCore.generated.cs", true);
 				
 				//For Views
 				// only generate stub once
