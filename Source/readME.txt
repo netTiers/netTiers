@@ -75,6 +75,7 @@ Known Issues
 Oracle - Find_Dynamic Stored Procedures does not work when a string value is passed in.
 Oracle - Custom Stored Procedures do not work.
 Oracle - Unit tests do not work.
+If you are using the Service Layer and an exception occurs saying entlib.config does not exist than you will neeed to change the policy name in the configuration file from NoneExceptionPolicy to ServiceLayerExceptionPolicy (http://nettiers.com/ComponentLayer.ashx#ExceptionHandling_Configuration:_2).
 
 http://code.google.com/p/nettiers/issues/list
 -----------------------------
