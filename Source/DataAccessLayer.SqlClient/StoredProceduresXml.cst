@@ -351,17 +351,22 @@ GO
 		// -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- 
 		// Insert
 		if (IncludeInsert)
-		{%>
+		{ %>
 		<procedure owner="<%=owner%>" name="<%= ProcedurePrefix + commandStem + InsertSuffix %>" <%if (GrantWriteUser != "") {%>grant="<%=GrantWriteUser%>"<%}%>>
 			<comment><![CDATA[<%= GetProcSqlComment(string.Format("Inserts a record into the {0} table", name), tableComment) %>]]></comment>
 			<parameters>
 				<% 
 				int countComputedColumns = 0;
+                int countIdentityIncrementColumns = 0;
 				for (int i = 0; i < cols.Count; i++)
 				{
 					Response.Write("\t\t\t\t" + GetSqlParameterXmlNode(cols[i], IsComputed(cols[i]) || IsIdentityColumn(cols[i]) || IsIdentityRowGuidColumn(cols[i])) + Environment.NewLine);
+                        
 					if (IsComputed(cols[i]))
 						countComputedColumns++;
+                        
+                    if (IsIdentityIncrementColumn(cols[i]))
+                        countIdentityIncrementColumns++;
 				}%>
 			</parameters>
 			<body><![CDATA[
@@ -370,6 +375,9 @@ GO
 				Declare @IdentityRowGuids table (<% for (int i = 0; i < colsIdentityRowGuids.Count; i++) {%><%= GetPropertyName(colsIdentityRowGuids[i]) %> <%= GetSqlDataType(colsIdentityRowGuids[i]) %><% if (i < colsIdentityRowGuids.Count - 1) { %>,<% } } %>	)
 				<%}%>				
 				INSERT INTO <%=fqTableName%>
+                    <% if (colsUpdatable.Count <= countIdentityIncrementColumns) { %>
+                DEFAULT VALUES
+                    <% } else { %>
 					(
 					<% for (int i = 0; i < colsUpdatable.Count; i++) { %>[<%= colsUpdatable[i].Name %>]<% if (i < colsUpdatable.Count - 1) { %>
 					,<% } } %>
@@ -377,13 +385,13 @@ GO
 					<% if (colsIdentityRowGuids.Count > 0 && IncludeDatabaseFeatures == MoM.Templates.DatabaseType.SQLServer2005) { %>
 						OUTPUT <% for (int i = 0; i < colsIdentityRowGuids.Count; i++) {%>INSERTED.<%= colsIdentityRowGuids[i].Name %><% if (i < colsIdentityRowGuids.Count - 1) { %>,<% } } %> INTO @IdentityRowGuids
 					
-					<%}%>					
+					<% } %>
 				VALUES
 					(
 					<% for (int i = 0; i < colsUpdatable.Count; i++) { %>@<%= GetPropertyName(colsUpdatable[i]) %><% if (i < colsUpdatable.Count - 1) { %>
 					,<% } } %>
 					)
-				
+                    <% } %>
 				<% if (colsIdentityRowGuids.Count > 0 && IncludeDatabaseFeatures == MoM.Templates.DatabaseType.SQLServer2005) { %>
 				SELECT <% for (int i = 0; i < colsIdentityRowGuids.Count; i++) {%>@<%= GetPropertyName(colsIdentityRowGuids[i]) %>=<%= GetPropertyName(colsIdentityRowGuids[i]) %><% if (i < colsIdentityRowGuids.Count - 1) { %>,<% } } %>	 from @IdentityRowGuids
 				<%}%>
@@ -438,18 +446,22 @@ GO
 			<parameters>
 				<% 
 				int countComputedColumns = 0;
+                int countIdentityIncrementColumns = 0;
 				for (int i = 0; i < cols.Count; i++)
 				{
-					Response.Write("\t\t\t\t" + GetSqlParameterXmlNode(cols[i], IsComputed(cols[i]) && cols[i] != RowVersion) + Environment.NewLine);
+                    if (!IsIdentityIncrementColumn(cols[i]))
+					    Response.Write("\t\t\t\t" + GetSqlParameterXmlNode(cols[i], IsComputed(cols[i]) && cols[i] != RowVersion) + Environment.NewLine);
 					
-					if (cols[i].IsPrimaryKeyMember && !IsComputed(cols[i]) && !IsIdentityColumn(cols[i]) && cols[i] != RowVersion)
+					if (cols[i].IsPrimaryKeyMember && !IsIdentityIncrementColumn(cols[i]) && !IsComputed(cols[i]) && !IsIdentityColumn(cols[i]) && cols[i] != RowVersion)
 					{
 						Response.Write("\t\t\t\t" + GetSqlParameterXmlNode(cols[i], "Original" + GetPropertyName(cols[i]), false) + Environment.NewLine);
 					}
 		
 					if (IsComputed(cols[i]))
 						countComputedColumns++;
-				
+				    
+                    if (IsIdentityIncrementColumn(cols[i]))
+                        countIdentityIncrementColumns++;
 				}
 				if (RowVersion != null)
 				{
@@ -458,6 +470,9 @@ GO
 				%>
 			</parameters>
 			<body><![CDATA[
+                <% if (colsUpdatable.Count <= countIdentityIncrementColumns) { %>
+                -- No columns to modify
+                <% } else { %>
 				<%= GetSetTransactionIsolationLevelStatement() %>
 				
 				-- Modify the updatable columns
@@ -525,6 +540,7 @@ GO
 					}
 				%>
 				<% } // endif countComputedColumns > 0 %>
+                <% } %>
 			]]></body>
 		</procedure>
 		<%} // end if (IncludeUpdate) 
