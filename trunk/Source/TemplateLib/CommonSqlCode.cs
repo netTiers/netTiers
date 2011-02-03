@@ -2484,6 +2484,7 @@ namespace MoM.Templates
         /// <returns>Identity?</returns>
         public bool IsIdentityColumn(ColumnSchema column)
         {
+            
             // for sql server
             // Added by Andy Digital Example LLC 12/10/2007
             // Trace.WriteLine("IsIdentityRowGuid Eval for Column " + column.Table.Name + "." + column.Name);
@@ -2707,7 +2708,20 @@ namespace MoM.Templates
             return false;
         }
 
+        /// <summary>
+        /// Check if a column has Identity Increment
+        /// </summary>
+        /// <param name="column">DB table column to be checked</param>
+        /// <returns>IdentityIncrement?</returns>
+        public bool IsIdentityIncrementColumn(ColumnSchema column)
+        {
+            // Sql server extended property
+            if (column.ExtendedProperties["CS_IdentityIncrement"] != null)
+                return (bool)column.ExtendedProperties["CS_IsIdentity"].Value;
 
+            return false;
+        }
+        
 /*
         /// <summary>
         /// Get the owner of a table.
