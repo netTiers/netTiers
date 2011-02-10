@@ -2810,22 +2810,38 @@
 		
 		#endregion Generate Win Library
 		
+        #region Set Project FileNames
+        
+        // Set filenames for .csproj files
+        string bllFilename = rootPathBLL + "\\" + BLLNameSpace + ".csproj";
+        string dalFilename = rootPathDAL + "\\" + DALNameSpace + ".csproj";
+        string DALSqlFilename = rootPathDALSql + "\\" + DALSqlNameSpace + ".csproj";
+        string DALWSFilename = rootPathDALWS + "\\" + DALWSNameSpace + ".csproj";
+        string DALGenericFilename = rootPathDALGeneric + "\\" + DALGenericNameSpace + ".csproj";
+        string utFilename = rootPathUT + "\\" + UTNameSpace + ".csproj";
+        string webLibFilename = rootPathWebLib + "\\" + WebLibNameSpace + ".csproj";
+        string componentFilename = rootPathComponents + "\\" + ComponentsNameSpace + ".csproj";
+        string winLibFilename = rootPathWinLib + "\\" + WinLibNameSpace + ".csproj";
+        string websiteFilename = rootPathWebsite + "\\" + WebsiteNameSpace + ".csproj";
+        string websecurityFilename = rootPathWebSecurityLib + "\\" + WebSecurityLibNameSpace + ".csproj";
+
+        #endregion
+        
 		#region Set Guids
 		
-		// Hard coded Guid make it easier to maintain solution when regenerating projects
-		// It may be intersting to put those value in global properties
-		string bllGuid = "20E43088-4618-4F4A-B8AD-FC31B50D94CD"; //Guid.NewGuid().ToString();
-		string dalGuid = "041C1BBE-0BFB-4D45-8125-9AB0BBC09A92"; //Guid.NewGuid().ToString();
-		string DALSqlGuid = "8996A7B4-57D3-440B-A545-A701844B8C4A"; //Guid.NewGuid().ToString();
-		string DALWSGuid = "061C1BBE-0BFB-4D45-8125-9AB0BBC09A92"; //Guid.NewGuid().ToString();
-		string DALGenericGuid = "6788B7D9-57D3-440B-A545-A701844B8C4A"; //Guid.NewGuid().ToString();
+        // If project files already exist then obtain the GUID from the .csproj file, otherwise generate a new GUID
+		string bllGuid = GetProjectGuid(bllFilename); // "20E43088-4618-4F4A-B8AD-FC31B50D94CD"; //Guid.NewGuid().ToString();
+		string dalGuid =  GetProjectGuid(dalFilename); //"041C1BBE-0BFB-4D45-8125-9AB0BBC09A92"; //Guid.NewGuid().ToString();
+		string DALSqlGuid =  GetProjectGuid(DALSqlFilename); //"8996A7B4-57D3-440B-A545-A701844B8C4A"; //Guid.NewGuid().ToString();
+		string DALWSGuid = GetProjectGuid(DALWSFilename); //"061C1BBE-0BFB-4D45-8125-9AB0BBC09A92"; //Guid.NewGuid().ToString();
+		string DALGenericGuid = GetProjectGuid(DALGenericFilename);//"6788B7D9-57D3-440B-A545-A701844B8C4A"; //Guid.NewGuid().ToString();
 		string wsGuid  = "5E3CA58E-216A-4F53-BD23-5A48A6C44924"; //Guid.NewGuid().ToString();
-		string utGuid  = "031D5BAE-0BFB-4D45-8125-9AB0BBC09A92"; //Guid.NewGuid().ToString();
-		string webLibGuid = "47FE3BE8-3E46-47CA-8494-473755867DD0"; //Guid.NewGuid().ToString();
-		string websiteGuid = "1DCAB031-308A-4581-AFA8-BD29F45A1357";
-		string componentGuid = "794327CE-DC0A-4381-89EE-4C00AFB08D5A"; 
-		string winLibGuid = "43FE3BE8-3E46-47CA-8494-473315867DD0"; //Guid.NewGuid().ToString();
-		string websecurityGuid = "417D82D0-4E13-4836-99A2-13062B945C49"; // ADDED BY CHARLIE
+		string utGuid  = GetProjectGuid(utFilename); //"031D5BAE-0BFB-4D45-8125-9AB0BBC09A92"; //Guid.NewGuid().ToString();
+		string webLibGuid = GetProjectGuid(webLibFilename);  //"47FE3BE8-3E46-47CA-8494-473755867DD0"; //Guid.NewGuid().ToString();
+		string websiteGuid = GetProjectGuid(websiteFilename);//"1DCAB031-308A-4581-AFA8-BD29F45A1357";
+		string componentGuid =  GetProjectGuid(componentFilename); //"794327CE-DC0A-4381-89EE-4C00AFB08D5A"; 
+		string winLibGuid = GetProjectGuid(winLibFilename);// "43FE3BE8-3E46-47CA-8494-473315867DD0"; //Guid.NewGuid().ToString();
+		string websecurityGuid = GetProjectGuid(websecurityFilename); //"417D82D0-4E13-4836-99A2-13062B945C49"; // ADDED BY CHARLIE
 		
 		#endregion Set Guids
 	
@@ -2997,7 +3013,7 @@
 			this.GetTemplate(projectTemplate).SetProperty("IncludeWCFDataAttributes", false);
 			this.GetTemplate(projectTemplate).SetProperty("IncludeDesignTimeSupport", false);
 												
-			this.RenderToFile(projectTemplate, rootPathComponents + "\\" + ComponentsNameSpace + ".csproj", true);
+			this.RenderToFile(projectTemplate, componentFilename, true);
 		}
 		#endregion Components project
 		
@@ -3025,8 +3041,7 @@
 			this.GetTemplate(projectTemplate).SetProperty("PropertySetFilePath", GetPropertySetFilePath());
 			this.GetTemplate(projectTemplate).SetProperty("SupportsCodesmithBuildTask", DoesSupportCodesmithBuildTask());
 			
-			//this.GetTemplate(projectTemplate).RenderToFile(rootPathBLL + "\\" + BLLNameSpace + ".csproj", true);
-			this.RenderToFile(projectTemplate, rootPathBLL + "\\" + BLLNameSpace + ".csproj", true);
+			this.RenderToFile(projectTemplate, bllFilename, true);
 		}
 		#endregion Entities project
 		
@@ -3051,7 +3066,7 @@
 			this.GetTemplate(projectTemplate).SetProperty("IncludeWCFDataAttributes", false);
 			this.GetTemplate(projectTemplate).SetProperty("IncludeDesignTimeSupport", IncludeDesignTimeSupport);
 	
-			this.RenderToFile(projectTemplate, rootPathDAL + "\\" + DALNameSpace + ".csproj", true);
+			this.RenderToFile(projectTemplate, dalFilename, true);
 			#endregion Data Access Layer base
 			
 			if (_netTiersSqlProvider == true)
@@ -3074,7 +3089,7 @@
 				this.GetTemplate(projectTemplate).SetProperty("IncludeWCFDataAttributes", false);
 				this.GetTemplate(projectTemplate).SetProperty("IncludeDesignTimeSupport", false);
 				
-				this.RenderToFile(projectTemplate, rootPathDALSql + "\\" + DALSqlNameSpace + ".csproj", true);
+				this.RenderToFile(projectTemplate, DALSqlFilename, true);
 			
 				#endregion Sql client
 			}
@@ -3146,7 +3161,7 @@
 				this.GetTemplate(projectTemplate).SetProperty("IncludeWCFDataAttributes", false);
 				this.GetTemplate(projectTemplate).SetProperty("IncludeDesignTimeSupport", false);
 			
-				this.RenderToFile(projectTemplate, rootPathDALGeneric + "\\" + DALGenericNameSpace + ".csproj", true);
+				this.RenderToFile(projectTemplate, DALGenericFilename, true);
 				
 				#endregion Generic client
 			}		
@@ -3170,7 +3185,7 @@
 				this.GetTemplate(projectTemplate).SetProperty("IncludeWCFDataAttributes", false);
 				this.GetTemplate(projectTemplate).SetProperty("IncludeDesignTimeSupport", false);
 			
-				this.RenderToFile(projectTemplate, rootPathDALWS + "\\" + DALWSNameSpace + ".csproj", true);
+				this.RenderToFile(projectTemplate, DALWSFilename, true);
 			}
 			
 			#endregion Web Service Client
@@ -3198,7 +3213,7 @@
 			this.GetTemplate(projectTemplate).SetProperty("IncludeWCFDataAttributes", false);
 			this.GetTemplate(projectTemplate).SetProperty("IncludeDesignTimeSupport", false);
 			
-			this.RenderToFile(projectTemplate, rootPathWinLib + "\\" + WinLibNameSpace + ".csproj", true);
+			this.RenderToFile(projectTemplate, winLibFilename, true);
 		}
 		#endregion Win Library project
 		
@@ -3222,7 +3237,7 @@
 			this.GetTemplate(projectTemplate).SetProperty("IncludeWCFDataAttributes", false);
 			this.GetTemplate(projectTemplate).SetProperty("IncludeDesignTimeSupport", false);
 
-			this.RenderToFile(projectTemplate, rootPathWebSecurityLib + "\\" + WebSecurityLibNameSpace + ".csproj", true);
+			this.RenderToFile(projectTemplate, websecurityFilename, true);
 		}
 		#endregion Web.Security  Library Library project file
 		
@@ -3246,7 +3261,7 @@
 			this.GetTemplate(projectTemplate).SetProperty("IncludeWCFDataAttributes", false);
 			this.GetTemplate(projectTemplate).SetProperty("IncludeDesignTimeSupport", false);
 			
-			this.RenderToFile(projectTemplate, rootPathWebLib + "\\" + WebLibNameSpace + ".csproj", true);
+			this.RenderToFile(projectTemplate, webLibFilename, true);
 		}
 		#endregion Web Library project file
 		
@@ -3269,7 +3284,7 @@
 			this.GetTemplate(projectTemplate).SetProperty("IncludeWCFDataAttributes", false);
 			this.GetTemplate(projectTemplate).SetProperty("IncludeDesignTimeSupport", false);
 			
-			this.RenderToFile(projectTemplate, rootPathWebsite + "\\" + WebsiteNameSpace + ".csproj", true);
+			this.RenderToFile(projectTemplate, websiteFilename, true);
 		}
 		#endregion Web Application Project file
 		
@@ -3293,7 +3308,7 @@
 			this.GetTemplate(projectTemplate).SetProperty("IncludeDesignTimeSupport", false);
 			this.GetTemplate(projectTemplate).SetProperty("NetTiersSqlProvider", _netTiersSqlProvider);
 	
-			this.RenderToFile(projectTemplate, rootPathUT + "\\" + UTNameSpace + ".csproj", true);
+			this.RenderToFile(projectTemplate, utFilename, true);
 		}
 		
 		if (IncludeUnitTest == MoM.Templates.UnitTestStyle.VSTS)
@@ -5008,6 +5023,32 @@
 			customProcsNode.AppendChild(customProcNode);
 		}
 	}
+    
+    /// <summary>
+	/// Get existing projectGUID from project or new GUID for new project
+	/// </summary>
+    private string GetProjectGuid(string filename)
+    {
+        Guid projectGuid = Guid.Empty;
+        
+        if (File.Exists(filename))
+        {
+            XmlDocument xmldoc = new XmlDocument();    
+            xmldoc.Load(filename);
+        
+            XmlNamespaceManager nsMgr = new XmlNamespaceManager(xmldoc.NameTable);
+            nsMgr.AddNamespace("ns", "http://schemas.microsoft.com/developer/msbuild/2003");
+            
+            XmlNode projectGuidNode = xmldoc.SelectSingleNode("//ns:ProjectGuid", nsMgr);
+            if (projectGuidNode != null)
+                projectGuid = new Guid(projectGuidNode.InnerText);
+        }
+        
+        if (projectGuid == Guid.Empty)
+            projectGuid = Guid.NewGuid();
+            
+        return projectGuid.ToString().ToUpper();
+    }
 	
 	#endregion Private helper methods
 
