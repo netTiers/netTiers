@@ -3783,7 +3783,7 @@ CREATE\s+PROC(?:EDURE)?                               # find the start of the st
                         return "0F";
 
                     //case DbType.Time: return "DateTime.MaxValue";
-                    case DbType.Time: return "new DateTime(1900,1,1,0,0,0,0)";
+                    case DbType.Time: return "new TimeSpan(1,0,0,0,0)";
                     case DbType.VarNumeric: return "0";
                         //the following won't be used
                         //        case DbType.SByte: return "0";
