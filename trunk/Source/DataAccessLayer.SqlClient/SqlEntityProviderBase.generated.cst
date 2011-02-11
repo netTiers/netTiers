@@ -1046,7 +1046,11 @@ namespace <%=DALNameSpace%>.SqlClient
 			// String types are nullable, but all other types are value types %>
 			database.AddInParameter(commandWrapper, "@<%=GetPropertyName(cols[i])%>", DbType.<%= cols[i].DataType.ToString() %>, (entity.<%=GetPropertyName(cols[i])%>.HasValue ? (object) entity.<%=GetPropertyName(cols[i])%>  : System.DBNull.Value));
 					<% } else {%>
-			database.AddInParameter(commandWrapper, "@<%=GetPropertyName(cols[i])%>", <%= GetDbType(cols[i]) %>, entity.<%=GetPropertyName(cols[i])%> );
+                        <% if (cols[i].DataType.ToString() == "Time") { %>
+            database.AddInParameter(commandWrapper, "@<%=GetPropertyName(cols[i])%>", SqlDbType.<%=cols[i].DataType.ToString()%>, entity.<%=GetPropertyName(cols[i])%> );
+                        <% } else { %>
+            database.AddInParameter(commandWrapper, "@<%=GetPropertyName(cols[i])%>", <%= GetDbType(cols[i]) %>, entity.<%=GetPropertyName(cols[i])%> );
+                        <% } %>
 				<% }
 				}		
 			} // end for 
@@ -1172,7 +1176,11 @@ namespace <%=DALNameSpace%>.SqlClient
 					<%}
 					else				
 				{%>
-			database.AddInParameter(commandWrapper, "@<%=GetPropertyName(cols[i])%>", <%=GetDbType(cols[i]) %>, entity.<%=GetPropertyName(cols[i])%> );
+                        <% if (cols[i].DataType.ToString() == "Time") { %>
+            database.AddInParameter(commandWrapper, "@<%=GetPropertyName(cols[i])%>", SqlDbType.<%=cols[i].DataType.ToString()%>, entity.<%=GetPropertyName(cols[i])%> );
+                        <% } else { %>
+            database.AddInParameter(commandWrapper, "@<%=GetPropertyName(cols[i])%>", <%=GetDbType(cols[i]) %>, entity.<%=GetPropertyName(cols[i])%> );
+                        <% } %>
 				<%}
 				}
 				if (cols[i].IsPrimaryKeyMember && !IsComputed(cols[i]) && !IsIdentityColumn(cols[i]) && cols[i] != RowVersion)
