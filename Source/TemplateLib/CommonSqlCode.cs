@@ -3823,6 +3823,7 @@ CREATE\s+PROC(?:EDURE)?                               # find the start of the st
             long longConvert;
             short shortConvert;
             DateTime dateConvert;
+            TimeSpan timeConvert;
             Guid guidConvert;
             sbyte sbConvert;
             ushort u16Convert;
@@ -3988,7 +3989,7 @@ CREATE\s+PROC(?:EDURE)?                               # find the start of the st
 
                             dateConvert = DateTime.Parse(defaultValue);
                             if (defaultValue != null )
-                                return "new DateTime(\"" + dateConvert.ToString() + "\")";
+                                return "new DateTime(" + dateConvert.Year + ", " + dateConvert.Month + ", " + dateConvert.Day + ", " + dateConvert.Hour + ", " + dateConvert.Minute + ", " + dateConvert.Second + ")";
 
                             return null;
 
@@ -4054,8 +4055,15 @@ CREATE\s+PROC(?:EDURE)?                               # find the start of the st
                                 return defaultValue;
                             else if (defaultValue != null)
                             {
-                                dateConvert = DateTime.Parse(defaultValue);
-                                return "DateTime.Parse(\"" + dateConvert.ToString() + "\")";
+                                string[] tmp = defaultValue.Split(':');
+                                if (tmp.Length > 3)
+                                    defaultValue = tmp[0] + ":" + tmp[1] + ":" + tmp[2];
+                                
+                                timeConvert = TimeSpan.Parse(defaultValue);
+                                if (timeConvert != null )
+                                    return "new TimeSpan(" + timeConvert.Hours + ", " + timeConvert.Minutes + ", " + timeConvert.Seconds + ")";
+                                    
+                                return null;
                             }
                             return null;
                         case DbType.VarNumeric:
