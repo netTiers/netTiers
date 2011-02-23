@@ -1943,7 +1943,30 @@ namespace MoM.Templates
             //    /*2*/GetObjectPropertyAccessor(column,objectName),
             //    /*3*/GetCSType(column));
             //}
-            if ( column.AllowDBNull )
+            if ( column.NativeType.ToLower() == "hierarchyid" )
+            {
+                if ( column.AllowDBNull )
+                {
+                    return string.Format("{2} = ({1}.IsDBNull(((int){4}.{0} - 1)))?null:{1}[((int){4}.{0} - 1)].ToString()",
+                    /*0*/GetPropertyName(column),
+                    /*1*/containerName,
+                    /*2*/GetObjectPropertyAccessor(column,objectName),
+                    /*3*/GetCSType(column),
+                    /*4*/GetClassName(column.Table, ClassNameFormat.Column));
+                }
+                else
+                {
+                    // regular NOT NULL data types, set to default value for type if null
+                    return string.Format("{2} = {1}[((int){5}.{0} - 1)].ToString()",
+                    /*0*/GetPropertyName(column),
+                    /*1*/containerName,
+                    /*2*/GetObjectPropertyAccessor(column,objectName),
+                    /*3*/GetCSType(column),
+                    /*4*/GetCSDefaultByType(column),
+                    /*5*/GetClassName(column.Table, ClassNameFormat.Column));
+                }
+            }
+            else if ( column.AllowDBNull )
             {
                 return string.Format("{2} = ({1}.IsDBNull(((int){4}.{0} - 1)))?null:({3}){1}[((int){4}.{0} - 1)]",
                 /*0*/GetPropertyName(column),
@@ -1976,7 +1999,27 @@ namespace MoM.Templates
         /// <remarks>This method should not append the trailing semicolon.</remarks>
         public string GetOriginalObjectPropertySetExpression(ColumnSchema column, string containerName, string objectName, int indent)
         {
-            if ( column.AllowDBNull )
+            if ( column.NativeType.ToLower() == "hierarchyid" )
+            {
+                if ( column.AllowDBNull )
+                {
+                    return string.Format("{2} = {1}.IsDBNull({1}.GetOrdinal(\"{0}\")) ? null : {1}[\"{0}\"].ToString()",
+                        /*0*/column.Name,
+                        /*1*/containerName,
+                        /*2*/GetOriginalObjectPropertyAccessor(column,objectName),
+                        /*3*/GetCSType(column),
+                        /*4*/GetClassName(column.Table));
+                }
+                else
+                {
+                    return string.Format("{2} = {1}[\"{0}\"].ToString()",
+                        /*0*/column.Name,
+                        /*1*/containerName,
+                        /*2*/GetOriginalObjectPropertyAccessor(column,objectName),
+                        /*3*/GetCSType(column));
+                }
+            }
+            else if ( column.AllowDBNull )
             {
                 return string.Format("{2} = {1}.IsDBNull({1}.GetOrdinal(\"{0}\")) ? null : ({3}){1}[\"{0}\"]",
                     /*0*/column.Name,
@@ -2006,7 +2049,26 @@ namespace MoM.Templates
         /// <remarks>This method should not append the trailing semicolon.</remarks>
         public string GetDatasetPropertySetExpression(ColumnSchema column, string containerName, string objectName, int indent)
         {
-            if ( column.AllowDBNull )
+            if ( column.NativeType.ToLower() == "hierarchyid" )
+            {
+                if ( column.AllowDBNull )
+                {
+                    return string.Format("{2} = Convert.IsDBNull({1}[\"{0}\"]) ? null : {1}[\"{0}\"].ToString()",
+                            /*0*/column.Name,
+                            /*1*/containerName,
+                            /*2*/objectName,
+                            /*3*/GetCSType(column));
+                }
+                else
+                {
+                    return string.Format("{2} = {1}[\"{0}\"].ToString()",
+                        /*0*/column.Name,
+                        /*1*/containerName,
+                        /*2*/objectName,
+                        /*3*/GetCSType(column));
+                }
+            }
+            else if ( column.AllowDBNull )
             {
                 return string.Format("{2} = Convert.IsDBNull({1}[\"{0}\"]) ? null : ({3}){1}[\"{0}\"]",
                         /*0*/column.Name,
@@ -3604,9 +3666,9 @@ namespace MoM.Templates
             {
                 return "System.Single" + (field.AllowDBNull ? "?" : "");
             }
-            else if (field.NativeType.ToLower() == "xml")
+            else if ((field.NativeType.ToLower() == "xml") || (field.NativeType.ToLower() == "hierarchyid"))
             {
-                return "string";
+                return "System.String";
             }
             else if (CSPUseDefaultValForNonNullableTypes && (field is ParameterSchema) && !IsCSReferenceDataType(field))
             {
@@ -3672,6 +3734,8 @@ CREATE\s+PROC(?:EDURE)?                               # find the start of the st
         {
             if (field.NativeType.ToLower() == "xml")
                 return "DbType.Xml";
+            else if (field.NativeType.ToLower() == "hierarchyid")
+                return "DbType.String";
             else
                 return "DbType." + field.DataType.ToString();
         }
@@ -3703,6 +3767,8 @@ CREATE\s+PROC(?:EDURE)?                               # find the start of the st
 
             if (column.NativeType.ToLower() == "real")
                 return "0.0F";
+            else if (column.NativeType.ToLower() == "hierarchyid")
+                return "string.Empty";
             else
             {
                 DbType dataType = column.DataType;
