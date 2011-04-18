@@ -463,6 +463,8 @@ namespace <%=RootNameSpace%>.Web.UI
                 for (int i = 0; i < c.Length; i++)
                 {
                     ColumnEnumAttribute cea = EntityHelper.GetAttribute<ColumnEnumAttribute>((Enum)c.GetValue(i));
+                    EnumTextValueAttribute etv = EntityHelper.GetAttribute<EnumTextValueAttribute>((Enum)c.GetValue(i));
+                    
                     // only show fields that we can realistically search against
                     switch (cea.DbType)
                     {
@@ -490,7 +492,9 @@ namespace <%=RootNameSpace%>.Web.UI
                         case System.Data.DbType.Xml:
                             #region Add fields to the dropdown collection
                             ListItem li = new ListItem();
-                            li.Text = EntityHelper.GetPascalSpacedName(cea.Name);
+                            li.Text = etv != null && !string.IsNullOrEmpty(etv.Text)
+                                          ? EntityHelper.GetPascalSpacedName(etv.Text)
+                                          : EntityHelper.GetPascalSpacedName(cea.Name);
                             li.Value = cea.Name;
                             cboFieldName.Items.Add(li);
                             #endregion
