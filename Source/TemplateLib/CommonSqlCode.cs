@@ -3331,7 +3331,11 @@ namespace MoM.Templates
             StringBuilder temp = new StringBuilder();
             for(int i=0; i<inputParameters.Count; i++)
             {
-                temp.AppendFormat("{2}\t\t/// <param name=\"{0}\"> A <c>{1}</c> instance.</param>", GetFieldName(inputParameters[i]).Replace(ParameterPrefix, ""), GetCSType(inputParameters[i]).Replace("<", "&lt;").Replace(">", "&gt;"), "\r\n");
+                string paramName = GetFieldName(inputParameters[i]);
+                if(!String.IsNullOrEmpty(ParameterPrefix))
+                    paramName = paramName.Replace(ParameterPrefix, "");
+
+                temp.AppendFormat("{2}\t\t/// <param name=\"{0}\"> A <c>{1}</c> instance.</param>", paramName, GetCSType(inputParameters[i]).Replace("<", "&lt;").Replace(">", "&gt;"), "\r\n");
             }
 
             return temp.ToString();
@@ -3349,7 +3353,11 @@ namespace MoM.Templates
             }
             for(int i=0; i<command.InputOutputParameters.Count; i++)
             {
-                temp += string.Format("{2}\t\t\t/// <param name=\"{0}\"> An output  <c>{1}</c> instance.</param>", GetFieldName(command.InputOutputParameters[i]).Replace(ParameterPrefix, ""), GetCSType(command.InputOutputParameters[i]), Environment.NewLine);
+                string paramName = GetFieldName(command.InputOutputParameters[i]);
+                if(!String.IsNullOrEmpty(ParameterPrefix))
+                    paramName = paramName.Replace(ParameterPrefix, "");
+
+                temp += string.Format("{2}\t\t\t/// <param name=\"{0}\"> An output  <c>{1}</c> instance.</param>", paramName, GetCSType(command.InputOutputParameters[i]), Environment.NewLine);
             }
 
             return temp;
@@ -3432,7 +3440,11 @@ namespace MoM.Templates
             StringBuilder temp = new StringBuilder();
             for(int i=0; i<outputParameters.Count; i++)
             {
-                temp.AppendFormat("{2}\t\t\t/// <param name=\"{0}\"> A <c>{1}</c> instance.</param>", GetFieldName(outputParameters[i]).Replace(ParameterPrefix ?? string.Empty, ""), GetCSType(outputParameters[i]).Replace("<", "&lt;").Replace(">", "&gt;"), Environment.NewLine);
+                string paramName = GetFieldName(outputParameters[i]);
+                if(!String.IsNullOrEmpty(ParameterPrefix))
+                    paramName = paramName.Replace(ParameterPrefix, "");
+
+                temp.AppendFormat("{2}\t\t\t/// <param name=\"{0}\"> A <c>{1}</c> instance.</param>", paramName, GetCSType(outputParameters[i]).Replace("<", "&lt;").Replace(">", "&gt;"), Environment.NewLine);
             }
 
             return temp.ToString();
