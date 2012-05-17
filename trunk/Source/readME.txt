@@ -23,11 +23,11 @@ You can find detailed getting started information
 
 System Requirements
 --------------------
-Visual Studio 2005
-Codesmith 3.2+
-Microsoft SQL Server2000+ 
-Microsoft .Net 2.0 
-Enterprise Library 2.0 (Optional, Recommended) 
+Visual Studio 2005+
+Codesmith Generator 6.x+
+Microsoft SQL Server 2000+, Oracle (Other DB's with limited support depending on provider) 
+Microsoft .Net 2.0+
+Enterprise Library 3.1+ (Optional, Recommended) 
 nUnit or Visual Studio Team System (Optional)
 
 Installing .netTiers
