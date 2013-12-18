@@ -1,5 +1,5 @@
 =============================
-      .netTiers v2.3.1
+      .netTiers v2.3.2
 =============================
 
 -----------------------------
@@ -19,7 +19,7 @@ http://www.gnu.org/licenses/lgpl.html
 Installing & Getting Started
 -----------------------------
 You can find detailed getting started information 
-@ http://www.nettiers.com/GettingStarted.ashx
+@ http://www.nettiers.net/GettingStarted.ashx
 
 System Requirements
 --------------------
@@ -33,7 +33,7 @@ nUnit or Visual Studio Team System (Optional)
 Installing .netTiers
 --------------------
 
-Once you have downloaded the .netTiers .zip file from the http://www.nettiers.com/Download.ashx website, simply extract the files to your favorite projects directory. It's required that you have CodeSmith installed and registered by this point on your system. 
+Once you have downloaded the .netTiers .zip file from the http://www.nettiers.net/Download.ashx website, simply extract the files to your favorite projects directory. It's required that you have CodeSmith installed and registered by this point on your system. 
 
 Required Setup 
 To execute, you simply have to run (double-click) the main template, NetTiers.cst found in the root of the folder found where you extracted the templates. CodeSmith Explorer will begin, and you will see the .netTiers Property Set. 
@@ -68,7 +68,7 @@ This is all that is required to generate a successful Data Access Layer from the
 More Information
 --------------------
 For more options and detailed instructions please see:
-http://www.nettiers.com/GettingStarted.ashx
+http://www.nettiers.net/GettingStarted.ashx
 
 Known Issues
 --------------------
@@ -77,11 +77,11 @@ Oracle - Custom Stored Procedures do not work.
 Oracle - Unit tests do not work.
 SQL CE - SQLCE4 is not yet supported.
 SQL CE - To run the generated admin website, you must follow these steps http://gbuchoa2.blogspot.com/2009/10/sql-server-compact-is-not-intended-for.html
-If you are using the Service Layer and an exception occurs saying entlib.config does not exist than you will neeed to change the policy name in the configuration file from NoneExceptionPolicy to ServiceLayerExceptionPolicy (http://nettiers.com/ComponentLayer.ashx#ExceptionHandling_Configuration:_2).
+If you are using the Service Layer and an exception occurs saying entlib.config does not exist than you will neeed to change the policy name in the configuration file from NoneExceptionPolicy to ServiceLayerExceptionPolicy (http://nettiers.net/ComponentLayer.ashx#ExceptionHandling_Configuration:_2).
 
 http://code.google.com/p/nettiers/issues/list
 -----------------------------
 .netTiers Support
 -----------------------------
-You can find more information on .netTiers Support @ http://www.nettiers.com/Support.ashx
+You can find more information on .netTiers Support @ http://www.nettiers.net/Support.ashx
 This will direct you to the community forums site and/or a paid ticket based support option.

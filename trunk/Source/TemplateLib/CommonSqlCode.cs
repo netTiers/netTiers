@@ -6108,6 +6108,12 @@ CREATE\s+PROC(?:EDURE)?                               # find the start of the st
                 case ( VSNetVersion.v2010 ) :
                     versionNumber = "10.0";
                     break;
+                case ( VSNetVersion.v2012 ) :
+                    versionNumber = "11.0";
+                    break;
+                case ( VSNetVersion.v2013 ) :
+                    versionNumber = "12.0";
+                    break;
             }
 
             return versionNumber;
@@ -6124,6 +6130,12 @@ CREATE\s+PROC(?:EDURE)?                               # find the start of the st
                     break;
                 case ( VSNetVersion.v2010 ) :
                     versionNumber = "11.00";
+                    break;
+                case ( VSNetVersion.v2012 ) :
+                    versionNumber = "12.00";
+                    break;
+                case ( VSNetVersion.v2013 ) :
+                    versionNumber = "13.00";
                     break;
             }
 
@@ -6142,6 +6154,12 @@ CREATE\s+PROC(?:EDURE)?                               # find the start of the st
                 case ( VSNetVersion.v2010 ) :
                     versionNumber = "10.0.20506";
                     break;
+                case ( VSNetVersion.v2012 ) :
+                    versionNumber = "11.0.60610.01";
+                    break;
+                case ( VSNetVersion.v2013 ) :
+                    versionNumber = "12.0.21005.1";
+                    break;
             }
 
             return versionNumber;
@@ -6155,7 +6173,11 @@ CREATE\s+PROC(?:EDURE)?                               # find the start of the st
             switch ( version )
             {
                 case ( VSNetVersion.v2010 ) :
+                case ( VSNetVersion.v2012 ) :
                     toolsVersion = "4.0";
+                    break;
+                case ( VSNetVersion.v2013 ) :
+                    toolsVersion = "12.0";
                     break;
             }
 
@@ -6173,6 +6195,12 @@ CREATE\s+PROC(?:EDURE)?                               # find the start of the st
                     break;
                 case ( VSNetVersion.v2010 ) :
                     versionNumber = "2010";
+                    break;
+                case ( VSNetVersion.v2012 ) :
+                    versionNumber = "2012";
+                    break;
+                case ( VSNetVersion.v2013 ) :
+                    versionNumber = "2013";
                     break;
             }
 
@@ -6193,6 +6221,12 @@ CREATE\s+PROC(?:EDURE)?                               # find the start of the st
                 case ( VSNetVersion.v2010 ) :
                     versionNumber = "10.0.0.0";
                     break;
+                case ( VSNetVersion.v2012 ) :
+                    versionNumber = "11.0.0.0";
+                    break;
+                case ( VSNetVersion.v2013 ) :
+                    versionNumber = "12.0.0.0";
+                    break;
             }
 
             return versionNumber;
@@ -6210,7 +6244,10 @@ CREATE\s+PROC(?:EDURE)?                               # find the start of the st
                     break;
                 case ( DotNetFrameworkVersion.v4 ) :
                     versionNumber = "4.0";
-                break;
+                    break;
+                case ( DotNetFrameworkVersion.v4_5 ) :
+                    versionNumber = "4.5";
+                    break;
             }
 
 			return versionNumber;
@@ -6492,9 +6529,11 @@ CREATE\s+PROC(?:EDURE)?                               # find the start of the st
 
     public enum VSNetVersion
     {
-        v2005
-        ,v2008
-        ,v2010
+        v2005,
+        v2008,
+        v2010,
+        v2012,
+        v2013
     }
 
     public enum DotNetFrameworkVersion
@@ -6506,7 +6545,9 @@ CREATE\s+PROC(?:EDURE)?                               # find the start of the st
         /// <summary> version 3.5 </summary>
         v3_5,
         /// <summary> version 4.0 </summary>
-        v4
+        v4,
+        /// <summary> version 4.5 </summary>
+        v4_5
     }
     #endregion
 
@@ -6901,7 +6942,7 @@ using System.Diagnostics;
 [System.Diagnostics.DebuggerStepThroughAttribute()]
 [System.ComponentModel.DesignerCategoryAttribute("code")]
 [System.Xml.Serialization.XmlTypeAttribute(AnonymousType=false)]
-[System.Xml.Serialization.XmlRootAttribute(Namespace="http://www.nettiers.com/NetTiersMap.xsd", IsNullable=false)]
+[System.Xml.Serialization.XmlRootAttribute(Namespace="http://www.nettiers.net/NetTiersMap.xsd", IsNullable=false)]
 public partial class NetTiersMap {
 
     [NonSerialized]
@@ -6937,7 +6978,7 @@ public partial class NetTiersMap {
 [System.SerializableAttribute()]
 [System.Diagnostics.DebuggerStepThroughAttribute()]
 [System.ComponentModel.DesignerCategoryAttribute("code")]
-[System.Xml.Serialization.XmlTypeAttribute(Namespace="http://www.nettiers.com/NetTiersMap.xsd")]
+[System.Xml.Serialization.XmlTypeAttribute(Namespace="http://www.nettiers.net/NetTiersMap.xsd")]
 public partial class TableMetaData {
 
     private ColumnMetaDataCollection columnField;
@@ -7062,7 +7103,7 @@ public partial class TableMetaData {
 [System.SerializableAttribute()]
 [System.Diagnostics.DebuggerStepThroughAttribute()]
 [System.ComponentModel.DesignerCategoryAttribute("code")]
-[System.Xml.Serialization.XmlTypeAttribute(Namespace="http://www.nettiers.com/NetTiersMap.xsd")]
+[System.Xml.Serialization.XmlTypeAttribute(Namespace="http://www.nettiers.net/NetTiersMap.xsd")]
 public partial class ViewMetaData {
 
     private ColumnMetaDataCollection columnField;
@@ -7175,7 +7216,7 @@ public partial class ViewMetaData {
 [System.SerializableAttribute()]
 [System.Diagnostics.DebuggerStepThroughAttribute()]
 [System.ComponentModel.DesignerCategoryAttribute("code")]
-[System.Xml.Serialization.XmlTypeAttribute(Namespace="http://www.nettiers.com/NetTiersMap.xsd")]
+[System.Xml.Serialization.XmlTypeAttribute(Namespace="http://www.nettiers.net/NetTiersMap.xsd")]
 public partial class ColumnMetaData {
 
     private string idField;
@@ -7262,7 +7303,7 @@ public partial class ColumnMetaData {
 [System.SerializableAttribute()]
 [System.Diagnostics.DebuggerStepThroughAttribute()]
 [System.ComponentModel.DesignerCategoryAttribute("code")]
-[System.Xml.Serialization.XmlTypeAttribute(Namespace="http://www.nettiers.com/NetTiersMap.xsd")]
+[System.Xml.Serialization.XmlTypeAttribute(Namespace="http://www.nettiers.net/NetTiersMap.xsd")]
 public partial class ChildCollectionMetaData {
 
     private string idField;
