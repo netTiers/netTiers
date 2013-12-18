@@ -4,7 +4,7 @@
 	<xsl:template match="/NetTiersReport">		
 		<html>
 			<head>
-                <link href="http://nettiers.com/common/styles.css" rel="stylesheet" type="text/css"/>
+                <link href="http://nettiers.net/common/styles.css" rel="stylesheet" type="text/css"/>
                 <style>
 				      span.executionTime {font-style: italic; color: #55AEED;}
 	            </style>
@@ -14,9 +14,9 @@
 				<table width="100%" border="0" cellspacing="2" cellpadding="2">
 					<tr>
                         <td width="700">
-                            <a href="http://code.google.com/p/nettiers/downloads/" target="_blank"><img border="0" src="http://www.nettiers.com/GetFile.aspx?File=Summary_Logo.gif" alt=".netTiers 2.3"  /></a>
+                            <a href="http://code.google.com/p/nettiers/downloads/" target="_blank"><img border="0" src="http://www.nettiers.net/GetFile.aspx?File=Summary_Logo.gif" alt=".netTiers 2.3"  /></a>
                             <hr /><div>
-                              <a href="http://nettiers.com/">Website</a>
+                              <a href="http://nettiers.net/">Website</a>
                              &#160;&#160; | &#160;&#160; 
                              <a href="http://community.codesmithtools.com/nettiers/f/default.aspx">Forums</a>
                              &#160;&#160; | &#160;&#160; 
@@ -73,7 +73,7 @@
               <p>To Configure your application to use .netTiers, add the following sections to your App / Web config files.
 			
 			 You can find more information on how to set this up at<br/> 
-			 <a href="http://nettiers.com/DocumentationPage.ashx">.netTiers 2.3 Install and Configuration Document @ http://nettiers.com/DocumentationPage.ashx</a>
+			 <a href="http://nettiers.net/DocumentationPage.ashx">.netTiers 2.3 Install and Configuration Document @ http://nettiers.net/DocumentationPage.ashx</a>
             </p>
             <p>1. Add a new section to the configSections</p>
             
@@ -125,7 +125,7 @@
           <div id="Documentation" style="display:inline">
             <a name="documentation"></a>
             <h3>Documentation <a href="#top" class="calloutlink" >Top</a></h3>
-            <a href="http://wiki.nettiers.com">.netTiers 2.0 Getting Started</a><br /><br />
+            <a href="http://wiki.nettiers.net">.netTiers 2.0 Getting Started</a><br /><br />
 
             <b>Sample API Usage</b>
             <br /><table style="border: 1px dashed rgb(255, 153, 0); background-color: rgb(255, 255, 223);" bgcolor="#ffffdf"><tbody><tr><td><pre><font color="black" face="Courier New" size="2">
