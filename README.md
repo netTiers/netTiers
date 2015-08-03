@@ -3,16 +3,16 @@
 # Overview #
 .netTiers is a set of open source code generation templates that simplify the tasks of creating customized application tiers for your Microsoft .NET applications in just a few minutes.
 
-.netTiers utilizes the power of the best code generation tool available today, [CodeSmith](http://www.codesmithtools.com/). .netTiers generated architecture is custom to your domain, uses familiar patterns, and follows the guidance of Microsoft's recommended patterns and practices. In fact, the .netTiers base architecture is built upon the Microsoft Enterprise Library Application Blocks.
+.netTiers utilizes the power of the best code generation tool available today, [CodeSmith](http://www.codesmithtools.com). .netTiers generated architecture is custom to your domain, uses familiar patterns, and follows the guidance of Microsoft's recommended patterns and practices. In fact, the .netTiers base architecture is built upon the Microsoft Enterprise Library Application Blocks.
 
 # Downloads #
-You may download a checked version of .netTiers by clicking on the downloads tab above.  If you are interested in using a nightly build then please visit the [nightly builds page](http://nettiers.net/builds/).
+You may download a checked version of .netTiers by clicking on the releases tab above or cloning the repository.
 
 # Documentation #
-All documentation for .netTiers can be found [here](http://nettiers.net/DocumentationPage.ashx). If the documentation is out dated please update the wiki or create an issue and we will see that it is updated.
+All documentation for .netTiers can be found [here](https://github.com/netTiers/netTiers/wiki). If the documentation is out dated please update the wiki or create an issue and we will see that it is updated.
 
 # System Requirements #
-  * [Visual Studio 2005+](http://msdn.microsoft.com/en-us/vstudio/default.aspx)
+  * [Visual Studio 2005+](https://www.visualstudio.com)
   * [CodeSmith Generator Professional 6.x+](http://codesmithtools.com)
   * [Microsoft SQL Server 2000+](http://www.microsoft.com/SQL/default.mspx)/Oracle (Other DB's with limited support depending on provider)
   * [Microsoft .NET 2.0+](http://www.microsoft.com/NET/)
