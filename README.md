@@ -1,9 +1,9 @@
 [![](http://nettiers.net/GetFile.aspx?File=Summary_Logo.gif)](http://nettiers.net)
 
-# Overview #
-.netTiers is a set of open source code generation templates that simplify the tasks of creating customized application tiers for your Microsoft .NET applications in just a few minutes.
+# Overview
+.netTiers is a library of open source [CodeSmith Generator](http://www.codesmithtools.com) templates written in C#.  The intention of the templates are to assist developers with the intention of eliminating repetative mundane coding, and at the same time, provide a full fledged framework that allows you to get started working on what matters the most to you in your applications.  For example, focusing your efforts with the presentation layer, business rules, workflow, and application health  for your application to become a success. Consider .netTiers an application block, only specialized to your domain model, and the growth from within the product will more likely be vertically more than horizontally.  Meaning, future versions will be focusing on providing more things out of the box which will assist you in your everyday development tasks. 
 
-.netTiers utilizes the power of the best code generation tool available today, [CodeSmith](http://www.codesmithtools.com). .netTiers generated architecture is custom to your domain, uses familiar patterns, and follows the guidance of Microsoft's recommended patterns and practices. In fact, the .netTiers base architecture is built upon the Microsoft Enterprise Library Application Blocks.
+The templates effectively build a set of object-relational domain objects for an existing database based off of Model Driven Design (MDD).  MDD essentially is the concept where a predesigned model is used to generate your application.  MDD was made famouis by many UML modelers, such as Rational Rose, etc.  However, with the advent of CodeSmith's rich set meta-data via it's SchemaExplorer, MDD has been particularly easy to adopt for .netTiers through the familiar data model.   It's .netTiers responsibility to have the ability to take a good database design and yield a wonderful generated domain for your codebase.  Since the majority of business applications revolve around data, .netTiers offers up the ability to work with your data in the easiest way possible as soon as possible.
 
 # Downloads #
 You may download a checked version of .netTiers by clicking on the releases tab above or cloning the repository.
