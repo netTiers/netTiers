@@ -18,6 +18,7 @@
 <%@ Property Name="EntLibVersion" Type="MoM.Templates.EntLibVersion" Default="v5_0" Category="02. Framework Generation - Optional" Description="Indicates the Enterprise Library version to use. Options include v3.1, v5.0" %>
 
 <%@ Property Name="NameSpace" Optional="True" Type="System.String" Category="Style" Description="Object Namespace." %>
+<%@ Property Name="EntityCacheLayer" Optional="True" Type="MoM.Templates.CacheLayer" Default="None" Category="Options" Description="Should Caching be enabled for this entity." %>
 	
 <%@ Property Name="UsePartialClass" Type="System.Boolean" Default="true" Category="General" Description="Indicates if partial class should be generated." %>
 <%@ Property Name="EqualitySemantics" Type="MoM.Templates.EqualitySemantics" Default="Value" Category="02. Framework Generation - Optional" Description="Equality semantics used for Entity instances.  If 'Reference', default reference type semantics will be used (based on object identity).  If 'Value', Equals() and GetHashCode() will be overridden to use value semantics (based on object contents)." %>
@@ -88,6 +89,9 @@ using Microsoft.Practices.EnterpriseLibrary.Validation;
 <%}%>
 <% if (DotNetVersion  == MoM.Templates.DotNetFrameworkVersion.v4) {%>using System.ComponentModel.DataAnnotations;<%}%>
 using <%=NameSpace%>.Validation;
+<% if(EntityCacheLayer == MoM.Templates.CacheLayer.EntLib) {%>
+using Microsoft.Practices.EnterpriseLibrary.Caching;
+<%}%>
 #endregion
 
 namespace <%=NameSpace%>
@@ -101,7 +105,7 @@ namespace <%=NameSpace%>
 	[Serializable]
 	<% } %>
 	[DataObject, CLSCompliant(true)]
-	public abstract partial class <%=abstractClassName%> : EntityBase, <%=interfaceName%>, IEntityId<<%= keyClassName %>>, System.IComparable, System.ICloneable, ICloneableEx, IEditableObject, IComponent, INotifyPropertyChanged
+	public abstract partial class <%=abstractClassName%> : EntityBase, <%=interfaceName%>, IEntityId<<%= keyClassName %>>, System.IComparable, System.ICloneable, ICloneableEx, IEditableObject, IComponent, INotifyPropertyChanged<% if(EntityCacheLayer != MoM.Templates.CacheLayer.None) {%>, IEntityCacheItem<% } %>
 	{		
 		#region Variable Declarations
 		
@@ -1205,6 +1209,29 @@ WriteRelationshipPropertyString();
 			}
 		} 
 		#endregion
+        
+        <% if(EntityCacheLayer == MoM.Templates.CacheLayer.EntLib) {%>
+        #region Cache Attributes
+        
+        /// <summary>
+        /// Entity Cache Duration
+        /// </summary>
+        public TimeSpan EntityCacheDuration { get; set; }
+        /// <summary>
+        /// Entity Cache Priority
+        /// </summary>
+        public CacheItemPriority EntityCacheItemPriority { get; set; }
+        /// <summary>
+        /// Entity Cach Expiration
+        /// </summary>
+        public ICacheItemExpiration EntityCacheItemExpiration { get; set; }
+        /// <summary>
+        /// Entity Refresh Action
+        /// </summary>
+        public ICacheItemRefreshAction EntityCacheItemRefreshAction { get; set; }
+
+        #endregion
+        <% } %>
 			
 	} // End Class
 	
