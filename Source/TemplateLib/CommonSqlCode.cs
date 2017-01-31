@@ -6424,7 +6424,7 @@ CREATE\s+PROC(?:EDURE)?                               # find the start of the st
             }
             else
             {
-                return "EntityCacheOptions _cacheOptions = EntityCacheOptions.None, EntityCachePolicy _cachePolicy = null";
+                return "EntityCacheOptions _cacheOptions, EntityCachePolicy _cachePolicy = null";
             }
         }
     }
