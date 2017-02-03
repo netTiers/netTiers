@@ -21,6 +21,8 @@
 <%@ Property Name="UsePartialClass" Type="System.Boolean" Default="true" Category="General" Description="Indicates if partial class should be generated." %>
 <%@ Property Name="RenderOverload" Type="System.Boolean" Default="False" Category="Options" Description="If true the overloaded methods will be generated." %>
 <%@ Property Name="RenderImplementation" Type="System.Boolean" Default="False" Category="Options" Description="If true the implementation methods will be generated." %>
+<%@ Property Name="CreateEntityCache" Optional="True" Type="System.Boolean" Default="False" Category="Options" Description="Should Caching be enabled for this entity." %>
+<%@ Property Name="DotNetVersion" Type="MoM.Templates.DotNetFrameworkVersion" Default="v4_5" Category="02. Framework Generation - Optional" Description="Indicates the Version of Dot Net to target. Options include v2, v3 and v3.5" %>
 
 <%
 
@@ -160,6 +162,63 @@
 					
 				getbyKeys.Add(GetKeysName(fkeys[j].ForeignKeyMemberColumns));
 		%>	
+        
+    	<% if(CreateEntityCache) {%>
+		/// <summary>
+        ///     Checks and creates cache first.
+		/// 	<%= constructorAccessModifier %> method that Gets rows in a <see cref="<%=collectionClassNameComment %>" /> from the datasource based on the <%=fkeys[j].Name%> key.
+		///		<%=fkeys[j].Name%> Description: <%=GetColumnXmlComment(fkeys[j],2)%>
+		/// </summary>
+		<% for (int i = 0; i < fkeys[j].ForeignKeyMemberColumns.Count; i++) { %>
+		/// <param name="<%= GetFieldName(fkeys[j].ForeignKeyMemberColumns[i])%>"><%=GetColumnXmlComment(fkeys[j].ForeignKeyMemberColumns[i],2)%></param>
+		<% } %>
+		/// <param name="_cacheOptions">General features directing what the caching method is doing</param>
+		/// <param name="_cachePolicy">The Entity Caching policy</param>
+		/// <returns>Returns a generic collection of <%=className%> objects from cache.</returns>
+		[DataObjectMethod(DataObjectMethodType.Select)]
+		<%= constructorAccessModifier %> <%=collectionClassName%> <%=partialClassInternalPrefix%>GetBy<%=GetKeysName(fkeys[j].ForeignKeyMemberColumns)%>(<%= GetFunctionHeaderParameters(fkeys[j].ForeignKeyMemberColumns) %>, <%= GetCacheFunctionParameters(DotNetVersion) %>)
+		{
+
+			#region Security check
+			// throws security exception if not authorized
+			SecurityContext.IsAuthorized("GetBy<%=GetKeysName(fkeys[j].ForeignKeyMemberColumns)%>");
+			#endregion Security check
+			
+			#region Initialisation
+			<%= collectionClassName %> list = null;
+			#endregion Initialisation
+			
+            #region Cache
+            
+            string cacheKey = new System.Text.StringBuilder("<%=abstractClassName%>.<%=partialClassInternalPrefix%>GetBy<%=GetKeysName(fkeys[j].ForeignKeyMemberColumns)%>")<% foreach(ColumnSchema col in fkeys[j].ForeignKeyMemberColumns) { %>.Append("|<%=GetFieldName(col)%>|").Append(<%=GetFieldName(col)%>)<% } %>.ToString();
+
+            if (_cacheOptions == EntityCacheOptions.UpdateCache || _cacheOptions == EntityCacheOptions.RemoveFromCache)
+            {
+                EntityCache.RemoveItem(cacheKey);
+
+                if (_cacheOptions == EntityCacheOptions.RemoveFromCache)
+                    return null;
+            }
+            else
+            {
+                list = EntityCache.GetItem<<%=collectionClassName%>>(cacheKey.ToString());
+                if (list != null)
+                {
+                    return list;
+                }
+            }
+            
+            #endregion
+            
+            list = <%=partialClassInternalPrefix%>GetBy<%=GetKeysName(fkeys[j].ForeignKeyMemberColumns)%>(<%= GetFunctionCallParameters(fkeys[j].ForeignKeyMemberColumns) %>);
+
+            if (list != null && list.Count > 0)
+                EntityCache.AddCache(cacheKey, list, _cachePolicy);
+				
+			return list;
+		}
+        <% } %>
+        
 		/// <summary>
 		/// 	<%= constructorAccessModifier %> method that Gets rows in a <see cref="<%=collectionClassNameComment %>" /> from the datasource based on the <%=fkeys[j].Name%> key.
 		///		<%=fkeys[j].Name%> Description: <%=GetColumnXmlComment(fkeys[j],2)%>
@@ -183,6 +242,8 @@
 			NetTiersProvider dataProvider = null;
 			#endregion Initialisation
 			
+            
+            
 			try
             {					
 				transactionManager = ConnectionScope.ValidateOrCreateTransaction(noTranByDefault);
@@ -313,6 +374,60 @@
 				string returnTypeForComment = returnType.Replace("<", "{").Replace(">", "}");
 		%>
 
+    	<% if(CreateEntityCache) {%>
+		/// <summary>
+        ///  Enable Caching on index
+		///  method that Gets rows in a <see cref="<%=collectionClassNameComment %>" /> from the datasource based on the primary key <%=indexes[j].Name%> index.
+		/// </summary>
+		<% for (int i = 0; i < indexes[j].MemberColumns.Count; i++) { %>
+		/// <param name="<%= GetFieldName(indexes[j].MemberColumns[i])%>"><%=GetColumnXmlComment( indexes[j].MemberColumns[i],2)%></param>
+		<% } %>
+		/// <param name="_cacheOptions">General features directing what the caching method is doing</param>
+		/// <param name="_cachePolicy">The Entity Caching policy</param>
+		/// <returns>Returns an instance of the <see cref="<%= returnTypeForComment %>"/> class.</returns>
+		[DataObjectMethod(DataObjectMethodType.Select)]
+		<%= constructorAccessModifier %> <%=returnType%> <%=partialClassInternalPrefix%>GetBy<%=GetKeysName(indexes[j].MemberColumns)%>(<%= GetFunctionHeaderParameters(indexes[j].MemberColumns) %>, <%= GetCacheFunctionParameters(DotNetVersion) %>)
+		{
+			#region Security check
+			// throws security exception if not authorized
+			SecurityContext.IsAuthorized("GetBy<%=GetKeysName(indexes[j].MemberColumns)%>");
+			#endregion Security check
+			
+			#region Initialisation
+			<%=returnType%> <%= returnTypeVar %> = null;
+			#endregion Initialisation
+			
+            #region Cache
+            
+            string cacheKey = new System.Text.StringBuilder("<%=abstractClassName%>.<%=partialClassInternalPrefix%>GetBy<%=GetKeysName(indexes[j].MemberColumns)%>")<% foreach(ColumnSchema col in indexes[j].MemberColumns) { %>.Append("|<%=GetFieldName(col)%>|").Append(<%=GetFieldName(col)%>)<% } %>.ToString();
+
+            if (_cacheOptions == EntityCacheOptions.UpdateCache || _cacheOptions == EntityCacheOptions.RemoveFromCache)
+            {
+                EntityCache.RemoveItem(cacheKey);
+
+                if (_cacheOptions == EntityCacheOptions.RemoveFromCache)
+                    return null;
+            }
+            else
+            {
+                <%= returnTypeVar %> = EntityCache.GetItem<<%=returnType%>>(cacheKey.ToString());
+                if (<%= returnTypeVar %> != null)
+                {
+                    return <%= returnTypeVar %>;
+                }
+            }
+            
+            #endregion
+            
+            <%= returnTypeVar %> = <%=partialClassInternalPrefix%>GetBy<%=GetKeysName(indexes[j].MemberColumns)%>(<%= GetFunctionCallParameters(indexes[j].MemberColumns) %>);
+
+            if (<%= returnTypeVar %> != null)
+                EntityCache.AddCache(cacheKey, <%= returnTypeVar %>, _cachePolicy);
+				
+			return <%= returnTypeVar %>;
+		}
+		<% } %>
+		
 		/// <summary>
 		///  method that Gets rows in a <see cref="<%=collectionClassNameComment %>" /> from the datasource based on the primary key <%=indexes[j].Name%> index.
 		/// </summary>
@@ -409,7 +524,60 @@
 	
 		<% if (IncludeGetList) { %>
 		#region <%=partialClassInternalPrefix%><%= MethodNames.GetAll %>
-		/// <summary>
+
+    	<% if(CreateEntityCache) {%>
+
+        /// <summary>
+		/// Get a complete collection of <see cref="<%= className %>" /> entities.
+        /// With Caching enabled.
+		/// </summary>
+		/// <param name="_cacheOptions">General features directing what the caching method is doing</param>
+		/// <param name="_cachePolicy">The Entity Caching policy</param>
+		/// <returns></returns>
+		<%= constructorAccessModifier %> <%=collectionClassName %> <%=partialClassInternalPrefix%><%= MethodNames.GetAll %>(<%= GetCacheFunctionParameters(DotNetVersion) %>) 
+		{
+			#region Security check
+			// throws security exception if not authorized
+			SecurityContext.IsAuthorized("<%= MethodNames.GetAll %>");
+			#endregion Security check
+			
+			#region Initialisation
+			<%= collectionClassName %> list = null;
+			#endregion Initialisation
+
+            #region Cache
+            
+            string cacheKey = "<%=abstractClassName %>.<%=partialClassInternalPrefix%><%= MethodNames.GetAll %>";
+
+            if (_cacheOptions == EntityCacheOptions.UpdateCache || _cacheOptions == EntityCacheOptions.RemoveFromCache)
+            {
+                EntityCache.RemoveItem(cacheKey);
+
+                if (_cacheOptions == EntityCacheOptions.RemoveFromCache)
+                    return null;
+            }
+            else
+            {
+                list = EntityCache.GetItem<<%= collectionClassName %>>(cacheKey.ToString());
+                if (list != null)
+                {
+                    return list;
+                }
+            }
+            
+            #endregion
+            
+            list = <%=partialClassInternalPrefix%><%= MethodNames.GetAll %>();
+
+            if (list != null && list.Count > 0)
+                EntityCache.AddCache(cacheKey, list, _cachePolicy);
+				
+			return list;
+		}
+
+		<% } %>
+
+        /// <summary>
 		/// Get a complete collection of <see cref="<%= className %>" /> entities.
 		/// </summary>
 		/// <returns></returns>
@@ -1238,7 +1406,72 @@
 		%>
 		
 		#region <%=command.Name%>
+    	<% if(CreateEntityCache && returnType != "void") {%>
 		/// <summary>
+		///	This method wrap the '<%=command.Name%>' stored procedure. 
+        /// Adds a caching layer to this custom sproc.
+		/// </summary><%=TransformStoredProcedureInputsToMethodComments(command.InputParameters) + TransformStoredProcedureOutputsToMethodComments(command.AllOutputParameters)%>
+		/// <param name="_cacheOptions">General features directing what the caching method is doing</param>
+		/// <param name="_cachePolicy">The Entity Caching policy</param>
+		/// <remark>This method is generate from a stored procedure.</remark><% if (returnType != "void") {%>
+		/// <returns>A <see cref="<%=returnTypeForComment%>"/> instance.</returns><%}%>
+		<%= constructorAccessModifier %>  <%=returnType%> <%=methodName%>(<%= (parms.Length > 0 ? parms.TrimStart(',') + "," : "") %> <%= GetCacheFunctionParameters(DotNetVersion) %>)
+		{
+			#region Security check
+			// throws security exception if not authorized
+			SecurityContext.IsAuthorized("<%=methodName%>");
+			#endregion Security check
+		
+			#region Initialisation
+			<%= string.Format("{0} result = null;" , returnType) %> 
+			#endregion Initialisation
+			
+			try
+            {
+                #region Cache
+                
+                string cacheKey = new System.Text.StringBuilder("<%=abstractClassName%>.<%=methodName%>")<% foreach(var col in command.InputParameters) { %>.Append("|<%=GetFieldName(col)%>|").Append(<%=GetFieldName(col)%>)<% } %><% foreach(var col in command.AllOutputParameters) { %>.Append("|<%=GetFieldName(col)%>|").Append(<%=GetFieldName(col)%>)<% } %>.ToString();
+
+                if (_cacheOptions == EntityCacheOptions.UpdateCache || _cacheOptions == EntityCacheOptions.RemoveFromCache)
+                {
+                    EntityCache.RemoveItem(cacheKey);
+
+                    if (_cacheOptions == EntityCacheOptions.RemoveFromCache)
+                        return null;
+                }
+                else
+                {
+                    result = EntityCache.GetItem<<%=returnType%>>(cacheKey.ToString());
+                    if (result != null)
+                    {
+                        return result;
+                    }
+                }
+                
+                #endregion
+                
+                result = <%=methodName%>(<%=TransformStoredProcedureInputsToDataAccess(false, command.InputParameters) + TransformStoredProcedureOutputsToDataAccess(true, command.AllOutputParameters)%>)<%= newCollectionEnd %>;
+
+                if (result != null)
+                    EntityCache.AddCache(cacheKey, result, _cachePolicy);
+    				
+			}
+            catch (Exception exc)
+            {
+				#region Handle transaction rollback and exception
+				
+				//Handle exception based on policy
+                if (DomainUtil.HandleException(exc, layerExceptionPolicy)) 
+					throw;
+                    
+				#endregion Handle transaction rollback and exception
+            }
+			
+			return result;
+		}
+        <% } %>
+        
+        /// <summary>
 		///	This method wrap the '<%=command.Name%>' stored procedure. 
 		/// </summary><%=TransformStoredProcedureInputsToMethodComments(command.InputParameters) + TransformStoredProcedureOutputsToMethodComments(command.AllOutputParameters)%>
 		/// <remark>This method is generate from a stored procedure.</remark><% if (returnType != "void") {%>

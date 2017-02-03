@@ -1,4 +1,4 @@
-using CodeSmith.Engine;
+﻿using CodeSmith.Engine;
 using SchemaExplorer;
 using System;
 using System.Windows.Forms.Design;
@@ -6415,6 +6415,18 @@ CREATE\s+PROC(?:EDURE)?                               # find the start of the st
             }
             return StrToAbbrev;
         }
+        
+        public string GetCacheFunctionParameters(MoM.Templates.DotNetFrameworkVersion DotNetVersion)
+        {
+            if(DotNetVersion == MoM.Templates.DotNetFrameworkVersion.v2 || DotNetVersion == MoM.Templates.DotNetFrameworkVersion.v3 || DotNetVersion == MoM.Templates.DotNetFrameworkVersion.v3_5)
+            {
+                return "EntityCacheOptions _cacheOptions, EntityCachePolicy _cachePolicy";
+            }
+            else
+            {
+                return "EntityCacheOptions _cacheOptions, EntityCachePolicy _cachePolicy = null";
+            }
+        }
     }
 
     #region Retry
@@ -6454,6 +6466,22 @@ CREATE\s+PROC(?:EDURE)?                               # find the start of the st
         //v4_1 = 4
         /// <summary>Use Enterprise Library version 5.0</summary>
         v5_0 = 8
+    }
+
+    #endregion
+
+    #region Caching Layer
+    /// <summary>
+    /// Enterprise Library versions
+    /// </summary>
+    public enum CacheLayer : byte
+    {
+        /// <summary>Do not generate caching layer</summary>
+        None = 0,
+        /// <summary>Use Enterprise Library version</summary>
+        EntLib = 1,
+        /// <summary>System.Runtime.Caching</summary>
+        SysRun = 2
     }
 
     #endregion

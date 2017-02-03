@@ -3,6 +3,7 @@
 <%@ Property Name="NameSpace" Type="System.String" Category="Data" Description="Namespace." %>
 <%@ Property Name="BLLNameSpace" Type="System.String" Category="Data" Description="BLL Namespace." %>
 <%@ Property Name="EntLibVersion" Type="MoM.Templates.EntLibVersion" Default="v5_0" Category="02. Framework Generation - Optional" Description="Indicates the Enterprise Library version to use. Options include v3.1, v5.0" %>
+<%@ Property Name="EntityCacheLayer" Type="MoM.Templates.CacheLayer" Default="None" Category="02. Framework Generation - Optional" Description="Indicates if the Cache code should be written for the enabled CacheTables entities using Enterprise Library or System.Runtime.Caching." %>
 
 <%@ Assembly Name="SchemaExplorer" %>
 <%@ Assembly Name="System.Design" %>
@@ -86,6 +87,15 @@
 			</add>
 		</exceptionPolicies>
 	</exceptionHandling>
+    <%if(EntityCacheLayer == MoM.Templates.CacheLayer.SysRun) { %>
+    <system.runtime.caching>
+        <memoryCache>
+            <namedCaches>
+                <add name="<%= BLLNameSpace %>.EntityCache" cacheMemoryLimitMegabytes="0" physicalMemoryLimitPercentage="0" pollingInterval="00:02:00" />
+            </namedCaches>
+        </memoryCache>
+    </system.runtime.caching>
+    <%} else { %>
 	<cachingConfiguration defaultCacheManager="<%= BLLNameSpace %>.EntityCache">
 		<cacheManagers>
 			<add expirationPollFrequencyInSeconds="60" maximumElementsInCacheBeforeScavenging="1000"
@@ -97,4 +107,5 @@
 			  name="Null Storage" />
 		</backingStores>
 	</cachingConfiguration>
+    <%} %>
 </configuration>

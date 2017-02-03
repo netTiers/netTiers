@@ -73,6 +73,7 @@
 <%@ Property Name="VisualStudioVersion" Type="MoM.Templates.VSNetVersion" Default="v2013" Category="02. Framework Generation - Optional" Description="Indicates the Version of Visual Studio to target. Options include v2005, v2008 and v2010" %>
 <%@ Property Name="DotNetVersion" Type="MoM.Templates.DotNetFrameworkVersion" Default="v4_5" Category="02. Framework Generation - Optional" Description="Indicates the Version of Dot Net to target. Options include v2, v3 and v3.5" %>
 <%@ Property Name="IsConnectionStringAzure" Type="System.Boolean" Default="False" Category="02. Framework Generation - Optional" Description="Indicates if at runtime the netTiersConnectionString is read from Window Azure's ServiceConfiguration.cscfg or from Web.config/app.config." %>
+<%@ Property Name="EntityCacheLayer" Type="MoM.Templates.CacheLayer" Default="None" Category="02. Framework Generation - Optional" Description="Indicates if the Cache code should be written for the enabled CacheTables entities using Enterprise Library or System.Runtime.Caching." %>
 
 <%@ Assembly Name="SchemaExplorer" %>
 <%@ Assembly Name="System.Design" %>
@@ -287,7 +288,10 @@
     <Reference Include="System.Xml"/>
     <Reference Include="System.Configuration" />
     <Reference Include="System.Drawing" />
-	<% if ( IncludeWCFDataAttributes ) { %>    
+    <% if( EntityCacheLayer == MoM.Templates.CacheLayer.SysRun) { %>
+    <Reference Include="System.Runtime.Caching" />
+    <% } %>
+    <% if ( IncludeWCFDataAttributes ) { %>    
     <% if (VisualStudioVersion == MoM.Templates.VSNetVersion.v2010 || VisualStudioVersion == MoM.Templates.VSNetVersion.v2012 || VisualStudioVersion == MoM.Templates.VSNetVersion.v2013) { %>
     <Reference Include="System.Runtime.Serialization" />
     <% } else { %>
@@ -317,6 +321,7 @@
       <SpecificVersion>False</SpecificVersion>
       <HintPath><%= LibraryPath %>\Microsoft.Practices.EnterpriseLibrary.Common.dll</HintPath>
     </Reference>    
+    <% if( EntityCacheLayer != MoM.Templates.CacheLayer.SysRun) { %>
     <Reference Include="Microsoft.Practices.EnterpriseLibrary.Caching, <%= entlibVersionText %>">
       <SpecificVersion>False</SpecificVersion>
       <HintPath><%= LibraryPath %>\Microsoft.Practices.EnterpriseLibrary.Caching.dll</HintPath>
@@ -325,6 +330,7 @@
       <SpecificVersion>False</SpecificVersion>
       <HintPath><%= LibraryPath %>\Microsoft.Practices.EnterpriseLibrary.Caching.Cryptography.dll</HintPath>
     </Reference>
+    <% } %>
     <% if(includeObjectBuilder) { %>
 	<Reference Include="Microsoft.Practices.<%= GetEntLibOBClassName(EntLibVersion)%>, <%= GetEntLibOBVersionSignature(EntLibVersion) %>">
       <SpecificVersion>False</SpecificVersion>

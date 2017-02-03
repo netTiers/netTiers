@@ -1,4 +1,4 @@
-		#region Templates
+﻿		#region Templates
 
 			CodeTemplates.Add("NetTiersMapInstance.Internal.cst", base.CreateTemplate<MappingInstance>()); this.PerformStep();
 			CodeTemplates.Add("vsnet2005.project.cst", base.CreateTemplate<vsnet2005Project>()); this.PerformStep();
@@ -29,6 +29,7 @@
 			CodeTemplates.Add("EntityFactory.cst", base.CreateTemplate<EntityFactory>()); this.PerformStep();
 			CodeTemplates.Add("EntityFactoryBase.cst", base.CreateTemplate<EntityFactoryBase>()); this.PerformStep();
 			CodeTemplates.Add("EntityCache.cst", base.CreateTemplate<EntityCache>()); this.PerformStep();
+			CodeTemplates.Add("EntityCache_EntLib.cst", base.CreateTemplate<EntityCache_EntLib>()); this.PerformStep();
 			CodeTemplates.Add("EntityLocator.cst", base.CreateTemplate<EntityLocator>()); this.PerformStep();
             CodeTemplates.Add("EntityLocator_EntLib5.cst", base.CreateTemplate<EntityLocator_EntLib5>()); this.PerformStep();
 			CodeTemplates.Add("EntityManager.cst", base.CreateTemplate<EntityManager>()); this.PerformStep();
