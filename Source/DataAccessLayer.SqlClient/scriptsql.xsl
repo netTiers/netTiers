@@ -14,7 +14,7 @@ USE [<xsl:value-of select="/root/database"/>]
 GO
 SET QUOTED_IDENTIFIER ON 
 GO
-SET ANSI_NULLS OFF 
+SET ANSI_NULLS <xsl:value-of select="/root/database/@setAnsiNulls"/>
 GO
 <xsl:apply-templates select="//procedures/procedure[not(@skip)]"/>
 </xsl:template>
@@ -44,7 +44,7 @@ SET QUOTED_IDENTIFIER ON
 GO
 SET NOCOUNT ON
 GO
-SET ANSI_NULLS OFF 
+SET ANSI_NULLS <xsl:value-of select="/root/database/@setAnsiNulls"/>
 GO
 </xsl:template>
 
