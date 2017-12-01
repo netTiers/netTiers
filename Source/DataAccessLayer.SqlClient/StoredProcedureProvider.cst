@@ -179,22 +179,23 @@ namespace <%=DALNameSpace%>.SqlClient
 		/// Get the command wrapper, either from the stored procedures or from the embedded queries.
 		/// </summary>
 		/// <param name="database">The database instance.</param>
+		/// <param name="defaultCommandTimeout">the timeout of the sp.</param>
 		/// <param name="commandName">the name of the sp.</param>
 		/// <param name="useStoredProcedure">Indicates if we want stored procedure.</param>
 		/// <returns></returns>
-		public static DbCommand GetCommandWrapper(Database database, string commandName, bool useStoredProcedure)
+		public static DbCommand GetCommandWrapper(Database database, int defaultCommandTimeout, string commandName, bool useStoredProcedure)
 		{
 			if (useStoredProcedure)
 			{
 				DbCommand command = database.GetStoredProcCommand(commandName);
-                command.CommandTimeout = DataRepository.Provider.DefaultCommandTimeout;
+                command.CommandTimeout = defaultCommandTimeout; //DataRepository.Provider.DefaultCommandTimeout;
                 return command;
 			}
 			else
 			{
                 DbCommand command = 
                     database.GetSqlStringCommand(StoredProcedureProvider.GetProcedureBodyFromEmbeddedResource(commandName));
-                command.CommandTimeout = DataRepository.Provider.DefaultCommandTimeout;
+                command.CommandTimeout = defaultCommandTimeout; //DataRepository.Provider.DefaultCommandTimeout;
                 return command; 
             }
 		}
@@ -204,6 +205,7 @@ namespace <%=DALNameSpace%>.SqlClient
 		/// optionally includes server-side paging.
 		/// </summary>
 		/// <param name="database"></param>
+		/// <param name="defaultCommandTimeout"></param>
 		/// <param name="commandName"></param>
 		/// <param name="columnEnum"></param>
 		/// <param name="parameters"></param>
@@ -211,7 +213,7 @@ namespace <%=DALNameSpace%>.SqlClient
 		/// <param name="start"></param>
 		/// <param name="pageLength"></param>
 		/// <returns></returns>
-		public static DbCommand GetCommandWrapper(Database database, String commandName, Type columnEnum, SqlFilterParameterCollection parameters, String orderBy, int start, int pageLength)
+		public static DbCommand GetCommandWrapper(Database database, int defaultCommandTimeout, String commandName, Type columnEnum, SqlFilterParameterCollection parameters, String orderBy, int start, int pageLength)
 		{
 			String query = StoredProcedureProvider.GetProcedureBodyFromEmbeddedResource(commandName);
 			//query = query.Replace(SqlUtil.PAGE_INDEX, string.Concat(SqlUtil.PAGE_INDEX, Guid.NewGuid().ToString("N").Substring(0,8)));
@@ -227,7 +229,7 @@ namespace <%=DALNameSpace%>.SqlClient
 			query = String.Format(query, whereClause, sortExpression, start, (start + pageLength)); 
 
             DbCommand command = database.GetSqlStringCommand(query);
-            command.CommandTimeout = DataRepository.Provider.DefaultCommandTimeout;
+            command.CommandTimeout = defaultCommandTimeout; //DataRepository.Provider.DefaultCommandTimeout;
             return command; 
 		}
 		

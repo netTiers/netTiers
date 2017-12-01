@@ -82,6 +82,7 @@ public abstract partial class <%=providerBaseName%> : <%=GetClassName(SourceView
 	string _connectionString;
     bool _useStoredProcedure;
     string _providerInvariantName;
+	int _defaultCommandTimeout;
 		
 	#region Constructors
 	
@@ -98,13 +99,15 @@ public abstract partial class <%=providerBaseName%> : <%=GetClassName(SourceView
 	/// Uses connection string to connect to datasource.
 	/// </summary>
 	/// <param name="connectionString">The connection string to the database.</param>
+	/// <param name="defaultCommandTimeout">The command timeout for the database calls.</param>
 	/// <param name="useStoredProcedure">A boolean value that indicates if we use stored procedures or embedded queries.</param>
 	/// <param name="providerInvariantName">Name of the invariant provider use by the DbProviderFactory.</param>
-	public <%=providerBaseName%>(string connectionString, bool useStoredProcedure, string providerInvariantName)
+	public <%=providerBaseName%>(string connectionString, int defaultCommandTimeout, bool useStoredProcedure, string providerInvariantName)
 	{
 		this._connectionString = connectionString;
 		this._useStoredProcedure = useStoredProcedure;
 		this._providerInvariantName = providerInvariantName;
+		this._defaultCommandTimeout = defaultCommandTimeout;
 	}
 			
 	#endregion 
@@ -162,7 +165,7 @@ public abstract partial class <%=providerBaseName%> : <%=GetClassName(SourceView
 	public override <%=collectionClassName%> <%= MethodNames.GetAll %>(TransactionManager transactionManager, int start, int pageLength, out int count)
 	{
 		SqlDatabase database = new SqlDatabase(this._connectionString);
-		DbCommand commandWrapper = StoredProcedureProvider.GetCommandWrapper(database, "<%=owner + ProcedurePrefix + GetCleanName(name) + SelectSuffix + SelectAllSuffix%>", _useStoredProcedure);
+		DbCommand commandWrapper = StoredProcedureProvider.GetCommandWrapper(database, this._defaultCommandTimeout, "<%=owner + ProcedurePrefix + GetCleanName(name) + SelectSuffix + SelectAllSuffix%>", _useStoredProcedure);
 		
 		IDataReader reader = null;
 		//Create Collection
@@ -216,7 +219,7 @@ public abstract partial class <%=providerBaseName%> : <%=GetClassName(SourceView
 	public override <%=collectionClassName%> <%= MethodNames.Get %>(TransactionManager transactionManager, string whereClause, string orderBy, int start, int pageLength, out int count)
 	{
 		SqlDatabase database = new SqlDatabase(this._connectionString);
-		DbCommand commandWrapper = StoredProcedureProvider.GetCommandWrapper(database, "<%=owner + ProcedurePrefix + GetCleanName(name) + SelectSuffix%>", _useStoredProcedure);
+		DbCommand commandWrapper = StoredProcedureProvider.GetCommandWrapper(database, this._defaultCommandTimeout, "<%=owner + ProcedurePrefix + GetCleanName(name) + SelectSuffix%>", _useStoredProcedure);
 
 		database.AddInParameter(commandWrapper, "@WhereClause", DbType.String, whereClause);
 		database.AddInParameter(commandWrapper, "@OrderBy", DbType.String, orderBy);
@@ -291,7 +294,7 @@ public abstract partial class <%=providerBaseName%> : <%=GetClassName(SourceView
 			filter = parameters.GetParameters();
 			
 		SqlDatabase database = new SqlDatabase(this._connectionString);
-		DbCommand commandWrapper = StoredProcedureProvider.GetCommandWrapper(database, "<%=owner + ProcedurePrefix + GetCleanName(name) + FindSuffix %>_Dynamic", typeof(<%= className %>Column), filter, orderBy, start, pageLength);
+		DbCommand commandWrapper = StoredProcedureProvider.GetCommandWrapper(database, this._defaultCommandTimeout, "<%=owner + ProcedurePrefix + GetCleanName(name) + FindSuffix %>_Dynamic", typeof(<%= className %>Column), filter, orderBy, start, pageLength);
 		
 		SqlFilterParameter param;
 
@@ -386,7 +389,7 @@ public abstract partial class <%=providerBaseName%> : <%=GetClassName(SourceView
 	public override <%=returnType%> <%=methodName%>(TransactionManager transactionManager, int start, int pageLength<%=methodParms%>)
 	{
 		SqlDatabase database = new SqlDatabase(this._connectionString);
-		DbCommand commandWrapper = StoredProcedureProvider.GetCommandWrapper(database, "<%= GetOwnerName(command, true) %><%=GetSafeName(command.Name)%>", true);
+		DbCommand commandWrapper = StoredProcedureProvider.GetCommandWrapper(database, this._defaultCommandTimeout, "<%= GetOwnerName(command, true) %><%=GetSafeName(command.Name)%>", true);
 		
 		<% foreach(ParameterSchema col in command.InputParameters)	{ %>
 		database.AddInParameter(commandWrapper, "<%=col.Name%>", <%=GetDbType(col)%>,  <%=GetFieldName(col)%> );

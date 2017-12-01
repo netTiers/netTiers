@@ -10,10 +10,16 @@
 <%@ Property Name="RetrySleepTime" Optional="True" Type="System.Int32" Category="Retry" Description="The number of milliseconds that the current thread will sleep between attempts.  Sleep only occurs if an exception is thrown." Default="1000" %>
 <%@ Property Name="RetrySleepStyle" Optional="True" Type="MoM.Templates.SleepStyle" Category="Retry" Description="" %>
 
+<%@ Property Name="CustomDataException" Optional="False" Type="System.Boolean" Category="Exceptions" Description="Enabling this option will cause the NetTiers data later to wrap its exceptions in a custom NetTiersDataException object with additional information." %>
+<%@ Property Name="DbExecutionTimer" Optional="False" Type="System.Boolean" Category="Exceptions" Description="Enabling this option will add a Stopwatch timer count to the custom NetTiersDataException timing how long the database execution was running for." %>
+
 using System;
 using System.Text;
 using System.Data;
 using System.Data.Common;
+using System.Collections.Generic;
+using System.Runtime.Serialization;
+using System.Security.Permissions;
 using Microsoft.Practices.EnterpriseLibrary.Data;
 //PSB 2006-05-26: should we use EntLib ExceptionPolicy.HandleException?
 //using Microsoft.Practices.EnterpriseLibrary.ExceptionHandling;
@@ -442,6 +448,140 @@ namespace <%=DALNameSpace%>
 		#endregion
 		#endregion
 	}
+
+    /// <summary>
+    /// A custom Exception class for NetTiers to throw additional information
+    /// </summary>
+    [Serializable]
+    public class NetTiersDataException : System.Exception
+    {
+        #region Attributes
+
+        /// <summary>
+        /// Specify whether command data exists in this excaption
+        /// </summary>
+        /// 
+        public bool HasCommandData = false;
+
+        /// <summary>
+        /// The DbCommand object CommandText
+        /// </summary>
+        public string CommandText { get; set; }
+
+        /// <summary>
+        /// The DbCommand object CommandText
+        /// </summary>
+        public int CommandTimeout { get; set; }
+
+        /// <summary>
+        /// The DbCommand object CommandText
+        /// </summary>
+        public string CommandType { get; set; }
+
+        /// <summary>
+        /// The DbCommand object CommandText
+        /// </summary>
+        public string ConnectionString { get; set; }
+
+        /// <summary>
+        /// The DbCommand object collection of Parameters
+        /// </summary>
+        public Dictionary<string, string> CommandParameters = new Dictionary<string, string>();
+
+        /// <summary>
+        /// How long the Data call was running for
+        /// </summary>
+        public long ElapsedMilliseconds = 0;
+
+        #endregion
+
+        #region Constructors
+
+        /// <summary>
+        /// Constructor to populate the base exception
+        /// </summary>
+        /// <param name="message">custom message</param>
+        /// <param name="ex">inner exception</param>
+        /// <param name="command">DB Command object</param>
+        public NetTiersDataException(string message, System.Exception ex, DbCommand command) : base(message, ex)
+        {
+            ExtractDbCommand(command);
+        }
+
+        /// <summary>
+        /// Constructor to populate the base exception with milliseconds included
+        /// </summary>
+        /// <param name="message">custom message</param>
+        /// <param name="ex">inner exception</param>
+        /// <param name="command">DB Command object</param>
+        /// <param name="milliseconds">How long the Data call was running for</param>
+        public NetTiersDataException(string message, System.Exception ex, DbCommand command, long milliseconds) : base(message, ex)
+        {
+            ExtractDbCommand(command);
+            ElapsedMilliseconds = milliseconds;
+        }
+
+        /// <summary>
+        /// The deserialization constructor
+        /// </summary>
+        /// <param name="info">serialization info</param>
+        /// <param name="context">streaming context</param>
+        protected NetTiersDataException(System.Runtime.Serialization.SerializationInfo info, System.Runtime.Serialization.StreamingContext context)
+            : base(info, context)
+        {
+            ElapsedMilliseconds = info.GetInt32("ElapsedMilliseconds");
+            HasCommandData = info.GetBoolean("HasCommandData");
+            CommandText = info.GetString("CommandText");
+            CommandTimeout = info.GetInt32("CommandTimeout");
+            CommandType = info.GetString("CommandType");
+            ConnectionString = info.GetString("ConnectionString");
+            CommandParameters = (Dictionary<string, string>)info.GetValue("CommandParameters", typeof(Dictionary<string, string>));
+        }
+
+        #endregion
+
+        /// <summary>
+        /// Extract data from dbcommand so the object can be serialized
+        /// </summary>
+        /// <param name="command">DB Command object</param>
+        private void ExtractDbCommand(DbCommand command)
+        {
+            if (command == null)
+                return;
+
+            HasCommandData = true;
+            CommandText = command.CommandText;
+            CommandTimeout = command.CommandTimeout;
+            CommandType = command.CommandType.ToString();
+            ConnectionString = command.Connection.ConnectionString;
+
+            foreach (System.Data.Common.DbParameter param in command.Parameters)
+                CommandParameters.Add(param.ParameterName, param.Value != null ? param.Value.ToString() : string.Empty);
+        }
+
+        /// <summary>
+        /// Serialization override method
+        /// </summary>
+        /// <param name="info">serialization info</param>
+        /// <param name="context">streaming context</param>
+        [SecurityPermission(SecurityAction.Demand, SerializationFormatter = true)]
+        public override void GetObjectData(SerializationInfo info, StreamingContext context)
+        {
+            if (info == null)
+                throw new ArgumentNullException("info");
+
+            info.AddValue("ElapsedMilliseconds", ElapsedMilliseconds);
+            info.AddValue("HasCommandData", HasCommandData);
+            info.AddValue("CommandText", CommandText);
+            info.AddValue("CommandTimeout", CommandTimeout);
+            info.AddValue("CommandType", CommandType);
+            info.AddValue("ConnectionString", ConnectionString);
+            info.AddValue("CommandParameters", CommandParameters, typeof(Dictionary<string, string>));
+
+            base.GetObjectData(info, context);
+        }
+    }
+
 }
 
 <script runat="template">
@@ -455,7 +595,9 @@ private enum ExecuteType
 }
 
 private static string RetryExecuteCode = 
-@"			{6}{3} results = {7};
+@"			{6}
+            {8}
+            {3} results = {7};
 			for (int attempt = 1; attempt <= {1}; attempt++)
 			{{
 				try
@@ -463,13 +605,14 @@ private static string RetryExecuteCode =
 					results = {5}.Execute{0}(dbCommand{4});
 					break;
 				}}
-				catch (System.Data.SqlClient.SqlException)
+				catch (System.Data.SqlClient.SqlException {9})
 				{{
 					// we could time out due to locks 
 					// or our database may be temporaryly unavailable
 					if (attempt == {1})
-						throw;
-						
+                    {{
+						{10}
+                    }}	
 					System.Threading.Thread.Sleep({2});
 				}}
 			}}
@@ -477,16 +620,16 @@ private static string RetryExecuteCode =
 			return results;";
 
 private static string NoRetryExecuteCode = 
-@"			{6}{3} results = {7};
+@"			{6}
+            {8}
+            {3} results = {7};
 			try
 			{{
 				results = {5}.Execute{0}(dbCommand{4});
 			}}
-			catch (Exception /*ex*/)
+			catch (Exception {9})
 			{{
-				//PSB 2006-05-26: should we use EntLib ExceptionPolicy.HandleException?
-                //if (ExceptionPolicy.HandleException(ex, exceptionPolicy)) throw;
-				throw;
+                {10}
 			}}
 			return results;";
 
@@ -496,6 +639,16 @@ private void WriteExecuteMethod(ExecuteType executeType, bool useTransactions)
 	string sleepType = string.Empty;
 	object[] formatParams = null;
 	bool useRetry = RetryEnabled && RetryMaxAttempts > 1;
+    string customExTimer = (CustomDataException && DbExecutionTimer) ? 
+            @"System.Diagnostics.Stopwatch timer = new System.Diagnostics.Stopwatch();
+            timer.Start();" : "";
+    string customEx = CustomDataException ? "ex" : "";
+    string customExThrow = (CustomDataException && DbExecutionTimer) ?
+            @"timer.Stop();
+                throw new NetTiersDataException(string.Format(""{0} Error: {{0}}"", dbCommand.CommandText), ex, dbCommand, timer.ElapsedMilliseconds);"
+            : CustomDataException ?
+            @"throw new NetTiersDataException(string.Format(""{0} Error: {{0}}"", dbCommand.CommandText), ex, dbCommand);"
+            : "throw;";
 	
 	switch (RetrySleepStyle)
 	{
@@ -521,9 +674,11 @@ private void WriteExecuteMethod(ExecuteType executeType, bool useTransactions)
 					"IDataReader",
 					(useTransactions? ", transactionManager.TransactionObject":""),
 					(useTransactions? "transactionManager.Database":"database"),
-					(useTransactions? "if (!transactionManager.IsOpen) throw new DataException(\"Transaction must be open before executing a query.\");\r\n\t\t\t":""),
-					"null"
-					
+					(useTransactions? "if (!transactionManager.IsOpen) throw new DataException(\"Transaction must be open before executing a query.\");":""),
+					"null",
+                    customExTimer,
+                    customEx,
+                    string.Format(customExThrow, "Reader")
 				};
 			break;
 			
@@ -536,8 +691,11 @@ private void WriteExecuteMethod(ExecuteType executeType, bool useTransactions)
 					"int",
 					(useTransactions? ", transactionManager.TransactionObject":""),
 					(useTransactions? "transactionManager.Database":"database"),
-					(useTransactions? "if (!transactionManager.IsOpen) throw new DataException(\"Transaction must be open before executing a query.\");\r\n\t\t\t":""),
-					"0"
+					(useTransactions? "if (!transactionManager.IsOpen) throw new DataException(\"Transaction must be open before executing a query.\");":""),
+					"0",
+                    customExTimer,
+                    customEx,
+                    string.Format(customExThrow, "NonQuery")
 				};
 			break;
 			
@@ -550,8 +708,11 @@ private void WriteExecuteMethod(ExecuteType executeType, bool useTransactions)
 					"DataSet",
 					(useTransactions? ", transactionManager.TransactionObject":""),
 					(useTransactions? "transactionManager.Database":"database"),
-					(useTransactions? "if (!transactionManager.IsOpen) throw new DataException(\"Transaction must be open before executing a query.\");\r\n\t\t\t":""),
-					"null"
+					(useTransactions? "if (!transactionManager.IsOpen) throw new DataException(\"Transaction must be open before executing a query.\");":""),
+					"null",
+                    customExTimer,
+                    customEx,
+                    string.Format(customExThrow, "DataSet")
 				};
 			break;
 		case ExecuteType.Scalar:
@@ -563,8 +724,11 @@ private void WriteExecuteMethod(ExecuteType executeType, bool useTransactions)
 					"Object",
 					(useTransactions? ", transactionManager.TransactionObject":""),
 					(useTransactions? "transactionManager.Database":"database"),
-					(useTransactions? "if (!transactionManager.IsOpen) throw new DataException(\"Transaction must be open before executing a query.\");\r\n\t\t\t":""),
-					"null"
+					(useTransactions? "if (!transactionManager.IsOpen) throw new DataException(\"Transaction must be open before executing a query.\");":""),
+					"null",
+                    customExTimer,
+                    customEx,
+                    string.Format(customExThrow, "Scalar")
 				};
 			break;
 	}
