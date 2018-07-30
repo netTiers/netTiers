@@ -211,7 +211,8 @@ namespace <%=NameSpace%>
 			
 		#region Properties	
 		
-		#region Data Properties		
+		#region Data Properties
+
 		<% for (int x=0; x < cols.Count; x++) {
 		
 		string dataObjectFieldParams = GetDataObjectFieldCallParams(cols[x]);
@@ -732,10 +733,13 @@ WriteRelationshipPropertyString();
 		/// </returns>
 		public bool IsPropertyChanged(<%= GetClassName(SourceTable, ClassNameFormat.Column) %> column)
 		{
-			switch(column)
+			if (_originalData == null)
+                throw new System.NotSupportedException("Must Call BeginEdit() first.\nvar casted_obj = (System.ComponentModel.IEditableObject)nettiers_generated_obj;\ncasted_obj.BeginEdit();");
+				
+			switch (column)
 			{
 				<% for (int x=0; x < cols.Count; x++) { %>
-					case <%= GetClassName(SourceTable, ClassNameFormat.Column) %>.<%=GetPropertyName(cols[x])%>:
+				case <%= GetClassName(SourceTable, ClassNameFormat.Column) %>.<%=GetPropertyName(cols[x])%>:
 					return entityData.<%=GetPropertyName(cols[x])%> != _originalData.<%=GetPropertyName(cols[x])%>;
 				<% } %>
 			
@@ -753,7 +757,7 @@ WriteRelationshipPropertyString();
 		/// </returns>
 		public override bool IsPropertyChanged(string columnName)
 		{
-			return 	IsPropertyChanged(EntityHelper.GetEnumValue< <%=GetClassName(SourceTable, ClassNameFormat.Column)%> >(columnName));
+			return IsPropertyChanged(EntityHelper.GetEnumValue<<%=GetClassName(SourceTable, ClassNameFormat.Column)%>>(columnName));
 		}
 		
 		/// <summary>
