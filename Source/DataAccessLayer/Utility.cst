@@ -67,7 +67,7 @@ namespace <%=DALNameSpace%>
         Ignore = 3
     }
     #endregion
-        
+
     #endregion
 
     /// <summary>
@@ -198,7 +198,7 @@ namespace <%=DALNameSpace%>
                         DataColumn column = new DataColumn(columnName, (Type)dataRow["DataType"]);
                         dataTable.Columns.Add(column);
                     }
-    
+
                     dataSet.Tables.Add(dataTable);
 
                     // Fill the data table we just created
@@ -206,7 +206,7 @@ namespace <%=DALNameSpace%>
                     while (reader.Read())
                     {
                         DataRow dataRow = dataTable.NewRow();
-    
+
                         for (int i = 0; i < reader.FieldCount; i++)
                             dataRow[i] = reader.GetValue(i);
 
@@ -520,6 +520,11 @@ namespace <%=DALNameSpace%>
         /// </summary>
         public long ElapsedMilliseconds = 0;
 
+        /// <summary>
+        /// Which execute attempt triggered this error
+        /// </summary>
+        public int Attempt = 0;
+
         #endregion
 
         #region Constructors
@@ -530,9 +535,11 @@ namespace <%=DALNameSpace%>
         /// <param name="message">custom message</param>
         /// <param name="ex">inner exception</param>
         /// <param name="command">DB Command object</param>
-        public NetTiersDataException(string message, System.Exception ex, DbCommand command) : base(message, ex)
+        /// <param name="attempt">How many attempts at execution were made</param>
+        public NetTiersDataException(string message, System.Exception ex, DbCommand command, int attempt) : base(message, ex)
         {
             ExtractDbCommand(command);
+            Attempt = attempt;
         }
 
         /// <summary>
@@ -541,10 +548,12 @@ namespace <%=DALNameSpace%>
         /// <param name="message">custom message</param>
         /// <param name="ex">inner exception</param>
         /// <param name="command">DB Command object</param>
+        /// <param name="attempt">How many attempts at execution were made</param>
         /// <param name="milliseconds">How long the Data call was running for</param>
-        public NetTiersDataException(string message, System.Exception ex, DbCommand command, long milliseconds) : base(message, ex)
+        public NetTiersDataException(string message, System.Exception ex, DbCommand command, int attempt, long milliseconds) : base(message, ex)
         {
             ExtractDbCommand(command);
+            Attempt = attempt;
             ElapsedMilliseconds = milliseconds;
         }
 
@@ -622,8 +631,7 @@ private enum ExecuteType
 }
 
 private static string RetryExecuteCode = 
-@"            {6}
-            {8}
+@"            {6}{8}
             {3} results = {7};
             for (int attempt = 1; attempt <= {1}; attempt++)
             {{
@@ -635,20 +643,25 @@ private static string RetryExecuteCode =
                 catch (System.Data.SqlClient.SqlException {9})
                 {{
                     // we could time out due to locks 
-                    // or our database may be temporaryly unavailable
+                    // or our database may be temporarily unavailable
                     if (attempt == {1})
                     {{
+                        {11}
                         {10}
-                    }}    
+                    }}
                     System.Threading.Thread.Sleep({2});
                 }}
+                catch (Exception {9})
+                {{
+                    {11}
+                    {10}
+                }}
             }}
-            
+
             return results;";
 
 private static string NoRetryExecuteCode = 
-@"            {6}
-            {8}
+@"            {6}{8}
             {3} results = {7};
             try
             {{
@@ -656,6 +669,7 @@ private static string NoRetryExecuteCode =
             }}
             catch (Exception {9})
             {{
+                {11}
                 {10}
             }}
             return results;";
@@ -667,14 +681,16 @@ private void WriteExecuteMethod(ExecuteType executeType, bool useTransactions)
     object[] formatParams = null;
     bool useRetry = RetryEnabled && RetryMaxAttempts > 1;
     string customExTimer = (CustomDataException && DbExecutionTimer) ? 
-            @"System.Diagnostics.Stopwatch timer = new System.Diagnostics.Stopwatch();
+            @"
+            System.Diagnostics.Stopwatch timer = new System.Diagnostics.Stopwatch();
             timer.Start();" : "";
+	string customExTimerStop = (CustomDataException && DbExecutionTimer) ? "timer.Stop();" : "";
     string customEx = CustomDataException ? "ex" : "";
+	string customExRetry = useRetry ? "attempt" : "1";
     string customExThrow = (CustomDataException && DbExecutionTimer) ?
-            @"timer.Stop();
-                throw new NetTiersDataException(string.Format(""{0} Error: {{0}}"", dbCommand.CommandText), ex, dbCommand, timer.ElapsedMilliseconds);"
+            @"throw new NetTiersDataException(string.Format(""{0} Error: {{0}}"", dbCommand.CommandText), ex, dbCommand, {1}, timer.ElapsedMilliseconds);"
             : CustomDataException ?
-            @"throw new NetTiersDataException(string.Format(""{0} Error: {{0}}"", dbCommand.CommandText), ex, dbCommand);"
+            @"throw new NetTiersDataException(string.Format(""{0} Error: {{0}}"", dbCommand.CommandText), ex, dbCommand, {1});"
             : "throw;";
     
     switch (RetrySleepStyle)
@@ -705,7 +721,8 @@ private void WriteExecuteMethod(ExecuteType executeType, bool useTransactions)
                     "null",
                     customExTimer,
                     customEx,
-                    string.Format(customExThrow, "Reader")
+                    string.Format(customExThrow, "Reader", customExRetry),
+					customExTimerStop
                 };
             break;
             
@@ -722,7 +739,8 @@ private void WriteExecuteMethod(ExecuteType executeType, bool useTransactions)
                     "0",
                     customExTimer,
                     customEx,
-                    string.Format(customExThrow, "NonQuery")
+                    string.Format(customExThrow, "NonQuery", customExRetry),
+					customExTimerStop
                 };
             break;
             
@@ -739,7 +757,8 @@ private void WriteExecuteMethod(ExecuteType executeType, bool useTransactions)
                     "null",
                     customExTimer,
                     customEx,
-                    string.Format(customExThrow, "DataSet")
+                    string.Format(customExThrow, "DataSet", customExRetry),
+					customExTimerStop
                 };
             break;
         case ExecuteType.Scalar:
@@ -755,7 +774,8 @@ private void WriteExecuteMethod(ExecuteType executeType, bool useTransactions)
                     "null",
                     customExTimer,
                     customEx,
-                    string.Format(customExThrow, "Scalar")
+                    string.Format(customExThrow, "Scalar", customExRetry),
+					customExTimerStop
                 };
             break;
     }
