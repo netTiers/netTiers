@@ -134,6 +134,11 @@
 
 			CodeTemplates.Add("StoredProcedureProvider.cst", base.CreateTemplate<StoredProcedureProvider>()); this.PerformStep();
 			CodeTemplates.Add("StoredProceduresXml.cst", base.CreateTemplate<StoredProceduresXml>()); this.PerformStep();
+			// this got moved inline because the views need to be refreshed before this code is run
+			//CodeTemplates.Add("ViewsXml.cst", base.CreateTemplate<ViewsXml>()); this.PerformStep();
+			CodeTemplates.Add("ExtractProcedureInstance.cst", base.CreateTemplate<ExtractProcedureInstance>()); this.PerformStep();
+			CodeTemplates.Add("ExtractViewInstance.cst", base.CreateTemplate<ExtractViewInstance>()); this.PerformStep();
+			CodeTemplates.Add("ExtractTableInstance.cst", base.CreateTemplate<ExtractTableInstance>()); this.PerformStep();
 
 			CodeTemplates.Add("SqlEntityViewProviderBase.generated.cst", base.CreateTemplate<SqlEntityViewProviderBaseGenerated>()); this.PerformStep();
 			CodeTemplates.Add("SqlEntityViewProvider.cst", base.CreateTemplate<SqlEntityViewProvider>()); this.PerformStep();

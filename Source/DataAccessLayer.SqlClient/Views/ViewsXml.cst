@@ -1,0 +1,91 @@
+﻿<%@ CodeTemplate Src="..\..\TemplateLib\CommonSqlCode.cs" Debug="true" Inherits="MoM.Templates.CommonSqlCode" Language="C#" TargetLanguage="T-SQL"
+	Description="Generates Alter statements for all Views" ResponseEncoding="UTF-8" NoWarn="0108,0618,1572,1573,1574,0162,2002"%>
+
+<%@ Property Name="CompanyName" Optional="True" Type="System.String" Category="General" Description="The name of your company." %>
+<%@ Property Name="CompanyURL" Optional="True" Type="System.String" Category="General" Description="The URL of your company." %>
+
+<%@ Property Name="SourceViews" Type="SchemaExplorer.ViewSchemaCollection" Optional="True" Category="Context" Description="Views that the stored procedures should be based on." %>
+<%@ Property Name="SetAnsiNullsOn" Type="System.Boolean" Default="False" Category="Options" Description="If this is set to True, SET ANSI_NULLS will be ON instead of OFF." %>
+
+<%@ Property Name="IsolationLevel" Type="TransactionIsolationLevelEnum" Default="None" Category="Options" Description="Isolation level to use in generated procedures." %>
+
+	
+<%@ Assembly Name="SchemaExplorer" %>
+<%@ Assembly Name="System.Design" %>
+<%@ Import Namespace="SchemaExplorer" %>
+<%@ Import Namespace="System.Text" %>
+<%@ Import Namespace="System.Text.RegularExpressions" %>
+<%@ Import Namespace="System.Collections" %>
+
+<?xml version="1.0" encoding="utf-8" ?>
+<?xml-stylesheet type='text/xsl' href="viewssql.xsl"?>
+<root xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+	<database setAnsiNulls="<%=(this.SetAnsiNullsOn == true) ? "ON" : "OFF" %>"><%=(SourceViews[0].Database.Name)%></database>
+	<views>
+		<%
+		// loop through all views
+		foreach(ViewSchema view in SourceViews)
+		{
+		%>
+		<view owner="<%=view.Owner%>" name="<%=view.Name%>" fullname="<%=view.FullName%>">
+			<comments><![CDATA[<%=view.Description%>]]></comments>
+			<body><![CDATA[<%=RemoveCreate(view.ViewText).Trim()%>]]></body>
+		</view>
+		<%	
+		} // end of view foreach loop
+		%>
+	</views>
+</root>
+<script runat="template">
+
+public enum TransactionIsolationLevelEnum
+{
+	None,
+	ReadCommitted,
+	ReadUncommitted,
+	RepeatableRead,
+	Serializable,
+	Snapshot
+}
+
+// Used to determine the style of drop statement to be used (if any)
+public enum DropStyleEnum
+{
+	Entity,
+	All
+}
+	
+public string GetSetTransactionIsolationLevelStatement()
+{
+	switch (IsolationLevel)
+	{
+		case TransactionIsolationLevelEnum.None:
+			return "";
+		case TransactionIsolationLevelEnum.ReadCommitted:
+			return "SET TRANSACTION ISOLATION LEVEL READ COMMITTED";
+		case TransactionIsolationLevelEnum.ReadUncommitted:
+			return "SET TRANSACTION ISOLATION LEVEL READ UNCOMMITTED";
+		case TransactionIsolationLevelEnum.RepeatableRead:
+			return "SET TRANSACTION ISOLATION LEVEL REPEATABLE READ";
+		case TransactionIsolationLevelEnum.Serializable:
+			return "SET TRANSACTION ISOLATION LEVEL SERIALIZABLE";
+		case TransactionIsolationLevelEnum.Snapshot:
+			return "SET TRANSACTION ISOLATION LEVEL SNAPSHOT";
+		default:
+			return "SET TRANSACTION ISOLATION LEVEL READ COMMITTED";
+	}
+}
+
+public string RemoveCreate(string body)
+{
+	if (string.IsNullOrWhiteSpace(body))
+        return string.Empty;
+    
+    int start = body.IndexOf("AS", StringComparison.OrdinalIgnoreCase);
+    if (start == -1)
+        return body;
+    
+    return body.Substring(start + 3);
+}
+
+</script>

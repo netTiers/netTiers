@@ -5,6 +5,7 @@
 <%@ Property Name="SourceViews" Type="SchemaExplorer.ViewSchemaCollection" Category="Context" Description="Views that the stored procedures should be based on." %>
 <%@ Property Name="EnumTables" Type="SchemaExplorer.TableSchemaCollection" Category="Context" Description="Tables that the stored procedures should be based on." %>
 
+<%@ Property Name="FilesGuid" Type="System.String" Category="Style" Description="Sql Files Project Guid" %>
 <%@ Property Name="BLLGuid" Type="System.String" Category="Style" Description="BLL Project Guid" %>
 <%@ Property Name="DALGuid" Type="System.String" Category="Style" Description="DAL Project Guid" %>
 <%@ Property Name="DALSqlGuid" Type="System.String" Category="Style" Description="DAL Project Guid" %>
@@ -20,6 +21,7 @@
 <%@ Property Name="OutputDirectory" Type="System.String" Category="General" Description="The root output folder."%>
 
 <%@ Property Name="NameSpace" Type="System.String" Category="Style" Description="Root Namespace" %>
+<%@ Property Name="SQLNamespace" Default="SQL" Type="System.String" Category="Style" Description="Sql Namespace" %>
 <%@ Property Name="BLLNameSpace" Type="System.String" Category="Data" Description="Entities Namespace." %>
 <%@ Property Name="DALNameSpace" Type="System.String" Category="Data" Description="DAL Namespace." %>
 <%@ Property Name="DALSqlNameSpace" Type="System.String" Category="Data" Description="DAL sql Namespace." %>
@@ -41,6 +43,10 @@
 <%@ Property Name="WinLibGuid" Type="System.String" Category="Context" Description="Win Library Project Guid" %>
 <%@ Property Name="WinLibNameSpace" Type="System.String" Category="Data" Description="Win Library Namespace." %>
 <%@ Property Name="IncludeWinLibrary" Type="System.Boolean" Category="Option" Description="" default="false" %>
+
+<%@ Property Name="IncludeSqlSprocs" Type="System.Boolean" Default="False" Category="Option" Description="" %>
+<%@ Property Name="IncludeSqlViews" Type="System.Boolean" Default="False" Category="Option" Description="" %>
+<%@ Property Name="IncludeSqlTables" Type="System.Boolean" Default="False" Category="Option" Description="" %>
 
 <%@ Property Name="IncludeDALBase" Type="System.Boolean" Category="Option" Description="" %>
 <%@ Property Name="IncludeSqlClient" Type="System.Boolean" Category="Option" Description="" %>
@@ -91,7 +97,11 @@
 	string fileName = string.Empty;
 	
 	// the assembly and documentation filename
-	if (IncludeBll)
+	if (IncludeSqlSprocs || IncludeSqlTables || IncludeSqlViews)
+	{
+		fileName = SQLNamespace;
+	}
+	else if (IncludeBll)
 	{
 		fileName =  BLLNameSpace; 
 	}
@@ -173,7 +183,7 @@
     <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
     <ProductVersion><%= GetVisualStudioProductVersionString( VisualStudioVersion ) %></ProductVersion>
     <SchemaVersion>2.0</SchemaVersion>
-    <ProjectGuid>{<% if (IncludeBll) Response.Write(BLLGuid); else if (IncludeComponents) Response.Write(ComponentsGuid); else if (IncludeDALBase) Response.Write(DALGuid); else if (IncludeSqlClient) Response.Write(DALSqlGuid); else if (IncludeGenericClient) Response.Write(DALGenericGuid); else if (IncludeUnitTest != MoM.Templates.UnitTestStyle.None) Response.Write(UTGuid); else if (IncludeWebservice) Response.Write(WSGuid);else if (IncludeWebserviceClient) Response.Write(DALWSGuid); else if (IncludeWebLibrary) Response.Write(WebLibGuid); else if (IncludeWebSecurity) Response.Write(WebSecurityLibGuid); else if (IncludeWinLibrary) Response.Write(WinLibGuid); else if (IncludeWebsite) Response.Write(WebsiteGuid);  %>}</ProjectGuid>
+    <ProjectGuid>{<% if (IncludeBll) Response.Write(BLLGuid); else if (IncludeComponents) Response.Write(ComponentsGuid); else if (IncludeDALBase) Response.Write(DALGuid); else if (IncludeSqlClient) Response.Write(DALSqlGuid); else if (IncludeGenericClient) Response.Write(DALGenericGuid); else if (IncludeUnitTest != MoM.Templates.UnitTestStyle.None) Response.Write(UTGuid); else if (IncludeWebservice) Response.Write(WSGuid);else if (IncludeWebserviceClient) Response.Write(DALWSGuid); else if (IncludeWebLibrary) Response.Write(WebLibGuid); else if (IncludeWebSecurity) Response.Write(WebSecurityLibGuid); else if (IncludeWinLibrary) Response.Write(WinLibGuid); else if (IncludeWebsite) Response.Write(WebsiteGuid); else if (IncludeSqlSprocs || IncludeSqlTables || IncludeSqlViews) Response.Write(FilesGuid);  %>}</ProjectGuid>
 	<% if ( IncludeWebsite ) { %>
     <ProjectTypeGuids>{349c5851-65df-11da-9384-00065b846f21};{fae04ec0-301f-11d3-bf4b-00c04f79efbc}</ProjectTypeGuids>
 	<% } else { %>
@@ -266,8 +276,11 @@
 	<ProjectTypeGuids>{3AC096D0-A1C2-E12C-1390-A8335801FDAB};{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}</ProjectTypeGuids>
 <% } %>
   </PropertyGroup>
+<% if (!IncludeSqlSprocs && !IncludeSqlTables && !IncludeSqlViews) { %>
+
   <ItemGroup>
-    <% if (IsConnectionStringAzure) { %>
+
+   <% if (IsConnectionStringAzure) { %>
 	    <Reference Include="Microsoft.WindowsAzure.ServiceRuntime, Version=1.0.0.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35, processorArchitecture=MSIL">
 	      <SpecificVersion>False</SpecificVersion>
 	      <HintPath>..\References\Microsoft.WindowsAzure.ServiceRuntime.dll</HintPath>
@@ -279,6 +292,8 @@
 		<RequiredTargetFramework><%= GetDotNetFrameworkString( DotNetVersion ) %></RequiredTargetFramework>
 	</Reference>
     <%}%>
+	
+
 <% if (GetDotNetFrameworkString( DotNetVersion ) == "4.5" || GetDotNetFrameworkString( DotNetVersion ) == "4.0" || (ValidationType == MoM.Templates.ValidationType.EntLib && GetDotNetFrameworkString( DotNetVersion ) == "3.5")) {%>
     <Reference Include="System.ComponentModel.DataAnnotations"/>
 <%}%>
@@ -545,7 +560,7 @@
       <Name>System.Web</Name>
     </Reference>
     <%}%>
-	
+
 	</ItemGroup>
 	
 	<% if ((IncludeUnitTest != MoM.Templates.UnitTestStyle.None) || IncludeWebservice) {%>
@@ -576,11 +591,31 @@
         </Compile>		
 	</ItemGroup>
 	
+<% } // end if Include Extracted SQL files (tables/views/sprocs) %>
+	
 	<ItemGroup>
 <%	
 	// Loop on each view
 	for (int i = 0; i < SourceViews.Count; i++)
 	{
+		if (IncludeSqlViews)
+		{%>
+			<Content Include=".\Views\<%=SourceViews[i].FullName%>.sql">
+			</Content>
+		<%} // endif IncludeSqlViews
+
+		if (IncludeSqlSprocs)
+		{
+			System.Collections.IDictionary procs = GetCustomProcedures(SourceViews[i]);
+			foreach(DictionaryEntry item in procs)
+			{
+           		SchemaExplorer.CommandSchema command = (SchemaExplorer.CommandSchema) item.Value;
+			%>
+			<Content Include=".\Procedures\<%=command.FullName%>.sql">
+			</Content>
+		<%  }
+		} // endif IncludeSqlSprocs
+
 		if (IncludeBll)
 		{%>
 			<Compile Include="<%=BLLSubFolder%>Views\<%=GetClassName(SourceViews[i])%>.cs">
@@ -673,6 +708,24 @@
 	// Loop on each table
 	for (int i = 0; i < SourceTables.Count; i++)
 	{
+		if (IncludeSqlTables)
+		{%>
+			<Content Include=".\Tables\<%=SourceTables[i].FullName%>.sql">
+			</Content>
+		<%} // endif IncludeSqlTables
+
+		if (IncludeSqlSprocs)
+		{
+			System.Collections.IDictionary procs = GetCustomProcedures(SourceTables[i]);
+			foreach(DictionaryEntry item in procs)
+			{
+           		SchemaExplorer.CommandSchema command = (SchemaExplorer.CommandSchema) item.Value;
+			%>
+			<Content Include=".\Procedures\<%=command.FullName%>.sql">
+			</Content>
+		<%  }
+		} // endif IncludeSqlSprocs
+
 		if (IncludeBll)
 		{%>
 			<Compile Include="<%=BLLSubFolder%><%=GetClassName(SourceTables[i])%>.cs">
@@ -813,10 +866,13 @@
 		<%}	// endif IncludeWebservice
 	}// endfor SourceTables.Count
 %>		
+<% if (!IncludeSqlSprocs && !IncludeSqlTables && !IncludeSqlViews) { %>
+
 		<Compile Include="..\AssemblyInfo.cs">
 		  <SubType>Code</SubType>
 		</Compile>
-			
+<% } %>
+		
 		<% /* Include the IEntity interface. */ %>
 		<% if (IncludeBll) { %>
 			<Compile Include="<%=BLLSubFolder%>IEntity.cs">
