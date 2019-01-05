@@ -908,6 +908,23 @@ namespace <%= DALNameSpace %>.Bases
         /// Deep Load the entire Entity object with criteria based on the child types array and the DeepLoadType.
         /// </summary>
         /// <remarks>
+        /// This method is only included for backwards compatibility.
+        /// </remarks>
+        /// <param name="mgr">A <see cref="TransactionManager"/> object.</param>
+        /// <param name="entity">The Entity object to load.</param>
+        /// <param name="deep">A flag that indicates whether to recursively load all Property Collections that are descendants of this instance. If True, loads the complete object graph below this object. If False, loads this object only.</param>
+        /// <param name="deepLoadType">DeepLoadType Enumeration to Include/Exclude object property collections from Load.</param>
+        /// <param name="childTypes">Entity Property Collection Type Array To Include or Exclude from Load.</param>
+        /// <param name="innerList">A collection of child types for easy access.</param>
+        public virtual void <%= MethodNames.DeepLoad %>(TransactionManager mgr, Entity entity, bool deep, DeepLoadType deepLoadType, System.Type[] childTypes, DeepSession innerList)
+        {
+            <%= MethodNames.DeepLoad %>(mgr, entity, deep, deepLoadType, childTypes, innerList, -1);
+        }
+
+        /// <summary>
+        /// Deep Load the entire Entity object with criteria based on the child types array and the DeepLoadType.
+        /// </summary>
+        /// <remarks>
         /// This method should be implemented by sub-classes to provide specific deep load functionality.
         /// </remarks>
         /// <param name="mgr">A <see cref="TransactionManager"/> object.</param>
@@ -922,56 +939,6 @@ namespace <%= DALNameSpace %>.Bases
         #endregion <%= MethodNames.DeepLoad %> Entity
 
         #region <%= MethodNames.DeepLoad %> Entity Collection
-
-        /// <summary>
-        /// Deep Load the entire Entity object with criteria based on the child types array and the DeepLoadType.
-        /// </summary>
-        /// <remarks>
-        /// This method should be implemented by sub-classes to provide specific deep load functionality.
-        /// </remarks>
-        /// <param name="mgr">A <see cref="TransactionManager"/> object.</param>
-        /// <param name="entities">The Entity List object to load.</param>
-        /// <param name="deep">A flag that indicates whether to recursively load all Property Collections that are descendants of this instance. If True, loads the complete object graph below this object. If False, loads this object only.</param>
-        /// <param name="deepLoadType">DeepLoadType Enumeration to Include/Exclude object property collections from Load.</param>
-        /// <param name="childTypes">Entity Property Collection Type Array To Include or Exclude from Load.</param>
-        /// <param name="innerList">A collection of child types for easy access.</param>
-        /// <param name="depth">How many levels deep should this object be loaded. -1 for no imposed limit.</param>
-        public void <%= MethodNames.DeepLoad %>(TransactionManager mgr, <%=listName%><Entity> entities, bool deep, DeepLoadType deepLoadType, System.Type[] childTypes, DeepSession innerList, int depth)
-        {
-            #region Argument Validation
-            
-            //Argument checks
-            if (entities == null)
-            {
-                throw new ArgumentNullException("entities", "A valid non-null, <%=listName%><Entity> object is not present.");
-            }
-            if (!Utility.IsIntFlagEnumDefined(typeof(DeepLoadType), deepLoadType))
-            {
-                throw new ArgumentException("A valid DeepLoadType option is not present.", deepLoadType.ToString());
-            }
-            if (childTypes == null)
-            {
-                throw new ArgumentNullException("childTypes", "A valid Type[] array is not present.");
-            }
-            
-            #endregion
-
-            //In case an event can trigger the disabling of the deepload
-            if ((deepLoadType & DeepLoadType.Ignore) == DeepLoadType.Ignore)
-            {
-                return;
-            }
-
-            foreach (Entity entity in entities)
-            {
-                <%= MethodNames.DeepLoad %>(mgr, entity, deep, deepLoadType, childTypes, innerList, depth);
-                // remove the loaded keys for this entity
-                <% //TODO:fix innerList.Keys.Remove(entity.EntityTrackingKey); %>
-            }
-
-            return;
-        }
-
 
         /// <summary>
         /// Deep Load the Entity objects with all of the child property collections only 1 level deep.
@@ -1066,6 +1033,72 @@ namespace <%= DALNameSpace %>.Bases
             foreach (Entity entity in entities)
             {
                 <%= MethodNames.DeepLoad %>(mgr, entity, deep, deepLoadType, childTypes);
+            }
+
+            return;
+        }
+
+        /// <summary>
+        /// Deep Load the Entity objects with criteria based on the child types array and the DeepLoadType.
+        /// </summary>
+        /// <remarks>
+        /// Use this method with caution as it is possible to DeepLoad with recursion and traverse an entire collection's object graph.
+        /// </remarks>
+        /// <param name="mgr">A <see cref="TransactionManager"/> object.</param>
+        /// <param name="entities">The Entity List object to load.</param>
+        /// <param name="deep">A flag that indicates whether to recursively load all Property Collections that are descendants of this instance. If True, loads the complete object graph below this object. If False, loads this object only.</param>
+        /// <param name="deepLoadType">DeepLoadType Enumeration to Include/Exclude object property collections from Load.</param>
+        /// <param name="childTypes">Entity Property Collection Type Array To Include or Exclude from Load.</param>
+        /// <param name="innerList">A collection of child types for easy access.</param>
+        public virtual void <%= MethodNames.DeepLoad %>(TransactionManager mgr, TList<Entity> entities, bool deep, DeepLoadType deepLoadType, System.Type[] childTypes, DeepSession innerList)
+        {
+            <%= MethodNames.DeepLoad %>(mgr, entities, deep, deepLoadType, childTypes, innerList, -1);
+        }
+
+        /// <summary>
+        /// Deep Load the entire Entity object with criteria based on the child types array and the DeepLoadType.
+        /// </summary>
+        /// <remarks>
+        /// This method should be implemented by sub-classes to provide specific deep load functionality.
+        /// </remarks>
+        /// <param name="mgr">A <see cref="TransactionManager"/> object.</param>
+        /// <param name="entities">The Entity List object to load.</param>
+        /// <param name="deep">A flag that indicates whether to recursively load all Property Collections that are descendants of this instance. If True, loads the complete object graph below this object. If False, loads this object only.</param>
+        /// <param name="deepLoadType">DeepLoadType Enumeration to Include/Exclude object property collections from Load.</param>
+        /// <param name="childTypes">Entity Property Collection Type Array To Include or Exclude from Load.</param>
+        /// <param name="innerList">A collection of child types for easy access.</param>
+        /// <param name="depth">How many levels deep should this object be loaded. -1 for no imposed limit.</param>
+        public void <%= MethodNames.DeepLoad %>(TransactionManager mgr, <%=listName%><Entity> entities, bool deep, DeepLoadType deepLoadType, System.Type[] childTypes, DeepSession innerList, int depth)
+        {
+            #region Argument Validation
+            
+            //Argument checks
+            if (entities == null)
+            {
+                throw new ArgumentNullException("entities", "A valid non-null, <%=listName%><Entity> object is not present.");
+            }
+            if (!Utility.IsIntFlagEnumDefined(typeof(DeepLoadType), deepLoadType))
+            {
+                throw new ArgumentException("A valid DeepLoadType option is not present.", deepLoadType.ToString());
+            }
+            if (childTypes == null)
+            {
+                throw new ArgumentNullException("childTypes", "A valid Type[] array is not present.");
+            }
+            
+            #endregion
+
+            //In case an event can trigger the disabling of the deepload
+            if ((deepLoadType & DeepLoadType.Ignore) == DeepLoadType.Ignore)
+            {
+                return;
+            }
+
+            foreach (Entity entity in entities)
+            {
+                <%= MethodNames.DeepLoad %>(mgr, entity, deep, deepLoadType, childTypes, innerList, depth);
+                // remove the loaded keys for this entity
+                <% //TODO:fix innerList.Keys.Remove(entity.EntityTrackingKey); %>
             }
 
             return;
