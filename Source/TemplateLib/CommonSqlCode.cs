@@ -154,7 +154,21 @@ namespace MoM.Templates
         /// Gets or sets a value that indicates if output during generation should
         /// be verbose or not.
         /// </summary>
-        protected bool Verbose { get { return verbose; } set { verbose = value; } }
+        protected bool Verbose
+        {
+            get { return verbose; }
+            set 
+            {
+                verbose = value; 
+                
+                if (verbose && !System.Diagnostics.Debugger.IsAttached)
+                {
+                    // uncomment the following line to launch a debugger to read
+                    // all the debug messages
+                    //System.Diagnostics.Debugger.Launch();
+                }
+            } 
+        }
         private bool verbose = false;
 
 
@@ -3909,7 +3923,7 @@ CREATE\s+PROC(?:EDURE)?                               # find the start of the st
             if (defaultValue.StartsWith("new "))
                 return null;
             
-            return defaultValue;
+            return defaultValue.TrimEnd('m', 'f');
         }
         
         /// <summary>
