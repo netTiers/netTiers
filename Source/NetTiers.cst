@@ -18,7 +18,11 @@
 <%@ Property Name="ChooseSourceDatabase" Type="SchemaExplorer.DatabaseSchema" DeepLoad="True" Optional="False" Category="01. Getting Started - Required" Description="Database that the tables views, and stored procedures should be based on. IMPORTANT!!! If SourceTables and SourceViews are left blank, the Entire Database will then be generated." %>
 
 <%-- 2. Framework Generation Category --%>
-<%@ Property Name="ExecuteSql" Type="System.Boolean" Default="False" Category="02. Framework Generation - Optional" Description="If true the stored procedures are installed on the sql server. (The SQL file is generated in all case)" %>
+<%@ Property Name="ExecuteSql" Type="System.Boolean" Default="False" Category="02. Framework Generation - Optional" Description="If true the stored procedures are installed on the sql server. (The SQL file is generated in all cases)" %>
+<%@ Property Name="ExecuteViews" Type="System.Boolean" Default="False" Category="02. Framework Generation - Optional" Description="If true the views are re-run on the sql server.  This helps to re-generate the meta data for views, and catch views that no longer compile. This causes a double hit to the sql server so generation speed will take a hit. (The SQL View file is generated in all cases)" %>
+<%@ Property Name="ExtractSprocs" Type="System.Boolean" Default="False" Category="02. Framework Generation - Optional" Description="If true the custom stored procedures are extracted and written to individual sql files.  Useful for source control history." %>
+<%@ Property Name="ExtractViews" Type="System.Boolean" Default="False" Category="02. Framework Generation - Optional" Description="If true the database views are extracted and written to individual sql files.  Useful for source control history." %>
+<%@ Property Name="ExtractTables" Type="System.Boolean" Default="False" Category="02. Framework Generation - Optional" Description="If true the database tables are extracted and written to individual sql files.  Useful for source control history." %>
 <%@ Property Name="SQLFolderName" Type="System.String" Category="02. Framework Generation - Optional" Description="The sub folder to output the SQL scripts" Default="SQL" Optional="False"%>
 <%@ Property Name="ViewReport" Type="System.Boolean" Default="True" Category="02. Framework Generation - Optional" Description="Indicates if the html report should launched at the end of the generation." %>
 <%@ Property Name="AutoIncrementBuildVersion" Type="System.Boolean" Default="True" Category="02. Framework Generation - Optional" Description="Indicates if assembley build version should be auto incremented." %>
@@ -727,6 +731,12 @@
 		this.GetTemplate(templateName).RenderToFile(path, overwrite);
 		this._counter++;
 	}
+	public void RenderToFile(CodeTemplate template, string path, bool overwrite)
+	{
+		this._CurrentFileName = path;
+		template.RenderToFile(path, overwrite);
+		this._counter++;
+	}
 
 	// load all the templates and put them into an hashtable
 	public void LoadTemplates()
@@ -1014,49 +1024,6 @@
 			return;
 		}
 		#endregion Check if there is anything to do, if not then exit;		
-	
-		#region Entity Mapping 
-	
-		MappingInstance map = (MappingInstance)base.CreateTemplate<MappingInstance>();	
-		this.CodeTemplate.CopyPropertiesTo(map);  
-		map.MappingFile = this.MappingFile;
-	
-		if (!Directory.Exists(Path.GetDirectoryName(this.MappingFile)))
-			SafeCreateDirectory(Path.GetDirectoryName(this.MappingFile));
-		
-		map.SourceTables = templateSourceTables;
-		map.SourceViews = templateSourceViews;
-		
-		map.UsePascalCasing = this.UsePascalCasing;
-		
-		NetTiers.NetTiersMap netTiersMap = map.GetMapping(this.MappingFile);
-		if (netTiersMap == null && !string.IsNullOrEmpty(MappingFile))
-		{
-			AddMessageNode(initNode, 2, "Generating .netTiers Entity Mapping", false);
-			using (System.IO.StreamWriter sw = new System.IO.StreamWriter(new MemoryStream()))
-			{
-				map.Render(sw);
-				sw.Close();
-			}
-			netTiersMap = map.GetMapping(this.MappingFile);
-			
-			if (netTiersMap == null)
-				AddMessageNode(initNode, 2, "Could not load mapping, mapping feature skipped.", true);	
-		}
-		base.CurrentNetTiersMap = netTiersMap;
-		#endregion  Entity Mapping
-		
-		SetProgress(templateSourceTables.Count + templateSourceViews.Count + (167 * 2));  /*167 templates or so 1 for compiling, 1 for property setting */
-		
-		#region Load templates
-		XmlElement templatesNode = AddMessageNode(initNode, 0, "Loading templates.", false);
-		_CurrentPhase = "Templates compilation";
-		DebugWriteLine("Current Phase: "+_CurrentPhase);
-		
-		// Load All of the Templates
-		LoadTemplates();
-		AddExecutionTime(templatesNode);
-		#endregion Load templates	
 		
 		#region Check the enum tables format (int + text)
 		if (templateEnumTables == null) templateEnumTables = new TableSchemaCollection();	
@@ -1215,6 +1182,18 @@
 		{
 			SafeCreateDirectory(rootPathSQL);
 		}
+        if (ExtractSprocs)
+        {
+			SafeCreateDirectory(rootPathSQL + "\\Procedures");
+        }
+        if (ExtractViews)
+        {
+			SafeCreateDirectory(rootPathSQL + "\\Views");
+        }
+        if (ExtractTables)
+        {
+			SafeCreateDirectory(rootPathSQL + "\\Tables");
+        }
 		#endregion Set up Sql directories	
 		
 		#region Set up web service directories
@@ -1362,17 +1341,229 @@
 		
 		AddExecutionTime(initNode);
 		
-		#endregion Create directories and copy dependencies
-		
-		#region Code generation
-		_CurrentPhase = "Generating global file ";
-		DebugWriteLine("Current Phase: "+_CurrentPhase);
-		
 		System.Xml.XmlElement commonNode = docOutput.CreateElement("common");
 		XmlAttribute att2 = docOutput.CreateAttribute("startTime");
 		att2.Value = DateTime.Now.ToFileTime().ToString();
 		commonNode.Attributes.Append(att2);	
 		docOutput.DocumentElement.AppendChild(commonNode);
+		
+		#endregion Create directories and copy dependencies
+        
+		#region Views SQL
+        
+        // Views need to happen before main template generation so they can refresh the schema if desired.
+		if (GenerateSql && templateSourceViews.Count > 0)
+		{
+			CodeTemplate view_template = null;
+			string xmlOutputName = "";
+			
+			if(_netTiersSqlProvider)
+			{
+				//SQL
+				view_template = base.CreateTemplate<ViewsXml>();
+				xmlOutputName = "Views.xml";
+			}
+			else if (ProviderInvariantName == "System.Data.SQLite")
+			{	
+				view_template = base.CreateTemplate<ExtractViewInstance>();
+				xmlOutputName = "System.Data.SQLite.Views.xml";
+			}
+			else if (ProviderInvariantName == "System.Data.OleDb")
+			{
+				view_template = base.CreateTemplate<ExtractViewInstance>();
+				xmlOutputName = "System.Data.OleDb.Views.xml";
+			}
+			else if (ProviderInvariantName == "System.Data.OracleClient")
+			{			
+				view_template = base.CreateTemplate<ExtractViewInstance>();
+				xmlOutputName = "System.Data.OracleClient.Views.xml";
+			}
+			else if (ProviderInvariantName == "System.Data.SqlServerCe.3.5")
+			{			
+				view_template = base.CreateTemplate<ExtractViewInstance>();
+				xmlOutputName = "System.Data.SqlServerCe.Views.xml";
+			}
+			else if (ProviderInvariantName == "MySql.Data.MySqlClient")
+			{			
+				view_template = base.CreateTemplate<ExtractViewInstance>();
+				xmlOutputName = "MySql.Data.MySqlClient.Views.xml";
+			}
+			else
+			{
+				throw new System.Exception("This provider is not supported.");
+			}
+		
+			XmlElement queriesNode = AddFileNode(commonNode, xmlOutputName);
+			
+			view_template.SetProperty("SourceViews", templateSourceViews);
+			
+			view_template.SetProperty("CompanyName", CompanyName);
+			view_template.SetProperty("CompanyURL", CompanyURL);
+			
+			if(_netTiersSqlProvider)
+			{
+				this.RenderToFile(view_template, rootPathDALSql + "\\Views\\" + xmlOutputName, true);
+			}
+			else if(ProviderInvariantName == "System.Data.OracleClient")
+			{
+				this.RenderToFile(view_template, rootPathDALOracle + "\\Views\\" + xmlOutputName, true);
+			}
+			else if(ProviderInvariantName == "System.Data.SqlServerCe.3.5")
+			{
+				this.RenderToFile(view_template, rootPathDALSqlCe + "\\Views\\" + xmlOutputName, true);
+			}
+			else
+			{
+				this.RenderToFile(view_template, rootPathDALGeneric + "\\Views\\" + xmlOutputName, true);
+			}
+			
+			// Create the SQL File from the XML file
+			XslTransform xslt = new XslTransform();
+			
+			if(_netTiersSqlProvider)
+			{
+				xslt.Load(this.CodeTemplateInfo.DirectoryName + "\\DataAccessLayer.SqlClient\\Views\\viewssql.xsl");
+			}
+			else if(ProviderInvariantName == "System.Data.OracleClient")
+			{
+				xslt.Load(this.CodeTemplateInfo.DirectoryName + "\\DataAccessLayer.SqlClient\\Views\\viewssql.xsl");
+			}
+			else if(ProviderInvariantName == "System.Data.SqlServerCe.3.5")
+			{
+				xslt.Load(this.CodeTemplateInfo.DirectoryName + "\\DataAccessLayer.SqlClient\\Views\\viewssql.xsl");
+			}
+			else if(ProviderInvariantName == "MySql.Data.MySqlClient")
+			{
+                // TODO: Load the Oracle XSLT for now.. This needs to be written..
+				xslt.Load(this.CodeTemplateInfo.DirectoryName + "\\DataAccessLayer.SqlClient\\Views\\viewssql.xsl");
+			}
+            else
+            {
+                //TODO: You need to add your custom provider render when using a third party RDBMS.
+                // Need to load Default XSLT Template for the stored procedures....
+            }
+			             
+			TextWriter writer = null;
+			XPathDocument mydata = null;
+			
+			try
+			{
+				if(_netTiersSqlProvider)
+				{
+					writer = new StreamWriter(rootPathSQL + "\\views.sql");
+					//Create a new XPathDocument and load the XML data to be transformed.
+					mydata = new XPathDocument(rootPathDALSql + "\\Views\\" + xmlOutputName);
+				}
+				else if(ProviderInvariantName == "System.Data.SqlServerCe.3.5")
+				{
+					writer = new StreamWriter(rootPathSQL + "\\views.sql");
+					//Create a new XPathDocument and load the XML data to be transformed.
+					mydata = new XPathDocument(rootPathDALSqlCe + "\\Views\\" + xmlOutputName);
+				}
+				else if(ProviderInvariantName == "System.Data.OracleClient")
+				{
+					writer = new StreamWriter(rootPathSQL + "\\views.sql");
+					
+					//Create a new XPathDocument and load the XML data to be transformed.
+					mydata = new XPathDocument(rootPathDALOracle + "\\Views\\" + xmlOutputName);
+				}
+				else
+				{
+					writer = new StreamWriter(rootPathSQL + "\\views.sql");
+					
+					//Create a new XPathDocument and load the XML data to be transformed.
+					mydata = new XPathDocument(rootPathDALGeneric + "\\Views\\" + xmlOutputName);
+				}
+		
+				xslt.Transform(mydata, null, writer, null);
+				writer.Close();
+			}
+			catch(Exception ex)
+			{
+				Response.WriteLine(ex);
+			}
+			finally
+			{
+				if (writer != null)
+				{
+					writer.Close();
+				}
+			}
+		
+			// Execute the views (refresh meta data).
+			if (_netTiersSqlProvider && ExecuteViews)
+			{
+				try
+				{
+					ExecuteSqlInFile(rootPathSQL + "\\views.sql", SourceDatabase.ConnectionString );
+                    
+                    // Now that the sql has been executed, refresh the view meta data in case in changed.
+                    SourceDatabase.Refresh();
+                    templateSourceViews = new ViewSchemaCollection();
+        			for (int i=0; i < SourceDatabase.Views.Count; i++)
+        			{
+        				templateSourceViews.Add(SourceDatabase.Views[i]);
+        			}
+				}
+				catch(System.Data.SqlClient.SqlException sex)
+				{
+					AddMessageNode(queriesNode, 2, string.Format("Error while executing View Sql file. {0}", sex), true);
+				}
+				catch(Exception ex)
+				{
+					AddMessageNode(queriesNode, 2, string.Format("Error while executing View Sql file. {0}", ex), true);
+				}			
+			}
+		}
+        
+		#endregion Views SQL
+	
+		#region Entity Mapping 
+	
+		MappingInstance map = (MappingInstance)base.CreateTemplate<MappingInstance>();	
+		this.CodeTemplate.CopyPropertiesTo(map);  
+		map.MappingFile = this.MappingFile;
+	
+		if (!Directory.Exists(Path.GetDirectoryName(this.MappingFile)))
+			SafeCreateDirectory(Path.GetDirectoryName(this.MappingFile));
+		
+		map.SourceTables = templateSourceTables;
+		map.SourceViews = templateSourceViews;
+		
+		map.UsePascalCasing = this.UsePascalCasing;
+		
+		NetTiers.NetTiersMap netTiersMap = map.GetMapping(this.MappingFile);
+		if (netTiersMap == null && !string.IsNullOrEmpty(MappingFile))
+		{
+			AddMessageNode(initNode, 2, "Generating .netTiers Entity Mapping", false);
+			using (System.IO.StreamWriter sw = new System.IO.StreamWriter(new MemoryStream()))
+			{
+				map.Render(sw);
+				sw.Close();
+			}
+			netTiersMap = map.GetMapping(this.MappingFile);
+			
+			if (netTiersMap == null)
+				AddMessageNode(initNode, 2, "Could not load mapping, mapping feature skipped.", true);	
+		}
+		base.CurrentNetTiersMap = netTiersMap;
+		#endregion  Entity Mapping
+		
+		SetProgress(templateSourceTables.Count + templateSourceViews.Count + (167 * 2));  /*167 templates or so 1 for compiling, 1 for property setting */
+		
+		#region Load templates
+		XmlElement templatesNode = AddMessageNode(initNode, 0, "Loading templates.", false);
+		_CurrentPhase = "Templates compilation";
+		DebugWriteLine("Current Phase: "+_CurrentPhase);
+		
+		// Load All of the Templates
+		LoadTemplates();
+		AddExecutionTime(templatesNode);
+		#endregion Load templates	
+		
+		#region Code generation
+		_CurrentPhase = "Generating global file ";
+		DebugWriteLine("Current Phase: "+_CurrentPhase);
 		
 		#region List classes
 		//----------------------------------------------------------------------------------------------------------------------------------------------
@@ -1772,6 +1963,7 @@
 		#endregion Entity Classes 3
 		
 		#region Stored procedures
+        
 		if (GenerateSql)
 		{
 			string xmlTemplateName = "";
@@ -1955,16 +2147,70 @@
 				}
 				catch(System.Data.SqlClient.SqlException sex)
 				{
-					AddMessageNode(queriesNode, 2, string.Format("Error while execution Sql file. {0}", sex), true);
+					AddMessageNode(queriesNode, 2, string.Format("Error while executing Procedures Sql file. {0}", sex), true);
 				}
 				catch(Exception ex)
 				{
-					AddMessageNode(queriesNode, 2, string.Format("Error while execution Sql file. {0}", ex), true);
+					AddMessageNode(queriesNode, 2, string.Format("Error while executing Procedures Sql file. {0}", ex), true);
 				}			
 			}
+            
 		}
+        
 		#endregion Stored procedures
-		
+        
+        #region Extract Database Schema
+
+        if (ExtractSprocs)
+        {
+            //Get all custom stored procs for tables
+            foreach(TableSchema table in templateSourceTables)
+            {
+            	System.Collections.IDictionary procs = GetCustomProcedures(table);
+            	
+            	foreach(DictionaryEntry item in procs)
+            	{  
+            		SchemaExplorer.CommandSchema command = (SchemaExplorer.CommandSchema) item.Value;
+    				this.GetTemplate("ExtractProcedureInstance.cst").SetProperty("CommandSchema", command);
+                    this.RenderToFile("ExtractProcedureInstance.cst", rootPathSQL + "\\Procedures\\" + command.FullName + ".sql", true);
+            	}
+            }
+            //Get all custom stored procs for views
+            foreach(ViewSchema view in templateSourceViews)
+            {
+            	System.Collections.IDictionary procs = GetCustomProcedures(view);
+            	
+            	foreach(DictionaryEntry item in procs)
+            	{  
+            		SchemaExplorer.CommandSchema command = (SchemaExplorer.CommandSchema) item.Value;
+    				this.GetTemplate("ExtractProcedureInstance.cst").SetProperty("CommandSchema", command);
+                    this.RenderToFile("ExtractProcedureInstance.cst", rootPathSQL + "\\Procedures\\" + command.FullName + ".sql", true);
+            	}
+            }
+        }
+        
+        if (ExtractViews)
+        {
+            //Get all views
+            foreach(ViewSchema view in templateSourceViews)
+            {
+				this.GetTemplate("ExtractViewInstance.cst").SetProperty("View", view);
+                this.RenderToFile("ExtractViewInstance.cst", rootPathSQL + "\\Views\\" + view.FullName + ".sql", true);
+            }
+        }
+        
+        if (ExtractTables)
+        {
+            //Get all tables
+            foreach(TableSchema table in templateSourceTables)
+            {
+				this.GetTemplate("ExtractTableInstance.cst").SetProperty("Table", table);
+                this.RenderToFile("ExtractTableInstance.cst", rootPathSQL + "\\Tables\\" + table.FullName + ".sql", true);
+            }
+        }
+
+        #endregion Extract Database Schema
+
 		#region Generate common dataaccesslayer
 		if (GenerateDataAccessLayer)
 		{
@@ -2855,6 +3101,7 @@
         #region Set Project FileNames
         
         // Set filenames for .csproj files
+        string SqlFilesFilename = rootPathSQL + "\\" + SQLNamespace + ".csproj";
         string bllFilename = rootPathBLL + "\\" + BLLNameSpace + ".csproj";
         string dalFilename = rootPathDAL + "\\" + DALNameSpace + ".csproj";
         string DALSqlFilename = rootPathDALSql + "\\" + DALSqlNameSpace + ".csproj";
@@ -2872,6 +3119,7 @@
 		#region Set Guids
 		
         // If project files already exist then obtain the GUID from the .csproj file, otherwise generate a new GUID
+		string filesGuid = GetProjectGuid(SqlFilesFilename);
 		string bllGuid = GetProjectGuid(bllFilename); // "20E43088-4618-4F4A-B8AD-FC31B50D94CD"; //Guid.NewGuid().ToString();
 		string dalGuid =  GetProjectGuid(dalFilename); //"041C1BBE-0BFB-4D45-8125-9AB0BBC09A92"; //Guid.NewGuid().ToString();
 		string DALSqlGuid =  GetProjectGuid(DALSqlFilename); //"8996A7B4-57D3-440B-A545-A701844B8C4A"; //Guid.NewGuid().ToString();
@@ -2884,8 +3132,8 @@
 		string componentGuid =  GetProjectGuid(componentFilename); //"794327CE-DC0A-4381-89EE-4C00AFB08D5A"; 
 		string winLibGuid = GetProjectGuid(winLibFilename);// "43FE3BE8-3E46-47CA-8494-473315867DD0"; //Guid.NewGuid().ToString();
 		string websecurityGuid = GetProjectGuid(websecurityFilename); //"417D82D0-4E13-4836-99A2-13062B945C49"; // ADDED BY CHARLIE
-		
-		#endregion Set Guids
+
+        #endregion Set Guids
 	
 		#region Set solution and project template names
 		
@@ -2967,6 +3215,7 @@
 		this.GetTemplate(projectTemplate).SetProperty("WebServiceUrl", WebServiceUrl);
 		this.GetTemplate(projectTemplate).SetProperty("rootPathWS", rootPathWS);
 	
+		this.GetTemplate(projectTemplate).SetProperty("FilesGuid", filesGuid);
 		this.GetTemplate(projectTemplate).SetProperty("BLLGuid", bllGuid);
 		this.GetTemplate(projectTemplate).SetProperty("DALGuid", dalGuid);
 		this.GetTemplate(projectTemplate).SetProperty("DALSqlGuid", DALSqlGuid);
@@ -2982,6 +3231,7 @@
 		this.GetTemplate(projectTemplate).SetProperty("ComponentPattern", ComponentPattern);
 	
 		this.GetTemplate(projectTemplate).SetProperty("NameSpace", NameSpace);
+		this.GetTemplate(projectTemplate).SetProperty("SQLNamespace", SQLNamespace);
 		this.GetTemplate(projectTemplate).SetProperty("BLLNameSpace", BLLNameSpace);
 		this.GetTemplate(projectTemplate).SetProperty("DALNameSpace", DALNameSpace);
 		this.GetTemplate(projectTemplate).SetProperty("ComponentLayerNameSpace", ComponentsNameSpace);
@@ -3091,7 +3341,40 @@
 		#region Data Access project
 		if (GenerateDataAccessLayer) // && !File.Exists(rootPathDAL + "\\" + NameSpace + ".DataAccessLayer.csproj"))
 		{
-			#region Data Access Layer base
+			#region SQL Export Files
+            if(ExtractSprocs || ExtractViews || ExtractTables)
+            {
+    			AddFileNode(commonNode, SQLNamespace + ".csproj");
+    	
+                // set SQL project specific variables
+    			this.GetTemplate(projectTemplate).SetProperty("IncludeSqlSprocs", ExtractSprocs);
+    			this.GetTemplate(projectTemplate).SetProperty("IncludeSqlViews", ExtractViews);
+    			this.GetTemplate(projectTemplate).SetProperty("IncludeSqlTables", ExtractTables);
+    			this.GetTemplate(projectTemplate).SetProperty("IncludeBll", false);
+    			this.GetTemplate(projectTemplate).SetProperty("IncludeDALBase", false);	
+    			this.GetTemplate(projectTemplate).SetProperty("IncludeSqlClient", false);			
+    			this.GetTemplate(projectTemplate).SetProperty("IncludeGenericClient", false);	
+    			this.GetTemplate(projectTemplate).SetProperty("IncludeWebservice", false);
+    			this.GetTemplate(projectTemplate).SetProperty("IncludeWebserviceClient", false);
+    			this.GetTemplate(projectTemplate).SetProperty("IncludeWebLibrary", false);
+    			this.GetTemplate(projectTemplate).SetProperty("IncludeWebSecurity", false);
+    			this.GetTemplate(projectTemplate).SetProperty("IncludeWebsite", false);
+    			this.GetTemplate(projectTemplate).SetProperty("IncludeWinLibrary", false);
+    			this.GetTemplate(projectTemplate).SetProperty("IncludeComponents", false);
+    			this.GetTemplate(projectTemplate).SetProperty("IncludeUnitTest", MoM.Templates.UnitTestStyle.None);			
+    			this.GetTemplate(projectTemplate).SetProperty("IncludeWCFDataAttributes", false);
+    			this.GetTemplate(projectTemplate).SetProperty("IncludeDesignTimeSupport", IncludeDesignTimeSupport);
+    	
+    			this.RenderToFile(projectTemplate, SqlFilesFilename, true);
+
+                // un-set SQL project specific variables
+                this.GetTemplate(projectTemplate).SetProperty("IncludeSqlSprocs", false);
+    			this.GetTemplate(projectTemplate).SetProperty("IncludeSqlViews", false);
+    			this.GetTemplate(projectTemplate).SetProperty("IncludeSqlTables", false);
+            }
+			#endregion SQL Export Files
+
+            #region Data Access Layer base
 			AddFileNode(commonNode, DALNameSpace + "." + DataAccessLayerNameSpace + ".csproj");
 	
 			this.GetTemplate(projectTemplate).SetProperty("IncludeBll", false);

@@ -189,6 +189,67 @@ namespace <%=NameSpace%>.Validation
 
         #endregion
 
+        #region DecimalMaxLength
+
+        /// <summary>
+        /// Rule ensuring a Decimal value doesn't exceed
+        /// a specified length.  Length is Precision minus Scale, and sql cannot handle a length greater than the
+        /// one specified in the database.  Length can also be described as the total number of digits to the
+        /// left of the decimal.
+        /// </summary>
+        /// <param name="target">Object containing the data to validate.</param>
+        /// <param name="e"><see cref="ValidationRuleArgs"/> containing the information about the object to be validated.</param>
+        /// <returns>False if the rule is broken; true otherwise.</returns>
+        /// <remarks>
+        /// This implementation uses late binding, and will only work
+        /// against String property values.
+        /// </remarks>
+        public static bool DecimalMaxLength(object target, ValidationRuleArgs e)
+        {
+            MaxLengthRuleArgs args = e as MaxLengthRuleArgs;
+            if (args != null)
+            {
+                int max = args.MaxLength;
+
+                PropertyInfo p = target.GetType().GetProperty(e.PropertyName);
+
+                if (p != null)
+                {
+                    if (p.PropertyType == typeof(decimal) || p.PropertyType == typeof(decimal?))
+                    {
+                        decimal? value = (decimal?)p.GetValue(target, null);
+
+                        if (value == null)
+                            return true;
+
+                        int left = EntityHelper.GetLeftNumberOfDigits(value.Value);
+
+                        if (left > max)
+                        {
+                            if (string.IsNullOrEmpty(e.Description)) e.Description = String.Format("{0} can not exceed {1} digits left of the decimal", e.FriendlyName, max.ToString());
+                            return false;
+                        }
+                        return true;
+                    }
+                    else
+                    {
+                        throw new ArgumentException(string.Format("Property \"{0}\" is not of type Decimal.", e.PropertyName));
+                    }
+                }
+                else
+                {
+                    throw new ArgumentException(string.Format("Property \"{0}\" not found on object \"{1}\"", e.PropertyName, target.GetType().ToString()));
+                }
+            }
+            else
+            {
+                throw new ArgumentException("Invalid ValidationRuleArgs. e must be of type MaxLengthRuleArgs.");
+            }
+
+        }
+
+        #endregion
+
         #region MaxWords
 
         /// <summary>

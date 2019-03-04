@@ -489,6 +489,7 @@ namespace <%=NameSpace%>
 		#endregion GetAttribute
 		
 		#region Pascal to spaced helper
+        
 		/// <summary>
 		/// Get the Pascal spaced version of a name.  
 		/// </summary>
@@ -505,7 +506,40 @@ namespace <%=NameSpace%>
 		    return regex.Replace(name, " ${x}");
 
 	    }
-		#endregion	
+        
+		#endregion
+
+        #region Decimal Precision and Scale
+
+        /// <summary>
+        /// Number of digits to the right of the decimal point without ending zeros
+        /// </summary>
+        /// <param name="value"></param>
+        /// <returns></returns>
+        public static int GetRightNumberOfDigits(decimal value)
+        {
+            var text = value.ToString(System.Globalization.CultureInfo.InvariantCulture).TrimEnd('0');
+            var decpoint = text.IndexOf(System.Globalization.CultureInfo.InvariantCulture.NumberFormat.NumberDecimalSeparator);
+            if (decpoint < 0)
+                return 0;
+            return text.Length - decpoint - 1;
+        }
+
+        /// <summary>
+        /// Number of digits to the left of the decimal point without starting zeros
+        /// </summary>
+        /// <param name="value"></param>
+        /// <returns></returns>
+        public static int GetLeftNumberOfDigits(decimal value)
+        {
+            var text = Math.Abs(value).ToString(System.Globalization.CultureInfo.InvariantCulture).TrimStart('0');
+            var decpoint = text.IndexOf(System.Globalization.CultureInfo.InvariantCulture.NumberFormat.NumberDecimalSeparator);
+            if (decpoint == -1)
+                return text.Length;
+            return decpoint;
+        }
+
+        #endregion  Decimal Precision and Scale
 			
 		<%
 		if (false)
@@ -629,11 +663,14 @@ namespace <%=NameSpace%>
 		/// <param name="isIdentity"></param>
 		/// <param name="allowDbNull"></param>
 		/// <param name="length"></param>
-		public ColumnEnumAttribute(String name, Type systemType, System.Data.DbType dbType, bool isPrimaryKey, bool isIdentity, bool allowDbNull, int length)
+		public ColumnEnumAttribute(String name, Type systemType, System.Data.DbType dbType, byte precision, int scale, object defaultValue, bool isPrimaryKey, bool isIdentity, bool allowDbNull, int length)
 		{
 			this.Name = name;
 			this.SystemType = systemType;
 			this.DbType = dbType;
+            this.Precision = precision;
+            this.Scale = scale;
+            this.DefaultValue = defaultValue;
 			this.IsPrimaryKey = isPrimaryKey;
 			this.IsIdentity = isIdentity;
 			this.AllowDbNull = allowDbNull;
@@ -649,8 +686,8 @@ namespace <%=NameSpace%>
 		/// <param name="isPrimaryKey"></param>
 		/// <param name="isIdentity"></param>
 		/// <param name="allowDbNull"></param>
-		public ColumnEnumAttribute(String name, Type systemType, System.Data.DbType dbType, bool isPrimaryKey, bool isIdentity, bool allowDbNull)
-			: this(name, systemType, dbType, isPrimaryKey, isIdentity, allowDbNull, -1)
+		public ColumnEnumAttribute(String name, Type systemType, System.Data.DbType dbType, byte precision, int scale, object defaultValue, bool isPrimaryKey, bool isIdentity, bool allowDbNull)
+			: this(name, systemType, dbType, precision, scale, defaultValue, isPrimaryKey, isIdentity, allowDbNull, -1)
 		{
 		}
 
@@ -756,7 +793,49 @@ namespace <%=NameSpace%>
 			set { length = value; }
 		}
 
-		#endregion Properties
+		/// <summary>
+		/// The Precision member variable.
+		/// </summary>
+		private byte precision;
+
+        /// <summary>
+		/// Gets or sets the Precision property.
+		/// </summary>
+		public byte Precision
+		{
+			get { return precision; }
+			set { precision = value; }
+		}
+
+		/// <summary>
+		/// The Scale member variable.
+		/// </summary>
+		private int scale;
+
+        /// <summary>
+		/// Gets or sets the Scale property.
+		/// </summary>
+		public int Scale
+		{
+			get { return scale; }
+			set { scale = value; }
+		}
+
+		/// <summary>
+		/// The DefaultValue member variable.
+		/// </summary>
+		private object defaultValue;
+
+        /// <summary>
+		/// Gets or sets the DefaultValue property.
+		/// </summary>
+		public object DefaultValue
+		{
+			get { return defaultValue; }
+			set { defaultValue = value; }
+		}
+
+        #endregion Properties
 	}
 
 	#endregion ColumnEnumAttribute

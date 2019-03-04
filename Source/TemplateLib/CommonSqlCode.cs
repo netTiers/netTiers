@@ -154,7 +154,21 @@ namespace MoM.Templates
         /// Gets or sets a value that indicates if output during generation should
         /// be verbose or not.
         /// </summary>
-        protected bool Verbose { get { return verbose; } set { verbose = value; } }
+        protected bool Verbose
+        {
+            get { return verbose; }
+            set 
+            {
+                verbose = value; 
+                
+                if (verbose && !System.Diagnostics.Debugger.IsAttached)
+                {
+                    // uncomment the following line to launch a debugger to read
+                    // all the debug messages
+                    //System.Diagnostics.Debugger.Launch();
+                }
+            } 
+        }
         private bool verbose = false;
 
 
@@ -411,15 +425,15 @@ namespace MoM.Templates
         }
 
         [Category("09. Code style - Advanced")]
-        [Description("The format for many to many methods. Parameter {0} is replaced by the secondary class name.")]
+        [Description("The format for many to many methods. Parameter {0} is replaced by the current class name, while parameter {1} is replaced by the secondary class name.")]
         public string ManyToManyFormat
         {
             get {return this.manyToManyFormat;}
             set
             {
-                if (value.IndexOf("{0}") == -1)
+                if (value.IndexOf("{0}") == -1 || value.IndexOf("{1}") == -1)
                 {
-                    throw new ArgumentException("This parameter must contains the pattern {0} to be valid.", "ManyToManyFormat");
+                    throw new ArgumentException("This parameter must contains the patterns {0} and {1} to be valid.", "ManyToManyFormat");
                 }
                 this.manyToManyFormat = value;
             }
@@ -3602,10 +3616,15 @@ namespace MoM.Templates
         /// <param name="column"></param>
         public string GetColumnEnumAttributeParams(ColumnSchema column)
         {
-            return string.Format("\"{0}\", typeof({1}), System.Data.{2}, ",
+            string defaultValue = GetCSDefaultValueByType(column, true);
+
+            return string.Format("\"{0}\", typeof({1}), System.Data.{2}, /*precision*/ {3}, /*scale*/ {4}, /*default*/ {5}, ",
                 column.Name,
                 GetCSType(column, false),
-                GetDbType(column)
+                GetDbType(column),
+                column.Precision,
+                column.Scale,
+                (defaultValue != null) ? defaultValue : "null"
             ) + GetDataObjectFieldCallParams(column);
         }
 
@@ -3616,10 +3635,15 @@ namespace MoM.Templates
         /// <param name="column"></param>
         public string GetColumnEnumAttributeParams(ViewColumnSchema column)
         {
-            return string.Format("\"{0}\", typeof({1}), System.Data.{2}, ",
+            string defaultValue = GetCSDefaultValueByType(column, true);
+
+            return string.Format("\"{0}\", typeof({1}), System.Data.{2}, /*precision*/ {3}, /*scale*/ {4}, /*default*/ {5}, ",
                 column.Name,
                 GetCSType(column, false),
-                GetDbType(column)
+                GetDbType(column),
+                column.Precision,
+                column.Scale,
+                (defaultValue != null) ? defaultValue : "null"
             ) + GetDataObjectFieldCallParams(column);
         }
 
@@ -3874,10 +3898,39 @@ CREATE\s+PROC(?:EDURE)?                               # find the start of the st
         }
 
         /// <summary>
+        /// An overload for the Default value method that nulls out functions.
+        /// If new functions are added to the GetCSDefaultValueByType then they
+        /// will also have to be added here.
+        /// </summary>
+        /// <param name="column"></param>
+        /// <param name="forceConstant"></param>
+        /// <returns></returns>
+        public string GetCSDefaultValueByType(SchemaExplorer.DataObjectBase column, bool forceConstant)
+        {
+            string defaultValue = GetCSDefaultValueByType(column);
+            
+            if (defaultValue == null)
+                return null;
+            
+            if (!forceConstant)
+                return defaultValue;
+            
+            if (defaultValue == "DateTime.Now"
+                || defaultValue == "DateTime.UtcNow"
+                || defaultValue == "Guid.NewGuid()")
+                return null;
+            
+            if (defaultValue.StartsWith("new "))
+                return null;
+            
+            return defaultValue.TrimEnd('m', 'f');
+        }
+        
+        /// <summary>
         /// This method returns the default value from the database if it is available.  It returns null
         /// if no default value could be parsed.
         ///
-        /// NOTE: rudimentary support for default values with computations/functions is built in.  Right now th
+        /// NOTE: rudimentary support for default values with computations/functions is built in.  Right now the
         ///   only supported function is getdate().  Any others can be added below if desired.
         /// </summary>
         /// <param name="column"></param>
@@ -3929,6 +3982,13 @@ CREATE\s+PROC(?:EDURE)?                               # find the start of the st
 
                 if (defaultValueProperty.DataType == DbType.String)
                 {
+                    // Handles default values that use the Unicode 'N' prefix.
+                    if (defaultValue.StartsWith("N'") && defaultValue.EndsWith("'"))
+                    {
+                        defaultValue = defaultValue.Substring(2);
+                        defaultValue = defaultValue.Substring(0, defaultValue.Length - 1);
+                    }
+
                     // probably a char type.  Let's remove the quotes so parsing is happy
                     if (defaultValue.StartsWith("'") && defaultValue.EndsWith("'"))
                     {
@@ -4011,7 +4071,7 @@ CREATE\s+PROC(?:EDURE)?                               # find the start of the st
                                 if (defaultValue.Trim().ToLower() == "n") return "false";
 
                                 boolConvert = bool.Parse(defaultValue);
-                                return boolConvert.ToString();
+                                return boolConvert.ToString().ToLower();
                             }
                             else
                                 return null;
@@ -4031,7 +4091,11 @@ CREATE\s+PROC(?:EDURE)?                               # find the start of the st
                                 return "new Guid(\"" + guidConvert.ToString() + "\")";
                             else
                                 return null;
+							
                         case DbType.Xml:
+                            if (defaultValue != null && defaultValue.Contains("\"") == false)
+                                return "\"" + defaultValue + "\"";
+                            else
                                 return null;
 
                         //Answer modified was just 0

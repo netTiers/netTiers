@@ -34,22 +34,43 @@ namespace <%=DALNameSpace%>
     /// <summary>
     /// DeepLoad options for deep loading entities
     /// </summary>
+    [FlagsAttribute]
     public enum DeepLoadType : int
     {
         /// <summary>
-        /// Will Include a child property collection 1 Level Deep
+        /// Will walk the entire object tree loading the included object types.
+        /// However, it will only load Lists/Collections 1 Level Deep.
+        /// Use LoadCollections to alter this behavior.
         /// </summary>
         IncludeChildren = 1,
 
         /// <summary>
-        /// Will Exclude a child property collection
+        /// Will walk the entire object tree loading all except the included object types.
+        /// However, it will only load Lists/Collections 1 Level Deep.
+        /// Use LoadCollections to alter this behavior.
         /// </summary>
         ExcludeChildren = 2,
 
         /// <summary>
         /// Will ignore the request and return the entity.
         /// </summary>
-        Ignore = 3
+        Ignore = 4,
+
+        /// <summary>
+        /// Without this flag set DeepLoad will only load Lists/Collections 1 Level Deep.
+        /// With this flag it will load them all the way down.
+        /// Be careful of circular references. Use the OnDeepLoading event to specify a
+        /// stopping point in this scenario.
+        /// </summary>
+        LoadCollections = 8,
+
+        /// <summary>
+        /// With this flag set DeepLoad skip over child object that have already been loaded.
+        /// Use this if you want to attempt targeting the path the DeepLoad will take.
+        /// This option was designed to allow an object to skip over a particularly deep branch
+        /// when the real target is a grandchild down another branch.
+        /// </summary>
+        IgnoreExistingChildren = 16,
     }
 
     /// <summary>
@@ -81,10 +102,64 @@ namespace <%=DALNameSpace%>
         #endregion
 
         #region Constructors
+        
         private Utility() {/*All static methods*/}
+        
         #endregion
 
         #region Helper Methods
+        
+        /// <summary>
+        /// Determines if the enum combination value exists in the specified enum type.
+        /// It assumes that the enum has been defined with the numerical values listed from
+        /// least to greatest.
+        /// </summary>
+        /// <param name="enumType">A valid Int32 enum type with the Flag attribute set</param>
+        /// <param name="value">Must be a positive Int32</param>
+        /// <returns></returns>
+        public static bool IsIntFlagEnumDefined(Type enumType, System.Enum value)
+        {
+            int ivalue = System.Convert.ToInt32(value);
+            if (ivalue < 0)
+            {
+                return false;
+            }
+
+            uint flagsset = System.Convert.ToUInt32(value);
+            Array values = Enum.GetValues(enumType);
+            int flagno = values.Length - 1;
+            uint initialflags = flagsset;
+            uint flag = 0;
+
+            //start with the highest values
+            while (flagno >= 0)
+            {
+                flag = System.Convert.ToUInt32(values.GetValue(flagno));
+                if ((flagno == 0) && (flag == 0))
+                {
+                    break;
+                }
+                //if the flags set contain this flag
+                if ((flagsset & flag) == flag)
+                {
+                    //unset this flag
+                    flagsset -= flag;
+                    if (flagsset == 0)
+                        return true;
+                }
+                flagno--;
+            }
+            if (flagsset != 0)
+            {
+                return false;
+            }
+            if (initialflags != 0 || flag == 0)
+            {
+                return true;
+            }
+            return false;
+        }
+        
         /// <summary>
         /// Get a default value for a given data type
         /// </summary>
