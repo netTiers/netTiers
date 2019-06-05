@@ -31,7 +31,7 @@
 <%@ Property Name="IncludeComponentLayer" Type="MoM.Templates.ComponentPatternType" Category="02. Framework Generation - Optional" Description="The pattern type to implement in the Component Layer." Default="None" %>
 <%@ Property Name="IncludeWCFDataAttributes" Type="System.Boolean" Default="False" Category="02. Framework Generation - Optional" Description="Indicates if the WCF attributes, [DataContract] and [DataMember], should be included on the entity classes." %>
 <%@ Property Name="SerializeEntityState" Type="System.Boolean" Default="False" Category="02. Framework Generation - Optional" Description="Indicates if the EntityState property should be included during serialization.  Useful if needing to know what state the entity is in over webservices." %>
-<%@ Property Name="EntLibVersion" Type="MoM.Templates.EntLibVersion" Default="v5_0" Category="02. Framework Generation - Optional" Description="Indicates the Enterprise Library version to use. Options include v3.1, v5.0" %>
+<%@ Property Name="EntLibVersion" Type="MoM.Templates.EntLibVersion" Default="v6_0" Category="02. Framework Generation - Optional" Description="Indicates the Enterprise Library version to use. Options include v3.1, v5.0" %>
 <%@ Property Name="VisualStudioVersion" Type="MoM.Templates.VSNetVersion" Default="v2013" Category="02. Framework Generation - Optional" Description="Indicates the Version of Visual Studio to target. Options include v2005, v2008 and v2010" %>
 <%@ Property Name="DotNetVersion" Type="MoM.Templates.DotNetFrameworkVersion" Default="v4_5" Category="02. Framework Generation - Optional" Description="Indicates the Version of Dot Net to target. Options include v2, v3 and v3.5" %>
 <%@ Property Name="IncludeXmlAttributes" Type="System.Boolean" Default="False" Category="02. Framework Generation - Optional" Description="Indicates if the Xml attributes, [XmlElement(IsNullable=true)], should be included on the entity classes." %>
@@ -1301,7 +1301,7 @@
 		SafeCopyFile(this.CodeTemplateInfo.DirectoryName + "\\References\\" + entLibSubDir + "\\Microsoft.Practices.EnterpriseLibrary.Common.dll", libPath + "\\Microsoft.Practices.EnterpriseLibrary.Common.dll");
 		SafeCopyFile(this.CodeTemplateInfo.DirectoryName + "\\References\\" + entLibSubDir + "\\Microsoft.Practices.EnterpriseLibrary.Data.dll", libPath+ "\\Microsoft.Practices.EnterpriseLibrary.Data.dll");
 		
-        if(EntLibVersion == MoM.Templates.EntLibVersion.v5_0)
+        if(EntLibVersion == MoM.Templates.EntLibVersion.v5_0 || EntLibVersion == MoM.Templates.EntLibVersion.v6_0)
         {
             SafeCopyFile(this.CodeTemplateInfo.DirectoryName + "\\References\\" + entLibSubDir + "\\Microsoft.Practices.Unity.dll", libPath +  "\\Microsoft.Practices.Unity.dll");
 		    SafeCopyFile(this.CodeTemplateInfo.DirectoryName + "\\References\\" + entLibSubDir + "\\Microsoft.Practices.Unity.Interception.dll", libPath +  "\\Microsoft.Practices.Unity.Interception.dll");
@@ -1309,14 +1309,18 @@
         }
         else
             SafeCopyFile(this.CodeTemplateInfo.DirectoryName + "\\References\\" + entLibSubDir + "\\Microsoft.Practices." + GetEntLibOBClassName(EntLibVersion) + ".dll", libPath +  "\\Microsoft.Practices." + GetEntLibOBClassName(EntLibVersion) + ".dll");
-            
-		SafeCopyFile(this.CodeTemplateInfo.DirectoryName + "\\References\\" + entLibSubDir + "\\Microsoft.Practices.EnterpriseLibrary.Caching.dll", libPath +  "\\Microsoft.Practices.EnterpriseLibrary.Caching.dll");
-		SafeCopyFile(this.CodeTemplateInfo.DirectoryName + "\\References\\" + entLibSubDir + "\\Microsoft.Practices.EnterpriseLibrary.Caching.Cryptography.dll", libPath + "\\Microsoft.Practices.EnterpriseLibrary.Caching.Cryptography.dll");
+        
+        if (EntityCacheLayer != MoM.Templates.CacheLayer.SysRun && EntLibVersion != MoM.Templates.EntLibVersion.v6_0) {
+    		SafeCopyFile(this.CodeTemplateInfo.DirectoryName + "\\References\\" + entLibSubDir + "\\Microsoft.Practices.EnterpriseLibrary.Caching.dll", libPath +  "\\Microsoft.Practices.EnterpriseLibrary.Caching.dll");
+    		SafeCopyFile(this.CodeTemplateInfo.DirectoryName + "\\References\\" + entLibSubDir + "\\Microsoft.Practices.EnterpriseLibrary.Caching.Cryptography.dll", libPath + "\\Microsoft.Practices.EnterpriseLibrary.Caching.Cryptography.dll");
+        }
+        if (EntLibVersion != MoM.Templates.EntLibVersion.v6_0) {
+    		SafeCopyFile(this.CodeTemplateInfo.DirectoryName + "\\References\\" + entLibSubDir + "\\Microsoft.Practices.EnterpriseLibrary.Security.dll", libPath + "\\Microsoft.Practices.EnterpriseLibrary.Security.dll");
+    		SafeCopyFile(this.CodeTemplateInfo.DirectoryName + "\\References\\" + entLibSubDir + "\\Microsoft.Practices.EnterpriseLibrary.Security.Cache.CachingStore.dll", libPath + "\\Microsoft.Practices.EnterpriseLibrary.Security.Cache.CachingStore.dll");
+            SafeCopyFile(this.CodeTemplateInfo.DirectoryName + "\\References\\" + entLibSubDir + "\\Microsoft.Practices.EnterpriseLibrary.Security.Cryptography.dll", libPath +  "\\Microsoft.Practices.EnterpriseLibrary.Security.Cryptography.dll");
+        }
 		SafeCopyFile(this.CodeTemplateInfo.DirectoryName + "\\References\\" + entLibSubDir + "\\Microsoft.Practices.EnterpriseLibrary.Logging.dll", libPath +  "\\Microsoft.Practices.EnterpriseLibrary.Logging.dll");
 		SafeCopyFile(this.CodeTemplateInfo.DirectoryName + "\\References\\" + entLibSubDir + "\\Microsoft.Practices.EnterpriseLibrary.Logging.Database.dll", libPath +  "\\Microsoft.Practices.EnterpriseLibrary.Logging.Database.dll");
-		SafeCopyFile(this.CodeTemplateInfo.DirectoryName + "\\References\\" + entLibSubDir + "\\Microsoft.Practices.EnterpriseLibrary.Security.dll", libPath + "\\Microsoft.Practices.EnterpriseLibrary.Security.dll");
-		SafeCopyFile(this.CodeTemplateInfo.DirectoryName + "\\References\\" + entLibSubDir + "\\Microsoft.Practices.EnterpriseLibrary.Security.Cache.CachingStore.dll", libPath + "\\Microsoft.Practices.EnterpriseLibrary.Security.Cache.CachingStore.dll");
-        SafeCopyFile(this.CodeTemplateInfo.DirectoryName + "\\References\\" + entLibSubDir + "\\Microsoft.Practices.EnterpriseLibrary.Security.Cryptography.dll", libPath +  "\\Microsoft.Practices.EnterpriseLibrary.Security.Cryptography.dll");
 		SafeCopyFile(this.CodeTemplateInfo.DirectoryName + "\\References\\" + entLibSubDir + "\\Microsoft.Practices.EnterpriseLibrary.ExceptionHandling.dll", libPath +  "\\Microsoft.Practices.EnterpriseLibrary.ExceptionHandling.dll");
 		SafeCopyFile(this.CodeTemplateInfo.DirectoryName + "\\References\\" + entLibSubDir + "\\Microsoft.Practices.EnterpriseLibrary.ExceptionHandling.Logging.dll", libPath + "\\Microsoft.Practices.EnterpriseLibrary.ExceptionHandling.Logging.dll");
 		if(ValidationType == MoM.Templates.ValidationType.EntLib)
@@ -1589,7 +1593,7 @@
 		string vListName = GetVListName();
 		this.RenderToFile("VList.cst", string.Format("{0}\\Views\\{1}.cs",rootPathBLL,vListName), true);
         
-        if(EntLibVersion == MoM.Templates.EntLibVersion.v5_0)
+        if(EntLibVersion == MoM.Templates.EntLibVersion.v5_0 || EntLibVersion == MoM.Templates.EntLibVersion.v6_0)
         {
             AddFileNode(commonNode, "WeakRefDictionary.cs");
             this.GetTemplate("WeakRefDictionary.cst").SetProperty("BLLNameSpace", BLLNameSpace);
@@ -1676,7 +1680,7 @@
 		//----------------------------------------------------------------------------------------------------------------------------------------------
 		//-- Entity IEntityLocator file
 		//----------------------------------------------------------------------------------------------------------------------------------------------
-        if(EntLibVersion == MoM.Templates.EntLibVersion.v5_0)
+        if(EntLibVersion == MoM.Templates.EntLibVersion.v5_0 || EntLibVersion == MoM.Templates.EntLibVersion.v6_0)
         {
             XmlElement iEntityLocatorNode = AddFileNode(commonNode, "EntityLocator.cs");
 		    this.GetTemplate("EntityLocator_EntLib5.cst").SetProperty("NameSpace", BLLNameSpace);
@@ -1696,7 +1700,7 @@
 		//----------------------------------------------------------------------------------------------------------------------------------------------
 		//-- Entity EntityManager file
 		//----------------------------------------------------------------------------------------------------------------------------------------------
-        if(EntLibVersion == MoM.Templates.EntLibVersion.v5_0)
+        if(EntLibVersion == MoM.Templates.EntLibVersion.v5_0 || EntLibVersion == MoM.Templates.EntLibVersion.v6_0)
         {
             XmlElement iEntityManagerNode = AddFileNode(commonNode, "EntityManager.cs");
             this.GetTemplate("EntityManager_EntLib5.cst").SetProperty("NameSpace", BLLNameSpace);
@@ -1820,6 +1824,7 @@
 			this.GetTemplate("SecurityContextBase.cst").SetProperty("NameSpace", ComponentsNameSpace);
 			this.GetTemplate("SecurityContextBase.cst").SetProperty("BLLNameSpace", BLLNameSpace);
 			this.GetTemplate("SecurityContextBase.cst").SetProperty("DALNameSpace", DALNameSpace);
+			this.GetTemplate("SecurityContextBase.cst").SetProperty("EntLibVersion", EntLibVersion);
 			this.RenderToFile("SecurityContextBase.cst", rootPathComponents + "\\SecurityContextBase.generated.cs", true);
 	
 			XmlElement contextViewNode = AddFileNode(commonNode, "ContextView.cs");
@@ -2277,7 +2282,7 @@
 			this.GetTemplate("TransactionManager.cst").SetProperty("ProviderInvariantName", ProviderInvariantName);
 			this.RenderToFile("TransactionManager.cst", rootPathDAL + "\\TransactionManager.cs", true);
             
-            if(EntLibVersion == MoM.Templates.EntLibVersion.v5_0)
+            if(EntLibVersion == MoM.Templates.EntLibVersion.v5_0 || EntLibVersion == MoM.Templates.EntLibVersion.v6_0)
             {
                 AddFileNode(commonNode, "FileConfigurationSouce.cs");
 	    		this.GetTemplate("FileConfigurationSouce_EntLib5.cst").SetProperty("DALNameSpace", DALNameSpace);
@@ -2915,6 +2920,16 @@
 				this.RenderToFile(entLibConfigTemplateName, rootPathWebsite + "\\entlib.config", true);
 			}
 	
+            // Global.asax(.cs)
+			if ( !File.Exists(rootPathWebsite + "\\Global.asax.cs") )
+			{
+				AddFileNode(commonNode, "Global.asax");
+				this.GetTemplate("Global.asax.cs.cst").SetProperty("WebsiteNameSpace", WebsiteNameSpace);
+				this.GetTemplate("Global.asax.cs.cst").SetProperty("UseWebAppProject", UseWebAppProject);
+				this.GetTemplate("Global.asax.cs.cst").SetProperty("EntLibVersion", EntLibVersion);
+				this.RenderToFile("Global.asax.cs.cst", rootPathWebsite + "\\Global.asax.cs", true);
+            }
+            
 			// Default.aspx(.cs)
 			if ( !File.Exists(rootPathWebsite + "\\Default.aspx") )
 			{

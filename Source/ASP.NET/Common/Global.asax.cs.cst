@@ -1,0 +1,45 @@
+﻿<%@ CodeTemplate Language="C#" TargetLanguage="C#" Src="..\..\TemplateLib\CommonSqlCode.cs" Inherits="MoM.Templates.CommonSqlCode" Description="" Debug="True" ResponseEncoding="UTF-8" NoWarn="0108,0618,1572,1573,1574,0162,2002" %>
+
+<%@ Property Name="WebsiteNameSpace" Type="System.String" Category="Data" Description="Website Namespace." %>
+<%@ Property Name="UseWebAppProject" Type="System.Boolean" Default="false" Category="06b. Website - Advanced" Description="Indicates if a Web Application Project file should be generated." %>
+<%@ Property Name="EntLibVersion" Type="MoM.Templates.EntLibVersion" Default="v5_0" Category="02. Framework Generation - Optional" Description="Indicates the Enterprise Library version to use. Options include v3, v5, and v6" %>
+
+<%@ Assembly Name="SchemaExplorer" %>
+<%@ Assembly Name="System.Design" %>
+<%@ Import Namespace="SchemaExplorer" %>
+#region Using Directives
+
+using System;
+<% if (EntLibVersion == MoM.Templates.EntLibVersion.v6_0) { %>
+using Microsoft.Practices.EnterpriseLibrary.Common.Configuration;
+using Microsoft.Practices.EnterpriseLibrary.ExceptionHandling;
+using Microsoft.Practices.EnterpriseLibrary.Logging;
+<% } %>
+
+#endregion
+
+namespace <%= WebsiteNameSpace %>
+{
+	<% if ( UseWebAppProject ) { %>
+	[CLSCompliant(false)]
+	<% } %>
+    public class Global : System.Web.HttpApplication
+	{
+		/// <summary>
+		/// Configuration for starting up the application
+		/// </summary>
+		/// <param name="sender"></param>
+		/// <param name="e"></param>
+        protected void Application_Start(object sender, EventArgs e)
+        {
+        <% if (EntLibVersion == MoM.Templates.EntLibVersion.v6_0) { %>
+            // configure logging for Enterprise Library 6
+            IConfigurationSource config = ConfigurationSourceFactory.Create();
+            ExceptionPolicyFactory factory = new ExceptionPolicyFactory(config);
+            Logger.SetLogWriter(new LogWriterFactory().Create());
+            ExceptionManager exManager = factory.CreateManager();
+            ExceptionPolicy.SetExceptionManager(factory.CreateManager());
+    	<% } %>
+        }
+	}
+}

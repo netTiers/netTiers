@@ -6,8 +6,10 @@
 <%@ Property Name="NameSpace" Optional="False" Type="System.String" Category="Style" Description="Object Namespace." %>
 <%@ Property Name="BLLNameSpace" Optional="False" Type="System.String" Category="Style" Description="Object Namespace." %>
 <%@ Property Name="DALNameSpace" Optional="False" Type="System.String" Category="Style" Description="Object Namespace." %>
+<%@ Property Name="EntLibVersion" Type="MoM.Templates.EntLibVersion" Default="v5_0" Category="02. Framework Generation - Optional" Description="Indicates the Enterprise Library version to use. Options include v2, v3, v3.1 and v4" %>
 <%@ Assembly Name="SchemaExplorer" %>
 #region Using directives
+
 using System;
 using System.ComponentModel;
 using System.Security;
@@ -16,8 +18,9 @@ using System.Security.Principal;
 using System.Web.Profile;
 using <%= BLLNameSpace %>;
 using <%= DALNameSpace %>;
-
+<% if(EntLibVersion == MoM.Templates.EntLibVersion.v3_1 || EntLibVersion == MoM.Templates.EntLibVersion.v5_0) { %>
 using Microsoft.Practices.EnterpriseLibrary.Security;
+<% } %>
 #endregion Using directives
 
 namespace <%=NameSpace%>
@@ -29,13 +32,17 @@ namespace <%=NameSpace%>
 	public partial class SecurityContextBase<Entity> where Entity : IEntity, new()
 	{
 		#region Fields
+        
         private object profile = null;
         private IIdentity identity = null;
         private IPrincipal principal = null;
-		private IAuthorizationProvider ruleProvider = null;
-		//private ISecurityCacheProvider securityCacheProvider = null; 
 		private static readonly string ruleProviderKey = "NetTiers.RuleProvider";
 		private static object syncObject = new object();
+<% if(EntLibVersion == MoM.Templates.EntLibVersion.v3_1 || EntLibVersion == MoM.Templates.EntLibVersion.v5_0) { %>
+		private IAuthorizationProvider ruleProvider = null;
+		//private ISecurityCacheProvider securityCacheProvider = null;
+<% } %>
+
 		#endregion Fields
 		
 		#region Properties
@@ -66,6 +73,7 @@ namespace <%=NameSpace%>
             set { principal = value; }
         }
 		
+<% if(EntLibVersion == MoM.Templates.EntLibVersion.v3_1 || EntLibVersion == MoM.Templates.EntLibVersion.v5_0) { %>
 		/// <summary>
 		///  The Current Authorization Rule Provider
 		/// </summary>
@@ -89,9 +97,12 @@ namespace <%=NameSpace%>
 				}
 			}
 		}
-		#endregion Properties
+<% } %>
+
+        #endregion Properties
 		
 		#region Constructors
+        
 		/// <summary>
 		/// Initializes a new instance of the SecurityContext class.
 		/// </summary>
@@ -100,14 +111,17 @@ namespace <%=NameSpace%>
 			this.Identity = System.Threading.Thread.CurrentPrincipal.Identity;
 			this.Principal = System.Threading.Thread.CurrentPrincipal;
 		}
+        
 		#endregion Constructors		
 		
 		#region Public methods
+        
 		/// <summary>
 		/// Determine whether user is authorized for the rule based on the rule provider
 		/// </summary>
 		public virtual bool IsAuthorized(string ruleToCheck)
-		{			
+		{
+<% if(EntLibVersion == MoM.Templates.EntLibVersion.v3_1 || EntLibVersion == MoM.Templates.EntLibVersion.v5_0) { %>
 			try
 			{
 				if (ConnectionScope.Current.DataProvider.EnableMethodAuthorization)
@@ -120,9 +134,11 @@ namespace <%=NameSpace%>
 				//Method has yet to be configured in config file
 				//throw;
 			}
+<% } %>
 			
 			return true;
 		}
+        
 		#endregion Public methods		
 	}
 }
