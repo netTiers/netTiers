@@ -1,5 +1,3 @@
-[![](http://nettiers.net/GetFile.aspx?File=Summary_Logo.gif)](http://nettiers.net)
-
 # Overview
 .netTiers is a library of open source [CodeSmith Generator](http://www.codesmithtools.com) templates written in C#.  The intention of the templates are to assist developers with the intention of eliminating repetative mundane coding, and at the same time, provide a full fledged framework that allows you to get started working on what matters the most to you in your applications.  For example, focusing your efforts with the presentation layer, business rules, workflow, and application health  for your application to become a success. Consider .netTiers an application block, only specialized to your domain model, and the growth from within the product will more likely be vertically more than horizontally.  Meaning, future versions will be focusing on providing more things out of the box which will assist you in your everyday development tasks. 
 
@@ -12,8 +10,8 @@ You may download a checked version of .netTiers by clicking on the releases tab 
 All documentation for .netTiers can be found [here](https://github.com/netTiers/netTiers/wiki). If the documentation is out dated please update the wiki or create an issue and we will see that it is updated.
 
 # System Requirements #
-  * [Visual Studio 2005+](https://www.visualstudio.com)
-  * [CodeSmith Generator Professional 6.x+](http://codesmithtools.com)
+  * [Visual Studio 2015+](https://www.visualstudio.com)
+  * [CodeSmith Generator Professional 8.x+](http://codesmithtools.com)
   * [Microsoft SQL Server 2000+](http://www.microsoft.com/SQL/default.mspx)/Oracle (Other DB's with limited support depending on provider)
   * [Microsoft .NET 2.0+](http://www.microsoft.com/NET/)
   * [Enterprise Library 3.1+](http://www.codeplex.com/entlib) (Optional, Recommended)
@@ -22,7 +20,7 @@ All documentation for .netTiers can be found [here](https://github.com/netTiers/
 # Special Thanks #
 [![](http://www.visualsvn.com/images/VisualSVN_125x37.gif)](http://www.visualsvn.com/)
 [![](http://www.codesmithtools.com/images/codesmith.gif)](http://www.codesmithtools.com/)
-[![](http://nettiers.net/GetFile.aspx?File=redgate.png)](http://www.red-gate.com/?utm_source=nettiers&utm_medium=website&utm_campaign=communitysupport)
-[![](http://nettiers.net/GetFile.aspx?File=aquafold_logo_blue_bubbles.png)](http://www.aquafold.com)
+[![](https://raw.githubusercontent.com/wiki/netTiers/netTiers/images/redgate.png)](http://www.red-gate.com/?utm_source=nettiers&utm_medium=website&utm_campaign=communitysupport)
+[![](aquafold.com)](http://www.aquafold.com)
 
 [Can’t code without ReSharper… Intelligent ASP.NET code editing with refactorings, navigation and lots more](http://www.jetbrains.com/resharper/)
