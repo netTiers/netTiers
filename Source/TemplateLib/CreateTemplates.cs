@@ -9,6 +9,7 @@
 			CodeTemplates.Add("AssemblyInfo.cst", base.CreateTemplate<AssemblyInfo>()); this.PerformStep(); 																												
 			CodeTemplates.Add("entlib.v3_1.config.cst", base.CreateTemplate<entlibv3_1config>()); this.PerformStep();
             CodeTemplates.Add("entlib.v5_0.config.cst", base.CreateTemplate<entlibv5_0config>()); this.PerformStep();
+            CodeTemplates.Add("entlib.v6_0.config.cst", base.CreateTemplate<entlibv6_0config>()); this.PerformStep();
             CodeTemplates.Add("WeakRefDictionary.cst", base.CreateTemplate<WeakRefDictionary>()); this.PerformStep();
                         
 			CodeTemplates.Add("App.config.2005.cst", base.CreateTemplate<AppConfig>()); this.PerformStep();													
@@ -180,6 +181,7 @@
 			CodeTemplates.Add("AdminEntityUC_CodeBehind.cst", base.CreateTemplate<AdminEntityUC_CodeBehind>()); this.PerformStep();
 			CodeTemplates.Add("Menu_xml.cst", base.CreateTemplate<Menu_xml>()); this.PerformStep();
 
+			CodeTemplates.Add("Global.asax.cs.cst", base.CreateTemplate<GlobalAsaxCs>()); this.PerformStep();
 			CodeTemplates.Add("Default.aspx.cs.cst", base.CreateTemplate<DefaultAspxCs>()); this.PerformStep();
 			CodeTemplates.Add("Default.aspx.cst", base.CreateTemplate<DefaultAspx>()); this.PerformStep();
 			CodeTemplates.Add("WebConfig.cst", base.CreateTemplate<WebConfig>()); this.PerformStep();

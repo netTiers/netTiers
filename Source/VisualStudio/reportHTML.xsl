@@ -14,15 +14,15 @@
 				<table width="100%" border="0" cellspacing="2" cellpadding="2">
 					<tr>
                         <td width="700">
-                            <a href="http://code.google.com/p/nettiers/downloads/" target="_blank"><img border="0" src="http://www.nettiers.net/GetFile.aspx?File=Summary_Logo.gif" alt=".netTiers 2.3"  /></a>
+                            <a href="https://github.com/netTiers/netTiers" target="_blank"><img border="0" src="http://www.nettiers.net/GetFile.aspx?File=Summary_Logo.gif" alt=".netTiers 2.3"  /></a>
                             <hr /><div>
-                              <a href="http://nettiers.net/">Website</a>
+                              <a href="https://github.com/nettiers/nettiers/wiki">Website</a>
                              &#160;&#160; | &#160;&#160; 
-                             <a href="http://community.codesmithtools.com/nettiers/f/default.aspx">Forums</a>
+                             <a href="https://github.com/netTiers/netTiers/issues">Issues / Bugs / Support</a>
                              &#160;&#160; | &#160;&#160; 
-                             <a href="http://code.google.com/p/nettiers/">Google Code</a>
+                             <a href="https://github.com/netTiers/netTiers">GitHub</a>
                              &#160;&#160; | &#160;&#160; 
-                             <a href="http://code.google.com/p/nettiers/downloads/">Downloads</a>
+                             <a href="https://github.com/netTiers/netTiers/archive/master.zip">Download zip</a>
                             </div>
                            <hr />
                         <h2>Generation Report</h2>
@@ -277,9 +277,11 @@ accountsService.DeepSave(myAccountEntity, <font color="blue">false</font>, DeepS
 	<xsl:template match="Message">
 		<li>
 			<span class="message{@level}"><xsl:value-of select="@message" /></span>
+			<xsl:if test="File">
 			<ul>
 				<xsl:apply-templates select="File" />
 			</ul>
+			</xsl:if>
 			<xsl:if test="@executionTime">[<xsl:value-of select="@executionTime" />]<br/></xsl:if>
 		</li>
 	</xsl:template>

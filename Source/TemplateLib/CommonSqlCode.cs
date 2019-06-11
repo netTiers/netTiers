@@ -3593,7 +3593,7 @@ namespace MoM.Templates
         /// Gets the <see cref="System.ComponentModel.DataObjectField" /> Ctor Params
         /// based on the schema information on a column.
         /// The 4 params are
-        ///    1. indicates whether the field is the primary key
+        /// 1. indicates whether the field is the primary key
         /// 2. whether the field is a database identity field
         /// 3. whether the field can be null
         /// 4. sets the length of the field
@@ -6151,6 +6151,7 @@ CREATE\s+PROC(?:EDURE)?                               # find the start of the st
                     entlibOBClassName = "ObjectBuilder";
                     break;
                 case MoM.Templates.EntLibVersion.v5_0 :
+                case MoM.Templates.EntLibVersion.v6_0 :
                     entlibOBClassName = string.Empty;
                     break;
 
@@ -6529,7 +6530,9 @@ CREATE\s+PROC(?:EDURE)?                               # find the start of the st
         /// <summary>Use Enterprise Library version 4.1</summary>
         //v4_1 = 4
         /// <summary>Use Enterprise Library version 5.0</summary>
-        v5_0 = 8
+        v5_0 = 8,
+        /// <summary>Use Enterprise Library version 6.0</summary>
+        v6_0 = 16
     }
 
     #endregion
