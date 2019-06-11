@@ -21,6 +21,6 @@ All documentation for .netTiers can be found [here](https://github.com/netTiers/
 [![](http://www.visualsvn.com/images/VisualSVN_125x37.gif)](http://www.visualsvn.com/)
 [![](http://www.codesmithtools.com/images/codesmith.gif)](http://www.codesmithtools.com/)
 [![](https://raw.githubusercontent.com/wiki/netTiers/netTiers/images/redgate.png)](http://www.red-gate.com/?utm_source=nettiers&utm_medium=website&utm_campaign=communitysupport)
-[![](aquafold.com)](http://www.aquafold.com)
+[![](https://www.aquafold.com/images/Aquafold/branding_logos/AquaFold_logo_side_bubbles_on_light_background_screenshot.png)](http://www.aquafold.com)
 
 [Can’t code without ReSharper… Intelligent ASP.NET code editing with refactorings, navigation and lots more](http://www.jetbrains.com/resharper/)
