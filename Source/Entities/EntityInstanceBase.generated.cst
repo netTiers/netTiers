@@ -19,20 +19,20 @@
 
 <%@ Property Name="NameSpace" Optional="True" Type="System.String" Category="Style" Description="Object Namespace." %>
 <%@ Property Name="EntityCacheLayer" Optional="True" Type="MoM.Templates.CacheLayer" Default="None" Category="Options" Description="Should Caching be enabled for this entity." %>
-    
+
 <%@ Property Name="UsePartialClass" Type="System.Boolean" Default="true" Category="General" Description="Indicates if partial class should be generated." %>
 <%@ Property Name="EqualitySemantics" Type="MoM.Templates.EqualitySemantics" Default="Value" Category="02. Framework Generation - Optional" Description="Equality semantics used for Entity instances.  If 'Reference', default reference type semantics will be used (based on object identity).  If 'Value', Equals() and GetHashCode() will be overridden to use value semantics (based on object contents)." %>
 <%@ Property Name="ValidationType" Type="MoM.Templates.ValidationType" Default="NetTiers" Category="02. Framework Generation - Optional" Description="Choice to either use .netTiers validation framework, or Enterprise Library VAB" %>
 
-<%-- When debugging, you must include this section of code 
+<%-- When debugging, you must include this section of code
 <%@ Register Name="EntityData" Template="EntityData.cst" MergeProperties="False" ExcludeProperties="" %>
 --%>
 
 <%
-    
-    
+
+
     //if (SourceTables == null) SourceTables = new SchemaExplorer.TableSchemaCollection();
-    
+
     // Name of the Abstract Class
     string className = GetClassName(SourceTable);
     string collectionClassName = GetClassName(SourceTable, ClassNameFormat.Collection);
@@ -42,25 +42,25 @@
     string interfaceName = GetClassName(SourceTable, ClassNameFormat.Interface);
 
     string constructorAccessModifier = UsePartialClass ? "public" : "protected";
-    
+
     // Collection of primary key columns
-    //NOT IN 2.6 API 
-    //MemberColumnSchemaCollection pkCols = SourceTable.PrimaryKey.MemberColumns; 
+    //NOT IN 2.6 API
+    //MemberColumnSchemaCollection pkCols = SourceTable.PrimaryKey.MemberColumns;
     ColumnSchemaCollection pkCols = SourceTable.PrimaryKey.MemberColumns;
-    
+
     // Collection of all columns in the table.
     ColumnSchemaCollection cols = SourceTable.Columns;
-        
-    //Provides information about the indexes contained in the table. 
+
+    //Provides information about the indexes contained in the table.
     //IndexSchemaCollection indexes = SourceTable.Indexes;
-        
+
     ColumnSchemaCollection colsUpdatable = new ColumnSchemaCollection();
     foreach (ColumnSchema column in cols)
     {
         if ( ! IsIdentityColumn(column) && ! IsComputed(column) )
             colsUpdatable.Add(column);
     }
-    
+
     //Get the columns that are common to all tables
     ColumnSchemaCollection commonColumns = GetCommonTableColumns(SourceTables);
 %>
@@ -78,6 +78,7 @@
 */
 
 #region using directives
+
 using System;
 using System.ComponentModel;
 using System.Collections;
@@ -92,12 +93,13 @@ using <%=NameSpace%>.Validation;
 <% if(EntityCacheLayer == MoM.Templates.CacheLayer.EntLib) {%>
 using Microsoft.Practices.EnterpriseLibrary.Caching;
 <%}%>
+
 #endregion
 
 namespace <%=NameSpace%>
 {
     ///<summary>
-    /// <% if(SourceTable.Description.Length == 0 ) {%>An object representation of the '<%=SourceTable.Name%>' table. [No description found in the database]<%} else {Response.Write(GetColumnXmlComment(SourceTable,1));}%>    
+    /// <% if(SourceTable.Description.Length == 0 ) {%>An object representation of the '<%=SourceTable.Name%>' table. [No description found in the database]<%} else {Response.Write(GetColumnXmlComment(SourceTable,1));}%>
     ///</summary>
     <% if ( IncludeWCFDataAttributes ) { %>
     [DataContract]
@@ -106,9 +108,9 @@ namespace <%=NameSpace%>
     <% } %>
     [DataObject, CLSCompliant(true)]
     public abstract partial class <%=abstractClassName%> : EntityBase, <%=interfaceName%>, IEntityId<<%= keyClassName %>>, System.IComparable, System.ICloneable, ICloneableEx, IEditableObject, IComponent, INotifyPropertyChanged<% if(EntityCacheLayer != MoM.Templates.CacheLayer.None) {%>, IEntityCacheItem<% } %>
-    {        
+    {
         #region Variable Declarations
-        
+
         /// <summary>
         ///  Hold the inner data of the entity.
         /// </summary>
@@ -116,7 +118,7 @@ namespace <%=NameSpace%>
         [DataMember]
         <% } %>
         private <%=structName%> entityData;
-        
+
         /// <summary>
         ///     Hold the original data of the entity, as loaded from the repository.
         /// </summary>
@@ -124,17 +126,17 @@ namespace <%=NameSpace%>
         [DataMember]
         <% } %>
         private <%=structName%> _originalData;
-        
+
         /// <summary>
         ///     Hold a backup of the inner data of the entity.
         /// </summary>
-        private <%=structName%> backupData; 
-        
+        private <%=structName%> backupData;
+
         /// <summary>
         ///     Key used if Tracking is Enabled for the <see cref="EntityLocator" />.
         /// </summary>
         private string entityTrackingKey;
-        
+
         /// <summary>
         ///     Hold the parent TList&lt;entity&gt; in which this entity maybe contained.
         /// </summary>
@@ -143,17 +145,17 @@ namespace <%=NameSpace%>
         [NonSerialized]
         <% } %>
         private <%=collectionClassName%> parentCollection;
-        
+
         private bool inTxn = false;
-        
+
         /// <summary>
         /// Occurs when a value is being changed for the specified column.
         /// </summary>
         <% if (!IncludeWCFDataAttributes) { %>
         [field:NonSerialized]
         <% } %>
-        public event <%= GetClassName(SourceTable, ClassNameFormat.EventHandler) %> ColumnChanging;        
-        
+        public event <%= GetClassName(SourceTable, ClassNameFormat.EventHandler) %> ColumnChanging;
+
         /// <summary>
         /// Occurs after a value has been changed for the specified column.
         /// </summary>
@@ -161,9 +163,9 @@ namespace <%=NameSpace%>
         [field:NonSerialized]
         <% } %>
         public event <%= GetClassName(SourceTable, ClassNameFormat.EventHandler) %> ColumnChanged;
-        
+
         #endregion Variable Declarations
-        
+
         #region Constructors
         ///<summary>
         /// Creates a new <see cref="<%=abstractClassName%>"/> instance.
@@ -172,8 +174,8 @@ namespace <%=NameSpace%>
         {
             this.entityData = new <%=structName%>();
             this.backupData = null;
-        }        
-        
+        }
+
         <% if(colsUpdatable.Count > 0) { %>
         ///<summary>
         /// Creates a new <see cref="<%=abstractClassName%>"/> instance.
@@ -191,7 +193,7 @@ namespace <%=NameSpace%>
             <% }// end for %>
         }
         <% } %>
-        
+
         ///<summary>
         /// A simple factory method to create a new <see cref="<%=className%>"/> instance.
         ///</summary>
@@ -206,23 +208,23 @@ namespace <%=NameSpace%>
             <% }// end for %>
             return new<%=className%>;
         }
-                
+
         #endregion Constructors
-            
-        #region Properties    
-        
+
+        #region Properties
+
         #region Data Properties
 
         <% for (int x=0; x < cols.Count; x++) {
-        
+
         string dataObjectFieldParams = GetDataObjectFieldCallParams(cols[x]);
         string defaultValue    = GetColumnDefaultValue(cols[x]).Length > 0
-            ? string.Format(",{1}\t\tDefaultValue({0})", GetColumnDefaultValue(cols[x]), "\r\n") 
-            : ""; 
+            ? string.Format(",{1}\t\tDefaultValue({0})", GetColumnDefaultValue(cols[x]), "\r\n")
+            : "";
 
         %>
         /// <summary>
-        ///     Gets or sets the <%= GetPropertyName(cols[x]) %> property. 
+        ///     Gets or sets the <%= GetPropertyName(cols[x]) %> property.
         ///        <%=GetColumnXmlComment(cols[x],2)%>
         /// </summary>
         /// <value>This type is <%=cols[x].NativeType%>.</value>
@@ -234,7 +236,7 @@ namespace <%=NameSpace%>
         <%if (! cols[x].AllowDBNull && IsCSReferenceDataType(cols[x]) ) {%>
         /// <exception cref="ArgumentNullException">If you attempt to set to null.</exception>
         <%}%>
-        
+
         <% if (!cols[x].AllowDBNull && DotNetVersion  == MoM.Templates.DotNetFrameworkVersion.v4 ) {%>[Required(ErrorMessage = "<%= GetPropertyName(cols[x]) %> is required")]<%}%>
         <% if(!cols[x].AllowDBNull && IsCSReferenceDataType(cols[x]) && ValidationType == MoM.Templates.ValidationType.EntLib){ %>
         [NotNullValidator(MessageTemplate="Property does not allow null values.", Tag="<%= cols[x].Name %>")]<% } %>
@@ -254,17 +256,17 @@ namespace <%=NameSpace%>
         {
             get
             {
-                return this.entityData.<%= GetPropertyName(cols[x]) %>; 
+                return this.entityData.<%= GetPropertyName(cols[x]) %>;
             }
-            
+
             set
             {
                 <%{%>
                 if (this.entityData.<%= GetPropertyName(cols[x]) %> == value)
                 <%}%>
                     return;
-                
-                OnPropertyChanging("<%=GetPropertyName(cols[x]) %>");                    
+
+                OnPropertyChanging("<%=GetPropertyName(cols[x]) %>");
                 OnColumnChanging(<%= GetClassName(SourceTable, ClassNameFormat.Column) %>.<%=GetPropertyName(cols[x]) %>, this.entityData.<%= GetPropertyName(cols[x]) %>);
                 this.entityData.<%= GetPropertyName(cols[x]) %> = value;
                 <% if ( cols[x].IsPrimaryKeyMember ) { %>
@@ -276,7 +278,7 @@ namespace <%=NameSpace%>
                 OnPropertyChanged("<%=GetPropertyName(cols[x]) %>");
             }
         }
-        
+
         <%
             if (cols[x].IsPrimaryKeyMember && !IsIdentityColumn(cols[x]) && !IsComputed(cols[x]) )
             {%>
@@ -295,32 +297,32 @@ namespace <%=NameSpace%>
             get { return this.entityData.<%= GetOriginalPropertyName(cols[x]) %>; }
             set { this.entityData.<%= GetOriginalPropertyName(cols[x]) %> = value; }
         }
-        
+
         <%     } // end if updatable PK
-        
-        } // end for each columns 
+
+        } // end for each columns
         %>
-        #endregion Data Properties        
+        #endregion Data Properties
 
         <% if (IncludeGetListByFK) { %>
         #region Source Foreign Key Property
-                
-        <%    //Generate a Source property for each foreign key relation        
+
+        <%    //Generate a Source property for each foreign key relation
         System.Collections.ArrayList filled = new System.Collections.ArrayList();
         foreach(TableKeySchema tableKey in SourceTable.ForeignKeys)
-        {    
+        {
             // related table must be in the selection
             if (SourceTables.Contains(tableKey.PrimaryKeyTable)) {
             string fkPropertyName = GetKeysName(tableKey.ForeignKeyMemberColumns);
-            
+
             if(filled.Contains(fkPropertyName))
                 continue;
-                
+
             filled.Add(fkPropertyName);
-            
+
             string pkClassName = GetClassName(tableKey.PrimaryKeyTable);
             string memberVarName = "_" + GetCamelCaseName(fkPropertyName) + "Source";
-        %>        
+        %>
         /// <summary>
         /// Gets or sets the source <see cref="<%=pkClassName%>"/>.
         /// </summary>
@@ -335,22 +337,22 @@ namespace <%=NameSpace%>
         <%    } //end if in SourceTables
          } //end for each FK%>
         #endregion
-        <%}// IncludeGetListByFK%>    
-        
+        <%}// IncludeGetListByFK%>
+
         #region Children Collections
-<% 
+<%
 if(IncludeRelations) {
 WriteRelationshipPropertyString();
 }
 %>
         #endregion Children Collections
-        
+
         #endregion
         <% if(ValidationType == MoM.Templates.ValidationType.NetTiers)
         {
         %>
         #region Validation
-        
+
         /// <summary>
         /// Assigns validation rules to this object based on model definition.
         /// </summary>
@@ -358,13 +360,13 @@ WriteRelationshipPropertyString();
         protected override void AddValidationRules()
         {
             //Validation rules based on database schema.
-        <% 
-        for (int x=0; x < cols.Count; x++) 
+        <%
+        for (int x=0; x < cols.Count; x++)
         {
             string propertyName = GetPropertyName(cols[x]);
             string friendlyName = GetFriendlyName(cols[x]);
-            
-            if (! cols[x].AllowDBNull && IsCSReferenceDataType(cols[x])) 
+
+            if (! cols[x].AllowDBNull && IsCSReferenceDataType(cols[x]))
             {
                 %>
             ValidationRules.AddRule( CommonRules.NotNull,
@@ -374,26 +376,26 @@ WriteRelationshipPropertyString();
 
             if (CanCheckLength(cols[x]))
             {%>
-            ValidationRules.AddRule( CommonRules.StringMaxLength, 
+            ValidationRules.AddRule( CommonRules.StringMaxLength,
                 new CommonRules.MaxLengthRuleArgs("<%=propertyName%>", "<%=friendlyName%>", <%=getColumnSize(cols[x].Size)%>));
             <%
             }
 
             if (cols[x].DataType == DbType.Decimal)
             {%>
-            ValidationRules.AddRule( CommonRules.DecimalMaxLength, 
+            ValidationRules.AddRule( CommonRules.DecimalMaxLength,
                 new CommonRules.MaxLengthRuleArgs("<%=propertyName%>", "<%=friendlyName%>", <%=cols[x].Precision - cols[x].Scale%>));
             <%
             }
 
         }
-        %>        
+        %>
         }
            #endregion
         <%
         }
         %>
-        
+
         #region Table Meta Data
         /// <summary>
         ///        The name of the underlying database table.
@@ -403,7 +405,7 @@ WriteRelationshipPropertyString();
         {
             get { return "<%=SourceTable.Name%>"; }
         }
-        
+
         /// <summary>
         ///        The name of the underlying database table's columns.
         /// </summary>
@@ -418,10 +420,10 @@ WriteRelationshipPropertyString();
                     } %>};
             }
         }
-        #endregion 
-        
+        #endregion
+
         #region IEditableObject
-        
+
         #region  CancelAddNew Event
         /// <summary>
         /// The delegate for the CancelAddNew event.
@@ -429,7 +431,7 @@ WriteRelationshipPropertyString();
         /// <param name="sender"></param>
         /// <param name="e"></param>
         public delegate void CancelAddNewEventHandler(object sender, EventArgs e);
-    
+
         /// <summary>
         /// The CancelAddNew event.
         /// </summary>
@@ -440,25 +442,25 @@ WriteRelationshipPropertyString();
         /// Called when [cancel add new].
         /// </summary>
         public void OnCancelAddNew()
-        {    
+        {
             if (!SuppressEntityEvents)
             {
                 CancelAddNewEventHandler handler = CancelAddNew ;
                 if (handler != null)
-                {    
+                {
                     handler(this, EventArgs.Empty) ;
                 }
             }
         }
-        #endregion 
-        
+        #endregion
+
         /// <summary>
         /// Begins an edit on an object.
         /// </summary>
-        void IEditableObject.BeginEdit() 
+        void IEditableObject.BeginEdit()
         {
             //Console.WriteLine("Start BeginEdit");
-            if (!inTxn) 
+            if (!inTxn)
             {
                 this.backupData = this.entityData.Clone() as <%=structName%>;
                 inTxn = true;
@@ -466,14 +468,14 @@ WriteRelationshipPropertyString();
             }
             //Console.WriteLine("End BeginEdit");
         }
-    
+
         /// <summary>
         /// Discards changes since the last <c>BeginEdit</c> call.
         /// </summary>
-        void IEditableObject.CancelEdit() 
+        void IEditableObject.CancelEdit()
         {
             //Console.WriteLine("Start CancelEdit");
-            if (this.inTxn) 
+            if (this.inTxn)
             {
                 this.entityData = this.backupData;
                 this.backupData = null;
@@ -484,37 +486,37 @@ WriteRelationshipPropertyString();
                 {
                     if (this.parentCollection != null)
                         this.parentCollection.Remove( (<%=className%>) this ) ;
-                }                
+                }
             }
             //Console.WriteLine("End CancelEdit");
         }
-    
+
         /// <summary>
         /// Pushes changes since the last <c>BeginEdit</c> or <c>IBindingList.AddNew</c> call into the underlying object.
         /// </summary>
-        void IEditableObject.EndEdit() 
+        void IEditableObject.EndEdit()
         {
             //Console.WriteLine("Start EndEdit" + this.custData.id + this.custData.lastName);
-            if (this.inTxn) 
+            if (this.inTxn)
             {
                 this.backupData = null;
-                if (this.IsDirty) 
+                if (this.IsDirty)
                 {
                     if (this.bindingIsNew) {
                         this.EntityState = EntityState.Added;
                         this.bindingIsNew = false ;
                     }
                     else
-                        if (this.EntityState == EntityState.Unchanged) 
+                        if (this.EntityState == EntityState.Unchanged)
                             this.EntityState = EntityState.Changed ;
                 }
 
                 this.bindingIsNew = false ;
-                this.inTxn = false;                
+                this.inTxn = false;
             }
             //Console.WriteLine("End EndEdit");
         }
-        
+
         /// <summary>
         /// Gets or sets the parent collection of this current entity, if available.
         /// </summary>
@@ -523,22 +525,22 @@ WriteRelationshipPropertyString();
         [Browsable(false)]
         public override object ParentCollection
         {
-            get 
+            get
             {
                 return this.parentCollection;
             }
-            set 
+            set
             {
                 this.parentCollection = value as <%=collectionClassName%>;
             }
         }
-        
+
         /// <summary>
         /// Called when the entity is changed.
         /// </summary>
-        private void OnEntityChanged() 
+        private void OnEntityChanged()
         {
-            if (!SuppressEntityEvents && !inTxn && this.parentCollection != null) 
+            if (!SuppressEntityEvents && !inTxn && this.parentCollection != null)
             {
                 this.parentCollection.EntityChanged(this as <%=className%>);
             }
@@ -546,10 +548,10 @@ WriteRelationshipPropertyString();
 
 
         #endregion
-        
+
         #region ICloneable Members
         ///<summary>
-        ///  Returns a Typed <%=className%> Entity 
+        ///  Returns a Typed <%=className%> Entity
         ///</summary>
         protected virtual <%=className%> Copy(IDictionary existingCopies)
         {
@@ -569,21 +571,21 @@ WriteRelationshipPropertyString();
                     copy.<%= GetOriginalPropertyName(cols[x]) %> = this.<%= GetOriginalPropertyName(cols[x]) %>;
                 <% } %>
             <% } %>
-            
+
             <% if (IncludeGetListByFK) { %>
                 <%    //Generate a Source property for each foreign key relation
                 System.Collections.ArrayList filled = new System.Collections.ArrayList();
                 foreach(TableKeySchema tableKey in SourceTable.ForeignKeys)
-                {    
+                {
                     // related table must be in the selection
                     if (SourceTables.Contains(tableKey.PrimaryKeyTable)) {
                         string fkPropertyName = GetKeysName(tableKey.ForeignKeyMemberColumns);
-                
+
                         if(filled.Contains(fkPropertyName))
                             continue;
-                        
+
                         filled.Add(fkPropertyName);
-                    
+
                         string pkClassName = GetClassName(tableKey.PrimaryKeyTable);
                         %>
             if (this.<%=fkPropertyName%>Source != null && existingCopies.Contains(this.<%=fkPropertyName%>Source))
@@ -592,41 +594,41 @@ WriteRelationshipPropertyString();
                 copy.<%=fkPropertyName%>Source = MakeCopyOf(this.<%=fkPropertyName%>Source, existingCopies) as <%= pkClassName %>;
             <%        } //end if in SourceTables
                 } //end for each FK
-          }// IncludeGetListByFK%>    
-        
-        <% 
+          }// IncludeGetListByFK%>
+
+        <%
         if (IncludeRelations){
         int ctr = 0;
-        foreach(CollectionInfo item in GetChildrenCollections(SourceTable, SourceTables).Values) { 
+        foreach(CollectionInfo item in GetChildrenCollections(SourceTable, SourceTables).Values) {
             if (ctr == 0)
                 Response.Write("\t\t\t//deep copy nested objects" + Environment.NewLine);
             ctr++;
-            
+
             string typeName = "";
             if (item.CollectionRelationshipType == MoM.Templates.CommonSqlCode.RelationshipType.OneToOne)
                 typeName = item.TypeName;
             else
                 typeName = item.CollectionTypeName;
         %>
-            copy.<%= item.PropertyNameUnique %> = (<%= typeName %>) MakeCopyOf(this.<%=item.PropertyNameUnique %>, existingCopies); 
+            copy.<%= item.PropertyNameUnique %> = (<%= typeName %>) MakeCopyOf(this.<%=item.PropertyNameUnique %>, existingCopies);
             <% }//end foreach CollectionInfo
         }//end if IncludeRelations
         %>
             copy.EntityState = this.EntityState;
             copy.SuppressEntityEvents = false;
             return copy;
-        }        
-        
-        
-        
+        }
+
+
+
         ///<summary>
-        ///  Returns a Typed <%=className%> Entity 
+        ///  Returns a Typed <%=className%> Entity
         ///</summary>
         public virtual <%=className%> Copy()
         {
-            return this.Copy(null);    
+            return this.Copy(null);
         }
-        
+
         ///<summary>
         /// ICloneable.Clone() Member, returns the Shallow Copy of this entity.
         ///</summary>
@@ -634,7 +636,7 @@ WriteRelationshipPropertyString();
         {
             return this.Copy(null);
         }
-        
+
         ///<summary>
         /// ICloneableEx.Clone() Member, returns the Shallow Copy of this entity.
         ///</summary>
@@ -642,7 +644,7 @@ WriteRelationshipPropertyString();
         {
             return this.Copy(existingCopies);
         }
-        
+
         ///<summary>
         /// Returns a deep copy of the child collection object passed in.
         ///</summary>
@@ -650,7 +652,7 @@ WriteRelationshipPropertyString();
         {
             if (x == null)
                 return null;
-                
+
             if (x is ICloneable)
             {
                 // Return a deep copy of the object
@@ -659,7 +661,7 @@ WriteRelationshipPropertyString();
             else
                 throw new System.NotSupportedException("Object Does Not Implement the ICloneable Interface.");
         }
-        
+
         ///<summary>
         /// Returns a deep copy of the child collection object passed in.
         ///</summary>
@@ -667,7 +669,7 @@ WriteRelationshipPropertyString();
         {
             if (x == null)
                 return null;
-            
+
             if (x is ICloneableEx)
             {
                 // Return a deep copy of the object
@@ -681,19 +683,19 @@ WriteRelationshipPropertyString();
             else
                 throw new System.NotSupportedException("Object Does Not Implement the ICloneable or IClonableEx Interface.");
         }
-        
-        
+
+
         ///<summary>
         ///  Returns a Typed <%=className%> Entity which is a deep copy of the current entity.
         ///</summary>
         public virtual <%=className%> DeepCopy()
         {
-            return EntityHelper.Clone<<%=className%>>(this as <%=className%>);    
+            return EntityHelper.Clone<<%=className%>>(this as <%=className%>);
         }
         #endregion
-        
-        #region Methods    
-            
+
+        #region Methods
+
         ///<summary>
         /// Revert all changes and restore original values.
         ///</summary>
@@ -712,8 +714,8 @@ WriteRelationshipPropertyString();
                 //Since this had no _originalData, then just reset the entityData with a new one.  entityData cannot be null.
                 this.entityData = new <%=structName%>();
             }
-        }    
-        
+        }
+
         /// <summary>
         /// Accepts the changes made to this object.
         /// </summary>
@@ -728,9 +730,9 @@ WriteRelationshipPropertyString();
             this._originalData = null;
             this._originalData = this.entityData.Clone() as <%=structName%>;
         }
-        
+
         #region Comparision with original data
-        
+
         /// <summary>
         /// Determines whether the property value has changed from the original data.
         /// </summary>
@@ -742,19 +744,19 @@ WriteRelationshipPropertyString();
         {
             if (_originalData == null)
                 throw new System.NotSupportedException("Must Call BeginEdit() first.\nvar casted_obj = (System.ComponentModel.IEditableObject)nettiers_generated_obj;\ncasted_obj.BeginEdit();");
-                
+
             switch (column)
             {
                 <% for (int x=0; x < cols.Count; x++) { %>
                 case <%= GetClassName(SourceTable, ClassNameFormat.Column) %>.<%=GetPropertyName(cols[x])%>:
                     return entityData.<%=GetPropertyName(cols[x])%> != _originalData.<%=GetPropertyName(cols[x])%>;
                 <% } %>
-            
+
                 default:
                     return false;
             }
         }
-        
+
         /// <summary>
         /// Determines whether the property value has changed from the original data.
         /// </summary>
@@ -766,7 +768,7 @@ WriteRelationshipPropertyString();
         {
             return IsPropertyChanged(EntityHelper.GetEnumValue<<%=GetClassName(SourceTable, ClassNameFormat.Column)%>>(columnName));
         }
-        
+
         /// <summary>
         /// Determines whether the data has changed from original.
         /// </summary>
@@ -780,8 +782,8 @@ WriteRelationshipPropertyString();
             result = result || entityData.<%=GetPropertyName(cols[x])%> != _originalData.<%=GetPropertyName(cols[x])%>;
             <% } %>
             return result;
-        }    
-        
+        }
+
         ///<summary>
         ///  Returns a <%=className%> Entity with the original data.
         ///</summary>
@@ -796,11 +798,11 @@ WriteRelationshipPropertyString();
                 <%}
                 %>
                 );
-                
+
             return (<%=className%>)this.Clone();
         }
         #endregion
-    
+
     <% if(EqualitySemantics == MoM.Templates.EqualitySemantics.Value) {%>
     #region Value Semantics Instance Equality
         ///<summary>
@@ -819,20 +821,20 @@ WriteRelationshipPropertyString();
 
         /// <summary>
         /// Serves as a hash function for a particular type, suitable for use in hashing algorithms and data structures like a hash table.
-        /// Provides a hash function that is appropriate for <see cref="<%=abstractClassName%>"/> class 
+        /// Provides a hash function that is appropriate for <see cref="<%=abstractClassName%>"/> class
         /// and that ensures a better distribution in the hash table
         /// </summary>
         /// <returns>number (hash code) that corresponds to the value of an object</returns>
         public override int GetHashCode()
         {
             return <%
-                for (int i=0; i < cols.Count; i++) 
+                for (int i=0; i < cols.Count; i++)
                 {
-                    if (i>0) 
+                    if (i>0)
                     {
                         Response.Write(" ^ \r\n\t\t\t\t\t");
                     }
-                    if (cols[i].AllowDBNull) 
+                    if (cols[i].AllowDBNull)
                     {
                         Response.Write("((this."+ GetPropertyName(cols[i]) + " == null) ? string.Empty : this."+ GetPropertyName(cols[i]) + ".ToString()).GetHashCode()");
                     }
@@ -840,10 +842,10 @@ WriteRelationshipPropertyString();
                     {
                         Response.Write("this."+ GetPropertyName(cols[i]) + ".GetHashCode()");
                     }
-                } 
+                }
                 %>;
         }
-        
+
         ///<summary>
         /// Returns a value indicating whether this instance is equal to a specified object using value semantics.
         ///</summary>
@@ -857,7 +859,7 @@ WriteRelationshipPropertyString();
         }
         #endregion
         <% } %>
-        
+
         ///<summary>
         /// Determines whether the specified <see cref="<%=abstractClassName%>"/> instances are considered equal using value semantics.
         ///</summary>
@@ -873,7 +875,7 @@ WriteRelationshipPropertyString();
             // one or the other is null, but not both
             if (Object1 == null ^ Object2 == null)
                 return false;
-                
+
             bool equal = true;
         <% for (int x=0; x < cols.Count; x++) {
                 if ( cols[x].AllowDBNull )
@@ -892,13 +894,13 @@ WriteRelationshipPropertyString();
             if (Object1.<%= GetPropertyName(cols[x]) %> != Object2.<%= GetPropertyName(cols[x]) %>)
                 equal = false;
             <% } // if ( cols[x].AllowDBNull ) %>
-        <% }// end for %>    
-                    
+        <% }// end for %>
+
             return equal;
         }
-        
+
         #endregion
-        
+
         #region IComparable Members
         ///<summary>
         /// Compares this instance to a specified object and returns an indication of their relative values.
@@ -911,7 +913,7 @@ WriteRelationshipPropertyString();
             <% // TODO -> generate a strongly typed IComparer in the concrete class %>
             //return this. GetPropertyName(SourceTable.PrimaryKey.MemberColumns[0]) .CompareTo(((<%=abstractClassName%>)obj).GetPropertyName(SourceTable.PrimaryKey.MemberColumns[0]));
         }
-        
+
         /*
         // static method to get a Comparer object
         public static <%= GetClassName(SourceTable, ClassNameFormat.Comparer) %> GetComparer()
@@ -937,28 +939,28 @@ WriteRelationshipPropertyString();
             switch (which)
             {
                 <% foreach(ColumnSchema column in cols) { %>
-                
+
                 <% if (column.DataType != DbType.Binary) { %>
-                
+
                 case <%= GetClassName(SourceTable, ClassNameFormat.Column) %>.<%=GetPropertyName(column)%>:
                     <% if (column.AllowDBNull && !IsCSReferenceDataType(column)) {%>
                     return this.<%=GetPropertyName(column)%>.Value.CompareTo(rhs.<%=GetPropertyName(column)%>.Value);
                     <% } else { %>
                     return this.<%=GetPropertyName(column)%>.CompareTo(rhs.<%=GetPropertyName(column)%>);
-                    <% } %>  
-                    
+                    <% } %>
+
                 <% } %>
-                                     
-                <% } //end foreach %>                
+
+                <% } //end foreach %>
             }
             return 0;
         }
         */
-    
+
         #endregion
-        
+
         #region IComponent Members
-        
+
         private ISite _site = null;
 
         /// <summary>
@@ -976,7 +978,7 @@ WriteRelationshipPropertyString();
         #endregion
 
         #region IDisposable Members
-        
+
         /// <summary>
         /// Notify those that care when we dispose.
         /// </summary>
@@ -992,7 +994,7 @@ WriteRelationshipPropertyString();
             this.Dispose(true);
             GC.SuppressFinalize(this);
         }
-        
+
         /// <summary>
         /// Clean up.
         /// </summary>
@@ -1005,11 +1007,11 @@ WriteRelationshipPropertyString();
                     handler(this, EventArgs.Empty);
             }
         }
-        
+
         #endregion
-                
+
         #region IEntityKey<<%= keyClassName %>> Members
-        
+
         // member variable for the EntityId property
         private <%= keyClassName %> _entityId;
 
@@ -1034,26 +1036,26 @@ WriteRelationshipPropertyString();
                 {
                     value.Entity = this;
                 }
-                
+
                 _entityId = value;
             }
         }
-        
+
         #endregion
-        
+
         #region EntityState
         /// <summary>
         ///        Indicates state of object
         /// </summary>
         /// <remarks>0=Unchanged, 1=Added, 2=Changed</remarks>
         [BrowsableAttribute(false) <%= (!SerializeEntityState ? ", XmlIgnoreAttribute()" : "") %>]
-        public override EntityState EntityState 
-        { 
-            get{ return entityData.EntityState;     } 
-            set{ entityData.EntityState = value; } 
+        public override EntityState EntityState
+        {
+            get{ return entityData.EntityState;     }
+            set{ entityData.EntityState = value; }
         }
-        #endregion 
-        
+        #endregion
+
         #region EntityTrackingKey
         ///<summary>
         /// Provides the tracking key for the <see cref="EntityLocator"/>
@@ -1065,10 +1067,10 @@ WriteRelationshipPropertyString();
             {
                 if(entityTrackingKey == null)
                     entityTrackingKey = new System.Text.StringBuilder("<%= className %>")<%
-                for (int x=0; x < cols.Count;x++) { 
+                for (int x=0; x < cols.Count;x++) {
                     if(cols[x].IsPrimaryKeyMember) {%>
                     .Append("|").Append( this.<%=GetPropertyName(cols[x])%>.ToString())<%
-                    }// end if 
+                    }// end if
                 } //end for each column %>.ToString();
                 return entityTrackingKey;
             }
@@ -1078,17 +1080,17 @@ WriteRelationshipPropertyString();
                     entityTrackingKey = value;
             }
         }
-        #endregion 
-        
+        #endregion
+
         #region ToString Method
-        
+
         ///<summary>
         /// Returns a String that represents the current object.
         ///</summary>
         public override string ToString()
         {
             return string.Format(System.Globalization.CultureInfo.InvariantCulture,
-                "{<%=cols.Count+1%>}{<%=cols.Count%>}<% for (int x=0; x < cols.Count; x++) { Response.Write("- " + GetPropertyName(cols[x]) + ": {" + x + "}{" + cols.Count + "}" ); } %>{<%=cols.Count+2%>}", 
+                "{<%=cols.Count+1%>}{<%=cols.Count%>}<% for (int x=0; x < cols.Count; x++) { Response.Write("- " + GetPropertyName(cols[x]) + ": {" + x + "}{" + cols.Count + "}" ); } %>{<%=cols.Count+2%>}",
             <%for (int x=0; x < cols.Count; x++)
               {
                 if ( cols[x].AllowDBNull )
@@ -1098,13 +1100,13 @@ WriteRelationshipPropertyString();
                 this.<%= GetPropertyName(cols[x]) %>,
             <% } // if ( cols[x].AllowDBNull )
             } // for (int x=0; x < cols.Count; x++) %>
-                System.Environment.NewLine, 
+                System.Environment.NewLine,
                 this.GetType(),
                 this.Error.Length == 0 ? string.Empty : string.Format("- Error: {0}\n",this.Error));
         }
-        
+
         #endregion ToString Method
-        
+
         #region Inner data class
         <%
             CodeTemplate template;
@@ -1112,23 +1114,23 @@ WriteRelationshipPropertyString();
                 template = CodeTemplates["EntityData.cst"];
             else
                 template = base.CreateTemplate<EntityData>();
-                
+
             this.CopyPropertiesTo(template);
             template.SetProperty("SourceTables", _sourceTables);
             template.SetProperty("SerializeEntityState", SerializeEntityState);
             template.SetProperty("IncludeWCFDataAttributes", IncludeWCFDataAttributes);
-            
+
             Response.Write(template.RenderToString());
         %>
         #endregion
-        
-                
+
+
         <% if (IncludeWCFDataAttributes ) { %>
-        
+
         #region DataContract serialization
-        
+
         bool _deserializing = false;
-        
+
         /// <summary>
         /// Called before deserializing the type.
         /// </summary>
@@ -1136,15 +1138,15 @@ WriteRelationshipPropertyString();
         private void Initialize_BeforeDeserializing(StreamingContext context)
         {
             this._deserializing = true;
-        
+
             this.entityData = new <%=structName%>();
             this.backupData = null;
-            
+
             <% if(ValidationType == MoM.Templates.ValidationType.NetTiers) { %>
             AddValidationRules();
             <% } %>
         }
-        
+
         /// <summary>
         /// Called after deserializing the type.
         /// </summary>
@@ -1153,11 +1155,11 @@ WriteRelationshipPropertyString();
         {
             this._deserializing = false;
         }
-                
+
         #endregion
-        
+
         <% } %>
-        
+
         #region Events trigger
         /// <summary>
         /// Raises the <see cref="ColumnChanging" /> event.
@@ -1168,7 +1170,7 @@ WriteRelationshipPropertyString();
             OnColumnChanging(column, null);
             return;
         }
-        
+
         /// <summary>
         /// Raises the <see cref="ColumnChanged" /> event.
         /// </summary>
@@ -1177,9 +1179,9 @@ WriteRelationshipPropertyString();
         {
             OnColumnChanged(column, null);
             return;
-        } 
-        
-        
+        }
+
+
         /// <summary>
         /// Raises the <see cref="ColumnChanging" /> event.
         /// </summary>
@@ -1189,7 +1191,7 @@ WriteRelationshipPropertyString();
         {
             if(IsEntityTracked && EntityState != EntityState.Added && !EntityManager.TrackChangedEntities)
                 EntityManager.StopTracking(entityTrackingKey);
-                
+
             if (!SuppressEntityEvents)
             {
                 <%= GetClassName(SourceTable, ClassNameFormat.EventHandler) %> handler = ColumnChanging;
@@ -1199,7 +1201,7 @@ WriteRelationshipPropertyString();
                 }
             }
         }
-        
+
         /// <summary>
         /// Raises the <see cref="ColumnChanged" /> event.
         /// </summary>
@@ -1214,16 +1216,16 @@ WriteRelationshipPropertyString();
                 {
                     handler(this, new <%= GetClassName(SourceTable, ClassNameFormat.EventArgs) %>(column, value));
                 }
-            
+
                 // warn the parent list that i have changed
                 OnEntityChanged();
             }
-        } 
+        }
         #endregion
-        
+
         <% if(EntityCacheLayer == MoM.Templates.CacheLayer.EntLib) {%>
         #region Cache Attributes
-        
+
         /// <summary>
         /// Entity Cache Duration
         /// </summary>
@@ -1243,23 +1245,23 @@ WriteRelationshipPropertyString();
 
         #endregion
         <% } %>
-            
+
     } // End Class
-    
-    
+
+
     #region <%= GetClassName(SourceTable, ClassNameFormat.EventArgs) %> class
     /// <summary>
     /// Provides data for the ColumnChanging and ColumnChanged events.
     /// </summary>
     /// <remarks>
-    /// The ColumnChanging and ColumnChanged events occur when a change is made to the value 
+    /// The ColumnChanging and ColumnChanged events occur when a change is made to the value
     /// of a property of a <see cref="<%=className%>"/> object.
     /// </remarks>
     public class <%= GetClassName(SourceTable, ClassNameFormat.EventArgs) %> : System.EventArgs
     {
         private <%= GetClassName(SourceTable, ClassNameFormat.Column) %> column;
         private object value;
-        
+
         ///<summary>
         /// Initalizes a new Instance of the <%= GetClassName(SourceTable, ClassNameFormat.EventArgs) %> class.
         ///</summary>
@@ -1267,7 +1269,7 @@ WriteRelationshipPropertyString();
         {
             this.column = column;
         }
-        
+
         ///<summary>
         /// Initalizes a new Instance of the <%= GetClassName(SourceTable, ClassNameFormat.EventArgs) %> class.
         ///</summary>
@@ -1276,13 +1278,13 @@ WriteRelationshipPropertyString();
             this.column = column;
             this.value = value;
         }
-        
+
         ///<summary>
         /// The <%= GetClassName(SourceTable, ClassNameFormat.Column) %> that was modified, which has raised the event.
         ///</summary>
         ///<value cref="<%= GetClassName(SourceTable, ClassNameFormat.Column) %>" />
         public <%= GetClassName(SourceTable, ClassNameFormat.Column) %> Column { get { return this.column; } }
-        
+
         /// <summary>
         /// Gets the current value of the column.
         /// </summary>
@@ -1291,28 +1293,28 @@ WriteRelationshipPropertyString();
 
     }
     #endregion
-    
+
     ///<summary>
     /// Define a delegate for all <%=className%> related events.
     ///</summary>
     public delegate void <%= GetClassName(SourceTable, ClassNameFormat.EventHandler) %>(object sender, <%= GetClassName(SourceTable, ClassNameFormat.EventArgs) %> e);
-    
+
     #region <%= GetClassName(SourceTable, ClassNameFormat.Comparer) %>
-        
+
     /// <summary>
     ///    Strongly Typed IComparer
     /// </summary>
     public class <%= GetClassName(SourceTable, ClassNameFormat.Comparer) %> : System.Collections.Generic.IComparer<<%=className%>>
     {
         <%= GetClassName(SourceTable, ClassNameFormat.Column) %> whichComparison;
-        
+
         /// <summary>
         /// Initializes a new instance of the <see cref="T:<%= GetClassName(SourceTable, ClassNameFormat.Comparer) %>"/> class.
         /// </summary>
         public <%= GetClassName(SourceTable, ClassNameFormat.Comparer) %>()
-        {            
-        }               
-        
+        {
+        }
+
         /// <summary>
         /// Initializes a new instance of the <see cref="T:<%= GetClassName(SourceTable, ClassNameFormat.Comparer) %>"/> class.
         /// </summary>
@@ -1365,9 +1367,9 @@ WriteRelationshipPropertyString();
             set { this.whichComparison = value; }
         }
     }
-    
+
     #endregion
-    
+
     #region <%= keyClassName %> Class
 
     /// <summary>
@@ -1378,14 +1380,14 @@ WriteRelationshipPropertyString();
     public class <%= keyClassName %> : EntityKeyBase
     {
         #region Constructors
-        
+
         /// <summary>
         /// Initializes a new instance of the <%= keyClassName %> class.
         /// </summary>
         public <%= keyClassName %>()
         {
         }
-        
+
         /// <summary>
         /// Initializes a new instance of the <%= keyClassName %> class.
         /// </summary>
@@ -1404,7 +1406,7 @@ WriteRelationshipPropertyString();
 
             #endregion
         }
-        
+
         /// <summary>
         /// Initializes a new instance of the <%= keyClassName %> class.
         /// </summary>
@@ -1418,14 +1420,14 @@ WriteRelationshipPropertyString();
 
             #endregion
         }
-        
+
         #endregion Constructors
 
         #region Properties
-        
+
         // member variable for the Entity property
         private <%= abstractClassName %> _entity;
-        
+
         /// <summary>
         /// Gets or sets the Entity property.
         /// </summary>
@@ -1434,11 +1436,11 @@ WriteRelationshipPropertyString();
             get { return _entity; }
             set { _entity = value; }
         }
-        
+
         <% foreach ( ColumnSchema column in pkCols ) { %>
         // member variable for the <%= GetPropertyName(column) %> property
         private <%= GetCSType(column) %> <%= GetVariableName(column) %>;
-        
+
         /// <summary>
         /// Gets or sets the <%= GetPropertyName(column) %> property.
         /// </summary>
@@ -1449,16 +1451,16 @@ WriteRelationshipPropertyString();
             {
                 if ( this.Entity != null )
                     this.Entity.<%= GetPropertyName(column) %> = value;
-                
+
                 <%= GetVariableName(column) %> = value;
             }
         }
-        
+
         <% } %>
         #endregion
 
         #region Methods
-        
+
         /// <summary>
         /// Reads values from the supplied <see cref="IDictionary"/> object into
         /// properties of the current object.
@@ -1502,7 +1504,7 @@ WriteRelationshipPropertyString();
 
             return values;
         }
-        
+
         ///<summary>
         /// Returns a String that represents the current object.
         ///</summary>
@@ -1521,11 +1523,11 @@ WriteRelationshipPropertyString();
 
         #endregion Methods
     }
-    
-    #endregion    
+
+    #endregion
 
     #region <%= GetClassName(SourceTable, ClassNameFormat.Column) %> Enum
-    
+
     /// <summary>
     /// Enumerate the <%=className%> columns.
     /// </summary>
@@ -1539,7 +1541,7 @@ WriteRelationshipPropertyString();
         [EnumTextValue("<%= GetFriendlyName(cols[x]) %>")]
         [ColumnEnum(<%= GetColumnEnumAttributeParams(cols[x]) %>)]
         <%=GetPropertyName(cols[x])%> = <%= (x+1) %><%if(x < cols.Count -1) {%>,<%}%>
-        <% }// end for %>    
+        <% }// end for %>
     }//End enum
 
     #endregion <%= GetClassName(SourceTable, ClassNameFormat.Column) %> Enum
@@ -1553,18 +1555,18 @@ protected static string MANY_TO_MANY = @"
         /// <summary>
         ///    Holds a collection of {3} objects
         ///    which are related to this object through the junction table {2}
-        /// </summary>    
+        /// </summary>
         [System.ComponentModel.Bindable(System.ComponentModel.BindableSupport.Yes)]
         public virtual {1} {0}
         {{
             get {{ return entityData.{0}; }}
-            set {{ entityData.{0} = value; }}    
+            set {{ entityData.{0} = value; }}
         }}
 ";
 
 ///<summary>
 /// One to One Relationship Class Template Property String
-///</summary>        
+///</summary>
 protected static string ONE_TO_ONE = @"
         /// <summary>
         ///    Holds a {0} object
@@ -1574,47 +1576,47 @@ protected static string ONE_TO_ONE = @"
         public virtual {0} {0}
         {{
             get {{ return entityData.{0}; }}
-            set {{ entityData.{0} = value; }}    
+            set {{ entityData.{0} = value; }}
         }}
 ";
-        
+
 ///<summary>
 /// One To Many Relationship Class Template Property String
-///</summary>        
-protected static string ONE_TO_MANY = @"    
+///</summary>
+protected static string ONE_TO_MANY = @"
         /// <summary>
         ///    Holds a collection of {2} objects
         ///    which are related to this object through the relation {1}
-        /// </summary>    
+        /// </summary>
         [System.ComponentModel.Bindable(System.ComponentModel.BindableSupport.Yes)]
         public virtual {0} {3}
         {{
             get {{ return entityData.{3}; }}
-            set {{ entityData.{3} = value; }}    
+            set {{ entityData.{3} = value; }}
         }}
 ";
-        
+
 ///<summary>
 ///   Writes out the property string of all the relationship object collections.
 ///</summary>
-private void WriteRelationshipPropertyString() 
+private void WriteRelationshipPropertyString()
 {
 
     ///Loop Child Collections
     foreach (CollectionInfo item in GetChildrenCollections(SourceTable, SourceTables).Values)
-    {        
+    {
         ///Assign by RelationshipType, Then Write to Response
         switch((int)item.CollectionRelationshipType)
         {
             ///One To One Relationship
-            case (int)RelationshipType.OneToOne:                                
+            case (int)RelationshipType.OneToOne:
                 object[] oneToOneParams = {
                             item.PropertyNameUnique,
                             item.TypeName
                 };
                 item.PropertyName = string.Format(ONE_TO_ONE, oneToOneParams);
                 break;
-                
+
             ///One To Many, Many To One
             case (int)RelationshipType.OneToMany:
             case (int)RelationshipType.ManyToOne:
@@ -1626,7 +1628,7 @@ private void WriteRelationshipPropertyString()
                 };
             item.PropertyName = string.Format(ONE_TO_MANY, oneToManyParams);
             break;
-            
+
             ///Many To Many
             case (int)RelationshipType.ManyToMany:
                 object[] manyToManyParams = {
@@ -1640,12 +1642,12 @@ private void WriteRelationshipPropertyString()
             default:
                 break;
         }
-    
+
         ///Write it out to the resonse stream
-        Response.Write(item.PropertyName);    
-    
+        Response.Write(item.PropertyName);
+
     }///End foreach loop
-        
+
 }
 
 private int getColumnSize(int columnSize)
