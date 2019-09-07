@@ -16,6 +16,7 @@
 <%@ Property Name="IncludeWCFDataAttributes" Type="System.Boolean" Default="False" Category="02. Framework Generation - Optional" Description="Indicates if the WCF attributes, [DataContract] and [DataMember], should be included on the entity classes." %>
 <%@ Property Name="IncludeXmlAttributes" Type="System.Boolean" Default="False" Category="02. Framework Generation - Optional" Description="Indicates if the Xml attributes, [XmlElement(IsNullable=true)], should be included on the entity classes." %>
 <%@ Property Name="EntLibVersion" Type="MoM.Templates.EntLibVersion" Default="v5_0" Category="02. Framework Generation - Optional" Description="Indicates the Enterprise Library version to use. Options include v3.1, v5.0" %>
+<%@ Property Name="ExtendedPropertyPrefix" Type="System.String" Default="netxp_" Category="07. CRUD - Advanced" Description="In SQL it is possible to add extended properties to columns. If the extended property name has this prefix, then it will be added as a custom attribute in the column enum." %>
 
 <%@ Property Name="NameSpace" Optional="True" Type="System.String" Category="Style" Description="Object Namespace." %>
 <%@ Property Name="EntityCacheLayer" Optional="True" Type="MoM.Templates.CacheLayer" Default="None" Category="Options" Description="Should Caching be enabled for this entity." %>
@@ -1538,6 +1539,13 @@ WriteRelationshipPropertyString();
         /// <summary>
         /// <%=GetPropertyName(cols[x])%> : <%=GetColumnXmlComment(cols[x],2)%>
         /// </summary>
+            <% if (!string.IsNullOrWhiteSpace(ExtendedPropertyPrefix)) {
+                   for (int i=0; i < cols[x].ExtendedProperties.Count; i++) {
+                       if (cols[x].ExtendedProperties[i].Name.ToLower().StartsWith(ExtendedPropertyPrefix.ToLower())) { %>
+        [ColumnExtendedProperty("<%=cols[x].ExtendedProperties[i].Name.Substring(ExtendedPropertyPrefix.Length) %>", "<%=cols[x].ExtendedProperties[i].Value %>")]
+            <%         }
+                   }
+               } %>
         [EnumTextValue("<%= GetFriendlyName(cols[x]) %>")]
         [ColumnEnum(<%= GetColumnEnumAttributeParams(cols[x]) %>)]
         <%=GetPropertyName(cols[x])%> = <%= (x+1) %><%if(x < cols.Count -1) {%>,<%}%>
