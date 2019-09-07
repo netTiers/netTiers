@@ -488,6 +488,34 @@ namespace <%=NameSpace%>
 
         #endregion GetAttribute
 
+        #region GetAttributes
+
+        /// <summary>
+        /// Gets the all occurrences of the specified type of <see cref="System.Attribute"/>.
+        /// </summary>
+        /// <typeparam name="T"></typeparam>
+        /// <param name="e"></param>
+        /// <returns></returns>
+        public static List<T> GetAttributes<T>(System.Enum e) where T : System.Attribute
+        {
+            List<T> attributes = new List<T>();
+            Type enumType = e.GetType();
+            System.Reflection.MemberInfo[] members = enumType.GetMember(e.ToString());
+
+            if (members != null && members.Length == 1)
+            {
+                object[] attrs = members[0].GetCustomAttributes(typeof(T), false);
+                foreach (object attr in attrs)
+                {
+                    attributes.Add((T)attr);
+                }
+            }
+
+            return attributes;
+        }
+
+        #endregion GetAttributes
+
         #region Pascal to spaced helper
 
         /// <summary>
@@ -645,7 +673,54 @@ namespace <%=NameSpace%>
         }
     }
 
-    #endregion 
+    #endregion EnumTextValue
+
+    #region ColumnExtendedProperty
+
+    ///<summary>
+    /// Attribute used to decorate enumerations with additional extended properties
+    ///</summary>
+    [AttributeUsage(AttributeTargets.All, AllowMultiple = true)]
+    public sealed class ColumnExtendedPropertyAttribute : System.Attribute
+    {
+        private readonly string enumPropName;
+        private readonly string enumPropValue;
+
+        ///<summary>
+        /// Returns the text representation of the extended property name
+        ///</summary>
+        public string Name
+        {
+            get
+            {
+                return enumPropName;
+            }
+        }
+
+        ///<summary>
+        /// Returns the text representation of the extended property value
+        ///</summary>
+        public string Value
+        {
+            get
+            {
+                return enumPropValue;
+            }
+        }
+
+        ///<summary>
+        /// Allows the creation of an extended property for the enumeration.
+        ///</summary>
+        /// <param name="name">The reader friendly name of the extended property.</param>
+        /// <param name="value">The reader friendly value of the extended property.</param>
+        public ColumnExtendedPropertyAttribute(string name, string value)
+        {
+            enumPropName = name;
+            enumPropValue = value;
+        }
+    }
+
+    #endregion ColumnExtendedProperty
 
     #region ColumnEnumAttribute
 
@@ -658,10 +733,13 @@ namespace <%=NameSpace%>
 
         /// <summary>
         /// Initializes a new instance of the ColumnEnumAttribute class.
-		/// </summary>
-		/// <param name="name"></param>
-		/// <param name="systemType"></param>
-		/// <param name="dbType"></param>
+        /// </summary>
+        /// <param name="name"></param>
+        /// <param name="systemType"></param>
+        /// <param name="dbType"></param>
+        /// <param name="precision"></param>
+        /// <param name="scale"></param>
+        /// <param name="defaultValue"></param>
         /// <param name="isPrimaryKey"></param>
         /// <param name="isIdentity"></param>
         /// <param name="allowDbNull"></param>
@@ -682,10 +760,13 @@ namespace <%=NameSpace%>
 
         /// <summary>
         /// Initializes a new instance of the ColumnEnumAttribute class.
-		/// </summary>
-		/// <param name="name"></param>
-		/// <param name="systemType"></param>
-		/// <param name="dbType"></param>
+        /// </summary>
+        /// <param name="name"></param>
+        /// <param name="systemType"></param>
+        /// <param name="dbType"></param>
+        /// <param name="precision"></param>
+        /// <param name="scale"></param>
+        /// <param name="defaultValue"></param>
         /// <param name="isPrimaryKey"></param>
         /// <param name="isIdentity"></param>
         /// <param name="allowDbNull"></param>
