@@ -16,6 +16,7 @@
 <%@ Property Name="IncludeGetListByFK" Type="System.Boolean" Default="True" Category="Options" Description="If true get functions will be generated." %>
 <%@ Property Name="IncludeGetListByIX" Type="System.Boolean" Default="True" Category="Options" Description="If true getlist functions will be generated." %>
 <%@ Property Name="IncludeFind" Type="System.Boolean" Default="True" Category="Options" Description="If true find functions will be generated." %>
+<%@ Property Name="VoidProcTransaction" Type="System.Boolean" Default="True" Category="Options" Description="If this is set to True, then automatically wrap all calls to stored procedures that have no return data in transactions; this way sprocs that only perform work will get all that work rolled back if they fail." %>
 <%@ Property Name="ComponentPattern" Optional="False" Type="MoM.Templates.ComponentPatternType" Category="Pattern" Description="Component Pattern Type." %>
 <%@ Property Name="CustomNonMatchingReturnType" Type="CustomNonMatchingReturnType" Default="DataSet" Category="Options" Description="When using custom stored procedures, if the returned rows do not match the fields in an entity, a DataSet or IDataReader will be returned. Choose One.  This is useful if you've returned more than one resultset in a custom procedure; you can use a ConvertToDataSet(IDataReader) method in the Utility class to convert that to a DataSet." %>
 <%@ Property Name="UsePartialClass" Type="System.Boolean" Default="true" Category="General" Description="Indicates if partial class should be generated." %>
@@ -118,11 +119,11 @@
     ColumnSchema RowVersion = null;
 
     foreach(ColumnSchema column in SourceTable.Columns)
-	{
-		if (column.NativeType.ToLower() == "timestamp")
-		{
-			RowVersion = column;
-		}
+    {
+        if (column.NativeType.ToLower() == "timestamp")
+        {
+            RowVersion = column;
+        }
     }
 
     // If the chosen pattern to implement is a domain pattern, go ahead 
@@ -1497,7 +1498,7 @@
         <% } %>
 
         /// <summary>
-        ///    This method wrap the '<%=command.Name%>' stored procedure. 
+        ///    This method wraps the '<%=command.Name%>' stored procedure. 
         /// </summary><%=TransformStoredProcedureInputsToMethodComments(command.InputParameters) + TransformStoredProcedureOutputsToMethodComments(command.AllOutputParameters)%>
         /// <remark>This method is generate from a stored procedure.</remark><% if (returnType != "void") {%>
         /// <returns>A <see cref="<%=returnTypeForComment%>"/> instance.</returns><%}%>
@@ -1602,7 +1603,7 @@
                 #endregion Handle transaction rollback and exception
             }
 
-            return<%= returnType != "void" ? "result" : "" %>;
+            return<%= returnType != "void" ? " result" : "" %>;
         }
 
         #endregion 
