@@ -1,4 +1,4 @@
-<%@ CodeTemplate Language="C#" TargetLanguage="C#" Src="" Inherits="" Debug="False" Description="Generates the SqlStringBuilder class." ResponseEncoding="UTF-8"  NoWarn="0108,0618,1572,1573,1574,0162,2002"%>
+﻿<%@ CodeTemplate Language="C#" TargetLanguage="C#" Src="" Inherits="" Debug="False" Description="Generates the SqlStringBuilder class." ResponseEncoding="UTF-8"  NoWarn="0108,0618,1572,1573,1574,0162,2002"%>
 
 <%@ Property Name="BLLNameSpace" Optional="False" Type="System.String" Category="Style" Description="BLL Namespace." %>
 <%@ Property Name="DALNameSpace" Optional="False" Type="System.String" Category="Style" Description="DAL Namespace." %>
@@ -59,6 +59,14 @@ namespace <%= DALNameSpace %>
         /// AppendNotRange
         /// </summary>
         AppendNotRange,
+        /// <summary>
+        /// AppendIsEmpty
+        /// </summary>
+        AppendIsEmpty,
+        /// <summary>
+        /// AppendIsNotEmpty
+        /// </summary>
+        AppendIsNotEmpty,
         /// <summary>
         /// AppendIsNull
         /// </summary>
@@ -217,6 +225,8 @@ namespace <%= DALNameSpace %>
 
         /// <summary>
         /// Appends the specified column and value to the current filter.
+        /// Ignores NULL and Empty values so it works as expected when binding to a property and creating the filter so unchosen values do not get applied.
+        /// There are IsNull and IsEmpty functions that should be used instead.
         /// </summary>
         /// <param name="junction"></param>
         /// <param name="column"></param>
@@ -400,6 +410,7 @@ namespace <%= DALNameSpace %>
 
         /// <summary>
         /// Appends the specified sub-query to the current filter.
+        /// Appends a raw IN () query. It is very susceptible to injection attacks. Highly recomended this method is not used with user input.
         /// </summary>
         /// <param name="column"></param>
         /// <param name="query"></param>
@@ -411,6 +422,7 @@ namespace <%= DALNameSpace %>
 
         /// <summary>
         /// Appends the specified sub-query to the current filter.
+        /// Appends a raw IN () query. It is very susceptible to injection attacks. Highly recomended this method is not used with user input.
         /// </summary>
         /// <param name="junction"></param>
         /// <param name="column"></param>
@@ -432,7 +444,7 @@ namespace <%= DALNameSpace %>
 
         /// <summary>
         /// Appends the specified sub-query to the current filter
-        /// as a NOT IN expression.
+        /// Appends a raw NOT IN () query. It is very susceptible to injection attacks. Highly recomended this method is not used with user input.
         /// </summary>
         /// <param name="column"></param>
         /// <param name="query"></param>
@@ -444,7 +456,7 @@ namespace <%= DALNameSpace %>
 
         /// <summary>
         /// Appends the specified sub-query to the current filter
-        /// as a NOT IN expression.
+        /// Appends a raw NOT IN () query. It is very susceptible to injection attacks. Highly recomended this method is not used with user input.
         /// </summary>
         /// <param name="junction"></param>
         /// <param name="column"></param>
@@ -561,6 +573,60 @@ namespace <%= DALNameSpace %>
         }
 
         #endregion AppendNotRange
+
+        #region AppendIsEmpty
+
+        /// <summary>
+        /// Appends the specified column and value to the current filter.
+        /// </summary>
+        /// <param name="column"></param>
+        /// <returns></returns>
+        public virtual SqlStringBuilder AppendIsEmpty(string column)
+        {
+            return AppendIsEmpty(this.junction, column);
+        }
+
+        /// <summary>
+        /// Appends the specified column and value to the current filter.
+        /// </summary>
+        /// <param name="junction"></param>
+        /// <param name="column"></param>
+        /// <returns></returns>
+        public virtual SqlStringBuilder AppendIsEmpty(string junction, string column)
+        {
+            AppendInternal(junction, column, "=", "''");
+
+            return this;
+        }
+
+        #endregion AppendIsEmpty
+
+        #region AppendIsNotEmpty
+
+        /// <summary>
+        /// Appends the specified column and value to the current filter.
+        /// </summary>
+        /// <param name="column"></param>
+        /// <returns></returns>
+        public virtual SqlStringBuilder AppendIsNotEmpty(string column)
+        {
+            return AppendIsNotEmpty(this.junction, column);
+        }
+
+        /// <summary>
+        /// Appends the specified column and value to the current filter.
+        /// </summary>
+        /// <param name="junction"></param>
+        /// <param name="column"></param>
+        /// <returns></returns>
+        public virtual SqlStringBuilder AppendIsNotEmpty(string junction, string column)
+        {
+            AppendInternal(junction, column, "<>", "''");
+
+            return this;
+        }
+
+        #endregion AppendIsNotEmpty
 
         #region AppendIsNull
 
@@ -862,7 +928,7 @@ namespace <%= DALNameSpace %>
         {
             if (!string.IsNullOrEmpty(value))
             {
-                AppendInternal(junction, SqlUtil.Contains(column, value));
+                AppendInternal(junction, SqlUtil.NotContains(column, value));
             }
             return this;
         }
@@ -1890,8 +1956,8 @@ namespace <%= DALNameSpace %>
         /// <summary>
         /// Appends the specified column and search text to the current filter.
         /// </summary>
-        /// <param name="junction"></param>
-        /// <param name="column"></param>
+        /// <param name="junction">The AND or OR junction used when adding this constraint to the other constraints in the filter</param>
+        /// <param name="column">The column Enum value used to lookup the column name</param>
         /// <param name="searchText"></param>
         /// <param name="ignoreCase"></param>
         /// <returns></returns>
@@ -1909,8 +1975,8 @@ namespace <%= DALNameSpace %>
         /// <summary>
         /// Appends the specified column and value to the current filter.
         /// </summary>
-        /// <param name="junction"></param>
-        /// <param name="column"></param>
+        /// <param name="junction">The AND or OR junction used when adding this constraint to the other constraints in the filter</param>
+        /// <param name="column">The column Enum value used to lookup the column name</param>
         /// <param name="value"></param>
         /// <returns></returns>
         public override SqlFilterBuilder<EntityColumn> AppendEquals(string junction, EntityColumn column, string value)
@@ -1922,9 +1988,10 @@ namespace <%= DALNameSpace %>
 
         /// <summary>
         /// Appends the specified column and value to the current filter.
+        /// as an EQUALS expression.
         /// </summary>
-        /// <param name="junction"></param>
-        /// <param name="column"></param>
+        /// <param name="junction">The AND or OR junction used when adding this constraint to the other constraints in the filter</param>
+        /// <param name="column">The name of the column itself to be used in the query</param>
         /// <param name="value"></param>
         /// <returns></returns>
         public override SqlStringBuilder AppendEquals(string junction, string column, string value)
@@ -1932,7 +1999,23 @@ namespace <%= DALNameSpace %>
             if (!string.IsNullOrEmpty(value))
             {
                 _isDirty = true;
-                value = SqlUtil.Equals(value);
+
+                // if instanciated with a class, then use that knowledge to correctly format the columns
+                // (Need a more robust type conversion before this can be used)
+                //Type entityType = typeof(EntityColumn);
+                //if (entityType.IsClass == true)
+                //{
+                //    Type enumType = Type.GetType(string.Format("DAL.Entity.{0}Column,DAL.Entity", entityType.Name));
+                //    if (Enum.IsDefined(enumType, column))
+                //    {
+                //        object colEnum = Enum.Parse(enumType, column);
+                //        Parameters.SetCurrentColumn(colEnum);
+                //    }
+                //    else
+                //        Parameters.SetCurrentColumn(null); // without this it will hang onto the last set column
+                //}
+
+                //value = SqlUtil.Equals(value);
                 AppendInternal(junction, column, "=", Parameters.GetParameter(value));
             }
 
@@ -1947,8 +2030,8 @@ namespace <%= DALNameSpace %>
         /// Appends the specified column and value to the current filter.
         /// as a NOT EQUALS expression.
         /// </summary>
-        /// <param name="junction"></param>
-        /// <param name="column"></param>
+        /// <param name="junction">The AND or OR junction used when adding this constraint to the other constraints in the filter</param>
+        /// <param name="column">The column Enum value used to lookup the column name</param>
         /// <param name="value"></param>
         /// <returns></returns>
         public override SqlFilterBuilder<EntityColumn> AppendNotEquals(string junction, EntityColumn column, string value)
@@ -1962,8 +2045,8 @@ namespace <%= DALNameSpace %>
         /// Appends the specified column and value to the current filter
         /// as a NOT EQUALS expression.
         /// </summary>
-        /// <param name="junction"></param>
-        /// <param name="column"></param>
+        /// <param name="junction">The AND or OR junction used when adding this constraint to the other constraints in the filter</param>
+        /// <param name="column">The name of the column itself to be used in the query</param>
         /// <param name="value"></param>
         /// <returns></returns>
         public override SqlStringBuilder AppendNotEquals(string junction, string column, string value)
@@ -1971,7 +2054,7 @@ namespace <%= DALNameSpace %>
             if (!string.IsNullOrEmpty(value))
             {
                 _isDirty = true;
-                value = SqlUtil.Equals(value);
+                //value = SqlUtil.Equals(value);
                 AppendInternal(junction, column, "<>", Parameters.GetParameter(value));
             }
 
@@ -1985,36 +2068,77 @@ namespace <%= DALNameSpace %>
         /// <summary>
         /// Appends the specified column and list of values to the current filter.
         /// </summary>
-        /// <param name="junction"></param>
-        /// <param name="column"></param>
-        /// <param name="values"></param>
-        /// <param name="encode"></param>
+        /// <param name="junction">The AND or OR junction used when adding this constraint to the other constraints in the filter</param>
+        /// <param name="column">The column Enum value used to lookup the column name</param>
+        /// <param name="values">An array of values to embed in the dynamic sql query. Due to parameter count limits in sql, this is not parameterized.</param>
+        /// <param name="surround">Indicates whether the individual values should be surrounded by ' marks</param>
         /// <returns></returns>
-        public override SqlFilterBuilder<EntityColumn> AppendIn(string junction, EntityColumn column, string[] values, bool encode)
+        public override SqlFilterBuilder<EntityColumn> AppendIn(string junction, EntityColumn column, string[] values, bool surround)
         {
             _isDirty = true;
             Parameters.SetCurrentColumn(column);
-            return base.AppendIn(junction, column, values, encode);
+            return base.AppendIn(junction, column, values, surround);
         }
 
         /// <summary>
         /// Appends the specified column and list of values to the current filter.
         /// </summary>
-        /// <param name="junction"></param>
-        /// <param name="column"></param>
-        /// <param name="values"></param>
-        /// <param name="encode"></param>
+        /// <param name="junction">The AND or OR junction used when adding this constraint to the other constraints in the filter</param>
+        /// <param name="column">The name of the column itself to be used in the query</param>
+        /// <param name="values">An array of values to embed in the dynamic sql query. Due to parameter count limits in sql, this is not parameterized.</param>
+        /// <param name="surround">Indicates whether the individual values should be surrounded by ' marks</param>
         /// <returns></returns>
-        public override SqlStringBuilder AppendIn(string junction, string column, string[] values, bool encode)
+        public override SqlStringBuilder AppendIn(string junction, string column, string[] values, bool surround)
         {
             if (values != null && values.Length > 0)
             {
-                string sqlQuery = GetInQueryValues(values, encode);
+                string sqlQuery = GetInQueryValues(values, surround);
 
                 if (!string.IsNullOrEmpty(sqlQuery))
                 {
                     _isDirty = true;
                     AppendInQuery(junction, column, sqlQuery);
+                }
+            }
+
+            return this;
+        }
+
+        /// <summary>
+        /// Appends the specified column and list of values to the current filter.
+        /// </summary>
+        /// <param name="junction">The AND or OR junction used when adding this constraint to the other constraints in the filter</param>
+        /// <param name="column">The name of the column itself to be used in the query</param>
+        /// <param name="values">An array of values to embed in the dynamic sql query. Due to parameter count limits in sql, this is not parameterized.</param>
+        /// <param name="paramlimit">if the array lengh is less than or equal to this value, then parameterize, else embed</param>
+        /// <returns></returns>
+        public SqlStringBuilder AppendIn(string junction, string column, string[] values, int paramlimit)
+        {
+            if (values != null && values.Length > 0)
+            {
+                if (values.Length > paramlimit)
+                {
+                    AppendIn(junction, column, values, true);
+                }
+                else
+                {
+                    // Allow small arrays to be parameterized
+
+                    CommaDelimitedStringCollection csv = new CommaDelimitedStringCollection();
+                    String temp;
+
+                    foreach (string value in values)
+                    {
+                        temp = value.Trim();
+
+                        if (!string.IsNullOrEmpty(temp))
+                        {
+                            csv.Add(Parameters.GetParameter(temp));
+                        }
+                    }
+
+                    _isDirty = true;
+                    AppendInQuery(junction, column, csv.ToString());
                 }
             }
 
@@ -2029,8 +2153,8 @@ namespace <%= DALNameSpace %>
         /// Appends the specified column and list of values to the current filter.
         /// as a NOT IN expression.
         /// </summary>
-        /// <param name="junction"></param>
-        /// <param name="column"></param>
+        /// <param name="junction">The AND or OR junction used when adding this constraint to the other constraints in the filter</param>
+        /// <param name="column">The column Enum value used to lookup the column name</param>
         /// <param name="values"></param>
         /// <param name="encode"></param>
         /// <returns></returns>
@@ -2045,8 +2169,8 @@ namespace <%= DALNameSpace %>
         /// Appends the specified column and list of values to the current filter
         /// as a NOT IN expression.
         /// </summary>
-        /// <param name="junction"></param>
-        /// <param name="column"></param>
+        /// <param name="junction">The AND or OR junction used when adding this constraint to the other constraints in the filter</param>
+        /// <param name="column">The name of the column itself to be used in the query</param>
         /// <param name="values"></param>
         /// <param name="encode"></param>
         /// <returns></returns>
@@ -2072,10 +2196,11 @@ namespace <%= DALNameSpace %>
 
         /// <summary>
         /// Appends the specified sub-query to the current filter.
+        /// Appends a raw IN () query. It is very susceptible to injection attacks. Highly recomended this method is not used with user input.
         /// </summary>
-        /// <param name="junction"></param>
-        /// <param name="column"></param>
-        /// <param name="query"></param>
+        /// <param name="junction">The AND or OR junction used when adding this constraint to the other constraints in the filter</param>
+        /// <param name="column">The column Enum value used to lookup the column name</param>
+        /// <param name="query">the raw query string to inject between the parenthesis</param>
         /// <returns></returns>
         public override SqlFilterBuilder<EntityColumn> AppendInQuery(string junction, EntityColumn column, string query)
         {
@@ -2090,11 +2215,11 @@ namespace <%= DALNameSpace %>
 
         /// <summary>
         /// Appends the specified sub-query to the current filter
-        /// as a NOT IN expression.
+        /// Appends a raw NOT IN () query. It is very susceptible to injection attacks. Highly recomended this method is not used with user input.
         /// </summary>
-        /// <param name="junction"></param>
-        /// <param name="column"></param>
-        /// <param name="query"></param>
+        /// <param name="junction">The AND or OR junction used when adding this constraint to the other constraints in the filter</param>
+        /// <param name="column">The column Enum value used to lookup the column name</param>
+        /// <param name="query">the raw query string to inject between the parenthesis</param>
         /// <returns></returns>
         public override SqlFilterBuilder<EntityColumn> AppendNotInQuery(string junction, EntityColumn column, string query)
         {
@@ -2110,10 +2235,10 @@ namespace <%= DALNameSpace %>
         /// <summary>
         /// Appends the specified column and value range to the current filter.
         /// </summary>
-        /// <param name="junction"></param>
-        /// <param name="column"></param>
-        /// <param name="from"></param>
-        /// <param name="to"></param>
+        /// <param name="junction">The AND or OR junction used when adding this constraint to the other constraints in the filter</param>
+        /// <param name="column">The column Enum value used to lookup the column name</param>
+        /// <param name="from">the minimum value to look for</param>
+        /// <param name="to">the maximum value to look for</param>
         /// <returns></returns>
         public override SqlFilterBuilder<EntityColumn> AppendRange(string junction, EntityColumn column, string from, string to)
         {
@@ -2125,10 +2250,10 @@ namespace <%= DALNameSpace %>
         /// <summary>
         /// Appends the specified column and value range to the current filter.
         /// </summary>
-        /// <param name="junction"></param>
-        /// <param name="column"></param>
-        /// <param name="from"></param>
-        /// <param name="to"></param>
+        /// <param name="junction">The AND or OR junction used when adding this constraint to the other constraints in the filter</param>
+        /// <param name="column">The name of the column itself to be used in the query</param>
+        /// <param name="from">the minimum value to look for</param>
+        /// <param name="to">the maximum value to look for</param>
         /// <returns></returns>
         public override SqlStringBuilder AppendRange(string junction, string column, string from, string to)
         {
@@ -2163,8 +2288,8 @@ namespace <%= DALNameSpace %>
         /// <summary>
         /// Appends the specified column and value not in range to the current filter.
         /// </summary>
-        /// <param name="junction"></param>
-        /// <param name="column"></param>
+        /// <param name="junction">The AND or OR junction used when adding this constraint to the other constraints in the filter</param>
+        /// <param name="column">The column Enum value used to lookup the column name</param>
         /// <param name="from"></param>
         /// <param name="to"></param>
         /// <returns></returns>
@@ -2178,8 +2303,8 @@ namespace <%= DALNameSpace %>
         /// <summary>
         /// Appends the specified column and value not in range to the current filter.
         /// </summary>
-        /// <param name="junction"></param>
-        /// <param name="column"></param>
+        /// <param name="junction">The AND or OR junction used when adding this constraint to the other constraints in the filter</param>
+        /// <param name="column">The name of the column itself to be used in the query</param>
         /// <param name="from"></param>
         /// <param name="to"></param>
         /// <returns></returns>
@@ -2218,8 +2343,8 @@ namespace <%= DALNameSpace %>
         /// <summary>
         /// Appends the specified column and value to the current filter.
         /// </summary>
-        /// <param name="junction"></param>
-        /// <param name="column"></param>
+        /// <param name="junction">The AND or OR junction used when adding this constraint to the other constraints in the filter</param>
+        /// <param name="column">The column Enum value used to lookup the column name</param>
         /// <param name="value"></param>
         /// <returns></returns>
         public override SqlFilterBuilder<EntityColumn> AppendGreaterThan(string junction, EntityColumn column, string value)
@@ -2232,8 +2357,8 @@ namespace <%= DALNameSpace %>
         /// <summary>
         /// Appends the specified column and value to the current filter.
         /// </summary>
-        /// <param name="junction"></param>
-        /// <param name="column"></param>
+        /// <param name="junction">The AND or OR junction used when adding this constraint to the other constraints in the filter</param>
+        /// <param name="column">The name of the column itself to be used in the query</param>
         /// <param name="value"></param>
         /// <returns></returns>
         public override SqlStringBuilder AppendGreaterThan(string junction, string column, string value)
@@ -2241,7 +2366,7 @@ namespace <%= DALNameSpace %>
             if (!string.IsNullOrEmpty(value))
             {
                 _isDirty = true;
-                value = SqlUtil.Equals(value);
+                //value = SqlUtil.Equals(value);
                 AppendInternal(junction, column, ">", Parameters.GetParameter(value));
             }
 
@@ -2255,8 +2380,8 @@ namespace <%= DALNameSpace %>
         /// <summary>
         /// Appends the specified column and value to the current filter.
         /// </summary>
-        /// <param name="junction"></param>
-        /// <param name="column"></param>
+        /// <param name="junction">The AND or OR junction used when adding this constraint to the other constraints in the filter</param>
+        /// <param name="column">The column Enum value used to lookup the column name</param>
         /// <param name="value"></param>
         /// <returns></returns>
         public override SqlFilterBuilder<EntityColumn> AppendGreaterThanOrEqual(string junction, EntityColumn column, string value)
@@ -2269,8 +2394,8 @@ namespace <%= DALNameSpace %>
         /// <summary>
         /// Appends the specified column and value to the current filter.
         /// </summary>
-        /// <param name="junction"></param>
-        /// <param name="column"></param>
+        /// <param name="junction">The AND or OR junction used when adding this constraint to the other constraints in the filter</param>
+        /// <param name="column">The name of the column itself to be used in the query</param>
         /// <param name="value"></param>
         /// <returns></returns>
         public override SqlStringBuilder AppendGreaterThanOrEqual(string junction, string column, string value)
@@ -2278,7 +2403,7 @@ namespace <%= DALNameSpace %>
             if (!string.IsNullOrEmpty(value))
             {
                 _isDirty = true;
-                value = SqlUtil.Equals(value);
+                //value = SqlUtil.Equals(value);
                 AppendInternal(junction, column, ">=", Parameters.GetParameter(value));
             }
 
@@ -2292,8 +2417,8 @@ namespace <%= DALNameSpace %>
         /// <summary>
         /// Appends the specified column and value to the current filter.
         /// </summary>
-        /// <param name="junction"></param>
-        /// <param name="column"></param>
+        /// <param name="junction">The AND or OR junction used when adding this constraint to the other constraints in the filter</param>
+        /// <param name="column">The column Enum value used to lookup the column name</param>
         /// <param name="value"></param>
         /// <returns></returns>
         public override SqlFilterBuilder<EntityColumn> AppendLessThan(string junction, EntityColumn column, string value)
@@ -2306,8 +2431,8 @@ namespace <%= DALNameSpace %>
         /// <summary>
         /// Appends the specified column and value to the current filter.
         /// </summary>
-        /// <param name="junction"></param>
-        /// <param name="column"></param>
+        /// <param name="junction">The AND or OR junction used when adding this constraint to the other constraints in the filter</param>
+        /// <param name="column">The name of the column itself to be used in the query</param>
         /// <param name="value"></param>
         /// <returns></returns>
         public override SqlStringBuilder AppendLessThan(string junction, string column, string value)
@@ -2315,7 +2440,7 @@ namespace <%= DALNameSpace %>
             if (!string.IsNullOrEmpty(value))
             {
                 _isDirty = true;
-                value = SqlUtil.Equals(value);
+                //value = SqlUtil.Equals(value);
                 AppendInternal(junction, column, "<", Parameters.GetParameter(value));
             }
 
@@ -2329,8 +2454,8 @@ namespace <%= DALNameSpace %>
         /// <summary>
         /// Appends the specified column and value to the current filter.
         /// </summary>
-        /// <param name="junction"></param>
-        /// <param name="column"></param>
+        /// <param name="junction">The AND or OR junction used when adding this constraint to the other constraints in the filter</param>
+        /// <param name="column">The column Enum value used to lookup the column name</param>
         /// <param name="value"></param>
         /// <returns></returns>
         public override SqlFilterBuilder<EntityColumn> AppendLessThanOrEqual(string junction, EntityColumn column, string value)
@@ -2343,8 +2468,8 @@ namespace <%= DALNameSpace %>
         /// <summary>
         /// Appends the specified column and value to the current filter.
         /// </summary>
-        /// <param name="junction"></param>
-        /// <param name="column"></param>
+        /// <param name="junction">The AND or OR junction used when adding this constraint to the other constraints in the filter</param>
+        /// <param name="column">The name of the column itself to be used in the query</param>
         /// <param name="value"></param>
         /// <returns></returns>
         public override SqlStringBuilder AppendLessThanOrEqual(string junction, string column, string value)
@@ -2352,7 +2477,7 @@ namespace <%= DALNameSpace %>
             if (!string.IsNullOrEmpty(value))
             {
                 _isDirty = true;
-                value = SqlUtil.Equals(value);
+                //value = SqlUtil.Equals(value);
                 AppendInternal(junction, column, "<=", Parameters.GetParameter(value));
             }
 
@@ -2365,10 +2490,12 @@ namespace <%= DALNameSpace %>
 
         /// <summary>
         /// Appends the specified column and value to the current filter.
+        /// The value has % added to it.  In Sql this will result in returning all records that
+        /// start with this value.
         /// </summary>
-        /// <param name="junction"></param>
-        /// <param name="column"></param>
-        /// <param name="value"></param>
+        /// <param name="junction">The AND or OR junction used when adding this constraint to the other constraints in the filter</param>
+        /// <param name="column">The column Enum value used to lookup the column name</param>
+        /// <param name="value">The value % will be appended to</param>
         /// <returns></returns>
         public override SqlFilterBuilder<EntityColumn> AppendStartsWith(string junction, EntityColumn column, string value)
         {
@@ -2379,17 +2506,19 @@ namespace <%= DALNameSpace %>
 
         /// <summary>
         /// Appends the specified column and value to the current filter.
+        /// The value has % added to it.  In Sql this will result in returning all records that
+        /// start with this value, but no records that equal it.
         /// </summary>
-        /// <param name="junction"></param>
-        /// <param name="column"></param>
-        /// <param name="value"></param>
+        /// <param name="junction">The AND or OR junction used when adding this constraint to the other constraints in the filter</param>
+        /// <param name="column">The name of the column itself to be used in the query</param>
+        /// <param name="value">The value % will be appended to</param>
         /// <returns></returns>
         public override SqlStringBuilder AppendStartsWith(string junction, string column, string value)
         {
             if (!string.IsNullOrEmpty(value))
             {
                 _isDirty = true;
-                value = SqlUtil.StartsWith(value);
+                value = String.Format("{0}%", value);
                 AppendInternal(junction, column, "LIKE", Parameters.GetParameter(value));
             }
 
@@ -2402,10 +2531,12 @@ namespace <%= DALNameSpace %>
 
         /// <summary>
         /// Appends the specified column and value to the current filter.
+        /// The value has % pre-pended to it.  In Sql this will result in returning all records that
+        /// end with this value.
         /// </summary>
-        /// <param name="junction"></param>
-        /// <param name="column"></param>
-        /// <param name="value"></param>
+        /// <param name="junction">The AND or OR junction used when adding this constraint to the other constraints in the filter</param>
+        /// <param name="column">The column Enum value used to lookup the column name</param>
+        /// <param name="value">The value % will be pre-pended to</param>
         /// <returns></returns>
         public override SqlFilterBuilder<EntityColumn> AppendEndsWith(string junction, EntityColumn column, string value)
         {
@@ -2416,17 +2547,19 @@ namespace <%= DALNameSpace %>
 
         /// <summary>
         /// Appends the specified column and value to the current filter.
+        /// The value has % pre-pended to it.  In Sql this will result in returning all records that
+        /// end with this value, but no records that equal it.
         /// </summary>
-        /// <param name="junction"></param>
-        /// <param name="column"></param>
-        /// <param name="value"></param>
+        /// <param name="junction">The AND or OR junction used when adding this constraint to the other constraints in the filter</param>
+        /// <param name="column">The name of the column itself to be used in the query</param>
+        /// <param name="value">The value % will be pre-pended to</param>
         /// <returns></returns>
         public override SqlStringBuilder AppendEndsWith(string junction, string column, string value)
         {
             if (!string.IsNullOrEmpty(value))
             {
                 _isDirty = true;
-                value = SqlUtil.EndsWith(value);
+                value = String.Format("%{0}", value);
                 AppendInternal(junction, column, "LIKE", Parameters.GetParameter(value));
             }
 
@@ -2439,9 +2572,10 @@ namespace <%= DALNameSpace %>
 
         /// <summary>
         /// Appends the specified column and value to the current filter.
+        /// This does wraps the passed in value in % before appending it to the query.
         /// </summary>
-        /// <param name="junction"></param>
-        /// <param name="column"></param>
+        /// <param name="junction">The AND or OR junction used when adding this constraint to the other constraints in the filter</param>
+        /// <param name="column">The column Enum value used to lookup the column name</param>
         /// <param name="value"></param>
         /// <returns></returns>
         public override SqlFilterBuilder<EntityColumn> AppendContains(string junction, EntityColumn column, string value)
@@ -2453,9 +2587,10 @@ namespace <%= DALNameSpace %>
 
         /// <summary>
         /// Appends the specified column and value to the current filter.
+        /// This does wraps the passed in value in % before appending it to the query.
         /// </summary>
-        /// <param name="junction"></param>
-        /// <param name="column"></param>
+        /// <param name="junction">The AND or OR junction used when adding this constraint to the other constraints in the filter</param>
+        /// <param name="column">The name of the column itself to be used in the query</param>
         /// <param name="value"></param>
         /// <returns></returns>
         public override SqlStringBuilder AppendContains(string junction, string column, string value)
@@ -2463,7 +2598,7 @@ namespace <%= DALNameSpace %>
             if (!string.IsNullOrEmpty(value))
             {
                 _isDirty = true;
-                value = SqlUtil.Contains(value);
+                value = String.Format("%{0}%", value);
                 AppendInternal(junction, column, "LIKE", Parameters.GetParameter(value));
             }
 
@@ -2476,9 +2611,10 @@ namespace <%= DALNameSpace %>
 
         /// <summary>
         /// Appends the specified column and value to the current filter.
+        /// This does wraps the passed in value in % before appending it to the query.
         /// </summary>
-        /// <param name="junction"></param>
-        /// <param name="column"></param>
+        /// <param name="junction">The AND or OR junction used when adding this constraint to the other constraints in the filter</param>
+        /// <param name="column">The column Enum value used to lookup the column name</param>
         /// <param name="value"></param>
         /// <returns></returns>
         public override SqlFilterBuilder<EntityColumn> AppendNotContains(string junction, EntityColumn column, string value)
@@ -2490,9 +2626,10 @@ namespace <%= DALNameSpace %>
 
         /// <summary>
         /// Appends the specified column and value to the current filter.
+        /// This does wraps the passed in value in % before appending it to the query.
         /// </summary>
-        /// <param name="junction"></param>
-        /// <param name="column"></param>
+        /// <param name="junction">The AND or OR junction used when adding this constraint to the other constraints in the filter</param>
+        /// <param name="column">The name of the column itself to be used in the query</param>
         /// <param name="value"></param>
         /// <returns></returns>
         public override SqlStringBuilder AppendNotContains(string junction, string column, string value)
@@ -2500,7 +2637,7 @@ namespace <%= DALNameSpace %>
             if (!string.IsNullOrEmpty(value))
             {
                 _isDirty = true;
-                value = SqlUtil.NotContains(value);
+                value = String.Format("%{0}%", value);
                 AppendInternal(junction, column, "NOT LIKE", Parameters.GetParameter(value));
             }
 
@@ -2514,8 +2651,8 @@ namespace <%= DALNameSpace %>
         /// <summary>
         /// Appends the specified column and value to the current filter.
         /// </summary>
-        /// <param name="junction"></param>
-        /// <param name="column"></param>
+        /// <param name="junction">The AND or OR junction used when adding this constraint to the other constraints in the filter</param>
+        /// <param name="column">The column Enum value used to lookup the column name</param>
         /// <param name="value"></param>
         /// <returns></returns>
         public override SqlFilterBuilder<EntityColumn> AppendLike(string junction, EntityColumn column, string value)
@@ -2527,9 +2664,10 @@ namespace <%= DALNameSpace %>
 
         /// <summary>
         /// Appends the specified column and value to the current filter.
+        /// This does not modify the value passed in, and just uses the LIKE operator on it.
         /// </summary>
-        /// <param name="junction"></param>
-        /// <param name="column"></param>
+        /// <param name="junction">The AND or OR junction used when adding this constraint to the other constraints in the filter</param>
+        /// <param name="column">The name of the column itself to be used in the query</param>
         /// <param name="value"></param>
         /// <returns></returns>
         public override SqlStringBuilder AppendLike(string junction, string column, string value)
@@ -2537,7 +2675,7 @@ namespace <%= DALNameSpace %>
             if (!string.IsNullOrEmpty(value))
             {
                 _isDirty = true;
-                value = SqlUtil.Like(value);
+                //value = SqlUtil.Like(value);
                 AppendInternal(junction, column, "LIKE", Parameters.GetParameter(value));
             }
 
@@ -2545,6 +2683,45 @@ namespace <%= DALNameSpace %>
         }
 
         #endregion AppendLike
+
+        #region AppendNotLike
+
+        /// <summary>
+        /// Appends the specified column and value to the current filter.
+        /// This does not modify the value passed in, and just uses the LIKE operator on it.
+        /// </summary>
+        /// <param name="junction">The AND or OR junction used when adding this constraint to the other constraints in the filter</param>
+        /// <param name="column">The column Enum value used to lookup the column name</param>
+        /// <param name="value"></param>
+        /// <returns></returns>
+        public override SqlFilterBuilder<EntityColumn> AppendNotLike(string junction, EntityColumn column, string value)
+        {
+            _isDirty = true;
+            Parameters.SetCurrentColumn(column);
+            return base.AppendNotLike(junction, column, value);
+        }
+
+        /// <summary>
+        /// Appends the specified column and value to the current filter.
+        /// This does not modify the value passed in, and just uses the NOT LIKE operator on it.
+        /// </summary>
+        /// <param name="junction">The AND or OR junction used when adding this constraint to the other constraints in the filter</param>
+        /// <param name="column">The name of the column itself to be used in the query</param>
+        /// <param name="value"></param>
+        /// <returns></returns>
+        public override SqlStringBuilder AppendNotLike(string junction, string column, string value)
+        {
+            if (!string.IsNullOrEmpty(value))
+            {
+                _isDirty = true;
+                //value = SqlUtil.NotLike(value);
+                AppendInternal(junction, column, "NOT LIKE", Parameters.GetParameter(value));
+            }
+
+            return this;
+        }
+
+        #endregion AppendNotLike
 
         #region Methods
 
