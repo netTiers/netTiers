@@ -17,6 +17,8 @@
 			CodeTemplates.Add("IEntity.cst", base.CreateTemplate<IEntity>()); this.PerformStep();
 			CodeTemplates.Add("IEntityId.cst", base.CreateTemplate<IEntityId>()); this.PerformStep();
 			CodeTemplates.Add("IEntityKey.cst", base.CreateTemplate<IEntityKey>()); this.PerformStep();
+			CodeTemplates.Add("NettiersBase.cst", base.CreateTemplate<NettiersBase>()); this.PerformStep();
+			CodeTemplates.Add("NettiersBaseCore.generated.cst", base.CreateTemplate<NettiersBaseCoreGenerated>()); this.PerformStep();
 			CodeTemplates.Add("EntityBase.cst", base.CreateTemplate<EntityBase>()); this.PerformStep();
 			CodeTemplates.Add("EntityBaseCore.generated.cst", base.CreateTemplate<EntityBaseCoreGenerated>()); this.PerformStep();
 			CodeTemplates.Add("EntityKeyBase.cst", base.CreateTemplate<EntityKeyBase>()); this.PerformStep();
@@ -48,6 +50,8 @@
 			CodeTemplates.Add("VList.cst", base.CreateTemplate<VList>()); this.PerformStep();
 			CodeTemplates.Add("EntityViewBase.generated.cst", base.CreateTemplate<EntityViewBaseGenerated>()); this.PerformStep();
 			CodeTemplates.Add("EntityView.cst", base.CreateTemplate<EntityView>()); this.PerformStep();
+			CodeTemplates.Add("ViewBase.cst", base.CreateTemplate<ViewBase>()); this.PerformStep();
+			CodeTemplates.Add("ViewBaseCore.generated.cst", base.CreateTemplate<ViewBaseCoreGenerated>()); this.PerformStep();
 
 			CodeTemplates.Add("BrokenRule.cst", base.CreateTemplate<BrokenRule>()); this.PerformStep();
 			CodeTemplates.Add("BrokenRulesList.cst", base.CreateTemplate<BrokenRulesList>()); this.PerformStep();

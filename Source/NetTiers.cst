@@ -102,6 +102,8 @@
 <%@ Property Name="IsolationLevel" Type="TransactionIsolationLevelEnum" Default="None" Category="07. CRUD - Advanced" Description="Isolation level to use in generated procedures." %>
 <%@ Property Name="UseTimestampConcurrency" Type="System.Boolean" Default="True" Category="07. CRUD - Advanced" Description="If this is set to True, Update and Delete will throw DbConcurrencyException when the timestamp doesn't match current." %>
 <%@ Property Name="SetAnsiNullsOn" Type="System.Boolean" Default="False" Category="07. CRUD - Advanced" Description="If this is set to True, SET ANSI_NULLS will be ON instead of OFF. Applies to SqlClient and eventually SqlCeClient" %>
+<%@ Property Name="VoidProcTransaction" Type="System.Boolean" Default="True" Category="07. CRUD - Advanced" Description="If this is set to True, then automatically wrap all calls to stored procedures that have no return data in transactions; this way sprocs that only perform work will get all that work rolled back if they fail." %>
+<%@ Property Name="ExtendedPropertyPrefix" Type="System.String" Default="netxp_" Category="07. CRUD - Advanced" Description="In SQL it is possible to add extended properties to columns. If the extended property name has this prefix, then it will be added as a custom attribute in the column enum. If this value is blank, extended properties will be ignored." %>
 
 <%-- Style of stored procedures --%>
 <%@ Property Name="InsertSuffix" Type="System.String" Default="_Insert" Category="08. Stored procedures - Advanced" Description="Suffix to use for all generated INSERT stored procedures." %>
@@ -1764,6 +1766,52 @@
         #endregion Validation class files
 
         #region Entity Classes 2
+        //----------------------------------------------------------------------------------------------------------------------------------------------
+        //-- NettiersBaseCore file
+        //----------------------------------------------------------------------------------------------------------------------------------------------
+        XmlElement nettiersBaseCoreNode = AddFileNode(commonNode, "NettiersBaseCore.generated.cs");
+        this.GetTemplate("NettiersBaseCore.generated.cst").SetProperty("NameSpace", BLLNameSpace);
+        this.GetTemplate("NettiersBaseCore.generated.cst").SetProperty("SourceTables", templateSourceTables);
+        this.GetTemplate("NettiersBaseCore.generated.cst").SetProperty("SourceViews", templateSourceViews);
+        this.GetTemplate("NettiersBaseCore.generated.cst").SetProperty("IncludeWCFDataAttributes", IncludeWCFDataAttributes);
+        this.GetTemplate("NettiersBaseCore.generated.cst").SetProperty("IncludeXmlAttributes", IncludeXmlAttributes);
+        this.GetTemplate("NettiersBaseCore.generated.cst").SetProperty("SerializeEntityState", SerializeEntityState);
+        this.GetTemplate("NettiersBaseCore.generated.cst").SetProperty("ValidationType", ValidationType);
+        this.RenderToFile("NettiersBaseCore.generated.cst", rootPathBLL + "\\NettiersBaseCore.generated.cs", true);
+
+        //----------------------------------------------------------------------------------------------------------------------------------------------
+        //-- NettiersBase file - generated only once
+        //----------------------------------------------------------------------------------------------------------------------------------------------
+        if (!File.Exists(rootPathBLL + "\\NettiersBase.cs"))
+        {
+            XmlElement nettiersBaseNode = AddFileNode(commonNode, "NettiersBase.cs");
+            this.GetTemplate("NettiersBase.cst").SetProperty("NameSpace", BLLNameSpace);
+            this.RenderToFile("NettiersBase.cst", rootPathBLL + "\\NettiersBase.cs", true);
+        }
+
+        //----------------------------------------------------------------------------------------------------------------------------------------------
+        //-- ViewBaseCore file
+        //----------------------------------------------------------------------------------------------------------------------------------------------
+        XmlElement viewBaseCoreNode = AddFileNode(commonNode, "ViewBaseCore.generated.cs");
+        this.GetTemplate("ViewBaseCore.generated.cst").SetProperty("NameSpace", BLLNameSpace);
+        this.GetTemplate("ViewBaseCore.generated.cst").SetProperty("SourceTables", templateSourceTables);
+        this.GetTemplate("ViewBaseCore.generated.cst").SetProperty("SourceViews", templateSourceViews);
+        this.GetTemplate("ViewBaseCore.generated.cst").SetProperty("IncludeWCFDataAttributes", IncludeWCFDataAttributes);
+        this.GetTemplate("ViewBaseCore.generated.cst").SetProperty("IncludeXmlAttributes", IncludeXmlAttributes);
+        this.GetTemplate("ViewBaseCore.generated.cst").SetProperty("SerializeEntityState", SerializeEntityState);
+        this.GetTemplate("ViewBaseCore.generated.cst").SetProperty("ValidationType", ValidationType);
+        this.RenderToFile("ViewBaseCore.generated.cst", rootPathBLL + "\\Views\\ViewBaseCore.generated.cs", true);
+
+        //----------------------------------------------------------------------------------------------------------------------------------------------
+        //-- ViewBase file - generated only once
+        //----------------------------------------------------------------------------------------------------------------------------------------------
+        if (!File.Exists(rootPathBLL + "\\Views\\ViewBase.cs"))
+        {
+            XmlElement viewBaseNode = AddFileNode(commonNode, "ViewBase.cs");
+            this.GetTemplate("ViewBase.cst").SetProperty("NameSpace", BLLNameSpace);
+            this.RenderToFile("ViewBase.cst", rootPathBLL + "\\Views\\ViewBase.cs", true);
+        }
+
         //----------------------------------------------------------------------------------------------------------------------------------------------
         //-- EntityBaseCore file
         //----------------------------------------------------------------------------------------------------------------------------------------------
@@ -4227,6 +4275,7 @@
                 this.GetTemplate("EntityInstanceBase.generated.cst").SetProperty("EqualitySemantics", EqualitySemantics);
                 this.GetTemplate("EntityInstanceBase.generated.cst").SetProperty("ValidationType", ValidationType);
                 this.GetTemplate("EntityInstanceBase.generated.cst").SetProperty("EntLibVersion", EntLibVersion);
+                this.GetTemplate("EntityInstanceBase.generated.cst").SetProperty("ExtendedPropertyPrefix", ExtendedPropertyPrefix);
                 if (templateCacheTables.Contains(SourceTable.Owner, SourceTable.Name))
                 {
                     // Generate the Interface stuff whether or not the user wants the full Caching system.
@@ -4328,6 +4377,7 @@
                     this.GetTemplate("ComponentBase.cst").SetProperty("IncludeSave", IncludeSave);
                     this.GetTemplate("ComponentBase.cst").SetProperty("IncludeUpdate", IncludeUpdate);
                     this.GetTemplate("ComponentBase.cst").SetProperty("IncludeGetListByFK", IncludeGetListByFK);
+                    this.GetTemplate("ComponentBase.cst").SetProperty("VoidProcTransaction", VoidProcTransaction);
                     this.GetTemplate("ComponentBase.cst").SetProperty("ComponentPattern", ComponentPattern);
                     this.GetTemplate("ComponentBase.cst").SetProperty("IncludeCustoms", IncludeCustoms);
                     this.GetTemplate("ComponentBase.cst").SetProperty("CustomNonMatchingReturnType", CustomNonMatchingReturnType);
@@ -4377,6 +4427,7 @@
                     this.GetTemplate("ComponentServiceBase.cst").SetProperty("IncludeUpdate", IncludeUpdate);
                     this.GetTemplate("ComponentServiceBase.cst").SetProperty("IncludeManyToMany", IncludeManyToMany);
                     this.GetTemplate("ComponentServiceBase.cst").SetProperty("IncludeGetListByFK", IncludeGetListByFK);
+                    this.GetTemplate("ComponentServiceBase.cst").SetProperty("VoidProcTransaction", VoidProcTransaction);
                     this.GetTemplate("ComponentServiceBase.cst").SetProperty("ComponentPattern", ComponentPattern);
                     this.GetTemplate("ComponentServiceBase.cst").SetProperty("IncludeCustoms", IncludeCustoms);
                     this.GetTemplate("ComponentServiceBase.cst").SetProperty("CustomNonMatchingReturnType", CustomNonMatchingReturnType);

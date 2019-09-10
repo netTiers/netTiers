@@ -610,10 +610,11 @@ namespace <%=DALNameSpace%>
         /// <param name="message">custom message</param>
         /// <param name="ex">inner exception</param>
         /// <param name="command">DB Command object</param>
+        /// <param name="database">Database object</param>
         /// <param name="attempt">How many attempts at execution were made</param>
-        public NetTiersDataException(string message, System.Exception ex, DbCommand command, int attempt) : base(message, ex)
+        public NetTiersDataException(string message, System.Exception ex, DbCommand command, Database database, int attempt) : base(message, ex)
         {
-            ExtractDbCommand(command);
+            ExtractDbCommand(command, database);
             Attempt = attempt;
         }
 
@@ -623,11 +624,12 @@ namespace <%=DALNameSpace%>
         /// <param name="message">custom message</param>
         /// <param name="ex">inner exception</param>
         /// <param name="command">DB Command object</param>
+        /// <param name="database">Database object</param>
         /// <param name="attempt">How many attempts at execution were made</param>
         /// <param name="milliseconds">How long the Data call was running for</param>
-        public NetTiersDataException(string message, System.Exception ex, DbCommand command, int attempt, long milliseconds) : base(message, ex)
+        public NetTiersDataException(string message, System.Exception ex, DbCommand command, Database database, int attempt, long milliseconds) : base(message, ex)
         {
-            ExtractDbCommand(command);
+            ExtractDbCommand(command, database);
             Attempt = attempt;
             ElapsedMilliseconds = milliseconds;
         }
@@ -655,7 +657,8 @@ namespace <%=DALNameSpace%>
         /// Extract data from dbcommand so the object can be serialized
         /// </summary>
         /// <param name="command">DB Command object</param>
-        private void ExtractDbCommand(DbCommand command)
+        /// <param name="database">Database object</param>
+        private void ExtractDbCommand(DbCommand command, Database database)
         {
             if (command == null)
                 return;
@@ -664,7 +667,7 @@ namespace <%=DALNameSpace%>
             CommandText = command.CommandText;
             CommandTimeout = command.CommandTimeout;
             CommandType = command.CommandType.ToString();
-            ConnectionString = command.Connection != null ? command.Connection.ConnectionString : null;
+            ConnectionString = database.ConnectionStringWithoutCredentials;
 
             foreach (System.Data.Common.DbParameter param in command.Parameters)
                 CommandParameters.Add(param.ParameterName, param.Value != null ? param.Value.ToString() : string.Empty);
@@ -763,9 +766,9 @@ private void WriteExecuteMethod(ExecuteType executeType, bool useTransactions)
     string customEx = CustomDataException ? "ex" : "";
 	string customExRetry = useRetry ? "attempt" : "1";
     string customExThrow = (CustomDataException && DbExecutionTimer) ?
-            @"throw new NetTiersDataException(string.Format(""{0} Error: {{0}}"", dbCommand.CommandText), ex, dbCommand, {1}, timer.ElapsedMilliseconds);"
+            @"throw new NetTiersDataException(string.Format(""{0} Error: {{0}}"", dbCommand.CommandText), ex, dbCommand, {1}, {2}, timer.ElapsedMilliseconds);"
             : CustomDataException ?
-            @"throw new NetTiersDataException(string.Format(""{0} Error: {{0}}"", dbCommand.CommandText), ex, dbCommand, {1});"
+            @"throw new NetTiersDataException(string.Format(""{0} Error: {{0}}"", dbCommand.CommandText), ex, dbCommand, {1}, {2});"
             : "throw;";
     
     switch (RetrySleepStyle)
@@ -796,7 +799,7 @@ private void WriteExecuteMethod(ExecuteType executeType, bool useTransactions)
                     "null",
                     customExTimer,
                     customEx,
-                    string.Format(customExThrow, "Reader", customExRetry),
+                    string.Format(customExThrow, "Reader", useTransactions ? "transactionManager.Database" : "database", customExRetry),
 					customExTimerStop
                 };
             break;
@@ -814,7 +817,7 @@ private void WriteExecuteMethod(ExecuteType executeType, bool useTransactions)
                     "0",
                     customExTimer,
                     customEx,
-                    string.Format(customExThrow, "NonQuery", customExRetry),
+                    string.Format(customExThrow, "NonQuery", useTransactions ? "transactionManager.Database" : "database", customExRetry),
 					customExTimerStop
                 };
             break;
@@ -832,7 +835,7 @@ private void WriteExecuteMethod(ExecuteType executeType, bool useTransactions)
                     "null",
                     customExTimer,
                     customEx,
-                    string.Format(customExThrow, "DataSet", customExRetry),
+                    string.Format(customExThrow, "DataSet", useTransactions ? "transactionManager.Database" : "database", customExRetry),
 					customExTimerStop
                 };
             break;
@@ -849,7 +852,7 @@ private void WriteExecuteMethod(ExecuteType executeType, bool useTransactions)
                     "null",
                     customExTimer,
                     customEx,
-                    string.Format(customExThrow, "Scalar", customExRetry),
+                    string.Format(customExThrow, "Scalar", useTransactions ? "transactionManager.Database" : "database", customExRetry),
 					customExTimerStop
                 };
             break;
