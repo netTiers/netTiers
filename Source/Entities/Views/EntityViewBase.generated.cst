@@ -15,6 +15,7 @@
 <%@ Property Name="IncludeRelations" Type="System.Boolean" Default="False" Category="Options" Description="Include Collections for Related Entities."%>
 <%@ Property Name="IncludeWCFDataAttributes" Type="System.Boolean" Default="False" Category="02. Framework Generation - Optional" Description="Indicates if the WCF attributes, [DataContract] and [DataMember], should be included on the entity classes." %>
 <%@ Property Name="IncludeXmlAttributes" Type="System.Boolean" Default="False" Category="02. Framework Generation - Optional" Description="Indicates if the Xml attributes, [XmlElement(IsNullable=true)], should be included on the entity classes." %>
+<%@ Property Name="ExtendedPropertyPrefix" Type="System.String" Default="netxp_" Category="07. CRUD - Advanced" Description="In SQL it is possible to add extended properties to columns. If the extended property name has this prefix, then it will be added as a custom attribute in the column enum." %>
 <%
     string abstractClassName = GetClassName(SourceView, ClassNameFormat.Abstract);    
     string className = GetClassName(SourceView);
@@ -44,6 +45,13 @@ namespace <%=NameSpace%>
     ///<summary>
     /// <% if(SourceView.Description.Length == 0 ) {%>An object representation of the '<%=SourceView.Name%>' view. [No description found in the database]<%} else {Response.Write(GetColumnXmlComment(SourceView,1));}%>    
     ///</summary>
+    <% if (!string.IsNullOrWhiteSpace(ExtendedPropertyPrefix)) {
+           for (int i=0; i < SourceView.ExtendedProperties.Count; i++) {
+               if (SourceView.ExtendedProperties[i].Name.ToLower().StartsWith(ExtendedPropertyPrefix.ToLower())) { %>
+    [EntityExtendedProperty("<%=SourceView.ExtendedProperties[i].Name.Substring(ExtendedPropertyPrefix.Length) %>", "<%=SourceView.ExtendedProperties[i].Value.ToString().Replace("\\", "\\\\") %>")]
+    <%         }
+           }
+       } %>
     <% if ( IncludeWCFDataAttributes ) { %>
     [DataContract]
     <% } %>
@@ -61,11 +69,6 @@ namespace <%=NameSpace%>
         /// </summary>
         private <%= GetCSType(SourceView.Columns[x]) %><%= Tab(2) %>  <%= GetFieldName(SourceView.Columns[x]) %> = <% if ( SourceView.Columns[x].AllowDBNull ) { %>null<% } else { %><%=GetCSDefaultByType(SourceView.Columns[x])%><% }%>;
         <%} //end for %>
-        
-        /// <summary>
-        /// Object that contains data to associate with this object
-        /// </summary>
-        private object _tag;
         
         /// <summary>
         /// Suppresses Entity Events from Firing, 
@@ -167,28 +170,6 @@ namespace <%=NameSpace%>
         
         <% }// end for %>
         
-        /// <summary>
-        /// Gets or sets the object that contains supplemental data about this object.
-        /// </summary>
-        /// <value>Object</value>
-        [System.ComponentModel.Bindable(false)]
-        [LocalizableAttribute(false)]
-        [DescriptionAttribute("Object containing data to be associated with this object")]
-        public virtual object Tag
-        {
-            get
-            {
-                return this._tag;
-            }
-            set
-            {
-                if (this._tag == value)
-                    return;
-        
-                this._tag = value;
-            }
-        }
-    
         /// <summary>
         /// Determines whether this entity is to suppress events while set to true.
         /// </summary>
@@ -505,6 +486,13 @@ namespace <%=NameSpace%>
         /// <summary>
         /// <%=SourceView.Columns[x].Name%> : <%=GetColumnXmlComment(SourceView.Columns[x],2)%>
         /// </summary>
+            <% if (!string.IsNullOrWhiteSpace(ExtendedPropertyPrefix)) {
+                   for (int i=0; i < SourceView.Columns[x].ExtendedProperties.Count; i++) {
+                       if (SourceView.Columns[x].ExtendedProperties[i].Name.ToLower().StartsWith(ExtendedPropertyPrefix.ToLower())) { %>
+        [ColumnExtendedProperty("<%=SourceView.Columns[x].ExtendedProperties[i].Name.Substring(ExtendedPropertyPrefix.Length) %>", "<%=SourceView.Columns[x].ExtendedProperties[i].Value.ToString().Replace("\\", "\\\\") %>")]
+            <%         }
+                   }
+               } %>
         [EnumTextValue("<%= SourceView.Columns[x].Name %>")]
         [ColumnEnum(<%= GetColumnEnumAttributeParams(SourceView.Columns[x]) %>)]
         <%=GetPropertyName(SourceView.Columns[x])%><%if(x < SourceView.Columns.Count -1) {%>,<%}%>

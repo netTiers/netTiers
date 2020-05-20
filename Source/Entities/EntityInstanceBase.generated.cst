@@ -99,9 +99,16 @@ using Microsoft.Practices.EnterpriseLibrary.Caching;
 
 namespace <%=NameSpace%>
 {
-    ///<summary>
+    /// <summary>
     /// <% if(SourceTable.Description.Length == 0 ) {%>An object representation of the '<%=SourceTable.Name%>' table. [No description found in the database]<%} else {Response.Write(GetColumnXmlComment(SourceTable,1));}%>
-    ///</summary>
+    /// </summary>
+    <% if (!string.IsNullOrWhiteSpace(ExtendedPropertyPrefix)) {
+           for (int i=0; i < SourceTable.ExtendedProperties.Count; i++) {
+               if (SourceTable.ExtendedProperties[i].Name.ToLower().StartsWith(ExtendedPropertyPrefix.ToLower())) { %>
+    [EntityExtendedProperty("<%=SourceTable.ExtendedProperties[i].Name.Substring(ExtendedPropertyPrefix.Length) %>", "<%=SourceTable.ExtendedProperties[i].Value.ToString().Replace("\\", "\\\\") %>")]
+    <%         }
+           }
+       } %>
     <% if ( IncludeWCFDataAttributes ) { %>
     [DataContract]
     <% } else { %>
@@ -121,12 +128,32 @@ namespace <%=NameSpace%>
         private <%=structName%> entityData;
 
         /// <summary>
+        /// Plain object variable to place locks on when accessing _originalData.
+        /// </summary>
+        private object _originalDataLock = new object();
+
+        /// <summary>
         /// Hold the original data of the entity, as loaded from the repository.
         /// </summary>
         <% if (IncludeWCFDataAttributes ) { %>
         [DataMember]
         <% } %>
         private <%=structName%> _originalData;
+
+        /// <summary>
+        /// Hold the original data of the entity, as loaded from the repository.
+        /// Control/lock access to it with a lock object.
+        /// </summary>
+        private <%=structName%> originalData
+        {
+            get
+            {
+                lock(_originalDataLock)
+                {
+                    return _originalData;
+                }
+            }
+        }
 
         /// <summary>
         /// Hold a backup of the inner data of the entity.
@@ -146,8 +173,6 @@ namespace <%=NameSpace%>
         [NonSerialized]
         <% } %>
         private <%=collectionClassName%> parentCollection;
-
-        private bool inTxn = false;
 
         /// <summary>
         /// Occurs when a value is being changed for the specified column.
@@ -361,7 +386,7 @@ WriteRelationshipPropertyString();
         /// <remarks>This method overrides the base class to add schema related validation.</remarks>
         protected override void AddValidationRules()
         {
-            //Validation rules based on database schema.
+            // Validation rules based on database schema.
         <%
         for (int x=0; x < cols.Count; x++)
         {
@@ -710,13 +735,13 @@ WriteRelationshipPropertyString();
             obj.CancelEdit();
 
             this.entityData = null;
-            if (this._originalData != null)
+            if (this.originalData != null)
             {
-                this.entityData = this._originalData.Clone() as <%=structName%>;
+                this.entityData = this.originalData.Clone() as <%=structName%>;
             }
             else
             {
-                //Since this had no _originalData, then just reset the entityData with a new one.  entityData cannot be null.
+                //Since this had no originalData, then just reset the entityData with a new one.  entityData cannot be null.
                 this.entityData = new <%=structName%>();
             }
         }
@@ -731,9 +756,13 @@ WriteRelationshipPropertyString();
         {
             base.AcceptChanges();
 
-            // we keep of the original version of the data
-            this._originalData = null;
-            this._originalData = this.entityData.Clone() as <%=structName%>;
+            // we keep a copy of the original version of the data
+            // grab a lock so no one tries to access this data until we have made a good effort not to leave it null
+            lock (_originalDataLock)
+            {
+                this._originalData = null;
+                this._originalData = this.entityData.Clone() as <%=structName%>;
+            }
         }
 
         #region Comparision with original data
@@ -747,14 +776,18 @@ WriteRelationshipPropertyString();
         /// </returns>
         public bool IsPropertyChanged(<%= GetClassName(SourceTable, ClassNameFormat.Column) %> column)
         {
-            if (_originalData == null)
-                throw new System.NotSupportedException("Must Call BeginEdit() first.\nvar casted_obj = (System.ComponentModel.IEditableObject)nettiers_generated_obj;\ncasted_obj.BeginEdit();");
+            // originalData is null when the object is either brand new.
+            // in this case the response from this method should be false.
+            // grab temporary copy of object to avoid repeatedly calling a locked object, and to ensure the object is not replaced while we are working with it
+            <%=structName%> tmpOriginalData = originalData;
+            if (tmpOriginalData == null)
+                return false;
 
             switch (column)
             {
                 <% for (int x=0; x < cols.Count; x++) { %>
                 case <%= GetClassName(SourceTable, ClassNameFormat.Column) %>.<%=GetPropertyName(cols[x])%>:
-                    return entityData.<%=GetPropertyName(cols[x])%> != _originalData.<%=GetPropertyName(cols[x])%>;
+                    return entityData.<%=GetPropertyName(cols[x])%> != tmpOriginalData.<%=GetPropertyName(cols[x])%>;
                 <% } %>
 
                 default:
@@ -782,11 +815,58 @@ WriteRelationshipPropertyString();
         /// </returns>
         public bool HasDataChanged()
         {
+            // grab temporary copy of object to avoid repeatedly calling a locked object, and to ensure the object is not replaced while we are working with it
+            <%=structName%> tmpOriginalData = originalData;
+            if (tmpOriginalData == null)
+                return false;
+
             bool result = false;
             <% for (int x=0; x < cols.Count; x++) { %>
-            result = result || entityData.<%=GetPropertyName(cols[x])%> != _originalData.<%=GetPropertyName(cols[x])%>;
+            result = result || entityData.<%=GetPropertyName(cols[x])%> != tmpOriginalData.<%=GetPropertyName(cols[x])%>;
             <% } %>
             return result;
+        }
+
+        /// <summary>
+        /// Gets a list of all the columns that have changed data in them.
+        /// </summary>
+        /// <returns></returns>
+        public override System.Collections.Generic.List<EntityChangedColumnValue> GetChangedEntityData()
+        {
+            System.Collections.Generic.List<<%=className%>ChangedColumnValue> changedData = GetChangedData();
+            return changedData.ConvertAll<EntityChangedColumnValue>(l => (EntityChangedColumnValue)l);
+        }
+
+        /// <summary>
+        /// Gets a list of all the columns that have changed data in them.
+        /// </summary>
+        /// <returns></returns>
+        public System.Collections.Generic.List<<%=className%>ChangedColumnValue> GetChangedData()
+        {
+            System.Collections.Generic.List<<%=className%>ChangedColumnValue> changedData = new System.Collections.Generic.List<<%=className%>ChangedColumnValue>();
+
+            // grab temporary copy of object to avoid repeatedly calling a locked object, and to ensure the object is not replaced while we are working with it
+            <%=structName%> tmpOriginalData = originalData;
+
+            // originalData is null when the object is either brand new, or briefly after the object has just been saved.
+            // in both cases the response from this method should return an empty list.
+            if (tmpOriginalData == null)
+                return changedData;
+
+            <% for (int x=0; x < cols.Count; x++) { %>
+            if (entityData.<%=GetPropertyName(cols[x])%> != tmpOriginalData.<%=GetPropertyName(cols[x])%>)
+                changedData.Add(new <%=className%>ChangedColumnValue() { Column = <%=className%>Column.<%=GetPropertyName(cols[x])%>, OldValue = tmpOriginalData.<%=GetPropertyName(cols[x])%>, CurrentValue = entityData.<%=GetPropertyName(cols[x])%> });
+            <% } %>
+
+            return changedData;
+        }
+
+        /// <summary>
+        /// Returns a generic object of type <%=className%> with the original data.
+        /// </summary>
+        public override object GetOriginalEntityObject()
+        {
+            return GetOriginalEntity();
         }
 
         /// <summary>
@@ -794,12 +874,15 @@ WriteRelationshipPropertyString();
         /// </summary>
         public <%=className%> GetOriginalEntity()
         {
-            if (_originalData != null)
+            // grab temporary copy of object to avoid repeatedly calling a locked object, and to ensure the object is not replaced while we are working with it
+            <%=structName%> tmpOriginalData = originalData;
+
+            if (tmpOriginalData != null)
                 return Create<%=className%>(
                 <%
                 for (int i = 0;i < colsUpdatable.Count; i++)
                 {%>
-                _originalData.<%=GetPropertyName(colsUpdatable[i])%><%if (i < colsUpdatable.Count-1){%>,<%}%>
+                tmpOriginalData.<%=GetPropertyName(colsUpdatable[i])%><%if (i < colsUpdatable.Count-1){%>,<%}%>
                 <%}
                 %>
                 );
@@ -1551,7 +1634,7 @@ WriteRelationshipPropertyString();
             <% if (!string.IsNullOrWhiteSpace(ExtendedPropertyPrefix)) {
                    for (int i=0; i < cols[x].ExtendedProperties.Count; i++) {
                        if (cols[x].ExtendedProperties[i].Name.ToLower().StartsWith(ExtendedPropertyPrefix.ToLower())) { %>
-        [ColumnExtendedProperty("<%=cols[x].ExtendedProperties[i].Name.Substring(ExtendedPropertyPrefix.Length) %>", "<%=cols[x].ExtendedProperties[i].Value %>")]
+        [ColumnExtendedProperty("<%=cols[x].ExtendedProperties[i].Name.Substring(ExtendedPropertyPrefix.Length) %>", "<%=cols[x].ExtendedProperties[i].Value.ToString().Replace("\\", "\\\\") %>")]
             <%         }
                    }
                } %>
@@ -1562,6 +1645,31 @@ WriteRelationshipPropertyString();
     } //End enum
 
     #endregion <%= GetClassName(SourceTable, ClassNameFormat.Column) %> Enum
+
+    #region RefQueueChangedColumnValue Class
+
+    /// <summary>
+    /// A key/value class to hold column value pairs in entities that have changed.
+    /// </summary>
+    public class <%=className%>ChangedColumnValue : EntityChangedColumnValue
+    {
+        /// <summary>
+        /// The column that had data change in it.
+        /// </summary>
+        public new <%=className%>Column Column
+        {
+            get
+            {
+                return (<%=className%>Column)base.Column;
+            }
+            set
+            {
+                base.Column = value;
+            }
+        }
+    }
+
+    #endregion
 
 } // end namespace
 <script runat="template">

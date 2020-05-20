@@ -38,7 +38,11 @@ namespace <%=NameSpace%>.Validation
 
                 if (value == null)
                 {
-                    if (string.IsNullOrEmpty(e.Description)) e.Description = string.Format("{0} cannot be null.", e.FriendlyName);
+                    if (string.IsNullOrEmpty(e.Description))
+                    {
+                        string err = string.Format("{0} cannot be null.", e.FriendlyName);
+                        AssignError(CommonRuleType.NotNull, target, e, err);
+                    }
                     return false;
                 }
 
@@ -74,7 +78,11 @@ namespace <%=NameSpace%>.Validation
                 string value = (string)p.GetValue(target, null);
                 if (string.IsNullOrEmpty(value))
                 {
-                    if (string.IsNullOrEmpty(e.Description)) e.Description = e.FriendlyName + " is required.";
+                    if (string.IsNullOrEmpty(e.Description))
+                    {
+                        string err = String.Format("{0} is required.", e.FriendlyName);
+                        AssignError(CommonRuleType.StringRequired, target, e, err);
+                    }
                     return false;
                 }
                 return true;
@@ -118,7 +126,11 @@ namespace <%=NameSpace%>.Validation
 
                         if (!String.IsNullOrEmpty(value) && (value.Length > max))
                         {
-                            if (string.IsNullOrEmpty(e.Description)) e.Description = String.Format("{0} can not exceed {1} characters", e.FriendlyName, max.ToString());
+                            if (string.IsNullOrEmpty(e.Description))
+                            {
+                                string err = String.Format("{0} can not exceed {1} characters", e.FriendlyName, max.ToString());
+                                AssignError(CommonRuleType.StringMaxLength, target, e, err);
+                            }
                             return false;
                         }
                         return true;
@@ -226,7 +238,11 @@ namespace <%=NameSpace%>.Validation
 
                         if (left > max)
                         {
-                            if (string.IsNullOrEmpty(e.Description)) e.Description = String.Format("{0} can not exceed {1} digits left of the decimal", e.FriendlyName, max.ToString());
+                            if (string.IsNullOrEmpty(e.Description))
+                            {
+                                string err = String.Format("{0} can not exceed {1} digits left of the decimal", e.FriendlyName, max.ToString());
+                                AssignError(CommonRuleType.DecimalMaxLength, target, e, err);
+                            }
                             return false;
                         }
                         return true;
@@ -334,7 +350,8 @@ namespace <%=NameSpace%>.Validation
             {
                 if (e.Description == string.Empty)
                 {
-                    e.Description = string.Format("{0} exceed the maximum number of words", e.FriendlyName, text1);
+                    string err = string.Format("{0} exceeds the maximum of {1} words", e.FriendlyName, args1.MaxLength);
+                    AssignError(CommonRuleType.MaxWords, target, e, err);
                 }
                 return false;
             }
@@ -373,7 +390,11 @@ namespace <%=NameSpace%>.Validation
 
                         if (value == null || !Regex.IsMatch(value, expression))
                         {
-                            if (string.IsNullOrEmpty(e.Description)) e.Description = String.Format("{0} is not valid.", e.FriendlyName);
+                            if (string.IsNullOrEmpty(e.Description))
+                            {
+                                string err = String.Format("{0} is not valid.", e.FriendlyName);
+                                AssignError(CommonRuleType.RegexIsMatch, target, e, err);
+                            }
                             return false;
                         }
                         return true;
@@ -455,7 +476,7 @@ namespace <%=NameSpace%>.Validation
         /// <returns>False if the rule is broken; true otherwise.</returns>
         public static bool LessThanValue<T>(object target, ValidationRuleArgs e)
         {
-            return CompareValues<T>(target, e as CompareValueRuleArgs<T>, CompareType.LessThan);
+            return CompareValues<T>(target, e as CompareValueRuleArgs<T>, CommonRuleType.LessThan);
         }
 
         /// <summary>
@@ -467,7 +488,7 @@ namespace <%=NameSpace%>.Validation
         /// <returns>False if the rule is broken; true otherwise.</returns>
         public static bool LessThanOrEqualToValue<T>(object target, ValidationRuleArgs e)
         {
-            return CompareValues<T>(target, e as CompareValueRuleArgs<T>, CompareType.LessThanOrEqualTo);
+            return CompareValues<T>(target, e as CompareValueRuleArgs<T>, CommonRuleType.LessThanOrEqualTo);
         }
 
         /// <summary>
@@ -479,7 +500,7 @@ namespace <%=NameSpace%>.Validation
         /// <returns>False if the rule is broken; true otherwise.</returns>
         public static bool EqualsValue<T>(object target, ValidationRuleArgs e)
         {
-            return CompareValues<T>(target, e as CompareValueRuleArgs<T>, CompareType.EqualTo);
+            return CompareValues<T>(target, e as CompareValueRuleArgs<T>, CommonRuleType.EqualTo);
         }
 
         /// <summary>
@@ -491,8 +512,7 @@ namespace <%=NameSpace%>.Validation
         /// <returns>False if the rule is broken; true otherwise.</returns>
         public static bool GreaterThanValue<T>(object target, ValidationRuleArgs e)
         {
-            return CompareValues<T>(target, e as CompareValueRuleArgs<T>, CompareType.GreaterThan
-               );
+            return CompareValues<T>(target, e as CompareValueRuleArgs<T>, CommonRuleType.GreaterThan);
         }
 
         /// <summary>
@@ -504,7 +524,7 @@ namespace <%=NameSpace%>.Validation
         /// <returns>False if the rule is broken; true otherwise.</returns>
         public static bool GreaterThanOrEqualToValue<T>(object target, ValidationRuleArgs e)
         {
-            return CompareValues<T>(target, e as CompareValueRuleArgs<T>, CompareType.GreaterThanOrEqualTo);
+            return CompareValues<T>(target, e as CompareValueRuleArgs<T>, CommonRuleType.GreaterThanOrEqualTo);
         }
 
         /// <summary>
@@ -513,9 +533,9 @@ namespace <%=NameSpace%>.Validation
         /// <typeparam name="T">Datatype of the property to validate.</typeparam>
         /// <param name="target">Object containing the data to validate.</param>
         /// <param name="e"><see cref="ValidationRuleArgs"/> containing the information about the object to be validated.</param>
-        /// <param name="compareType"><see cref="CompareType"/> defining the type of comparison that will be made.</param>
+        /// <param name="compareType"><see cref="CommonRuleType"/> defining the type of comparison that will be made.</param>
         /// <returns></returns>
-        private static bool CompareValues<T>(object target, CompareValueRuleArgs<T> e, CompareType compareType)
+        private static bool CompareValues<T>(object target, CompareValueRuleArgs<T> e, CommonRuleType compareType)
         {
             bool result = true;
 
@@ -549,62 +569,67 @@ namespace <%=NameSpace%>.Validation
 
                 switch (compareType)
                 {
-                    case CompareType.LessThanOrEqualTo:
+                    case CommonRuleType.LessThanOrEqualTo:
                         result = (res <= 0);
 
                         if (!result)
                         {
                             if (string.IsNullOrEmpty(e.Description))
                             {
-                                e.Description = string.Format("{0} cannot exceed {1}.", e.FriendlyName, compareValue.ToString());
+                                string err = string.Format("{0} cannot exceed {1}.", e.FriendlyName, compareValue.ToString());
+                                AssignError(compareType, target, e, err);
                             }
                         }
                         break;
 
-                    case CompareType.LessThan:
+                    case CommonRuleType.LessThan:
                         result = (res < 0);
 
                         if (!result)
                         {
                             if (string.IsNullOrEmpty(e.Description))
                             {
-                                e.Description = string.Format("{0} must be less than {1}.", e.FriendlyName, compareValue.ToString());
+                               string err = string.Format("{0} must be less than {1}.", e.FriendlyName, compareValue.ToString());
+                               AssignError(compareType, target, e, err);
                             }
                         }
                         break;
 
-                    case CompareType.EqualTo:
+                    case CommonRuleType.EqualTo:
                         result = (res == 0);
 
                         if (!result)
                         {
                             if (string.IsNullOrEmpty(e.Description))
                             {
-                                e.Description = string.Format("{0} must equal {1}.", e.FriendlyName, compareValue.ToString());
+                                string err = string.Format("{0} must equal {1}.", e.FriendlyName, compareValue.ToString());
+                                AssignError(compareType, target, e, err);
                             }
                         }
                         break;
 
-                    case CompareType.GreaterThan:
+                    case CommonRuleType.GreaterThan:
                         result = (res > 0);
 
                         if (!result)
                         {
                             if (string.IsNullOrEmpty(e.Description))
                             {
-                                e.Description = string.Format("{0} must exceed {1}.", e.FriendlyName, compareValue.ToString());
+                                string err = string.Format("{0} must exceed {1}.", e.FriendlyName, compareValue.ToString());
+                                AssignError(compareType, target, e, err);
                             }
                         }
                         break;
 
-                    case CompareType.GreaterThanOrEqualTo:
+                    case CommonRuleType.GreaterThanOrEqualTo:
                         result = (res >= 0);
 
                         if (!result)
                         {
                             if (string.IsNullOrEmpty(e.Description))
                             {
-                                e.Description = string.Format("{0} must be greater than or equal to {1}.", e.FriendlyName, compareValue.ToString());
+                                string err = string.Format("{0} must be greater than or equal to {1}.", e.FriendlyName, compareValue.ToString());
+                                AssignError(compareType, target, e, err);
                             }
                         }
                         break;
@@ -617,18 +642,6 @@ namespace <%=NameSpace%>.Validation
                 }
             }
             return result;
-        }
-
-        /// <summary>
-        /// Enum indicating the type of comparison that will be made.
-        /// </summary>
-        private enum CompareType
-        {
-            LessThanOrEqualTo,
-            LessThan,
-            EqualTo,
-            GreaterThan,
-            GreaterThanOrEqualTo
         }
 
         /// <summary>
@@ -706,7 +719,11 @@ namespace <%=NameSpace%>.Validation
 
                 if (!result)
                 {
-                    if (string.IsNullOrEmpty(e.Description)) e.Description = string.Format("{0} must be between {1} and {2}.", ruleArgs.FriendlyName, ruleArgs.Range.MinValue, ruleArgs.Range.MaxValue);
+                    if (string.IsNullOrEmpty(e.Description))
+                    {
+                        string err = string.Format("{0} must be between {1} and {2}.", ruleArgs.FriendlyName, ruleArgs.Range.MinValue, ruleArgs.Range.MaxValue);
+                        AssignError(CommonRuleType.InRange, target, e, err);
+                    }
                 }
 
                 return result;
@@ -857,6 +874,93 @@ namespace <%=NameSpace%>.Validation
         }
 
         #endregion		
+
+        /// <summary>
+        /// A method that fires when a common rule fails
+        /// </summary>
+        /// <param name="ruleType">Which common rule method is triggering this validation error</param>
+        /// <param name="target">the netTiers object</param>
+        /// <param name="e">validation rule data</param>
+        public delegate void FailedValidationHandler(CommonRuleType ruleType, EntityBase target, ValidationRuleArgs e);
+
+        /// <summary>
+        /// Assigns a method that fires when a common rule fails.
+        /// Can be used to customize the error messages, translate them,
+        /// or take additional actions based on the error.
+        /// </summary>
+        [field: NonSerialized]
+        public static event FailedValidationHandler FailedValidation;
+
+        /// <summary>
+        /// Assigns an error string, and calls a handler if it exists
+        /// </summary>
+        /// <param name="ruleType"></param>
+        /// <param name="target"></param>
+        /// <param name="e"></param>
+        /// <param name="err"></param>
+        private static void AssignError(CommonRuleType ruleType, object target, ValidationRuleArgs e, string err)
+        {
+            e.Description = err;
+            if (FailedValidation != null)
+            {
+                FailedValidation(ruleType, (EntityBase)target, e);
+            }
+        }
+
+        /// <summary>
+        /// The validation rule type
+        /// </summary>
+        public enum CommonRuleType : int
+        {
+            /// <summary>
+            /// Not Null
+            /// </summary>
+            NotNull = 1,
+            /// <summary>
+            /// String Required
+            /// </summary>
+            StringRequired = 2,
+            /// <summary>
+            /// String Max Length
+            /// </summary>
+            StringMaxLength = 3,
+            /// <summary>
+            /// Decimal Max Length
+            /// </summary>
+            DecimalMaxLength = 4,
+            /// <summary>
+            /// Max Words
+            /// </summary>
+            MaxWords = 5,
+            /// <summary>
+            /// Regex Is Match
+            /// </summary>
+            RegexIsMatch = 6,
+            /// <summary>
+            /// LessThan Or EqualTo
+            /// </summary>
+            LessThanOrEqualTo = 7,
+            /// <summary>
+            /// LessThan
+            /// </summary>
+            LessThan = 8,
+            /// <summary>
+            /// EqualTo
+            /// </summary>
+            EqualTo = 9,
+            /// <summary>
+            /// GreaterThan
+            /// </summary>
+            GreaterThan = 10,
+            /// <summary>
+            /// GreaterThan Or EqualTo
+            /// </summary>
+            GreaterThanOrEqualTo = 11,
+            /// <summary>
+            /// In Range
+            /// </summary>
+            InRange = 12
+        }
 		
     }
 

@@ -244,30 +244,30 @@ namespace <%=NameSpace%>
         public abstract bool IsPropertyChanged(string columnName);
 
         /// <summary>
-        /// Object that contains data to associate with this object
+        /// Gets a list of all the columns that have changed data in them.
         /// </summary>
-        [NonSerialized]
-        private object tag;
+        /// <returns></returns>
+        public abstract System.Collections.Generic.List<EntityChangedColumnValue> GetChangedEntityData();
 
         /// <summary>
-        /// Gets or sets the object that contains supplemental data about this object.
+        /// Returns a generic object with the original data.  To be implemented in concrete class.
         /// </summary>
-        /// <value>Object</value>
-        [System.ComponentModel.Bindable(false)]
-        [LocalizableAttribute(false)]
-        [DescriptionAttribute("Object containing data to be associated with this object")]
-        public virtual object Tag
+        public abstract object GetOriginalEntityObject();
+
+        /// <summary>
+        /// Is this object in editing mode.
+        /// </summary>
+        [NonSerialized]
+        protected bool inTxn = false;
+
+        /// <summary>
+        /// Is this object in editing mode.
+        /// </summary>
+        public bool IsEditingEnabled
         {
             get
             {
-                return this.tag;
-            }
-            set
-            {
-                if (this.tag == value)
-                    return;
-
-                this.tag = value;
+                return inTxn;
             }
         }
 
@@ -360,6 +360,8 @@ namespace <%=NameSpace%>
                 {
                     PropertyChanging(this, e);
                 }
+
+                NetTiersEntityEvents.OnPropertyChanging(this, new NetTiersEntityEventArgs(e.PropertyName));
             }
         }
 
@@ -404,6 +406,8 @@ namespace <%=NameSpace%>
                 {
                     PropertyChanged(this, e);
                 }
+
+                NetTiersEntityEvents.OnPropertyChanged(this, new NetTiersEntityEventArgs(e.PropertyName));
             }
         }
 
@@ -701,7 +705,8 @@ namespace <%=NameSpace%>
         {
             Validate(column.ToString());
         }
-          #endregion
+		
+        #endregion
 
         #region IDeserializationCallback Members
 
@@ -722,5 +727,26 @@ namespace <%=NameSpace%>
 
         #endregion
 
+    }
+
+    /// <summary>
+    /// A key/value class to hold column value pairs in entities that have changed.
+    /// </summary>
+    public class EntityChangedColumnValue
+    {
+        /// <summary>
+        /// The column that had data change in it.
+        /// </summary>
+        public System.Enum Column { get; set; }
+
+        /// <summary>
+        /// The original data.
+        /// </summary>
+        public object OldValue { get; set; }
+
+        /// <summary>
+        /// The current value.
+        /// </summary>
+        public object CurrentValue { get; set; }
     }
 }

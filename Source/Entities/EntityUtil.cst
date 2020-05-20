@@ -15,6 +15,7 @@
 #region Using Directives
 
 using System;
+using System.ComponentModel;
 using System.Collections;
 using System.Reflection;
 using System.Text;
@@ -884,4 +885,93 @@ namespace <%= NameSpace %>
             return builder.ToString();
         }
     }
+
+    #region EntityEvents
+
+    /// <summary>
+    /// This class provides static global access to the localized event handlers on <see cref="IEntity"/> instances and collections.
+    /// </summary>
+    public static class NetTiersEntityEvents
+    {
+        /// <summary>
+        /// A method that fires when an Entity's has an event.
+        /// </summary>
+        /// <param name="entity">the netTiers object</param>
+        /// <param name="e">validation rule data</param>
+        public delegate void EntityEventHandler(EntityBase entity, NetTiersEntityEventArgs e);
+
+        /// <summary>
+        /// A method that fires when an Entity's property gets changed.
+        /// Can be used to globally trap events from all objects.
+        /// </summary>
+        [field: NonSerialized]
+        public static event EntityEventHandler PropertyChanged;
+
+        /// <summary>
+        /// This is the method that is responsible for notifying
+        /// receivers that the event occurred.
+        /// </summary>
+        public static void OnPropertyChanged(EntityBaseCore entity, NetTiersEntityEventArgs e)
+        {
+            if (PropertyChanged != null)
+            {
+                PropertyChanged((EntityBase)entity, e);
+            }
+        }
+
+        /// <summary>
+        /// A method that fires when an Entity's property is getting ready to change.
+        /// Can be used to globally trap events from all objects.
+        /// </summary>
+        [field: NonSerialized]
+        public static event EntityEventHandler PropertyChanging;
+
+        /// <summary>
+        /// This is the method that is responsible for notifying
+        /// receivers that the event occurred.
+        /// </summary>
+        public static void OnPropertyChanging(EntityBaseCore entity, NetTiersEntityEventArgs e)
+        {
+            if (PropertyChanging != null)
+            {
+                PropertyChanging((EntityBase)entity, e);
+            }
+        }
+
+        
+    }
+
+    /// <summary>
+    /// The event arguments class used with the entity event methods
+    /// </summary>
+    public class NetTiersEntityEventArgs
+    {
+        private string _propertyName = "";
+        /// <summary>
+        /// The name of the property being affected
+        /// </summary>
+        public string PropertyName
+        {
+            get
+            {
+                return _propertyName;
+            }
+            set
+            {
+                _propertyName = value;
+            }
+        }
+
+        /// <summary>
+        /// Constructor for this event args class
+        /// </summary>
+        /// <param name="propertyName"></param>
+        public NetTiersEntityEventArgs(string propertyName)
+        {
+            PropertyName = propertyName;
+        }
+    }
+
+    #endregion EntityEvents
+
 }
