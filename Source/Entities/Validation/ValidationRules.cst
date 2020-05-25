@@ -12,6 +12,7 @@
 <%@ Property Name="NameSpace" Optional="False" Type="System.String" Category="Style" Description="Object Namespace." %>
 <%@ Assembly Name="SchemaExplorer" %>
 using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Text;
 
@@ -41,7 +42,7 @@ namespace <%=NameSpace%>.Validation
       /// <summary>
 	  /// Object associated with the common/generated rules list.
 	  /// </summary>>
-      private static Dictionary<string, Dictionary<string, List<ValidationRuleInfo>>> _commonRulesList;
+      private static ConcurrentDictionary<string, ConcurrentDictionary<string, List<ValidationRuleInfo>>> _commonRulesList;
 
       private static readonly object SyncRoot = new object();
 
@@ -98,7 +99,7 @@ namespace <%=NameSpace%>.Validation
 	  /// <summary>
 	  /// List of common rules associated with an entity.
 	  /// </summary>
-	  private static Dictionary<string, Dictionary<string, List<ValidationRuleInfo>>> CommonRulesList
+	  private static ConcurrentDictionary<string, ConcurrentDictionary<string, List<ValidationRuleInfo>>> CommonRulesList
       {
          get
          {
@@ -108,7 +109,7 @@ namespace <%=NameSpace%>.Validation
                {
                   if (_commonRulesList == null)
                   {
-                     _commonRulesList = new Dictionary<string, Dictionary<string, List<ValidationRuleInfo>>>();
+                     _commonRulesList = new ConcurrentDictionary<string, ConcurrentDictionary<string, List<ValidationRuleInfo>>>();
                   }
                }
             }
@@ -147,29 +148,8 @@ namespace <%=NameSpace%>.Validation
       /// <returns>A <see cref="List{ValidationRuleInfo}"/> containing all of the rules for the specified property.</returns>
       private static List<ValidationRuleInfo> GetCommonPropertyRules(IEntity entity, string propertyName)
       {
-         List<ValidationRuleInfo> list = null;
-
-         if (CommonRulesList.ContainsKey(entity.TableName))
-         {
-            var rulesForEntity = CommonRulesList[entity.TableName];
-            if (rulesForEntity.ContainsKey(propertyName))
-            {
-               list = rulesForEntity[propertyName];
-            }
-         }
-         else
-         {
-            // Create the root entry
-            CommonRulesList.Add(entity.TableName, new Dictionary<string, List<ValidationRuleInfo>>());
-         }
-
-         if (list == null)
-         {
-            //No list found - create a new one.
-            list = new List<ValidationRuleInfo>();
-            CommonRulesList[entity.TableName].Add(propertyName, list);
-         }
-         return list;
+         var rulesForEntity = CommonRulesList.GetOrAdd(entity.TableName, s => new ConcurrentDictionary<string, List<ValidationRuleInfo>>());
+         return rulesForEntity.GetOrAdd(propertyName, s => new List<ValidationRuleInfo>());
       }
 
       internal static void AddCommonRule(IEntity sender, ValidationRuleHandler handler, ValidationRuleArgs args)
