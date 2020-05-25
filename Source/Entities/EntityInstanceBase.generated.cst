@@ -167,7 +167,7 @@ namespace <%=NameSpace%>
 
         private static bool _commonRulesInitialised = false;
 		
-		private static volatile object syncRoot = new object();
+	    private static volatile object syncRoot = new object();
 
         #endregion Variable Declarations
 
@@ -366,11 +366,11 @@ WriteRelationshipPropertyString();
         protected override void AddValidationRules()
         {
             //Validation rules based on database schema.
-			if (_commonRulesInitialised) return;
+            if (_commonRulesInitialised) return;
             
-			lock (syncRoot)
+            lock (syncRoot)
             {
-				if (_commonRulesInitialised) return;
+               if (_commonRulesInitialised) return;
 				
         <%
         for (int x=0; x < cols.Count; x++)
@@ -381,29 +381,29 @@ WriteRelationshipPropertyString();
             if (! cols[x].AllowDBNull && IsCSReferenceDataType(cols[x]))
             {
                 %>
-				ValidationRules.AddRule( CommonRules.NotNull,
-					new ValidationRuleArgs("<%=propertyName%>", "<%=friendlyName%>"));
+                ValidationRules.AddRule( CommonRules.NotNull,
+                   new ValidationRuleArgs("<%=propertyName%>", "<%=friendlyName%>"));
                 <%
             }
 
             if (CanCheckLength(cols[x]))
             {%>
-				ValidationRules.AddRule( CommonRules.StringMaxLength,
-					new CommonRules.MaxLengthRuleArgs("<%=propertyName%>", "<%=friendlyName%>", <%=getColumnSize(cols[x].Size)%>));
+                ValidationRules.AddRule( CommonRules.StringMaxLength,
+                   new CommonRules.MaxLengthRuleArgs("<%=propertyName%>", "<%=friendlyName%>", <%=getColumnSize(cols[x].Size)%>));
             <%
             }
 
             if (cols[x].DataType == DbType.Decimal)
             {%>
-				ValidationRules.AddRule( CommonRules.DecimalMaxLength,
-					new CommonRules.MaxLengthRuleArgs("<%=propertyName%>", "<%=friendlyName%>", <%=cols[x].Precision - cols[x].Scale%>));
+                ValidationRules.AddRule( CommonRules.DecimalMaxLength,
+                   new CommonRules.MaxLengthRuleArgs("<%=propertyName%>", "<%=friendlyName%>", <%=cols[x].Precision - cols[x].Scale%>));
             <%
             }
         }
 		
         %>
-				_commonRulesInitialised = true;
-			}
+               _commonRulesInitialised = true;
+            }
         }
            #endregion
         <%
