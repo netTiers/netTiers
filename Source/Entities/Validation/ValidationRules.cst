@@ -12,7 +12,6 @@
 <%@ Property Name="NameSpace" Optional="False" Type="System.String" Category="Style" Description="Object Namespace." %>
 <%@ Assembly Name="SchemaExplorer" %>
 using System;
-using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Text;
 
@@ -42,7 +41,7 @@ namespace <%=NameSpace%>.Validation
       /// <summary>
 	  /// Object associated with the common/generated rules list.
 	  /// </summary>>
-      private static ConcurrentDictionary<string, ConcurrentDictionary<string, List<ValidationRuleInfo>>> _commonRulesList;
+      private static Dictionary<string, Dictionary<string, List<ValidationRuleInfo>>> _commonRulesList = new Dictionary<string, Dictionary<string, List<ValidationRuleInfo>>>();
 
       private static readonly object SyncRoot = new object();
 
@@ -95,27 +94,6 @@ namespace <%=NameSpace%>.Validation
             return _rulesList;
          }
       }
-	  
-	  /// <summary>
-	  /// List of common rules associated with an entity.
-	  /// </summary>
-	  private static ConcurrentDictionary<string, ConcurrentDictionary<string, List<ValidationRuleInfo>>> CommonRulesList
-      {
-         get
-         {
-            if (_commonRulesList == null)
-            {
-               lock (SyncRoot)
-               {
-                  if (_commonRulesList == null)
-                  {
-                     _commonRulesList = new ConcurrentDictionary<string, ConcurrentDictionary<string, List<ValidationRuleInfo>>>();
-                  }
-               }
-            }
-            return _commonRulesList;
-         }
-      }
 
       #region Adding Rules
 
@@ -140,16 +118,38 @@ namespace <%=NameSpace%>.Validation
          return list;
       }
 	  
-	  /// <summary>
+      /// <summary>
       /// Returns a list of <see cref="ValidationRuleInfo"/> objects for a specified property.
       /// </summary>
       /// <param name="propertyName">The name of the property to get the rules for.</param>
-	  /// <param name="entity">The entity to validate the rules against.</param>
+	  /// <param name="entity">Entity to check rules against</param>
       /// <returns>A <see cref="List{ValidationRuleInfo}"/> containing all of the rules for the specified property.</returns>
       private static List<ValidationRuleInfo> GetCommonPropertyRules(IEntity entity, string propertyName)
       {
-         var rulesForEntity = CommonRulesList.GetOrAdd(entity.TableName, s => new ConcurrentDictionary<string, List<ValidationRuleInfo>>());
-         return rulesForEntity.GetOrAdd(propertyName, s => new List<ValidationRuleInfo>());
+         // We perform this locking to avoid using a ConcurrentDictionary due to required support for older .Net versions
+         if (!_commonRulesList.ContainsKey(entity.TableName))
+         {
+            lock (SyncRoot)
+            {
+               if (!_commonRulesList.ContainsKey(entity.TableName))
+               {
+                  _commonRulesList.Add(entity.TableName, new Dictionary<string, List<ValidationRuleInfo>>());
+               }
+            }
+         }
+
+         if (!_commonRulesList[entity.TableName].ContainsKey(propertyName))
+         {
+            lock (SyncRoot)
+            {
+               if (!_commonRulesList[entity.TableName].ContainsKey(propertyName))
+               {
+                  _commonRulesList[entity.TableName].Add(propertyName, new List<ValidationRuleInfo>());
+               }
+            }
+         }
+
+         return _commonRulesList[entity.TableName][propertyName];
       }
 
       internal static void AddCommonRule(IEntity sender, ValidationRuleHandler handler, ValidationRuleArgs args)
@@ -206,8 +206,8 @@ namespace <%=NameSpace%>.Validation
       #endregion
 
       #region Validating Rules
-
-      /// <summary>
+  
+  	  /// <summary>
       /// Validates a list of rules.
       /// </summary>
       /// <remarks>
@@ -217,9 +217,9 @@ namespace <%=NameSpace%>.Validation
       /// <param name="ruleList">List of rules to validate.</param>
       private void ValidateRuleList(List<ValidationRuleInfo> ruleList)
       {
-		 ValidateRuleList(ruleList, null);
+         ValidateRuleList(ruleList, null);
       }
-	  
+  
 	  /// <summary>
       /// Validates a list of rules.
       /// </summary>
@@ -249,18 +249,18 @@ namespace <%=NameSpace%>.Validation
       {
          List<ValidationRuleInfo> list;
 		 
-		 // validate common rules
-         if (CommonRulesList.ContainsKey(target.TableName))
+         // validate common rules
+         if (_commonRulesList.ContainsKey(target.TableName))
          {
-            var rules = CommonRulesList[target.TableName];
-            if (rules.ContainsKey(propertyName))
-            {
-               list = rules[propertyName];
-               if (list == null)
-                  return;
+             var rules = _commonRulesList[target.TableName];
+             if (rules.ContainsKey(propertyName))
+             {
+                 list = rules[propertyName];
+                 if (list == null)
+                     return;
 
-               ValidateRuleList(list, target);
-            }
+                 ValidateRuleList(list, target);
+             }
          }
 		 
          //Get the rules for the property
@@ -280,12 +280,12 @@ namespace <%=NameSpace%>.Validation
       public void ValidateRules(IEntity target)
       {
          // validate the common rules
-         if (CommonRulesList.ContainsKey(target.TableName))
+         if (_commonRulesList.ContainsKey(target.TableName))
          {
-            foreach (KeyValuePair<string, List<ValidationRuleInfo>> rulePair in CommonRulesList[target.TableName])
-            {
-               ValidateRuleList(rulePair.Value, target);
-            }
+             foreach (KeyValuePair<string, List<ValidationRuleInfo>> rulePair in _commonRulesList[target.TableName])
+             {
+                 ValidateRuleList(rulePair.Value, target);
+             }
          }
         
    		 // get the rules for each rule name
