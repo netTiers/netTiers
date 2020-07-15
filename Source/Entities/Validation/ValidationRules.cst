@@ -39,6 +39,13 @@ namespace <%=NameSpace%>.Validation
       private Dictionary<string, List<ValidationRuleInfo>> _rulesList;
 
       /// <summary>
+	  /// Object associated with the common/generated rules list.
+	  /// </summary>>
+      private static Dictionary<string, Dictionary<string, List<ValidationRuleInfo>>> _commonRulesList = new Dictionary<string, Dictionary<string, List<ValidationRuleInfo>>>();
+
+      private static readonly object SyncRoot = new object();
+
+      /// <summary>
       /// Creates an instance of the class and associates the target.
       /// </summary>
       /// <param name="businessEntity">Target</param>
@@ -110,6 +117,49 @@ namespace <%=NameSpace%>.Validation
          }
          return list;
       }
+	  
+      /// <summary>
+      /// Returns a list of <see cref="ValidationRuleInfo"/> objects for a specified property.
+      /// </summary>
+      /// <param name="propertyName">The name of the property to get the rules for.</param>
+	  /// <param name="entity">Entity to check rules against</param>
+      /// <returns>A <see cref="List{ValidationRuleInfo}"/> containing all of the rules for the specified property.</returns>
+      private static List<ValidationRuleInfo> GetCommonPropertyRules(IEntity entity, string propertyName)
+      {
+         // We perform this locking to avoid using a ConcurrentDictionary due to required support for older .Net versions
+         if (!_commonRulesList.ContainsKey(entity.TableName))
+         {
+            lock (SyncRoot)
+            {
+               if (!_commonRulesList.ContainsKey(entity.TableName))
+               {
+                  _commonRulesList.Add(entity.TableName, new Dictionary<string, List<ValidationRuleInfo>>());
+               }
+            }
+         }
+
+         if (!_commonRulesList[entity.TableName].ContainsKey(propertyName))
+         {
+            lock (SyncRoot)
+            {
+               if (!_commonRulesList[entity.TableName].ContainsKey(propertyName))
+               {
+                  _commonRulesList[entity.TableName].Add(propertyName, new List<ValidationRuleInfo>());
+               }
+            }
+         }
+
+         return _commonRulesList[entity.TableName][propertyName];
+      }
+
+      internal static void AddCommonRule(IEntity sender, ValidationRuleHandler handler, ValidationRuleArgs args)
+      {
+         // get the list of rules for the property
+         List<ValidationRuleInfo> list = GetCommonPropertyRules(sender, args.PropertyName);
+
+         // we have the list, add our new rule
+         list.Add(new ValidationRuleInfo(null, handler, args));
+      }
 
       /// <summary>
       /// Adds a rule to the list of validated rules.
@@ -156,8 +206,8 @@ namespace <%=NameSpace%>.Validation
       #endregion
 
       #region Validating Rules
-
-      /// <summary>
+  
+  	  /// <summary>
       /// Validates a list of rules.
       /// </summary>
       /// <remarks>
@@ -167,9 +217,23 @@ namespace <%=NameSpace%>.Validation
       /// <param name="ruleList">List of rules to validate.</param>
       private void ValidateRuleList(List<ValidationRuleInfo> ruleList)
       {
+         ValidateRuleList(ruleList, null);
+      }
+  
+	  /// <summary>
+      /// Validates a list of rules.
+      /// </summary>
+      /// <remarks>
+      /// This method calls the Invoke method on each rule in the list.  If the rule fails, it 
+      /// is added to the <see cref="BrokenRulesList"/>
+      /// </remarks>
+      /// <param name="ruleList">List of rules to validate.</param>	  
+	  /// <param name="target">The entity to validate the rules against.</param>
+      private void ValidateRuleList(List<ValidationRuleInfo> ruleList, IEntity target)
+      {
          foreach (ValidationRuleInfo rule in ruleList)
          {
-            if (rule.Invoke())
+            if (rule.Invoke(target))
                BrokenRulesList.Remove(rule);
             else
                BrokenRulesList.Add(rule);
@@ -180,9 +244,25 @@ namespace <%=NameSpace%>.Validation
       /// Validates all rules for a property
       /// </summary>
       /// <param name="propertyName">Name of the property to validate.</param>
-      public void ValidateRules(string propertyName)
+	  /// <param name="target">The entity to validate the rules against.</param>
+      public void ValidateRules(string propertyName, IEntity target)
       {
          List<ValidationRuleInfo> list;
+		 
+         // validate common rules
+         if (_commonRulesList.ContainsKey(target.TableName))
+         {
+             var rules = _commonRulesList[target.TableName];
+             if (rules.ContainsKey(propertyName))
+             {
+                 list = rules[propertyName];
+                 if (list == null)
+                     return;
+
+                 ValidateRuleList(list, target);
+             }
+         }
+		 
          //Get the rules for the property
          if (RulesList.ContainsKey(propertyName))
          {
@@ -197,9 +277,18 @@ namespace <%=NameSpace%>.Validation
       /// <summary>
       /// Validate all the rules for all properties.
       /// </summary>
-      public void ValidateRules()
+      public void ValidateRules(IEntity target)
       {
-         // get the rules for each rule name
+         // validate the common rules
+         if (_commonRulesList.ContainsKey(target.TableName))
+         {
+             foreach (KeyValuePair<string, List<ValidationRuleInfo>> rulePair in _commonRulesList[target.TableName])
+             {
+                 ValidateRuleList(rulePair.Value, target);
+             }
+         }
+        
+   		 // get the rules for each rule name
          foreach (KeyValuePair<string, List<ValidationRuleInfo>> rulePair in RulesList)
          {
             ValidateRuleList(rulePair.Value);
@@ -211,7 +300,7 @@ namespace <%=NameSpace%>.Validation
       #region Validation Status
 
       /// <summary>
-      /// Returns a value indicateing whether the <see cref="Target"/> object is valid.
+      /// Returns a value indicating whether the <see cref="Target"/> object is valid.
       /// </summary>
       /// <remarks>If one or more rules are broken, the object is assumed to be invalid and 
       /// false is return.  Otherwise, True is returned.
@@ -235,9 +324,9 @@ namespace <%=NameSpace%>.Validation
       /// <summary>
       /// 	Clear the rules list.
       /// </summary>
-			public void Clear()
-	   	{
-		  	_rulesList.Clear();
-	   	}
+	  public void Clear()
+	  {
+	     _rulesList.Clear();
+	  }
    }
 }
