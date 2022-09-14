@@ -1,10 +1,9 @@
 <?xml version="1.0"?>
 <xsl:stylesheet version="1.0" xmlns:xsl="http://www.w3.org/1999/XSL/Transform">
 <xsl:output method="html" indent="yes" />
-	<xsl:template match="/NetTiersReport">		
+	<xsl:template match="/NetTiersReport">
 		<html>
 			<head>
-                <link href="http://nettiers.net/common/styles.css" rel="stylesheet" type="text/css"/>
                 <style>
 				      span.executionTime {font-style: italic; color: #55AEED;}
 	            </style>
@@ -14,14 +13,12 @@
 				<table width="100%" border="0" cellspacing="2" cellpadding="2">
 					<tr>
                         <td width="700">
-                            <a href="https://github.com/netTiers/netTiers" target="_blank"><img border="0" src="http://www.nettiers.net/GetFile.aspx?File=Summary_Logo.gif" alt=".netTiers 2.3"  /></a>
+							<a href="https://github.com/netTiers/netTiers" target="_blank">GitHub</a>
                             <hr /><div>
-                              <a href="https://github.com/nettiers/nettiers/wiki">Website</a>
-                             &#160;&#160; | &#160;&#160; 
+                              <a href="https://github.com/nettiers/nettiers/wiki">Wiki</a>
+                             &#160;&#160; | &#160;&#160;
                              <a href="https://github.com/netTiers/netTiers/issues">Issues / Bugs / Support</a>
-                             &#160;&#160; | &#160;&#160; 
-                             <a href="https://github.com/netTiers/netTiers">GitHub</a>
-                             &#160;&#160; | &#160;&#160; 
+                             &#160;&#160; | &#160;&#160;
                              <a href="https://github.com/netTiers/netTiers/archive/master.zip">Download zip</a>
                             </div>
                            <hr />
@@ -71,12 +68,12 @@
 			  <p> Below are the steps to to configure the .netTiers components.</p>
 			
               <p>To Configure your application to use .netTiers, add the following sections to your App / Web config files.
-			
-			 You can find more information on how to set this up at<br/> 
-			 <a href="http://nettiers.net/DocumentationPage.ashx">.netTiers 2.3 Install and Configuration Document @ http://nettiers.net/DocumentationPage.ashx</a>
+
+			 You can find more information on how to set this up at<br/>
+			 <a href="https://github.com/netTiers/netTiers/wiki">.netTiers 2.3 Install and Configuration Document @ https://github.com/netTiers/netTiers/wiki</a>
             </p>
             <p>1. Add a new section to the configSections</p>
-            
+
 <pre>
   &lt;section name="<xsl:value-of select="//NetTiersReport/@DALNameSpace" />"
 		type="<xsl:value-of select="//NetTiersReport/@DALNameSpace" />.Bases.NetTiersServiceSection, <xsl:value-of select="//NetTiersReport/@DALNameSpace" />"
@@ -125,7 +122,7 @@
           <div id="Documentation" style="display:inline">
             <a name="documentation"></a>
             <h3>Documentation <a href="#top" class="calloutlink" >Top</a></h3>
-            <a href="http://wiki.nettiers.net">.netTiers 2.0 Getting Started</a><br /><br />
+            <a href="https://github.com/netTiers/netTiers/wiki">.netTiers 2.0 Getting Started</a><br /><br />
 
             <b>Sample API Usage</b>
             <br /><table style="border: 1px dashed rgb(255, 153, 0); background-color: rgb(255, 255, 223);" bgcolor="#ffffdf"><tbody><tr><td><pre><font color="black" face="Courier New" size="2">

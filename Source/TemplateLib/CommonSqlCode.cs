@@ -1,4 +1,4 @@
-﻿using CodeSmith.Engine;
+using CodeSmith.Engine;
 using SchemaExplorer;
 using System;
 using System.Windows.Forms.Design;
@@ -7037,7 +7037,7 @@ using System.Diagnostics;
 [System.Diagnostics.DebuggerStepThroughAttribute()]
 [System.ComponentModel.DesignerCategoryAttribute("code")]
 [System.Xml.Serialization.XmlTypeAttribute(AnonymousType=false)]
-[System.Xml.Serialization.XmlRootAttribute(Namespace="http://www.nettiers.net/NetTiersMap.xsd", IsNullable=false)]
+[System.Xml.Serialization.XmlRootAttribute(Namespace="https://raw.githubusercontent.com/netTiers/netTiers/master/Source/SchemaMapping/NetTiersMap.xsd", IsNullable=false)]
 public partial class NetTiersMap {
 
     [NonSerialized]
@@ -7073,7 +7073,7 @@ public partial class NetTiersMap {
 [System.SerializableAttribute()]
 [System.Diagnostics.DebuggerStepThroughAttribute()]
 [System.ComponentModel.DesignerCategoryAttribute("code")]
-[System.Xml.Serialization.XmlTypeAttribute(Namespace="http://www.nettiers.net/NetTiersMap.xsd")]
+[System.Xml.Serialization.XmlTypeAttribute(Namespace="https://raw.githubusercontent.com/netTiers/netTiers/master/Source/SchemaMapping/NetTiersMap.xsd")]
 public partial class TableMetaData {
 
     private ColumnMetaDataCollection columnField;
@@ -7198,7 +7198,7 @@ public partial class TableMetaData {
 [System.SerializableAttribute()]
 [System.Diagnostics.DebuggerStepThroughAttribute()]
 [System.ComponentModel.DesignerCategoryAttribute("code")]
-[System.Xml.Serialization.XmlTypeAttribute(Namespace="http://www.nettiers.net/NetTiersMap.xsd")]
+[System.Xml.Serialization.XmlTypeAttribute(Namespace="https://raw.githubusercontent.com/netTiers/netTiers/master/Source/SchemaMapping/NetTiersMap.xsd")]
 public partial class ViewMetaData {
 
     private ColumnMetaDataCollection columnField;
@@ -7311,7 +7311,7 @@ public partial class ViewMetaData {
 [System.SerializableAttribute()]
 [System.Diagnostics.DebuggerStepThroughAttribute()]
 [System.ComponentModel.DesignerCategoryAttribute("code")]
-[System.Xml.Serialization.XmlTypeAttribute(Namespace="http://www.nettiers.net/NetTiersMap.xsd")]
+[System.Xml.Serialization.XmlTypeAttribute(Namespace="https://raw.githubusercontent.com/netTiers/netTiers/master/Source/SchemaMapping/NetTiersMap.xsd")]
 public partial class ColumnMetaData {
 
     private string idField;
@@ -7398,7 +7398,7 @@ public partial class ColumnMetaData {
 [System.SerializableAttribute()]
 [System.Diagnostics.DebuggerStepThroughAttribute()]
 [System.ComponentModel.DesignerCategoryAttribute("code")]
-[System.Xml.Serialization.XmlTypeAttribute(Namespace="http://www.nettiers.net/NetTiersMap.xsd")]
+[System.Xml.Serialization.XmlTypeAttribute(Namespace="https://raw.githubusercontent.com/netTiers/netTiers/master/Source/SchemaMapping/NetTiersMap.xsd")]
 public partial class ChildCollectionMetaData {
 
     private string idField;
