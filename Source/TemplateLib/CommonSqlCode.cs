@@ -6055,7 +6055,7 @@ CREATE\s+PROC(?:EDURE)?                               # find the start of the st
         ///</summary>
         public string GetEntLibVersionSignature(EntLibVersion version)
         {
-            string entlibVersionText = "";
+            string entlibVersionText = "Version=6.0.0.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35";
 
             switch (version)
             {
@@ -6069,6 +6069,9 @@ CREATE\s+PROC(?:EDURE)?                               # find the start of the st
                     entlibVersionText = "Version=5.0.414.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35";
                     break;
 
+                case MoM.Templates.EntLibVersion.v6_0:
+                    entlibVersionText = "Version=6.0.0.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35";
+                    break;
             }
             return entlibVersionText;
         }
@@ -6179,6 +6182,9 @@ CREATE\s+PROC(?:EDURE)?                               # find the start of the st
                 case ( VSNetVersion.v2013 ) :
                     versionNumber = "12.0";
                     break;
+                case ( VSNetVersion.v2019 ):
+                    versionNumber = "16.0";
+                    break;
             }
 
             return versionNumber;
@@ -6201,6 +6207,9 @@ CREATE\s+PROC(?:EDURE)?                               # find the start of the st
                     break;
                 case ( VSNetVersion.v2013 ) :
                     versionNumber = "13.00";
+                    break;
+                case ( VSNetVersion.v2019 ):
+                    versionNumber = "14.00";
                     break;
             }
 
@@ -6225,6 +6234,9 @@ CREATE\s+PROC(?:EDURE)?                               # find the start of the st
                 case ( VSNetVersion.v2013 ) :
                     versionNumber = "12.0.21005.1";
                     break;
+                case ( VSNetVersion.v2019 ):
+                    versionNumber = "16.0.30717.126";
+                    break;
             }
 
             return versionNumber;
@@ -6233,7 +6245,7 @@ CREATE\s+PROC(?:EDURE)?                               # find the start of the st
 
         public string GetVisualStudioToolVersionString( VSNetVersion version )
         {
-            string toolsVersion = "3.5";
+            string toolsVersion = "Current";
 
             switch ( version )
             {
@@ -6241,7 +6253,8 @@ CREATE\s+PROC(?:EDURE)?                               # find the start of the st
                 case ( VSNetVersion.v2012 ) :
                     toolsVersion = "4.0";
                     break;
-                case ( VSNetVersion.v2013 ) :
+                case ( VSNetVersion.v2013 ):
+                case ( VSNetVersion.v2019 ):
                     toolsVersion = "12.0";
                     break;
             }
@@ -6266,6 +6279,9 @@ CREATE\s+PROC(?:EDURE)?                               # find the start of the st
                     break;
                 case ( VSNetVersion.v2013 ) :
                     versionNumber = "2013";
+                    break;
+                case ( VSNetVersion.v2019 ):
+                    versionNumber = "2019";
                     break;
             }
 
@@ -6292,6 +6308,9 @@ CREATE\s+PROC(?:EDURE)?                               # find the start of the st
                 case ( VSNetVersion.v2013 ) :
                     versionNumber = "12.0.0.0";
                     break;
+                case ( VSNetVersion.v2019 ):
+                    versionNumber = "16.0.0.0";
+                    break;
             }
 
             return versionNumber;
@@ -6312,6 +6331,9 @@ CREATE\s+PROC(?:EDURE)?                               # find the start of the st
                     break;
                 case ( DotNetFrameworkVersion.v4_5 ) :
                     versionNumber = "4.5";
+                    break;
+                case ( DotNetFrameworkVersion.v4_7_2 ):
+                    versionNumber = "4.7.2";
                     break;
             }
 
@@ -6628,7 +6650,8 @@ CREATE\s+PROC(?:EDURE)?                               # find the start of the st
         v2008,
         v2010,
         v2012,
-        v2013
+        v2013,
+        v2019
     }
 
     public enum DotNetFrameworkVersion
@@ -6642,7 +6665,9 @@ CREATE\s+PROC(?:EDURE)?                               # find the start of the st
         /// <summary> version 4.0 </summary>
         v4,
         /// <summary> version 4.5 </summary>
-        v4_5
+        v4_5,
+        /// <summary> version 4.7.2 </summary>
+        v4_7_2,
     }
     #endregion
 
