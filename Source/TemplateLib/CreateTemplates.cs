@@ -102,6 +102,7 @@
 			CodeTemplates.Add("ContextView.cst", base.CreateTemplate<ContextView>()); this.PerformStep();
 
 			CodeTemplates.Add("DataRepository.cst", base.CreateTemplate<DataRepository>()); this.PerformStep();
+			CodeTemplates.Add("ExceptionManager.cst", base.CreateTemplate<ExceptionManager>()); this.PerformStep();
 			CodeTemplates.Add("Utility.cst", base.CreateTemplate<Utility>()); this.PerformStep();
 			CodeTemplates.Add("ITransactionManager.cst", base.CreateTemplate<ITransactionManager>()); this.PerformStep();
 			CodeTemplates.Add("TransactionManager.cst", base.CreateTemplate<TransactionManager>()); this.PerformStep();

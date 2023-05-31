@@ -6575,6 +6575,20 @@ CREATE\s+PROC(?:EDURE)?                               # find the start of the st
 
     #endregion
 
+    #region Exception Handler
+    /// <summary>
+    /// Enterprise Library versions
+    /// </summary>
+    public enum ExceptionHandler : byte
+    {
+        /// <summary>Generate a basic error handling system that errors will be passed into</summary>
+        netTiers = 0,
+        /// <summary>Use Enterprise Library version</summary>
+        EntLib = 1,
+    }
+
+    #endregion
+
     #region PascalCasing style
     /// <summary>
     /// Indicates the style of Pascal casing to be used

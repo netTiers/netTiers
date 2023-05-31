@@ -1,0 +1,72 @@
+﻿<%@ Property Name="DALNameSpace" Optional="False" Type="System.String" Category="Style" Description="Repository Namespace." %>
+
+#region Using directives
+
+using System;
+
+#endregion
+
+namespace <%=DALNameSpace%>
+{
+    /// <summary>
+    /// This class represents the basic Exception Manager system build into nettiers.
+    /// </summary>
+    [CLSCompliant(true)]
+    public sealed class ExceptionManager
+    {
+        private static IExceptionHandler _handler = null;
+
+        private static object HandlerLock = new object();
+
+        private static IExceptionHandler Handler
+        {
+            get
+            {
+                if (_handler == null && DataRepository.Provider.ExceptionHandlerType != null)
+                {
+                    lock (HandlerLock)
+                    {
+                        if (_handler == null)
+                        {
+                            if (typeof(IExceptionHandler).IsAssignableFrom(DataRepository.Provider.ExceptionHandlerType) == false)
+                                throw new System.Configuration.ConfigurationErrorsException("The Exception Handler type does not implement the IExceptionHandler interface");
+
+                            _handler = Activator.CreateInstance(DataRepository.Provider.ExceptionHandlerType, null) as IExceptionHandler;
+                        }
+                    }
+                }
+                return _handler;
+            }
+        }
+
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="ex">The exception to be handled</param>
+        /// <param name="policyName">The Policy throwing the exception</param>
+        /// <returns></returns>
+        public static bool HandleException(Exception ex, string policyName)
+        {
+            if (Handler == null)
+                return true;
+
+            Handler.HandleException(ex, policyName);
+            return false;
+        }
+
+    }
+
+    /// <summary>
+    /// Defines the contract for an ExceptionHandler.  An ExceptionHandler contains specific handling
+    /// logic (i.e. logging the exception, replacing the exception, and so forth.)
+    /// </summary>    
+    public interface IExceptionHandler
+    {
+        /// <summary>
+        /// <para>When implemented by a class, handles an <see cref="Exception"/>.</para>
+        /// </summary>
+        /// <param name="exception"><para>The exception to handle.</para></param>        
+        /// <param name="policyName"><para>The policy that this exception belongs to.</para></param>        
+        void HandleException(Exception exception, string policyName);
+    }
+}

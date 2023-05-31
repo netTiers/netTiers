@@ -6,21 +6,21 @@
 <%@ Property Name="NameSpace" Optional="False" Type="System.String" Category="Style" Description="Object Namespace." %>
 <%@ Property Name="BLLNameSpace" Optional="False" Type="System.String" Category="Style" Description="Object Namespace." %>
 <%@ Property Name="DALNameSpace" Optional="False" Type="System.String" Category="Style" Description="Repository Namespace." %>
+<%@ Property Name="ExceptionHandler" Optional="False" Type="MoM.Templates.ExceptionHandler" Category="Style" Description="Which exception handler system should we use." %>
 <%@ Assembly Name="SchemaExplorer" %>
 <%
 	string listName = GetTListName();
 %>
 using System;
 using System.Data;
-using System.Collections.Generic;
-using System.Collections;
-using System.Text;
 
 using <%= BLLNameSpace %>;
 using <%= DALNameSpace %>;
 using <%= DALNameSpace %>.Bases;
 
+<% if (ExceptionHandler == MoM.Templates.ExceptionHandler.EntLib) { %>
 using Microsoft.Practices.EnterpriseLibrary.ExceptionHandling;
+<% } %>
 
 namespace <%= NameSpace %>
 {
@@ -47,13 +47,17 @@ namespace <%= NameSpace %>
         }		
 		
 		/// <summary>
-		/// Wraps call to tohe <see cref="ExceptionPolicy"/> class which handles all exceptions based on the security policy.
+		/// Wraps call to the <see cref="<% if (ExceptionHandler == MoM.Templates.ExceptionHandler.EntLib) { %>ExceptionPolicy<% } else { %>ExceptionManager<% } %>"/> class which handles all exceptions based on the security policy.
 		/// </summary>
 		public static bool HandleException(Exception e, string policyName)
 		{
 			try
             {
+                <% if (ExceptionHandler == MoM.Templates.ExceptionHandler.EntLib) { %>
 				return ExceptionPolicy.HandleException(e, policyName);
+                <% } else { %>
+                return ExceptionManager.HandleException(e, policyName);
+                <% } %>
             }
             catch (System.Configuration.ConfigurationErrorsException)
             {

@@ -307,7 +307,7 @@ namespace <%=DALNameSpace%>
 
         #region SqlInjection
         private static readonly System.Text.RegularExpressions.Regex regSystemThreats =
-                new System.Text.RegularExpressions.Regex(@"\s?;\s?|\s?drop\s|\s?grant\s|^'|\s?--|\s?union\s|\s?delete\s|\s?truncate\s|\s?sysobjects\s?|\s?xp_.*?|\s?syslogins\s?|\s?sysremote\s?|\s?sysusers\s?|\s?sysxlogins\s?|\s?sysdatabases\s?|\s?aspnet_.*?|\s?exec\s?",
+                new System.Text.RegularExpressions.Regex(@"\s?;\s?|\bdrop\b|\bgrant\b|^'|\s?--|\bunion\b|\bdelete\b|\btruncate\b|\bsysobjects\b|\s?xp_.*?|\bsyslogins\b|\bsysremote\b|\bsysusers\b|\bsysxlogins\b|\bsysdatabases\b|\baspnet_.*?|\bexec\b",
                     System.Text.RegularExpressions.RegexOptions.Compiled | System.Text.RegularExpressions.RegexOptions.IgnoreCase);
 
         /// <summary>
@@ -716,52 +716,52 @@ private enum ExecuteType
 }
 
 private static string RetryExecuteCode = 
-@"            {6}{8}
-            {3} results = {7};
+@"            {5}{7}
+            {3} results = {6};
             for (int attempt = 1; attempt <= {1}; attempt++)
             {{
                 try
                 {{
-                    results = {5}.Execute{0}(dbCommand{4});
+                    {4}
                     break;
                 }}
-                catch (System.Data.SqlClient.SqlException {9})
+                catch (System.Data.SqlClient.SqlException {8})
                 {{
                     // we could time out due to locks 
                     // or our database may be temporarily unavailable
                     if (attempt == {1})
                     {{
-                        {11}
                         {10}
+                        {9}
                     }}
                     System.Threading.Thread.Sleep({2});
                 }}
-                catch (Exception {9})
+                catch (Exception {8})
                 {{
-                    {11}
                     {10}
+                    {9}
                 }}
             }}
 
             return results;";
 
 private static string NoRetryExecuteCode = 
-@"            {6}{8}
-            {3} results = {7};
+@"            {5}{7}
+            {3} results = {6};
             try
             {{
-                results = {5}.Execute{0}(dbCommand{4});
+                {4}
             }}
-            catch (Exception {9})
+            catch (Exception {8})
             {{
-                {11}
                 {10}
+                {9}
             }}
             return results;";
 
+
 private void WriteExecuteMethod(ExecuteType executeType, bool useTransactions)
 {
-    string results = string.Empty;
     string sleepType = string.Empty;
     object[] formatParams = null;
     bool useRetry = RetryEnabled && RetryMaxAttempts > 1;
@@ -777,7 +777,17 @@ private void WriteExecuteMethod(ExecuteType executeType, bool useTransactions)
             : CustomDataException ?
             @"throw new NetTiersDataException(string.Format(""{0} Error: {{0}}"", dbCommand.CommandText), ex, dbCommand, {1}, {2});"
             : "throw;";
-    
+    string returnResults = useTransactions ?
+                  @"if (transactionManager.IsDisabled)
+					{{
+                        results = transactionManager.Database.Execute{0}(dbCommand);
+					}}
+                    else
+					{{
+                        results = transactionManager.Database.Execute{0}(dbCommand, transactionManager.TransactionObject);
+					}}"
+					: "results = database.Execute{0}(dbCommand);";
+
     switch (RetrySleepStyle)
     {
         case MoM.Templates.SleepStyle.Constant:
@@ -800,9 +810,8 @@ private void WriteExecuteMethod(ExecuteType executeType, bool useTransactions)
                     RetryMaxAttempts,
                     sleepType,
                     "IDataReader",
-                    (useTransactions? ", transactionManager.TransactionObject":""),
-                    (useTransactions? "transactionManager.Database":"database"),
-                    (useTransactions? "if (!transactionManager.IsOpen) throw new DataException(\"Transaction must be open before executing a query.\");":""),
+                    string.Format(returnResults, "Reader"),
+                    (useTransactions? "if (!transactionManager.IsOpen && !transactionManager.IsDisabled) throw new DataException(\"Transaction must be open before executing a query.\");":""),
                     "null",
                     customExTimer,
                     customEx,
@@ -818,9 +827,8 @@ private void WriteExecuteMethod(ExecuteType executeType, bool useTransactions)
                     RetryMaxAttempts,
                     sleepType,
                     "int",
-                    (useTransactions? ", transactionManager.TransactionObject":""),
-                    (useTransactions? "transactionManager.Database":"database"),
-                    (useTransactions? "if (!transactionManager.IsOpen) throw new DataException(\"Transaction must be open before executing a query.\");":""),
+                    string.Format(returnResults, "NonQuery"),
+                    (useTransactions? "if (!transactionManager.IsOpen && !transactionManager.IsDisabled) throw new DataException(\"Transaction must be open before executing a query.\");":""),
                     "0",
                     customExTimer,
                     customEx,
@@ -836,9 +844,8 @@ private void WriteExecuteMethod(ExecuteType executeType, bool useTransactions)
                     RetryMaxAttempts,
                     sleepType,
                     "DataSet",
-                    (useTransactions? ", transactionManager.TransactionObject":""),
-                    (useTransactions? "transactionManager.Database":"database"),
-                    (useTransactions? "if (!transactionManager.IsOpen) throw new DataException(\"Transaction must be open before executing a query.\");":""),
+                    string.Format(returnResults, "DataSet"),
+                    (useTransactions? "if (!transactionManager.IsOpen && !transactionManager.IsDisabled) throw new DataException(\"Transaction must be open before executing a query.\");":""),
                     "null",
                     customExTimer,
                     customEx,
@@ -853,9 +860,8 @@ private void WriteExecuteMethod(ExecuteType executeType, bool useTransactions)
                     RetryMaxAttempts,
                     sleepType,
                     "Object",
-                    (useTransactions? ", transactionManager.TransactionObject":""),
-                    (useTransactions? "transactionManager.Database":"database"),
-                    (useTransactions? "if (!transactionManager.IsOpen) throw new DataException(\"Transaction must be open before executing a query.\");":""),
+                    string.Format(returnResults, "Scalar"),
+                    (useTransactions? "if (!transactionManager.IsOpen && !transactionManager.IsDisabled) throw new DataException(\"Transaction must be open before executing a query.\");":""),
                     "null",
                     customExTimer,
                     customEx,

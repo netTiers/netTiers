@@ -40,6 +40,7 @@
 <%@ Property Name="TimeStandard" Type="TimeStandardEnum" Default="Local" Category="02. Framework Generation - Optional" Description="Standard used for generating DateTime values. If 'UTC' DateTime is generated based on UtcNow. If 'Local' DateTime is generated based on DateTime.Now" %>
 <%@ Property Name="IsConnectionStringAzure" Type="System.Boolean" Default="False" Category="02. Framework Generation - Optional" Description="Indicates if at runtime the netTiersConnectionString is read from Window Azure's ServiceConfiguration.cscfg or from Web.config/app.config." %>
 <%@ Property Name="EntityCacheLayer" Type="MoM.Templates.CacheLayer" Default="None" Category="02. Framework Generation - Optional" Description="Indicates if the Cache code should be written for the enabled CacheTables entities using Enterprise Library or System.Runtime.Caching." %>
+<%@ Property Name="ExceptionHandler" Type="MoM.Templates.ExceptionHandler" Default="EntLib" Category="02. Framework Generation - Optional" Description="Choose the system that will be used for error handling: Enterprise Library or netTiers." %>
 <%@ Property Name="EnableViewCache" Type="System.Boolean" Default="True" Category="02. Framework Generation - Optional" Description="If a cache layer has been chosen, then also create cache methods for all views" %>
 
 <%-- 3. Namespaces Category --%>
@@ -1906,6 +1907,7 @@
             this.GetTemplate("DomainUtil.cst").SetProperty("NameSpace", ComponentsNameSpace);
             this.GetTemplate("DomainUtil.cst").SetProperty("BLLNameSpace", BLLNameSpace);
             this.GetTemplate("DomainUtil.cst").SetProperty("DALNameSpace", DALNameSpace);
+            this.GetTemplate("DomainUtil.cst").SetProperty("ExceptionHandler", ExceptionHandler);
             this.RenderToFile("DomainUtil.cst", rootPathComponents + "\\DomainUtil.cs", true);
 
 
@@ -2350,6 +2352,10 @@
             this.GetTemplate("DataRepository.cst").SetProperty("VisualStudioVersion", VisualStudioVersion);
             this.GetTemplate("DataRepository.cst").SetProperty("IsConnectionStringAzure", IsConnectionStringAzure);
             this.RenderToFile("DataRepository.cst", rootPathDAL + "\\DataRepository.cs", true);
+
+            AddFileNode(commonNode, "ExceptionManager.cs");
+            this.GetTemplate("ExceptionManager.cst").SetProperty("DALNameSpace", DALNameSpace);
+            this.RenderToFile("ExceptionManager.cst", rootPathDAL + "\\ExceptionManager.cs", true);
 
             AddFileNode(commonNode, "IEntityProvider.cs");
             SetCommonProperties("IEntityProvider.cst");
@@ -3826,6 +3832,7 @@
             this.GetTemplate("EntityViewBase.generated.cst").SetProperty("IncludeRelations", IncludeRelations);
             this.GetTemplate("EntityViewBase.generated.cst").SetProperty("IncludeWCFDataAttributes", IncludeWCFDataAttributes);
             this.GetTemplate("EntityViewBase.generated.cst").SetProperty("IncludeXmlAttributes", IncludeXmlAttributes);
+            this.GetTemplate("EntityViewBase.generated.cst").SetProperty("ExtendedPropertyPrefix", ExtendedPropertyPrefix);
 
             this.RenderToFile("EntityViewBase.generated.cst", rootPathBLL + "\\Views\\" + GetClassName(SourceView, ClassNameFormat.PartialAbstract) + ".cs", true);
 

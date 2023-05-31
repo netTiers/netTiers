@@ -494,6 +494,25 @@ namespace <%=NameSpace%>
         /// Gets the all occurrences of the specified type of <see cref="System.Attribute"/>.
         /// </summary>
         /// <typeparam name="T"></typeparam>
+        /// <param name="type"></param>
+        /// <returns></returns>
+        public static List<T> GetAttributes<T>(System.Type type) where T : System.Attribute
+        {
+            List<T> attributes = new List<T>();
+
+            object[] attrs = type.GetCustomAttributes(typeof(T), false);
+            foreach (object attr in attrs)
+            {
+                attributes.Add((T)attr);
+            }
+
+            return attributes;
+        }
+
+        /// <summary>
+        /// Gets the all occurrences of the specified type of <see cref="System.Attribute"/>.
+        /// </summary>
+        /// <typeparam name="T"></typeparam>
         /// <param name="e"></param>
         /// <returns></returns>
         public static List<T> GetAttributes<T>(System.Enum e) where T : System.Attribute
@@ -674,6 +693,53 @@ namespace <%=NameSpace%>
     }
 
     #endregion EnumTextValue
+
+    #region EntityExtendedProperty
+
+    ///<summary>
+    /// Attribute used to decorate entities with additional extended properties
+    ///</summary>
+    [AttributeUsage(AttributeTargets.All, AllowMultiple = true)]
+    public sealed class EntityExtendedPropertyAttribute : System.Attribute
+    {
+        private readonly string enumPropName;
+        private readonly string enumPropValue;
+
+        ///<summary>
+        /// Returns the text representation of the extended property name
+        ///</summary>
+        public string Name
+        {
+            get
+            {
+                return enumPropName;
+            }
+        }
+
+        ///<summary>
+        /// Returns the text representation of the extended property value
+        ///</summary>
+        public string Value
+        {
+            get
+            {
+                return enumPropValue;
+            }
+        }
+
+        ///<summary>
+        /// Allows the creation of an extended property for the entity.
+        ///</summary>
+        /// <param name="name">The reader friendly name of the extended property.</param>
+        /// <param name="value">The reader friendly value of the extended property.</param>
+        public EntityExtendedPropertyAttribute(string name, string value)
+        {
+            enumPropName = name;
+            enumPropValue = value;
+        }
+    }
+
+    #endregion EntityExtendedProperty
 
     #region ColumnExtendedProperty
 

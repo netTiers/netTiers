@@ -102,6 +102,13 @@ namespace <%=NameSpace%>
     /// <summary>
     /// <% if(SourceTable.Description.Length == 0 ) {%>An object representation of the '<%=SourceTable.Name%>' table. [No description found in the database]<%} else {Response.Write(GetColumnXmlComment(SourceTable,1));}%>
     /// </summary>
+    <% if (!string.IsNullOrWhiteSpace(ExtendedPropertyPrefix)) {
+           for (int i=0; i < SourceTable.ExtendedProperties.Count; i++) {
+               if (SourceTable.ExtendedProperties[i].Name.ToLower().StartsWith(ExtendedPropertyPrefix.ToLower())) { %>
+    [EntityExtendedProperty("<%=SourceTable.ExtendedProperties[i].Name.Substring(ExtendedPropertyPrefix.Length) %>", "<%=SourceTable.ExtendedProperties[i].Value.ToString().Replace("\\", "\\\\") %>")]
+    <%         }
+           }
+       } %>
     <% if ( IncludeWCFDataAttributes ) { %>
     [DataContract]
     <% } else { %>
@@ -1563,7 +1570,7 @@ WriteRelationshipPropertyString();
             <% if (!string.IsNullOrWhiteSpace(ExtendedPropertyPrefix)) {
                    for (int i=0; i < cols[x].ExtendedProperties.Count; i++) {
                        if (cols[x].ExtendedProperties[i].Name.ToLower().StartsWith(ExtendedPropertyPrefix.ToLower())) { %>
-        [ColumnExtendedProperty("<%=cols[x].ExtendedProperties[i].Name.Substring(ExtendedPropertyPrefix.Length) %>", "<%=cols[x].ExtendedProperties[i].Value %>")]
+        [ColumnExtendedProperty("<%=cols[x].ExtendedProperties[i].Name.Substring(ExtendedPropertyPrefix.Length) %>", "<%=cols[x].ExtendedProperties[i].Value.ToString().Replace("\\", "\\\\") %>")]
             <%         }
                    }
                } %>

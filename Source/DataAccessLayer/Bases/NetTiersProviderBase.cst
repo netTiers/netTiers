@@ -22,13 +22,14 @@ using <%= BLLNameSpace %>;
 #endregion
 
 namespace <%=DALNameSpace%>.Bases
-{	
-	///<summary>
-	/// The base class to implements to create a .NetTiers provider.
-	///</summary>
-	public abstract class NetTiersProviderBase : System.Configuration.Provider.ProviderBase, INetTiersProvider
-	{
-		private Type entityCreationalFactoryType = null;
+{
+    ///<summary>
+    /// The base class to implements to create a .NetTiers provider.
+    ///</summary>
+    public abstract class NetTiersProviderBase : System.Configuration.Provider.ProviderBase, INetTiersProvider
+    {
+        private Type exceptionHandlerType = null;
+        private Type entityCreationalFactoryType = null;
         private static object syncObject = new object();
         private bool enableEntityTracking = true;
         private bool enableListTracking = false;
@@ -52,18 +53,24 @@ namespace <%=DALNameSpace%>.Bases
             base.Initialize(name, config);
 
             string entityCreationalFactoryTypeString = config["entityFactoryType"];
+            string exceptionHandlerTypeString = config["exceptionHandlerType"];
 
             lock (syncObject)
             {
+                /*
+                 * Attempt to create the Factory Type
+                 */
                 if (string.IsNullOrEmpty(entityCreationalFactoryTypeString))
                 {
                     entityCreationalFactoryType = typeof(<%= BLLNameSpace %>.EntityFactory);
                 }
                 else
                 {
+                    string entityCreationalFactoryTypeStringFullName = entityCreationalFactoryTypeString.Substring(0, entityCreationalFactoryTypeString.LastIndexOf('.'));
+
                     foreach (System.Reflection.Assembly assembly in AppDomain.CurrentDomain.GetAssemblies())
                     {
-                        if (assembly.FullName.Split(',')[0] == entityCreationalFactoryTypeString.Substring(0, entityCreationalFactoryTypeString.LastIndexOf('.')))
+                        if (assembly.FullName.Split(',')[0] == entityCreationalFactoryTypeStringFullName)
                         {
                             entityCreationalFactoryType = assembly.GetType(entityCreationalFactoryTypeString, false, true);
                             break;
@@ -93,7 +100,36 @@ namespace <%=DALNameSpace%>.Bases
                 }
                 if (entityCreationalFactoryType == null)
                     throw new ArgumentNullException("Could not find a valid entity factory configured in assemblies.  .netTiers can not continue.");
-                
+
+                /*
+				 * Attempt to create the Exception Handler
+				 */
+                if (!string.IsNullOrEmpty(exceptionHandlerTypeString))
+                {
+                    //exceptionHandlerType = Type.GetType(exceptionHandlerTypeString, false, true);
+
+                    if (exceptionHandlerType == null && exceptionHandlerTypeString.Contains(","))
+                    {
+                        //assembly still not found, try loading the assembly.  It's possible it's not referenced.
+                        string exceptionHandlerTypeStringAssembly = exceptionHandlerTypeString.Substring(exceptionHandlerTypeString.IndexOf(',') + 1).Trim();
+
+                        try
+                        {
+                            System.Reflection.Assembly.Load(exceptionHandlerTypeStringAssembly);
+                            exceptionHandlerType = Type.GetType(exceptionHandlerTypeString, false, true);
+                        }
+                        catch
+                        {
+                            //throws file not found exception
+                        }
+                    }
+                    if (exceptionHandlerType == null)
+                        throw new ArgumentNullException("The exception handler in the configuration could not be loaded.  .netTiers can not continue.");
+                }
+
+                /*
+				 * Load the rest of the config
+				 */
                 if (config["enableEntityTracking"] != null)
                 {
                     bool.TryParse(config["enableEntityTracking"], out this.enableEntityTracking);
@@ -144,6 +180,22 @@ namespace <%=DALNameSpace%>.Bases
             set
             {
                 entityCreationalFactoryType = value;
+            }
+        }
+
+        /// <summary>
+        /// Gets or sets the Creational Entity Factory Type.
+        /// </summary>
+        /// <value>The entity factory type.</value>
+        public virtual Type ExceptionHandlerType
+        {
+            get
+            {
+                return exceptionHandlerType;
+            }
+            set
+            {
+                exceptionHandlerType = value;
             }
         }
 
