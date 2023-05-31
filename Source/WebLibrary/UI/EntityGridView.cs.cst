@@ -935,36 +935,128 @@ namespace <%=RootNameSpace%>.Web.UI
         {
         }
 
+        public virtual void ExportCSV(string reportName, Page currentPage, GridView GridView1)
+        {
+            ClearChildControls(GridView1);
+
+            currentPage.DataBind();
+
+            currentPage.Response.Clear();
+            currentPage.Response.Buffer = true;
+            currentPage.Response.AddHeader("Content-Disposition", "attachment; filename=" + reportName.Replace(".xls", ".csv"));
+            currentPage.Response.ContentEncoding = System.Text.Encoding.Unicode;
+            currentPage.Response.ContentType = "application/text";
+
+            StringBuilder sb = new StringBuilder();
+            
+			var columns = GridView1.Columns.Count;
+            if (columns == 0)
+            {
+                columns = GridView1.HeaderRow.Cells.Count;
+                for (int k = 0; k < GridView1.HeaderRow.Cells.Count; k++)
+                {
+                    sb.Append(GridView1.HeaderRow.Cells[k].Text.Replace(",", ";").Replace("ID", "Id") + ',');
+                }
+            }
+            else
+            {
+                for (int k = 0; k < columns; k++)
+                {
+                    if (GridView1.Columns[k].Visible == false) continue;
+
+                    sb.Append(GridView1.Columns[k].HeaderText.Replace(",", ";").Replace("ID", "Id") + ',');
+                }
+            }
+            
+			sb.Append("\r\n");
+
+            for (int i = 0; i < GridView1.Rows.Count; i++)
+            {
+                for (int k = 0; k < columns; k++)
+                {
+                    if (GridView1.Columns.Count > 0 && GridView1.Columns[k].Visible == false) continue;
+
+                    var val = GridView1.Rows[i].Cells[k].Text;
+
+                    for (int c = 0; c < GridView1.Rows[i].Cells[k].Controls.Count; c++)
+                    {
+                        Control item = GridView1.Rows[i].Cells[k].Controls[c];
+                        if (item.Visible)
+                        {
+                            if (item is HyperLink) val += (item as HyperLink).Text;
+                            else if (item is Literal) val += (item as Literal).Text;
+                            else if (item is IButtonControl) val += (item as IButtonControl).Text;
+                            else if (item is ITextControl) val += (item as ITextControl).Text;
+                        }
+                    }
+
+					//TODO: Basic sanitization, needs improvement
+                    val = val.Replace("&nbsp;", " ");
+                    val = System.Text.RegularExpressions.Regex.Replace(val, "<.*?>", string.Empty);
+                    while (val.Contains("  "))
+                    {
+                        val = val.Replace("  ", " ");
+                    }
+                    while (val.Contains(Environment.NewLine + Environment.NewLine))
+                    {
+                        val = val.Replace(Environment.NewLine + Environment.NewLine, Environment.NewLine);
+                    }
+                    val = val.Replace(Environment.NewLine, ";").Replace("; ", ";");
+                    while (val.Contains(";;"))
+                    {
+                        val = val.Replace(";;", ";");
+                    }
+                    val = val.Replace("&pound;", "£");
+                    val = val.Trim(new char[] { ';', ' ' });
+					val = val.Replace(",", ";");
+					
+					//Append value with comma
+                    sb.Append(val + ',');					
+                }
+                sb.Append("\r\n");
+            }
+
+            currentPage.Response.Output.Write(sb.ToString());
+            currentPage.Response.End();
+        }
+		
+		public void PrepareGridViewAndExport(string reportName, Page currentPage, EntityGridView gridView, int[] RemoveColumns)
+        {
+            if (gridView.ExcelColumns != null)
+            {
+                foreach (DataControlField field in gridView.ExcelColumns)
+                {
+                    gridView.Columns.Add(field);
+                }
+            }
+
+            gridView.AllowMultiColumnSorting = false;
+            gridView.AllowPaging = false;
+            gridView.AllowSorting = false;
+            gridView.ShowFooter = false;
+            gridView.EnableViewState = false;
+
+            gridView.PageIndex = 0;
+            gridView.PageSize = gridView.RecordsCount;
+            gridView.DataSourceID = gridView.DataSourceID;
+            gridView.DataBind();
+
+            if (RemoveColumns != null)
+                foreach (var c in RemoveColumns)
+                {
+                    gridView.Columns[c].Visible = false;
+                }
+
+            Export(reportName, currentPage, gridView);
+        }
 
         /// <summary>
         /// Exports the datagrid to an Excel file with the name of the datasheet provided by the passed in parameter
         /// </summary>
         public virtual void Export(string reportName, Page currentPage, Control gridView)
         {
-            System.Web.UI.HtmlControls.HtmlForm htmlForm = new System.Web.UI.HtmlControls.HtmlForm();
-            currentPage.Controls.Add(htmlForm);
-            htmlForm.Controls.Add(gridView);
-
-            ClearChildControls((GridView)gridView);
-
-            currentPage.Response.Clear();
-            currentPage.Response.Buffer = true;
-
-            currentPage.Response.AddHeader("Content-Disposition", "attachment; filename=" + reportName);
-            currentPage.Response.ContentType = "application/vnd.ms-excel";
-            currentPage.Response.ContentEncoding = System.Text.Encoding.UTF8;
-            currentPage.Response.Charset = "";
-            currentPage.EnableViewState = false;
-
-            using (StringWriter stringWriter = new StringWriter())
-            {
-                HtmlTextWriter htmlWriter = new HtmlTextWriter(stringWriter);
-                htmlForm.RenderControl(htmlWriter);
-                htmlWriter.Flush();
-
-                currentPage.Response.Write(stringWriter.ToString());
-                currentPage.Response.End();
-            }
+            ExportCSV(reportName, currentPage, gridView as GridView);
+            return;
         }
 
         /// <summary>
