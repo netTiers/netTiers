@@ -6185,6 +6185,9 @@ CREATE\s+PROC(?:EDURE)?                               # find the start of the st
                 case ( VSNetVersion.v2019 ):
                     versionNumber = "16.0";
                     break;
+                case ( VSNetVersion.v2022 ):
+                    versionNumber = "17.0";
+                    break;
             }
 
             return versionNumber;
@@ -6206,10 +6209,13 @@ CREATE\s+PROC(?:EDURE)?                               # find the start of the st
                     versionNumber = "12.00";
                     break;
                 case ( VSNetVersion.v2013 ) :
-                    versionNumber = "13.00";
+                    versionNumber = "12.00";
                     break;
                 case ( VSNetVersion.v2019 ):
-                    versionNumber = "14.00";
+                    versionNumber = "12.00";
+                    break;
+                case ( VSNetVersion.v2022 ):
+                    versionNumber = "12.00";
                     break;
             }
 
@@ -6237,6 +6243,9 @@ CREATE\s+PROC(?:EDURE)?                               # find the start of the st
                 case ( VSNetVersion.v2019 ):
                     versionNumber = "16.0.30717.126";
                     break;
+                case ( VSNetVersion.v2022 ):
+                    versionNumber = "17.2.32616.157";
+                    break;
             }
 
             return versionNumber;
@@ -6255,6 +6264,7 @@ CREATE\s+PROC(?:EDURE)?                               # find the start of the st
                     break;
                 case ( VSNetVersion.v2013 ):
                 case ( VSNetVersion.v2019 ):
+                case ( VSNetVersion.v2022 ):
                     toolsVersion = "12.0";
                     break;
             }
@@ -6282,6 +6292,9 @@ CREATE\s+PROC(?:EDURE)?                               # find the start of the st
                     break;
                 case ( VSNetVersion.v2019 ):
                     versionNumber = "2019";
+                    break;
+                case ( VSNetVersion.v2022 ):
+                    versionNumber = "2022";
                     break;
             }
 
@@ -6311,6 +6324,9 @@ CREATE\s+PROC(?:EDURE)?                               # find the start of the st
                 case ( VSNetVersion.v2019 ):
                     versionNumber = "16.0.0.0";
                     break;
+                case ( VSNetVersion.v2022 ):
+                    versionNumber = "17.0.0.0";
+                    break;
             }
 
             return versionNumber;
@@ -6334,6 +6350,9 @@ CREATE\s+PROC(?:EDURE)?                               # find the start of the st
                     break;
                 case ( DotNetFrameworkVersion.v4_7_2 ):
                     versionNumber = "4.7.2";
+                    break;
+                case ( DotNetFrameworkVersion.v4_8 ):
+                    versionNumber = "4.8";
                     break;
             }
 
@@ -6651,7 +6670,8 @@ CREATE\s+PROC(?:EDURE)?                               # find the start of the st
         v2010,
         v2012,
         v2013,
-        v2019
+        v2019,
+        v2022
     }
 
     public enum DotNetFrameworkVersion
@@ -6668,6 +6688,8 @@ CREATE\s+PROC(?:EDURE)?                               # find the start of the st
         v4_5,
         /// <summary> version 4.7.2 </summary>
         v4_7_2,
+        /// <summary> version 4.8 </summary>
+        v4_8,
     }
     #endregion
 
