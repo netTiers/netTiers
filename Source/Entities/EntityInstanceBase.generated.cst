@@ -83,6 +83,7 @@
 using System;
 using System.ComponentModel;
 using System.Collections;
+using System.Linq;
 using System.Xml.Serialization;
 using System.Runtime.Serialization;
 <% if(ValidationType == MoM.Templates.ValidationType.EntLib){%>
@@ -900,8 +901,14 @@ WriteRelationshipPropertyString();
                 { %>
             if ( Object1.<%= GetPropertyName(cols[x]) %> != null && Object2.<%= GetPropertyName(cols[x]) %> != null )
             {
+                <% if (cols[x].DataType == DbType.Binary) { %>
+                if (!Object1.<%= GetPropertyName(cols[x]) %>.SequenceEqual(Object2.<%= GetPropertyName(cols[x]) %>))
+                    equal = false;
+                <%}
+                    else { %>
                 if (Object1.<%= GetPropertyName(cols[x]) %> != Object2.<%= GetPropertyName(cols[x]) %>)
                     equal = false;
+            <%}%>
             }
             else if (Object1.<%=GetPropertyName(cols[x])%> == null ^ Object2.<%=GetPropertyName(cols[x])%> == null )
             {
@@ -909,8 +916,14 @@ WriteRelationshipPropertyString();
             }
               <%}
                 else { %>
+                <% if (cols[x].DataType == DbType.Binary) { %>
+            if (!Object1.<%= GetPropertyName(cols[x]) %>.SequenceEqual(Object2.<%= GetPropertyName(cols[x]) %>))
+                equal = false;
+                <%}
+                    else { %>
             if (Object1.<%= GetPropertyName(cols[x]) %> != Object2.<%= GetPropertyName(cols[x]) %>)
                 equal = false;
+                <%}%>
             <% } // if ( cols[x].AllowDBNull ) %>
         <% }// end for %>
 
